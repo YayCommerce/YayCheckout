@@ -1,0 +1,17 @@
+{
+  "name": "plugin-yaycheckout",
+  "title": "YayCheckout Plugin",
+  "private": true,
+  "scripts": {
+    "postinstall": "composer install",
+    "dev": "./scripts/run.sh dev",
+    "build": "./scripts/run.sh build",
+    "release": "./scripts/run.sh release",
+    "dev:admin": "pnpm --filter @yaycheckout/admin-page dev",
+    "build:admin": "pnpm --filter @yaycheckout/admin-page build",
+    "makepot": "wp i18n make-pot . languages/yaycheckout.pot --exclude=node_modules,apps,tests --domain=yaycheckout"
+  },
+  "keywords": [],
+  "author": "Yay Commerce",
+  "packageManager": "pnpm@11.15.1"
+}
