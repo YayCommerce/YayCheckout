@@ -1,0 +1,131 @@
+<?php
+namespace YayCheckout\Models;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * A checkout layout.
+ *
+ * Dumb entity: it holds data and the storage-key constants, and makes no
+ * WordPress calls. Everything it needs is handed to from_post() already
+ * fetched, which keeps the draft/snapshot rules readable in one file and
+ * lets this class be reasoned about without WordPress loaded.
+ *
+ * A layout carries two copies of its markup at once:
+ *
+ *   post_content            the working draft — what the editor saves
+ *   _yaycheckout_published  the snapshot — what customers actually see
+ *
+ * Publishing copies draft to snapshot. Nothing else ever writes the snapshot,
+ * and a customer request never reads the draft.
+ */
+class Layout {
+
+    public const POST_TYPE = 'yay_checkout_layout';
+
+    /*
+     * Storage keys live here and nowhere else. With two copies of the markup on
+     * one post, a mistyped key silently reads or writes the wrong one — the
+     * renderer serves a draft, or a publish writes nothing — with no error and
+     * no failing test. A constant turns that into a fatal.
+     */
+    public const META_PUBLISHED          = '_yaycheckout_published';
+    public const META_DERIVED            = '_yaycheckout_derived';
+    public const META_PUBLISHED_AT       = '_yaycheckout_published_at';
+    public const META_PUBLISHED_REVISION = '_yaycheckout_published_revision';
+    public const META_RULES              = '_yaycheckout_rules';
+    public const META_SELF_TEST          = '_yaycheckout_self_test';
+
+    public const OPTION_ACTIVE = 'yaycheckout_active_layout';
+
+    public int $id       = 0;
+    public string $title = '';
+
+    /** Working draft markup (post_content). Never rendered to customers. */
+    public string $draft = '';
+
+    /** Published snapshot markup. What the renderer reads. */
+    public string $snapshot = '';
+
+    public ?string $published_at    = null;
+    public ?int $published_revision = null;
+    public bool $is_active          = false;
+
+    /** Pro assignment rules. Unused in 1.x. */
+    public array $rules = [];
+
+    /** Caches regenerated from the snapshot at publish time. */
+    public array $derived = [];
+
+    /**
+     * @param  \WP_Post $post
+     * @param  array    $meta      Raw bulk meta as returned by get_post_meta( $id ).
+     * @param  bool     $is_active
+     * @return self
+     */
+    public static function from_post( \WP_Post $post, array $meta, bool $is_active ): self {
+        $layout = new self();
+
+        $layout->id       = (int) $post->ID;
+        $layout->title    = (string) $post->post_title;
+        $layout->draft    = (string) $post->post_content;
+        $layout->snapshot = (string) self::meta_value( $meta, self::META_PUBLISHED, '' );
+
+        $published_at = self::meta_value( $meta, self::META_PUBLISHED_AT, null );
+        $revision     = self::meta_value( $meta, self::META_PUBLISHED_REVISION, null );
+
+        $layout->published_at       = ( null === $published_at || '' === $published_at ) ? null : (string) $published_at;
+        $layout->published_revision = ( null === $revision || '' === $revision ) ? null : (int) $revision;
+        $layout->is_active          = $is_active;
+        $layout->rules              = (array) self::meta_value( $meta, self::META_RULES, [] );
+        $layout->derived            = (array) self::meta_value( $meta, self::META_DERIVED, [] );
+
+        return $layout;
+    }
+
+    /**
+     * Serialized shape for REST. camelCase so the TypeScript side stays
+     * idiomatic; the zod schema in apps/admin mirrors this exactly.
+     *
+     * @return array
+     */
+    public function to_array(): array {
+        return [
+            'id'                => $this->id,
+            'title'             => $this->title,
+            'draft'             => $this->draft,
+            'snapshot'          => $this->snapshot,
+            'publishedAt'       => $this->published_at,
+            'publishedRevision' => $this->published_revision,
+            'isActive'          => $this->is_active,
+            'derived'           => $this->derived,
+        ];
+    }
+
+    public function is_published(): bool {
+        return null !== $this->published_at && '' !== $this->snapshot;
+    }
+
+    /**
+     * Unwrap one value from the array-of-arrays that get_post_meta( $id )
+     * returns. Without this every field silently becomes a one-element array.
+     *
+     * @param  array  $meta
+     * @param  string $key
+     * @param  mixed  $fallback
+     * @return mixed
+     */
+    private static function meta_value( array $meta, string $key, $fallback ) {
+        if ( ! isset( $meta[ $key ] ) ) {
+            return $fallback;
+        }
+
+        $value = $meta[ $key ];
+
+        if ( is_array( $value ) && array_key_exists( 0, $value ) ) {
+            return $value[0];
+        }
+
+        return $value;
+    }
+}

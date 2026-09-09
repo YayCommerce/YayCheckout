@@ -17,6 +17,7 @@ class YayCheckout {
         \YayCheckout\Engine\Register\RegisterFacade::get_instance();
         \YayCheckout\Engine\Admin\Settings::get_instance();
         \YayCheckout\Blocks\BlockRegistry::get_instance();
+        \YayCheckout\PostTypes\LayoutPostType::get_instance();
     }
 
     public static function initialize() {

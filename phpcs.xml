@@ -55,6 +55,16 @@
         -->
         <exclude name="Squiz.Commenting.FunctionComment"/>
         <exclude name="Squiz.Commenting.VariableComment.Missing"/>
+        <!-- Properties are typed (PHP 7.4+), so an @var tag only repeats the signature. -->
+        <exclude name="Squiz.Commenting.VariableComment.MissingVar"/>
+
+        <!--
+            Exceptions here are caught by the REST controllers and returned as
+            JSON error messages, never printed as HTML. Running them through
+            esc_html() would encode quotes in the payload instead of protecting
+            anything.
+        -->
+        <exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
 
         <!--
             Inline `/** @var Foo $bar */` annotations exist for static analysis
