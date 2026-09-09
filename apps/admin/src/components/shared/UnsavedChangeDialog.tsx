@@ -1,7 +1,14 @@
 import { __ } from '@wordpress/i18n';
 
-import { Button } from '../button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface UnsavedChangeDialogProps {
   open: boolean;

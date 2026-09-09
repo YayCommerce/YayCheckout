@@ -6,7 +6,7 @@ import { isPro } from '@/lib/plan';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { YayCheckoutToolTip } from '@/components/ui/custom/YayCheckoutToolTip';
+import { YayCheckoutToolTip } from '@/components/shared/YayCheckoutToolTip';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 
 const UPGRADE_URL = 'https://yaycommerce.com/yaycheckout-for-woocommerce/';
