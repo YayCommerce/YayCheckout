@@ -3,6 +3,7 @@ namespace YayCheckout\Repositories;
 
 use YayCheckout\Models\Layout;
 use YayCheckout\Services\DerivedCacheBuilder;
+use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -193,6 +194,28 @@ class LayoutRepository {
 
         if ( null === $source ) {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        /*
+         * The cap applies here too. LayoutCapGuard covers creation through
+         * core's REST endpoints, but duplicating is our own code path and would
+         * otherwise be the obvious way around the limit.
+         */
+        $limit = Plan::layout_limit();
+
+        if ( Plan::UNLIMITED !== $limit && $this->count() >= $limit ) {
+            throw new \InvalidArgumentException(
+                sprintf(
+                    /* translators: %d: number of layouts allowed on the current plan. */
+                    _n(
+                        'Your plan includes %d checkout layout. Upgrade to Pro for unlimited layouts.',
+                        'Your plan includes %d checkout layouts. Upgrade to Pro for unlimited layouts.',
+                        $limit,
+                        'yaycheckout'
+                    ),
+                    $limit
+                )
+            );
         }
 
         $new_id = wp_insert_post(

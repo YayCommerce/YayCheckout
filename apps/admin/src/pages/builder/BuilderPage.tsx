@@ -1,7 +1,9 @@
 import { __ } from '@wordpress/i18n';
 
+import { isPro } from '@/lib/plan';
 import { useLayoutsQuery, usePublishLayoutMutation } from '@/lib/queries/layout.queries';
 import { Button } from '@/components/ui/button';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 import PagePlaceholder from '@/pages/PagePlaceholder';
 
 /**
@@ -19,6 +21,17 @@ export default function BuilderPage() {
     >
       {isPending && <p>{__('Loading layouts…', 'yaycheckout')}</p>}
       {error && <p>{error.message}</p>}
+
+      {layouts && (
+        <p className="mb-3 flex items-center gap-2">
+          {/* The limit itself is server-side; showing the count here avoids
+              duplicating it in TS where it could drift out of step. */}
+          <span>
+            {layouts.length} {__('layouts', 'yaycheckout')}
+          </span>
+          {!isPro && <PremiumGate inline />}
+        </p>
+      )}
 
       {layouts && layouts.length === 0 && <p>{__('No layouts yet.', 'yaycheckout')}</p>}
 
