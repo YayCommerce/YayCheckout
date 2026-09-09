@@ -219,13 +219,37 @@ cmd_build() {
 cmd_release() {
     local no_prompt=false
     local requested_version=""
+    local plan="free"
     local arg
     for arg in "$@"; do
         case $arg in
             --no-prompt) no_prompt=true ;;
+            --plan=*)    plan="${arg#--plan=}" ;;
             *) [ -z "$requested_version" ] && requested_version="$arg" ;;
         esac
     done
+
+    # Default free, and fail on anything unrecognised: an unflagged or
+    # mistyped release must never quietly produce an artifact containing
+    # premium code.
+    if [ "$plan" != "free" ] && [ "$plan" != "pro" ]; then
+        print_error "Invalid plan: $plan"
+        echo "Use: --plan=free or --plan=pro"
+        exit 1
+    fi
+
+    # Pro installs into its own directory rather than replacing the free one.
+    # If the free plugin is ever listed on wordpress.org, a wp.org update for
+    # slug 'yaycheckout' would otherwise overwrite a paid Pro install and
+    # silently remove the features the customer bought. Both being active at
+    # once is already handled: yaycheckout.php deactivates a second copy when
+    # YayCheckout\plugin_init is already defined.
+    local plan_slug="$PLUGIN_SLUG"
+    local plan_label="YayCheckout"
+    if [ "$plan" = "pro" ]; then
+        plan_slug="${PLUGIN_SLUG}-pro"
+        plan_label="YayCheckout Pro"
+    fi
 
     if [ -n "$requested_version" ] && ! validate_version "$requested_version"; then
         print_error "Invalid version format: $requested_version"
@@ -247,9 +271,10 @@ cmd_release() {
         version=$(get_version)
     fi
 
-    local zip_name="${PLUGIN_SLUG}-${version}.zip"
+    local zip_name="${plan_slug}-${version}.zip"
 
     echo ""
+    print_info "Plan: $plan"
     print_info "Version: $version"
     print_info "Output: release/$zip_name"
     echo ""
@@ -260,10 +285,13 @@ cmd_release() {
     cd "$PLUGIN_DIR"
     composer dump-autoload --no-dev --classmap-authoritative --quiet
 
+    # vite.config.ts reads this; without it a build falls back to free.
+    export YAYCHECKOUT_PLAN="$plan"
+
     cmd_build
 
     # Assemble package in a temp folder named after the plugin slug
-    local temp_dir="$RELEASE_DIR/$PLUGIN_SLUG"
+    local temp_dir="$RELEASE_DIR/$plan_slug"
     rm -rf "$temp_dir"
     mkdir -p "$temp_dir"
 
@@ -283,6 +311,20 @@ cmd_release() {
     cp "$PLUGIN_DIR/vendor/autoload.php" "$temp_dir/vendor/"
     cp -r "$PLUGIN_DIR/vendor/composer" "$temp_dir/vendor/"
 
+    # The premium boundary: includes/Premium/ is the only premium PHP, and
+    # nothing outside it names a YayCheckout\Premium class, so removing it
+    # leaves a working Free build. scripts/check-premium-boundary.sh keeps
+    # that true.
+    if [ "$plan" = "free" ]; then
+        rm -rf "$temp_dir/includes/Premium"
+        print_info "Free build: includes/Premium removed"
+    fi
+
+    # Distinguish the editions in wp-admin.
+    if [ "$plan" = "pro" ]; then
+        sed_inplace "s/^ \* Plugin Name: .*/ \* Plugin Name:       $plan_label - WooCommerce Checkout Builder/" "$temp_dir/$PLUGIN_SLUG.php"
+    fi
+
     # Strip dev-only artifacts
     rm -f "$temp_dir/includes/Engine/Register/RegisterDev.php"
     rm -rf "$temp_dir/assets/dist/admin/.vite" 2>/dev/null || true
@@ -293,8 +335,28 @@ cmd_release() {
     print_step "Creating ZIP archive..."
     cd "$RELEASE_DIR"
     rm -f "$zip_name"
-    zip -r -q "$zip_name" "$PLUGIN_SLUG"
+    zip -r -q "$zip_name" "$plan_slug"
     rm -rf "$temp_dir"
+
+    # Verify the artifact, not the intent. cmd_release copies a fixed list and
+    # drops everything else silently, so a leak is invisible in a dev tree that
+    # always contains every file. This runs against what customers receive.
+    print_step "Verifying artifact..."
+    local premium_entries
+    premium_entries=$(unzip -l "$zip_name" | grep -c "includes/Premium/" || true)
+
+    if [ "$plan" = "free" ] && [ "$premium_entries" -ne 0 ]; then
+        print_error "Free artifact contains premium code:"
+        unzip -l "$zip_name" | grep "includes/Premium/"
+        exit 1
+    fi
+
+    if [ "$plan" = "pro" ] && [ "$premium_entries" -eq 0 ]; then
+        print_error "Pro artifact is missing includes/Premium/"
+        exit 1
+    fi
+
+    print_success "Artifact matches plan '$plan' ($premium_entries premium file(s))"
 
     # Restore dev autoload maps so local development still works
     cd "$PLUGIN_DIR"
@@ -354,7 +416,8 @@ cmd_help() {
     echo "Commands:"
     echo "  dev                          Update admin shell + start Vite dev server (:3040)"
     echo "  build                        Build admin dashboard for production"
-    echo "  release [version|--no-prompt] Create release ZIP in release/"
+    echo "  release [version] [--plan=free|pro] [--no-prompt]"
+    echo "                               Create release ZIP in release/ (default --plan=free)"
     echo "  bump <version>               Bump version in plugin files"
     echo "  info                         Show current version info"
     echo "  clean                        Remove build artifacts"
@@ -362,7 +425,8 @@ cmd_help() {
     echo ""
     echo "Examples:"
     echo "  ./scripts/run.sh dev                    # Dev server with HMR"
-    echo "  ./scripts/run.sh release                # Package (prompts version)"
+    echo "  ./scripts/run.sh release                # Free package (prompts version)"
+    echo "  ./scripts/run.sh release --plan=pro      # Pro package"
     echo "  ./scripts/run.sh release 1.0.1          # Bump to 1.0.1 and package"
     echo "  ./scripts/run.sh release --no-prompt    # Package current version"
 }
