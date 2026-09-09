@@ -16,7 +16,6 @@ export type Meta = {
     assetsUrl: string;
 
     version: string;
-    isPro: boolean;
     reviewed: boolean;
   };
   wcMeta: {
