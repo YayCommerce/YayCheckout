@@ -30,11 +30,9 @@ class LayoutRepository {
             return null;
         }
 
-        $meta = get_post_meta( $id );
-
         return Layout::from_post(
             $post,
-            is_array( $meta ) ? $meta : [],
+            $this->hydrate_meta( get_post_meta( $id ) ),
             $this->active_id() === $id
         );
     }
@@ -217,5 +215,28 @@ class LayoutRepository {
 
     private function active_id(): int {
         return (int) get_option( Layout::OPTION_ACTIVE, 0 );
+    }
+
+    /**
+     * Unserialize bulk post meta.
+     *
+     * With no key, get_post_meta( $id ) returns the raw meta cache: unlike the
+     * single-key call it does not run maybe_unserialize, so array values such
+     * as the derived caches arrive as serialized strings. Doing it here keeps
+     * the model free of WordPress calls.
+     *
+     * @param  mixed $meta
+     * @return array
+     */
+    private function hydrate_meta( $meta ): array {
+        if ( ! is_array( $meta ) ) {
+            return [];
+        }
+
+        foreach ( $meta as $key => $values ) {
+            $meta[ $key ] = array_map( 'maybe_unserialize', (array) $values );
+        }
+
+        return $meta;
     }
 }
