@@ -30,7 +30,11 @@
   },
   "scripts": {
     "shell-update": "yaycommerce-update",
-    "lint": "phpcs",
+    "check:boundary": "bash scripts/check-premium-boundary.sh",
+    "lint": [
+      "@check:boundary",
+      "phpcs"
+    ],
     "lint:fix": "phpcbf"
   }
 }
