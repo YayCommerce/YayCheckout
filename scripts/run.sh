@@ -4,7 +4,7 @@
 # Usage: ./scripts/run.sh [command]
 #
 # Commands:
-#   dev                - Update admin shell + start Vite dev server (HMR on :3030)
+#   dev                - Update admin shell + start Vite dev server (HMR on :3040)
 #   build              - Build admin dashboard for production
 #   release [version]  - Create release ZIP package (prompts for version)
 #   bump <version>     - Bump version number in plugin files
@@ -193,7 +193,7 @@ cmd_dev() {
     install_admin_deps
 
     print_info "Make sure YAYCHECKOUT_IS_DEVELOPMENT is true in wp-config.php"
-    print_step "Starting Vite dev server (http://localhost:3030)..."
+    print_step "Starting Vite dev server (http://localhost:3040)..."
     cd "$ADMIN_DIR"
     $PNPM dev
 }
@@ -352,7 +352,7 @@ cmd_help() {
     echo "Usage: ./scripts/run.sh [command]"
     echo ""
     echo "Commands:"
-    echo "  dev                          Update admin shell + start Vite dev server (:3030)"
+    echo "  dev                          Update admin shell + start Vite dev server (:3040)"
     echo "  build                        Build admin dashboard for production"
     echo "  release [version|--no-prompt] Create release ZIP in release/"
     echo "  bump <version>               Bump version in plugin files"

@@ -1,3 +1,4 @@
+import { QueryMeta } from '@/lib/query-client';
 import { AdminData, Meta } from './localize.type';
 
 declare global {
@@ -6,6 +7,13 @@ declare global {
     yayCheckoutAdmin: AdminData;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     wp: any;
+  }
+}
+
+declare module '@tanstack/react-query' {
+  interface Register {
+    queryMeta: QueryMeta;
+    mutationMeta: QueryMeta;
   }
 }
 

@@ -1,7 +1,7 @@
 import { __ } from '@wordpress/i18n';
 
-import { Button } from '@/components/ui/button';
 import { useLayoutsQuery, usePublishLayoutMutation } from '@/lib/queries/layout.queries';
+import { Button } from '@/components/ui/button';
 import PagePlaceholder from '@/pages/PagePlaceholder';
 
 /**
@@ -33,11 +33,7 @@ export default function BuilderPage() {
               <span className="text-muted-foreground">
                 {layout.publishedAt ?? __('never published', 'yaycheckout')}
               </span>
-              <Button
-                size="sm"
-                disabled={publish.isPending}
-                onClick={() => publish.mutate(layout.id)}
-              >
+              <Button size="sm" disabled={publish.isPending} onClick={() => publish.mutate(layout.id)}>
                 {__('Publish', 'yaycheckout')}
               </Button>
             </li>
