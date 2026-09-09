@@ -26,7 +26,7 @@ class LocalizeHelper {
         $currency = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'USD';
 
         $meta = [
-            'wpMeta'      => [
+            'wpMeta'       => [
                 'siteUrl'      => esc_url_raw( site_url() ),
                 'adminUrl'     => esc_url_raw( admin_url() ),
                 'ajaxUrl'      => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
@@ -43,7 +43,7 @@ class LocalizeHelper {
                 'isPro'     => YayCheckout::is_pro(),
                 'reviewed'  => (bool) get_option( SettingsHelper::OPTION_REVIEWED, false ),
             ],
-            'wcMeta'      => [
+            'wcMeta'       => [
                 'currency_data' => [
                     'currency'     => $currency,
                     'symbol'       => function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol( $currency ) ) : '$',

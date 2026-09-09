@@ -17,7 +17,11 @@ trait SingletonTrait {
     /** Singletons should not be cloneable. */
     protected function __clone() { }
 
-    /** Singletons should not be restorable from strings. */
+    /**
+     * Singletons should not be restorable from strings.
+     *
+     * @throws \Exception Always; unserializing a singleton is a bug.
+     */
     public function __wakeup() {
         throw new \Exception( 'Cannot unserialize a singleton.' );
     }
