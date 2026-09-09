@@ -16,7 +16,7 @@ const queryClient = createQueryClient();
  * branch and its dynamic import are dropped from the production bundle. That
  * keeps the build to the single js/main.js that RegisterProd enqueues.
  */
-const QueryDevtools = import.meta.env.DEV ? lazy(() => import('@/components/QueryDevtools')) : null;
+const QueryDevtools = import.meta.env.DEV ? lazy(() => import('@/components/shared/QueryDevtools')) : null;
 
 createRoot(document.getElementById('yaycheckout') as HTMLElement).render(
   <React.StrictMode>

@@ -13,7 +13,7 @@ includes/
   Repositories/ ALL get_post/update_post_meta/get_option. Returns Models. Owns invariants.
   Services/     only when an op spans repos or is pure computation.
   Controllers/  REST routing, arg validation, permissions. Thin.
-  Renderer/     frontend WooCommerce hooks. Read-only.
+  Renderer/     frontend WooCommerce hooks. Read-only. (planned; not yet present)
   Blocks/       PHP block registration + render_callbacks.
   Helpers/      stateless statics + option wrappers.
   Support/      plugin-lifecycle primitives (Plan). No WP calls.
