@@ -8,10 +8,10 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Which edition of the plugin is installed.
  *
- * The answer is derived, never declared: is_pro() reports whether the premium
+ * The answer is derived, never declared: is_pro() reports whether the pro
  * service provider actually booted. A build-time constant could disagree with
- * what shipped — say "pro" while the premium files are absent — and the first
- * premium call would then fatal. A derived flag cannot lie, because the thing
+ * what shipped — say "pro" while the pro files are absent — and the first
+ * pro call would then fatal. A derived flag cannot lie, because the thing
  * it reports is the thing that happened.
  *
  * This is *plan*, not license. An expired Pro license is still the Pro plan;
@@ -25,7 +25,7 @@ final class Plan {
     private static bool $pro = false;
 
     /**
-     * Called by PremiumServiceProvider::boot(), and by nothing else.
+     * Called by ProServiceProvider::boot(), and by nothing else.
      */
     public static function mark_pro(): void {
         self::$pro = true;

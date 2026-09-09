@@ -3,7 +3,7 @@ import { __ } from '@wordpress/i18n';
 import { isPro } from '@/lib/plan';
 import { useLayoutsQuery, usePublishLayoutMutation } from '@/lib/queries/layout.queries';
 import { Button } from '@/components/ui/button';
-import { PremiumGate } from '@/components/premium/PremiumGate';
+import { ProGate } from '@/components/pro/ProGate';
 import PagePlaceholder from '@/pages/PagePlaceholder';
 
 /**
@@ -29,7 +29,7 @@ export default function BuilderPage() {
           <span>
             {layouts.length} {__('layouts', 'yaycheckout')}
           </span>
-          {!isPro && <PremiumGate inline />}
+          {!isPro && <ProGate inline />}
         </p>
       )}
 

@@ -49,11 +49,11 @@ pnpm makepot               # regenerate languages/yaycheckout.pot
 
 ## Editions
 
-One codebase, two artifacts. `includes/Premium/` holds all premium PHP and is
-removed from the Free zip, so the Free build genuinely has no premium code —
+One codebase, two artifacts. `includes/Pro/` holds all pro PHP and is
+removed from the Free zip, so the Free build genuinely has no pro code —
 not merely disabled code. Nothing outside that directory may name a
-`YayCheckout\Premium` class; `composer lint` runs
-`scripts/check-premium-boundary.sh` to keep that true.
+`YayCheckout\Pro` class; `composer lint` runs
+`scripts/check-pro-boundary.sh` to keep that true.
 
 | | Folder | Plugin Name |
 |---|---|---|
@@ -67,7 +67,7 @@ handled — the plugin deactivates a second copy of itself.
 
 The SPA plan comes from `__YAYCHECKOUT_PLAN__`, resolved in `vite.config.ts`.
 The dev server defaults to `pro`; builds default to `free`; the release script
-sets `YAYCHECKOUT_PLAN` explicitly. Note the SPA gate is cosmetic — premium
+sets `YAYCHECKOUT_PLAN` explicitly. Note the SPA gate is cosmetic — pro
 components ship in the Free bundle blurred. The Free build's PHP is what
 actually withholds the features.
 

@@ -231,7 +231,7 @@ cmd_release() {
 
     # Default free, and fail on anything unrecognised: an unflagged or
     # mistyped release must never quietly produce an artifact containing
-    # premium code.
+    # pro code.
     if [ "$plan" != "free" ] && [ "$plan" != "pro" ]; then
         print_error "Invalid plan: $plan"
         echo "Use: --plan=free or --plan=pro"
@@ -311,13 +311,13 @@ cmd_release() {
     cp "$PLUGIN_DIR/vendor/autoload.php" "$temp_dir/vendor/"
     cp -r "$PLUGIN_DIR/vendor/composer" "$temp_dir/vendor/"
 
-    # The premium boundary: includes/Premium/ is the only premium PHP, and
-    # nothing outside it names a YayCheckout\Premium class, so removing it
-    # leaves a working Free build. scripts/check-premium-boundary.sh keeps
+    # The pro boundary: includes/Pro/ is the only pro PHP, and
+    # nothing outside it names a YayCheckout\Pro class, so removing it
+    # leaves a working Free build. scripts/check-pro-boundary.sh keeps
     # that true.
     if [ "$plan" = "free" ]; then
-        rm -rf "$temp_dir/includes/Premium"
-        print_info "Free build: includes/Premium removed"
+        rm -rf "$temp_dir/includes/Pro"
+        print_info "Free build: includes/Pro removed"
     fi
 
     # Distinguish the editions in wp-admin.
@@ -342,21 +342,21 @@ cmd_release() {
     # drops everything else silently, so a leak is invisible in a dev tree that
     # always contains every file. This runs against what customers receive.
     print_step "Verifying artifact..."
-    local premium_entries
-    premium_entries=$(unzip -l "$zip_name" | grep -c "includes/Premium/" || true)
+    local pro_entries
+    pro_entries=$(unzip -l "$zip_name" | grep -c "includes/Pro/" || true)
 
-    if [ "$plan" = "free" ] && [ "$premium_entries" -ne 0 ]; then
-        print_error "Free artifact contains premium code:"
-        unzip -l "$zip_name" | grep "includes/Premium/"
+    if [ "$plan" = "free" ] && [ "$pro_entries" -ne 0 ]; then
+        print_error "Free artifact contains pro code:"
+        unzip -l "$zip_name" | grep "includes/Pro/"
         exit 1
     fi
 
-    if [ "$plan" = "pro" ] && [ "$premium_entries" -eq 0 ]; then
-        print_error "Pro artifact is missing includes/Premium/"
+    if [ "$plan" = "pro" ] && [ "$pro_entries" -eq 0 ]; then
+        print_error "Pro artifact is missing includes/Pro/"
         exit 1
     fi
 
-    print_success "Artifact matches plan '$plan' ($premium_entries premium file(s))"
+    print_success "Artifact matches plan '$plan' ($pro_entries pro file(s))"
 
     # Restore dev autoload maps so local development still works
     cd "$PLUGIN_DIR"

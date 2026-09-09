@@ -11,8 +11,8 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 
 const UPGRADE_URL = 'https://yaycommerce.com/yaycheckout-for-woocommerce/';
 
-interface PremiumGateProps {
-  /** Premium content, shown blurred to Free users. */
+interface ProGateProps {
+  /** Pro content, shown blurred to Free users. */
   children?: ReactNode;
   /** Renders the small inline PRO badge instead of the full overlay. */
   inline?: boolean;
@@ -20,24 +20,24 @@ interface PremiumGateProps {
 }
 
 /**
- * Shows premium content to Pro builds and a blurred upsell to Free builds.
+ * Shows pro content to Pro builds and a blurred upsell to Free builds.
  *
  * IMPORTANT — this gate is cosmetic, not a security boundary. Free users
  * receive these components in their bundle and can unblur them with devtools.
  * That is acceptable only because the Free build's PHP has no matching
  * endpoint, so revealing the UI reveals nothing and calls nothing.
  *
- * Use `PremiumOnly` instead for anything that would render real customer data
+ * Use `ProOnly` instead for anything that would render real customer data
  * or call a real endpoint. If you find yourself wrapping a working data panel
- * in PremiumGate, that is the wrong component.
+ * in ProGate, that is the wrong component.
  */
-export function PremiumGate({ children, inline = false, className }: PremiumGateProps) {
+export function ProGate({ children, inline = false, className }: ProGateProps) {
   if (isPro) {
     return <>{children}</>;
   }
 
   if (inline) {
-    return <PremiumBadge className={className} />;
+    return <ProBadge className={className} />;
   }
 
   return (
@@ -64,22 +64,22 @@ export function PremiumGate({ children, inline = false, className }: PremiumGate
  * When the code must actually be absent from the Free bundle, branch at the
  * call site instead, where the folded constant lets the bundler drop it:
  *
- *     {isPro && <SomePremiumPanel />}
+ *     {isPro && <SomeProPanel />}
  *
  * For 1.x that distinction is cosmetic anyway: the Free build's PHP has no
- * premium endpoints, so unreferenced premium UI can call nothing.
+ * pro endpoints, so unreferenced pro UI can call nothing.
  */
-export function PremiumOnly({ children }: { children: ReactNode }) {
+export function ProOnly({ children }: { children: ReactNode }) {
   return isPro ? <>{children}</> : null;
 }
 
-/** Renders children only in a Free build. Runtime-only, as PremiumOnly above. */
+/** Renders children only in a Free build. Runtime-only, as ProOnly above. */
 export function FreeOnly({ children }: { children: ReactNode }) {
   return isPro ? null : <>{children}</>;
 }
 
 /** Small PRO chip for menu items and section headings. */
-export function PremiumBadge({ className }: { className?: string }) {
+export function ProBadge({ className }: { className?: string }) {
   return (
     <YayCheckoutToolTip
       trigger={

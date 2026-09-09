@@ -17,7 +17,7 @@ includes/
   Blocks/       PHP block registration + render_callbacks.
   Helpers/      stateless statics + option wrappers.
   Support/      plugin-lifecycle primitives (Plan). No WP calls.
-  Premium/      everything Pro-only. Absent from the Free build.
+  Pro/      everything Pro-only. Absent from the Free build.
   Engine/       boot, wiring, asset registration.
   Utils/        traits.
 ```
@@ -91,15 +91,15 @@ Three files per feature, matching the existing `settings.*` set:
 
 PHP `to_array()` emits camelCase so the TS side stays idiomatic. The zod schema is the only place the PHP shape is asserted in JS — keep it exact.
 
-## The premium boundary
+## The pro boundary
 
-`includes/Premium/` is deleted wholesale to build the Free artifact, so it must be genuinely detachable:
+`includes/Pro/` is deleted wholesale to build the Free artifact, so it must be genuinely detachable:
 
-> **No file outside `includes/Premium/` may name a `YayCheckout\Premium\*` class.**
+> **No file outside `includes/Pro/` may name a `YayCheckout\Pro\*` class.**
 
-The single permitted reference is the guarded bootstrap in `YayCheckout::boot_premium()`. Premium features attach to core through hooks and filters — `DerivedCacheBuilder::FILTER_CONTRIBUTORS` is the model — so core never calls into premium code.
+The single permitted reference is the guarded bootstrap in `YayCheckout::boot_pro()`. Pro features attach to core through hooks and filters — `DerivedCacheBuilder::FILTER_CONTRIBUTORS` is the model — so core never calls into pro code.
 
-`composer lint` runs `scripts/check-premium-boundary.sh`, which fails on a second reference. This is not a style preference: without it, one `use` statement makes the Free build impossible, and nothing else would reveal that until a customer installed the artifact.
+`composer lint` runs `scripts/check-pro-boundary.sh`, which fails on a second reference. This is not a style preference: without it, one `use` statement makes the Free build impossible, and nothing else would reveal that until a customer installed the artifact.
 
 Plan is derived, not declared. `Plan::is_pro()` reports whether the provider actually booted, so it cannot claim Pro while the files are missing. It describes **plan**, not license — an expired Pro license is still the Pro plan.
 
