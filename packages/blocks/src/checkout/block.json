@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/checkout",
+  "title": "Checkout",
+  "category": "yaycheckout",
+  "description": "Root container for a YayCheckout checkout layout.",
+  "textdomain": "yaycheckout",
+  "attributes": {
+    "templateLock": {
+      "type": [ "string", "boolean" ],
+      "default": "insert"
+    }
+  },
+  "supports": {
+    "html": false,
+    "inserter": false,
+    "reusable": false,
+    "lock": false
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}

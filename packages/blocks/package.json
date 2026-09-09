@@ -1,0 +1,13 @@
+{
+  "name": "@yaycheckout/blocks",
+  "version": "1.0.0",
+  "private": true,
+  "description": "YayCheckout editor blocks",
+  "scripts": {
+    "build": "wp-scripts build --output-path=../../assets/dist/blocks",
+    "start": "wp-scripts start --output-path=../../assets/dist/blocks"
+  },
+  "devDependencies": {
+    "@wordpress/scripts": "^30.7.0"
+  }
+}

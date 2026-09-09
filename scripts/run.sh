@@ -20,6 +20,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="$(dirname "$SCRIPT_DIR")"
 ADMIN_DIR="$PLUGIN_DIR/apps/admin"
+BLOCKS_DIR="$PLUGIN_DIR/packages/blocks"
 RELEASE_DIR="$PLUGIN_DIR/release"
 PLUGIN_SLUG="yaycheckout"
 MAIN_FILE="$PLUGIN_DIR/$PLUGIN_SLUG.php"
@@ -92,6 +93,14 @@ install_admin_deps() {
         print_step "Installing admin app dependencies..."
         (cd "$ADMIN_DIR" && $PNPM install)
         print_success "Dependencies installed"
+    fi
+}
+
+install_blocks_deps() {
+    if [ ! -d "$BLOCKS_DIR/node_modules" ]; then
+        print_step "Installing blocks dependencies..."
+        (cd "$BLOCKS_DIR" && $PNPM install)
+        print_success "Blocks dependencies installed"
     fi
 }
 
@@ -192,12 +201,19 @@ cmd_dev() {
 cmd_build() {
     resolve_pnpm
     install_admin_deps
+    install_blocks_deps
 
     # package.json build script runs `tsc --noEmit` before vite build
     print_step "Building admin dashboard (typecheck + build)..."
-    cd "$ADMIN_DIR"
-    $PNPM build
-    print_success "Build complete! Output: $PLUGIN_DIR/assets/dist/admin/"
+    (cd "$ADMIN_DIR" && $PNPM build)
+    print_success "Admin build complete! Output: $PLUGIN_DIR/assets/dist/admin/"
+
+    # Blocks must build for every release: register_block_type() reads
+    # assets/dist/blocks/<block>/block.json, so a ZIP built without this
+    # step ships an editor with no YayCheckout blocks and no error saying why.
+    print_step "Building blocks..."
+    (cd "$BLOCKS_DIR" && $PNPM build)
+    print_success "Blocks build complete! Output: $PLUGIN_DIR/assets/dist/blocks/"
 }
 
 cmd_release() {
