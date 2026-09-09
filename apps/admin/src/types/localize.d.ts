@@ -17,13 +17,6 @@ declare module '@tanstack/react-query' {
   }
 }
 
-declare module '@tanstack/react-table' {
-  interface ColumnMeta<TData, TValue> {
-    align?: 'left' | 'center' | 'right';
-    isCheckbox?: boolean;
-  }
-}
-
 declare module 'rooks' {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type AnyFunction = (...args: any[]) => any;

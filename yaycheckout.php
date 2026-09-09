@@ -72,7 +72,13 @@ spl_autoload_register(
         $file = $base_dir . str_replace( '\\', '/', $relative_class_name ) . '.php';
 
         if ( file_exists( $file ) ) {
-            require $file;
+            /*
+             * require_once, not require: a malformed class name — a doubled
+             * backslash from another plugin's class_exists(), say — maps to the
+             * same file through a different string, and a plain require would
+             * then redeclare the class and fatal the whole site.
+             */
+            require_once $file;
         }
     }
 );

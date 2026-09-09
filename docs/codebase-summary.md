@@ -74,7 +74,7 @@ src/
     api/                ky calls per feature
     queries/            queryOptions + hooks per feature
     schema/             zod schemas mirroring PHP to_array()
-    helpers/            error unwrapping, formatting, assets
+    helpers/            error unwrapping
     plan.ts             Free/Pro, from the build-time constant
     query-client.ts     QueryClient + global error toasts
   types/                window globals, module augmentation
