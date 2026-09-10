@@ -1,6 +1,8 @@
 <?php
 namespace YayCheckout\Controllers;
 
+use YayCheckout\Helpers\Logger;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -43,6 +45,8 @@ abstract class BaseRestController {
                 return rest_ensure_response( $response );
             }
         } catch ( \Throwable $ex ) {
+            Logger::exception( $ex, 'GET ' . $request->get_route() );
+
             return new \WP_Error( 'internal_error', $ex->getMessage(), [ 'status' => 500 ] );
         }
     }
@@ -71,6 +75,8 @@ abstract class BaseRestController {
                 return rest_ensure_response( $response );
             }
         } catch ( \Throwable $ex ) {
+            Logger::exception( $ex, $request->get_method() . ' ' . $request->get_route() );
+
             return new \WP_Error( 'internal_error', $ex->getMessage(), [ 'status' => 500 ] );
         }
     }
@@ -100,6 +106,8 @@ abstract class BaseRestController {
 
         } catch ( \Throwable $ex ) {
             $wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB
+
+            Logger::exception( $ex, $request->get_method() . ' ' . $request->get_route(), [ 'rolled_back' => true ] );
 
             return new \WP_Error( 'internal_error', $ex->getMessage(), [ 'status' => 500 ] );
         }

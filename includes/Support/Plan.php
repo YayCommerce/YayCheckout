@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * The answer is derived, never declared: is_pro() reports whether the pro
  * service provider actually booted. A build-time constant could disagree with
- * what shipped — say "pro" while the pro files are absent — and the first
+ * what shipped — say "pro" while the Pro files are absent — and the first
  * pro call would then fatal. A derived flag cannot lie, because the thing
  * it reports is the thing that happened.
  *
@@ -42,5 +42,41 @@ final class Plan {
      */
     public static function layout_limit(): int {
         return self::is_pro() ? self::UNLIMITED : LayoutRepository::FREE_LIMIT;
+    }
+
+    /**
+     * Whether an existing layout count has used up this edition's allowance.
+     *
+     * The rule lives here so creation and duplication cannot drift apart —
+     * they enforce the same limit through different code paths.
+     *
+     * @param  int $count Layouts that already exist.
+     * @return bool
+     */
+    public static function layout_limit_reached( int $count ): bool {
+        $limit = self::layout_limit();
+
+        return self::UNLIMITED !== $limit && $count >= $limit;
+    }
+
+    /**
+     * What a merchant is told when they hit the limit.
+     *
+     * Shared so translators see one string rather than two identical ones,
+     * and so the upgrade wording is changed in a single place.
+     */
+    public static function layout_limit_message(): string {
+        $limit = self::layout_limit();
+
+        return sprintf(
+            /* translators: %d: number of layouts allowed on the current plan. */
+            _n(
+                'Your plan includes %d checkout layout. Upgrade to Pro for unlimited layouts.',
+                'Your plan includes %d checkout layouts. Upgrade to Pro for unlimited layouts.',
+                $limit,
+                'yaycheckout'
+            ),
+            $limit
+        );
     }
 }

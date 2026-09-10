@@ -31,7 +31,7 @@ class YayCheckout {
      * Load the pro service provider when this build ships one.
      *
      * The only place in core that names a YayCheckout\Pro class. Everything
-     * pro attaches to core through hooks from there, so deleting
+     * Pro attaches to core through hooks from there, so deleting
      * includes/Pro/ produces a working Free build rather than a fatal.
      * scripts/check-pro-boundary.sh enforces that this stays true.
      *

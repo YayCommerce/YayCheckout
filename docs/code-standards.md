@@ -15,7 +15,7 @@ includes/
   Controllers/  REST routing, arg validation, permissions. Thin.
   Renderer/     frontend WooCommerce hooks. Read-only. (planned; not yet present)
   Blocks/       PHP block registration + render_callbacks.
-  Helpers/      stateless statics + option wrappers.
+  Helpers/      stateless statics: option wrappers, Logger, localize payload.
   Support/      plugin-lifecycle primitives (Plan). No WP calls.
   Pro/      everything Pro-only. Absent from the Free build.
   Engine/       boot, wiring, asset registration.
@@ -23,6 +23,8 @@ includes/
 ```
 
 **A WP core function call outside `Repositories/`, `Helpers/`, `Engine/`, `Renderer/`, `Blocks/` is a bug.**
+
+Translation and escaping functions — `__()`, `_n()`, `esc_html()` and friends — are exempt. They format strings rather than reach for state, and banning them everywhere would push user-facing copy out of the layer that owns the rule it describes. `Plan::layout_limit_message()` is the example: the limit and its wording belong together.
 
 Models and Services stay pure so they can be reasoned about (and later tested) without WordPress loaded. A Model receives already-fetched data; it never goes and gets it. A Service is a function of its inputs.
 
@@ -133,13 +135,23 @@ it, which is why the former `ui/custom/` moved to `shared/`.
   `ProGate.tsx`, `Header.tsx`, `BuilderPage.tsx`.
 - Non-component modules stay kebab-case: `layout.api.ts`, `use-settings-form.ts`.
 
-## The pro boundary
+## Logging
+
+`Helpers\Logger` writes to WooCommerce's log under the `yaycheckout` source, visible at WooCommerce → Status → Logs, which is where support already looks.
+
+Log **faults** — something went wrong that nobody asked for. `Logger::exception()` records the message, the route, the exception class, the file and line, and the trace, which is what makes a bug report actionable instead of "it broke". `BaseRestController` does this for every 500 it returns.
+
+Do **not** log expected outcomes. A merchant hitting a plan limit or posting unusable markup is a 4xx, not a fault; logging those buries real failures in noise.
+
+`Logger::debug()` is a no-op unless `WP_DEBUG` is on, so debug calls can be left in place without filling a production log directory.
+
+## The Pro boundary
 
 `includes/Pro/` is deleted wholesale to build the Free artifact, so it must be genuinely detachable:
 
 > **No file outside `includes/Pro/` may name a `YayCheckout\Pro\*` class.**
 
-The single permitted reference is the guarded bootstrap in `YayCheckout::boot_pro()`. Pro features attach to core through hooks and filters — `DerivedCacheBuilder::FILTER_CONTRIBUTORS` is the model — so core never calls into pro code.
+The single permitted reference is the guarded bootstrap in `YayCheckout::boot_pro()`. Pro features attach to core through hooks and filters — `DerivedCacheBuilder::FILTER_CONTRIBUTORS` is the model — so core never calls into Pro code.
 
 `composer lint` runs `scripts/check-pro-boundary.sh`, which fails on a second reference. This is not a style preference: without it, one `use` statement makes the Free build impossible, and nothing else would reveal that until a customer installed the artifact.
 

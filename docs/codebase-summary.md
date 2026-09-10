@@ -31,7 +31,7 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `Blocks/` | `BlockRegistry` | registers built block directories |
 | `Support/` | `Plan` | Free/Pro flag, derived from provider boot |
 | `Pro/` | `ProServiceProvider` | **absent from the Free build** |
-| `Helpers/` | `SettingsHelper`, `LocalizeHelper` | option wrappers, SPA bootstrap payload |
+| `Helpers/` | `SettingsHelper`, `LocalizeHelper`, `Logger` | option wrappers, SPA bootstrap payload, WooCommerce logging |
 | `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `Admin/`, `Register/` | wiring, asset registration, the layout cap |
 | `Utils/` | `SingletonTrait` | |
 

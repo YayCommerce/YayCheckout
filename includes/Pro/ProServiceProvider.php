@@ -6,7 +6,7 @@ use YayCheckout\Support\Plan;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Entry point for everything pro. Absent from the Free build.
+ * Entry point for everything Pro. Absent from the Free build.
  *
  * THE BOUNDARY RULE
  * -----------------
@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
  * That rule is what makes the directory genuinely removable rather than merely
  * tidy. Pro behaviour therefore attaches to core through hooks and filters
  * — as DerivedCacheBuilder::FILTER_CONTRIBUTORS was designed for — and never by
- * core calling into pro code.
+ * core calling into Pro code.
  */
 class ProServiceProvider {
 

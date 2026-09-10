@@ -201,21 +201,8 @@ class LayoutRepository {
          * core's REST endpoints, but duplicating is our own code path and would
          * otherwise be the obvious way around the limit.
          */
-        $limit = Plan::layout_limit();
-
-        if ( Plan::UNLIMITED !== $limit && $this->count() >= $limit ) {
-            throw new \InvalidArgumentException(
-                sprintf(
-                    /* translators: %d: number of layouts allowed on the current plan. */
-                    _n(
-                        'Your plan includes %d checkout layout. Upgrade to Pro for unlimited layouts.',
-                        'Your plan includes %d checkout layouts. Upgrade to Pro for unlimited layouts.',
-                        $limit,
-                        'yaycheckout'
-                    ),
-                    $limit
-                )
-            );
+        if ( Plan::layout_limit_reached( $this->count() ) ) {
+            throw new \InvalidArgumentException( Plan::layout_limit_message() );
         }
 
         $new_id = wp_insert_post(

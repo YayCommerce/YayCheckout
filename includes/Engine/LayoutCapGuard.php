@@ -41,30 +41,15 @@ class LayoutCapGuard {
             return $prepared_post;
         }
 
-        $limit = Plan::layout_limit();
-
-        if ( Plan::UNLIMITED === $limit ) {
-            return $prepared_post;
-        }
-
         $repository = new LayoutRepository();
 
-        if ( $repository->count() < $limit ) {
+        if ( ! Plan::layout_limit_reached( $repository->count() ) ) {
             return $prepared_post;
         }
 
         return new \WP_Error(
             'yaycheckout_layout_limit_reached',
-            sprintf(
-                /* translators: %d: number of layouts allowed on the current plan. */
-                _n(
-                    'Your plan includes %d checkout layout. Upgrade to Pro for unlimited layouts.',
-                    'Your plan includes %d checkout layouts. Upgrade to Pro for unlimited layouts.',
-                    $limit,
-                    'yaycheckout'
-                ),
-                $limit
-            ),
+            Plan::layout_limit_message(),
             [ 'status' => 403 ]
         );
     }
