@@ -1,8 +1,9 @@
 import { useNavigate, useParams } from 'react-router';
 import { __ } from '@wordpress/i18n';
 
+import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import PagePlaceholder from '@/pages/PagePlaceholder';
+import PageLayout from '@/pages/PageLayout';
 
 const tabs = [
   { value: 'general', label: __('General', 'yaycheckout') },
@@ -15,7 +16,10 @@ export default function SettingsPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
+    <PageLayout
+      heading={__('Settings', 'yaycheckout')}
+      description={__('Configure checkout behaviour, emails and advanced options.', 'yaycheckout')}
+    >
       <Tabs value={subMenu} onValueChange={(value) => navigate(`/settings/${value}`)}>
         <TabsList>
           {tabs.map((tab) => (
@@ -26,12 +30,11 @@ export default function SettingsPage() {
         </TabsList>
       </Tabs>
 
-      <div className="-mx-6 mt-4">
-        <PagePlaceholder
-          title={tabs.find((tab) => tab.value === subMenu)?.label ?? ''}
-          description={__('Settings for this section are not implemented yet.', 'yaycheckout')}
-        />
-      </div>
-    </div>
+      <Card>
+        <p className="text-muted-foreground text-sm">
+          {__('Settings for this section are not implemented yet.', 'yaycheckout')}
+        </p>
+      </Card>
+    </PageLayout>
   );
 }
