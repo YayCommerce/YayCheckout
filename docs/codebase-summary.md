@@ -8,7 +8,7 @@ WooCommerce checkout builder. WordPress 6.5+, PHP 7.4+, WooCommerce 10+, HPOS co
 
 ```
 yaycheckout.php          bootstrap: constants, autoloader, admin shell, duplicate guard
-includes/                plugin PHP (~1,700 lines, 24 files)
+includes/                plugin PHP (~1,800 lines)
 apps/admin/              React settings SPA (Vite)      → assets/dist/admin/
 packages/blocks/         editor blocks (@wordpress/scripts) → assets/dist/blocks/
 assets/dist/             build output, gitignored
@@ -29,7 +29,7 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `Services/` | `DerivedCacheBuilder` | pure markup → derived caches |
 | `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController` | routing, validation, permissions |
 | `Blocks/` | `BlockRegistry` | registers built block directories |
-| `Support/` | `Plan` | Free/Pro flag, derived from provider boot |
+| `Support/` | `Plan` | Free/Pro flag derived from provider boot; owns the layout limit and its message |
 | `Pro/` | `ProServiceProvider` | **absent from the Free build** |
 | `Helpers/` | `SettingsHelper`, `LocalizeHelper`, `Logger` | option wrappers, SPA bootstrap payload, WooCommerce logging |
 | `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `Admin/`, `Register/` | wiring, asset registration, the layout cap |

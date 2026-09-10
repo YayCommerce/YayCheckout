@@ -100,6 +100,16 @@ Plan and license are separate axes. Plan is which build is installed — build-t
 
 Pro installs to its own directory rather than replacing Free: if Free is ever listed on wordpress.org, an update for slug `yaycheckout` would otherwise overwrite a paid install. Both being active at once is handled — the plugin deactivates a second copy of itself.
 
+### Enforcing the layout limit
+
+Free allows three layouts, Pro is unlimited — but layouts are created through **core's** `wp/v2` endpoints, so there is no handler of ours to hold a count check. `LayoutCapGuard` filters `rest_pre_insert_yay_checkout_layout` instead, which is the only seam at the point of creation.
+
+That filter also fires on **updates**, so it returns early when the prepared post already carries an ID. Without that, editing any layout would start failing the moment a merchant reached the limit — a worse bug than the one being fixed.
+
+`LayoutRepository::duplicate()` enforces the same limit separately, because it is our own code path rather than core's and would otherwise be the obvious way around a create-time cap. Both read `Plan::layout_limit_reached()` so the rule cannot drift between them.
+
+Enforcement is server-side because gating only the admin app would be bypassed by posting to `wp/v2` directly, which any shop manager can do.
+
 ### The boundary rule
 
 > No file outside `includes/Pro/` may name a `YayCheckout\Pro\*` class.
@@ -116,6 +126,23 @@ The check is the load-bearing part, not the directory. A sibling plugin has a `P
 - `exec_write` — custom tables. Wraps in `START TRANSACTION`.
 
 WordPress writes go through the object cache, so a `ROLLBACK` reverts MySQL while leaving a persistent cache holding the rolled-back data. That bug is invisible on a host without a persistent object cache and intermittent on one with it. Ordering writes safely is the substitute for a transaction.
+
+## Logging
+
+Two loggers, deliberately separate:
+
+- `Helpers\Logger` writes to WooCommerce's log under the `yaycheckout` source. Every 500 returned by `BaseRestController` records the route, exception class, file, line and trace.
+- `apps/admin/src/lib/logger.ts` wraps the browser console with a `[YayCheckout]` prefix. Query, mutation and route-render failures go through it.
+
+Both follow the same rule: log **faults**, not expected outcomes. A plan limit or unusable markup is a 4xx the merchant caused, and recording those buries the failures that matter.
+
+The client logger keeps `error` and `warn` in production, since a console screenshot is often the fastest route to a cause; `info` and `debug` are compiled out.
+
+## Class loading
+
+The plugin registers its own `spl_autoload_register` mapping `YayCheckout\Foo\Bar` to `includes/Foo/Bar.php`, separate from Composer's classmap, which covers only the scoped admin shell and the adapter.
+
+It uses `require_once` rather than `require`. A malformed class name — a doubled backslash from another plugin's `class_exists()`, say — maps to the same file through a different string, and a plain `require` then redeclared the class and took down the entire site.
 
 ## Where the plan enters the build
 
