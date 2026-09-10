@@ -75,6 +75,7 @@ src/
     queries/            queryOptions + hooks per feature
     schema/             zod schemas mirroring PHP to_array()
     helpers/            error unwrapping
+    logger.ts           namespaced console; error/warn kept in production
     plan.ts             Free/Pro, from the build-time constant
     query-client.ts     QueryClient + global error toasts
   types/                window globals, module augmentation

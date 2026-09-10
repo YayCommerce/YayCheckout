@@ -145,6 +145,16 @@ Do **not** log expected outcomes. A merchant hitting a plan limit or posting unu
 
 `Logger::debug()` is a no-op unless `WP_DEBUG` is on, so debug calls can be left in place without filling a production log directory.
 
+### Logging in the SPA
+
+`lib/logger.ts` wraps the console with a `[YayCheckout]` prefix so admin-page output can be filtered from everything else WordPress prints.
+
+`error` and `warn` survive into production on purpose: when a merchant reports a problem, asking them to screenshot the console is often the shortest path to a cause. `info` and `debug` are guarded on `import.meta.env.DEV`, and terser removes those calls entirely from a production build — verified by grepping the bundle, where `console.info` and `console.debug` do not appear at all. The message strings still ship, since the guard lives inside the function rather than at the call site; that is cosmetic, but do not put anything sensitive in a debug message.
+
+Failures are logged where they are handled, not at every layer: `query-client.ts` for query and mutation errors, and the 500 route for render errors. A query error is logged even when its toast is suppressed, because a silent background refetch failure is the case with no other trace.
+
+This is a browser aid, not a record. The server-side counterpart is `Helpers\Logger`.
+
 ## The Pro boundary
 
 `includes/Pro/` is deleted wholesale to build the Free artifact, so it must be genuinely detachable:

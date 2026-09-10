@@ -3,6 +3,7 @@ import { createInterpolateElement } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 import { markReviewed } from '@/lib/api/settings.api';
+import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbSeparator } from '../ui/breadcrumb';
 
@@ -63,7 +64,7 @@ export default function Footer({
     try {
       await markReviewed();
     } catch (e) {
-      console.warn('Mark reviewed failed:', e);
+      logger.warn('Mark reviewed failed', e);
     }
   };
 

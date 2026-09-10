@@ -12,10 +12,3 @@ export async function getErrorMsg(error: unknown, defaultMsg?: string) {
   }
   return messageText;
 }
-
-export async function getErrorJson(error: unknown) {
-  if (error instanceof HTTPError) {
-    return await error.response.clone().json();
-  }
-  return null;
-}

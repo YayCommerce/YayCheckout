@@ -2,6 +2,7 @@ import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { getErrorMsg } from '@/lib/helpers/response.helper';
+import { logger } from '@/lib/logger';
 
 /**
  * Opt out of the global error toast for a single query or mutation, when a
@@ -28,6 +29,10 @@ export function createQueryClient() {
        * otherwise fail invisibly, leaving stale data looking current.
        */
       onError: async (error, query) => {
+        // Logged even when the toast is suppressed: a silent refetch failure
+        // is exactly the case with no other trace.
+        logger.error(`query failed: ${JSON.stringify(query.queryKey)}`, error);
+
         if (query.meta?.skipGlobalError || query.state.data === undefined) {
           return;
         }
@@ -41,7 +46,9 @@ export function createQueryClient() {
        * Mutations always report. Unlike a query there is no rendered result to
        * carry the message, so a silent failure looks like nothing happened.
        */
-      onError: async (error, _variables, _context, mutation) => {
+      onError: async (error, variables, _context, mutation) => {
+        logger.error(`mutation failed: ${JSON.stringify(mutation.options.mutationKey)}`, error, variables);
+
         if (mutation.meta?.skipGlobalError) {
           return;
         }

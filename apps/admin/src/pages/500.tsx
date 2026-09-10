@@ -1,11 +1,17 @@
+import { useEffect } from 'react';
 import { useNavigate, useRouteError } from 'react-router';
 import { __ } from '@wordpress/i18n';
 
+import { logger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 
 export default function ErrorPage() {
   const navigate = useNavigate();
   const error = useRouteError() as { message: string };
+
+  useEffect(() => {
+    logger.error('route error', error);
+  }, [error]);
 
   return (
     <div className="flex h-[80vh] flex-col items-center justify-center gap-6">
