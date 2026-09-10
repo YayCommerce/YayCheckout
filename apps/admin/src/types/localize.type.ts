@@ -16,18 +16,7 @@ export type Meta = {
     assetsUrl: string;
 
     version: string;
-    isPro: boolean;
     reviewed: boolean;
-  };
-  wcMeta: {
-    currency_data: {
-      currency: string;
-      symbol: string;
-      position: string;
-      thousand_sep: string;
-      decimal_sep: string;
-      num_decimals: number;
-    };
   };
 };
 

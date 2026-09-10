@@ -4,7 +4,7 @@
 # Usage: ./scripts/run.sh [command]
 #
 # Commands:
-#   dev                - Update admin shell + start Vite dev server (HMR on :3030)
+#   dev                - Update admin shell + start Vite dev server (HMR on :3040)
 #   build              - Build admin dashboard for production
 #   release [version]  - Create release ZIP package (prompts for version)
 #   bump <version>     - Bump version number in plugin files
@@ -20,6 +20,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="$(dirname "$SCRIPT_DIR")"
 ADMIN_DIR="$PLUGIN_DIR/apps/admin"
+BLOCKS_DIR="$PLUGIN_DIR/packages/blocks"
 RELEASE_DIR="$PLUGIN_DIR/release"
 PLUGIN_SLUG="yaycheckout"
 MAIN_FILE="$PLUGIN_DIR/$PLUGIN_SLUG.php"
@@ -92,6 +93,14 @@ install_admin_deps() {
         print_step "Installing admin app dependencies..."
         (cd "$ADMIN_DIR" && $PNPM install)
         print_success "Dependencies installed"
+    fi
+}
+
+install_blocks_deps() {
+    if [ ! -d "$BLOCKS_DIR/node_modules" ]; then
+        print_step "Installing blocks dependencies..."
+        (cd "$BLOCKS_DIR" && $PNPM install)
+        print_success "Blocks dependencies installed"
     fi
 }
 
@@ -184,7 +193,7 @@ cmd_dev() {
     install_admin_deps
 
     print_info "Make sure YAYCHECKOUT_IS_DEVELOPMENT is true in wp-config.php"
-    print_step "Starting Vite dev server (http://localhost:3030)..."
+    print_step "Starting Vite dev server (http://localhost:3040)..."
     cd "$ADMIN_DIR"
     $PNPM dev
 }
@@ -192,24 +201,55 @@ cmd_dev() {
 cmd_build() {
     resolve_pnpm
     install_admin_deps
+    install_blocks_deps
 
     # package.json build script runs `tsc --noEmit` before vite build
     print_step "Building admin dashboard (typecheck + build)..."
-    cd "$ADMIN_DIR"
-    $PNPM build
-    print_success "Build complete! Output: $PLUGIN_DIR/assets/dist/admin/"
+    (cd "$ADMIN_DIR" && $PNPM build)
+    print_success "Admin build complete! Output: $PLUGIN_DIR/assets/dist/admin/"
+
+    # Blocks must build for every release: register_block_type() reads
+    # assets/dist/blocks/<block>/block.json, so a ZIP built without this
+    # step ships an editor with no YayCheckout blocks and no error saying why.
+    print_step "Building blocks..."
+    (cd "$BLOCKS_DIR" && $PNPM build)
+    print_success "Blocks build complete! Output: $PLUGIN_DIR/assets/dist/blocks/"
 }
 
 cmd_release() {
     local no_prompt=false
     local requested_version=""
+    local plan="free"
     local arg
     for arg in "$@"; do
         case $arg in
             --no-prompt) no_prompt=true ;;
+            --plan=*)    plan="${arg#--plan=}" ;;
             *) [ -z "$requested_version" ] && requested_version="$arg" ;;
         esac
     done
+
+    # Default free, and fail on anything unrecognised: an unflagged or
+    # mistyped release must never quietly produce an artifact containing
+    # pro code.
+    if [ "$plan" != "free" ] && [ "$plan" != "pro" ]; then
+        print_error "Invalid plan: $plan"
+        echo "Use: --plan=free or --plan=pro"
+        exit 1
+    fi
+
+    # Pro installs into its own directory rather than replacing the free one.
+    # If the free plugin is ever listed on wordpress.org, a wp.org update for
+    # slug 'yaycheckout' would otherwise overwrite a paid Pro install and
+    # silently remove the features the customer bought. Both being active at
+    # once is already handled: yaycheckout.php deactivates a second copy when
+    # YayCheckout\plugin_init is already defined.
+    local plan_slug="$PLUGIN_SLUG"
+    local plan_label="YayCheckout"
+    if [ "$plan" = "pro" ]; then
+        plan_slug="${PLUGIN_SLUG}-pro"
+        plan_label="YayCheckout Pro"
+    fi
 
     if [ -n "$requested_version" ] && ! validate_version "$requested_version"; then
         print_error "Invalid version format: $requested_version"
@@ -231,9 +271,10 @@ cmd_release() {
         version=$(get_version)
     fi
 
-    local zip_name="${PLUGIN_SLUG}-${version}.zip"
+    local zip_name="${plan_slug}-${version}.zip"
 
     echo ""
+    print_info "Plan: $plan"
     print_info "Version: $version"
     print_info "Output: release/$zip_name"
     echo ""
@@ -244,10 +285,13 @@ cmd_release() {
     cd "$PLUGIN_DIR"
     composer dump-autoload --no-dev --classmap-authoritative --quiet
 
+    # vite.config.ts reads this; without it a build falls back to free.
+    export YAYCHECKOUT_PLAN="$plan"
+
     cmd_build
 
     # Assemble package in a temp folder named after the plugin slug
-    local temp_dir="$RELEASE_DIR/$PLUGIN_SLUG"
+    local temp_dir="$RELEASE_DIR/$plan_slug"
     rm -rf "$temp_dir"
     mkdir -p "$temp_dir"
 
@@ -267,6 +311,20 @@ cmd_release() {
     cp "$PLUGIN_DIR/vendor/autoload.php" "$temp_dir/vendor/"
     cp -r "$PLUGIN_DIR/vendor/composer" "$temp_dir/vendor/"
 
+    # The pro boundary: includes/Pro/ is the only pro PHP, and
+    # nothing outside it names a YayCheckout\Pro class, so removing it
+    # leaves a working Free build. scripts/check-pro-boundary.sh keeps
+    # that true.
+    if [ "$plan" = "free" ]; then
+        rm -rf "$temp_dir/includes/Pro"
+        print_info "Free build: includes/Pro removed"
+    fi
+
+    # Distinguish the editions in wp-admin.
+    if [ "$plan" = "pro" ]; then
+        sed_inplace "s/^ \* Plugin Name: .*/ \* Plugin Name:       $plan_label - WooCommerce Checkout Builder/" "$temp_dir/$PLUGIN_SLUG.php"
+    fi
+
     # Strip dev-only artifacts
     rm -f "$temp_dir/includes/Engine/Register/RegisterDev.php"
     rm -rf "$temp_dir/assets/dist/admin/.vite" 2>/dev/null || true
@@ -277,8 +335,28 @@ cmd_release() {
     print_step "Creating ZIP archive..."
     cd "$RELEASE_DIR"
     rm -f "$zip_name"
-    zip -r -q "$zip_name" "$PLUGIN_SLUG"
+    zip -r -q "$zip_name" "$plan_slug"
     rm -rf "$temp_dir"
+
+    # Verify the artifact, not the intent. cmd_release copies a fixed list and
+    # drops everything else silently, so a leak is invisible in a dev tree that
+    # always contains every file. This runs against what customers receive.
+    print_step "Verifying artifact..."
+    local pro_entries
+    pro_entries=$(unzip -l "$zip_name" | grep -c "includes/Pro/" || true)
+
+    if [ "$plan" = "free" ] && [ "$pro_entries" -ne 0 ]; then
+        print_error "Free artifact contains pro code:"
+        unzip -l "$zip_name" | grep "includes/Pro/"
+        exit 1
+    fi
+
+    if [ "$plan" = "pro" ] && [ "$pro_entries" -eq 0 ]; then
+        print_error "Pro artifact is missing includes/Pro/"
+        exit 1
+    fi
+
+    print_success "Artifact matches plan '$plan' ($pro_entries pro file(s))"
 
     # Restore dev autoload maps so local development still works
     cd "$PLUGIN_DIR"
@@ -336,9 +414,10 @@ cmd_help() {
     echo "Usage: ./scripts/run.sh [command]"
     echo ""
     echo "Commands:"
-    echo "  dev                          Update admin shell + start Vite dev server (:3030)"
+    echo "  dev                          Update admin shell + start Vite dev server (:3040)"
     echo "  build                        Build admin dashboard for production"
-    echo "  release [version|--no-prompt] Create release ZIP in release/"
+    echo "  release [version] [--plan=free|pro] [--no-prompt]"
+    echo "                               Create release ZIP in release/ (default --plan=free)"
     echo "  bump <version>               Bump version in plugin files"
     echo "  info                         Show current version info"
     echo "  clean                        Remove build artifacts"
@@ -346,7 +425,8 @@ cmd_help() {
     echo ""
     echo "Examples:"
     echo "  ./scripts/run.sh dev                    # Dev server with HMR"
-    echo "  ./scripts/run.sh release                # Package (prompts version)"
+    echo "  ./scripts/run.sh release                # Free package (prompts version)"
+    echo "  ./scripts/run.sh release --plan=pro      # Pro package"
     echo "  ./scripts/run.sh release 1.0.1          # Bump to 1.0.1 and package"
     echo "  ./scripts/run.sh release --no-prompt    # Package current version"
 }

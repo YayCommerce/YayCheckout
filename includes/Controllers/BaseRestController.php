@@ -1,6 +1,8 @@
 <?php
 namespace YayCheckout\Controllers;
 
+use YayCheckout\Helpers\Logger;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -43,13 +45,48 @@ abstract class BaseRestController {
                 return rest_ensure_response( $response );
             }
         } catch ( \Throwable $ex ) {
+            Logger::exception( $ex, 'GET ' . $request->get_route() );
+
             return new \WP_Error( 'internal_error', $ex->getMessage(), [ 'status' => 500 ] );
         }
     }
 
     /**
-     * Execute Routes which DO Write to DB, auto-rollback on error.
+     * Execute Routes which write through the WordPress API (posts, meta, options).
      * Treat deep thrown error as internal_error
+     *
+     * Deliberately has NO SQL transaction. WordPress writes go through the object
+     * cache, so a ROLLBACK would revert MySQL while leaving a persistent cache
+     * (Redis/Memcached) holding the rolled-back post or option — a phantom write
+     * that is invisible on hosts without a persistent cache and intermittent on
+     * hosts with one. Order the writes inside the callback so that a failure
+     * part-way through leaves the previous state serving requests.
+     *
+     * Use this for WordPress API writes. Use exec_write() for custom tables.
+     *
+     * @param  callable         $callback
+     * @param  \WP_REST_Request $request
+     * @return \WP_REST_Response|\WP_Error|void
+     */
+    public function exec_write_wp( $callback, $request ) {
+        try {
+            if ( is_callable( $callback ) ) {
+                $response = $callback( $request );
+                return rest_ensure_response( $response );
+            }
+        } catch ( \Throwable $ex ) {
+            Logger::exception( $ex, $request->get_method() . ' ' . $request->get_route() );
+
+            return new \WP_Error( 'internal_error', $ex->getMessage(), [ 'status' => 500 ] );
+        }
+    }
+
+    /**
+     * Execute Routes which DO Write to DB via custom tables, auto-rollback on error.
+     * Treat deep thrown error as internal_error
+     *
+     * For WordPress API writes (posts, meta, options) use exec_write_wp() instead —
+     * a SQL transaction cannot roll back the WordPress object cache.
      *
      * @param  callable         $callback
      * @param  \WP_REST_Request $request
@@ -69,6 +106,8 @@ abstract class BaseRestController {
 
         } catch ( \Throwable $ex ) {
             $wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB
+
+            Logger::exception( $ex, $request->get_method() . ' ' . $request->get_route(), [ 'rolled_back' => true ] );
 
             return new \WP_Error( 'internal_error', $ex->getMessage(), [ 'status' => 500 ] );
         }

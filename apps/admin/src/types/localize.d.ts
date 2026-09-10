@@ -1,3 +1,4 @@
+import { QueryMeta } from '@/lib/query-client';
 import { AdminData, Meta } from './localize.type';
 
 declare global {
@@ -9,10 +10,10 @@ declare global {
   }
 }
 
-declare module '@tanstack/react-table' {
-  interface ColumnMeta<TData, TValue> {
-    align?: 'left' | 'center' | 'right';
-    isCheckbox?: boolean;
+declare module '@tanstack/react-query' {
+  interface Register {
+    queryMeta: QueryMeta;
+    mutationMeta: QueryMeta;
   }
 }
 

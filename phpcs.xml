@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<ruleset name="YayCheckout">
+    <description>Coding standard for YayCheckout. Encodes the style already used in this repo — 4-space indent, aligned array arrows, no Yoda conditions — rather than imposing WPCS defaults on existing code.</description>
+
+    <!-- Scan plugin PHP only. Vendor, build output and JS workspaces are not ours. -->
+    <file>includes</file>
+    <file>yaycheckout.php</file>
+    <file>index.php</file>
+    <file>YayCheckoutPluginAdapter.php</file>
+    <!-- Block render callbacks live beside their block.json, per wp-scripts convention. -->
+    <file>packages/blocks/src</file>
+
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/vendor-prefixed/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/apps/*</exclude-pattern>
+    <exclude-pattern>*/packages/*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/assets/dist/*</exclude-pattern>
+    <exclude-pattern>*/release/*</exclude-pattern>
+    <!-- php-scoper build config: compact symbol lists, not WordPress runtime code. -->
+    <exclude-pattern>scoper.inc.php</exclude-pattern>
+
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="sp"/>
+    <arg name="parallel" value="8"/>
+
+    <config name="minimum_wp_version" value="6.5"/>
+
+    <rule ref="WordPress">
+        <!-- This repo indents with 4 spaces, not tabs. -->
+        <exclude name="Generic.WhiteSpace.DisallowSpaceIndent"/>
+
+        <!-- Yoda conditions are not used here. -->
+        <exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
+
+        <!--
+            File naming: classes live in includes/ as PascalCase files matching
+            the class name, required by the spl_autoload_register in yaycheckout.php.
+            WPCS wants class-my-thing.php, which would break autoloading.
+        -->
+        <exclude name="WordPress.Files.FileName"/>
+
+        <!-- Not every file needs a docblock header; classes and methods do. -->
+        <exclude name="Squiz.Commenting.FileComment"/>
+        <exclude name="Squiz.Commenting.ClassComment"/>
+
+        <!-- Short array syntax is used throughout; WPCS 3 allows it, keep it explicit. -->
+        <exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+
+        <!--
+            Docblocks are written where they explain something non-obvious, not on
+            every method. Requiring them everywhere produces 45 empty comments that
+            restate the method name.
+        -->
+        <exclude name="Squiz.Commenting.FunctionComment"/>
+        <exclude name="Squiz.Commenting.VariableComment.Missing"/>
+        <!-- Properties are typed (PHP 7.4+), so an @var tag only repeats the signature. -->
+        <exclude name="Squiz.Commenting.VariableComment.MissingVar"/>
+
+        <!--
+            Exceptions here are caught by the REST controllers and returned as
+            JSON error messages, never printed as HTML. Running them through
+            esc_html() would encode quotes in the payload instead of protecting
+            anything.
+        -->
+        <exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
+
+        <!--
+            Inline `/** @var Foo $bar */` annotations exist for static analysis
+            and have no prose to add; requiring a short description turns them
+            into three-line comments that say nothing.
+        -->
+        <exclude name="Generic.Commenting.DocComment.MissingShort"/>
+
+        <!--
+            YayCheckoutPluginAdapter and SingletonTrait use single-line bodies
+            (`public function get_menu_slug(): string { return 'yaycheckout'; }`)
+            deliberately: it keeps a pure delegation adapter readable as a table.
+        -->
+        <exclude name="Squiz.Functions.MultiLineFunctionDeclaration.ContentAfterBrace"/>
+        <exclude name="Generic.Functions.OpeningFunctionBraceKernighanRitchie.SpaceBeforeBrace"/>
+    </rule>
+
+    <!-- 4-space indentation. -->
+    <rule ref="Generic.WhiteSpace.ScopeIndent">
+        <properties>
+            <property name="indent" value="4"/>
+            <property name="tabIndent" value="false"/>
+        </properties>
+    </rule>
+
+    <!-- Aligned => in array literals, as written throughout includes/. -->
+    <rule ref="WordPress.Arrays.MultipleStatementAlignment">
+        <properties>
+            <!-- Align arrows even when the value is a multi-line array, as existing code does. -->
+            <property name="alignMultilineItems" value="always"/>
+            <property name="exact" value="true"/>
+        </properties>
+    </rule>
+
+    <!-- Single text domain for all i18n calls. -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="yaycheckout"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- manage_woocommerce is registered by WooCommerce, not WordPress core. -->
+    <rule ref="WordPress.WP.Capabilities">
+        <properties>
+            <property name="custom_capabilities" type="array">
+                <element value="manage_woocommerce"/>
+                <element value="edit_shop_orders"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- Hooks, globals and options are all prefixed yaycheckout / YAYCHECKOUT. -->
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="yaycheckout"/>
+                <element value="YAYCHECKOUT"/>
+                <element value="YayCheckout"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>

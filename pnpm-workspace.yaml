@@ -1,5 +1,6 @@
 packages:
   - "apps/admin"
+  - "packages/blocks"
 allowBuilds:
   '@parcel/watcher': true
   core-js: true

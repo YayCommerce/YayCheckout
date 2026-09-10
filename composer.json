@@ -11,8 +11,11 @@
     }
   },
   "require-dev": {
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
     "humbug/php-scoper": "^0.18.18",
-    "thecodingmachine/safe": "^3.4"
+    "squizlabs/php_codesniffer": "^3.9",
+    "thecodingmachine/safe": "^3.4",
+    "wp-coding-standards/wpcs": "^3.1"
   },
   "autoload": {
     "classmap": [
@@ -20,7 +23,18 @@
       "YayCheckoutPluginAdapter.php"
     ]
   },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  },
   "scripts": {
-    "shell-update": "yaycommerce-update"
+    "shell-update": "yaycommerce-update",
+    "check:boundary": "bash scripts/check-pro-boundary.sh",
+    "lint": [
+      "@check:boundary",
+      "phpcs"
+    ],
+    "lint:fix": "phpcbf"
   }
 }

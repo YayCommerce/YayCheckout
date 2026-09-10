@@ -2,7 +2,6 @@
 namespace YayCheckout\Helpers;
 
 use YayCheckout\Controllers\BaseRestController;
-use YayCheckout\YayCheckout;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -23,10 +22,8 @@ class LocalizeHelper {
     }
 
     public static function get_meta() {
-        $currency = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'USD';
-
         $meta = [
-            'wpMeta'      => [
+            'wpMeta'       => [
                 'siteUrl'      => esc_url_raw( site_url() ),
                 'adminUrl'     => esc_url_raw( admin_url() ),
                 'ajaxUrl'      => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
@@ -40,18 +37,7 @@ class LocalizeHelper {
                 'pluginUrl' => YAYCHECKOUT_PLUGIN_URL,
                 'assetsUrl' => YAYCHECKOUT_PLUGIN_URL . 'assets',
                 'version'   => YAYCHECKOUT_VERSION,
-                'isPro'     => YayCheckout::is_pro(),
                 'reviewed'  => (bool) get_option( SettingsHelper::OPTION_REVIEWED, false ),
-            ],
-            'wcMeta'      => [
-                'currency_data' => [
-                    'currency'     => $currency,
-                    'symbol'       => function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol( $currency ) ) : '$',
-                    'position'     => get_option( 'woocommerce_currency_pos', 'left' ),
-                    'thousand_sep' => function_exists( 'wc_get_price_thousand_separator' ) ? wc_get_price_thousand_separator() : ',',
-                    'decimal_sep'  => function_exists( 'wc_get_price_decimal_separator' ) ? wc_get_price_decimal_separator() : '.',
-                    'num_decimals' => function_exists( 'wc_get_price_decimals' ) ? wc_get_price_decimals() : 2,
-                ],
             ],
         ];
 

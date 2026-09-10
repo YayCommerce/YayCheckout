@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Engine;
 
+use YayCheckout\Controllers\LayoutRestController;
 use YayCheckout\Controllers\SettingsRestController;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -20,5 +21,6 @@ class RestAPI {
 
     public function checkout_endpoints() {
         SettingsRestController::get_instance();
+        LayoutRestController::get_instance();
     }
 }

@@ -56,23 +56,29 @@ if ( ! defined( 'YAYCHECKOUT_MENU_ORDER' ) ) {
     define( 'YAYCHECKOUT_MENU_ORDER', 4 );
 }
 
-// Plugin classes: YayCheckout\* → includes/*
+// Plugin classes: YayCheckout\* → includes/*.
 spl_autoload_register(
-    function ( $class ) {
+    function ( $class_name ) {
         $prefix   = __NAMESPACE__;
         $base_dir = __DIR__ . '/includes';
 
         $len = strlen( $prefix );
-        if ( strncmp( $prefix, $class, $len ) !== 0 ) {
+        if ( strncmp( $prefix, $class_name, $len ) !== 0 ) {
             return;
         }
 
-        $relative_class_name = substr( $class, $len );
+        $relative_class_name = substr( $class_name, $len );
 
         $file = $base_dir . str_replace( '\\', '/', $relative_class_name ) . '.php';
 
         if ( file_exists( $file ) ) {
-            require $file;
+            /*
+             * require_once, not require: a malformed class name — a doubled
+             * backslash from another plugin's class_exists(), say — maps to the
+             * same file through a different string, and a plain require would
+             * then redeclare the class and fatal the whole site.
+             */
+            require_once $file;
         }
     }
 );
