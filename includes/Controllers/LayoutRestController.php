@@ -1,7 +1,6 @@
 <?php
 namespace YayCheckout\Controllers;
 
-use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -33,6 +32,13 @@ class LayoutRestController extends BaseRestController {
                     'methods'             => \WP_REST_Server::READABLE,
                     'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_layouts' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => [
+                        'case' => [
+                            'required'          => false,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_key',
+                        ],
+                    ],
                 ],
             ]
         );
@@ -78,18 +84,21 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
+     * Returns dump data for one Layouts-screen case, keyed by the `case` query
+     * param. Temporary: bypasses LayoutRepository entirely so the screen can be
+     * built and reviewed against every state in YC-02_Layouts_Home.dc.html
+     * before the real backend (health, compatibility, archive, safe mode,
+     * assignment rules) exists. Repoint this at $this->layouts->all() once it
+     * does, and delete LayoutsDumpData.
+     *
      * @param  \WP_REST_Request $request
      * @return array
      */
     public function get_layouts( \WP_REST_Request $request ) {
-        unset( $request );
+        $case_param = $request->get_param( 'case' );
+        $case_key   = $case_param ? (string) $case_param : LayoutsDumpData::DEFAULT_CASE;
 
-        return array_map(
-            static function ( Layout $layout ) {
-                return $layout->to_array();
-            },
-            $this->layouts->all()
-        );
+        return array_merge( [ 'case' => $case_key ], LayoutsDumpData::get( $case_key ) );
     }
 
     /**

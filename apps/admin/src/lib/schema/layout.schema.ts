@@ -1,53 +1,96 @@
 import { z } from 'zod';
 
-/**
- * PHP encodes an empty associative array as `[]`, not `{}`, so any map that
- * happens to be empty arrives as an empty JSON array. Normalise that before
- * validating rather than loosening the map type.
- */
-const phpMap = z.preprocess(
-  (value) => (Array.isArray(value) && value.length === 0 ? {} : value),
-  z.record(z.string(), z.unknown()),
-);
+const layoutActionButtonSchema = z.enum(['enabled', 'disabled', 'hidden']);
 
-/**
- * Derived caches, regenerated from the published snapshot at publish time.
- * Keys mirror DerivedCacheBuilder's output and are stable. A layout that has
- * never been published has no derived caches at all.
- */
-export const layoutDerivedSchema = z.preprocess(
-  (value) => (Array.isArray(value) && value.length === 0 ? {} : value),
-  z.object({
-    fields: phpMap.optional(),
-    extra_fields: phpMap.optional(),
-    slots: z.array(z.string()).optional(),
-    order_modes: z.array(z.string()).optional(),
+const layoutRowActionsSchema = z.object({
+  edit: layoutActionButtonSchema,
+  /** "previewDraft" labels the button "Preview draft" instead of "Preview". */
+  preview: z.enum(['preview', 'previewDraft', 'disabled', 'hidden']),
+  /** Only rendered when the row's `isActive` is false — an active row shows a
+   * plain "active" label instead, in every case this schema covers. */
+  setActive: layoutActionButtonSchema,
+  publish: z.boolean(),
+  /** The "⋯" menu trigger. */
+  moreMenu: z.boolean(),
+  restore: z.boolean().optional(),
+  /** Labeled "Delete for good" — permanent delete, archive-only. */
+  delete: z.boolean().optional(),
+  fixInEditor: z.boolean().optional(),
+  restoreLastGood: z.boolean().optional(),
+});
+
+export const layoutRowSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  statusLabel: z.string(),
+  statusTone: z.enum(['default', 'warning']),
+  isActive: z.boolean(),
+  lastPublishedAt: z.string().nullable(),
+  archivedAt: z.string().nullable().optional(),
+  /** Plain text for the Default/catch-all row (paired with `isActive`), a
+   * bordered chip otherwise — see LayoutsPage.tsx. */
+  assignment: z.string().nullable().optional(),
+  dimmed: z.boolean().optional(),
+  /** e.g. "Setting active…" — replaces the status pill while set. */
+  inFlight: z.string().nullable().optional(),
+  issue: z
+    .object({
+      message: z.string(),
+      lastGoodRevision: z.string().optional(),
+    })
+    .nullable()
+    .optional(),
+  actions: layoutRowActionsSchema,
+});
+
+const healthRowSchema = z.object({ label: z.string(), value: z.string() });
+
+const linkSchema = z.object({ label: z.string() });
+
+export const layoutsPageDataSchema = z.object({
+  case: z.string(),
+  plan: z.enum(['free', 'pro']),
+  viewOnly: z.boolean(),
+  archivedView: z.boolean(),
+  listLocked: z.boolean(),
+  counts: z.object({ active: z.number(), archived: z.number() }),
+  planLimit: z.object({
+    limit: z.number().nullable(),
+    used: z.number(),
+    reached: z.boolean(),
   }),
-);
+  search: z.object({ term: z.string(), totalShown: z.number(), total: z.number() }).nullable().optional(),
+  pagination: z.object({ page: z.number(), totalPages: z.number() }).nullable().optional(),
+  table: z.object({
+    showAssignmentColumn: z.boolean(),
+    showArchivedColumns: z.boolean(),
+  }),
+  layouts: z.array(layoutRowSchema),
+  health: z.object({
+    rows: z.array(healthRowSchema),
+    note: z.string().optional(),
+    link: linkSchema.nullable().optional(),
+  }),
+  compatibility: z.object({
+    summary: z.string(),
+    tone: z.enum(['default', 'warning']),
+    link: linkSchema.nullable().optional(),
+  }),
+  asideNote: z.object({ title: z.string(), message: z.string() }).nullable().optional(),
+  banner: z
+    .object({
+      tone: z.enum(['info', 'warning']),
+      title: z.string().optional(),
+      message: z.string(),
+      action: linkSchema.optional(),
+      link: linkSchema.optional(),
+    })
+    .nullable()
+    .optional(),
+  planPromo: z.object({ message: z.string() }).nullable().optional(),
+  emptyState: z.object({ title: z.string(), message: z.string() }).nullable().optional(),
+  tableFooterNote: z.string().nullable().optional(),
+});
 
-/**
- * Mirrors Layout::to_array() in PHP. This is the only place the server shape is
- * asserted on the client, so it is where a drifted contract shows up.
- *
- * .strict() is deliberate: without it a renamed key parses to undefined instead
- * of failing, and a rename on the PHP side would surface as a blank field in
- * the UI rather than an error.
- */
-export const layoutSchema = z
-  .object({
-    id: z.number(),
-    title: z.string(),
-    /** Working draft. Never rendered to customers. */
-    draft: z.string(),
-    /** Published snapshot. Empty until the layout has been published. */
-    snapshot: z.string(),
-    publishedAt: z.string().nullable(),
-    publishedRevision: z.number().nullable(),
-    isActive: z.boolean(),
-    derived: layoutDerivedSchema,
-  })
-  .strict();
-
-export const layoutListSchema = z.array(layoutSchema);
-
-export type Layout = z.infer<typeof layoutSchema>;
+export type LayoutRow = z.infer<typeof layoutRowSchema>;
+export type LayoutsPageData = z.infer<typeof layoutsPageDataSchema>;
