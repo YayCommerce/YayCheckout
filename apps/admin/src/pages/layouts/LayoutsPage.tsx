@@ -317,7 +317,9 @@ function LayoutTableRow({
             {row.inFlight}
           </span>
         ) : (
-          <Badge variant={statusBadgeVariant(row)}>{row.statusLabel}</Badge>
+          <Badge key={statusBadgeVariant(row)} variant={statusBadgeVariant(row)}>
+            {row.statusLabel}
+          </Badge>
         )}
       </TableCell>
       <TableCell className="font-mono text-xs">
