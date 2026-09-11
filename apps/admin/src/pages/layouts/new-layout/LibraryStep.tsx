@@ -174,7 +174,7 @@ export function LibraryStep({
                   <span className="text-muted-foreground flex-1 text-xs">
                     {lockedCount} {__('more templates', 'yaycheckout')}
                   </span>
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="primary-outline">
                     {__('Upgrade', 'yaycheckout')}
                   </Button>
                 </div>
