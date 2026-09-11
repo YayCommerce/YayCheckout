@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { HTTPError } from 'ky';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
@@ -43,17 +43,18 @@ export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenCh
 
   const mutation = useCreateLayoutDraftMutation();
 
-  function reset() {
-    setStep('source');
-    setName('Untitled checkout');
-    setTemplateSlug(null);
-    setFormError(null);
-    mutation.reset();
-  }
+  useEffect(() => {
+    if (open) {
+      setStep('source');
+      setName('Untitled checkout');
+      setTemplateSlug(null);
+      setFormError(null);
+    }
+  }, [open]);
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      reset();
+      mutation.reset();
     }
     onOpenChange(nextOpen);
   }

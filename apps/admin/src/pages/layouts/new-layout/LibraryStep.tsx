@@ -4,11 +4,11 @@ import { __ } from '@wordpress/i18n';
 import { isPro } from '@/lib/plan';
 import { useTemplateLibraryQuery } from '@/lib/queries/template.queries';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { focusVariants } from '@/components/ui/variants/focus.variants';
+import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
 import { NameField } from '@/pages/layouts/new-layout/NameField';
 import type { FormError } from '@/pages/layouts/new-layout/NewLayoutModal';
 
@@ -136,11 +136,7 @@ export function LibraryStep({
                 <div className="bg-muted h-16 w-full rounded-sm" />
                 <div className="flex w-full items-center justify-between gap-1">
                   <span className="text-xs font-medium">{template.name}</span>
-                  {template.locked && (
-                    <Badge variant="outline" className="px-1.5 text-[10px]">
-                      {__('PRO', 'yaycheckout')}
-                    </Badge>
-                  )}
+                  {template.locked && <ProTag />}
                 </div>
               </button>
             ))}
@@ -168,15 +164,11 @@ export function LibraryStep({
             {lockedCount > 0 && (
               <div className="border-muted-foreground/40 bg-muted/40 flex flex-col gap-3 rounded-md border border-dashed p-3">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="px-1.5 text-[10px]">
-                    {__('PRO', 'yaycheckout')}
-                  </Badge>
+                  <ProTag />
                   <span className="text-muted-foreground flex-1 text-xs">
                     {lockedCount} {__('more templates', 'yaycheckout')}
                   </span>
-                  <Button size="sm" variant="primary-outline">
-                    {__('Upgrade', 'yaycheckout')}
-                  </Button>
+                  <UpgradeButton />
                 </div>
                 <div className="grid grid-cols-5 gap-2 opacity-45">
                   {Array.from({ length: 5 }, (_, i) => (
