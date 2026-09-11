@@ -32,16 +32,17 @@ class LayoutPostType {
                     'singular_name' => __( 'Checkout Layout', 'yaycheckout' ),
                 ],
                 'public'           => false,
-                'show_ui'          => false,
+                'show_ui'          => true,
                 'show_in_menu'     => false,
                 'show_in_rest'     => true,
                 'rest_base'        => Layout::POST_TYPE,
-                'supports'         => [ 'title', 'editor', 'revisions', 'custom-fields' ],
+                'supports' => [ 'title', 'editor', 'revisions', 'custom-fields', 'author', 'thumbnail', 'page-attributes' ],
                 'has_archive'      => false,
                 'rewrite'          => false,
                 'query_var'        => false,
                 'can_export'       => true,
                 'delete_with_user' => false,
+                'publicly_queryable' => true,
 
                 /*
                  * Every capability maps to manage_woocommerce so core's REST
