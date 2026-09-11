@@ -13,7 +13,8 @@ const layoutRowActionsSchema = z.object({
   /** The "⋯" menu trigger. */
   moreMenu: z.boolean(),
   restore: z.boolean().optional(),
-  deleteForGood: z.boolean().optional(),
+  /** Labeled "Delete for good" — permanent delete, archive-only. */
+  delete: z.boolean().optional(),
   fixInEditor: z.boolean().optional(),
   restoreLastGood: z.boolean().optional(),
 });

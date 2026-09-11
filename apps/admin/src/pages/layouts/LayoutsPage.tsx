@@ -376,8 +376,10 @@ function LayoutRowActions({ row, listLocked }: { row: LayoutRow; listLocked: boo
           {__('Set active', 'yaycheckout')}
         </Button>
       )}
-      {row.isActive && <span className="text-muted-foreground text-xs">{__('active', 'yaycheckout')}</span>}
-      {actions.deleteForGood && (
+      {row.isActive && !actions.publish && (
+        <span className="text-muted-foreground text-xs">{__('active', 'yaycheckout')}</span>
+      )}
+      {actions.delete && (
         <Button size="sm" variant="destructive-outline">
           {__('Delete for good', 'yaycheckout')}
         </Button>
