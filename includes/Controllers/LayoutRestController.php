@@ -2,6 +2,7 @@
 namespace YayCheckout\Controllers;
 
 use YayCheckout\Repositories\LayoutRepository;
+use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -37,6 +38,62 @@ class LayoutRestController extends BaseRestController {
                             'required'          => false,
                             'type'              => 'string',
                             'sanitize_callback' => 'sanitize_key',
+                        ],
+                    ],
+                ],
+                [
+
+                    /*
+                     * exec_write_wp, not exec_write: mirrors publish_layout —
+                     * no SQL transaction is needed because create_draft() does
+                     * not touch the database yet (see its docblock).
+                     */
+                    'methods'             => \WP_REST_Server::CREATABLE,
+                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'create_draft' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => [
+                        'name'         => [
+                            'required'          => true,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_text_field',
+                            'validate_callback' => static function ( $value ) {
+                                return '' !== trim( (string) $value );
+                            },
+                        ],
+                        'source'       => [
+                            'required'          => true,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_key',
+                            'validate_callback' => static function ( $value ) {
+                                return in_array( $value, [ 'blank', 'library' ], true );
+                            },
+                        ],
+                        'templateSlug' => [
+                            'required'          => false,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_key',
+                        ],
+                    ],
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
+            '/layouts/templates',
+            [
+                [
+                    'methods'             => \WP_REST_Server::READABLE,
+                    'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_templates' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => [
+                        'plan' => [
+                            'required'          => false,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_key',
+                            'validate_callback' => static function ( $value ) {
+                                return in_array( $value, [ 'free', 'pro' ], true );
+                            },
                         ],
                     ],
                 ],
@@ -99,6 +156,66 @@ class LayoutRestController extends BaseRestController {
         $case_key   = $case_param ? (string) $case_param : LayoutsDumpData::DEFAULT_CASE;
 
         return array_merge( [ 'case' => $case_key ], LayoutsDumpData::get( $case_key ) );
+    }
+
+    /**
+     * Returns the "From library" template catalogue for the New layout modal
+     * (YC-02b_New_Layout_Modal.dc.html). See LayoutTemplatesDumpData for why
+     * this is fixture data rather than a real template library.
+     *
+     * The `plan` param lets the SPA preview against its own build-time edition
+     * (apps/admin/src/lib/plan.ts) rather than this site's actual licence, so
+     * the locked/unlocked grid can be reviewed without rebuilding. Omit it and
+     * the real Plan::is_pro() decides, for any caller outside the SPA.
+     *
+     * @param  \WP_REST_Request $request
+     * @return array
+     */
+    public function get_templates( \WP_REST_Request $request ) {
+        $plan_param = $request->get_param( 'plan' );
+        $is_pro     = $plan_param ? ( 'pro' === $plan_param ) : Plan::is_pro();
+
+        return [
+            'plan'      => $is_pro ? 'pro' : 'free',
+            'templates' => LayoutTemplatesDumpData::templates( $is_pro ),
+        ];
+    }
+
+    /**
+     * Creates a layout draft from the New layout modal. Validates the name
+     * against LayoutTemplatesDumpData's fixed collision list and, when it is
+     * free, returns a fake success payload — it never touches the database.
+     * Repoint at LayoutRepository::create() once that exists.
+     *
+     * @param  \WP_REST_Request $request
+     * @return array|\WP_Error
+     */
+    public function create_draft( \WP_REST_Request $request ) {
+        $name = (string) $request->get_param( 'name' );
+
+        $suggested_name = LayoutTemplatesDumpData::check_duplicate_name( $name );
+
+        if ( null !== $suggested_name ) {
+            return new \WP_Error(
+                'duplicate_name',
+                sprintf(
+                    /* translators: %s: the layout name the merchant typed. */
+                    __( 'A layout called "%s" already exists.', 'yaycheckout' ),
+                    $name
+                ),
+                [
+                    'status'         => 409,
+                    'suggested_name' => $suggested_name,
+                ]
+            );
+        }
+
+        return [
+            'id'           => wp_rand( 1000, 9999 ),
+            'name'         => $name,
+            'source'       => (string) $request->get_param( 'source' ),
+            'templateSlug' => $request->get_param( 'templateSlug' ),
+        ];
     }
 
     /**
