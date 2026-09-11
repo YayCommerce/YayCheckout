@@ -321,7 +321,7 @@ function LayoutTableRow({
         )}
       </TableCell>
       <TableCell className="font-mono text-xs">
-        {row.archivedAt ?? (row.isActive ? <Badge variant="secondary">{__('ACTIVE', 'yaycheckout')}</Badge> : '—')}
+        {row.archivedAt ?? (row.isActive ? <Badge variant="success">{__('Active', 'yaycheckout')}</Badge> : '—')}
       </TableCell>
       <TableCell className="font-mono text-xs">{row.lastPublishedAt ?? __('never', 'yaycheckout')}</TableCell>
       <TableCell>
