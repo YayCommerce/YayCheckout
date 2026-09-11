@@ -31,7 +31,7 @@ export function LibraryStep({
   name: string;
   onNameChange: (value: string) => void;
   selectedSlug: string | null;
-  onSelectSlug: (slug: string) => void;
+  onSelectSlug: (slug: string | null) => void;
   onBack: () => void;
   onCancel: () => void;
   onSubmit: () => void;
@@ -61,6 +61,12 @@ export function LibraryStep({
       if (firstUnlocked) onSelectSlug(firstUnlocked.slug);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (data && selectedSlug && !templates.some((t) => t.slug === selectedSlug)) {
+      onSelectSlug(null);
+    }
+  }, [data, templates, selectedSlug, onSelectSlug]);
 
   const disabled = '' === name.trim() || !selectedSlug || error?.kind === 'duplicate';
 

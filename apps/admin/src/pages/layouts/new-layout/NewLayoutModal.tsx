@@ -16,9 +16,13 @@ export type FormError =
 
 async function toFormError(error: unknown): Promise<FormError> {
   if (error instanceof HTTPError && error.response.status === 409) {
-    const body = await error.response.clone().json();
-    if (body?.data?.suggested_name) {
-      return { kind: 'duplicate', message: body.message, suggestedName: body.data.suggested_name };
+    try {
+      const body = await error.response.clone().json();
+      if (body?.data?.suggested_name) {
+        return { kind: 'duplicate', message: body.message, suggestedName: body.data.suggested_name };
+      }
+    } catch {
+      // Not a JSON body (proxy error page, truncated response, ...) — fall through to the generic path below.
     }
   }
 

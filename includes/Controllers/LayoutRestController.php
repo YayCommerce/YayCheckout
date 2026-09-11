@@ -72,6 +72,13 @@ class LayoutRestController extends BaseRestController {
                             'required'          => false,
                             'type'              => 'string',
                             'sanitize_callback' => 'sanitize_key',
+                            'validate_callback' => static function ( $value, $request ) {
+                                if ( 'library' !== $request->get_param( 'source' ) ) {
+                                    return true;
+                                }
+
+                                return is_string( $value ) && '' !== trim( $value );
+                            },
                         ],
                     ],
                 ],
