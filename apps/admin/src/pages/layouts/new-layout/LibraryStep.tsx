@@ -55,6 +55,9 @@ export function LibraryStep({
       : data.templates.filter((t) => t.category === categoryFilter);
   }, [data, categoryFilter]);
 
+  const unlockedTemplates = useMemo(() => data?.templates.filter((t) => !t.locked) ?? [], [data]);
+  const lockedCount = data ? data.templates.length - unlockedTemplates.length : 0;
+
   useEffect(() => {
     if (!selectedSlug && data) {
       const firstUnlocked = data.templates.find((t) => !t.locked);
@@ -81,7 +84,7 @@ export function LibraryStep({
               ? __('Pro — full grid, filterable', 'yaycheckout')
               : __('Templates included in Lite', 'yaycheckout')}
           </span>
-          {data && (
+          {plan === 'pro' && data && (
             <span className="text-muted-foreground text-xs">
               {data.templates.length} {__('templates', 'yaycheckout')}
             </span>
@@ -114,7 +117,7 @@ export function LibraryStep({
               <Skeleton key={i} className="h-20 w-full" />
             ))}
           </div>
-        ) : (
+        ) : plan === 'pro' ? (
           <div className="grid h-84 scrollbar-none grid-cols-5 content-start gap-3 overflow-y-auto pt-0.5 pl-0.5">
             {templates.map((template) => (
               <button
@@ -142,6 +145,47 @@ export function LibraryStep({
               </button>
             ))}
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-3">
+              {unlockedTemplates.map((template) => (
+                <button
+                  key={template.slug}
+                  type="button"
+                  onClick={() => onSelectSlug(template.slug)}
+                  className={cn(
+                    'transition-default hover:border-muted-foreground flex flex-col items-start gap-2 rounded-md border p-2 text-left',
+                    focusVariants({ variant: 'none' }),
+                    template.slug === selectedSlug && 'border-primary ring-primary ring-1',
+                  )}
+                >
+                  <div className="bg-muted h-16 w-full rounded-sm" />
+                  <span className="text-xs font-medium">{template.name}</span>
+                </button>
+              ))}
+            </div>
+
+            {lockedCount > 0 && (
+              <div className="border-muted-foreground/40 bg-muted/40 flex flex-col gap-3 rounded-md border border-dashed p-3">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="px-1.5 text-[10px]">
+                    {__('PRO', 'yaycheckout')}
+                  </Badge>
+                  <span className="text-muted-foreground flex-1 text-xs">
+                    {lockedCount} {__('more templates', 'yaycheckout')}
+                  </span>
+                  <Button size="sm" variant="outline">
+                    {__('Upgrade', 'yaycheckout')}
+                  </Button>
+                </div>
+                <div className="grid grid-cols-5 gap-2 opacity-45">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <div key={i} className="bg-muted border-muted-foreground/30 h-11 rounded-sm border" />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
