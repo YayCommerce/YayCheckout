@@ -42,7 +42,7 @@ class LayoutPostType {
                 'query_var'        => false,
                 'can_export'       => true,
                 'delete_with_user' => false,
-                'publicly_queryable' => true,
+                // 'publicly_queryable' => true,
 
                 /*
                  * Every capability maps to manage_woocommerce so core's REST
