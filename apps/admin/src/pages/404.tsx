@@ -16,8 +16,8 @@ export default function NotFoundPage() {
         </p>
       </div>
 
-      <Button variant="primary" onClick={() => navigate('/dashboard')}>
-        {__('Back to Dashboard', 'yaycheckout')}
+      <Button variant="primary" onClick={() => navigate('/layouts')}>
+        {__('Back to Layouts', 'yaycheckout')}
       </Button>
     </div>
   );

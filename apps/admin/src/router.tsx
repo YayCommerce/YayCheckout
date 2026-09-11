@@ -3,11 +3,11 @@ import { createHashRouter, redirect } from 'react-router';
 import AppLayout from './AppLayout';
 import NotFoundPage from './pages/404';
 import ErrorPage from './pages/500';
-import BuilderPage from './pages/builder/BuilderPage';
-import DashboardPage from './pages/dashboard/DashboardPage';
+import CompatibilityPage from './pages/compatibility/CompatibilityPage';
 import DesignPage from './pages/design/DesignPage';
-import FieldsPage from './pages/fields/FieldsPage';
+import LayoutsPage from './pages/layouts/LayoutsPage';
 import SettingsPage from './pages/settings/SettingsPage';
+import ToolsPage from './pages/tools/ToolsPage';
 
 export function getManagerRouter() {
   return createHashRouter([
@@ -18,23 +18,19 @@ export function getManagerRouter() {
       children: [
         {
           index: true,
-          loader: () => redirect('/dashboard'),
+          loader: () => redirect('/layouts'),
         },
         {
-          path: 'dashboard',
-          element: <DashboardPage />,
-        },
-        {
-          path: 'builder',
-          element: <BuilderPage />,
-        },
-        {
-          path: 'fields',
-          element: <FieldsPage />,
+          path: 'layouts',
+          element: <LayoutsPage />,
         },
         {
           path: 'design',
           element: <DesignPage />,
+        },
+        {
+          path: 'tools',
+          element: <ToolsPage />,
         },
         {
           path: 'settings',
@@ -53,6 +49,10 @@ export function getManagerRouter() {
               element: <SettingsPage />,
             },
           ],
+        },
+        {
+          path: 'compatibility',
+          element: <CompatibilityPage />,
         },
         {
           path: '*',
