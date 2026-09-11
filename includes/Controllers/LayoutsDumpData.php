@@ -974,6 +974,148 @@ class LayoutsDumpData {
                 'tableFooterNote' => 'Preview and the Compatibility report stay available so support staff can diagnose without edit rights.',
             ],
 
+            // not in the wireframe: showcases every WordPress post status a layout can carry.
+            'edge-all-statuses'               => [
+                'plan'            => 'pro',
+                'viewOnly'        => false,
+                'archivedView'    => false,
+                'listLocked'      => false,
+                'counts'          => [
+                    'active'   => 6,
+                    'archived' => 0,
+                ],
+                'planLimit'       => [
+                    'limit'   => null,
+                    'used'    => 6,
+                    'reached' => false,
+                ],
+                'search'          => null,
+                'pagination'      => null,
+                'table'           => [
+                    'showAssignmentColumn' => false,
+                    'showArchivedColumns'  => false,
+                ],
+                'layouts'         => [
+                    [
+                        'id'              => 1,
+                        'title'           => 'Draft checkout',
+                        'statusLabel'     => 'Draft',
+                        'statusTone'      => 'default',
+                        'isActive'        => false,
+                        'lastPublishedAt' => null,
+                        'actions'         => [
+                            'edit'      => 'enabled',
+                            'preview'   => 'preview',
+                            'setActive' => 'disabled',
+                            'publish'   => false,
+                            'moreMenu'  => true,
+                        ],
+                    ],
+                    [
+                        'id'              => 2,
+                        'title'           => 'Review checkout',
+                        'statusLabel'     => 'Pending review',
+                        'statusTone'      => 'default',
+                        'isActive'        => false,
+                        'lastPublishedAt' => null,
+                        'actions'         => [
+                            'edit'      => 'enabled',
+                            'preview'   => 'preview',
+                            'setActive' => 'disabled',
+                            'publish'   => false,
+                            'moreMenu'  => true,
+                        ],
+                    ],
+                    [
+                        'id'              => 3,
+                        'title'           => 'Internal test checkout',
+                        'statusLabel'     => 'Private',
+                        'statusTone'      => 'default',
+                        'isActive'        => false,
+                        'lastPublishedAt' => '5 Sep, 14:20',
+                        'actions'         => [
+                            'edit'      => 'enabled',
+                            'preview'   => 'preview',
+                            'setActive' => 'enabled',
+                            'publish'   => false,
+                            'moreMenu'  => true,
+                        ],
+                    ],
+                    [
+                        'id'              => 4,
+                        'title'           => 'Fall sale checkout',
+                        'statusLabel'     => 'Scheduled · 20 Sep, 2026',
+                        'statusTone'      => 'default',
+                        'isActive'        => false,
+                        'lastPublishedAt' => null,
+                        'actions'         => [
+                            'edit'      => 'enabled',
+                            'preview'   => 'preview',
+                            'setActive' => 'disabled',
+                            'publish'   => false,
+                            'moreMenu'  => true,
+                        ],
+                    ],
+                    [
+                        'id'              => 5,
+                        'title'           => 'Default checkout',
+                        'statusLabel'     => 'Published',
+                        'statusTone'      => 'default',
+                        'isActive'        => false,
+                        'lastPublishedAt' => '4 Sep, 10:12',
+                        'actions'         => [
+                            'edit'      => 'enabled',
+                            'preview'   => 'preview',
+                            'setActive' => 'enabled',
+                            'publish'   => false,
+                            'moreMenu'  => true,
+                        ],
+                    ],
+                    [
+                        'id'              => 6,
+                        'title'           => 'Spring sale checkout',
+                        'statusLabel'     => 'Published · unpublished changes',
+                        'statusTone'      => 'default',
+                        'isActive'        => false,
+                        'lastPublishedAt' => '2 Sep, 09:15',
+                        'actions'         => [
+                            'edit'      => 'enabled',
+                            'preview'   => 'previewDraft',
+                            'setActive' => 'enabled',
+                            'publish'   => true,
+                            'moreMenu'  => true,
+                        ],
+                    ],
+                ],
+                'health'          => [
+                    'rows' => [
+                        [
+                            'label' => 'Orders through YayCheckout · 7 days',
+                            'value' => '128',
+                        ],
+                        [
+                            'label' => 'Checkout errors',
+                            'value' => '0',
+                        ],
+                        [
+                            'label' => 'Last self-test',
+                            'value' => 'Passed 2h ago',
+                        ],
+                    ],
+                    'link' => [ 'label' => 'View logs' ],
+                ],
+                'compatibility'   => [
+                    'summary' => '0 warnings',
+                    'tone'    => 'default',
+                    'link'    => [ 'label' => 'Open Compatibility' ],
+                ],
+                'asideNote'       => null,
+                'banner'          => null,
+                'planPromo'       => null,
+                'emptyState'      => null,
+                'tableFooterNote' => '6 layouts showing every publish status a layout can carry — Draft, Pending review, Private, Scheduled, Published, Published with unpublished changes.',
+            ],
+
         ];
     }
 }

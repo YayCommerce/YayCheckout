@@ -25,6 +25,7 @@ const CASES: { value: string; label: string }[] = [
   { value: 'edge-archive-view', label: 'Edge — archive view' },
   { value: 'edge-many-long-names', label: 'Edge — many layouts, long names' },
   { value: 'edge-read-only-role', label: 'Edge — read-only role' },
+  { value: 'edge-all-statuses', label: 'Edge — all statuses' },
 ];
 
 /**
@@ -272,6 +273,14 @@ function LayoutsTable({ data }: { data: LayoutsPageData }) {
   );
 }
 
+/** Green for anything live (Published*), red for a real problem or Archived, neutral otherwise. */
+function statusBadgeVariant(row: LayoutRow) {
+  if (row.statusTone === 'warning') return 'destructive';
+  if (row.statusLabel === 'Archived') return 'destructive-soft';
+  if (row.statusLabel.startsWith('Published')) return 'success';
+  return 'outline';
+}
+
 function LayoutTableRow({
   row,
   listLocked,
@@ -308,7 +317,7 @@ function LayoutTableRow({
             {row.inFlight}
           </span>
         ) : (
-          <Badge variant={row.statusTone === 'warning' ? 'warning-outline' : 'outline'}>{row.statusLabel}</Badge>
+          <Badge variant={statusBadgeVariant(row)}>{row.statusLabel}</Badge>
         )}
       </TableCell>
       <TableCell className="font-mono text-xs">
