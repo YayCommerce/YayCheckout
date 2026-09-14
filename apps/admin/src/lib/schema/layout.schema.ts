@@ -1,3 +1,4 @@
+import { __ } from '@wordpress/i18n';
 import { z } from 'zod';
 
 const layoutActionButtonSchema = z.enum(['enabled', 'disabled', 'hidden']);
@@ -94,3 +95,33 @@ export const layoutsPageDataSchema = z.object({
 
 export type LayoutRow = z.infer<typeof layoutRowSchema>;
 export type LayoutsPageData = z.infer<typeof layoutsPageDataSchema>;
+
+export const createLayoutDraftResponseSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  source: z.enum(['blank', 'library']),
+  templateSlug: z.string().nullable(),
+});
+
+export type CreateLayoutDraftResponse = z.infer<typeof createLayoutDraftResponseSchema>;
+
+/**
+ * Client-side validation for the New layout form. Mirrors the server rule in
+ * LayoutRestController::create_draft() (templateSlug required precisely when
+ * source is 'library') so a bad submission never reaches the network.
+ */
+export const newLayoutFormSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(1, __('Name is required', 'yaycheckout')),
+    source: z.enum(['blank', 'library']),
+    templateSlug: z.string().nullable(),
+  })
+  .refine((data) => data.source === 'blank' || !!data.templateSlug, {
+    message: __('Pick a template', 'yaycheckout'),
+    path: ['templateSlug'],
+  });
+
+export type NewLayoutFormValues = z.infer<typeof newLayoutFormSchema>;

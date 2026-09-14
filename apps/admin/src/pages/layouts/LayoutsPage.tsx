@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import PageLayout from '@/pages/PageLayout';
 
 const CASES: { value: string; label: string }[] = [
@@ -66,8 +67,12 @@ export default function LayoutsPage() {
 }
 
 function LayoutsPageBody({ data }: { data: LayoutsPageData }) {
+  const [newLayoutOpen, setNewLayoutOpen] = useState(false);
+
   return (
     <div className="space-y-4">
+      <NewLayoutModal open={newLayoutOpen} onOpenChange={setNewLayoutOpen} />
+
       {data.banner && (
         <Alert destructive={data.banner.tone === 'warning'}>
           {data.banner.title && <AlertTitle>{data.banner.title}</AlertTitle>}
@@ -101,7 +106,7 @@ function LayoutsPageBody({ data }: { data: LayoutsPageData }) {
               />
             )}
             {data.planLimit.reached && <Badge variant="outline">PRO</Badge>}
-            <Button size="sm" disabled={data.planLimit.reached}>
+            <Button size="sm" disabled={data.planLimit.reached} onClick={() => setNewLayoutOpen(true)}>
               {__('Add layout', 'yaycheckout')}
             </Button>
           </div>
@@ -138,7 +143,9 @@ function LayoutsPageBody({ data }: { data: LayoutsPageData }) {
                   <EmptyDescription>{data.emptyState.message}</EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
-                  <Button size="sm">{__('Add layout', 'yaycheckout')}</Button>
+                  <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
+                    {__('Add layout', 'yaycheckout')}
+                  </Button>
                   <Button size="sm" variant="outline">
                     {__('Restore from archive', 'yaycheckout')}
                   </Button>

@@ -9,6 +9,8 @@
  * license is currently valid. An expired Pro license is still the Pro plan.
  * License state is runtime and would come from the server, not from here.
  */
+export type Plan = 'free' | 'pro';
+
 export const isPro = __YAYCHECKOUT_PLAN__ === 'pro';
 
 export const isFree = !isPro;
