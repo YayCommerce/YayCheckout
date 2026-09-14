@@ -1,4 +1,5 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { __ } from '@wordpress/i18n';
 
 import { useLayoutsPageQuery } from '@/lib/queries/layout.queries';
@@ -7,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -67,7 +69,28 @@ export default function LayoutsPage() {
 }
 
 function LayoutsPageBody({ data }: { data: LayoutsPageData }) {
+  const queryClient = useQueryClient();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
+  const [editingLayoutId, setEditingLayoutId] = useState<number | null>(null);
+
+  const editorUrl = useMemo(() => {
+    if (!editingLayoutId) {
+      return '';
+    }
+
+    const url = new URL('post.php', window.yayCheckoutMeta.wpMeta.adminUrl);
+    url.searchParams.set('post', String(editingLayoutId));
+    url.searchParams.set('action', 'edit');
+    url.searchParams.set('yc-embed', '1');
+    return url.toString();
+  }, [editingLayoutId]);
+
+  const onEditorOpenChange = (open: boolean) => {
+    if (!open) {
+      setEditingLayoutId(null);
+      queryClient.invalidateQueries({ queryKey: ['layouts'] });
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -154,7 +177,7 @@ function LayoutsPageBody({ data }: { data: LayoutsPageData }) {
             </Card>
           ) : (
             <Card>
-              <LayoutsTable data={data} />
+              <LayoutsTable data={data} onEditLayout={setEditingLayoutId} />
               {(data.search || data.pagination) && (
                 <div className="mt-3 flex items-center gap-4 border-t pt-3">
                   {data.search && (
@@ -229,11 +252,29 @@ function LayoutsPageBody({ data }: { data: LayoutsPageData }) {
           )}
         </aside>
       </div>
+
+      <Dialog open={null !== editingLayoutId} onOpenChange={onEditorOpenChange}>
+        <DialogContent className="!flex h-[92vh] w-[96vw] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[96vw]">
+          <DialogHeader className="shrink-0 gap-1 border-b px-4 py-2">
+            <DialogTitle className="text-base">{__('Edit layout', 'yaycheckout')}</DialogTitle>
+          </DialogHeader>
+
+          {editorUrl && (
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <iframe
+                title={__('Layout editor', 'yaycheckout')}
+                src={editorUrl}
+                className="block h-full w-full border-0"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function LayoutsTable({ data }: { data: LayoutsPageData }) {
+function LayoutsTable({ data, onEditLayout }: { data: LayoutsPageData; onEditLayout: (id: number) => void }) {
   return (
     <Table>
       <TableHeader>
@@ -257,6 +298,7 @@ function LayoutsTable({ data }: { data: LayoutsPageData }) {
               row={row}
               listLocked={data.listLocked}
               showAssignmentColumn={data.table.showAssignmentColumn}
+              onEditLayout={onEditLayout}
             />
             {row.issue && (
               <TableRow>
@@ -292,10 +334,12 @@ function LayoutTableRow({
   row,
   listLocked,
   showAssignmentColumn,
+  onEditLayout,
 }: {
   row: LayoutRow;
   listLocked: boolean;
   showAssignmentColumn: boolean;
+  onEditLayout: (id: number) => void;
 }) {
   const dimmed = row.dimmed && !row.inFlight;
 
@@ -334,13 +378,21 @@ function LayoutTableRow({
       </TableCell>
       <TableCell className="font-mono text-xs">{row.lastPublishedAt ?? __('never', 'yaycheckout')}</TableCell>
       <TableCell>
-        <LayoutRowActions row={row} listLocked={listLocked} />
+        <LayoutRowActions row={row} listLocked={listLocked} onEditLayout={onEditLayout} />
       </TableCell>
     </TableRow>
   );
 }
 
-function LayoutRowActions({ row, listLocked }: { row: LayoutRow; listLocked: boolean }) {
+function LayoutRowActions({
+  row,
+  listLocked,
+  onEditLayout,
+}: {
+  row: LayoutRow;
+  listLocked: boolean;
+  onEditLayout: (id: number) => void;
+}) {
   if (listLocked) {
     return (
       <div className="flex items-center gap-2">
@@ -358,7 +410,11 @@ function LayoutRowActions({ row, listLocked }: { row: LayoutRow; listLocked: boo
 
   return (
     <div className="flex items-center gap-2">
-      {actions.fixInEditor && <Button size="sm">{__('Fix in editor', 'yaycheckout')}</Button>}
+      {actions.fixInEditor && (
+        <Button size="sm" onClick={() => onEditLayout(row.id)}>
+          {__('Fix in editor', 'yaycheckout')}
+        </Button>
+      )}
       {actions.restoreLastGood && (
         <Button size="sm" variant="outline">
           {__('Restore last good', 'yaycheckout')}
@@ -370,7 +426,12 @@ function LayoutRowActions({ row, listLocked }: { row: LayoutRow; listLocked: boo
         </Button>
       )}
       {actions.edit !== 'hidden' && (
-        <Button size="sm" variant="outline" disabled={actions.edit === 'disabled'}>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={actions.edit === 'disabled'}
+          onClick={() => onEditLayout(row.id)}
+        >
           {__('Edit', 'yaycheckout')}
         </Button>
       )}
