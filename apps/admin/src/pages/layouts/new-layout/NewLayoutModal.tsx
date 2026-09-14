@@ -16,7 +16,7 @@ import { SourceStep } from '@/pages/layouts/new-layout/SourceStep';
 type Step = 'source' | 'library';
 
 const DEFAULT_VALUES: NewLayoutFormValues = {
-  name: 'Untitled checkout',
+  name: __('Untitled checkout', 'yaycheckout'),
   source: 'blank',
   templateSlug: null,
 };

@@ -8,7 +8,6 @@ export const templateSchema = z.object({
 });
 
 export const templateLibrarySchema = z.object({
-  plan: z.enum(['free', 'pro']),
   templates: z.array(templateSchema),
 });
 

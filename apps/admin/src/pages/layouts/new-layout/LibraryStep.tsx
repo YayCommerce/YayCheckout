@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { __ } from '@wordpress/i18n';
+import { __, _n } from '@wordpress/i18n';
 
 import { isPro } from '@/lib/plan';
 import { useTemplateLibraryQuery } from '@/lib/queries/template.queries';
@@ -96,7 +96,8 @@ export function LibraryStep({
           </span>
           {isPro && data && (
             <span className="text-muted-foreground text-xs">
-              {data.templates.length} {__('templates', 'yaycheckout')}
+              {data.templates.length}{' '}
+              {_n('template', 'templates', data.templates.length, 'yaycheckout')}
             </span>
           )}
         </div>
@@ -176,7 +177,8 @@ export function LibraryStep({
                 <div className="flex items-center gap-2">
                   <ProTag />
                   <span className="text-muted-foreground flex-1 text-xs">
-                    {lockedCount} {__('more templates', 'yaycheckout')}
+                    {lockedCount}{' '}
+                    {_n('more template', 'more templates', lockedCount, 'yaycheckout')}
                   </span>
                   <UpgradeButton />
                 </div>

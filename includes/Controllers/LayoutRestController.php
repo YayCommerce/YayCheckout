@@ -183,7 +183,6 @@ class LayoutRestController extends BaseRestController {
         $is_pro     = $plan_param ? ( 'pro' === $plan_param ) : Plan::is_pro();
 
         return [
-            'plan'      => $is_pro ? 'pro' : 'free',
             'templates' => LayoutTemplatesDumpData::templates( $is_pro ),
         ];
     }

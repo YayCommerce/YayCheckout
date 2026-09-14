@@ -1,3 +1,4 @@
+import { __ } from '@wordpress/i18n';
 import { z } from 'zod';
 
 const layoutActionButtonSchema = z.enum(['enabled', 'disabled', 'hidden']);
@@ -111,12 +112,15 @@ export type CreateLayoutDraftResponse = z.infer<typeof createLayoutDraftResponse
  */
 export const newLayoutFormSchema = z
   .object({
-    name: z.string().trim().min(1, 'Name is required'),
+    name: z
+      .string()
+      .trim()
+      .min(1, __('Name is required', 'yaycheckout')),
     source: z.enum(['blank', 'library']),
     templateSlug: z.string().nullable(),
   })
   .refine((data) => data.source === 'blank' || !!data.templateSlug, {
-    message: 'Pick a template',
+    message: __('Pick a template', 'yaycheckout'),
     path: ['templateSlug'],
   });
 
