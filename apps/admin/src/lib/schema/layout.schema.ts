@@ -96,14 +96,12 @@ export const layoutsPageDataSchema = z.object({
 export type LayoutRow = z.infer<typeof layoutRowSchema>;
 export type LayoutsPageData = z.infer<typeof layoutsPageDataSchema>;
 
-export const createLayoutDraftResponseSchema = z
-  .object({
-    id: z.number(), 
-    name: z.string(),
-    source: z.enum(['blank', 'library']),
-    template_slug: z.string().nullable(),
-  })
-  .transform(({ template_slug, ...rest }) => ({ ...rest, templateSlug: template_slug }));
+export const createLayoutDraftResponseSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  source: z.enum(['blank', 'library']),
+  templateSlug: z.string().nullable(),
+});
 
 export type CreateLayoutDraftResponse = z.infer<typeof createLayoutDraftResponseSchema>;
 

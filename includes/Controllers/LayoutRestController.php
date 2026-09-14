@@ -52,7 +52,7 @@ class LayoutRestController extends BaseRestController {
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'create_draft' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => [
-                        'name'          => [
+                        'name'         => [
                             'required'          => true,
                             'type'              => 'string',
                             'sanitize_callback' => 'sanitize_text_field',
@@ -60,7 +60,7 @@ class LayoutRestController extends BaseRestController {
                                 return '' !== trim( (string) $value );
                             },
                         ],
-                        'source'        => [
+                        'source'       => [
                             'required'          => true,
                             'type'              => 'string',
                             'sanitize_callback' => 'sanitize_key',
@@ -68,7 +68,7 @@ class LayoutRestController extends BaseRestController {
                                 return in_array( $value, [ 'blank', 'library' ], true );
                             },
                         ],
-                        'template_slug' => [
+                        'templateSlug' => [
                             'required'          => false,
                             'type'              => 'string',
                             'sanitize_callback' => 'sanitize_key',
@@ -217,10 +217,10 @@ class LayoutRestController extends BaseRestController {
         }
 
         return [
-            'id'            => wp_rand( 1000, 9999 ),
-            'name'          => $name,
-            'source'        => (string) $request->get_param( 'source' ),
-            'template_slug' => $request->get_param( 'template_slug' ),
+            'id'           => wp_rand( 1000, 9999 ),
+            'name'         => $name,
+            'source'       => (string) $request->get_param( 'source' ),
+            'templateSlug' => $request->get_param( 'templateSlug' ),
         ];
     }
 
