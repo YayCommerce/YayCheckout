@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { __ } from '@wordpress/i18n';
 
 import { isPro } from '@/lib/plan';
 import { useTemplateLibraryQuery } from '@/lib/queries/template.queries';
+import type { NewLayoutFormValues } from '@/lib/schema/layout.schema';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
@@ -10,35 +12,38 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { focusVariants } from '@/components/ui/variants/focus.variants';
 import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
 import { NameField } from '@/pages/layouts/new-layout/NameField';
-import type { FormError } from '@/pages/layouts/new-layout/NewLayoutModal';
 
 const ALL_CATEGORIES = __('All', 'yaycheckout');
 
 /** yc02-10 (Free, mostly locked) / yc02-10b (Pro, full grid + filter chips):
  * category chips are derived from the fetched template list, not hardcoded. */
 export function LibraryStep({
-  name,
-  onNameChange,
-  selectedSlug,
-  onSelectSlug,
+  suggestedName,
+  onUseSuggestedName,
   onBack,
   onCancel,
-  onSubmit,
-  onUseSuggestedName,
   isPending,
-  error,
+  rootError,
 }: {
-  name: string;
-  onNameChange: (value: string) => void;
-  selectedSlug: string | null;
-  onSelectSlug: (slug: string | null) => void;
+  suggestedName: string | null;
+  onUseSuggestedName: () => void;
   onBack: () => void;
   onCancel: () => void;
-  onSubmit: () => void;
-  onUseSuggestedName: (suggestedName: string) => void;
   isPending: boolean;
-  error: FormError | null;
+  rootError?: string;
 }) {
+  const {
+    control,
+    setValue,
+    formState: { errors },
+  } = useFormContext<NewLayoutFormValues>();
+  const name = useWatch<NewLayoutFormValues, 'name'>({ control, name: 'name' });
+  const selectedSlug = useWatch<NewLayoutFormValues, 'templateSlug'>({ control, name: 'templateSlug' });
+
+  function selectTemplate(slug: string | null) {
+    setValue('templateSlug', slug, { shouldValidate: true });
+  }
+
   const plan = isPro ? 'pro' : 'free';
   const { data, isPending: isLoadingTemplates } = useTemplateLibraryQuery(plan);
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL_CATEGORIES);
@@ -61,21 +66,27 @@ export function LibraryStep({
   useEffect(() => {
     if (!selectedSlug && data) {
       const firstUnlocked = data.templates.find((t) => !t.locked);
-      if (firstUnlocked) onSelectSlug(firstUnlocked.slug);
+      if (firstUnlocked) selectTemplate(firstUnlocked.slug);
     }
   }, [data]);
 
   useEffect(() => {
     if (data && selectedSlug && !templates.some((t) => t.slug === selectedSlug)) {
-      onSelectSlug(null);
+      selectTemplate(null);
     }
-  }, [data, templates, selectedSlug, onSelectSlug]);
+  }, [data, templates, selectedSlug]);
 
-  const disabled = '' === name.trim() || !selectedSlug || error?.kind === 'duplicate';
+  /*
+   * suggestedName alone isn't enough: it only clears on submit or on using
+   * the suggestion, but react-hook-form's own revalidation clears the field
+   * error as soon as the user edits the name. Requiring both keeps the
+   * button disabled exactly while the duplicate error is still showing.
+   */
+  const disabled = '' === (name ?? '').trim() || !selectedSlug || (!!suggestedName && !!errors.name);
 
   return (
     <div className="flex flex-col gap-5">
-      <NameField name={name} onNameChange={onNameChange} error={error} onUseSuggestedName={onUseSuggestedName} />
+      <NameField suggestedName={suggestedName} onUseSuggestedName={onUseSuggestedName} />
 
       <div className="flex flex-col gap-3 rounded-md border p-4">
         <div className="flex items-center justify-between gap-2">
@@ -124,7 +135,7 @@ export function LibraryStep({
                 key={template.slug}
                 type="button"
                 disabled={template.locked}
-                onClick={() => onSelectSlug(template.slug)}
+                onClick={() => selectTemplate(template.slug)}
                 title={template.locked ? __('Upgrade to Pro to use this template', 'yaycheckout') : undefined}
                 className={cn(
                   'transition-default flex flex-col items-start gap-2 rounded-md border p-2 text-left',
@@ -148,7 +159,7 @@ export function LibraryStep({
                 <button
                   key={template.slug}
                   type="button"
-                  onClick={() => onSelectSlug(template.slug)}
+                  onClick={() => selectTemplate(template.slug)}
                   className={cn(
                     'transition-default hover:border-muted-foreground flex flex-col items-start gap-2 rounded-md border p-2 text-left',
                     focusVariants({ variant: 'none' }),
@@ -181,20 +192,20 @@ export function LibraryStep({
         )}
       </div>
 
-      {error?.kind === 'generic' && <p className="text-destructive text-sm">{error.message}</p>}
+      {rootError && <p className="text-destructive text-sm">{rootError}</p>}
 
       <DialogFooter className="items-center gap-3 border-t pt-4 sm:justify-between">
         <p className="text-muted-foreground text-xs">
           {__('Your existing fields and gateways are mapped into the template you pick.', 'yaycheckout')}
         </p>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onBack}>
+          <Button type="button" variant="outline" onClick={onBack}>
             {__('Back', 'yaycheckout')}
           </Button>
-          <Button variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={onCancel}>
             {__('Cancel', 'yaycheckout')}
           </Button>
-          <Button onClick={onSubmit} disabled={disabled || isPending}>
+          <Button type="submit" disabled={disabled || isPending}>
             {isPending ? __('Creating…', 'yaycheckout') : __('Create draft', 'yaycheckout')}
           </Button>
         </div>

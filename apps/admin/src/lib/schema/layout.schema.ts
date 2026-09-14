@@ -103,3 +103,21 @@ export const createLayoutDraftResponseSchema = z.object({
 });
 
 export type CreateLayoutDraftResponse = z.infer<typeof createLayoutDraftResponseSchema>;
+
+/**
+ * Client-side validation for the New layout form. Mirrors the server rule in
+ * LayoutRestController::create_draft() (templateSlug required precisely when
+ * source is 'library') so a bad submission never reaches the network.
+ */
+export const newLayoutFormSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Name is required'),
+    source: z.enum(['blank', 'library']),
+    templateSlug: z.string().nullable(),
+  })
+  .refine((data) => data.source === 'blank' || !!data.templateSlug, {
+    message: 'Pick a template',
+    path: ['templateSlug'],
+  });
+
+export type NewLayoutFormValues = z.infer<typeof newLayoutFormSchema>;
