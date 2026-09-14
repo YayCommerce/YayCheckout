@@ -211,7 +211,7 @@ class LayoutRestController extends BaseRestController {
                 ),
                 [
                     'status'         => 409,
-                    'suggested_name' => $suggested_name,
+                    'suggestedName' => $suggested_name,
                 ]
             );
         }

@@ -34,7 +34,7 @@ async function readSuggestedName(error: unknown): Promise<string | null> {
 
   try {
     const body = await error.response.clone().json();
-    return body?.data?.suggested_name ?? null;
+    return body?.data?.suggestedName ?? null;
   } catch {
     return null;
   }
