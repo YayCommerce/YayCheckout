@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Repositories;
 
+use YayCheckout\Enums\LayoutPostStatus;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Services\DerivedCacheBuilder;
@@ -16,14 +17,6 @@ class LayoutRepository {
 
     /** Free edition may hold this many layouts. */
     public const FREE_LIMIT = 3;
-
-    /**
-     * Post status of a layout that has been published at least once.
-     *
-     * Not 'publish' — see publish() for why that would expose layout markup to
-     * anonymous REST callers.
-     */
-    public const STATUS_PUBLISHED = 'private';
 
     public function find( int $id ): ?Layout {
         $post = get_post( $id );
@@ -173,18 +166,13 @@ class LayoutRepository {
 
         /*
          * post_status records only that this layout has been published at least
-         * once. It is deliberately 'private', never 'publish':
-         * WP_REST_Posts_Controller::check_read_permission() returns true for any
-         * post whose status is 'publish' without consulting the post type's
-         * capabilities, so a published layout would be readable through
-         * wp/v2 by anonymous visitors. 'private' routes the read through
-         * read_post, which this post type maps to manage_woocommerce.
+         * once. See LayoutPostStatus::PUBLISHED for why it is never 'publish'.
          */
-        if ( self::STATUS_PUBLISHED !== $post->post_status ) {
+        if ( LayoutPostStatus::PUBLISHED !== $post->post_status ) {
             wp_update_post(
                 [
                     'ID'          => $id,
-                    'post_status' => self::STATUS_PUBLISHED,
+                    'post_status' => LayoutPostStatus::PUBLISHED,
                 ]
             );
         }
@@ -230,7 +218,7 @@ class LayoutRepository {
         $new_id = wp_insert_post(
             [
                 'post_type'    => Layout::POST_TYPE,
-                'post_status'  => 'draft',
+                'post_status'  => LayoutPostStatus::DRAFT,
                 /* translators: %s: source layout title. */
                 'post_title'   => sprintf( __( '%s (copy)', 'yaycheckout' ), $source->title ),
                 'post_content' => $source->draft,
@@ -273,28 +261,12 @@ class LayoutRepository {
     }
 
     /**
-     * @param  string[] $lifecycles
+     * @param  string[] $statuses
      * @return string[]
      */
-    private function post_statuses_for( array $lifecycles ): array {
-        $map = [
-            Layout::LIFECYCLE_DRAFT     => [ 'draft' ],
-            Layout::LIFECYCLE_PUBLISHED => [ self::STATUS_PUBLISHED ],
-            Layout::LIFECYCLE_ARCHIVED  => [ Layout::POST_STATUS_ARCHIVED ],
-        ];
+    private function post_statuses_for( array $statuses ): array {
+        $post_statuses = array_map( [ LayoutPostStatus::class, 'for_status' ], $statuses );
 
-        $statuses = [];
-
-        foreach ( $lifecycles as $lifecycle ) {
-            if ( ! isset( $map[ $lifecycle ] ) ) {
-                continue;
-            }
-
-            foreach ( $map[ $lifecycle ] as $post_status ) {
-                $statuses[] = $post_status;
-            }
-        }
-
-        return array_values( array_unique( $statuses ) );
+        return array_values( array_unique( array_filter( $post_statuses ) ) );
     }
 }

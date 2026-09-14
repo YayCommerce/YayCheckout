@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Controllers;
 
+use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Repositories\LayoutRepository;
@@ -282,7 +283,7 @@ class LayoutRestController extends BaseRestController {
      *
      * `status` has no `type => array`: WP validates type before sanitize, so
      * `?status=draft,published` (a string) would 400. Accept string or array;
-     * LayoutQuery checks the lifecycle vocabulary.
+     * LayoutQuery checks the LayoutStatus vocabulary.
      *
      * `case` is the dump-data switch used by LayoutsPage while the screen is
      * reviewed against YC-02. Real callers omit it.
@@ -297,7 +298,7 @@ class LayoutRestController extends BaseRestController {
                 'sanitize_callback' => 'sanitize_key',
             ],
             'status' => [
-                'default'           => [ Layout::LIFECYCLE_DRAFT, Layout::LIFECYCLE_PUBLISHED ],
+                'default'           => LayoutStatus::listed(),
                 'validate_callback' => static function ( $value ) {
                     return is_string( $value ) || is_array( $value );
                 },

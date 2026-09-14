@@ -1,12 +1,14 @@
 <?php
 namespace YayCheckout\Models;
 
+use YayCheckout\Enums\LayoutStatus;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
  * How to ask for layouts.
  *
- * Speaks product lifecycle only, never WordPress post_status. Search and
+ * Speaks LayoutStatus only, never WordPress post_status. Search and
  * pagination belong to the admin UI over the returned list, not here.
  */
 class LayoutQuery {
@@ -18,7 +20,7 @@ class LayoutQuery {
 
     /**
      * @param string[] $statuses
-     * @throws \InvalidArgumentException When $statuses is empty or contains an unknown lifecycle.
+     * @throws \InvalidArgumentException When $statuses is empty or contains an unknown status.
      */
     private function __construct( array $statuses ) {
         $unique = array_values( array_unique( $statuses ) );
@@ -27,14 +29,8 @@ class LayoutQuery {
             throw new \InvalidArgumentException( 'At least one layout status is required.' );
         }
 
-        $allowed = [
-            Layout::LIFECYCLE_DRAFT,
-            Layout::LIFECYCLE_PUBLISHED,
-            Layout::LIFECYCLE_ARCHIVED,
-        ];
-
         foreach ( $unique as $status ) {
-            if ( ! in_array( $status, $allowed, true ) ) {
+            if ( ! LayoutStatus::is_valid( $status ) ) {
                 throw new \InvalidArgumentException( sprintf( 'Unknown layout status: %s', $status ) );
             }
         }
@@ -46,30 +42,24 @@ class LayoutQuery {
      * The Layouts home tab: everything the merchant works with, not archived.
      */
     public static function listed(): self {
-        return new self( [ Layout::LIFECYCLE_DRAFT, Layout::LIFECYCLE_PUBLISHED ] );
+        return new self( LayoutStatus::listed() );
     }
 
     public static function archived(): self {
-        return new self( [ Layout::LIFECYCLE_ARCHIVED ] );
+        return new self( [ LayoutStatus::ARCHIVED ] );
     }
 
     public static function any(): self {
-        return new self(
-            [
-                Layout::LIFECYCLE_DRAFT,
-                Layout::LIFECYCLE_PUBLISHED,
-                Layout::LIFECYCLE_ARCHIVED,
-            ]
-        );
+        return new self( LayoutStatus::all() );
     }
 
     /**
-     * @param  string[] $lifecycles
+     * @param  string[] $statuses
      * @return self
-     * @throws \InvalidArgumentException When $lifecycles is empty or contains an unknown lifecycle.
+     * @throws \InvalidArgumentException When $statuses is empty or contains an unknown status.
      */
-    public static function of_statuses( array $lifecycles ): self {
-        return new self( $lifecycles );
+    public static function of_statuses( array $statuses ): self {
+        return new self( $statuses );
     }
 
     /**

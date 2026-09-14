@@ -1,8 +1,7 @@
 import { api } from '@/lib/api/api';
 import {
   createLayoutDraftResponseSchema,
-  Layout,
-  LayoutLifecycle,
+  LayoutStatus,
   layoutListResponseSchema,
   layoutSchema,
   layoutsPageDataSchema,
@@ -13,7 +12,7 @@ export async function getLayoutsPage(caseKey: string) {
 }
 
 export type LayoutListParams = {
-  status?: LayoutLifecycle[];
+  status?: LayoutStatus[];
 };
 
 export async function getLayouts(params: LayoutListParams = {}) {

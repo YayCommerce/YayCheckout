@@ -26,12 +26,12 @@ export const layoutDerivedSchema = z.preprocess(
   }),
 );
 
-export const layoutLifecycleSchema = z.enum(['draft', 'published', 'archived']);
+export const layoutStatusSchema = z.enum(['draft', 'published', 'archived']);
 
 const layoutSummaryFields = {
   id: z.number(),
   title: z.string(),
-  status: layoutLifecycleSchema,
+  status: layoutStatusSchema,
   hasUnpublishedChanges: z.boolean(),
   isActive: z.boolean(),
   publishedAt: z.string().nullable(),
@@ -73,7 +73,7 @@ export const layoutListResponseSchema = z
   })
   .strict();
 
-export type LayoutLifecycle = z.infer<typeof layoutLifecycleSchema>;
+export type LayoutStatus = z.infer<typeof layoutStatusSchema>;
 export type LayoutSummary = z.infer<typeof layoutSummarySchema>;
 export type Layout = z.infer<typeof layoutSchema>;
 export type LayoutListResponse = z.infer<typeof layoutListResponseSchema>;

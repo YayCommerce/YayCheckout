@@ -1,6 +1,9 @@
 <?php
 namespace YayCheckout\Models;
 
+use YayCheckout\Enums\LayoutPostStatus;
+use YayCheckout\Enums\LayoutStatus;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -24,14 +27,6 @@ class Layout {
     public const POST_TYPE = 'yay_checkout_layout';
 
     /*
-     * Product lifecycle, the only status vocabulary REST and the SPA speak.
-     * WordPress post_status is an implementation detail of the repository.
-     */
-    public const LIFECYCLE_DRAFT     = 'draft';
-    public const LIFECYCLE_PUBLISHED = 'published';
-    public const LIFECYCLE_ARCHIVED  = 'archived';
-
-    /*
      * Storage keys live here and nowhere else. With two copies of the markup on
      * one post, a mistyped key silently reads or writes the wrong one — the
      * renderer serves a draft, or a publish writes nothing — with no error and
@@ -43,15 +38,6 @@ class Layout {
     public const META_PUBLISHED_REVISION = '_yaycheckout_published_revision';
     public const META_RULES              = '_yaycheckout_rules';
     public const META_SELF_TEST          = '_yaycheckout_self_test';
-
-    /**
-     * Custom post_status for archived layouts.
-     *
-     * Not 'trash': WordPress purges trash, and restore must return the layout
-     * as Draft or Published exactly as it was. Registering the status is a
-     * later write-path concern; until then queries for it return empty.
-     */
-    public const POST_STATUS_ARCHIVED = 'yc_archived';
 
     public const OPTION_ACTIVE = 'yaycheckout_active_layout';
 
@@ -68,8 +54,8 @@ class Layout {
     public ?int $published_revision = null;
     public bool $is_active          = false;
 
-    /** WordPress post_status. Never serialized to REST. */
-    public string $post_status = 'draft';
+    /** WordPress post_status (LayoutPostStatus). Never serialized to REST. */
+    public string $post_status = LayoutPostStatus::DRAFT;
 
     /** Pro assignment rules. Unused in 1.x. */
     public array $rules = [];
@@ -105,16 +91,16 @@ class Layout {
     }
 
     /**
-     * Product status for REST. Archived wins so a published layout that has
-     * been archived keeps its snapshot (restore must return Published, not
-     * Draft) without appearing as live in the listed tab.
+     * Product status for REST (LayoutStatus). Archived wins so a published
+     * layout that has been archived keeps its snapshot (restore must return
+     * Published, not Draft) without appearing as live in the listed tab.
      */
-    public function lifecycle_status(): string {
-        if ( $this->post_status === self::POST_STATUS_ARCHIVED ) {
-            return self::LIFECYCLE_ARCHIVED;
+    public function status(): string {
+        if ( $this->post_status === LayoutPostStatus::ARCHIVED ) {
+            return LayoutStatus::ARCHIVED;
         }
 
-        return $this->is_published() ? self::LIFECYCLE_PUBLISHED : self::LIFECYCLE_DRAFT;
+        return $this->is_published() ? LayoutStatus::PUBLISHED : LayoutStatus::DRAFT;
     }
 
     public function has_unpublished_changes(): bool {
@@ -131,7 +117,7 @@ class Layout {
         return [
             'id'                    => $this->id,
             'title'                 => $this->title,
-            'status'                => $this->lifecycle_status(),
+            'status'                => $this->status(),
             'hasUnpublishedChanges' => $this->has_unpublished_changes(),
             'isActive'              => $this->is_active,
             'publishedAt'           => $this->published_at,
