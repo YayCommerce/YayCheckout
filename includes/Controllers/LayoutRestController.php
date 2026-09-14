@@ -2,6 +2,7 @@
 namespace YayCheckout\Controllers;
 
 use YayCheckout\Models\Layout;
+use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -33,6 +34,20 @@ class LayoutRestController extends BaseRestController {
                     'methods'             => \WP_REST_Server::READABLE,
                     'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_layouts' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $this->list_args(),
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
+            '/layouts/(?P<id>\d+)',
+            [
+                [
+                    'methods'             => \WP_REST_Server::READABLE,
+                    'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_layout' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $this->id_args(),
                 ],
             ]
         );
@@ -51,23 +66,7 @@ class LayoutRestController extends BaseRestController {
                      */
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'publish_layout' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
-                    'args'                => [
-                        'id' => [
-                            'required'          => true,
-                            'type'              => 'integer',
-                            'sanitize_callback' => 'absint',
-
-                            /*
-                             * Wrapped rather than passing 'is_numeric' directly:
-                             * REST calls validate callbacks with three arguments
-                             * ( $value, $request, $param ), and an internal
-                             * function that takes one raises ArgumentCountError.
-                             */
-                            'validate_callback' => static function ( $value ) {
-                                return is_numeric( $value );
-                            },
-                        ],
-                    ],
+                    'args'                => $this->id_args(),
                 ],
             ]
         );
@@ -79,17 +78,40 @@ class LayoutRestController extends BaseRestController {
 
     /**
      * @param  \WP_REST_Request $request
-     * @return array
+     * @return array|\WP_Error
      */
     public function get_layouts( \WP_REST_Request $request ) {
-        unset( $request );
+        try {
+            $query = LayoutQuery::of_statuses( (array) $request->get_param( 'status' ) );
+        } catch ( \InvalidArgumentException $ex ) {
+            return $this->error_invalid_arguments( $ex->getMessage() );
+        }
 
-        return array_map(
-            static function ( Layout $layout ) {
-                return $layout->to_array();
-            },
-            $this->layouts->all()
-        );
+        $layouts = $this->layouts->query( $query );
+
+        return [
+            'items'  => array_map(
+                static function ( Layout $layout ) {
+                    return $layout->to_summary_array();
+                },
+                $layouts
+            ),
+            'counts' => $this->layouts->counts(),
+        ];
+    }
+
+    /**
+     * @param  \WP_REST_Request $request
+     * @return array|\WP_Error
+     */
+    public function get_layout( \WP_REST_Request $request ) {
+        $layout = $this->layouts->find( (int) $request->get_param( 'id' ) );
+
+        if ( null === $layout ) {
+            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+        }
+
+        return $layout->to_array();
     }
 
     /**
@@ -119,5 +141,55 @@ class LayoutRestController extends BaseRestController {
              */
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
+    }
+
+    /**
+     * Collection query args.
+     *
+     * `status` has no `type => array`: WP validates type before sanitize, so
+     * `?status=draft,published` (a string) would 400. Accept string or array;
+     * LayoutQuery checks the lifecycle vocabulary.
+     *
+     * @return array
+     */
+    private function list_args(): array {
+        return [
+            'status' => [
+                'default'           => [ Layout::LIFECYCLE_DRAFT, Layout::LIFECYCLE_PUBLISHED ],
+                'validate_callback' => static function ( $value ) {
+                    return is_string( $value ) || is_array( $value );
+                },
+                'sanitize_callback' => static function ( $value ) {
+                    if ( is_string( $value ) ) {
+                        $value = explode( ',', $value );
+                    }
+
+                    return array_values( array_filter( array_map( 'sanitize_key', (array) $value ) ) );
+                },
+            ],
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    private function id_args(): array {
+        return [
+            'id' => [
+                'required'          => true,
+                'type'              => 'integer',
+                'sanitize_callback' => 'absint',
+
+                /*
+                 * Wrapped rather than passing 'is_numeric' directly:
+                 * REST calls validate callbacks with three arguments
+                 * ( $value, $request, $param ), and an internal
+                 * function that takes one raises ArgumentCountError.
+                 */
+                'validate_callback' => static function ( $value ) {
+                    return is_numeric( $value );
+                },
+            ],
+        ];
     }
 }

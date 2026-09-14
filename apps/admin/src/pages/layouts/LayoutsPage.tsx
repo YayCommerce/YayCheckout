@@ -16,8 +16,9 @@ import PageLayout from '@/pages/PageLayout';
  * their data sources exist (analytics table in 1.3; the Compatibility screen).
  */
 export default function LayoutsPage() {
-  const { data: layouts, isPending, error } = useLayoutsQuery();
+  const { data, isPending, error } = useLayoutsQuery();
   const publish = usePublishLayoutMutation();
+  const layouts = data?.items;
 
   return (
     <PageLayout
@@ -31,12 +32,12 @@ export default function LayoutsPage() {
             {isPending && <p>{__('Loading layouts…', 'yaycheckout')}</p>}
             {error && <p>{error.message}</p>}
 
-            {layouts && (
+            {data && (
               <p className="flex items-center gap-2">
                 {/* The limit itself is server-side; showing the count here avoids
                     duplicating it in TS where it could drift out of step. */}
                 <span>
-                  {layouts.length} {__('layouts', 'yaycheckout')}
+                  {data.counts.listed} {__('layouts', 'yaycheckout')}
                 </span>
                 {!isPro && <ProGate inline />}
               </p>

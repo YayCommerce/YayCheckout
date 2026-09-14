@@ -1,7 +1,13 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getLayouts, publishLayout } from '@/lib/api/layout.api';
+import { getLayout, getLayouts, LayoutListParams, publishLayout } from '@/lib/api/layout.api';
 import type { Layout } from '@/lib/schema/layout.schema';
+
+export const LAYOUT_KEYS = {
+  all: ['layouts'] as const,
+  list: (params: LayoutListParams = {}) => ['layouts', 'list', params] as const,
+  detail: (id: number) => ['layouts', 'detail', id] as const,
+};
 
 /** ─── Query Options ─────────────────────────────────── */
 
@@ -11,16 +17,27 @@ export const LAYOUT_QUERIES = {
    * singleton state: there is no initialData on the page and no staleTime of
    * Infinity, because layouts change from the editor as well as from here.
    */
-  list: queryOptions({
-    queryKey: ['layouts', 'list'],
-    queryFn: getLayouts,
-  }),
+  list: (params: LayoutListParams = {}) =>
+    queryOptions({
+      queryKey: LAYOUT_KEYS.list(params),
+      queryFn: () => getLayouts(params),
+    }),
+  detail: (id: number) =>
+    queryOptions({
+      queryKey: LAYOUT_KEYS.detail(id),
+      queryFn: () => getLayout(id),
+      enabled: id > 0,
+    }),
 };
 
 /** ─── Hooks ─────────────────────────────────────────── */
 
-export function useLayoutsQuery() {
-  return useQuery(LAYOUT_QUERIES.list);
+export function useLayoutsQuery(params: LayoutListParams = {}) {
+  return useQuery(LAYOUT_QUERIES.list(params));
+}
+
+export function useLayoutQuery(id: number) {
+  return useQuery(LAYOUT_QUERIES.detail(id));
 }
 
 export function usePublishLayoutMutation() {
@@ -30,12 +47,11 @@ export function usePublishLayoutMutation() {
     mutationKey: ['layouts', 'publish'],
     mutationFn: (id: Layout['id']) => publishLayout(id),
     /*
-     * Invalidate rather than setQueryData: the response is a single layout
-     * while the cache holds the list, and publishing can change another
-     * layout's active flag.
+     * Invalidate the whole layouts tree: publish changes list rows
+     * (status, hasUnpublishedChanges) and the matching detail cache.
      */
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LAYOUT_QUERIES.list.queryKey });
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
     },
   });
 }

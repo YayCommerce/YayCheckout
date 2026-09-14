@@ -25,29 +25,54 @@ export const layoutDerivedSchema = z.preprocess(
   }),
 );
 
+export const layoutLifecycleSchema = z.enum(['draft', 'published', 'archived']);
+
+const layoutSummaryFields = {
+  id: z.number(),
+  title: z.string(),
+  status: layoutLifecycleSchema,
+  hasUnpublishedChanges: z.boolean(),
+  isActive: z.boolean(),
+  publishedAt: z.string().nullable(),
+};
+
 /**
- * Mirrors Layout::to_array() in PHP. This is the only place the server shape is
- * asserted on the client, so it is where a drifted contract shows up.
+ * Collection row. Mirrors Layout::to_summary_array() — no markup.
  *
  * .strict() is deliberate: without it a renamed key parses to undefined instead
  * of failing, and a rename on the PHP side would surface as a blank field in
  * the UI rather than an error.
  */
+export const layoutSummarySchema = z.object(layoutSummaryFields).strict();
+
+/**
+ * Full layout. Mirrors Layout::to_array().
+ */
 export const layoutSchema = z
   .object({
-    id: z.number(),
-    title: z.string(),
+    ...layoutSummaryFields,
     /** Working draft. Never rendered to customers. */
     draft: z.string(),
     /** Published snapshot. Empty until the layout has been published. */
     snapshot: z.string(),
-    publishedAt: z.string().nullable(),
     publishedRevision: z.number().nullable(),
-    isActive: z.boolean(),
     derived: layoutDerivedSchema,
   })
   .strict();
 
-export const layoutListSchema = z.array(layoutSchema);
+export const layoutListResponseSchema = z
+  .object({
+    items: z.array(layoutSummarySchema),
+    counts: z
+      .object({
+        listed: z.number(),
+        archived: z.number(),
+      })
+      .strict(),
+  })
+  .strict();
 
+export type LayoutLifecycle = z.infer<typeof layoutLifecycleSchema>;
+export type LayoutSummary = z.infer<typeof layoutSummarySchema>;
 export type Layout = z.infer<typeof layoutSchema>;
+export type LayoutListResponse = z.infer<typeof layoutListResponseSchema>;

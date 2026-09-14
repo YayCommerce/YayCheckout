@@ -1,8 +1,25 @@
 import { api } from '@/lib/api/api';
-import { Layout, layoutListSchema, layoutSchema } from '@/lib/schema/layout.schema';
+import {
+  Layout,
+  LayoutLifecycle,
+  layoutListResponseSchema,
+  layoutSchema,
+} from '@/lib/schema/layout.schema';
 
-export async function getLayouts() {
-  return layoutListSchema.parse(await api.get('layouts').json());
+export type LayoutListParams = {
+  status?: LayoutLifecycle[];
+};
+
+export async function getLayouts(params: LayoutListParams = {}) {
+  const searchParams = params.status?.length ? { status: params.status.join(',') } : undefined;
+
+  return layoutListResponseSchema.parse(
+    await api.get('layouts', searchParams ? { searchParams } : undefined).json(),
+  );
+}
+
+export async function getLayout(id: number) {
+  return layoutSchema.parse(await api.get(`layouts/${id}`).json());
 }
 
 /**
