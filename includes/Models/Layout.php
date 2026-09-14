@@ -24,6 +24,14 @@ class Layout {
     public const POST_TYPE = 'yay_checkout_layout';
 
     /*
+     * Product lifecycle, the only status vocabulary REST and the SPA speak.
+     * WordPress post_status is an implementation detail of the repository.
+     */
+    public const LIFECYCLE_DRAFT     = 'draft';
+    public const LIFECYCLE_PUBLISHED = 'published';
+    public const LIFECYCLE_ARCHIVED  = 'archived';
+
+    /*
      * Storage keys live here and nowhere else. With two copies of the markup on
      * one post, a mistyped key silently reads or writes the wrong one — the
      * renderer serves a draft, or a publish writes nothing — with no error and
@@ -35,6 +43,15 @@ class Layout {
     public const META_PUBLISHED_REVISION = '_yaycheckout_published_revision';
     public const META_RULES              = '_yaycheckout_rules';
     public const META_SELF_TEST          = '_yaycheckout_self_test';
+
+    /**
+     * Custom post_status for archived layouts.
+     *
+     * Not 'trash': WordPress purges trash, and restore must return the layout
+     * as Draft or Published exactly as it was. Registering the status is a
+     * later write-path concern; until then queries for it return empty.
+     */
+    public const POST_STATUS_ARCHIVED = 'yc_archived';
 
     public const OPTION_ACTIVE = 'yaycheckout_active_layout';
 
@@ -51,6 +68,9 @@ class Layout {
     public ?int $published_revision = null;
     public bool $is_active          = false;
 
+    /** WordPress post_status. Never serialized to REST. */
+    public string $post_status = 'draft';
+
     /** Pro assignment rules. Unused in 1.x. */
     public array $rules = [];
 
@@ -66,10 +86,11 @@ class Layout {
     public static function from_post( \WP_Post $post, array $meta, bool $is_active ): self {
         $layout = new self();
 
-        $layout->id       = (int) $post->ID;
-        $layout->title    = (string) $post->post_title;
-        $layout->draft    = (string) $post->post_content;
-        $layout->snapshot = (string) self::meta_value( $meta, self::META_PUBLISHED, '' );
+        $layout->id          = (int) $post->ID;
+        $layout->title       = (string) $post->post_title;
+        $layout->draft       = (string) $post->post_content;
+        $layout->snapshot    = (string) self::meta_value( $meta, self::META_PUBLISHED, '' );
+        $layout->post_status = (string) $post->post_status;
 
         $published_at = self::meta_value( $meta, self::META_PUBLISHED_AT, null );
         $revision     = self::meta_value( $meta, self::META_PUBLISHED_REVISION, null );
@@ -84,22 +105,55 @@ class Layout {
     }
 
     /**
+     * Product status for REST. Archived wins so a published layout that has
+     * been archived keeps its snapshot (restore must return Published, not
+     * Draft) without appearing as live in the listed tab.
+     */
+    public function lifecycle_status(): string {
+        if ( $this->post_status === self::POST_STATUS_ARCHIVED ) {
+            return self::LIFECYCLE_ARCHIVED;
+        }
+
+        return $this->is_published() ? self::LIFECYCLE_PUBLISHED : self::LIFECYCLE_DRAFT;
+    }
+
+    public function has_unpublished_changes(): bool {
+        return $this->is_published() && $this->draft !== $this->snapshot;
+    }
+
+    /**
+     * List row. Markup stays off the collection so a Pro store with dozens of
+     * layouts does not ship every draft over the wire.
+     *
+     * @return array
+     */
+    public function to_summary_array(): array {
+        return [
+            'id'                    => $this->id,
+            'title'                 => $this->title,
+            'status'                => $this->lifecycle_status(),
+            'hasUnpublishedChanges' => $this->has_unpublished_changes(),
+            'isActive'              => $this->is_active,
+            'publishedAt'           => $this->published_at,
+        ];
+    }
+
+    /**
      * Serialized shape for REST. camelCase so the TypeScript side stays
      * idiomatic; the zod schema in apps/admin mirrors this exactly.
      *
      * @return array
      */
     public function to_array(): array {
-        return [
-            'id'                => $this->id,
-            'title'             => $this->title,
-            'draft'             => $this->draft,
-            'snapshot'          => $this->snapshot,
-            'publishedAt'       => $this->published_at,
-            'publishedRevision' => $this->published_revision,
-            'isActive'          => $this->is_active,
-            'derived'           => $this->derived,
-        ];
+        return array_merge(
+            $this->to_summary_array(),
+            [
+                'draft'             => $this->draft,
+                'snapshot'          => $this->snapshot,
+                'publishedRevision' => $this->published_revision,
+                'derived'           => $this->derived,
+            ]
+        );
     }
 
     public function is_published(): bool {

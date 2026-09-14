@@ -1,6 +1,8 @@
 <?php
 namespace YayCheckout\Controllers;
 
+use YayCheckout\Models\Layout;
+use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
@@ -33,13 +35,7 @@ class LayoutRestController extends BaseRestController {
                     'methods'             => \WP_REST_Server::READABLE,
                     'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_layouts' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
-                    'args'                => [
-                        'case' => [
-                            'required'          => false,
-                            'type'              => 'string',
-                            'sanitize_callback' => 'sanitize_key',
-                        ],
-                    ],
+                    'args'                => $this->list_args(),
                 ],
                 [
 
@@ -109,6 +105,19 @@ class LayoutRestController extends BaseRestController {
 
         register_rest_route(
             self::REST_NAMESPACE,
+            '/layouts/(?P<id>\d+)',
+            [
+                [
+                    'methods'             => \WP_REST_Server::READABLE,
+                    'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_layout' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $this->id_args(),
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
             '/layouts/(?P<id>\d+)/publish',
             [
                 [
@@ -121,23 +130,7 @@ class LayoutRestController extends BaseRestController {
                      */
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'publish_layout' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
-                    'args'                => [
-                        'id' => [
-                            'required'          => true,
-                            'type'              => 'integer',
-                            'sanitize_callback' => 'absint',
-
-                            /*
-                             * Wrapped rather than passing 'is_numeric' directly:
-                             * REST calls validate callbacks with three arguments
-                             * ( $value, $request, $param ), and an internal
-                             * function that takes one raises ArgumentCountError.
-                             */
-                            'validate_callback' => static function ( $value ) {
-                                return is_numeric( $value );
-                            },
-                        ],
-                    ],
+                    'args'                => $this->id_args(),
                 ],
             ]
         );
@@ -148,21 +141,52 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Returns dump data for one Layouts-screen case, keyed by the `case` query
-     * param. Temporary: bypasses LayoutRepository entirely so the screen can be
-     * built and reviewed against every state in YC-02_Layouts_Home.dc.html
-     * before the real backend (health, compatibility, archive, safe mode,
-     * assignment rules) exists. Repoint this at $this->layouts->all() once it
-     * does, and delete LayoutsDumpData.
+     * With `case`, returns dump data for the Layouts screen review dropdown.
+     * Without it, returns the real collection: summaries plus tab counts.
      *
      * @param  \WP_REST_Request $request
-     * @return array
+     * @return array|\WP_Error
      */
     public function get_layouts( \WP_REST_Request $request ) {
         $case_param = $request->get_param( 'case' );
-        $case_key   = $case_param ? (string) $case_param : LayoutsDumpData::DEFAULT_CASE;
 
-        return array_merge( [ 'case' => $case_key ], LayoutsDumpData::get( $case_key ) );
+        if ( $case_param ) {
+            $case_key = (string) $case_param;
+
+            return array_merge( [ 'case' => $case_key ], LayoutsDumpData::get( $case_key ) );
+        }
+
+        try {
+            $query = LayoutQuery::of_statuses( (array) $request->get_param( 'status' ) );
+        } catch ( \InvalidArgumentException $ex ) {
+            return $this->error_invalid_arguments( $ex->getMessage() );
+        }
+
+        $layouts = $this->layouts->query( $query );
+
+        return [
+            'items'  => array_map(
+                static function ( Layout $layout ) {
+                    return $layout->to_summary_array();
+                },
+                $layouts
+            ),
+            'counts' => $this->layouts->counts(),
+        ];
+    }
+
+    /**
+     * @param  \WP_REST_Request $request
+     * @return array|\WP_Error
+     */
+    public function get_layout( \WP_REST_Request $request ) {
+        $layout = $this->layouts->find( (int) $request->get_param( 'id' ) );
+
+        if ( null === $layout ) {
+            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+        }
+
+        return $layout->to_array();
     }
 
     /**
@@ -251,5 +275,63 @@ class LayoutRestController extends BaseRestController {
              */
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
+    }
+
+    /**
+     * Collection query args.
+     *
+     * `status` has no `type => array`: WP validates type before sanitize, so
+     * `?status=draft,published` (a string) would 400. Accept string or array;
+     * LayoutQuery checks the lifecycle vocabulary.
+     *
+     * `case` is the dump-data switch used by LayoutsPage while the screen is
+     * reviewed against YC-02. Real callers omit it.
+     *
+     * @return array
+     */
+    private function list_args(): array {
+        return [
+            'case'   => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_key',
+            ],
+            'status' => [
+                'default'           => [ Layout::LIFECYCLE_DRAFT, Layout::LIFECYCLE_PUBLISHED ],
+                'validate_callback' => static function ( $value ) {
+                    return is_string( $value ) || is_array( $value );
+                },
+                'sanitize_callback' => static function ( $value ) {
+                    if ( is_string( $value ) ) {
+                        $value = explode( ',', $value );
+                    }
+
+                    return array_values( array_filter( array_map( 'sanitize_key', (array) $value ) ) );
+                },
+            ],
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    private function id_args(): array {
+        return [
+            'id' => [
+                'required'          => true,
+                'type'              => 'integer',
+                'sanitize_callback' => 'absint',
+
+                /*
+                 * Wrapped rather than passing 'is_numeric' directly:
+                 * REST calls validate callbacks with three arguments
+                 * ( $value, $request, $param ), and an internal
+                 * function that takes one raises ArgumentCountError.
+                 */
+                'validate_callback' => static function ( $value ) {
+                    return is_numeric( $value );
+                },
+            ],
+        ];
     }
 }

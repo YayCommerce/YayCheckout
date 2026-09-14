@@ -2,6 +2,7 @@
 namespace YayCheckout\Repositories;
 
 use YayCheckout\Models\Layout;
+use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Services\DerivedCacheBuilder;
 use YayCheckout\Support\Plan;
 
@@ -56,54 +57,75 @@ class LayoutRepository {
     }
 
     /**
-     * @param  array $args Extra WP_Query args.
+     * Every matching layout. Search and pagination are the SPA's job over this list.
+     *
      * @return Layout[]
      */
-    public function all( array $args = [] ): array {
-        $query = new \WP_Query(
-            array_merge(
-                [
-                    'post_type'      => Layout::POST_TYPE,
-                    'post_status'    => 'any',
-                    'posts_per_page' => -1,
-                    'orderby'        => 'menu_order ID',
-                    'order'          => 'ASC',
-                    'fields'         => 'ids',
-                    'no_found_rows'  => true,
-                ],
-                $args
-            )
+    public function query( LayoutQuery $query ): array {
+        $wp_query = new \WP_Query(
+            [
+                'post_type'              => Layout::POST_TYPE,
+                'post_status'            => $this->post_statuses_for( $query->statuses() ),
+                'posts_per_page'         => -1,
+                'orderby'                => 'menu_order ID',
+                'order'                  => 'ASC',
+                'update_post_meta_cache' => true,
+                'update_post_term_cache' => false,
+                'no_found_rows'          => true,
+            ]
         );
 
-        $layouts = [];
+        $active_id = $this->active_id();
+        $layouts   = [];
 
-        foreach ( $query->posts as $id ) {
-            $layout = $this->find( (int) $id );
-
-            if ( null !== $layout ) {
-                $layouts[] = $layout;
+        foreach ( $wp_query->posts as $post ) {
+            if ( ! $post instanceof \WP_Post ) {
+                continue;
             }
+
+            $layouts[] = Layout::from_post(
+                $post,
+                $this->hydrate_meta( get_post_meta( $post->ID ) ),
+                $active_id === (int) $post->ID
+            );
         }
 
         return $layouts;
     }
 
     /**
-     * Every layout the merchant can see, published or not. The Free limit
-     * counts what appears in the list, so an unpublished draft counts too.
+     * Layouts that consume a Free slot. Archived layouts do not count: the
+     * merchant can archive all three and still add a new draft (YC-02.13).
+     *
+     * Called with no argument from LayoutCapGuard and duplicate(); pass a
+     * LayoutQuery to count a filtered set.
      */
-    public function count(): int {
-        $query = new \WP_Query(
+    public function count( ?LayoutQuery $query = null ): int {
+        $query = $query ?? LayoutQuery::listed();
+
+        $wp_query = new \WP_Query(
             [
                 'post_type'      => Layout::POST_TYPE,
-                'post_status'    => 'any',
+                'post_status'    => $this->post_statuses_for( $query->statuses() ),
                 'posts_per_page' => -1,
                 'fields'         => 'ids',
                 'no_found_rows'  => true,
             ]
         );
 
-        return count( $query->posts );
+        return count( $wp_query->posts );
+    }
+
+    /**
+     * Tab totals for the whole store, independent of the current status filter.
+     *
+     * @return array{listed: int, archived: int}
+     */
+    public function counts(): array {
+        return [
+            'listed'   => $this->count( LayoutQuery::listed() ),
+            'archived' => $this->count( LayoutQuery::archived() ),
+        ];
     }
 
     /**
@@ -248,5 +270,31 @@ class LayoutRepository {
         }
 
         return $meta;
+    }
+
+    /**
+     * @param  string[] $lifecycles
+     * @return string[]
+     */
+    private function post_statuses_for( array $lifecycles ): array {
+        $map = [
+            Layout::LIFECYCLE_DRAFT     => [ 'draft' ],
+            Layout::LIFECYCLE_PUBLISHED => [ self::STATUS_PUBLISHED ],
+            Layout::LIFECYCLE_ARCHIVED  => [ Layout::POST_STATUS_ARCHIVED ],
+        ];
+
+        $statuses = [];
+
+        foreach ( $lifecycles as $lifecycle ) {
+            if ( ! isset( $map[ $lifecycle ] ) ) {
+                continue;
+            }
+
+            foreach ( $map[ $lifecycle ] as $post_status ) {
+                $statuses[] = $post_status;
+            }
+        }
+
+        return array_values( array_unique( $statuses ) );
     }
 }
