@@ -1,15 +1,16 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { getTemplateLibrary } from '@/lib/api/template.api';
+import { isPro } from '@/lib/plan';
 
 export const TEMPLATE_QUERIES = {
-  library: (plan: 'free' | 'pro') =>
+  library: () =>
     queryOptions({
-      queryKey: ['templates', 'library', plan],
-      queryFn: () => getTemplateLibrary(plan),
+      queryKey: ['templates', 'library', isPro],
+      queryFn: getTemplateLibrary,
     }),
 };
 
-export function useTemplateLibraryQuery(plan: 'free' | 'pro') {
-  return useQuery(TEMPLATE_QUERIES.library(plan));
+export function useTemplateLibraryQuery() {
+  return useQuery(TEMPLATE_QUERIES.library());
 }

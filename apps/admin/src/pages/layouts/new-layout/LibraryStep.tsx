@@ -44,8 +44,7 @@ export function LibraryStep({
     setValue('templateSlug', slug, { shouldValidate: true });
   }
 
-  const plan = isPro ? 'pro' : 'free';
-  const { data, isPending: isLoadingTemplates } = useTemplateLibraryQuery(plan);
+  const { data, isPending: isLoadingTemplates } = useTemplateLibraryQuery();
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL_CATEGORIES);
 
   const categories = useMemo(() => {
@@ -91,18 +90,18 @@ export function LibraryStep({
       <div className="flex flex-col gap-3 rounded-md border p-4">
         <div className="flex items-center justify-between gap-2">
           <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
-            {plan === 'pro'
+            {isPro
               ? __('Pro — full grid, filterable', 'yaycheckout')
               : __('Templates included in Lite', 'yaycheckout')}
           </span>
-          {plan === 'pro' && data && (
+          {isPro && data && (
             <span className="text-muted-foreground text-xs">
               {data.templates.length} {__('templates', 'yaycheckout')}
             </span>
           )}
         </div>
 
-        {plan === 'pro' && (
+        {isPro && (
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
               <button
@@ -128,7 +127,7 @@ export function LibraryStep({
               <Skeleton key={i} className="h-20 w-full" />
             ))}
           </div>
-        ) : plan === 'pro' ? (
+        ) : isPro ? (
           <div className="grid h-84 scrollbar-none grid-cols-5 content-start gap-3 overflow-y-auto pt-0.5 pl-0.5">
             {templates.map((template) => (
               <button
