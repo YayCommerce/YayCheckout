@@ -64,12 +64,21 @@ export const layoutSchema = z
 export const layoutListResponseSchema = z
   .object({
     items: z.array(layoutSummarySchema),
-    counts: z
-      .object({
-        listed: z.number(),
-        archived: z.number(),
-      })
-      .strict(),
+  })
+  .strict();
+
+export const layoutCountsSchema = z
+  .object({
+    listed: z.number(),
+    archived: z.number(),
+  })
+  .strict();
+
+/** GET /layouts/counts — its own endpoint so tab totals have one cache key,
+ * independent of whichever status filter the list query is on. */
+export const layoutCountsResponseSchema = z
+  .object({
+    counts: layoutCountsSchema,
   })
   .strict();
 
@@ -77,6 +86,7 @@ export type LayoutStatus = z.infer<typeof layoutStatusSchema>;
 export type LayoutSummary = z.infer<typeof layoutSummarySchema>;
 export type Layout = z.infer<typeof layoutSchema>;
 export type LayoutListResponse = z.infer<typeof layoutListResponseSchema>;
+export type LayoutCounts = z.infer<typeof layoutCountsSchema>;
 
 /**
  * Client-side validation for the New layout form. Mirrors the server rule in

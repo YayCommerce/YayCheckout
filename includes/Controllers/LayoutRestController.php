@@ -84,6 +84,18 @@ class LayoutRestController extends BaseRestController {
 
         register_rest_route(
             self::REST_NAMESPACE,
+            '/layouts/counts',
+            [
+                [
+                    'methods'             => \WP_REST_Server::READABLE,
+                    'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_layout_counts' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
             '/layouts/templates',
             [
                 [
@@ -143,7 +155,7 @@ class LayoutRestController extends BaseRestController {
 
     /**
      * With `case`, returns dump data for the Layouts screen review dropdown.
-     * Without it, returns the real collection: summaries plus tab counts.
+     * Without it, returns the real collection: filtered summaries.
      *
      * @param  \WP_REST_Request $request
      * @return array|\WP_Error
@@ -166,14 +178,24 @@ class LayoutRestController extends BaseRestController {
         $layouts = $this->layouts->query( $query );
 
         return [
-            'items'  => array_map(
+            'items' => array_map(
                 static function ( Layout $layout ) {
                     return $layout->to_summary_array();
                 },
                 $layouts
             ),
-            'counts' => $this->layouts->counts(),
         ];
+    }
+
+    /**
+     * Tab totals, independent of the current status filter. Its own route so
+     * the counts query (see LayoutsPage.tsx) doesn't share a cache key or
+     * response payload with the filtered list query.
+     *
+     * @return array
+     */
+    public function get_layout_counts(): array {
+        return [ 'counts' => $this->layouts->counts() ];
     }
 
     /**

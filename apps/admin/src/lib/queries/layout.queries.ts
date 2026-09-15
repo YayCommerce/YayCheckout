@@ -1,10 +1,18 @@
 import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { createLayoutDraft, getLayout, getLayouts, LayoutListParams, publishLayout } from '@/lib/api/layout.api';
+import {
+  createLayoutDraft,
+  getLayout,
+  getLayoutCounts,
+  getLayouts,
+  LayoutListParams,
+  publishLayout,
+} from '@/lib/api/layout.api';
 
 export const LAYOUT_KEYS = {
   all: ['layouts'] as const,
   list: (params: LayoutListParams = {}) => ['layouts', 'list', params] as const,
+  counts: ['layouts', 'counts'] as const,
   detail: (id: number) => ['layouts', 'detail', id] as const,
 };
 
@@ -28,6 +36,16 @@ export const LAYOUT_QUERIES = {
        */
       placeholderData: keepPreviousData,
     }),
+  /**
+   * No status param and no placeholderData: this key never changes when the
+   * tab switches, so it simply doesn't refetch on tab switch at all — and
+   * with only one cache entry ever, there's no stale/fresh snapshot to
+   * diverge between tabs.
+   */
+  counts: queryOptions({
+    queryKey: LAYOUT_KEYS.counts,
+    queryFn: getLayoutCounts,
+  }),
   detail: (id: number) =>
     queryOptions({
       queryKey: LAYOUT_KEYS.detail(id),
@@ -40,6 +58,10 @@ export const LAYOUT_QUERIES = {
 
 export function useLayoutsQuery(params: LayoutListParams = {}) {
   return useQuery(LAYOUT_QUERIES.list(params));
+}
+
+export function useLayoutCountsQuery() {
+  return useQuery(LAYOUT_QUERIES.counts);
 }
 
 export function useLayoutQuery(id: number) {
@@ -59,8 +81,10 @@ export function useCreateLayoutDraftMutation() {
     mutationFn: createLayoutDraft,
     meta: { skipGlobalError: true },
     onSuccess: () => {
-      // Prefix match: invalidates list/detail caches together.
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+      // A new draft always lands in the listed tab — narrower than LAYOUT_KEYS.all
+      // so this doesn't also refetch the archived list.
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: ['draft', 'published'] }) });
     },
   });
 }
@@ -72,7 +96,9 @@ export function usePublishLayoutMutation() {
     mutationKey: ['layouts', 'publish'],
     mutationFn: publishLayout,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+      // Publishing never moves a layout between tabs (draft and published are
+      // both "listed"), so counts don't change — only the row's status badge does.
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: ['draft', 'published'] }) });
     },
   });
 }

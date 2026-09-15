@@ -3,8 +3,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
-import { LAYOUT_KEYS, useLayoutsQuery, usePublishLayoutMutation } from '@/lib/queries/layout.queries';
-import type { LayoutListResponse, LayoutSummary } from '@/lib/schema/layout.schema';
+import {
+  LAYOUT_KEYS,
+  useLayoutCountsQuery,
+  useLayoutsQuery,
+  usePublishLayoutMutation,
+} from '@/lib/queries/layout.queries';
+import type { LayoutCounts, LayoutListResponse, LayoutSummary } from '@/lib/schema/layout.schema';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,65 +23,48 @@ import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import PageLayout from '@/pages/PageLayout';
 
 type View = 'listed' | 'archived';
-type LayoutCounts = LayoutListResponse['counts'];
 
 /*
- * Real GET /layouts — items + counts from LayoutRepository. Edit and Publish
- * are real; Search, Health/Compatibility, Preview, Set active, "⋯", Restore
- * and Delete for good render with the demo's exact DOM state (enabled/
- * disabled/hidden, labels) but no onClick — each still lacks a backend
- * action. See LayoutRowActions.
+ * GET /layouts (items) + GET /layouts/counts (tab totals) from
+ * LayoutRepository — two separate queries so counts has one cache key
+ * instead of diverging per status filter. Edit and Publish are real; Search,
+ * Health/Compatibility, Preview, Set active, "⋯", Restore and Delete for good
+ * render with the demo's exact DOM state (enabled/disabled/hidden, labels)
+ * but no onClick — each still lacks a backend action. See LayoutRowActions.
  */
 export default function LayoutsPage() {
   const [view, setView] = useState<View>('listed');
-  const { data, dataUpdatedAt, isPending, isFetching, isPlaceholderData, error } = useLayoutsQuery({
+  const list = useLayoutsQuery({
     status: view === 'archived' ? ['archived'] : ['draft', 'published'],
   });
-  const counts = useMonotonicCounts(data, dataUpdatedAt);
+  const countsQuery = useLayoutCountsQuery();
+
+  const isPending = list.isPending || countsQuery.isPending;
+  const error = list.error ?? countsQuery.error;
 
   return (
     <PageLayout
       heading={__('Layouts', 'yaycheckout')}
       description={__('Create, publish and activate checkout layouts.', 'yaycheckout')}
     >
-      {/* isPending only fires once, before any tab has ever loaded data —
-       * placeholderData: keepPreviousData means a tab switch afterwards
-       * keeps `data` defined and flips isFetching instead, so the table
-       * alone shows a loading state rather than the whole page. */}
+      {/* isPending only fires once, before either query has ever loaded —
+       * `list`'s placeholderData: keepPreviousData flips isFetching instead
+       * on later tab switches, and `counts` has no status filter to switch
+       * at all, so neither re-fires isPending after the first load. */}
       {isPending && <LayoutsPageSkeleton />}
       {error && <p className="text-destructive text-sm">{error.message}</p>}
-      {data && counts && (
+      {list.data && countsQuery.data && (
         <LayoutsPageBody
-          data={data}
-          counts={counts}
-          isFetching={isFetching}
-          isPlaceholderData={isPlaceholderData}
+          data={list.data}
+          counts={countsQuery.data}
+          isFetching={list.isFetching}
+          isPlaceholderData={list.isPlaceholderData}
           view={view}
           onViewChange={setView}
         />
       )}
     </PageLayout>
   );
-}
-
-/**
- * `listed` and `archived` are separate cache entries, each with its own
- * dataUpdatedAt. Reactivating one that's gone stale briefly shows an older
- * snapshot of this filter-independent number. Only accept a snapshot newer
- * than the one already shown, so that dip never reaches the screen.
- */
-function useMonotonicCounts(data: LayoutListResponse | undefined, dataUpdatedAt: number): LayoutCounts | null {
-  const [counts, setCounts] = useState<LayoutCounts | null>(null);
-  const lastUpdatedAt = useRef(0);
-
-  useEffect(() => {
-    if (data && dataUpdatedAt >= lastUpdatedAt.current) {
-      lastUpdatedAt.current = dataUpdatedAt;
-      setCounts(data.counts);
-    }
-  }, [data, dataUpdatedAt]);
-
-  return counts;
 }
 
 function LayoutsPageBody({
@@ -136,8 +124,12 @@ function LayoutsPageBody({
           <div className="flex items-center gap-3">
             <h2 className="flex-1 text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
             {/* No search arg on GET /layouts yet — visible once the list is
-             * long enough to need it, but not wired to a query. */}
-            {data.items.length >= 10 && <Input placeholder={__('Search layouts…', 'yaycheckout')} className="w-52" />}
+             * long enough to need it, but not wired to a query. Sourced from
+             * counts, not data.items.length, so this row doesn't depend on
+             * the list query at all. */}
+            {(view === 'archived' ? counts.archived : counts.listed) >= 10 && (
+              <Input placeholder={__('Search layouts…', 'yaycheckout')} className="w-52" />
+            )}
             <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
               {__('Add layout', 'yaycheckout')}
             </Button>

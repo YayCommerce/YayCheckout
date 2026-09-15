@@ -1,5 +1,10 @@
 import { api } from '@/lib/api/api';
-import { LayoutStatus, layoutListResponseSchema, layoutSchema } from '@/lib/schema/layout.schema';
+import {
+  LayoutStatus,
+  layoutCountsResponseSchema,
+  layoutListResponseSchema,
+  layoutSchema,
+} from '@/lib/schema/layout.schema';
 
 export type LayoutListParams = {
   status?: LayoutStatus[];
@@ -11,6 +16,10 @@ export async function getLayouts(params: LayoutListParams = {}) {
   return layoutListResponseSchema.parse(
     await api.get('layouts', searchParams ? { searchParams } : undefined).json(),
   );
+}
+
+export async function getLayoutCounts() {
+  return layoutCountsResponseSchema.parse(await api.get('layouts/counts').json()).counts;
 }
 
 export async function getLayout(id: number) {
