@@ -51,6 +51,8 @@ class Layout {
     public string $snapshot = '';
 
     public ?string $published_at    = null;
+    /** GMT post_date while post_status is 'future'; null otherwise. */
+    public ?string $scheduled_at    = null;
     public ?int $published_revision = null;
     public bool $is_active          = false;
 
@@ -72,11 +74,12 @@ class Layout {
     public static function from_post( \WP_Post $post, array $meta, bool $is_active ): self {
         $layout = new self();
 
-        $layout->id          = (int) $post->ID;
-        $layout->title       = (string) $post->post_title;
-        $layout->draft       = (string) $post->post_content;
-        $layout->snapshot    = (string) self::meta_value( $meta, self::META_PUBLISHED, '' );
-        $layout->post_status = (string) $post->post_status;
+        $layout->id           = (int) $post->ID;
+        $layout->title        = (string) $post->post_title;
+        $layout->draft        = (string) $post->post_content;
+        $layout->snapshot     = (string) self::meta_value( $meta, self::META_PUBLISHED, '' );
+        $layout->post_status  = (string) $post->post_status;
+        $layout->scheduled_at = LayoutPostStatus::SCHEDULED === $layout->post_status ? (string) $post->post_date_gmt : null;
 
         $published_at = self::meta_value( $meta, self::META_PUBLISHED_AT, null );
         $revision     = self::meta_value( $meta, self::META_PUBLISHED_REVISION, null );
@@ -94,10 +97,18 @@ class Layout {
      * Product status for REST (LayoutStatus). Archived wins so a published
      * layout that has been archived keeps its snapshot (restore must return
      * Published, not Draft) without appearing as live in the listed tab.
+     * Scheduled and Pending likewise come from post_status alone: they
+     * describe what will happen to the draft, regardless of whether an
+     * earlier snapshot is already live.
      */
     public function status(): string {
-        if ( $this->post_status === LayoutPostStatus::ARCHIVED ) {
-            return LayoutStatus::ARCHIVED;
+        switch ( $this->post_status ) {
+            case LayoutPostStatus::ARCHIVED:
+                return LayoutStatus::ARCHIVED;
+            case LayoutPostStatus::SCHEDULED:
+                return LayoutStatus::SCHEDULED;
+            case LayoutPostStatus::PENDING:
+                return LayoutStatus::PENDING;
         }
 
         return $this->is_published() ? LayoutStatus::PUBLISHED : LayoutStatus::DRAFT;
@@ -121,6 +132,7 @@ class Layout {
             'hasUnpublishedChanges' => $this->has_unpublished_changes(),
             'isActive'              => $this->is_active,
             'publishedAt'           => $this->published_at,
+            'scheduledAt'           => $this->scheduled_at,
         ];
     }
 

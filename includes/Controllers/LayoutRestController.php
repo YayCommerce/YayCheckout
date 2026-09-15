@@ -41,9 +41,9 @@ class LayoutRestController extends BaseRestController {
                 [
 
                     /*
-                     * exec_write_wp, not exec_write: mirrors publish_layout —
-                     * no SQL transaction is needed because create_draft() does
-                     * not touch the database yet (see its docblock).
+                     * exec_write_wp, not exec_write: create_draft() writes a
+                     * post through wp_insert_post(), and a SQL rollback cannot
+                     * undo what the object cache already holds.
                      */
                     'methods'             => \WP_REST_Server::CREATABLE,
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'create_draft' ], $request ),
@@ -78,6 +78,18 @@ class LayoutRestController extends BaseRestController {
                             },
                         ],
                     ],
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
+            '/layouts/counts',
+            [
+                [
+                    'methods'             => \WP_REST_Server::READABLE,
+                    'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_layout_counts' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
                 ],
             ]
         );
@@ -143,7 +155,7 @@ class LayoutRestController extends BaseRestController {
 
     /**
      * With `case`, returns dump data for the Layouts screen review dropdown.
-     * Without it, returns the real collection: summaries plus tab counts.
+     * Without it, returns the real collection: filtered summaries.
      *
      * @param  \WP_REST_Request $request
      * @return array|\WP_Error
@@ -166,14 +178,24 @@ class LayoutRestController extends BaseRestController {
         $layouts = $this->layouts->query( $query );
 
         return [
-            'items'  => array_map(
+            'items' => array_map(
                 static function ( Layout $layout ) {
                     return $layout->to_summary_array();
                 },
                 $layouts
             ),
-            'counts' => $this->layouts->counts(),
         ];
+    }
+
+    /**
+     * Tab totals, independent of the current status filter. Its own route so
+     * the counts query (see LayoutsPage.tsx) doesn't share a cache key or
+     * response payload with the filtered list query.
+     *
+     * @return array
+     */
+    public function get_layout_counts(): array {
+        return [ 'counts' => $this->layouts->counts() ];
     }
 
     /**
@@ -192,7 +214,7 @@ class LayoutRestController extends BaseRestController {
 
     /**
      * Returns the "From library" template catalogue for the New layout modal
-     * (YC-02b_New_Layout_Modal.dc.html). See LayoutTemplatesDumpData for why
+     * (YC-02b_New_Layout_Modal.dc.html). See LayoutTemplateCatalogue for why
      * this is fixture data rather than a real template library.
      *
      * The `plan` param lets the SPA preview against its own build-time edition
@@ -208,45 +230,37 @@ class LayoutRestController extends BaseRestController {
         $is_pro     = $plan_param ? ( 'pro' === $plan_param ) : Plan::is_pro();
 
         return [
-            'templates' => LayoutTemplatesDumpData::templates( $is_pro ),
+            'templates' => LayoutTemplateCatalogue::templates( $is_pro ),
         ];
     }
 
     /**
-     * Creates a layout draft from the New layout modal. Validates the name
-     * against LayoutTemplatesDumpData's fixed collision list and, when it is
-     * free, returns a fake success payload — it never touches the database.
-     * Repoint at LayoutRepository::create() once that exists.
+     * Creates a layout draft from the New layout modal.
+     *
+     * 'blank' and 'library' both create the same blank draft — only the
+     * template's existence is checked for 'library' — until a real catalogue
+     * exists to source markup from.
+     *
+     * No duplicate-title check: titles may repeat, same as WordPress Pages.
+     * publish() dedupes the post_name slug on its own once first published.
      *
      * @param  \WP_REST_Request $request
      * @return array|\WP_Error
      */
     public function create_draft( \WP_REST_Request $request ) {
-        $name = (string) $request->get_param( 'name' );
+        $name          = (string) $request->get_param( 'name' );
+        $source        = (string) $request->get_param( 'source' );
+        $template_slug = (string) $request->get_param( 'templateSlug' );
 
-        $suggested_name = LayoutTemplatesDumpData::check_duplicate_name( $name );
-
-        if ( null !== $suggested_name ) {
-            return new \WP_Error(
-                'duplicate_name',
-                sprintf(
-                    /* translators: %s: the layout name the merchant typed. */
-                    __( 'A layout called "%s" already exists.', 'yaycheckout' ),
-                    $name
-                ),
-                [
-                    'status'         => 409,
-                    'suggestedName' => $suggested_name,
-                ]
-            );
+        if ( 'library' === $source && ! LayoutTemplateCatalogue::has_template( $template_slug ) ) {
+            return $this->error_invalid_arguments( __( 'Unknown template.', 'yaycheckout' ) );
         }
 
-        return [
-            'id'           => wp_rand( 1000, 9999 ),
-            'name'         => $name,
-            'source'       => (string) $request->get_param( 'source' ),
-            'templateSlug' => $request->get_param( 'templateSlug' ),
-        ];
+        try {
+            return $this->layouts->create( $name )->to_array();
+        } catch ( \InvalidArgumentException $ex ) {
+            return $this->error_invalid_arguments( $ex->getMessage() );
+        }
     }
 
     /**

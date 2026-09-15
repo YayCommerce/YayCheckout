@@ -12,6 +12,8 @@ defined( 'ABSPATH' ) || exit;
 final class LayoutStatus {
 
     public const DRAFT     = 'draft';
+    public const PENDING   = 'pending';
+    public const SCHEDULED = 'scheduled';
     public const PUBLISHED = 'published';
     public const ARCHIVED  = 'archived';
 
@@ -19,7 +21,7 @@ final class LayoutStatus {
      * @return string[]
      */
     public static function all(): array {
-        return [ self::DRAFT, self::PUBLISHED, self::ARCHIVED ];
+        return [ self::DRAFT, self::PENDING, self::SCHEDULED, self::PUBLISHED, self::ARCHIVED ];
     }
 
     /**
@@ -28,7 +30,7 @@ final class LayoutStatus {
      * @return string[]
      */
     public static function listed(): array {
-        return [ self::DRAFT, self::PUBLISHED ];
+        return [ self::DRAFT, self::PENDING, self::SCHEDULED, self::PUBLISHED ];
     }
 
     /**
