@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { createLayoutDraft, getLayout, getLayouts, LayoutListParams, publishLayout } from '@/lib/api/layout.api';
 
@@ -20,6 +20,13 @@ export const LAYOUT_QUERIES = {
     queryOptions({
       queryKey: LAYOUT_KEYS.list(params),
       queryFn: () => getLayouts(params),
+      /*
+       * Switching Active/Archive is a different queryKey (different status
+       * filter), so without this the whole page would drop back to its
+       * first-load skeleton on every tab switch. Keeps the previous tab's
+       * data on screen — isFetching (not isPending) is what flips true.
+       */
+      placeholderData: keepPreviousData,
     }),
   detail: (id: number) =>
     queryOptions({

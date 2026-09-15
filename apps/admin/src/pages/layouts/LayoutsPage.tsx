@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
-import { useLayoutsQuery, usePublishLayoutMutation } from '@/lib/queries/layout.queries';
+import { LAYOUT_KEYS, useLayoutsQuery, usePublishLayoutMutation } from '@/lib/queries/layout.queries';
 import type { LayoutListResponse, LayoutSummary } from '@/lib/schema/layout.schema';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,7 @@ import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import PageLayout from '@/pages/PageLayout';
 
 type View = 'listed' | 'archived';
+type LayoutCounts = LayoutListResponse['counts'];
 
 /*
  * Real GET /layouts — items + counts from LayoutRepository. Edit and Publish
@@ -27,28 +29,68 @@ type View = 'listed' | 'archived';
  */
 export default function LayoutsPage() {
   const [view, setView] = useState<View>('listed');
-  const { data, isPending, error } = useLayoutsQuery({
+  const { data, dataUpdatedAt, isPending, isFetching, isPlaceholderData, error } = useLayoutsQuery({
     status: view === 'archived' ? ['archived'] : ['draft', 'published'],
   });
+  const counts = useMonotonicCounts(data, dataUpdatedAt);
 
   return (
     <PageLayout
       heading={__('Layouts', 'yaycheckout')}
       description={__('Create, publish and activate checkout layouts.', 'yaycheckout')}
     >
+      {/* isPending only fires once, before any tab has ever loaded data —
+       * placeholderData: keepPreviousData means a tab switch afterwards
+       * keeps `data` defined and flips isFetching instead, so the table
+       * alone shows a loading state rather than the whole page. */}
       {isPending && <LayoutsPageSkeleton />}
       {error && <p className="text-destructive text-sm">{error.message}</p>}
-      {data && <LayoutsPageBody data={data} view={view} onViewChange={setView} />}
+      {data && counts && (
+        <LayoutsPageBody
+          data={data}
+          counts={counts}
+          isFetching={isFetching}
+          isPlaceholderData={isPlaceholderData}
+          view={view}
+          onViewChange={setView}
+        />
+      )}
     </PageLayout>
   );
 }
 
+/**
+ * `listed` and `archived` are separate cache entries, each with its own
+ * dataUpdatedAt. Reactivating one that's gone stale briefly shows an older
+ * snapshot of this filter-independent number. Only accept a snapshot newer
+ * than the one already shown, so that dip never reaches the screen.
+ */
+function useMonotonicCounts(data: LayoutListResponse | undefined, dataUpdatedAt: number): LayoutCounts | null {
+  const [counts, setCounts] = useState<LayoutCounts | null>(null);
+  const lastUpdatedAt = useRef(0);
+
+  useEffect(() => {
+    if (data && dataUpdatedAt >= lastUpdatedAt.current) {
+      lastUpdatedAt.current = dataUpdatedAt;
+      setCounts(data.counts);
+    }
+  }, [data, dataUpdatedAt]);
+
+  return counts;
+}
+
 function LayoutsPageBody({
   data,
+  counts,
+  isFetching,
+  isPlaceholderData,
   view,
   onViewChange,
 }: {
   data: LayoutListResponse;
+  counts: LayoutCounts;
+  isFetching: boolean;
+  isPlaceholderData: boolean;
   view: View;
   onViewChange: (view: View) => void;
 }) {
@@ -71,7 +113,7 @@ function LayoutsPageBody({
   const onEditorOpenChange = (open: boolean) => {
     if (!open) {
       setEditingLayoutId(null);
-      queryClient.invalidateQueries({ queryKey: ['layouts'] });
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
     }
   };
 
@@ -91,26 +133,17 @@ function LayoutsPageBody({
             </Button>
           </div>
 
-          <div className="flex">
-            <Button
-              size="sm"
-              variant={view === 'listed' ? 'primary' : 'outline'}
-              className="rounded-r-none"
-              onClick={() => onViewChange('listed')}
-            >
-              {__('Active list', 'yaycheckout')} ({data.counts.listed})
-            </Button>
-            <Button
-              size="sm"
-              variant={view === 'archived' ? 'primary' : 'outline'}
-              className="rounded-l-none"
-              onClick={() => onViewChange('archived')}
-            >
-              {__('Archive', 'yaycheckout')} ({data.counts.archived})
-            </Button>
-          </div>
+          <TabToggle
+            view={view}
+            onViewChange={onViewChange}
+            listedCount={counts.listed}
+            archivedCount={counts.archived}
+            disabled={isFetching && isPlaceholderData}
+          />
 
-          {data.items.length === 0 ? (
+          {isPlaceholderData ? (
+            <TableRowsSkeleton />
+          ) : data.items.length === 0 ? (
             <Card>
               <Empty>
                 <EmptyHeader>
@@ -123,7 +156,7 @@ function LayoutsPageBody({
                   <EmptyDescription>
                     {view === 'archived'
                       ? __('Layouts you archive will show up here.', 'yaycheckout')
-                      : data.counts.archived > 0
+                      : counts.archived > 0
                         ? __(
                             'All of your layouts are archived. Restore one to bring it back to this list, or start a new draft. Archiving never deletes anything.',
                             'yaycheckout',
@@ -136,7 +169,7 @@ function LayoutsPageBody({
                     <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
                       {__('Add layout', 'yaycheckout')}
                     </Button>
-                    {data.counts.archived > 0 && (
+                    {counts.archived > 0 && (
                       <Button size="sm" variant="outline" onClick={() => onViewChange('archived')}>
                         {__('Restore from archive', 'yaycheckout')}
                       </Button>
@@ -146,7 +179,7 @@ function LayoutsPageBody({
               </Empty>
             </Card>
           ) : (
-            <Card>
+            <Card className={cn('transition-opacity', isFetching && 'opacity-60')}>
               <LayoutsTable items={data.items} view={view} onEditLayout={setEditingLayoutId} />
               {/* No page/per_page args on GET /layouts yet — the list is
                * already fetched whole, so page buttons are visual only. */}
@@ -193,6 +226,88 @@ function LayoutsPageBody({
       </Dialog>
     </div>
   );
+}
+
+/**
+ * Pure — reads counts/disabled from props rather than its own query (a
+ * per-tab query caused the stale-snapshot bug useMonotonicCounts explains).
+ * Memoized on these primitive props so LayoutsPageBody re-rendering for
+ * unrelated reasons (the editor dialog, the New layout modal) doesn't
+ * re-run this button JSX too.
+ */
+const TabToggle = memo(function TabToggle({
+  view,
+  onViewChange,
+  listedCount,
+  archivedCount,
+  disabled,
+}: {
+  view: View;
+  onViewChange: (view: View) => void;
+  listedCount: number;
+  archivedCount: number;
+  disabled: boolean;
+}) {
+  // Only flashes a skeleton when a count's actual value changes (e.g. after
+  // creating a draft) — a background revalidation that resolves to the same
+  // number, or a plain tab switch, never touches it. See useFlashOnChange.
+  const listedFlashing = useFlashOnChange(listedCount);
+  const archivedFlashing = useFlashOnChange(archivedCount);
+
+  return (
+    <div className="flex">
+      <Button
+        size="sm"
+        variant={view === 'listed' ? 'primary' : 'outline'}
+        className="rounded-r-none"
+        disabled={disabled}
+        onClick={() => onViewChange('listed')}
+      >
+        {__('Active list', 'yaycheckout')} (<CountValue flashing={listedFlashing} value={listedCount} />)
+      </Button>
+      <Button
+        size="sm"
+        variant={view === 'archived' ? 'primary' : 'outline'}
+        className="rounded-l-none"
+        disabled={disabled}
+        onClick={() => onViewChange('archived')}
+      >
+        {__('Archive', 'yaycheckout')} (<CountValue flashing={archivedFlashing} value={archivedCount} />)
+      </Button>
+    </div>
+  );
+});
+
+function CountValue({ flashing, value }: { flashing: boolean; value: number }) {
+  return flashing ? <Skeleton className="inline-block size-3 align-middle" /> : <>{value}</>;
+}
+
+/**
+ * True for FLASH_MS right after `value` changes from what it was last time;
+ * false otherwise, including on mount and when a refetch resolves to the
+ * same number. LayoutRestController::get_layouts() always returns both
+ * counts regardless of the `status` filter, so a plain tab switch or a
+ * same-value revalidation never trips this — only a genuine change does
+ * (e.g. counts.listed after creating a draft).
+ */
+const FLASH_MS = 400;
+
+function useFlashOnChange(value: number): boolean {
+  const [flashing, setFlashing] = useState(false);
+  const previous = useRef(value);
+
+  useEffect(() => {
+    if (previous.current === value) {
+      return;
+    }
+
+    previous.current = value;
+    setFlashing(true);
+    const timeout = setTimeout(() => setFlashing(false), FLASH_MS);
+    return () => clearTimeout(timeout);
+  }, [value]);
+
+  return flashing;
 }
 
 const PAGE_SIZE = 10;
@@ -383,16 +498,25 @@ function LayoutRowActions({
   );
 }
 
+/** Three loading rows in a Card — the same shape whether the whole page is
+ * loading for the first time or one tab's table is waiting on its own fetch
+ * (see the isPlaceholderData branch in LayoutsPageBody). */
+function TableRowsSkeleton() {
+  return (
+    <Card>
+      <div className="space-y-3">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-10 w-full" />
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 function LayoutsPageSkeleton() {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <Card>
-        <div className="space-y-3">
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-10 w-full" />
-          ))}
-        </div>
-      </Card>
+      <TableRowsSkeleton />
       <aside className="space-y-4">
         <Card>
           <Skeleton className="h-4 w-24" />
