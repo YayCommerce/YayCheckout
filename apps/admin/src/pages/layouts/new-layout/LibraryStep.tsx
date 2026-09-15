@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { __, _n } from '@wordpress/i18n';
 
@@ -53,13 +53,6 @@ export function LibraryStep({
 
   const unlockedTemplates = useMemo(() => data?.templates.filter((t) => !t.locked) ?? [], [data]);
   const lockedCount = data ? data.templates.length - unlockedTemplates.length : 0;
-
-  useEffect(() => {
-    if (!selectedSlug && data) {
-      const firstUnlocked = data.templates.find((t) => !t.locked);
-      if (firstUnlocked) selectTemplate(firstUnlocked.slug);
-    }
-  }, [data]);
 
   // Clearing a selection the new filter would hide happens here, in the
   // click, rather than in an effect watching `templates` — the filter only
