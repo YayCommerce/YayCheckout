@@ -8,6 +8,7 @@ import {
   LayoutListParams,
   publishLayout,
 } from '@/lib/api/layout.api';
+import { LISTED_LAYOUT_STATUSES } from '@/lib/schema/layout.schema';
 
 export const LAYOUT_KEYS = {
   all: ['layouts'] as const,
@@ -84,7 +85,7 @@ export function useCreateLayoutDraftMutation() {
       // A new draft always lands in the listed tab — narrower than LAYOUT_KEYS.all
       // so this doesn't also refetch the archived list.
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: ['draft', 'published'] }) });
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
     },
   });
 }
@@ -98,7 +99,7 @@ export function usePublishLayoutMutation() {
     onSuccess: () => {
       // Publishing never moves a layout between tabs (draft and published are
       // both "listed"), so counts don't change — only the row's status badge does.
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: ['draft', 'published'] }) });
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
     },
   });
 }

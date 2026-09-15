@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -30,8 +30,24 @@ const DEFAULT_VALUES: NewLayoutFormValues = {
  * No duplicate-name handling: layout titles may repeat, same as WordPress
  * Pages — the post_name slug is what WordPress deduplicates, automatically,
  * once the layout is first published.
+ *
+ * All per-session state (step, form, mutation) lives in NewLayoutForm,
+ * which sits inside DialogContent. Radix unmounts that subtree once the
+ * close animation ends and mounts it fresh on the next open, so each open
+ * starts from defaults without a reset effect — and without the flash a
+ * reset-on-open or reset-on-close effect painted over the fade.
  */
 export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl">
+        <NewLayoutForm onClose={() => onOpenChange(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function NewLayoutForm({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<Step>('source');
 
   const form = useForm<NewLayoutFormValues>({
@@ -40,25 +56,6 @@ export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenCh
   });
 
   const mutation = useCreateLayoutDraftMutation();
-
-  /*
-   * Reset on open, not on close: the dialog keeps its content mounted and
-   * fading out for the close animation, so resetting synchronously on close
-   * flashed the source step's UI over that fade.
-   */
-  useEffect(() => {
-    if (open) {
-      setStep('source');
-      form.reset(DEFAULT_VALUES);
-    }
-  }, [open]);
-
-  function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen) {
-      mutation.reset();
-    }
-    onOpenChange(nextOpen);
-  }
 
   /*
    * Back (from the header breadcrumb or LibraryStep's own Back button) only
@@ -81,50 +78,48 @@ export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenCh
     try {
       const created = await mutation.mutateAsync(payload);
       toast.success(`${__('Layout draft created.', 'yaycheckout')} "${created.title}"`);
-      handleOpenChange(false);
+      onClose();
     } catch (error) {
       form.setError('root', { type: 'server', message: await getErrorMsg(error) });
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {step === 'library' && (
-              <button
-                type="button"
-                onClick={backToSource}
-                className="text-muted-foreground hover:text-foreground text-xs font-normal"
-              >
-                ‹ {__('New layout', 'yaycheckout')}
-              </button>
-            )}
-            {step === 'library' ? __('From library', 'yaycheckout') : __('New layout', 'yaycheckout')}
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          {step === 'library' && (
+            <button
+              type="button"
+              onClick={backToSource}
+              className="text-muted-foreground hover:text-foreground text-xs font-normal"
+            >
+              ‹ {__('New layout', 'yaycheckout')}
+            </button>
+          )}
+          {step === 'library' ? __('From library', 'yaycheckout') : __('New layout', 'yaycheckout')}
+        </DialogTitle>
+      </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onValid)}>
-            {step === 'source' ? (
-              <SourceStep
-                onChooseLibrary={() => setStep('library')}
-                onCancel={() => handleOpenChange(false)}
-                isPending={mutation.isPending}
-                rootError={form.formState.errors.root?.message}
-              />
-            ) : (
-              <LibraryStep
-                onBack={backToSource}
-                onCancel={() => handleOpenChange(false)}
-                isPending={mutation.isPending}
-                rootError={form.formState.errors.root?.message}
-              />
-            )}
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onValid)}>
+          {step === 'source' ? (
+            <SourceStep
+              onChooseLibrary={() => setStep('library')}
+              onCancel={onClose}
+              isPending={mutation.isPending}
+              rootError={form.formState.errors.root?.message}
+            />
+          ) : (
+            <LibraryStep
+              onBack={backToSource}
+              onCancel={onClose}
+              isPending={mutation.isPending}
+              rootError={form.formState.errors.root?.message}
+            />
+          )}
+        </form>
+      </Form>
+    </>
   );
 }

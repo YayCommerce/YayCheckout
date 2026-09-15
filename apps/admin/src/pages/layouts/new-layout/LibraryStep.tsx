@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { __, _n } from '@wordpress/i18n';
 
@@ -54,18 +54,17 @@ export function LibraryStep({
   const unlockedTemplates = useMemo(() => data?.templates.filter((t) => !t.locked) ?? [], [data]);
   const lockedCount = data ? data.templates.length - unlockedTemplates.length : 0;
 
-  useEffect(() => {
-    if (!selectedSlug && data) {
-      const firstUnlocked = data.templates.find((t) => !t.locked);
-      if (firstUnlocked) selectTemplate(firstUnlocked.slug);
-    }
-  }, [data]);
+  // Clearing a selection the new filter would hide happens here, in the
+  // click, rather than in an effect watching `templates` — the filter only
+  // ever changes from this handler, so there's nothing else to react to.
+  function onCategoryChange(category: string) {
+    setCategoryFilter(category);
 
-  useEffect(() => {
-    if (data && selectedSlug && !templates.some((t) => t.slug === selectedSlug)) {
+    const selected = data?.templates.find((t) => t.slug === selectedSlug);
+    if (selected && category !== ALL_CATEGORIES && selected.category !== category) {
       selectTemplate(null);
     }
-  }, [data, templates, selectedSlug]);
+  }
 
   const disabled = '' === (name ?? '').trim() || !selectedSlug;
 
@@ -94,7 +93,7 @@ export function LibraryStep({
               <button
                 key={category}
                 type="button"
-                onClick={() => setCategoryFilter(category)}
+                onClick={() => onCategoryChange(category)}
                 className={cn(
                   'rounded-full border px-3 py-1 text-xs',
                   category === categoryFilter

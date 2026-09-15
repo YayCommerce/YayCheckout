@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Search } from 'lucide-react';
 import { useDebounceFn } from 'rooks';
 import { toast } from 'sonner';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import {
   LAYOUT_KEYS,
@@ -11,7 +11,12 @@ import {
   useLayoutsQuery,
   usePublishLayoutMutation,
 } from '@/lib/queries/layout.queries';
-import type { LayoutCounts, LayoutListResponse, LayoutSummary } from '@/lib/schema/layout.schema';
+import {
+  LISTED_LAYOUT_STATUSES,
+  type LayoutCounts,
+  type LayoutListResponse,
+  type LayoutSummary,
+} from '@/lib/schema/layout.schema';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -66,7 +71,7 @@ export default function LayoutsPage() {
   }
 
   const list = useLayoutsQuery({
-    status: view === 'archived' ? ['archived'] : ['draft', 'published'],
+    status: view === 'archived' ? ['archived'] : LISTED_LAYOUT_STATUSES,
     search,
     page: pageIndex + 1,
     perPage: PAGE_SIZE,
@@ -74,7 +79,6 @@ export default function LayoutsPage() {
   const countsQuery = useLayoutCountsQuery();
 
   const isPending = list.isPending || countsQuery.isPending;
-  const error = list.error ?? countsQuery.error;
 
   return (
     <PageLayout
@@ -87,13 +91,20 @@ export default function LayoutsPage() {
        * to switch at all, so neither re-fires isPending after the first
        * load. */}
       {isPending && <LayoutsPageSkeleton />}
-      {error && <p className="text-destructive text-sm">{error.message}</p>}
-      {list.data && countsQuery.data && (
+      {/* Only a counts failure replaces the page — the tabs can't render
+       * without it. A list failure is passed into the body instead, so the
+       * tabs stay mounted and the user can switch away or back to retry;
+       * placeholderData only covers `pending`, so on error `list.data` is
+       * undefined and gating the body on it would unmount the tabs too. */}
+      {countsQuery.error && <p className="text-destructive text-sm">{countsQuery.error.message}</p>}
+      {countsQuery.data && (
         <LayoutsPageBody
-          data={list.data}
+          listData={list.data}
+          listError={list.error}
+          listFetching={list.isFetching}
+          listIsPlaceholder={list.isPlaceholderData}
           counts={countsQuery.data}
-          isFetching={list.isFetching}
-          isPlaceholderData={list.isPlaceholderData}
+          countsFetching={countsQuery.isFetching}
           view={view}
           onViewChange={onViewChange}
           search={search}
@@ -108,10 +119,12 @@ export default function LayoutsPage() {
 }
 
 function LayoutsPageBody({
-  data,
+  listData,
+  listError,
+  listFetching,
+  listIsPlaceholder,
   counts,
-  isFetching,
-  isPlaceholderData,
+  countsFetching,
   view,
   onViewChange,
   search,
@@ -120,10 +133,14 @@ function LayoutsPageBody({
   pageIndex,
   onPageIndexChange,
 }: {
-  data: LayoutListResponse;
+  listData: LayoutListResponse | undefined;
+  listError: Error | null;
+  /** Background refetch of the current tab — real rows stay, table dims. */
+  listFetching: boolean;
+  /** listData still belongs to the previous tab while this tab's first fetch is in flight. */
+  listIsPlaceholder: boolean;
   counts: LayoutCounts;
-  isFetching: boolean;
-  isPlaceholderData: boolean;
+  countsFetching: boolean;
   view: View;
   onViewChange: (view: View) => void;
   search: string;
@@ -155,23 +172,20 @@ function LayoutsPageBody({
     }
   };
 
-  // A tab/page/search change (isPlaceholderData) disables tabs and
+  // A tab/page/search change (listIsPlaceholder) disables tabs and
   // pagination together; a same-page refetch (e.g. after creating a draft)
   // doesn't.
-  const controlsDisabled = isFetching && isPlaceholderData;
-
-  // Only flashes a skeleton when a count's actual value changes (e.g. after
-  // creating a draft) — a background revalidation that resolves to the same
-  // number, or a plain tab switch, never touches it. See useFlashOnChange.
-  const listedFlashing = useFlashOnChange(counts.listed);
-  const archivedFlashing = useFlashOnChange(counts.archived);
+  const controlsDisabled = listFetching && listIsPlaceholder;
 
   // Search and pagination only earn their place once a tab is long enough to
   // need them — same >=10 threshold the dump-data design used for the static
   // demo (docs/superpowers/plans/2026-09-11-layouts-dump-data-design.md, case
   // edge-many-long-names), now driving both controls from one flag.
   const showListControls = (view === 'archived' ? counts.archived : counts.listed) >= PAGE_SIZE;
-  const pageCount = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
+  // listData can be undefined (list query failed with no cached data) —
+  // unused in that branch, so a harmless default keeps this a plain
+  // top-level const instead of duplicating the null-check below.
+  const pageCount = listData ? Math.max(1, Math.ceil(listData.total / PAGE_SIZE)) : 1;
 
   return (
     <div className="space-y-4">
@@ -191,13 +205,13 @@ function LayoutsPageBody({
               <SegmentedItem value="listed">
                 {__('Active list', 'yaycheckout')}
                 <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
-                  <CountValue flashing={listedFlashing} value={counts.listed} />
+                  <CountValue loading={countsFetching} value={counts.listed} />
                 </Badge>
               </SegmentedItem>
               <SegmentedItem value="archived">
                 {__('Archive', 'yaycheckout')}
                 <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
-                  <CountValue flashing={archivedFlashing} value={counts.archived} />
+                  <CountValue loading={countsFetching} value={counts.archived} />
                 </Badge>
               </SegmentedItem>
             </Segmented>
@@ -222,9 +236,16 @@ function LayoutsPageBody({
             </div>
           </div>
 
-          {isPlaceholderData ? (
+          {/* A failed background refetch keeps the previous `listData`, so
+           * the table still renders under the error; a failed first fetch of
+           * a tab has no data and shows only the error, tabs still usable. */}
+          {listError && <p className="text-destructive text-sm">{listError.message}</p>}
+
+          {/* Placeholder rows are the other tab's layouts — never render them
+           * under this tab's heading, show the skeleton until its own arrive. */}
+          {listIsPlaceholder ? (
             <TableRowsSkeleton />
-          ) : data.items.length === 0 ? (
+          ) : !listData ? null : listData.items.length === 0 ? (
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon" />
@@ -262,9 +283,9 @@ function LayoutsPageBody({
               )}
             </Empty>
           ) : (
-            <div className={cn('min-w-0 transition-opacity', isFetching && 'opacity-60')}>
+            <div className={cn('min-w-0 transition-opacity', listFetching && 'opacity-60')}>
               <div className="overflow-x-auto rounded-lg border">
-                <LayoutsTable items={data.items} view={view} onEditLayout={setEditingLayoutId} />
+                <LayoutsTable items={listData.items} view={view} onEditLayout={setEditingLayoutId} />
               </div>
               {showListControls && (
                 <div className="mt-3 flex items-center justify-end gap-4">
@@ -324,36 +345,23 @@ function LayoutsPageBody({
   );
 }
 
-function CountValue({ flashing, value }: { flashing: boolean; value: number }) {
-  return flashing ? <Skeleton className="inline-block size-3 align-middle" /> : <>{value}</>;
-}
-
 /**
- * True for FLASH_MS right after `value` changes from what it was last time;
- * false otherwise, including on mount and when a refetch resolves to the
- * same number. LayoutRestController::get_layouts() always returns both
- * counts regardless of the `status` filter, so a plain tab switch or a
- * same-value revalidation never trips this — only a genuine change does
- * (e.g. counts.listed after creating a draft).
+ * Shows a skeleton while the counts query is refetching (create draft, close
+ * editor, stale-on-focus) so a slow site never displays a stale number as if
+ * it were current. The skeleton's fade-in is delayed in CSS: a refetch that
+ * finishes within that window unmounts it before it ever becomes visible, so
+ * fast sites don't flicker — no timers or state, just `animation-delay`.
  */
-const FLASH_MS = 400;
+function CountValue({ loading, value }: { loading: boolean; value: number }) {
+  if (!loading) {
+    return <>{value}</>;
+  }
 
-function useFlashOnChange(value: number): boolean {
-  const [flashing, setFlashing] = useState(false);
-  const previous = useRef(value);
-
-  useEffect(() => {
-    if (previous.current === value) {
-      return;
-    }
-
-    previous.current = value;
-    setFlashing(true);
-    const timeout = setTimeout(() => setFlashing(false), FLASH_MS);
-    return () => clearTimeout(timeout);
-  }, [value]);
-
-  return flashing;
+  return (
+    <span className="animate-in fade-in fill-mode-backwards inline-block align-middle [animation-delay:150ms]">
+      <Skeleton className="size-3" />
+    </span>
+  );
 }
 
 function LayoutsTable({
@@ -406,6 +414,24 @@ function statusBadge(layout: LayoutSummary) {
           : __('Published', 'yaycheckout')}
       </Badge>
     );
+  }
+
+  if (layout.status === 'scheduled') {
+    return (
+      <Badge variant="outline">
+        {layout.scheduledAt
+          ? sprintf(
+              /* translators: %s: scheduled publish date */
+              __('Scheduled · %s', 'yaycheckout'),
+              layout.scheduledAt,
+            )
+          : __('Scheduled', 'yaycheckout')}
+      </Badge>
+    );
+  }
+
+  if (layout.status === 'pending') {
+    return <Badge variant="outline">{__('Pending review', 'yaycheckout')}</Badge>;
   }
 
   return <Badge variant="outline">{__('Draft', 'yaycheckout')}</Badge>;
@@ -523,7 +549,7 @@ function LayoutRowActions({
 /** Three loading rows — the same shape whether the whole page is loading for
  * the first time (wrapped in its own Card, see LayoutsPageSkeleton) or one
  * tab's table is waiting on its own fetch inside the already-rendered
- * "Your layouts" Card (see the isPlaceholderData branch in LayoutsPageBody). */
+ * "Your layouts" Card (see the listIsPlaceholder branch in LayoutsPageBody). */
 function TableRowsSkeleton() {
   return (
     <div className="space-y-3">
