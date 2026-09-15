@@ -172,19 +172,11 @@ function LayoutsPageBody({
     }
   };
 
-  // A tab/page/search change (listIsPlaceholder) disables tabs and
-  // pagination together; a same-page refetch (e.g. after creating a draft)
-  // doesn't.
+  // Disabled only for a tab/page/search change, not a same-page refetch.
   const controlsDisabled = listFetching && listIsPlaceholder;
 
-  // Search and pagination only earn their place once a tab is long enough to
-  // need them — same >=10 threshold the dump-data design used for the static
-  // demo (docs/superpowers/plans/2026-09-11-layouts-dump-data-design.md, case
-  // edge-many-long-names), now driving both controls from one flag.
+  // >=10 threshold per the dump-data design (case edge-many-long-names).
   const showListControls = (view === 'archived' ? counts.archived : counts.listed) >= PAGE_SIZE;
-  // listData can be undefined (list query failed with no cached data) —
-  // unused in that branch, so a harmless default keeps this a plain
-  // top-level const instead of duplicating the null-check below.
   const pageCount = listData ? Math.max(1, Math.ceil(listData.total / PAGE_SIZE)) : 1;
 
   return (
