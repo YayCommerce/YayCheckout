@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
@@ -117,6 +117,16 @@ function LayoutsPageBody({
     }
   };
 
+  // Tab switch (isPlaceholderData) disables both buttons; a same-tab
+  // refetch (e.g. after creating a draft) doesn't.
+  const tabsDisabled = isFetching && isPlaceholderData;
+
+  // Only flashes a skeleton when a count's actual value changes (e.g. after
+  // creating a draft) — a background revalidation that resolves to the same
+  // number, or a plain tab switch, never touches it. See useFlashOnChange.
+  const listedFlashing = useFlashOnChange(counts.listed);
+  const archivedFlashing = useFlashOnChange(counts.archived);
+
   return (
     <div className="space-y-4">
       <NewLayoutModal open={newLayoutOpen} onOpenChange={setNewLayoutOpen} />
@@ -133,13 +143,26 @@ function LayoutsPageBody({
             </Button>
           </div>
 
-          <TabToggle
-            view={view}
-            onViewChange={onViewChange}
-            listedCount={counts.listed}
-            archivedCount={counts.archived}
-            disabled={isFetching && isPlaceholderData}
-          />
+          <div className="flex">
+            <Button
+              size="sm"
+              variant={view === 'listed' ? 'primary' : 'outline'}
+              className="rounded-r-none"
+              disabled={tabsDisabled}
+              onClick={() => onViewChange('listed')}
+            >
+              {__('Active list', 'yaycheckout')} (<CountValue flashing={listedFlashing} value={counts.listed} />)
+            </Button>
+            <Button
+              size="sm"
+              variant={view === 'archived' ? 'primary' : 'outline'}
+              className="rounded-l-none"
+              disabled={tabsDisabled}
+              onClick={() => onViewChange('archived')}
+            >
+              {__('Archive', 'yaycheckout')} (<CountValue flashing={archivedFlashing} value={counts.archived} />)
+            </Button>
+          </div>
 
           {isPlaceholderData ? (
             <TableRowsSkeleton />
@@ -227,56 +250,6 @@ function LayoutsPageBody({
     </div>
   );
 }
-
-/**
- * Pure — reads counts/disabled from props rather than its own query (a
- * per-tab query caused the stale-snapshot bug useMonotonicCounts explains).
- * Memoized on these primitive props so LayoutsPageBody re-rendering for
- * unrelated reasons (the editor dialog, the New layout modal) doesn't
- * re-run this button JSX too.
- */
-const TabToggle = memo(function TabToggle({
-  view,
-  onViewChange,
-  listedCount,
-  archivedCount,
-  disabled,
-}: {
-  view: View;
-  onViewChange: (view: View) => void;
-  listedCount: number;
-  archivedCount: number;
-  disabled: boolean;
-}) {
-  // Only flashes a skeleton when a count's actual value changes (e.g. after
-  // creating a draft) — a background revalidation that resolves to the same
-  // number, or a plain tab switch, never touches it. See useFlashOnChange.
-  const listedFlashing = useFlashOnChange(listedCount);
-  const archivedFlashing = useFlashOnChange(archivedCount);
-
-  return (
-    <div className="flex">
-      <Button
-        size="sm"
-        variant={view === 'listed' ? 'primary' : 'outline'}
-        className="rounded-r-none"
-        disabled={disabled}
-        onClick={() => onViewChange('listed')}
-      >
-        {__('Active list', 'yaycheckout')} (<CountValue flashing={listedFlashing} value={listedCount} />)
-      </Button>
-      <Button
-        size="sm"
-        variant={view === 'archived' ? 'primary' : 'outline'}
-        className="rounded-l-none"
-        disabled={disabled}
-        onClick={() => onViewChange('archived')}
-      >
-        {__('Archive', 'yaycheckout')} (<CountValue flashing={archivedFlashing} value={archivedCount} />)
-      </Button>
-    </div>
-  );
-});
 
 function CountValue({ flashing, value }: { flashing: boolean; value: number }) {
   return flashing ? <Skeleton className="inline-block size-3 align-middle" /> : <>{value}</>;
