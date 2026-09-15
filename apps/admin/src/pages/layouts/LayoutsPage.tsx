@@ -40,7 +40,6 @@ export default function LayoutsPage() {
   const countsQuery = useLayoutCountsQuery();
 
   const isPending = list.isPending || countsQuery.isPending;
-  const error = list.error ?? countsQuery.error;
 
   return (
     <PageLayout
@@ -52,10 +51,16 @@ export default function LayoutsPage() {
        * on later tab switches, and `counts` has no status filter to switch
        * at all, so neither re-fires isPending after the first load. */}
       {isPending && <LayoutsPageSkeleton />}
-      {error && <p className="text-destructive text-sm">{error.message}</p>}
-      {list.data && countsQuery.data && (
+      {/* Only a counts failure replaces the page — the tabs can't render
+       * without it. A list failure is passed into the body instead, so the
+       * tabs stay mounted and the user can switch away or back to retry;
+       * placeholderData only covers `pending`, so on error `list.data` is
+       * undefined and gating the body on it would unmount the tabs too. */}
+      {countsQuery.error && <p className="text-destructive text-sm">{countsQuery.error.message}</p>}
+      {countsQuery.data && (
         <LayoutsPageBody
           data={list.data}
+          listError={list.error}
           counts={countsQuery.data}
           countsFetching={countsQuery.isFetching}
           isFetching={list.isFetching}
@@ -70,6 +75,7 @@ export default function LayoutsPage() {
 
 function LayoutsPageBody({
   data,
+  listError,
   counts,
   countsFetching,
   isFetching,
@@ -77,7 +83,8 @@ function LayoutsPageBody({
   view,
   onViewChange,
 }: {
-  data: LayoutListResponse;
+  data: LayoutListResponse | undefined;
+  listError: Error | null;
   counts: LayoutCounts;
   countsFetching: boolean;
   isFetching: boolean;
@@ -108,10 +115,6 @@ function LayoutsPageBody({
     }
   };
 
-  // Tab switch (isPlaceholderData) disables both buttons; a same-tab
-  // refetch (e.g. after creating a draft) doesn't.
-  const tabsDisabled = isFetching && isPlaceholderData;
-
   return (
     <div className="space-y-4">
       <NewLayoutModal open={newLayoutOpen} onOpenChange={setNewLayoutOpen} />
@@ -132,12 +135,14 @@ function LayoutsPageBody({
             </Button>
           </div>
 
+          {/* Never disabled during a tab switch: each status filter is its
+           * own cache entry, so clicking back mid-fetch shows the previous
+           * tab instantly and the abandoned fetch just settles into cache. */}
           <div className="flex">
             <Button
               size="sm"
               variant={view === 'listed' ? 'primary' : 'outline'}
               className="rounded-r-none"
-              disabled={tabsDisabled}
               onClick={() => onViewChange('listed')}
             >
               {__('Active list', 'yaycheckout')} (<CountValue loading={countsFetching} value={counts.listed} />)
@@ -146,16 +151,20 @@ function LayoutsPageBody({
               size="sm"
               variant={view === 'archived' ? 'primary' : 'outline'}
               className="rounded-l-none"
-              disabled={tabsDisabled}
               onClick={() => onViewChange('archived')}
             >
               {__('Archive', 'yaycheckout')} (<CountValue loading={countsFetching} value={counts.archived} />)
             </Button>
           </div>
 
+          {/* A failed background refetch keeps the previous `data`, so the
+           * table still renders under the error; a failed first fetch of a
+           * tab has no data and shows only the error, tabs still usable. */}
+          {listError && <p className="text-destructive text-sm">{listError.message}</p>}
+
           {isPlaceholderData ? (
             <TableRowsSkeleton />
-          ) : data.items.length === 0 ? (
+          ) : !data ? null : data.items.length === 0 ? (
             <Card>
               <Empty>
                 <EmptyHeader>
