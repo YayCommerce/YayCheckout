@@ -1,13 +1,6 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import {
-  createLayoutDraft,
-  getLayout,
-  getLayouts,
-  getLayoutsPage,
-  LayoutListParams
-} from '@/lib/api/layout.api';
-import type { Layout } from '@/lib/schema/layout.schema';
+import { createLayoutDraft, getLayout, getLayouts, LayoutListParams, publishLayout } from '@/lib/api/layout.api';
 
 export const LAYOUT_KEYS = {
   all: ['layouts'] as const,
@@ -19,18 +12,9 @@ export const LAYOUT_KEYS = {
 
 export const LAYOUT_QUERIES = {
   /**
-   * Keyed by case so switching the dropdown in LayoutsPage is a plain
-   * refetch through TanStack Query's cache, not manual state juggling.
-   */
-  page: (caseKey: string) =>
-    queryOptions({
-      queryKey: ['layouts', 'page', caseKey],
-      queryFn: () => getLayoutsPage(caseKey),
-    }),
-  /**
-   * Unlike SETTINGS_QUERIES.main this is a collection, not bootstrapped
-   * singleton state: there is no initialData on the page and no staleTime of
-   * Infinity, because layouts change from the editor as well as from here.
+   * Not a bootstrapped singleton state like SETTINGS_QUERIES.main: there is
+   * no initialData and no staleTime of Infinity, because layouts change from
+   * the editor as well as from here.
    */
   list: (params: LayoutListParams = {}) =>
     queryOptions({
@@ -47,10 +31,6 @@ export const LAYOUT_QUERIES = {
 
 /** ─── Hooks ─────────────────────────────────────────── */
 
-export function useLayoutsPageQuery(caseKey: string) {
-  return useQuery(LAYOUT_QUERIES.page(caseKey));
-}
-
 export function useLayoutsQuery(params: LayoutListParams = {}) {
   return useQuery(LAYOUT_QUERIES.list(params));
 }
@@ -60,14 +40,32 @@ export function useLayoutQuery(id: number) {
 }
 
 /**
- * skipGlobalError: the New layout modal renders every failure itself
- * (inline duplicate-name message, or a generic inline error) — a global
- * toast on top would say the same thing twice.
+ * skipGlobalError: the New layout modal renders its own inline error on
+ * failure (form.setError('root', ...)) — a global toast on top would say
+ * the same thing twice.
  */
 export function useCreateLayoutDraftMutation() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationKey: ['layouts', 'create-draft'],
     mutationFn: createLayoutDraft,
     meta: { skipGlobalError: true },
+    onSuccess: () => {
+      // Prefix match: invalidates list/detail caches together.
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+    },
+  });
+}
+
+export function usePublishLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'publish'],
+    mutationFn: publishLayout,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+    },
   });
 }

@@ -4,22 +4,14 @@ namespace YayCheckout\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Dump data for the "New layout" → "From library" step in
- * YC-02b_New_Layout_Modal.dc.html. A fixed catalogue standing in for the real
- * template library, and a fixed name collision list standing in for a real
- * uniqueness check against LayoutRepository — neither touches the database.
+ * Template catalogue for the "New layout" → "From library" step in
+ * YC-02b_New_Layout_Modal.dc.html.
  *
- * Delete this file and repoint LayoutRestController at the real catalogue and
- * LayoutRepository once they exist.
+ * Currently a fixed list standing in for a real template source — does not
+ * touch the database. Repoint templates()/catalogue() at real markup once it
+ * exists.
  */
-class LayoutTemplatesDumpData {
-
-    /**
-     * Names LayoutRestController::create_draft() treats as already taken, so
-     * the yc02-16 "duplicate name rejected" state is reachable without a
-     * database. Matches the wireframe's own example name.
-     */
-    private const EXISTING_NAMES = [ 'Default checkout' ];
+class LayoutTemplateCatalogue {
 
     /**
      * The first N templates a Free/Lite licence may pick — the rest render
@@ -42,19 +34,17 @@ class LayoutTemplatesDumpData {
     }
 
     /**
-     * @param  string $name Name the merchant typed into the New layout modal.
-     * @return string|null  Suggested unique name, or null when $name is free to use.
+     * @param  string $slug
+     * @return bool Whether $slug is one of the catalogue's templates.
      */
-    public static function check_duplicate_name( string $name ): ?string {
-        $trimmed = trim( $name );
-
-        foreach ( self::EXISTING_NAMES as $existing ) {
-            if ( 0 === strcasecmp( $trimmed, $existing ) ) {
-                return $existing . ' 2';
+    public static function has_template( string $slug ): bool {
+        foreach ( self::catalogue() as $template ) {
+            if ( $template['slug'] === $slug ) {
+                return true;
             }
         }
 
-        return null;
+        return false;
     }
 
     /**

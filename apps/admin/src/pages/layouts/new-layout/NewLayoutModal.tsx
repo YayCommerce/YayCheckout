@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { HTTPError } from 'ky';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
@@ -22,34 +21,18 @@ const DEFAULT_VALUES: NewLayoutFormValues = {
 };
 
 /**
- * Returns the server's suggested replacement name for a 409 duplicate-name
- * response, or null for anything else (including a 409 with a non-JSON body
- * — a proxy error page, a truncated response — which falls through to the
- * generic error path instead of throwing).
- */
-async function readSuggestedName(error: unknown): Promise<string | null> {
-  if (!(error instanceof HTTPError) || error.response.status !== 409) {
-    return null;
-  }
-
-  try {
-    const body = await error.response.clone().json();
-    return body?.data?.suggestedName ?? null;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Orchestrates the two-step "New layout" flow from
  * YC-02b_New_Layout_Modal.dc.html: choosing Blank vs From library (state 9),
  * then — for From library — picking a template (states 10/10b). One
  * react-hook-form instance backs both steps; Create draft calls the real
  * POST /layouts endpoint — see LayoutRestController::create_draft().
+ *
+ * No duplicate-name handling: layout titles may repeat, same as WordPress
+ * Pages — the post_name slug is what WordPress deduplicates, automatically,
+ * once the layout is first published.
  */
 export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [step, setStep] = useState<Step>('source');
-  const [suggestedName, setSuggestedName] = useState<string | null>(null);
 
   const form = useForm<NewLayoutFormValues>({
     resolver: zodResolver(newLayoutFormSchema),
@@ -66,7 +49,6 @@ export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenCh
   useEffect(() => {
     if (open) {
       setStep('source');
-      setSuggestedName(null);
       form.reset(DEFAULT_VALUES);
     }
   }, [open]);
@@ -90,16 +72,7 @@ export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenCh
     setStep('source');
   }
 
-  function useSuggestedName() {
-    if (!suggestedName) return;
-    form.setValue('name', suggestedName);
-    form.clearErrors('name');
-    setSuggestedName(null);
-  }
-
   async function onValid(values: NewLayoutFormValues) {
-    setSuggestedName(null);
-
     const payload =
       values.source === 'blank'
         ? { name: values.name, source: 'blank' as const }
@@ -107,17 +80,9 @@ export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenCh
 
     try {
       const created = await mutation.mutateAsync(payload);
-      toast.success(`${__('Layout draft created.', 'yaycheckout')} "${created.name}"`);
+      toast.success(`${__('Layout draft created.', 'yaycheckout')} "${created.title}"`);
       handleOpenChange(false);
     } catch (error) {
-      const suggested = await readSuggestedName(error);
-
-      if (suggested) {
-        form.setError('name', { type: 'server', message: await getErrorMsg(error) });
-        setSuggestedName(suggested);
-        return;
-      }
-
       form.setError('root', { type: 'server', message: await getErrorMsg(error) });
     }
   }
@@ -144,8 +109,6 @@ export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenCh
           <form onSubmit={form.handleSubmit(onValid)}>
             {step === 'source' ? (
               <SourceStep
-                suggestedName={suggestedName}
-                onUseSuggestedName={useSuggestedName}
                 onChooseLibrary={() => setStep('library')}
                 onCancel={() => handleOpenChange(false)}
                 isPending={mutation.isPending}
@@ -153,8 +116,6 @@ export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenCh
               />
             ) : (
               <LibraryStep
-                suggestedName={suggestedName}
-                onUseSuggestedName={useSuggestedName}
                 onBack={backToSource}
                 onCancel={() => handleOpenChange(false)}
                 isPending={mutation.isPending}

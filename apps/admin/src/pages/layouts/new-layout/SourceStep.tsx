@@ -12,37 +12,24 @@ import { NameField } from '@/pages/layouts/new-layout/NameField';
 /** yc02-9: choosing Blank vs From library. Picking "From library" advances
  * straight to the library step — it never submits from here. */
 export function SourceStep({
-  suggestedName,
-  onUseSuggestedName,
   onChooseLibrary,
   onCancel,
   isPending,
   rootError,
 }: {
-  suggestedName: string | null;
-  onUseSuggestedName: () => void;
   onChooseLibrary: () => void;
   onCancel: () => void;
   isPending: boolean;
   rootError?: string;
 }) {
-  const {
-    control,
-    formState: { errors },
-  } = useFormContext<NewLayoutFormValues>();
+  const { control } = useFormContext<NewLayoutFormValues>();
   const name = useWatch<NewLayoutFormValues, 'name'>({ control, name: 'name' });
 
-  /*
-   * suggestedName alone isn't enough: it only clears on submit or on using
-   * the suggestion, but react-hook-form's own revalidation clears the field
-   * error as soon as the user edits the name. Requiring both keeps the
-   * button disabled exactly while the duplicate error is still showing.
-   */
-  const disabled = '' === (name ?? '').trim() || (!!suggestedName && !!errors.name);
+  const disabled = '' === (name ?? '').trim();
 
   return (
     <div className="flex flex-col gap-5">
-      <NameField suggestedName={suggestedName} onUseSuggestedName={onUseSuggestedName} />
+      <NameField />
 
       <FormField
         name="source"

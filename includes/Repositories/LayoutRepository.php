@@ -189,6 +189,40 @@ class LayoutRepository {
     }
 
     /**
+     * Create a new blank layout draft.
+     *
+     * The content defaults to the locked root block rather than an empty
+     * string: LayoutPostType's template_lock 'all' requires it, so a blank
+     * default keeps a brand-new draft a working checkout immediately.
+     *
+     * @param  string $title
+     * @return Layout
+     * @throws \InvalidArgumentException When the Free/Pro layout limit is reached
+     *                                    or the insert fails.
+     */
+    public function create( string $title ): Layout {
+        if ( Plan::layout_limit_reached( $this->count() ) ) {
+            throw new \InvalidArgumentException( Plan::layout_limit_message() );
+        }
+
+        $new_id = wp_insert_post(
+            [
+                'post_type'    => Layout::POST_TYPE,
+                'post_status'  => LayoutPostStatus::DRAFT,
+                'post_title'   => $title,
+                'post_content' => '<!-- wp:yaycheckout/checkout /-->',
+            ],
+            true
+        );
+
+        if ( is_wp_error( $new_id ) ) {
+            throw new \InvalidArgumentException( $new_id->get_error_message() );
+        }
+
+        return $this->find( (int) $new_id );
+    }
+
+    /**
      * Copy a layout's draft into a new layout.
      *
      * The snapshot and its derived caches are deliberately not copied: the copy

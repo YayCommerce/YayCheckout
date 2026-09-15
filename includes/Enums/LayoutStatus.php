@@ -12,6 +12,9 @@ defined( 'ABSPATH' ) || exit;
 final class LayoutStatus {
 
     public const DRAFT     = 'draft';
+    public const PENDING   = 'pending';
+    public const PRIVATE   = 'private';
+    public const SCHEDULED = 'scheduled';
     public const PUBLISHED = 'published';
     public const ARCHIVED  = 'archived';
 

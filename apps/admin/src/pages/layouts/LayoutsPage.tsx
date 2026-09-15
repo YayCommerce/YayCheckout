@@ -1,74 +1,57 @@
-import { Fragment, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
-import { useLayoutsPageQuery } from '@/lib/queries/layout.queries';
-import { LayoutRow, LayoutsPageData } from '@/lib/schema/layout.schema';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useLayoutsQuery, usePublishLayoutMutation } from '@/lib/queries/layout.queries';
+import type { LayoutListResponse, LayoutSummary } from '@/lib/schema/layout.schema';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import PageLayout from '@/pages/PageLayout';
 
-const CASES: { value: string; label: string }[] = [
-  { value: 'free-first-draft', label: 'Free — first draft' },
-  { value: 'free-one-active', label: 'Free — one active' },
-  { value: 'free-active-unpublished-changes', label: 'Free — active, unpublished changes' },
-  { value: 'free-limit-reached', label: 'Free — limit reached' },
-  { value: 'safe-mode', label: 'Safe mode on' },
-  { value: 'pro-with-rules', label: 'Pro — list with rules' },
-  { value: 'edge-no-layouts-left', label: 'Edge — no layouts left' },
-  { value: 'edge-archive-view', label: 'Edge — archive view' },
-  { value: 'edge-many-long-names', label: 'Edge — many layouts, long names' },
-  { value: 'edge-read-only-role', label: 'Edge — read-only role' },
-  { value: 'edge-all-statuses', label: 'Edge — all statuses' },
-];
+type View = 'listed' | 'archived';
 
-/**
- * Renders every non-modal state from YC-02_Layouts_Home.dc.html against dump
- * data returned by GET /layouts?case=<key> — see LayoutsDumpData.php. No
- * button here calls a real mutation; every enabled/disabled state comes from
- * the payload. Modals (assignment preview, set active, publish, archive,
- * archive-blocked, delete) are a separate ticket.
+/*
+ * Real GET /layouts — items + counts from LayoutRepository. Edit and Publish
+ * are real; Search, Health/Compatibility, Preview, Set active, "⋯", Restore
+ * and Delete for good render with the demo's exact DOM state (enabled/
+ * disabled/hidden, labels) but no onClick — each still lacks a backend
+ * action. See LayoutRowActions.
  */
 export default function LayoutsPage() {
-  const [caseKey, setCaseKey] = useState(CASES[0].value);
-  const { data, isPending, error } = useLayoutsPageQuery(caseKey);
+  const [view, setView] = useState<View>('listed');
+  const { data, isPending, error } = useLayoutsQuery({
+    status: view === 'archived' ? ['archived'] : ['draft', 'published'],
+  });
 
   return (
     <PageLayout
       heading={__('Layouts', 'yaycheckout')}
       description={__('Create, publish and activate checkout layouts.', 'yaycheckout')}
-      actions={
-        <Select value={caseKey} onValueChange={setCaseKey}>
-          <SelectTrigger className="w-64">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {CASES.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                {c.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      }
     >
       {isPending && <LayoutsPageSkeleton />}
       {error && <p className="text-destructive text-sm">{error.message}</p>}
-      {data && <LayoutsPageBody data={data} />}
+      {data && <LayoutsPageBody data={data} view={view} onViewChange={setView} />}
     </PageLayout>
   );
 }
 
-function LayoutsPageBody({ data }: { data: LayoutsPageData }) {
+function LayoutsPageBody({
+  data,
+  view,
+  onViewChange,
+}: {
+  data: LayoutListResponse;
+  view: View;
+  onViewChange: (view: View) => void;
+}) {
   const queryClient = useQueryClient();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
   const [editingLayoutId, setEditingLayoutId] = useState<number | null>(null);
@@ -96,160 +79,98 @@ function LayoutsPageBody({ data }: { data: LayoutsPageData }) {
     <div className="space-y-4">
       <NewLayoutModal open={newLayoutOpen} onOpenChange={setNewLayoutOpen} />
 
-      {data.banner && (
-        <Alert destructive={data.banner.tone === 'warning'}>
-          {data.banner.title && <AlertTitle>{data.banner.title}</AlertTitle>}
-          <AlertDescription>
-            <div className="flex items-center justify-between gap-4">
-              <span>{data.banner.message}</span>
-              {data.banner.action && (
-                <Button size="sm" variant="outline">
-                  {data.banner.action.label}
-                </Button>
-              )}
-              {data.banner.link && (
-                <Button size="sm" variant="link">
-                  {data.banner.link.label}
-                </Button>
-              )}
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
-
       <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <h2 className="flex-1 text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
-            {data.search && (
-              <Input
-                defaultValue={data.search.term}
-                placeholder={__('Search layouts…', 'yaycheckout')}
-                className="w-52"
-              />
-            )}
-            {data.planLimit.reached && <Badge variant="outline">PRO</Badge>}
-            <Button size="sm" disabled={data.planLimit.reached} onClick={() => setNewLayoutOpen(true)}>
+            {/* No search arg on GET /layouts yet — visible once the list is
+             * long enough to need it, but not wired to a query. */}
+            {data.items.length >= 10 && <Input placeholder={__('Search layouts…', 'yaycheckout')} className="w-52" />}
+            <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
               {__('Add layout', 'yaycheckout')}
             </Button>
           </div>
 
-          {data.archivedView && (
-            <div className="flex">
-              <Button size="sm" variant="outline" className="rounded-r-none">
-                {__('Active list', 'yaycheckout')} ({data.counts.active})
-              </Button>
-              <Button size="sm" variant="primary" className="rounded-l-none">
-                {__('Archive', 'yaycheckout')} ({data.counts.archived})
-              </Button>
-            </div>
-          )}
+          <div className="flex">
+            <Button
+              size="sm"
+              variant={view === 'listed' ? 'primary' : 'outline'}
+              className="rounded-r-none"
+              onClick={() => onViewChange('listed')}
+            >
+              {__('Active list', 'yaycheckout')} ({data.counts.listed})
+            </Button>
+            <Button
+              size="sm"
+              variant={view === 'archived' ? 'primary' : 'outline'}
+              className="rounded-l-none"
+              onClick={() => onViewChange('archived')}
+            >
+              {__('Archive', 'yaycheckout')} ({data.counts.archived})
+            </Button>
+          </div>
 
-          {data.planPromo && (
-            <Card className="border-dashed">
-              <div className="flex items-center gap-3">
-                <Badge variant="outline">PRO</Badge>
-                <p className="text-muted-foreground flex-1 text-sm">{data.planPromo.message}</p>
-                <Button size="sm" variant="outline">
-                  {__('Upgrade', 'yaycheckout')}
-                </Button>
-              </div>
-            </Card>
-          )}
-
-          {data.emptyState ? (
+          {data.items.length === 0 ? (
             <Card>
               <Empty>
                 <EmptyHeader>
                   <EmptyMedia variant="icon" />
-                  <EmptyTitle>{data.emptyState.title}</EmptyTitle>
-                  <EmptyDescription>{data.emptyState.message}</EmptyDescription>
+                  <EmptyTitle>
+                    {view === 'archived'
+                      ? __('Nothing archived', 'yaycheckout')
+                      : __('Nothing here yet', 'yaycheckout')}
+                  </EmptyTitle>
+                  <EmptyDescription>
+                    {view === 'archived'
+                      ? __('Layouts you archive will show up here.', 'yaycheckout')
+                      : data.counts.archived > 0
+                        ? __(
+                            'All of your layouts are archived. Restore one to bring it back to this list, or start a new draft. Archiving never deletes anything.',
+                            'yaycheckout',
+                          )
+                        : __('Create your first checkout layout to get started.', 'yaycheckout')}
+                  </EmptyDescription>
                 </EmptyHeader>
-                <EmptyContent>
-                  <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
-                    {__('Add layout', 'yaycheckout')}
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    {__('Restore from archive', 'yaycheckout')}
-                  </Button>
-                </EmptyContent>
+                {view === 'listed' && (
+                  <EmptyContent>
+                    <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
+                      {__('Add layout', 'yaycheckout')}
+                    </Button>
+                    {data.counts.archived > 0 && (
+                      <Button size="sm" variant="outline" onClick={() => onViewChange('archived')}>
+                        {__('Restore from archive', 'yaycheckout')}
+                      </Button>
+                    )}
+                  </EmptyContent>
+                )}
               </Empty>
             </Card>
           ) : (
             <Card>
-              <LayoutsTable data={data} onEditLayout={setEditingLayoutId} />
-              {(data.search || data.pagination) && (
-                <div className="mt-3 flex items-center gap-4 border-t pt-3">
-                  {data.search && (
-                    <span className="text-muted-foreground flex-1 font-mono text-xs">
-                      {__('showing', 'yaycheckout')} {data.search.totalShown} {__('of', 'yaycheckout')}{' '}
-                      {data.search.total}
-                    </span>
-                  )}
-                  {data.pagination && (
-                    <div className="flex">
-                      {Array.from({ length: data.pagination.totalPages }, (_, i) => i + 1).map((page) => (
-                        <Button
-                          key={page}
-                          size="sm"
-                          variant={page === data.pagination?.page ? 'primary' : 'outline'}
-                          className="h-7 rounded-none px-2.5 text-xs first:rounded-l-md last:rounded-r-md"
-                        >
-                          {page}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-              {data.tableFooterNote && <p className="text-muted-foreground mt-3 text-xs">{data.tableFooterNote}</p>}
+              <LayoutsTable items={data.items} view={view} onEditLayout={setEditingLayoutId} />
+              {/* No page/per_page args on GET /layouts yet — the list is
+               * already fetched whole, so page buttons are visual only. */}
+              {data.items.length >= 10 && <LayoutsPagination itemCount={data.items.length} />}
             </Card>
           )}
         </div>
 
         <aside className="space-y-4">
+          {/* No HealthChecker yet — content is a placeholder, not fabricated. */}
           <Card>
             <CardHeader>
               <CardTitle>{__('Health', 'yaycheckout')}</CardTitle>
             </CardHeader>
-            <div className="space-y-2">
-              {data.health.rows.map((row) => (
-                <div key={row.label} className="flex justify-between border-b pb-2 text-sm last:border-b-0 last:pb-0">
-                  <span className="text-muted-foreground">{row.label}</span>
-                  <span className="font-mono">{row.value}</span>
-                </div>
-              ))}
-            </div>
-            {data.health.note && <p className="text-muted-foreground mt-2 text-xs">{data.health.note}</p>}
-            {data.health.link && (
-              <Button size="sm" variant="link" className="mt-1 h-auto p-0">
-                {data.health.link.label}
-              </Button>
-            )}
+            <p className="text-muted-foreground text-sm">{__('Not available yet.', 'yaycheckout')}</p>
           </Card>
 
+          {/* No compatibility scan yet — same treatment as Health. */}
           <Card>
             <CardHeader>
               <CardTitle>{__('Compatibility', 'yaycheckout')}</CardTitle>
             </CardHeader>
-            <p className={data.compatibility.tone === 'warning' ? 'text-destructive text-sm' : 'text-sm'}>
-              {data.compatibility.summary}
-            </p>
-            {data.compatibility.link && (
-              <Button size="sm" variant="link" className="mt-1 h-auto p-0">
-                {data.compatibility.link.label}
-              </Button>
-            )}
+            <p className="text-muted-foreground text-sm">{__('Not available yet.', 'yaycheckout')}</p>
           </Card>
-
-          {data.asideNote && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">{data.asideNote.title}</CardTitle>
-              </CardHeader>
-              <p className="text-muted-foreground text-sm">{data.asideNote.message}</p>
-            </Card>
-          )}
         </aside>
       </div>
 
@@ -274,191 +195,190 @@ function LayoutsPageBody({ data }: { data: LayoutsPageData }) {
   );
 }
 
-function LayoutsTable({ data, onEditLayout }: { data: LayoutsPageData; onEditLayout: (id: number) => void }) {
+const PAGE_SIZE = 10;
+
+/** Visual only — see the "No page/per_page args" note above its call site. */
+function LayoutsPagination({ itemCount }: { itemCount: number }) {
+  const totalPages = Math.ceil(itemCount / PAGE_SIZE);
+
+  return (
+    <div className="mt-3 flex items-center gap-4 border-t pt-3">
+      <div className="flex">
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <Button
+            key={page}
+            size="sm"
+            variant={page === 1 ? 'primary' : 'outline'}
+            className="h-7 rounded-none px-2.5 text-xs first:rounded-l-md last:rounded-r-md"
+          >
+            {page}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LayoutsTable({
+  items,
+  view,
+  onEditLayout,
+}: {
+  items: LayoutSummary[];
+  view: View;
+  onEditLayout: (id: number) => void;
+}) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>{__('Name', 'yaycheckout')}</TableHead>
-          {data.table.showAssignmentColumn && <TableHead>{__('Assignment', 'yaycheckout')}</TableHead>}
+          {/*
+           * Assignment column — Pro only, design shows it when a layout has
+           * an assignment rule (role/country/campaign). No real data yet:
+           * Layout::$rules (META_RULES) exists but is "Unused in 1.x" —
+           * there's no rule-authoring UI or evaluation engine. Uncomment
+           * once LayoutSummary carries a real `assignment` field.
+           * <TableHead>{__('Assignment', 'yaycheckout')}</TableHead>
+           */}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
-          {data.table.showArchivedColumns ? (
-            <TableHead>{__('Archived', 'yaycheckout')}</TableHead>
-          ) : (
-            <TableHead>{__('Active', 'yaycheckout')}</TableHead>
-          )}
+          <TableHead>{__('Active', 'yaycheckout')}</TableHead>
           <TableHead>{__('Last published', 'yaycheckout')}</TableHead>
           <TableHead>{__('Actions', 'yaycheckout')}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.layouts.map((row) => (
-          <Fragment key={row.id}>
-            <LayoutTableRow
-              row={row}
-              listLocked={data.listLocked}
-              showAssignmentColumn={data.table.showAssignmentColumn}
-              onEditLayout={onEditLayout}
-            />
-            {row.issue && (
-              <TableRow>
-                <TableCell
-                  colSpan={data.table.showAssignmentColumn ? 6 : 5}
-                  className="border-l-destructive bg-destructive/5 border-l-2 py-3 text-sm"
-                >
-                  <p>{row.issue.message}</p>
-                  {row.issue.lastGoodRevision && (
-                    <p className="text-muted-foreground mt-1 font-mono text-xs">
-                      {__('last good revision:', 'yaycheckout')} {row.issue.lastGoodRevision}
-                    </p>
-                  )}
-                </TableCell>
-              </TableRow>
-            )}
-          </Fragment>
+        {items.map((layout) => (
+          <LayoutTableRow key={layout.id} layout={layout} view={view} onEditLayout={onEditLayout} />
         ))}
       </TableBody>
     </Table>
   );
 }
 
-/** Green for anything live (Published*), red for a real problem or Archived, neutral otherwise. */
-function statusBadgeVariant(row: LayoutRow) {
-  if (row.statusTone === 'warning') return 'destructive';
-  if (row.statusLabel === 'Archived') return 'destructive-soft';
-  if (row.statusLabel.startsWith('Published')) return 'success';
-  return 'outline';
+function statusBadge(layout: LayoutSummary) {
+  if (layout.status === 'archived') {
+    return <Badge variant="destructive-soft">{__('Archived', 'yaycheckout')}</Badge>;
+  }
+
+  if (layout.status === 'published') {
+    return (
+      <Badge variant="success">
+        {layout.hasUnpublishedChanges
+          ? __('Published · unpublished changes', 'yaycheckout')
+          : __('Published', 'yaycheckout')}
+      </Badge>
+    );
+  }
+
+  return <Badge variant="outline">{__('Draft', 'yaycheckout')}</Badge>;
 }
 
 function LayoutTableRow({
-  row,
-  listLocked,
-  showAssignmentColumn,
+  layout,
+  view,
   onEditLayout,
 }: {
-  row: LayoutRow;
-  listLocked: boolean;
-  showAssignmentColumn: boolean;
+  layout: LayoutSummary;
+  view: View;
   onEditLayout: (id: number) => void;
 }) {
-  const dimmed = row.dimmed && !row.inFlight;
-
   return (
-    <TableRow className={dimmed ? 'opacity-40' : undefined}>
-      <TableCell className="max-w-[320px] truncate font-medium" title={row.title}>
-        {row.title}
+    <TableRow>
+      <TableCell className="max-w-[320px] truncate font-medium" title={layout.title}>
+        {layout.title}
       </TableCell>
-      {showAssignmentColumn && (
-        <TableCell>
-          {row.assignment ? (
-            row.isActive ? (
-              <span className="text-muted-foreground font-mono text-xs">{row.assignment}</span>
-            ) : (
-              <Badge variant="outline">{row.assignment}</Badge>
-            )
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          )}
-        </TableCell>
-      )}
-      <TableCell>
-        {row.inFlight ? (
-          <span className="text-muted-foreground flex items-center gap-2 text-xs">
-            <span className="border-muted-foreground size-3 animate-spin rounded-full border-2 border-t-transparent" />
-            {row.inFlight}
-          </span>
-        ) : (
-          <Badge key={statusBadgeVariant(row)} variant={statusBadgeVariant(row)}>
-            {row.statusLabel}
-          </Badge>
-        )}
-      </TableCell>
+      {/*
+       * Pairs with the commented-out Assignment <TableHead> above — same
+       * "no real data yet" reason. Original design:
+       * <TableCell>
+       *   {layout.assignment ? (
+       *     layout.isActive ? (
+       *       <span className="text-muted-foreground font-mono text-xs">{layout.assignment}</span>
+       *     ) : (
+       *       <Badge variant="outline">{layout.assignment}</Badge>
+       *     )
+       *   ) : (
+       *     <span className="text-muted-foreground">—</span>
+       *   )}
+       * </TableCell>
+       */}
+      <TableCell>{statusBadge(layout)}</TableCell>
       <TableCell className="font-mono text-xs">
-        {row.archivedAt ?? (row.isActive ? <Badge variant="success">{__('Active', 'yaycheckout')}</Badge> : '—')}
+        {layout.isActive ? <Badge variant="success">{__('Active', 'yaycheckout')}</Badge> : '—'}
       </TableCell>
-      <TableCell className="font-mono text-xs">{row.lastPublishedAt ?? __('never', 'yaycheckout')}</TableCell>
+      <TableCell className="font-mono text-xs">{layout.publishedAt ?? __('never', 'yaycheckout')}</TableCell>
       <TableCell>
-        <LayoutRowActions row={row} listLocked={listLocked} onEditLayout={onEditLayout} />
+        <LayoutRowActions layout={layout} view={view} onEditLayout={onEditLayout} />
       </TableCell>
     </TableRow>
   );
 }
 
+/**
+ * Edit and Publish are real; Publish is enabled by unpublished changes alone,
+ * regardless of active state. The rest (Preview, Set active, "⋯", Restore,
+ * Delete for good) match the demo's DOM state but have no onClick yet.
+ */
 function LayoutRowActions({
-  row,
-  listLocked,
+  layout,
+  view,
   onEditLayout,
 }: {
-  row: LayoutRow;
-  listLocked: boolean;
+  layout: LayoutSummary;
+  view: View;
   onEditLayout: (id: number) => void;
 }) {
-  if (listLocked) {
+  const publishMutation = usePublishLayoutMutation();
+
+  if (view === 'archived') {
     return (
       <div className="flex items-center gap-2">
-        <Button size="sm" variant="outline" disabled>
-          {__('Edit', 'yaycheckout')}
-        </Button>
-        <Button size="sm" variant="outline" disabled>
+        <Button size="sm" variant="outline">
           {__('Preview', 'yaycheckout')}
+        </Button>
+        <Button size="sm" variant="outline">
+          {__('Restore', 'yaycheckout')}
+        </Button>
+        <Button size="sm" variant="destructive-outline">
+          {__('Delete for good', 'yaycheckout')}
         </Button>
       </div>
     );
   }
 
-  const { actions } = row;
+  const canPublish = layout.hasUnpublishedChanges;
+
+  function onPublish() {
+    publishMutation.mutate(layout.id, {
+      onSuccess: () => toast.success(__('Layout published.', 'yaycheckout')),
+    });
+  }
 
   return (
     <div className="flex items-center gap-2">
-      {actions.fixInEditor && (
-        <Button size="sm" onClick={() => onEditLayout(row.id)}>
-          {__('Fix in editor', 'yaycheckout')}
+      <Button size="sm" variant="outline" onClick={() => onEditLayout(layout.id)}>
+        {__('Edit', 'yaycheckout')}
+      </Button>
+      <Button size="sm" variant="outline">
+        {canPublish ? __('Preview draft', 'yaycheckout') : __('Preview', 'yaycheckout')}
+      </Button>
+      {canPublish && (
+        <Button size="sm" onClick={onPublish} disabled={publishMutation.isPending}>
+          {publishMutation.isPending ? __('Publishing…', 'yaycheckout') : __('Publish', 'yaycheckout')}
         </Button>
       )}
-      {actions.restoreLastGood && (
-        <Button size="sm" variant="outline">
-          {__('Restore last good', 'yaycheckout')}
-        </Button>
-      )}
-      {actions.restore && (
-        <Button size="sm" variant="outline">
-          {__('Restore', 'yaycheckout')}
-        </Button>
-      )}
-      {actions.edit !== 'hidden' && (
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={actions.edit === 'disabled'}
-          onClick={() => onEditLayout(row.id)}
-        >
-          {__('Edit', 'yaycheckout')}
-        </Button>
-      )}
-      {actions.preview !== 'hidden' && (
-        <Button size="sm" variant="outline" disabled={actions.preview === 'disabled'}>
-          {actions.preview === 'previewDraft' ? __('Preview draft', 'yaycheckout') : __('Preview', 'yaycheckout')}
-        </Button>
-      )}
-      {actions.publish && <Button size="sm">{__('Publish', 'yaycheckout')}</Button>}
-      {!row.isActive && actions.setActive !== 'hidden' && (
-        <Button size="sm" variant="outline" disabled={actions.setActive === 'disabled'}>
+      {!layout.isActive && (
+        <Button size="sm" variant="outline" disabled={layout.status !== 'published'}>
           {__('Set active', 'yaycheckout')}
         </Button>
       )}
-      {row.isActive && !actions.publish && (
+      {layout.isActive && !canPublish && (
         <span className="text-muted-foreground text-xs">{__('active', 'yaycheckout')}</span>
       )}
-      {actions.delete && (
-        <Button size="sm" variant="destructive-outline">
-          {__('Delete for good', 'yaycheckout')}
-        </Button>
-      )}
-      {actions.moreMenu && (
-        <Button size="sm" variant="outline">
-          ⋯
-        </Button>
-      )}
+      <Button size="sm" variant="outline">
+        ⋯
+      </Button>
     </div>
   );
 }
@@ -476,11 +396,7 @@ function LayoutsPageSkeleton() {
       <aside className="space-y-4">
         <Card>
           <Skeleton className="h-4 w-24" />
-          <div className="mt-3 space-y-2">
-            <Skeleton className="h-3 w-full" />
-            <Skeleton className="h-3 w-full" />
-            <Skeleton className="h-3 w-2/3" />
-          </div>
+          <Skeleton className="mt-3 h-3 w-1/2" />
         </Card>
         <Card>
           <Skeleton className="h-4 w-24" />

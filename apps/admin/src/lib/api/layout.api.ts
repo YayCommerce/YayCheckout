@@ -1,15 +1,5 @@
 import { api } from '@/lib/api/api';
-import {
-  createLayoutDraftResponseSchema,
-  LayoutStatus,
-  layoutListResponseSchema,
-  layoutSchema,
-  layoutsPageDataSchema,
-} from '@/lib/schema/layout.schema';
-
-export async function getLayoutsPage(caseKey: string) {
-  return layoutsPageDataSchema.parse(await api.get('layouts', { searchParams: { case: caseKey } }).json());
-}
+import { LayoutStatus, layoutListResponseSchema, layoutSchema } from '@/lib/schema/layout.schema';
 
 export type LayoutListParams = {
   status?: LayoutStatus[];
@@ -27,9 +17,13 @@ export async function getLayout(id: number) {
   return layoutSchema.parse(await api.get(`layouts/${id}`).json());
 }
 
+export async function publishLayout(id: number) {
+  return layoutSchema.parse(await api.post(`layouts/${id}/publish`).json());
+}
+
 export type CreateLayoutDraftPayload =
   { name: string; source: 'blank' } | { name: string; source: 'library'; templateSlug: string };
 
 export async function createLayoutDraft(payload: CreateLayoutDraftPayload) {
-  return createLayoutDraftResponseSchema.parse(await api.post('layouts', { json: payload }).json());
+  return layoutSchema.parse(await api.post('layouts', { json: payload }).json());
 }

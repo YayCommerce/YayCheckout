@@ -18,25 +18,17 @@ const ALL_CATEGORIES = __('All', 'yaycheckout');
 /** yc02-10 (Free, mostly locked) / yc02-10b (Pro, full grid + filter chips):
  * category chips are derived from the fetched template list, not hardcoded. */
 export function LibraryStep({
-  suggestedName,
-  onUseSuggestedName,
   onBack,
   onCancel,
   isPending,
   rootError,
 }: {
-  suggestedName: string | null;
-  onUseSuggestedName: () => void;
   onBack: () => void;
   onCancel: () => void;
   isPending: boolean;
   rootError?: string;
 }) {
-  const {
-    control,
-    setValue,
-    formState: { errors },
-  } = useFormContext<NewLayoutFormValues>();
+  const { control, setValue } = useFormContext<NewLayoutFormValues>();
   const name = useWatch<NewLayoutFormValues, 'name'>({ control, name: 'name' });
   const selectedSlug = useWatch<NewLayoutFormValues, 'templateSlug'>({ control, name: 'templateSlug' });
 
@@ -75,17 +67,11 @@ export function LibraryStep({
     }
   }, [data, templates, selectedSlug]);
 
-  /*
-   * suggestedName alone isn't enough: it only clears on submit or on using
-   * the suggestion, but react-hook-form's own revalidation clears the field
-   * error as soon as the user edits the name. Requiring both keeps the
-   * button disabled exactly while the duplicate error is still showing.
-   */
-  const disabled = '' === (name ?? '').trim() || !selectedSlug || (!!suggestedName && !!errors.name);
+  const disabled = '' === (name ?? '').trim() || !selectedSlug;
 
   return (
     <div className="flex flex-col gap-5">
-      <NameField suggestedName={suggestedName} onUseSuggestedName={onUseSuggestedName} />
+      <NameField />
 
       <div className="flex flex-col gap-3 rounded-md border p-4">
         <div className="flex items-center justify-between gap-2">
