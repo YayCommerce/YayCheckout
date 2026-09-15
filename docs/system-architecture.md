@@ -70,6 +70,16 @@ Both check `manage_woocommerce`. Core does so because the post type maps every c
 
 **A published layout's `post_status` is `private`, never `publish`.** `WP_REST_Posts_Controller::check_read_permission()` returns true for any post whose status is `publish` without consulting the post type's capabilities — so publishing would have made layout markup readable through `wp/v2` by anonymous visitors, bypassing the capability map entirely. `private` routes the read through `read_post`.
 
+Full map, owned by `LayoutPostStatus`:
+
+| `LayoutStatus` | `post_status` |
+|---|---|
+| `draft` | `draft` |
+| `pending` | `pending` |
+| `scheduled` | `future` |
+| `published` | `private` |
+| `archived` | `trash` |
+
 ## Blocks are dynamic
 
 `save()` returns `null`; all markup comes from `render.php`. Published layouts are stored as markup and re-rendered on every request, so a renamed attribute is absorbed by a default in the render callback. Static save output would instead need a block deprecation for every attribute rename, and existing merchant content would show as invalid.

@@ -13,6 +13,12 @@ final class LayoutPostStatus {
 
     public const DRAFT = 'draft';
 
+    /** Awaiting review before it can be published. Core's own status. */
+    public const PENDING = 'pending';
+
+    /** Publishes itself at post_date. Core's 'future' status. */
+    public const SCHEDULED = 'future';
+
     /**
      * A layout that has been published at least once.
      *
@@ -39,6 +45,8 @@ final class LayoutPostStatus {
     public static function for_status( string $status ): ?string {
         $map = [
             LayoutStatus::DRAFT     => self::DRAFT,
+            LayoutStatus::PENDING   => self::PENDING,
+            LayoutStatus::SCHEDULED => self::SCHEDULED,
             LayoutStatus::PUBLISHED => self::PUBLISHED,
             LayoutStatus::ARCHIVED  => self::ARCHIVED,
         ];

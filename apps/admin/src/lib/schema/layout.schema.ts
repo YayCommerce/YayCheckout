@@ -26,7 +26,11 @@ export const layoutDerivedSchema = z.preprocess(
   }),
 );
 
-export const layoutStatusSchema = z.enum(['draft', 'published', 'archived']);
+/** Mirrors LayoutStatus::all() in PHP. */
+export const layoutStatusSchema = z.enum(['draft', 'pending', 'scheduled', 'published', 'archived']);
+
+/** Mirrors LayoutStatus::listed(): the Active tab, everything not archived. */
+export const LISTED_LAYOUT_STATUSES = layoutStatusSchema.options.filter((status) => status !== 'archived');
 
 const layoutSummaryFields = {
   id: z.number(),
@@ -35,6 +39,8 @@ const layoutSummaryFields = {
   hasUnpublishedChanges: z.boolean(),
   isActive: z.boolean(),
   publishedAt: z.string().nullable(),
+  /** GMT publish date while status is 'scheduled'; null otherwise. */
+  scheduledAt: z.string().nullable(),
 };
 
 /**

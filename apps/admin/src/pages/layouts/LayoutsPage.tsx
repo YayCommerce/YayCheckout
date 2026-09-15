@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import {
   LAYOUT_KEYS,
@@ -9,7 +9,12 @@ import {
   useLayoutsQuery,
   usePublishLayoutMutation,
 } from '@/lib/queries/layout.queries';
-import type { LayoutCounts, LayoutListResponse, LayoutSummary } from '@/lib/schema/layout.schema';
+import {
+  LISTED_LAYOUT_STATUSES,
+  type LayoutCounts,
+  type LayoutListResponse,
+  type LayoutSummary,
+} from '@/lib/schema/layout.schema';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,7 +40,7 @@ type View = 'listed' | 'archived';
 export default function LayoutsPage() {
   const [view, setView] = useState<View>('listed');
   const list = useLayoutsQuery({
-    status: view === 'archived' ? ['archived'] : ['draft', 'published'],
+    status: view === 'archived' ? ['archived'] : LISTED_LAYOUT_STATUSES,
   });
   const countsQuery = useLayoutCountsQuery();
 
@@ -346,6 +351,24 @@ function statusBadge(layout: LayoutSummary) {
           : __('Published', 'yaycheckout')}
       </Badge>
     );
+  }
+
+  if (layout.status === 'scheduled') {
+    return (
+      <Badge variant="outline">
+        {layout.scheduledAt
+          ? sprintf(
+              /* translators: %s: scheduled publish date */
+              __('Scheduled · %s', 'yaycheckout'),
+              layout.scheduledAt,
+            )
+          : __('Scheduled', 'yaycheckout')}
+      </Badge>
+    );
+  }
+
+  if (layout.status === 'pending') {
+    return <Badge variant="outline">{__('Pending review', 'yaycheckout')}</Badge>;
   }
 
   return <Badge variant="outline">{__('Draft', 'yaycheckout')}</Badge>;
