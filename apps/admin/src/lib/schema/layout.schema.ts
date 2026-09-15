@@ -64,6 +64,9 @@ export const layoutSchema = z
 export const layoutListResponseSchema = z
   .object({
     items: z.array(layoutSummarySchema),
+    total: z.number(),
+    page: z.number(),
+    perPage: z.number(),
   })
   .strict();
 
