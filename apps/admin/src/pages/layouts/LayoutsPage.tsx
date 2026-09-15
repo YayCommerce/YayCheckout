@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
@@ -57,6 +57,7 @@ export default function LayoutsPage() {
         <LayoutsPageBody
           data={list.data}
           counts={countsQuery.data}
+          countsFetching={countsQuery.isFetching}
           isFetching={list.isFetching}
           isPlaceholderData={list.isPlaceholderData}
           view={view}
@@ -70,6 +71,7 @@ export default function LayoutsPage() {
 function LayoutsPageBody({
   data,
   counts,
+  countsFetching,
   isFetching,
   isPlaceholderData,
   view,
@@ -77,6 +79,7 @@ function LayoutsPageBody({
 }: {
   data: LayoutListResponse;
   counts: LayoutCounts;
+  countsFetching: boolean;
   isFetching: boolean;
   isPlaceholderData: boolean;
   view: View;
@@ -109,12 +112,6 @@ function LayoutsPageBody({
   // refetch (e.g. after creating a draft) doesn't.
   const tabsDisabled = isFetching && isPlaceholderData;
 
-  // Only flashes a skeleton when a count's actual value changes (e.g. after
-  // creating a draft) — a background revalidation that resolves to the same
-  // number, or a plain tab switch, never touches it. See useFlashOnChange.
-  const listedFlashing = useFlashOnChange(counts.listed);
-  const archivedFlashing = useFlashOnChange(counts.archived);
-
   return (
     <div className="space-y-4">
       <NewLayoutModal open={newLayoutOpen} onOpenChange={setNewLayoutOpen} />
@@ -143,7 +140,7 @@ function LayoutsPageBody({
               disabled={tabsDisabled}
               onClick={() => onViewChange('listed')}
             >
-              {__('Active list', 'yaycheckout')} (<CountValue flashing={listedFlashing} value={counts.listed} />)
+              {__('Active list', 'yaycheckout')} (<CountValue loading={countsFetching} value={counts.listed} />)
             </Button>
             <Button
               size="sm"
@@ -152,7 +149,7 @@ function LayoutsPageBody({
               disabled={tabsDisabled}
               onClick={() => onViewChange('archived')}
             >
-              {__('Archive', 'yaycheckout')} (<CountValue flashing={archivedFlashing} value={counts.archived} />)
+              {__('Archive', 'yaycheckout')} (<CountValue loading={countsFetching} value={counts.archived} />)
             </Button>
           </div>
 
@@ -243,36 +240,23 @@ function LayoutsPageBody({
   );
 }
 
-function CountValue({ flashing, value }: { flashing: boolean; value: number }) {
-  return flashing ? <Skeleton className="inline-block size-3 align-middle" /> : <>{value}</>;
-}
-
 /**
- * True for FLASH_MS right after `value` changes from what it was last time;
- * false otherwise, including on mount and when a refetch resolves to the
- * same number. LayoutRestController::get_layouts() always returns both
- * counts regardless of the `status` filter, so a plain tab switch or a
- * same-value revalidation never trips this — only a genuine change does
- * (e.g. counts.listed after creating a draft).
+ * Shows a skeleton while the counts query is refetching (create draft, close
+ * editor, stale-on-focus) so a slow site never displays a stale number as if
+ * it were current. The skeleton's fade-in is delayed in CSS: a refetch that
+ * finishes within that window unmounts it before it ever becomes visible, so
+ * fast sites don't flicker — no timers or state, just `animation-delay`.
  */
-const FLASH_MS = 400;
+function CountValue({ loading, value }: { loading: boolean; value: number }) {
+  if (!loading) {
+    return <>{value}</>;
+  }
 
-function useFlashOnChange(value: number): boolean {
-  const [flashing, setFlashing] = useState(false);
-  const previous = useRef(value);
-
-  useEffect(() => {
-    if (previous.current === value) {
-      return;
-    }
-
-    previous.current = value;
-    setFlashing(true);
-    const timeout = setTimeout(() => setFlashing(false), FLASH_MS);
-    return () => clearTimeout(timeout);
-  }, [value]);
-
-  return flashing;
+  return (
+    <span className="animate-in fade-in fill-mode-backwards inline-block align-middle [animation-delay:150ms]">
+      <Skeleton className="size-3" />
+    </span>
+  );
 }
 
 const PAGE_SIZE = 10;
