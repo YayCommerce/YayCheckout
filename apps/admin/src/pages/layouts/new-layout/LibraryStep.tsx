@@ -61,11 +61,17 @@ export function LibraryStep({
     }
   }, [data]);
 
-  useEffect(() => {
-    if (data && selectedSlug && !templates.some((t) => t.slug === selectedSlug)) {
+  // Clearing a selection the new filter would hide happens here, in the
+  // click, rather than in an effect watching `templates` — the filter only
+  // ever changes from this handler, so there's nothing else to react to.
+  function onCategoryChange(category: string) {
+    setCategoryFilter(category);
+
+    const selected = data?.templates.find((t) => t.slug === selectedSlug);
+    if (selected && category !== ALL_CATEGORIES && selected.category !== category) {
       selectTemplate(null);
     }
-  }, [data, templates, selectedSlug]);
+  }
 
   const disabled = '' === (name ?? '').trim() || !selectedSlug;
 
@@ -94,7 +100,7 @@ export function LibraryStep({
               <button
                 key={category}
                 type="button"
-                onClick={() => setCategoryFilter(category)}
+                onClick={() => onCategoryChange(category)}
                 className={cn(
                   'rounded-full border px-3 py-1 text-xs',
                   category === categoryFilter
