@@ -59,12 +59,12 @@ export default function LayoutsPage() {
       {countsQuery.error && <p className="text-destructive text-sm">{countsQuery.error.message}</p>}
       {countsQuery.data && (
         <LayoutsPageBody
-          data={list.data}
+          listData={list.data}
           listError={list.error}
+          listFetching={list.isFetching}
+          listIsPlaceholder={list.isPlaceholderData}
           counts={countsQuery.data}
           countsFetching={countsQuery.isFetching}
-          isFetching={list.isFetching}
-          isPlaceholderData={list.isPlaceholderData}
           view={view}
           onViewChange={setView}
         />
@@ -74,21 +74,23 @@ export default function LayoutsPage() {
 }
 
 function LayoutsPageBody({
-  data,
+  listData,
   listError,
+  listFetching,
+  listIsPlaceholder,
   counts,
   countsFetching,
-  isFetching,
-  isPlaceholderData,
   view,
   onViewChange,
 }: {
-  data: LayoutListResponse | undefined;
+  listData: LayoutListResponse | undefined;
   listError: Error | null;
+  /** Background refetch of the current tab — real rows stay, table dims. */
+  listFetching: boolean;
+  /** listData still belongs to the previous tab while this tab's first fetch is in flight. */
+  listIsPlaceholder: boolean;
   counts: LayoutCounts;
   countsFetching: boolean;
-  isFetching: boolean;
-  isPlaceholderData: boolean;
   view: View;
   onViewChange: (view: View) => void;
 }) {
@@ -125,7 +127,7 @@ function LayoutsPageBody({
             <h2 className="flex-1 text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
             {/* No search arg on GET /layouts yet — visible once the list is
              * long enough to need it, but not wired to a query. Sourced from
-             * counts, not data.items.length, so this row doesn't depend on
+             * counts, not listData.items.length, so this row doesn't depend on
              * the list query at all. */}
             {(view === 'archived' ? counts.archived : counts.listed) >= 10 && (
               <Input placeholder={__('Search layouts…', 'yaycheckout')} className="w-52" />
@@ -157,14 +159,16 @@ function LayoutsPageBody({
             </Button>
           </div>
 
-          {/* A failed background refetch keeps the previous `data`, so the
-           * table still renders under the error; a failed first fetch of a
-           * tab has no data and shows only the error, tabs still usable. */}
+          {/* A failed background refetch keeps the previous `listData`, so
+           * the table still renders under the error; a failed first fetch of
+           * a tab has no data and shows only the error, tabs still usable. */}
           {listError && <p className="text-destructive text-sm">{listError.message}</p>}
 
-          {isPlaceholderData ? (
+          {/* Placeholder rows are the other tab's layouts — never render them
+           * under this tab's heading, show the skeleton until its own arrive. */}
+          {listIsPlaceholder ? (
             <TableRowsSkeleton />
-          ) : !data ? null : data.items.length === 0 ? (
+          ) : !listData ? null : listData.items.length === 0 ? (
             <Card>
               <Empty>
                 <EmptyHeader>
@@ -200,11 +204,11 @@ function LayoutsPageBody({
               </Empty>
             </Card>
           ) : (
-            <Card className={cn('transition-opacity', isFetching && 'opacity-60')}>
-              <LayoutsTable items={data.items} view={view} onEditLayout={setEditingLayoutId} />
+            <Card className={cn('transition-opacity', listFetching && 'opacity-60')}>
+              <LayoutsTable items={listData.items} view={view} onEditLayout={setEditingLayoutId} />
               {/* No page/per_page args on GET /layouts yet — the list is
                * already fetched whole, so page buttons are visual only. */}
-              {data.items.length >= 10 && <LayoutsPagination itemCount={data.items.length} />}
+              {listData.items.length >= 10 && <LayoutsPagination itemCount={listData.items.length} />}
             </Card>
           )}
         </div>
@@ -458,7 +462,7 @@ function LayoutRowActions({
 
 /** Three loading rows in a Card — the same shape whether the whole page is
  * loading for the first time or one tab's table is waiting on its own fetch
- * (see the isPlaceholderData branch in LayoutsPageBody). */
+ * (see the listIsPlaceholder branch in LayoutsPageBody). */
 function TableRowsSkeleton() {
   return (
     <Card>
