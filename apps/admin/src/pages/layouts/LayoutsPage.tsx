@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Search } from 'lucide-react';
 import { useDebounceFn } from 'rooks';
@@ -67,6 +67,8 @@ export default function LayoutsPage() {
 
   function onViewChange(next: View) {
     setView(next);
+    setSearchInput('');
+    setSearch('');
     setPageIndex(0);
   }
 
@@ -77,6 +79,17 @@ export default function LayoutsPage() {
     perPage: PAGE_SIZE,
   });
   const countsQuery = useLayoutCountsQuery();
+
+  // The tab's total can shrink from outside the SPA (another admin editing
+  // the same layouts) between fetches. Step back rather than leave the user
+  // stuck on a page that now returns zero items but reads as "nothing here".
+  useEffect(() => {
+    if (!list.data || list.isPlaceholderData) return;
+
+    const pageCount = Math.max(1, Math.ceil(list.data.total / PAGE_SIZE));
+
+    if (pageIndex >= pageCount) setPageIndex(pageCount - 1);
+  }, [list.data, list.isPlaceholderData, pageIndex]);
 
   const isPending = list.isPending || countsQuery.isPending;
 
