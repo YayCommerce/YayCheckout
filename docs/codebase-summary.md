@@ -24,7 +24,7 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | Directory | Holds | Notes |
 |---|---|---|
 | `PostTypes/` | `LayoutPostType` | registration only: caps, template, revision policy |
-| `Models/` | `Layout` | dumb entity; **every storage key constant lives here**; zero WP calls |
+| `Models/` | `Layout`, `LayoutQuery` | `Layout` is dumb entity; **every storage key constant lives here**; zero WP calls. `LayoutQuery` is immutable value object for filtered/paginated queries. |
 | `Repositories/` | `LayoutRepository` | all layout storage access; owns the publish sequence |
 | `Services/` | `DerivedCacheBuilder` | pure markup → derived caches |
 | `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController` | routing, validation, permissions |
@@ -46,13 +46,17 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 
 ### REST
 
-| Route | Purpose |
-|---|---|
-| `wp/v2/yay_checkout_layout` | core: draft save, autosave, revisions |
-| `GET yaycheckout/v1/layouts` | list |
-| `POST yaycheckout/v1/layouts/{id}/publish` | draft → snapshot |
-| `GET/POST yaycheckout/v1/settings` | settings |
-| `POST yaycheckout/v1/mark-reviewed` | review prompt |
+| Route | Method | Purpose |
+|---|---|---|
+| `wp/v2/yay_checkout_layout` | GET/POST | core: draft save, autosave, revisions |
+| `yaycheckout/v1/layouts` | GET | list one page; args: `status` (comma list), `search` (string), `page` (int ≥1) |
+| `yaycheckout/v1/layouts` | POST | create draft; args: `name`, `source` (blank\|library), `templateSlug` |
+| `yaycheckout/v1/layouts/counts` | GET | per-tab totals: `listed` (everything not archived) and `archived` |
+| `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
+| `yaycheckout/v1/layouts/{id}` | GET | single layout |
+| `yaycheckout/v1/layouts/{id}/publish` | POST | draft → snapshot |
+| `yaycheckout/v1/settings` | GET/POST | settings |
+| `yaycheckout/v1/mark-reviewed` | POST | review prompt |
 
 All require `manage_woocommerce`.
 
@@ -114,4 +118,8 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 
 ## Not yet built
 
-No tests. No `Renderer/` — the plugin does not yet hook WooCommerce's checkout, so published layouts are stored and rendered by `do_blocks()` but not wired into the storefront checkout. See the end of `system-architecture.md` for the full deferred list.
+No tests. No `Renderer/` — the plugin does not yet hook WooCommerce's checkout, so published layouts are stored and rendered by `do_blocks()` but not wired into the storefront checkout.
+
+`Controllers/LayoutsDumpData` and `Controllers/LayoutTemplateCatalogue` are placeholder controllers: fixed data, no database. `LayoutsDumpData` renders every non-modal Layouts screen state for UI review; delete it once health metrics and assignment rules exist. `LayoutTemplateCatalogue` is a fixed library; repoint it at a real template source once it exists. Row actions (Health, Preview, Set active, Restore, Delete) render but have no backend yet.
+
+See the end of `system-architecture.md` for the full deferred list.
