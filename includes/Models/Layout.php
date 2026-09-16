@@ -126,19 +126,21 @@ class Layout {
      */
     public function to_summary_array(): array {
         return [
-            'id'                    => $this->id,
-            'title'                 => $this->title,
-            'status'                => $this->status(),
-            'hasUnpublishedChanges' => $this->has_unpublished_changes(),
-            'isActive'              => $this->is_active,
-            'publishedAt'           => $this->published_at,
-            'scheduledAt'           => $this->scheduled_at,
+            'id'                      => $this->id,
+            'title'                   => $this->title,
+            'status'                  => $this->status(),
+            'has_unpublished_changes' => $this->has_unpublished_changes(),
+            'is_active'               => $this->is_active,
+            'published_at'            => $this->published_at,
+            'scheduled_at'            => $this->scheduled_at,
         ];
     }
 
     /**
-     * Serialized shape for REST. camelCase so the TypeScript side stays
-     * idiomatic; the zod schema in apps/admin mirrors this exactly.
+     * Serialized shape for REST. Keys are snake_case like every payload field
+     * (see docs/code-standards.md, REST); the wire zod schema in apps/admin
+     * mirrors this exactly and lib/api/layout.api.ts converts it to the
+     * camelCase `Layout` type the rest of the SPA uses.
      *
      * @return array
      */
@@ -146,10 +148,10 @@ class Layout {
         return array_merge(
             $this->to_summary_array(),
             [
-                'draft'             => $this->draft,
-                'snapshot'          => $this->snapshot,
-                'publishedRevision' => $this->published_revision,
-                'derived'           => $this->derived,
+                'draft'              => $this->draft,
+                'snapshot'           => $this->snapshot,
+                'published_revision' => $this->published_revision,
+                'derived'            => $this->derived,
             ]
         );
     }

@@ -96,9 +96,9 @@ class LayoutRepository {
         }
 
         return [
-            'items' => $layouts,
-            'total' => (int) $wp_query->found_posts,
-            'totalPages' => $wp_query->max_num_pages
+            'items'       => $layouts,
+            'total'       => (int) $wp_query->found_posts,
+            'total_pages' => (int) $wp_query->max_num_pages,
         ];
     }
 

@@ -195,7 +195,7 @@ function LayoutsPageBody({
   // behind a skeleton. Page and search fetches keep the controls live.
   const controlsDisabled = listIsOtherTabPlaceholder;
 
-  // >=10 threshold per the dump-data design (case edge-many-long-names).
+  // >=10 threshold per the Layouts screen design (many long names).
   const showListControls = (view === 'archived' ? counts.archived : counts.listed) >= MIN_ITEMS_FOR_LIST_CONTROLS;
   // Floor at 1: totalPages is 0 for an empty result.
   const pageCount = Math.max(1, listData?.totalPages ?? 1);

@@ -1,5 +1,5 @@
-import { __ } from '@wordpress/i18n';
 import { z } from 'zod';
+import { __ } from '@wordpress/i18n';
 
 /**
  * PHP encodes an empty associative array as `[]`, not `{}`, so any map that
@@ -32,15 +32,23 @@ export const layoutStatusSchema = z.enum(['draft', 'pending', 'scheduled', 'publ
 /** Mirrors LayoutStatus::listed(): the Active tab, everything not archived. */
 export const LISTED_LAYOUT_STATUSES = layoutStatusSchema.options.filter((status) => status !== 'archived');
 
-const layoutSummaryFields = {
+/*
+ * Wire schemas below assert the PHP shape exactly — snake_case, like every
+ * payload field (docs/code-standards.md, REST). The SPA never touches them
+ * directly: lib/api/layout.api.ts parses with these and converts to the
+ * camelCase app types at the bottom of this file, so the conversion lives in
+ * one place and no component knows how PHP spells a key.
+ */
+
+const layoutSummaryWireFields = {
   id: z.number(),
   title: z.string(),
   status: layoutStatusSchema,
-  hasUnpublishedChanges: z.boolean(),
-  isActive: z.boolean(),
-  publishedAt: z.string().nullable(),
+  has_unpublished_changes: z.boolean(),
+  is_active: z.boolean(),
+  published_at: z.string().nullable(),
   /** GMT publish date while status is 'scheduled'; null otherwise. */
-  scheduledAt: z.string().nullable(),
+  scheduled_at: z.string().nullable(),
 };
 
 /**
@@ -50,29 +58,29 @@ const layoutSummaryFields = {
  * of failing, and a rename on the PHP side would surface as a blank field in
  * the UI rather than an error.
  */
-export const layoutSummarySchema = z.object(layoutSummaryFields).strict();
+export const layoutSummaryWireSchema = z.object(layoutSummaryWireFields).strict();
 
 /**
  * Full layout. Mirrors Layout::to_array().
  */
-export const layoutSchema = z
+export const layoutWireSchema = z
   .object({
-    ...layoutSummaryFields,
+    ...layoutSummaryWireFields,
     /** Working draft. Never rendered to customers. */
     draft: z.string(),
     /** Published snapshot. Empty until the layout has been published. */
     snapshot: z.string(),
-    publishedRevision: z.number().nullable(),
+    published_revision: z.number().nullable(),
     derived: layoutDerivedSchema,
   })
   .strict();
 
-export const layoutListResponseSchema = z
+export const layoutListResponseWireSchema = z
   .object({
-    items: z.array(layoutSummarySchema),
+    items: z.array(layoutSummaryWireSchema),
     total: z.number(),
     page: z.number(),
-    totalPages: z.number(),
+    total_pages: z.number(),
   })
   .strict();
 
@@ -92,10 +100,39 @@ export const layoutCountsResponseSchema = z
   .strict();
 
 export type LayoutStatus = z.infer<typeof layoutStatusSchema>;
-export type LayoutSummary = z.infer<typeof layoutSummarySchema>;
-export type Layout = z.infer<typeof layoutSchema>;
-export type LayoutListResponse = z.infer<typeof layoutListResponseSchema>;
 export type LayoutCounts = z.infer<typeof layoutCountsSchema>;
+
+export type LayoutSummaryWire = z.infer<typeof layoutSummaryWireSchema>;
+export type LayoutWire = z.infer<typeof layoutWireSchema>;
+export type LayoutListResponseWire = z.infer<typeof layoutListResponseWireSchema>;
+
+/** App-side shapes — camelCase. Built from the wire types by `layout.api.ts`; this is what pages and hooks consume. */
+export type LayoutSummary = {
+  id: number;
+  title: string;
+  status: LayoutStatus;
+  hasUnpublishedChanges: boolean;
+  isActive: boolean;
+  publishedAt: string | null;
+  /** GMT publish date while status is 'scheduled'; null otherwise. */
+  scheduledAt: string | null;
+};
+
+export type Layout = LayoutSummary & {
+  /** Working draft. Never rendered to customers. */
+  draft: string;
+  /** Published snapshot. Empty until the layout has been published. */
+  snapshot: string;
+  publishedRevision: number | null;
+  derived: z.infer<typeof layoutDerivedSchema>;
+};
+
+export type LayoutListResponse = {
+  items: LayoutSummary[];
+  total: number;
+  page: number;
+  totalPages: number;
+};
 
 /**
  * Client-side validation for the New layout form. Mirrors the server rule in
@@ -104,10 +141,7 @@ export type LayoutCounts = z.infer<typeof layoutCountsSchema>;
  */
 export const newLayoutFormSchema = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .min(1, __('Name is required', 'yaycheckout')),
+    name: z.string().trim().min(1, __('Name is required', 'yaycheckout')),
     source: z.enum(['blank', 'library']),
     templateSlug: z.string().nullable(),
   })

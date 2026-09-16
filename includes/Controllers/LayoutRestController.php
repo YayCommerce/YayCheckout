@@ -49,7 +49,7 @@ class LayoutRestController extends BaseRestController {
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'create_draft' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => [
-                        'name'         => [
+                        'name'          => [
                             'required'          => true,
                             'type'              => 'string',
                             'sanitize_callback' => 'sanitize_text_field',
@@ -57,7 +57,7 @@ class LayoutRestController extends BaseRestController {
                                 return '' !== trim( (string) $value );
                             },
                         ],
-                        'source'       => [
+                        'source'        => [
                             'required'          => true,
                             'type'              => 'string',
                             'sanitize_callback' => 'sanitize_key',
@@ -65,7 +65,7 @@ class LayoutRestController extends BaseRestController {
                                 return in_array( $value, [ 'blank', 'library' ], true );
                             },
                         ],
-                        'templateSlug' => [
+                        'template_slug' => [
                             'required'          => false,
                             'type'              => 'string',
                             'sanitize_callback' => 'sanitize_key',
@@ -154,21 +154,12 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * With `case`, returns dump data for the Layouts screen review dropdown.
-     * Without it, returns the real collection: filtered summaries.
+     * The collection: filtered, searched, paginated summaries.
      *
      * @param  \WP_REST_Request $request
      * @return array|\WP_Error
      */
     public function get_layouts( \WP_REST_Request $request ) {
-        $case_param = $request->get_param( 'case' );
-
-        if ( $case_param ) {
-            $case_key = (string) $case_param;
-
-            return array_merge( [ 'case' => $case_key ], LayoutsDumpData::get( $case_key ) );
-        }
-
         try {
             $query = LayoutQuery::of_statuses( (array) $request->get_param( 'status' ) )
                 ->with_search( (string) $request->get_param( 'search' ) )
@@ -180,15 +171,15 @@ class LayoutRestController extends BaseRestController {
         $result = $this->layouts->query( $query );
 
         return [
-            'items'      => array_map(
+            'items'       => array_map(
                 static function ( Layout $layout ) {
                     return $layout->to_summary_array();
                 },
                 $result['items']
             ),
-            'total'      => $result['total'],
-            'page'       => $query->page(),
-            'totalPages' => $result['totalPages'],
+            'total'       => $result['total'],
+            'page'        => $query->page(),
+            'total_pages' => $result['total_pages'],
         ];
     }
 
@@ -255,7 +246,7 @@ class LayoutRestController extends BaseRestController {
     public function create_draft( \WP_REST_Request $request ) {
         $name          = (string) $request->get_param( 'name' );
         $source        = (string) $request->get_param( 'source' );
-        $template_slug = (string) $request->get_param( 'templateSlug' );
+        $template_slug = (string) $request->get_param( 'template_slug' );
 
         if ( 'library' === $source && ! LayoutTemplateCatalogue::has_template( $template_slug ) ) {
             return $this->error_invalid_arguments( __( 'Unknown template.', 'yaycheckout' ) );
@@ -304,9 +295,6 @@ class LayoutRestController extends BaseRestController {
      * `?status=draft,published` (a string) would 400. Accept string or array;
      * LayoutQuery checks the LayoutStatus vocabulary.
      *
-     * `case` is the dump-data switch used by LayoutsPage while the screen is
-     * reviewed against YC-02. Real callers omit it.
-     *
      * `search`/`page` drive LayoutQuery::with_search()/with_pagination() — the
      * list is fetched one page at a time, matched against the whole store.
      * Page size is fixed server-side (LayoutQuery::PER_PAGE), not a param.
@@ -315,11 +303,6 @@ class LayoutRestController extends BaseRestController {
      */
     private function list_args(): array {
         return [
-            'case'   => [
-                'required'          => false,
-                'type'              => 'string',
-                'sanitize_callback' => 'sanitize_key',
-            ],
             'status' => [
                 'default'           => LayoutStatus::listed(),
                 'validate_callback' => static function ( $value ) {

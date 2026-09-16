@@ -120,6 +120,6 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 
 No tests. No `Renderer/` — the plugin does not yet hook WooCommerce's checkout, so published layouts are stored and rendered by `do_blocks()` but not wired into the storefront checkout.
 
-`Controllers/LayoutsDumpData` and `Controllers/LayoutTemplateCatalogue` are placeholder controllers: fixed data, no database. `LayoutsDumpData` renders every non-modal Layouts screen state for UI review; delete it once health metrics and assignment rules exist. `LayoutTemplateCatalogue` is a fixed library; repoint it at a real template source once it exists. Row actions (Health, Preview, Set active, Restore, Delete) render but have no backend yet.
+`Controllers/LayoutTemplateCatalogue` is a placeholder controller: a fixed template library, no database — repoint it at a real template source once one exists. Row actions (Health, Preview, Set active, Restore, Delete) render but have no backend yet.
 
 See the end of `system-architecture.md` for the full deferred list.

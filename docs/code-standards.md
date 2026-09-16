@@ -93,7 +93,9 @@ Three files per feature, matching the existing `settings.*` set:
 - `src/lib/api/{feature}.api.ts` — ky calls, one function per endpoint
 - `src/lib/queries/{feature}.queries.ts` — `queryOptions` object + hooks
 
-PHP `to_array()` emits camelCase so the TS side stays idiomatic. The zod schema is the only place the PHP shape is asserted in JS — keep it exact.
+**Wire vs app naming — same rule as every YayCommerce plugin.** Everything on the wire is `snake_case`: query params follow WP REST core spelling (`page`, `search`, `status`), request bodies (`template_slug`) and every payload field PHP `to_array()` / `to_summary_array()` emits (`has_unpublished_changes`, `published_at`, `total_pages`). Everything TS-side is camelCase (`Layout`, `LayoutListResponse`, form values, hook params). The two meet in exactly one place: `src/lib/api/{feature}.api.ts`, which parses responses against the strict `*WireSchema` in `lib/schema/` and converts to the app types (`summaryFromWire`, `layoutFromWire`), and converts request bodies on the way out. Pages and hooks never see a snake_case key; PHP never learns how the SPA spells one. The `wp_localize_script` bootstrap (`LocalizeHelper`, `window.yayCheckoutMeta`) is the one exception: its top-level keys follow the YayCommerce house camelCase shape (`wpMeta.siteUrl`).
+
+The zod wire schema is the only place the PHP shape is asserted in JS — keep it exact and `.strict()`, so a renamed PHP key fails loudly instead of parsing to `undefined`.
 
 ### Where components live
 
