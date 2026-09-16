@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Search } from 'lucide-react';
 import { useDebounceFn } from 'rooks';
@@ -49,6 +49,10 @@ export default function LayoutsPage() {
   const [pageIndex, setPageIndex] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  // Mirrors searchInput for the trailing debounce callback, which closes over
+  // a stale render. rooks' useDebounceFn exposes no cancel, so the callback
+  // checks this instead when a tab switch has cleared the input under it.
+  const searchInputRef = useRef('');
 
   // Reset to page 1 in the same state update as the filter change, not a
   // separate effect — an effect would commit a render with the new search
@@ -56,16 +60,20 @@ export default function LayoutsPage() {
   // page that may not exist under the new filter before a second effect-
   // driven fetch corrects it.
   const [applySearch] = useDebounceFn((value: string) => {
+    if (value !== searchInputRef.current) return;
+
     setSearch(value);
     setPageIndex(0);
   }, 300);
 
   function onSearchInputChange(value: string) {
+    searchInputRef.current = value;
     setSearchInput(value);
     applySearch(value);
   }
 
   function onViewChange(next: View) {
+    searchInputRef.current = '';
     setView(next);
     setSearchInput('');
     setSearch('');
@@ -79,14 +87,14 @@ export default function LayoutsPage() {
   });
   const countsQuery = useLayoutCountsQuery();
 
-  // The tab's total can shrink from outside the SPA (another admin editing
-  // the same layouts) between fetches. Step back rather than leave the user
-  // stuck on a page that now returns zero items but reads as "nothing here".
-  useEffect(() => {
-    if (!list.data || list.isPlaceholderData) return;
+  // View whose rows are on screen. Lags `view` only while the new tab's first
+  // fetch is in flight — the one case keepPreviousData's placeholder rows
+  // belong to a different tab and must not render under this tab's heading.
+  // A same-tab page/search change keeps its placeholder rows and dims them.
+  const [settledView, setSettledView] = useState(view);
+  if (list.data && !list.isPlaceholderData && settledView !== view) setSettledView(view);
 
-    if (pageIndex >= list.data.totalPages) setPageIndex(list.data.totalPages - 1);
-  }, [list.data, list.isPlaceholderData, pageIndex]);
+  const listIsOtherTabPlaceholder = list.isPlaceholderData && settledView !== view;
 
   const isPending = list.isPending || countsQuery.isPending;
 
@@ -95,11 +103,12 @@ export default function LayoutsPage() {
       heading={__('Layouts', 'yaycheckout')}
       description={__('Create, publish and activate checkout layouts.', 'yaycheckout')}
     >
-      {/* isPending only fires once, before either query has ever loaded —
+      {/* isPending only fires once, before both queries have loaded —
        * `list`'s placeholderData: keepPreviousData flips isFetching instead
        * on later tab/page/search changes, and `counts` has no status filter
        * to switch at all, so neither re-fires isPending after the first
-       * load. */}
+       * load. The body is gated on it too: counts usually lands first, and
+       * without the gate the real tabs would render under the skeleton. */}
       {isPending && <LayoutsPageSkeleton />}
       {/* Only a counts failure replaces the page — the tabs can't render
        * without it. A list failure is passed into the body instead, so the
@@ -107,12 +116,12 @@ export default function LayoutsPage() {
        * placeholderData only covers `pending`, so on error `list.data` is
        * undefined and gating the body on it would unmount the tabs too. */}
       {countsQuery.error && <p className="text-destructive text-sm">{countsQuery.error.message}</p>}
-      {countsQuery.data && (
+      {!isPending && countsQuery.data && (
         <LayoutsPageBody
           listData={list.data}
           listError={list.error}
           listFetching={list.isFetching}
-          listIsPlaceholder={list.isPlaceholderData}
+          listIsOtherTabPlaceholder={listIsOtherTabPlaceholder}
           counts={countsQuery.data}
           countsFetching={countsQuery.isFetching}
           view={view}
@@ -132,7 +141,7 @@ function LayoutsPageBody({
   listData,
   listError,
   listFetching,
-  listIsPlaceholder,
+  listIsOtherTabPlaceholder,
   counts,
   countsFetching,
   view,
@@ -145,10 +154,10 @@ function LayoutsPageBody({
 }: {
   listData: LayoutListResponse | undefined;
   listError: Error | null;
-  /** Background refetch of the current tab — real rows stay, table dims. */
+  /** Any fetch for this tab (refetch, page, search) — rows stay on screen and dim. */
   listFetching: boolean;
   /** listData still belongs to the previous tab while this tab's first fetch is in flight. */
-  listIsPlaceholder: boolean;
+  listIsOtherTabPlaceholder: boolean;
   counts: LayoutCounts;
   countsFetching: boolean;
   view: View;
@@ -182,12 +191,14 @@ function LayoutsPageBody({
     }
   };
 
-  // Disabled only for a tab/page/search change, not a same-page refetch.
-  const controlsDisabled = listFetching && listIsPlaceholder;
+  // Disabled only while switching tabs — the one fetch whose rows are hidden
+  // behind a skeleton. Page and search fetches keep the controls live.
+  const controlsDisabled = listIsOtherTabPlaceholder;
 
   // >=10 threshold per the dump-data design (case edge-many-long-names).
   const showListControls = (view === 'archived' ? counts.archived : counts.listed) >= MIN_ITEMS_FOR_LIST_CONTROLS;
-  const pageCount = listData?.totalPages ?? 1;
+  // Floor at 1: totalPages is 0 for an empty result.
+  const pageCount = Math.max(1, listData?.totalPages ?? 1);
 
   return (
     <div className="space-y-4">
@@ -243,65 +254,71 @@ function LayoutsPageBody({
            * a tab has no data and shows only the error, tabs still usable. */}
           {listError && <p className="text-destructive text-sm">{listError.message}</p>}
 
-          {/* Placeholder rows are the other tab's layouts — never render them
-           * under this tab's heading, show the skeleton until its own arrive. */}
-          {listIsPlaceholder ? (
+          {/* Placeholder rows from the other tab never render under this
+           * tab's heading — skeleton until its own arrive. Same-tab page and
+           * search fetches keep the previous rows (or empty state) and dim
+           * them, so the pager stays mounted and nothing jumps. */}
+          {listIsOtherTabPlaceholder ? (
             <TableRowsSkeleton />
-          ) : !listData ? null : listData.items.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon" />
-                <EmptyTitle>
-                  {search
-                    ? __('No matching layouts', 'yaycheckout')
-                    : view === 'archived'
-                      ? __('Nothing archived', 'yaycheckout')
-                      : __('Nothing here yet', 'yaycheckout')}
-                </EmptyTitle>
-                <EmptyDescription>
-                  {search
-                    ? __('No layouts match your search. Try a different name.', 'yaycheckout')
-                    : view === 'archived'
-                      ? __('Layouts you archive will show up here.', 'yaycheckout')
-                      : counts.archived > 0
-                        ? __(
-                            'All of your layouts are archived. Restore one to bring it back to this list, or start a new draft. Archiving never deletes anything.',
-                            'yaycheckout',
-                          )
-                        : __('Create your first checkout layout to get started.', 'yaycheckout')}
-                </EmptyDescription>
-              </EmptyHeader>
-              {view === 'listed' && !search && (
-                <EmptyContent>
-                  <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
-                    {__('Add layout', 'yaycheckout')}
-                  </Button>
-                  {counts.archived > 0 && (
-                    <Button size="sm" variant="outline" onClick={() => onViewChange('archived')}>
-                      {__('Restore from archive', 'yaycheckout')}
-                    </Button>
-                  )}
-                </EmptyContent>
-              )}
-            </Empty>
-          ) : (
+          ) : !listData ? null : (
             <div className={cn('min-w-0 transition-opacity', listFetching && 'opacity-60')}>
-              <div className="overflow-x-auto rounded-lg border">
-                <LayoutsTable items={listData.items} view={view} onEditLayout={setEditingLayoutId} />
-              </div>
-              {showListControls && (
-                <div className="mt-3 flex items-center justify-end gap-4">
-                  <Pagination
-                    pageIndex={pageIndex}
-                    pageCount={pageCount}
-                    onPreviousPage={() => onPageIndexChange(pageIndex - 1)}
-                    onNextPage={() => onPageIndexChange(pageIndex + 1)}
-                    onPageChange={onPageIndexChange}
-                    canPreviousPage={pageIndex > 0}
-                    canNextPage={pageIndex + 1 < pageCount}
-                    disabled={controlsDisabled}
-                  />
-                </div>
+              {listData.items.length === 0 ? (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon" />
+                    <EmptyTitle>
+                      {search
+                        ? __('No matching layouts', 'yaycheckout')
+                        : view === 'archived'
+                          ? __('Nothing archived', 'yaycheckout')
+                          : __('Nothing here yet', 'yaycheckout')}
+                    </EmptyTitle>
+                    <EmptyDescription>
+                      {search
+                        ? __('No layouts match your search. Try a different name.', 'yaycheckout')
+                        : view === 'archived'
+                          ? __('Layouts you archive will show up here.', 'yaycheckout')
+                          : counts.archived > 0
+                            ? __(
+                                'All of your layouts are archived. Restore one to bring it back to this list, or start a new draft. Archiving never deletes anything.',
+                                'yaycheckout',
+                              )
+                            : __('Create your first checkout layout to get started.', 'yaycheckout')}
+                    </EmptyDescription>
+                  </EmptyHeader>
+                  {view === 'listed' && !search && (
+                    <EmptyContent>
+                      <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
+                        {__('Add layout', 'yaycheckout')}
+                      </Button>
+                      {counts.archived > 0 && (
+                        <Button size="sm" variant="outline" onClick={() => onViewChange('archived')}>
+                          {__('Restore from archive', 'yaycheckout')}
+                        </Button>
+                      )}
+                    </EmptyContent>
+                  )}
+                </Empty>
+              ) : (
+                <>
+                  <div className="overflow-x-auto rounded-lg border">
+                    <LayoutsTable items={listData.items} view={view} onEditLayout={setEditingLayoutId} />
+                  </div>
+                  {showListControls && (
+                    <div className="mt-3 flex items-center justify-end gap-4">
+                      <Pagination
+                        pageIndex={pageIndex}
+                        pageCount={pageCount}
+                        onPreviousPage={() => onPageIndexChange(pageIndex - 1)}
+                        onNextPage={() => onPageIndexChange(pageIndex + 1)}
+                        onPageChange={onPageIndexChange}
+                        canPreviousPage={pageIndex > 0}
+                        canNextPage={pageIndex + 1 < pageCount}
+                        disabled={controlsDisabled}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
