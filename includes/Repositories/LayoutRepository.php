@@ -18,6 +18,12 @@ class LayoutRepository {
     /** Free edition may hold this many layouts. */
     public const FREE_LIMIT = 3;
 
+    /**
+     * Filters the active-layout set on activation. Free replaces, Pro merges
+     * — see set_active().
+     */
+    public const FILTER_ACTIVE_IDS = 'yaycheckout_active_layout_ids';
+
     public function find( int $id ): ?Layout {
         $post = get_post( $id );
 
@@ -28,12 +34,18 @@ class LayoutRepository {
         return Layout::from_post(
             $post,
             $this->hydrate_meta( get_post_meta( $id ) ),
-            $this->active_id() === $id
+            in_array( $id, $this->active_ids(), true )
         );
     }
 
+    /**
+     * The active layout, or the last one activated when Pro holds several:
+     * set_active() appends under Pro, so the end of the set is the merchant's
+     * most recent choice and the one they expect to be serving.
+     */
     public function active(): ?Layout {
-        $id = $this->active_id();
+        $ids = $this->active_ids();
+        $id  = empty( $ids ) ? 0 : (int) end( $ids );
 
         return $id > 0 ? $this->find( $id ) : null;
     }
@@ -80,8 +92,8 @@ class LayoutRepository {
 
         remove_filter( 'posts_search', [ $this, 'match_search_to_title' ], 10 );
 
-        $active_id = $this->active_id();
-        $layouts   = [];
+        $active_ids = $this->active_ids();
+        $layouts    = [];
 
         foreach ( $wp_query->posts as $post ) {
             if ( ! $post instanceof \WP_Post ) {
@@ -91,7 +103,7 @@ class LayoutRepository {
             $layouts[] = Layout::from_post(
                 $post,
                 $this->hydrate_meta( get_post_meta( $post->ID ) ),
-                $active_id === (int) $post->ID
+                in_array( (int) $post->ID, $active_ids, true )
             );
         }
 
@@ -162,6 +174,13 @@ class LayoutRepository {
         return [
             'listed'   => $this->count( LayoutQuery::listed() ),
             'archived' => $this->count( LayoutQuery::archived() ),
+
+            /*
+             * Store-wide, unlike the per-row is_active the list returns: the
+             * admin app needs to know a layout is the last active one while
+             * looking at a single page of results.
+             */
+            'active'   => count( $this->active_ids() ),
         ];
     }
 
@@ -225,11 +244,79 @@ class LayoutRepository {
     }
 
     /**
-     * Exactly one layout is active, held as a single option, so the invariant
-     * cannot be violated by construction. Writes nothing else.
+     * Publish the layout if it has never been published, then make it active.
+     *
+     * Publishing first keeps the invariant that an active layout always has a
+     * snapshot to serve: activating a draft would otherwise put a layout live
+     * with nothing published behind it.
+     *
+     * @param  int $id
+     * @return Layout
+     * @throws \InvalidArgumentException When the layout is missing or its markup is unusable.
+     */
+    public function activate( int $id ): Layout {
+        $post = get_post( $id );
+
+        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        /*
+         * Publishing an archived layout would silently restore it from the
+         * trash, and on Free push the layout count past FREE_LIMIT. Restoring
+         * is the merchant's decision, so refuse rather than decide for them.
+         */
+        if ( LayoutPostStatus::ARCHIVED === $post->post_status ) {
+            throw new \InvalidArgumentException(
+                __( 'Restore this layout from the archive before activating it.', 'yaycheckout' )
+            );
+        }
+
+        if ( LayoutPostStatus::PUBLISHED !== $post->post_status ) {
+            $this->publish( $id );
+        }
+
+        $this->set_active( $id );
+
+        return $this->find( $id );
+    }
+
+    /**
+     * Drop a layout from the active set.
+     *
+     * Deliberately does not touch post_status: deactivating says "stop serving
+     * this to shoppers", not "unpublish". The layout keeps its snapshot and can
+     * be activated again without republishing.
+     *
+     * @param  int $id
+     * @return Layout
+     * @throws \InvalidArgumentException When the layout is missing.
+     */
+    public function deactivate( int $id ): Layout {
+        $post = get_post( $id );
+
+        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        $remaining = array_values( array_diff( $this->active_ids(), [ $id ] ) );
+
+        update_option( Layout::OPTION_ACTIVE, $remaining );
+
+        return $this->find( $id );
+    }
+
+    /**
+     * Free replaces the active set with this one layout; Pro merges it in,
+     * through FILTER_ACTIVE_IDS. The filter's default is the Free behaviour,
+     * so the Free build — where nothing hooks it — needs no branch of its own.
+     * Writes nothing else.
      */
     public function set_active( int $id ): void {
-        update_option( Layout::OPTION_ACTIVE, $id );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- FILTER_ACTIVE_IDS carries the yaycheckout_ prefix.
+        $ids = (array) apply_filters( self::FILTER_ACTIVE_IDS, [ $id ], $id, $this->active_ids() );
+
+        update_option( Layout::OPTION_ACTIVE, array_values( array_unique( array_map( 'intval', $ids ) ) ) );
     }
 
     /**
@@ -311,8 +398,28 @@ class LayoutRepository {
         return $this->find( (int) $new_id );
     }
 
-    private function active_id(): int {
-        return (int) get_option( Layout::OPTION_ACTIVE, 0 );
+    /**
+     * The active layout ids, as the current plan allows them.
+     *
+     * A bare int is accepted on read: the option held a single id before Pro
+     * could activate several, so a site that stored one keeps working.
+     *
+     * Free serves one layout at a time, but a site that ran Pro can still have
+     * several ids stored — nothing prunes the option when the Pro build is
+     * swapped out. Keep the last, which set_active() appends and active()
+     * already resolves to, so dropping back to Free leaves the storefront on
+     * the same layout instead of reviving an older one. Filtering on read
+     * rather than rewriting the option means the full set returns intact if
+     * the merchant upgrades again; the next write persists the trimmed set.
+     *
+     * @return int[]
+     */
+    private function active_ids(): array {
+        $stored = get_option( Layout::OPTION_ACTIVE, [] );
+        $ids    = is_array( $stored ) ? $stored : [ $stored ];
+        $ids    = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
+
+        return Plan::is_pro() ? $ids : array_slice( $ids, -1 );
     }
 
     /**

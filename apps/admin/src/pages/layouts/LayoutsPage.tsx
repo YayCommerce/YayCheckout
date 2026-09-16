@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Search } from 'lucide-react';
 import { useDebounceFn } from 'rooks';
@@ -7,6 +7,8 @@ import { __, sprintf } from '@wordpress/i18n';
 
 import {
   LAYOUT_KEYS,
+  useActivateLayoutMutation,
+  useDeactivateLayoutMutation,
   useLayoutCountsQuery,
   useLayoutsQuery,
   usePublishLayoutMutation,
@@ -22,13 +24,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Pagination } from '@/components/ui/pagination';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
+import { SetActiveModal } from '@/pages/layouts/SetActiveModal';
 import PageLayout from '@/pages/PageLayout';
 
 type View = 'listed' | 'archived';
@@ -39,10 +49,10 @@ const MIN_ITEMS_FOR_LIST_CONTROLS = 10;
  * GET /layouts (one page of items, matched against `search`) + GET
  * /layouts/counts (tab totals) from LayoutRepository — two separate queries
  * so counts has one cache key instead of diverging per status filter. Edit,
- * Publish, Search and pagination are real; Health/Compatibility, Preview, Set
- * active, "⋯", Restore and Delete for good render with the demo's exact DOM
- * state (enabled/disabled/hidden, labels) but no onClick — each still lacks a
- * backend action. See LayoutRowActions.
+ * Publish, Set active, Deactivate, Search and pagination are real;
+ * Health/Compatibility, Preview, Restore and Delete for good render with
+ * the demo's exact DOM state (enabled/disabled/hidden, labels) but no
+ * onClick. See LayoutRowActions.
  */
 export default function LayoutsPage() {
   const [view, setView] = useState<View>('listed');
@@ -171,6 +181,36 @@ function LayoutsPageBody({
   const queryClient = useQueryClient();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
   const [editingLayoutId, setEditingLayoutId] = useState<number | null>(null);
+  const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
+  const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
+
+  const activateMutation = useActivateLayoutMutation();
+  const deactivateMutation = useDeactivateLayoutMutation();
+
+  /*
+   * Both mutations invalidate the list and the counts rather than patching
+   * rows here: activating one layout deactivates another under Free, so the
+   * row that changed is not only the row that was clicked. The server already
+   * decides that — see LayoutRepository::set_active() — and is_active on every
+   * refetched row reflects it.
+   */
+  function onActivate(layout: LayoutSummary) {
+    activateMutation.mutate(layout.id, {
+      onSuccess: () => {
+        setActivatingLayout(null);
+        toast.success(__('Layout activated.', 'yaycheckout'));
+      },
+    });
+  }
+
+  function onDeactivate(layout: LayoutSummary) {
+    deactivateMutation.mutate(layout.id, {
+      onSuccess: () => {
+        setDeactivatingLayout(null);
+        toast.success(__('Layout deactivated.', 'yaycheckout'));
+      },
+    });
+  }
 
   const editorUrl = useMemo(() => {
     if (!editingLayoutId) {
@@ -203,6 +243,19 @@ function LayoutsPageBody({
   return (
     <div className="space-y-4">
       <NewLayoutModal open={newLayoutOpen} onOpenChange={setNewLayoutOpen} />
+      <SetActiveModal
+        layout={activatingLayout}
+        onOpenChange={(open) => !open && setActivatingLayout(null)}
+        onConfirm={onActivate}
+        isPending={activateMutation.isPending}
+      />
+      <DeactivateModal
+        layout={deactivatingLayout}
+        isLastActive={counts.active === 1}
+        onOpenChange={(open) => !open && setDeactivatingLayout(null)}
+        onConfirm={onDeactivate}
+        isPending={deactivateMutation.isPending}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
         <Card className="min-w-0">
@@ -302,7 +355,13 @@ function LayoutsPageBody({
               ) : (
                 <>
                   <div className="overflow-x-auto rounded-lg border">
-                    <LayoutsTable items={listData.items} view={view} onEditLayout={setEditingLayoutId} />
+                    <LayoutsTable
+                      items={listData.items}
+                      view={view}
+                      onEditLayout={setEditingLayoutId}
+                      onSetActive={setActivatingLayout}
+                      onDeactivate={setDeactivatingLayout}
+                    />
                   </div>
                   {showListControls && (
                     <div className="mt-3 flex items-center justify-end gap-4">
@@ -387,10 +446,14 @@ function LayoutsTable({
   items,
   view,
   onEditLayout,
+  onSetActive,
+  onDeactivate,
 }: {
   items: LayoutSummary[];
   view: View;
   onEditLayout: (id: number) => void;
+  onSetActive: (layout: LayoutSummary) => void;
+  onDeactivate: (layout: LayoutSummary) => void;
 }) {
   return (
     <Table>
@@ -413,7 +476,14 @@ function LayoutsTable({
       </TableHeader>
       <TableBody>
         {items.map((layout) => (
-          <LayoutTableRow key={layout.id} layout={layout} view={view} onEditLayout={onEditLayout} />
+          <LayoutTableRow
+            key={layout.id}
+            layout={layout}
+            view={view}
+            onEditLayout={onEditLayout}
+            onSetActive={onSetActive}
+            onDeactivate={onDeactivate}
+          />
         ))}
       </TableBody>
     </Table>
@@ -460,10 +530,14 @@ function LayoutTableRow({
   layout,
   view,
   onEditLayout,
+  onSetActive,
+  onDeactivate,
 }: {
   layout: LayoutSummary;
   view: View;
   onEditLayout: (id: number) => void;
+  onSetActive: (layout: LayoutSummary) => void;
+  onDeactivate: (layout: LayoutSummary) => void;
 }) {
   return (
     <TableRow>
@@ -491,7 +565,13 @@ function LayoutTableRow({
       </TableCell>
       <TableCell className="font-mono text-xs">{layout.publishedAt ?? __('never', 'yaycheckout')}</TableCell>
       <TableCell>
-        <LayoutRowActions layout={layout} view={view} onEditLayout={onEditLayout} />
+        <LayoutRowActions
+          layout={layout}
+          view={view}
+          onEditLayout={onEditLayout}
+          onSetActive={onSetActive}
+          onDeactivate={onDeactivate}
+        />
       </TableCell>
     </TableRow>
   );
@@ -499,17 +579,23 @@ function LayoutTableRow({
 
 /**
  * Edit and Publish are real; Publish is enabled by unpublished changes alone,
- * regardless of active state. The rest (Preview, Set active, "⋯", Restore,
+ * regardless of active state. Set active opens SetActiveModal, and the "⋯"
+ * menu's Deactivate opens DeactivateModal — disabled on a row that isn't
+ * active, since it is the menu's only item. The rest (Preview, Restore,
  * Delete for good) match the demo's DOM state but have no onClick yet.
  */
 function LayoutRowActions({
   layout,
   view,
   onEditLayout,
+  onSetActive,
+  onDeactivate,
 }: {
   layout: LayoutSummary;
   view: View;
   onEditLayout: (id: number) => void;
+  onSetActive: (layout: LayoutSummary) => void;
+  onDeactivate: (layout: LayoutSummary) => void;
 }) {
   const publishMutation = usePublishLayoutMutation();
 
@@ -551,16 +637,27 @@ function LayoutRowActions({
         </Button>
       )}
       {!layout.isActive && (
-        <Button size="sm" variant="outline" disabled={layout.status !== 'published'}>
+        <Button size="sm" variant="outline" onClick={() => onSetActive(layout)}>
           {__('Set active', 'yaycheckout')}
         </Button>
       )}
       {layout.isActive && !canPublish && (
-        <span className="text-muted-foreground text-xs">{__('active', 'yaycheckout')}</span>
+        <Button size="sm" variant="outline" disabled>
+          {__('active', 'yaycheckout')}
+        </Button>
       )}
-      <Button size="sm" variant="outline">
-        ⋯
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="sm" variant="outline">
+            ⋯
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
+            {__('Deactivate', 'yaycheckout')}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

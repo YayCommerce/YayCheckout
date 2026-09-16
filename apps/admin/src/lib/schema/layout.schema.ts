@@ -88,6 +88,7 @@ export const layoutCountsSchema = z
   .object({
     listed: z.number(),
     archived: z.number(),
+    active: z.number(),
   })
   .strict();
 
