@@ -8,6 +8,7 @@ WooCommerce checkout builder. WordPress 6.5+, PHP 7.4+, WooCommerce 10+, HPOS co
 
 ```
 yaycheckout.php          bootstrap: constants, autoloader, admin shell, duplicate guard
+uninstall.php            opt-in data removal on plugin delete (no autoloader; literals mirror Model constants)
 includes/                plugin PHP (~1,800 lines)
 apps/admin/              React settings SPA (Vite)      → assets/dist/admin/
 packages/blocks/         editor blocks (@wordpress/scripts) → assets/dist/blocks/
@@ -24,14 +25,15 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | Directory | Holds | Notes |
 |---|---|---|
 | `PostTypes/` | `LayoutPostType` | registration only: caps, template, revision policy |
-| `Models/` | `Layout`, `LayoutQuery` | `Layout` is dumb entity; **every storage key constant lives here**; zero WP calls. `LayoutQuery` is immutable value object for filtered/paginated queries. |
-| `Repositories/` | `LayoutRepository` | all layout storage access; owns the publish sequence |
+| `Models/` | `Layout`, `LayoutQuery`, `Settings` | `Layout` and `Settings` are dumb entities; **every storage key constant lives here**; zero WP calls. `Settings` also owns the settings schema and `sanitize()`. `LayoutQuery` is immutable value object for filtered/paginated queries. |
+| `Repositories/` | `LayoutRepository`, `SettingsRepository` | all storage access: layouts (owns the publish sequence), settings option + review flag |
 | `Services/` | `DerivedCacheBuilder` | pure markup → derived caches |
 | `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController` | routing, validation, permissions |
 | `Blocks/` | `BlockRegistry` | registers built block directories |
 | `Support/` | `Plan` | Free/Pro flag derived from provider boot; owns the layout limit and its message |
 | `Pro/` | `ProServiceProvider` | **absent from the Free build** |
-| `Helpers/` | `SettingsHelper`, `LocalizeHelper`, `Logger` | option wrappers, SPA bootstrap payload, WooCommerce logging |
+| `Helpers/` | `IntegrationsHelper`, `LocalizeHelper`, `Logger` | companion detection, SPA bootstrap payload, WooCommerce logging |
+| `Renderer/` | `CheckoutScripts` | storefront hooks; today only the force-enqueue escape hatch |
 | `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `Admin/`, `Register/` | wiring, asset registration, the layout cap |
 | `Utils/` | `SingletonTrait` | |
 
@@ -55,7 +57,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
 | `yaycheckout/v1/layouts/{id}/publish` | POST | draft → snapshot |
-| `yaycheckout/v1/settings` | GET/POST | settings |
+| `yaycheckout/v1/settings` | GET/POST | envelope `{ settings, updated_at }`; POST takes the settings object, strips unknown keys, 400 on a wrong type or enum value |
 | `yaycheckout/v1/mark-reviewed` | POST | review prompt |
 
 All require `manage_woocommerce`.
@@ -67,7 +69,7 @@ React 18 + TypeScript, Vite, hash router, TanStack Query, zod, Tailwind 4, shadc
 ```
 src/
   main.tsx              root: QueryClientProvider, router, dev-only devtools
-  router.tsx            hash routes; settings has :subMenu tabs
+  router.tsx            hash routes; settings has :subMenu tabs (general | integrations | advanced)
   AppLayout.tsx         chrome + Toaster
   pages/{page}/         route components; page-private components/ and hooks/ alongside
   components/
@@ -85,7 +87,7 @@ src/
   types/                window globals, module augmentation
 ```
 
-Three files per feature in `lib/` — `{feature}.schema.ts`, `.api.ts`, `.queries.ts`. `settings.*` and `layout.*` are the worked examples. `.schema.ts` holds both the strict snake_case `*WireSchema` and the camelCase app types; `.api.ts` is the only file that converts between them (see `code-standards.md`, REST).
+Three files per feature in `lib/` — `{feature}.schema.ts`, `.api.ts`, `.queries.ts`. `settings.*` and `layout.*` are the worked examples. `.schema.ts` holds both the strict snake_case `*WireSchema` and the camelCase app types; `.api.ts` is the only file that converts between them (see `code-standards.md`, REST). Companion detection (`useIntegrations()`) is read from the localize bootstrap, not a query — it cannot change without an admin reload.
 
 The API client handles WordPress specifics: `X-WP-Nonce`, pretty vs. plain permalinks, and reloading on an expired nonce.
 
@@ -118,7 +120,7 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 
 ## Not yet built
 
-No tests. No `Renderer/` — the plugin does not yet hook WooCommerce's checkout, so published layouts are stored and rendered by `do_blocks()` but not wired into the storefront checkout.
+No tests. `Renderer/` holds only the force-enqueue hook — the plugin does not yet render layouts into WooCommerce's checkout, so published layouts are stored and rendered by `do_blocks()` but not wired into the storefront. Safe mode, telemetry opt-in and preview-link lifetime are stored settings with no consumer yet; the Integrations tab detects companions but no companion declares checkout slots.
 
 `Controllers/LayoutTemplateCatalogue` is a placeholder controller: a fixed template library, no database — repoint it at a real template source once one exists. Row actions (Health, Preview, Set active, Restore, Delete) render but have no backend yet.
 

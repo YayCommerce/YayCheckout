@@ -182,4 +182,4 @@ It uses `require_once` rather than `require`. A malformed class name — a doubl
 
 ## Deliberately not built
 
-Pro assignment rules (`resolve_for_request()` returns the active layout and is the seam for them), `_yaycheckout_tokens_override`, the `yay_checkout_pattern` library CPT, import/export, the extra-field registry, `Renderer/` and the WooCommerce checkout hooks, order meta writes, self-test, telemetry, the 1.3 analytics table, and `yay_cart_layout` / `yay_thankyou_layout`.
+Pro assignment rules (`resolve_for_request()` returns the active layout and is the seam for them), `_yaycheckout_tokens_override`, the `yay_checkout_pattern` library CPT, import/export, the extra-field registry, the storefront renderer (`Renderer/` holds only the force-enqueue hook; layouts are not yet rendered into WooCommerce's checkout), order meta writes, self-test, telemetry (the opt-in is stored, nothing is sent), preview links (the lifetime is stored, no links exist), safe-mode enforcement (stored, unread until the renderer exists), the 1.3 analytics table, and `yay_cart_layout` / `yay_thankyou_layout`.

@@ -1,8 +1,6 @@
 <?php
 namespace YayCheckout\Engine;
 
-use YayCheckout\Helpers\SettingsHelper;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -47,8 +45,10 @@ class ActDeact {
     public static function deactivate() {
     }
 
+    /**
+     * Per-site activation. Nothing to do yet: settings are derived from
+     * Models\Settings::schema() on read, so there is nothing to seed.
+     */
     protected static function single_activate() {
-        // Seed default settings on first activation.
-        SettingsHelper::get_settings();
     }
 }
