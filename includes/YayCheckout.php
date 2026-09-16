@@ -21,6 +21,7 @@ class YayCheckout {
         \YayCheckout\Blocks\BlockRegistry::get_instance();
         \YayCheckout\PostTypes\LayoutPostType::get_instance();
         \YayCheckout\Engine\LayoutCapGuard::get_instance();
+        \YayCheckout\Engine\LayoutStatusGuard::get_instance();
         \YayCheckout\Engine\Admin\LayoutEditorEmbedStyles::get_instance();
     }
 
