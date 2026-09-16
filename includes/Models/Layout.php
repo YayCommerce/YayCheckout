@@ -1,6 +1,9 @@
 <?php
 namespace YayCheckout\Models;
 
+use YayCheckout\Enums\LayoutPostStatus;
+use YayCheckout\Enums\LayoutStatus;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -48,8 +51,13 @@ class Layout {
     public string $snapshot = '';
 
     public ?string $published_at    = null;
+    /** GMT post_date while post_status is 'future'; null otherwise. */
+    public ?string $scheduled_at    = null;
     public ?int $published_revision = null;
     public bool $is_active          = false;
+
+    /** WordPress post_status (LayoutPostStatus). Never serialized to REST. */
+    public string $post_status = LayoutPostStatus::DRAFT;
 
     /** Pro assignment rules. Unused in 1.x. */
     public array $rules = [];
@@ -66,10 +74,12 @@ class Layout {
     public static function from_post( \WP_Post $post, array $meta, bool $is_active ): self {
         $layout = new self();
 
-        $layout->id       = (int) $post->ID;
-        $layout->title    = (string) $post->post_title;
-        $layout->draft    = (string) $post->post_content;
-        $layout->snapshot = (string) self::meta_value( $meta, self::META_PUBLISHED, '' );
+        $layout->id           = (int) $post->ID;
+        $layout->title        = (string) $post->post_title;
+        $layout->draft        = (string) $post->post_content;
+        $layout->snapshot     = (string) self::meta_value( $meta, self::META_PUBLISHED, '' );
+        $layout->post_status  = (string) $post->post_status;
+        $layout->scheduled_at = LayoutPostStatus::SCHEDULED === $layout->post_status ? (string) $post->post_date_gmt : null;
 
         $published_at = self::meta_value( $meta, self::META_PUBLISHED_AT, null );
         $revision     = self::meta_value( $meta, self::META_PUBLISHED_REVISION, null );
@@ -84,22 +94,64 @@ class Layout {
     }
 
     /**
+     * Product status for REST (LayoutStatus). Archived wins so a published
+     * layout that has been archived keeps its snapshot (restore must return
+     * Published, not Draft) without appearing as live in the listed tab.
+     * Scheduled and Pending likewise come from post_status alone: they
+     * describe what will happen to the draft, regardless of whether an
+     * earlier snapshot is already live.
+     */
+    public function status(): string {
+        switch ( $this->post_status ) {
+            case LayoutPostStatus::ARCHIVED:
+                return LayoutStatus::ARCHIVED;
+            case LayoutPostStatus::SCHEDULED:
+                return LayoutStatus::SCHEDULED;
+            case LayoutPostStatus::PENDING:
+                return LayoutStatus::PENDING;
+        }
+
+        return $this->is_published() ? LayoutStatus::PUBLISHED : LayoutStatus::DRAFT;
+    }
+
+    public function has_unpublished_changes(): bool {
+        return $this->is_published() && $this->draft !== $this->snapshot;
+    }
+
+    /**
+     * List row. Markup stays off the collection so a Pro store with dozens of
+     * layouts does not ship every draft over the wire.
+     *
+     * @return array
+     */
+    public function to_summary_array(): array {
+        return [
+            'id'                    => $this->id,
+            'title'                 => $this->title,
+            'status'                => $this->status(),
+            'hasUnpublishedChanges' => $this->has_unpublished_changes(),
+            'isActive'              => $this->is_active,
+            'publishedAt'           => $this->published_at,
+            'scheduledAt'           => $this->scheduled_at,
+        ];
+    }
+
+    /**
      * Serialized shape for REST. camelCase so the TypeScript side stays
      * idiomatic; the zod schema in apps/admin mirrors this exactly.
      *
      * @return array
      */
     public function to_array(): array {
-        return [
-            'id'                => $this->id,
-            'title'             => $this->title,
-            'draft'             => $this->draft,
-            'snapshot'          => $this->snapshot,
-            'publishedAt'       => $this->published_at,
-            'publishedRevision' => $this->published_revision,
-            'isActive'          => $this->is_active,
-            'derived'           => $this->derived,
-        ];
+        return array_merge(
+            $this->to_summary_array(),
+            [
+                'draft'             => $this->draft,
+                'snapshot'          => $this->snapshot,
+                'publishedRevision' => $this->published_revision,
+                'derived'           => $this->derived,
+            ]
+        );
     }
 
     public function is_published(): bool {

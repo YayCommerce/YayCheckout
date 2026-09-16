@@ -1,7 +1,9 @@
 <?php
 namespace YayCheckout\Repositories;
 
+use YayCheckout\Enums\LayoutPostStatus;
 use YayCheckout\Models\Layout;
+use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Services\DerivedCacheBuilder;
 use YayCheckout\Support\Plan;
 
@@ -15,14 +17,6 @@ class LayoutRepository {
 
     /** Free edition may hold this many layouts. */
     public const FREE_LIMIT = 3;
-
-    /**
-     * Post status of a layout that has been published at least once.
-     *
-     * Not 'publish' — see publish() for why that would expose layout markup to
-     * anonymous REST callers.
-     */
-    public const STATUS_PUBLISHED = 'private';
 
     public function find( int $id ): ?Layout {
         $post = get_post( $id );
@@ -56,54 +50,75 @@ class LayoutRepository {
     }
 
     /**
-     * @param  array $args Extra WP_Query args.
+     * Every matching layout. Search and pagination are the SPA's job over this list.
+     *
      * @return Layout[]
      */
-    public function all( array $args = [] ): array {
-        $query = new \WP_Query(
-            array_merge(
-                [
-                    'post_type'      => Layout::POST_TYPE,
-                    'post_status'    => 'any',
-                    'posts_per_page' => -1,
-                    'orderby'        => 'menu_order ID',
-                    'order'          => 'ASC',
-                    'fields'         => 'ids',
-                    'no_found_rows'  => true,
-                ],
-                $args
-            )
+    public function query( LayoutQuery $query ): array {
+        $wp_query = new \WP_Query(
+            [
+                'post_type'              => Layout::POST_TYPE,
+                'post_status'            => $this->post_statuses_for( $query->statuses() ),
+                'posts_per_page'         => -1,
+                'orderby'                => 'menu_order ID',
+                'order'                  => 'ASC',
+                'update_post_meta_cache' => true,
+                'update_post_term_cache' => false,
+                'no_found_rows'          => true,
+            ]
         );
 
-        $layouts = [];
+        $active_id = $this->active_id();
+        $layouts   = [];
 
-        foreach ( $query->posts as $id ) {
-            $layout = $this->find( (int) $id );
-
-            if ( null !== $layout ) {
-                $layouts[] = $layout;
+        foreach ( $wp_query->posts as $post ) {
+            if ( ! $post instanceof \WP_Post ) {
+                continue;
             }
+
+            $layouts[] = Layout::from_post(
+                $post,
+                $this->hydrate_meta( get_post_meta( $post->ID ) ),
+                $active_id === (int) $post->ID
+            );
         }
 
         return $layouts;
     }
 
     /**
-     * Every layout the merchant can see, published or not. The Free limit
-     * counts what appears in the list, so an unpublished draft counts too.
+     * Layouts that consume a Free slot. Archived layouts do not count: the
+     * merchant can archive all three and still add a new draft (YC-02.13).
+     *
+     * Called with no argument from LayoutCapGuard and duplicate(); pass a
+     * LayoutQuery to count a filtered set.
      */
-    public function count(): int {
-        $query = new \WP_Query(
+    public function count( ?LayoutQuery $query = null ): int {
+        $query = $query ?? LayoutQuery::listed();
+
+        $wp_query = new \WP_Query(
             [
                 'post_type'      => Layout::POST_TYPE,
-                'post_status'    => 'any',
+                'post_status'    => $this->post_statuses_for( $query->statuses() ),
                 'posts_per_page' => -1,
                 'fields'         => 'ids',
                 'no_found_rows'  => true,
             ]
         );
 
-        return count( $query->posts );
+        return count( $wp_query->posts );
+    }
+
+    /**
+     * Tab totals for the whole store, independent of the current status filter.
+     *
+     * @return array{listed: int, archived: int}
+     */
+    public function counts(): array {
+        return [
+            'listed'   => $this->count( LayoutQuery::listed() ),
+            'archived' => $this->count( LayoutQuery::archived() ),
+        ];
     }
 
     /**
@@ -151,18 +166,13 @@ class LayoutRepository {
 
         /*
          * post_status records only that this layout has been published at least
-         * once. It is deliberately 'private', never 'publish':
-         * WP_REST_Posts_Controller::check_read_permission() returns true for any
-         * post whose status is 'publish' without consulting the post type's
-         * capabilities, so a published layout would be readable through
-         * wp/v2 by anonymous visitors. 'private' routes the read through
-         * read_post, which this post type maps to manage_woocommerce.
+         * once. See LayoutPostStatus::PUBLISHED for why it is never 'publish'.
          */
-        if ( self::STATUS_PUBLISHED !== $post->post_status ) {
+        if ( LayoutPostStatus::PUBLISHED !== $post->post_status ) {
             wp_update_post(
                 [
                     'ID'          => $id,
-                    'post_status' => self::STATUS_PUBLISHED,
+                    'post_status' => LayoutPostStatus::PUBLISHED,
                 ]
             );
         }
@@ -176,6 +186,40 @@ class LayoutRepository {
      */
     public function set_active( int $id ): void {
         update_option( Layout::OPTION_ACTIVE, $id );
+    }
+
+    /**
+     * Create a new blank layout draft.
+     *
+     * The content defaults to the locked root block rather than an empty
+     * string: LayoutPostType's template_lock 'all' requires it, so a blank
+     * default keeps a brand-new draft a working checkout immediately.
+     *
+     * @param  string $title
+     * @return Layout
+     * @throws \InvalidArgumentException When the Free/Pro layout limit is reached
+     *                                    or the insert fails.
+     */
+    public function create( string $title ): Layout {
+        if ( Plan::layout_limit_reached( $this->count() ) ) {
+            throw new \InvalidArgumentException( Plan::layout_limit_message() );
+        }
+
+        $new_id = wp_insert_post(
+            [
+                'post_type'    => Layout::POST_TYPE,
+                'post_status'  => LayoutPostStatus::DRAFT,
+                'post_title'   => $title,
+                'post_content' => '<!-- wp:yaycheckout/checkout /-->',
+            ],
+            true
+        );
+
+        if ( is_wp_error( $new_id ) ) {
+            throw new \InvalidArgumentException( $new_id->get_error_message() );
+        }
+
+        return $this->find( (int) $new_id );
     }
 
     /**
@@ -208,7 +252,7 @@ class LayoutRepository {
         $new_id = wp_insert_post(
             [
                 'post_type'    => Layout::POST_TYPE,
-                'post_status'  => 'draft',
+                'post_status'  => LayoutPostStatus::DRAFT,
                 /* translators: %s: source layout title. */
                 'post_title'   => sprintf( __( '%s (copy)', 'yaycheckout' ), $source->title ),
                 'post_content' => $source->draft,
@@ -248,5 +292,15 @@ class LayoutRepository {
         }
 
         return $meta;
+    }
+
+    /**
+     * @param  string[] $statuses
+     * @return string[]
+     */
+    private function post_statuses_for( array $statuses ): array {
+        $post_statuses = array_map( [ LayoutPostStatus::class, 'for_status' ], $statuses );
+
+        return array_values( array_unique( array_filter( $post_statuses ) ) );
     }
 }

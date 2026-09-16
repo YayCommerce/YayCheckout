@@ -35,7 +35,12 @@ class RegisterDev {
     public function register_all_scripts() {
         $deps = [ 'react', 'react-dom', 'wp-element', 'wp-components', 'wp-hooks', 'wp-i18n', 'wp-date' ];
 
-        wp_register_script( ScriptName::PAGE_SETTINGS, self::DEV_SERVER . '/main.tsx', $deps, YAYCHECKOUT_VERSION, true );
+        // No version arg: WordPress would append `?ver=` to the module URL, and
+        // Vite's esbuild transform parses that query string as loader options
+        // and rejects it ("Invalid loader value"). The dev server busts its own
+        // cache, so a version is not needed here.
+        // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+        wp_register_script( ScriptName::PAGE_SETTINGS, self::DEV_SERVER . '/main.tsx', $deps, null, true );
         wp_set_script_translations( ScriptName::PAGE_SETTINGS, 'yaycheckout', YAYCHECKOUT_PLUGIN_DIR . 'languages' );
     }
 }

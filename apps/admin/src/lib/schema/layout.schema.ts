@@ -1,3 +1,4 @@
+import { __ } from '@wordpress/i18n';
 import { z } from 'zod';
 
 /**
@@ -25,29 +26,91 @@ export const layoutDerivedSchema = z.preprocess(
   }),
 );
 
+/** Mirrors LayoutStatus::all() in PHP. */
+export const layoutStatusSchema = z.enum(['draft', 'pending', 'scheduled', 'published', 'archived']);
+
+/** Mirrors LayoutStatus::listed(): the Active tab, everything not archived. */
+export const LISTED_LAYOUT_STATUSES = layoutStatusSchema.options.filter((status) => status !== 'archived');
+
+const layoutSummaryFields = {
+  id: z.number(),
+  title: z.string(),
+  status: layoutStatusSchema,
+  hasUnpublishedChanges: z.boolean(),
+  isActive: z.boolean(),
+  publishedAt: z.string().nullable(),
+  /** GMT publish date while status is 'scheduled'; null otherwise. */
+  scheduledAt: z.string().nullable(),
+};
+
 /**
- * Mirrors Layout::to_array() in PHP. This is the only place the server shape is
- * asserted on the client, so it is where a drifted contract shows up.
+ * Collection row. Mirrors Layout::to_summary_array() — no markup.
  *
  * .strict() is deliberate: without it a renamed key parses to undefined instead
  * of failing, and a rename on the PHP side would surface as a blank field in
  * the UI rather than an error.
  */
+export const layoutSummarySchema = z.object(layoutSummaryFields).strict();
+
+/**
+ * Full layout. Mirrors Layout::to_array().
+ */
 export const layoutSchema = z
   .object({
-    id: z.number(),
-    title: z.string(),
+    ...layoutSummaryFields,
     /** Working draft. Never rendered to customers. */
     draft: z.string(),
     /** Published snapshot. Empty until the layout has been published. */
     snapshot: z.string(),
-    publishedAt: z.string().nullable(),
     publishedRevision: z.number().nullable(),
-    isActive: z.boolean(),
     derived: layoutDerivedSchema,
   })
   .strict();
 
-export const layoutListSchema = z.array(layoutSchema);
+export const layoutListResponseSchema = z
+  .object({
+    items: z.array(layoutSummarySchema),
+  })
+  .strict();
 
+export const layoutCountsSchema = z
+  .object({
+    listed: z.number(),
+    archived: z.number(),
+  })
+  .strict();
+
+/** GET /layouts/counts — its own endpoint so tab totals have one cache key,
+ * independent of whichever status filter the list query is on. */
+export const layoutCountsResponseSchema = z
+  .object({
+    counts: layoutCountsSchema,
+  })
+  .strict();
+
+export type LayoutStatus = z.infer<typeof layoutStatusSchema>;
+export type LayoutSummary = z.infer<typeof layoutSummarySchema>;
 export type Layout = z.infer<typeof layoutSchema>;
+export type LayoutListResponse = z.infer<typeof layoutListResponseSchema>;
+export type LayoutCounts = z.infer<typeof layoutCountsSchema>;
+
+/**
+ * Client-side validation for the New layout form. Mirrors the server rule in
+ * LayoutRestController::create_draft() (templateSlug required precisely when
+ * source is 'library') so a bad submission never reaches the network.
+ */
+export const newLayoutFormSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(1, __('Name is required', 'yaycheckout')),
+    source: z.enum(['blank', 'library']),
+    templateSlug: z.string().nullable(),
+  })
+  .refine((data) => data.source === 'blank' || !!data.templateSlug, {
+    message: __('Pick a template', 'yaycheckout'),
+    path: ['templateSlug'],
+  });
+
+export type NewLayoutFormValues = z.infer<typeof newLayoutFormSchema>;

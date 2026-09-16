@@ -56,6 +56,10 @@ if ( ! defined( 'YAYCHECKOUT_MENU_ORDER' ) ) {
     define( 'YAYCHECKOUT_MENU_ORDER', 4 );
 }
 
+if ( ! defined( 'YAYCHECKOUT_IS_DEVELOPMENT' ) ) {
+    define( 'YAYCHECKOUT_IS_DEVELOPMENT', true );
+}
+
 // Plugin classes: YayCheckout\* → includes/*.
 spl_autoload_register(
     function ( $class_name ) {

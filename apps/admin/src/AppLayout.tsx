@@ -18,8 +18,8 @@ export default function AppLayout() {
       </main>
 
       <Footer
-        currentMenu={pathSegments.length ? pathSegments : ['dashboard']}
-        onBackToDefault={() => navigate('/dashboard')}
+        currentMenu={pathSegments.length ? pathSegments : ['layouts']}
+        onBackToDefault={() => navigate('/layouts')}
       />
     </div>
   );

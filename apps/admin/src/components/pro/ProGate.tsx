@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ComponentProps, ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { __ } from '@wordpress/i18n';
 
@@ -6,8 +6,8 @@ import { isPro } from '@/lib/plan';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { YayCheckoutToolTip } from '@/components/shared/YayCheckoutToolTip';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { YayCheckoutToolTip } from '@/components/shared/YayCheckoutToolTip';
 
 const UPGRADE_URL = 'https://yaycommerce.com/yaycheckout-for-woocommerce/';
 
@@ -94,6 +94,33 @@ export function ProBadge({ className }: { className?: string }) {
       }
       content={__('Unlock this feature', 'yaycheckout')}
     />
+  );
+}
+
+/**
+ * Neutral "PRO" chip for marking a single locked item inline (a grid card,
+ * a teaser box) — no click, no tooltip. For the clickable menu/heading chip
+ * that links to the upgrade page, use ProBadge above instead.
+ */
+export function ProTag({ className }: { className?: string }) {
+  return (
+    <Badge variant="outline" className={cn('px-1.5 text-[10px]', className)}>
+      {__('PRO', 'yaycheckout')}
+    </Badge>
+  );
+}
+
+/**
+ * Plain "Upgrade" CTA button. Callers wire their own onClick (most current
+ * ones don't yet — the real upgrade flow isn't built) rather than this
+ * defaulting to UPGRADE_URL, since not every "Upgrade" button in the app
+ * should necessarily go to the same place.
+ */
+export function UpgradeButton(props: Omit<ComponentProps<typeof Button>, 'children'>) {
+  return (
+    <Button size="sm" variant="primary-outline" {...props}>
+      {__('Upgrade', 'yaycheckout')}
+    </Button>
   );
 }
 
