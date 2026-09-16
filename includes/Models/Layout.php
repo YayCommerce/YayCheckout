@@ -109,6 +109,8 @@ class Layout {
                 return LayoutStatus::SCHEDULED;
             case LayoutPostStatus::PENDING:
                 return LayoutStatus::PENDING;
+            case LayoutPostStatus::PUBLISHED:
+                return LayoutStatus::PUBLISHED;
         }
 
         return $this->is_published() ? LayoutStatus::PUBLISHED : LayoutStatus::DRAFT;

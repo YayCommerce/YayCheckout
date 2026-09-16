@@ -71,8 +71,8 @@ class LayoutRepository {
                 's'                      => $query->search(),
                 'posts_per_page'         => $query->per_page(),
                 'paged'                  => $query->page(),
-                'orderby'                => 'menu_order ID',
-                'order'                  => 'ASC',
+                'orderby'                => 'date ID',
+                'order'                  => 'DESC',
                 'update_post_meta_cache' => true,
                 'update_post_term_cache' => false,
             ]
