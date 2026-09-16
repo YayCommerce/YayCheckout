@@ -20,15 +20,14 @@ final class LayoutPostStatus {
     public const SCHEDULED = 'future';
 
     /**
-     * A layout that has been published at least once.
+     * TEMPORARY — for local testing only, do not commit.
      *
-     * Not 'publish': WP_REST_Posts_Controller::check_read_permission() returns
-     * true for any post whose status is 'publish' without consulting the post
-     * type's capabilities, so a published layout would be readable through
-     * wp/v2 by anonymous visitors. 'private' routes the read through
-     * read_post, which this post type maps to manage_woocommerce.
+     * 'publish' makes WP_REST_Posts_Controller::check_read_permission() return
+     * true for this post unconditionally (see class-wp-rest-posts-controller.php
+     * line 1791), exposing every published layout's full markup to anonymous
+     * REST reads. Revert to 'private' before any commit.
      */
-    public const PUBLISHED = 'private';
+    public const PUBLISHED = 'publish';
 
     /**
      * Archived layouts sit in WordPress trash. Note WP cron empties trash
