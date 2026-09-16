@@ -33,7 +33,7 @@ import PageLayout from '@/pages/PageLayout';
 
 type View = 'listed' | 'archived';
 
-const PAGE_SIZE = 10;
+const MIN_ITEMS_FOR_LIST_CONTROLS = 10;
 
 /*
  * GET /layouts (one page of items, matched against `search`) + GET
@@ -76,7 +76,6 @@ export default function LayoutsPage() {
     status: view === 'archived' ? ['archived'] : LISTED_LAYOUT_STATUSES,
     search,
     page: pageIndex + 1,
-    perPage: PAGE_SIZE,
   });
   const countsQuery = useLayoutCountsQuery();
 
@@ -86,9 +85,7 @@ export default function LayoutsPage() {
   useEffect(() => {
     if (!list.data || list.isPlaceholderData) return;
 
-    const pageCount = Math.max(1, Math.ceil(list.data.total / PAGE_SIZE));
-
-    if (pageIndex >= pageCount) setPageIndex(pageCount - 1);
+    if (pageIndex >= list.data.totalPages) setPageIndex(list.data.totalPages - 1);
   }, [list.data, list.isPlaceholderData, pageIndex]);
 
   const isPending = list.isPending || countsQuery.isPending;
@@ -189,8 +186,8 @@ function LayoutsPageBody({
   const controlsDisabled = listFetching && listIsPlaceholder;
 
   // >=10 threshold per the dump-data design (case edge-many-long-names).
-  const showListControls = (view === 'archived' ? counts.archived : counts.listed) >= PAGE_SIZE;
-  const pageCount = listData ? Math.max(1, Math.ceil(listData.total / PAGE_SIZE)) : 1;
+  const showListControls = (view === 'archived' ? counts.archived : counts.listed) >= MIN_ITEMS_FOR_LIST_CONTROLS;
+  const pageCount = listData?.totalPages ?? 1;
 
   return (
     <div className="space-y-4">

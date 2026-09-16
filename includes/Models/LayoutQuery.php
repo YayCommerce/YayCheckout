@@ -13,6 +13,9 @@ defined( 'ABSPATH' ) || exit;
  */
 class LayoutQuery {
 
+    /** Fixed server-side; the SPA never chooses its own page size. */
+    public const PER_PAGE = 10;
+
     /**
      * @var string[]
      */
@@ -21,8 +24,6 @@ class LayoutQuery {
     private string $search = '';
 
     private int $page = 1;
-
-    private int $per_page = 10;
 
     /**
      * @param string[] $statuses
@@ -51,10 +52,9 @@ class LayoutQuery {
         return $clone;
     }
 
-    public function with_pagination( int $page, int $per_page ): self {
-        $clone           = clone $this;
-        $clone->page     = max( 1, $page );
-        $clone->per_page = max( 1, $per_page );
+    public function with_pagination( int $page ): self {
+        $clone       = clone $this;
+        $clone->page = max( 1, $page );
 
         return $clone;
     }
@@ -99,6 +99,6 @@ class LayoutQuery {
     }
 
     public function per_page(): int {
-        return $this->per_page;
+        return self::PER_PAGE;
     }
 }

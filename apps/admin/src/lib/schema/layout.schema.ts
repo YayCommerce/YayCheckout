@@ -72,7 +72,7 @@ export const layoutListResponseSchema = z
     items: z.array(layoutSummarySchema),
     total: z.number(),
     page: z.number(),
-    perPage: z.number(),
+    totalPages: z.number(),
   })
   .strict();
 

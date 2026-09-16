@@ -172,7 +172,7 @@ class LayoutRestController extends BaseRestController {
         try {
             $query = LayoutQuery::of_statuses( (array) $request->get_param( 'status' ) )
                 ->with_search( (string) $request->get_param( 'search' ) )
-                ->with_pagination( (int) $request->get_param( 'page' ), (int) $request->get_param( 'perPage' ) );
+                ->with_pagination( (int) $request->get_param( 'page' ) );
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
@@ -180,15 +180,15 @@ class LayoutRestController extends BaseRestController {
         $result = $this->layouts->query( $query );
 
         return [
-            'items'   => array_map(
+            'items'      => array_map(
                 static function ( Layout $layout ) {
                     return $layout->to_summary_array();
                 },
                 $result['items']
             ),
-            'total'   => $result['total'],
-            'page'    => $query->page(),
-            'perPage' => $query->per_page(),
+            'total'      => $result['total'],
+            'page'       => $query->page(),
+            'totalPages' => max( 1, (int) ceil( $result['total'] / $query->per_page() ) ),
         ];
     }
 
@@ -307,19 +307,20 @@ class LayoutRestController extends BaseRestController {
      * `case` is the dump-data switch used by LayoutsPage while the screen is
      * reviewed against YC-02. Real callers omit it.
      *
-     * `search`/`page`/`perPage` drive LayoutQuery::with_search()/with_pagination() —
-     * the list is fetched one page at a time, matched against the whole store.
+     * `search`/`page` drive LayoutQuery::with_search()/with_pagination() — the
+     * list is fetched one page at a time, matched against the whole store.
+     * Page size is fixed server-side (LayoutQuery::PER_PAGE), not a param.
      *
      * @return array
      */
     private function list_args(): array {
         return [
-            'case'    => [
+            'case'   => [
                 'required'          => false,
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_key',
             ],
-            'status'  => [
+            'status' => [
                 'default'           => LayoutStatus::listed(),
                 'validate_callback' => static function ( $value ) {
                     return is_string( $value ) || is_array( $value );
@@ -332,28 +333,19 @@ class LayoutRestController extends BaseRestController {
                     return array_values( array_filter( array_map( 'sanitize_key', (array) $value ) ) );
                 },
             ],
-            'search'  => [
+            'search' => [
                 'required'          => false,
                 'type'              => 'string',
                 'default'           => '',
                 'sanitize_callback' => 'sanitize_text_field',
             ],
-            'page'    => [
+            'page'   => [
                 'required'          => false,
                 'type'              => 'integer',
                 'default'           => 1,
                 'sanitize_callback' => 'absint',
                 'validate_callback' => static function ( $value ) {
                     return is_numeric( $value ) && (int) $value >= 1;
-                },
-            ],
-            'perPage' => [
-                'required'          => false,
-                'type'              => 'integer',
-                'default'           => 10,
-                'sanitize_callback' => 'absint',
-                'validate_callback' => static function ( $value ) {
-                    return is_numeric( $value ) && (int) $value >= 1 && (int) $value <= 100;
                 },
             ],
         ];
