@@ -188,7 +188,7 @@ class LayoutRestController extends BaseRestController {
             ),
             'total'      => $result['total'],
             'page'       => $query->page(),
-            'totalPages' => max( 1, (int) ceil( $result['total'] / $query->per_page() ) ),
+            'totalPages' => $result['totalPages'],
         ];
     }
 

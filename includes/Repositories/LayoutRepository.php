@@ -98,6 +98,7 @@ class LayoutRepository {
         return [
             'items' => $layouts,
             'total' => (int) $wp_query->found_posts,
+            'totalPages' => $wp_query->max_num_pages
         ];
     }
 
