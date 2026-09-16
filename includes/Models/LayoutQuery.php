@@ -8,15 +8,22 @@ defined( 'ABSPATH' ) || exit;
 /**
  * How to ask for layouts.
  *
- * Speaks LayoutStatus only, never WordPress post_status. Search and
- * pagination belong to the admin UI over the returned list, not here.
+ * Speaks LayoutStatus only, never WordPress post_status. Carries search and
+ * pagination too — LayoutRepository::query()/count() read them directly.
  */
 class LayoutQuery {
+
+    /** Fixed server-side; the SPA never chooses its own page size. */
+    public const PER_PAGE = 10;
 
     /**
      * @var string[]
      */
     private array $statuses;
+
+    private string $search = '';
+
+    private int $page = 1;
 
     /**
      * @param string[] $statuses
@@ -36,6 +43,20 @@ class LayoutQuery {
         }
 
         $this->statuses = $unique;
+    }
+
+    public function with_search( string $search ): self {
+        $clone         = clone $this;
+        $clone->search = trim( $search );
+
+        return $clone;
+    }
+
+    public function with_pagination( int $page ): self {
+        $clone       = clone $this;
+        $clone->page = max( 1, $page );
+
+        return $clone;
     }
 
     /**
@@ -67,5 +88,17 @@ class LayoutQuery {
      */
     public function statuses(): array {
         return $this->statuses;
+    }
+
+    public function search(): string {
+        return $this->search;
+    }
+
+    public function page(): int {
+        return $this->page;
+    }
+
+    public function per_page(): int {
+        return self::PER_PAGE;
     }
 }

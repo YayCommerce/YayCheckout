@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { Plus, Search } from 'lucide-react';
+import { useDebounceFn } from 'rooks';
 import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
 
@@ -21,7 +23,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
-import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { Pagination } from '@/components/ui/pagination';
+import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
@@ -29,20 +33,60 @@ import PageLayout from '@/pages/PageLayout';
 
 type View = 'listed' | 'archived';
 
+const MIN_ITEMS_FOR_LIST_CONTROLS = 10;
+
 /*
- * GET /layouts (items) + GET /layouts/counts (tab totals) from
- * LayoutRepository — two separate queries so counts has one cache key
- * instead of diverging per status filter. Edit and Publish are real; Search,
- * Health/Compatibility, Preview, Set active, "⋯", Restore and Delete for good
- * render with the demo's exact DOM state (enabled/disabled/hidden, labels)
- * but no onClick — each still lacks a backend action. See LayoutRowActions.
+ * GET /layouts (one page of items, matched against `search`) + GET
+ * /layouts/counts (tab totals) from LayoutRepository — two separate queries
+ * so counts has one cache key instead of diverging per status filter. Edit,
+ * Publish, Search and pagination are real; Health/Compatibility, Preview, Set
+ * active, "⋯", Restore and Delete for good render with the demo's exact DOM
+ * state (enabled/disabled/hidden, labels) but no onClick — each still lacks a
+ * backend action. See LayoutRowActions.
  */
 export default function LayoutsPage() {
   const [view, setView] = useState<View>('listed');
+  const [pageIndex, setPageIndex] = useState(0);
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+
+  // Reset to page 1 in the same state update as the filter change, not a
+  // separate effect — an effect would commit a render with the new search
+  // (or view) paired with the stale pageIndex first, firing one fetch for a
+  // page that may not exist under the new filter before a second effect-
+  // driven fetch corrects it.
+  const [applySearch] = useDebounceFn((value: string) => {
+    setSearch(value);
+    setPageIndex(0);
+  }, 300);
+
+  function onSearchInputChange(value: string) {
+    setSearchInput(value);
+    applySearch(value);
+  }
+
+  function onViewChange(next: View) {
+    setView(next);
+    setSearchInput('');
+    setSearch('');
+    setPageIndex(0);
+  }
+
   const list = useLayoutsQuery({
     status: view === 'archived' ? ['archived'] : LISTED_LAYOUT_STATUSES,
+    search,
+    page: pageIndex + 1,
   });
   const countsQuery = useLayoutCountsQuery();
+
+  // The tab's total can shrink from outside the SPA (another admin editing
+  // the same layouts) between fetches. Step back rather than leave the user
+  // stuck on a page that now returns zero items but reads as "nothing here".
+  useEffect(() => {
+    if (!list.data || list.isPlaceholderData) return;
+
+    if (pageIndex >= list.data.totalPages) setPageIndex(list.data.totalPages - 1);
+  }, [list.data, list.isPlaceholderData, pageIndex]);
 
   const isPending = list.isPending || countsQuery.isPending;
 
@@ -53,8 +97,9 @@ export default function LayoutsPage() {
     >
       {/* isPending only fires once, before either query has ever loaded —
        * `list`'s placeholderData: keepPreviousData flips isFetching instead
-       * on later tab switches, and `counts` has no status filter to switch
-       * at all, so neither re-fires isPending after the first load. */}
+       * on later tab/page/search changes, and `counts` has no status filter
+       * to switch at all, so neither re-fires isPending after the first
+       * load. */}
       {isPending && <LayoutsPageSkeleton />}
       {/* Only a counts failure replaces the page — the tabs can't render
        * without it. A list failure is passed into the body instead, so the
@@ -71,7 +116,12 @@ export default function LayoutsPage() {
           counts={countsQuery.data}
           countsFetching={countsQuery.isFetching}
           view={view}
-          onViewChange={setView}
+          onViewChange={onViewChange}
+          search={search}
+          searchInput={searchInput}
+          onSearchInputChange={onSearchInputChange}
+          pageIndex={pageIndex}
+          onPageIndexChange={setPageIndex}
         />
       )}
     </PageLayout>
@@ -87,6 +137,11 @@ function LayoutsPageBody({
   countsFetching,
   view,
   onViewChange,
+  search,
+  searchInput,
+  onSearchInputChange,
+  pageIndex,
+  onPageIndexChange,
 }: {
   listData: LayoutListResponse | undefined;
   listError: Error | null;
@@ -98,6 +153,11 @@ function LayoutsPageBody({
   countsFetching: boolean;
   view: View;
   onViewChange: (view: View) => void;
+  search: string;
+  searchInput: string;
+  onSearchInputChange: (value: string) => void;
+  pageIndex: number;
+  onPageIndexChange: (pageIndex: number) => void;
 }) {
   const queryClient = useQueryClient();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
@@ -122,46 +182,60 @@ function LayoutsPageBody({
     }
   };
 
+  // Disabled only for a tab/page/search change, not a same-page refetch.
+  const controlsDisabled = listFetching && listIsPlaceholder;
+
+  // >=10 threshold per the dump-data design (case edge-many-long-names).
+  const showListControls = (view === 'archived' ? counts.archived : counts.listed) >= MIN_ITEMS_FOR_LIST_CONTROLS;
+  const pageCount = listData?.totalPages ?? 1;
+
   return (
     <div className="space-y-4">
       <NewLayoutModal open={newLayoutOpen} onOpenChange={setNewLayoutOpen} />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <h2 className="flex-1 text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
-            {/* No search arg on GET /layouts yet — visible once the list is
-             * long enough to need it, but not wired to a query. Sourced from
-             * counts, not listData.items.length, so this row doesn't depend on
-             * the list query at all. */}
-            {(view === 'archived' ? counts.archived : counts.listed) >= 10 && (
-              <Input placeholder={__('Search layouts…', 'yaycheckout')} className="w-52" />
-            )}
-            <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
-              {__('Add layout', 'yaycheckout')}
-            </Button>
-          </div>
+      <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
+        <Card className="min-w-0">
+          <h2 className="text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
 
-          {/* Never disabled during a tab switch: each status filter is its
-           * own cache entry, so clicking back mid-fetch shows the previous
-           * tab instantly and the abandoned fetch just settles into cache. */}
-          <div className="flex">
-            <Button
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Segmented
               size="sm"
-              variant={view === 'listed' ? 'primary' : 'outline'}
-              className="rounded-r-none"
-              onClick={() => onViewChange('listed')}
+              value={view}
+              onValueChange={(next) => next && onViewChange(next as View)}
+              disabled={controlsDisabled}
             >
-              {__('Active list', 'yaycheckout')} (<CountValue loading={countsFetching} value={counts.listed} />)
-            </Button>
-            <Button
-              size="sm"
-              variant={view === 'archived' ? 'primary' : 'outline'}
-              className="rounded-l-none"
-              onClick={() => onViewChange('archived')}
-            >
-              {__('Archive', 'yaycheckout')} (<CountValue loading={countsFetching} value={counts.archived} />)
-            </Button>
+              <SegmentedItem value="listed">
+                {__('Active list', 'yaycheckout')}
+                <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
+                  <CountValue loading={countsFetching} value={counts.listed} />
+                </Badge>
+              </SegmentedItem>
+              <SegmentedItem value="archived">
+                {__('Archive', 'yaycheckout')}
+                <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
+                  <CountValue loading={countsFetching} value={counts.archived} />
+                </Badge>
+              </SegmentedItem>
+            </Segmented>
+
+            <div className="flex items-center gap-3">
+              {showListControls && (
+                <InputGroup size="small" className="w-64">
+                  <InputGroupInput
+                    placeholder={__('Search layouts…', 'yaycheckout')}
+                    value={searchInput}
+                    onChange={(e) => onSearchInputChange(e.target.value)}
+                  />
+                  <InputGroupAddon align="inline-end">
+                    <Search className="size-4" />
+                  </InputGroupAddon>
+                </InputGroup>
+              )}
+              <Button size="sm" variant="primary-outline" onClick={() => setNewLayoutOpen(true)}>
+                <Plus className="size-4" />
+                {__('Add layout', 'yaycheckout')}
+              </Button>
+            </div>
           </div>
 
           {/* A failed background refetch keeps the previous `listData`, so
@@ -174,17 +248,20 @@ function LayoutsPageBody({
           {listIsPlaceholder ? (
             <TableRowsSkeleton />
           ) : !listData ? null : listData.items.length === 0 ? (
-            <Card>
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon" />
-                  <EmptyTitle>
-                    {view === 'archived'
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon" />
+                <EmptyTitle>
+                  {search
+                    ? __('No matching layouts', 'yaycheckout')
+                    : view === 'archived'
                       ? __('Nothing archived', 'yaycheckout')
                       : __('Nothing here yet', 'yaycheckout')}
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    {view === 'archived'
+                </EmptyTitle>
+                <EmptyDescription>
+                  {search
+                    ? __('No layouts match your search. Try a different name.', 'yaycheckout')
+                    : view === 'archived'
                       ? __('Layouts you archive will show up here.', 'yaycheckout')
                       : counts.archived > 0
                         ? __(
@@ -192,31 +269,43 @@ function LayoutsPageBody({
                             'yaycheckout',
                           )
                         : __('Create your first checkout layout to get started.', 'yaycheckout')}
-                  </EmptyDescription>
-                </EmptyHeader>
-                {view === 'listed' && (
-                  <EmptyContent>
-                    <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
-                      {__('Add layout', 'yaycheckout')}
+                </EmptyDescription>
+              </EmptyHeader>
+              {view === 'listed' && !search && (
+                <EmptyContent>
+                  <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
+                    {__('Add layout', 'yaycheckout')}
+                  </Button>
+                  {counts.archived > 0 && (
+                    <Button size="sm" variant="outline" onClick={() => onViewChange('archived')}>
+                      {__('Restore from archive', 'yaycheckout')}
                     </Button>
-                    {counts.archived > 0 && (
-                      <Button size="sm" variant="outline" onClick={() => onViewChange('archived')}>
-                        {__('Restore from archive', 'yaycheckout')}
-                      </Button>
-                    )}
-                  </EmptyContent>
-                )}
-              </Empty>
-            </Card>
+                  )}
+                </EmptyContent>
+              )}
+            </Empty>
           ) : (
-            <Card className={cn('transition-opacity', listFetching && 'opacity-60')}>
-              <LayoutsTable items={listData.items} view={view} onEditLayout={setEditingLayoutId} />
-              {/* No page/per_page args on GET /layouts yet — the list is
-               * already fetched whole, so page buttons are visual only. */}
-              {listData.items.length >= 10 && <LayoutsPagination itemCount={listData.items.length} />}
-            </Card>
+            <div className={cn('min-w-0 transition-opacity', listFetching && 'opacity-60')}>
+              <div className="overflow-x-auto rounded-lg border">
+                <LayoutsTable items={listData.items} view={view} onEditLayout={setEditingLayoutId} />
+              </div>
+              {showListControls && (
+                <div className="mt-3 flex items-center justify-end gap-4">
+                  <Pagination
+                    pageIndex={pageIndex}
+                    pageCount={pageCount}
+                    onPreviousPage={() => onPageIndexChange(pageIndex - 1)}
+                    onNextPage={() => onPageIndexChange(pageIndex + 1)}
+                    onPageChange={onPageIndexChange}
+                    canPreviousPage={pageIndex > 0}
+                    canNextPage={pageIndex + 1 < pageCount}
+                    disabled={controlsDisabled}
+                  />
+                </div>
+              )}
+            </div>
           )}
-        </div>
+        </Card>
 
         <aside className="space-y-4">
           {/* No HealthChecker yet — content is a placeholder, not fabricated. */}
@@ -274,30 +363,6 @@ function CountValue({ loading, value }: { loading: boolean; value: number }) {
     <span className="animate-in fade-in fill-mode-backwards inline-block align-middle [animation-delay:150ms]">
       <Skeleton className="size-3" />
     </span>
-  );
-}
-
-const PAGE_SIZE = 10;
-
-/** Visual only — see the "No page/per_page args" note above its call site. */
-function LayoutsPagination({ itemCount }: { itemCount: number }) {
-  const totalPages = Math.ceil(itemCount / PAGE_SIZE);
-
-  return (
-    <div className="mt-3 flex items-center gap-4 border-t pt-3">
-      <div className="flex">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <Button
-            key={page}
-            size="sm"
-            variant={page === 1 ? 'primary' : 'outline'}
-            className="h-7 rounded-none px-2.5 text-xs first:rounded-l-md last:rounded-r-md"
-          >
-            {page}
-          </Button>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -483,25 +548,26 @@ function LayoutRowActions({
   );
 }
 
-/** Three loading rows in a Card — the same shape whether the whole page is
- * loading for the first time or one tab's table is waiting on its own fetch
- * (see the listIsPlaceholder branch in LayoutsPageBody). */
+/** Three loading rows — the same shape whether the whole page is loading for
+ * the first time (wrapped in its own Card, see LayoutsPageSkeleton) or one
+ * tab's table is waiting on its own fetch inside the already-rendered
+ * "Your layouts" Card (see the listIsPlaceholder branch in LayoutsPageBody). */
 function TableRowsSkeleton() {
   return (
-    <Card>
-      <div className="space-y-3">
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-10 w-full" />
-        ))}
-      </div>
-    </Card>
+    <div className="space-y-3">
+      {[0, 1, 2].map((i) => (
+        <Skeleton key={i} className="h-10 w-full" />
+      ))}
+    </div>
   );
 }
 
 function LayoutsPageSkeleton() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <TableRowsSkeleton />
+    <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
+      <Card>
+        <TableRowsSkeleton />
+      </Card>
       <aside className="space-y-4">
         <Card>
           <Skeleton className="h-4 w-24" />

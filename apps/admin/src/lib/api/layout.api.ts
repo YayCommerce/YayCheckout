@@ -8,13 +8,18 @@ import {
 
 export type LayoutListParams = {
   status?: LayoutStatus[];
+  search?: string;
+  page?: number;
 };
 
 export async function getLayouts(params: LayoutListParams = {}) {
-  const searchParams = params.status?.length ? { status: params.status.join(',') } : undefined;
+  const searchParams: Record<string, string> = {};
+  if (params.status?.length) searchParams.status = params.status.join(',');
+  if (params.search) searchParams.search = params.search;
+  if (params.page != null) searchParams.page = String(params.page);
 
   return layoutListResponseSchema.parse(
-    await api.get('layouts', searchParams ? { searchParams } : undefined).json(),
+    await api.get('layouts', Object.keys(searchParams).length ? { searchParams } : undefined).json(),
   );
 }
 

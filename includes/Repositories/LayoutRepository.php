@@ -50,23 +50,35 @@ class LayoutRepository {
     }
 
     /**
-     * Every matching layout. Search and pagination are the SPA's job over this list.
+     * One page of matching layouts and the total across all pages, per
+     * $query's search/page/per_page. One WP_Query: found_posts gives the
+     * total without a second, unbounded query.
      *
-     * @return Layout[]
+     * Search() matches post_title only — LayoutRestController's `search` arg
+     * is documented as searching by name, and post_content is Gutenberg block
+     * markup, not user-facing text WP's default title+content 's' should
+     * match against.
+     *
+     * @return array{items: Layout[], total: int}
      */
     public function query( LayoutQuery $query ): array {
+        add_filter( 'posts_search', [ $this, 'match_search_to_title' ], 10, 2 );
+
         $wp_query = new \WP_Query(
             [
                 'post_type'              => Layout::POST_TYPE,
                 'post_status'            => $this->post_statuses_for( $query->statuses() ),
-                'posts_per_page'         => -1,
+                's'                      => $query->search(),
+                'posts_per_page'         => $query->per_page(),
+                'paged'                  => $query->page(),
                 'orderby'                => 'menu_order ID',
                 'order'                  => 'ASC',
                 'update_post_meta_cache' => true,
                 'update_post_term_cache' => false,
-                'no_found_rows'          => true,
             ]
         );
+
+        remove_filter( 'posts_search', [ $this, 'match_search_to_title' ], 10 );
 
         $active_id = $this->active_id();
         $layouts   = [];
@@ -83,7 +95,39 @@ class LayoutRepository {
             );
         }
 
-        return $layouts;
+        return [
+            'items' => $layouts,
+            'total' => (int) $wp_query->found_posts,
+            'totalPages' => $wp_query->max_num_pages
+        ];
+    }
+
+    /**
+     * Narrows WP_Query's default title+excerpt+content search to post_title
+     * only. Mirrors the AND-of-terms shape WP_Query::parse_search() itself
+     * builds, so multi-word search behaves the same way merchants already
+     * expect from WordPress.
+     *
+     * @param  string    $search
+     * @param  \WP_Query $wp_query
+     * @return string
+     */
+    public function match_search_to_title( string $search, \WP_Query $wp_query ): string {
+        global $wpdb;
+
+        $terms = $wp_query->query_vars['search_terms'] ?? [];
+
+        if ( '' === $search || empty( $terms ) ) {
+            return $search;
+        }
+
+        $clauses = [];
+
+        foreach ( (array) $terms as $term ) {
+            $clauses[] = $wpdb->prepare( "{$wpdb->posts}.post_title LIKE %s", '%' . $wpdb->esc_like( $term ) . '%' );
+        }
+
+        return ' AND (' . implode( ' AND ', $clauses ) . ') ';
     }
 
     /**
