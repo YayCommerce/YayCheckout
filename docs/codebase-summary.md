@@ -49,8 +49,8 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | Route | Method | Purpose |
 |---|---|---|
 | `wp/v2/yay_checkout_layout` | GET/POST | core: draft save, autosave, revisions |
-| `yaycheckout/v1/layouts` | GET | list one page; args: `status` (comma list), `search` (string), `page` (int ≥1) |
-| `yaycheckout/v1/layouts` | POST | create draft; args: `name`, `source` (blank\|library), `templateSlug` |
+| `yaycheckout/v1/layouts` | GET | list one page; args: `status` (comma list), `search` (string), `page` (int ≥1); envelope `{ items, total, page, total_pages }` |
+| `yaycheckout/v1/layouts` | POST | create draft; args: `name`, `source` (blank\|library), `template_slug` |
 | `yaycheckout/v1/layouts/counts` | GET | per-tab totals: `listed` (everything not archived) and `archived` |
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
@@ -85,7 +85,7 @@ src/
   types/                window globals, module augmentation
 ```
 
-Three files per feature in `lib/` — `{feature}.schema.ts`, `.api.ts`, `.queries.ts`. `settings.*` and `layout.*` are the worked examples.
+Three files per feature in `lib/` — `{feature}.schema.ts`, `.api.ts`, `.queries.ts`. `settings.*` and `layout.*` are the worked examples. `.schema.ts` holds both the strict snake_case `*WireSchema` and the camelCase app types; `.api.ts` is the only file that converts between them (see `code-standards.md`, REST).
 
 The API client handles WordPress specifics: `X-WP-Nonce`, pretty vs. plain permalinks, and reloading on an expired nonce.
 
