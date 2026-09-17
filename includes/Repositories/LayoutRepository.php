@@ -133,7 +133,7 @@ class LayoutRepository {
 
         $terms = $wp_query->query_vars['search_terms'] ?? [];
 
-        if ( '' === $search || empty( $terms ) ) {
+        if ( '' === $search || empty( $terms ) || Layout::POST_TYPE !== $wp_query->get( 'post_type' ) ) {
             return $search;
         }
 
