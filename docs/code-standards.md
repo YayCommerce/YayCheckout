@@ -186,7 +186,9 @@ Plan is derived, not declared. `Plan::is_pro()` reports whether the provider act
 
 ## Comments
 
-**A comment states only what is true of the code directly beneath it — the invariant it protects and what breaks without it.** Never what other code does, what the code used to do, or what it will do. Cross-cutting rationale lives in `docs/system-architecture.md`; the comment points at it (`See docs/system-architecture.md, <section>`).
+**Default to no comment. Code shows *how*; comment only to carry *why* — a non-obvious constraint, deliberate deviation, gotcha, or workaround.** Keep the one fact a reader needs at that line, in the fewest words; two lines is the usual ceiling, longer only for a WordPress behaviour the code works around. Never narrate the code ("loop over layouts"), narrate the change ("fixed X", "as requested"), restate names or types, or mark block ends. Docblocks are one line plus only the `@param` / `@return` / `@throws` a caller relies on.
+
+**When a comment does exist, it states only what is true of the code directly beneath it — the invariant it protects and what breaks without it.** Never what other code does, what the code used to do, or what it will do. Cross-cutting rationale lives in `docs/system-architecture.md`; the comment points at it (`See docs/system-architecture.md, <section>`).
 
 The rule exists because comments that describe something outside their own block rot silently: the other module changes, the comment does not, and the next reader is sent down the wrong path. A 2026-09 audit found 53 such comments; none of the comments about a block's own invariant were wrong.
 
@@ -205,7 +207,7 @@ The review question is: *does this comment describe something outside this funct
 
 `TODO:` is for planned work only — one line, what and why not now. Not for wishes.
 
-With no test suite, invariant comments are the spec. Trim them; do not delete them.
+With no test suite, invariant comments are the spec. Trim them to the invariant; delete only when the code already says it.
 
 ## Formatting
 
