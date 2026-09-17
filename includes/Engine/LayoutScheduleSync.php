@@ -1,7 +1,6 @@
 <?php
 namespace YayCheckout\Engine;
 
-use YayCheckout\Enums\LayoutPostStatus;
 use YayCheckout\Helpers\Logger;
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
@@ -16,36 +15,29 @@ defined( 'ABSPATH' ) || exit;
  * 'publish'. Core's cron only flips post_status, so without this a scheduled
  * layout would reach its date and still have nothing for shoppers to see.
  *
- * Hooked on publish_future_post rather than transition_post_status:
- * LayoutRepository::publish() moves a scheduled layout to 'publish' itself
- * when the merchant publishes early, and a transition hook would fire from
- * inside that call and snapshot twice. Cron never reaches publish(), so the
- * two paths cannot overlap.
+ * Listens to the future → publish transition, but only while core's
+ * publish_future_post cron action is running. That fires once per real
+ * transition, so an overlapping cron run that dequeues the same event cannot
+ * snapshot twice. LayoutRepository::publish() makes the same transition
+ * itself when the merchant publishes early; that never happens inside the
+ * cron action, so this cannot re-enter publish().
  */
 class LayoutScheduleSync {
 
     use SingletonTrait;
 
     protected function __construct() {
-        // After core's check_and_publish_future_post() at 10.
-        add_action( 'publish_future_post', [ $this, 'snapshot_published_layout' ], 20 );
+        add_action( 'future_to_publish', [ $this, 'snapshot_published_layout' ] );
     }
 
     /**
-     * @param int|string $post_id
+     * @param \WP_Post $post
      */
-    public function snapshot_published_layout( $post_id ): void {
-        $post = get_post( $post_id );
-
-        /*
-         * Core re-reads the post and leaves it 'future' when the time has not
-         * come yet, rescheduling itself. Only a layout it actually published
-         * needs a snapshot.
-         */
+    public function snapshot_published_layout( $post ): void {
         if (
-            ! $post instanceof \WP_Post
+            ! doing_action( 'publish_future_post' )
+            || ! $post instanceof \WP_Post
             || Layout::POST_TYPE !== $post->post_type
-            || LayoutPostStatus::PUBLISHED !== $post->post_status
         ) {
             return;
         }
