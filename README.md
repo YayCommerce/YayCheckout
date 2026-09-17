@@ -75,5 +75,7 @@ actually withholds the features.
 
 ## Documentation
 
-- [`docs/code-standards.md`](docs/code-standards.md) — layering, naming, REST conventions
+- [`docs/codebase-summary.md`](docs/codebase-summary.md) — orientation map of the codebase structure
+- [`docs/system-architecture.md`](docs/system-architecture.md) — design decisions and data flow
+- [`docs/code-standards.md`](docs/code-standards.md) — layering, naming, and conventions
 - `plans/` — implementation plans (gitignored)

@@ -8,6 +8,7 @@ Run `composer lint` (and `composer lint:fix` for the auto-fixable subset).
 
 ```
 includes/
+  Enums/        constants classes: status enums, post_status maps. Zero WP calls.
   PostTypes/    register_post_type only — caps, template, labels. No logic.
   Models/       dumb entities. Typed props, from_post()/to_array(). Zero WP calls.
   Repositories/ ALL get_post/update_post_meta/get_option. Returns Models. Owns invariants.
@@ -17,9 +18,11 @@ includes/
   Blocks/       PHP block registration + render_callbacks.
   Helpers/      stateless statics: Logger, localize payload, detection. No option storage — that is a Repository.
   Support/      plugin-lifecycle primitives (Plan). No WP calls.
-  Pro/      everything Pro-only. Absent from the Free build.
+  Pro/          everything Pro-only. Absent from the Free build.
   Engine/       boot, wiring, asset registration.
   Utils/        traits.
+  Fallback.php  duplicate-guard admin notice. Standalone file wired in bootstrap.
+  I18n.php      textdomain loader. Standalone file wired in bootstrap.
 ```
 
 **A WP core function call outside `Repositories/`, `Helpers/`, `Engine/`, `Renderer/`, `Blocks/` is a bug.**
