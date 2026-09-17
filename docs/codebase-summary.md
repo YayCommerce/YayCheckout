@@ -30,13 +30,13 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `Models/` | `Layout`, `LayoutQuery`, `Settings` | `Layout` and `Settings` are dumb entities; **every storage key constant lives here**; zero WP calls. `Settings` owns `schema()` (the single description of every setting), `from_option()` (read projection through the schema), and `sanitize()` (strict type and enum validation, unknown keys stripped). `LayoutQuery` is immutable value object for filtered/paginated queries. |
 | `Repositories/` | `LayoutRepository`, `SettingsRepository` | all storage access: layouts (owns the publish sequence and the active-layout set — Free replaces, Pro appends, last id serves), settings (get/save/is_reviewed/mark_reviewed) |
 | `Services/` | `DerivedCacheBuilder` | pure markup → derived caches |
-| `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue` | routing, validation, permissions; core's wp/v2 layout controller with reads gated on `manage_woocommerce`; template catalogue (placeholder, static list) |
+| `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue` | routing, validation, permissions; core's wp/v2 layout controller with reads gated on `manage_woocommerce` and delete withheld from the embedded editor; template catalogue (placeholder, static list) |
 | `Blocks/` | `BlockRegistry` | registers built block directories |
 | `Support/` | `Plan` | Free/Pro flag derived from provider boot; owns the layout limit and its message |
 | `Pro/` | `ProServiceProvider` | **absent from the Free build** |
 | `Helpers/` | `IntegrationsHelper`, `LocalizeHelper`, `Logger` | YayBoost/YayLoyalty detection (via defined constants + filter), SPA bootstrap payload, WooCommerce logging |
 | `Renderer/` | `CheckoutScripts` | WooCommerce storefront hooks; today only force-enqueueing checkout scripts when `advanced.force_enqueue_checkout_scripts` is on |
-| `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutActiveGuard`, `LayoutPublishGuard`, `LayoutPublishSync`, `Admin/` (Settings, LayoutEditorEmbedStyles), `Register/` (RegisterFacade, RegisterDev, RegisterProd, ScriptName) | wiring, asset registration, the layout cap, no trashing the active layout, markup check on REST publish, snapshot on any transition into publish, embed editor styles, dev/prod asset registration |
+| `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutActiveGuard`, `LayoutPublishGuard`, `LayoutPublishSync`, `Admin/` (Settings, LayoutEditorEmbed), `Register/` (RegisterFacade, RegisterDev, RegisterProd, ScriptName) | wiring, asset registration, the layout cap, no trashing the active layout, markup check on REST publish, snapshot on any transition into publish, embedded-editor chrome and REST tagging, dev/prod asset registration |
 | `Utils/` | `SingletonTrait` | |
 | `Fallback.php` | duplicate-guard admin notice | shown when another YayCheckout copy is installed; wired in yaycheckout.php |
 | `I18n.php` | textdomain loader | loaded via plugins_loaded, handles i18n with locale detection |
@@ -46,7 +46,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 ### Entry points
 
 - `yaycheckout.php` → `plugin_init()` on `plugins_loaded`, after a WooCommerce check; also registers `I18n::load_plugin_textdomain()` on `plugins_loaded`
-- `YayCheckout::__construct()` boots in order: `boot_pro()`, `RestAPI`, `RegisterFacade`, `Admin\Settings`, `BlockRegistry`, `LayoutPostType`, `LayoutCapGuard`, `LayoutActiveGuard`, `LayoutPublishGuard`, `LayoutPublishSync`, `Admin\LayoutEditorEmbedStyles`, `Renderer\CheckoutScripts`
+- `YayCheckout::__construct()` boots in order: `boot_pro()`, `RestAPI`, `RegisterFacade`, `Admin\Settings`, `BlockRegistry`, `LayoutPostType`, `LayoutCapGuard`, `LayoutActiveGuard`, `LayoutPublishGuard`, `LayoutPublishSync`, `Admin\LayoutEditorEmbed`, `Renderer\CheckoutScripts`
 - `Engine\RestAPI` instantiates controllers on `rest_api_init`
 - `Engine\Admin\Settings` enqueues the SPA and localises `yayCheckoutMeta` / `yayCheckoutAdmin`, gated on the admin-shell hook suffix
 - `Engine\Register\RegisterFacade` branches to RegisterDev or RegisterProd on `init`, conditionally based on `YAYCHECKOUT_IS_DEVELOPMENT`

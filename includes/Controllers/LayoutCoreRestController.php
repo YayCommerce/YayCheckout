@@ -1,6 +1,8 @@
 <?php
 namespace YayCheckout\Controllers;
 
+use YayCheckout\Engine\Admin\LayoutEditorEmbed;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -28,5 +30,25 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
 
     public function check_read_permission( $post ) {
         return current_user_can( 'manage_woocommerce' ) && parent::check_read_permission( $post );
+    }
+
+    /**
+     * Refuses delete for the embedded editor, which reads the same answer to
+     * decide whether to show Move to trash. After a trash Gutenberg
+     * hard-navigates to edit.php, a screen the embed cannot host. The page
+     * check covers the server-side preload; the header covers live calls.
+     *
+     * @return true|\WP_Error
+     */
+    public function delete_item_permissions_check( $request ) {
+        if ( LayoutEditorEmbed::is_embed_request() || $request->get_header( LayoutEditorEmbed::REST_HEADER ) ) {
+            return new \WP_Error(
+                'rest_cannot_delete',
+                __( 'Archive layouts from the Layouts list, not the editor.', 'yaycheckout' ),
+                [ 'status' => 403 ]
+            );
+        }
+
+        return parent::delete_item_permissions_check( $request );
     }
 }

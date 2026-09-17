@@ -33,6 +33,20 @@ class CoreRestReadPermissionTest extends WP_UnitTestCase {
         $this->assertSame( [ $this->published ], array_column( $collection->get_data(), 'id' ) );
     }
 
+    /** The editor's Move to trash reads the same permission callback, so a refused DELETE also hides the button. */
+    public function test_embedded_editor_cannot_trash(): void {
+        LayoutFactory::as_shop_manager();
+        $route = '/wp/v2/' . Layout::POST_TYPE . '/' . $this->published;
+
+        $tagged = new \WP_REST_Request( 'DELETE', $route );
+        $tagged->set_header( 'X-YayCheckout-Embed', '1' );
+        $this->assertSame( 403, rest_do_request( $tagged )->get_status() );
+        $this->assertSame( 'publish', get_post( $this->published )->post_status );
+
+        $this->assertSame( 200, rest_do_request( new \WP_REST_Request( 'DELETE', $route ) )->get_status() );
+        $this->assertSame( 'trash', get_post( $this->published )->post_status );
+    }
+
     private function core_get( string $suffix ): \WP_REST_Response {
         return rest_do_request( new \WP_REST_Request( 'GET', '/wp/v2/' . Layout::POST_TYPE . $suffix ) );
     }
