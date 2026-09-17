@@ -15,9 +15,6 @@ import { NameField } from '@/pages/layouts/new-layout/NameField';
 
 const ALL_CATEGORIES = __('All', 'yaycheckout');
 
-/** Template picker — Free sees the grid mostly locked, Pro the full grid with
- * filter chips. Category chips are derived from the fetched template list,
- * not hardcoded. */
 export function LibraryStep({
   onBack,
   onCancel,
@@ -55,9 +52,7 @@ export function LibraryStep({
   const unlockedTemplates = useMemo(() => data?.templates.filter((t) => !t.locked) ?? [], [data]);
   const lockedCount = data ? data.templates.length - unlockedTemplates.length : 0;
 
-  // Clearing a selection the new filter would hide happens here, in the
-  // click, rather than in an effect watching `templates` — the filter only
-  // ever changes from this handler, so there's nothing else to react to.
+  // Clear a selection the new filter would hide.
   function onCategoryChange(category: string) {
     setCategoryFilter(category);
 

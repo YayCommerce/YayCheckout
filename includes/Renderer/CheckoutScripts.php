@@ -7,17 +7,13 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Force-enqueue the classic checkout scripts on the checkout page.
- *
- * WooCommerce decides per request whether wc-checkout and friends are needed
- * and skips them on block checkouts and some themes. A layout that relies on
- * them then breaks silently. The advanced.force_enqueue_checkout_scripts
- * setting is the support escape hatch: when on, they load regardless.
+ * Support escape hatch: WooCommerce skips wc-checkout on block checkouts and
+ * some themes, and a layout relying on it then breaks silently.
  */
 class CheckoutScripts {
     use SingletonTrait;
 
-    /** After WC_Frontend_Scripts registers its handles at the default priority. */
+    /** After WC_Frontend_Scripts registers its handles at priority 10. */
     private const PRIORITY = 20;
 
     protected function __construct() {

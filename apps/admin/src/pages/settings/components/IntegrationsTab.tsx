@@ -8,11 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { DocLink } from './DocLink';
 
-/*
- * Read-only this round: no companion declares checkout slots yet, so there is
- * nothing to toggle. Detected companions get a card; the rest stay listed but
- * greyed so a merchant sees what exists without being sold to.
- */
+// Read-only: no companion declares checkout slots yet.
 export function IntegrationsTab() {
   const integrations = useIntegrations();
   const detected = integrations.filter((integration) => integration.detected);

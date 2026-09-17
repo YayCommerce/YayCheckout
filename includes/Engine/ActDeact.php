@@ -3,9 +3,6 @@ namespace YayCheckout\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Activate and deactivate methods of the plugin.
- */
 class ActDeact {
 
     public static function install_woocommerce_admin_notice() {
@@ -45,10 +42,7 @@ class ActDeact {
     public static function deactivate() {
     }
 
-    /**
-     * Per-site activation. Nothing to do yet: settings are derived from
-     * Models\Settings::schema() on read, so there is nothing to seed.
-     */
+    /** Nothing to seed: settings derive from Settings::schema() on read. */
     protected static function single_activate() {
     }
 }

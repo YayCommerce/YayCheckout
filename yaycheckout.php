@@ -64,7 +64,6 @@ if ( ! defined( 'YAYCHECKOUT_IS_DEVELOPMENT' ) ) {
     define( 'YAYCHECKOUT_IS_DEVELOPMENT', true );
 }
 
-// Plugin classes: YayCheckout\* → includes/*.
 spl_autoload_register(
     function ( $class_name ) {
         $prefix   = __NAMESPACE__;
@@ -80,23 +79,16 @@ spl_autoload_register(
         $file = $base_dir . str_replace( '\\', '/', $relative_class_name ) . '.php';
 
         if ( file_exists( $file ) ) {
-            /*
-             * require_once, not require: a malformed class name — a doubled
-             * backslash from another plugin's class_exists(), say — maps to the
-             * same file through a different string, and a plain require would
-             * then redeclare the class and fatal the whole site.
-             */
+            // require_once: a doubled-backslash class name maps to the same file and would redeclare.
             require_once $file;
         }
     }
 );
 
-// Scoped admin shell + root adapter (composer classmap: vendor-prefixed/src + adapter).
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/YayCheckoutPluginAdapter.php';
 
-// Boot the shared YayCommerce admin shell early so version election across
-// coexisting Yay plugins happens before menus register.
+// Priority 5: version election across coexisting Yay plugins must precede menu registration.
 add_action(
     'plugins_loaded',
     function () {

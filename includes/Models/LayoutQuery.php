@@ -6,20 +6,14 @@ use YayCheckout\Enums\LayoutStatus;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * How to ask for layouts.
- *
- * Speaks LayoutStatus only, never WordPress post_status. Carries search and
- * pagination too — LayoutRepository::query() reads them directly; count()
- * uses the statuses only.
+ * Speaks LayoutStatus only, never post_status.
  */
 class LayoutQuery {
 
-    /** Fixed server-side; the SPA never chooses its own page size. */
+    /** Fixed server-side; not a request param. */
     public const PER_PAGE = 10;
 
-    /**
-     * @var string[]
-     */
+    /** @var string[] */
     private array $statuses;
 
     private string $search = '';
@@ -27,7 +21,6 @@ class LayoutQuery {
     private int $page = 1;
 
     /**
-     * @param string[] $statuses
      * @throws \InvalidArgumentException When $statuses is empty or contains an unknown status.
      */
     private function __construct( array $statuses ) {
@@ -60,9 +53,6 @@ class LayoutQuery {
         return $clone;
     }
 
-    /**
-     * The Layouts home tab: everything the merchant works with, not archived.
-     */
     public static function listed(): self {
         return new self( LayoutStatus::listed() );
     }
@@ -76,8 +66,6 @@ class LayoutQuery {
     }
 
     /**
-     * @param  string[] $statuses
-     * @return self
      * @throws \InvalidArgumentException When $statuses is empty or contains an unknown status.
      */
     public static function of_statuses( array $statuses ): self {

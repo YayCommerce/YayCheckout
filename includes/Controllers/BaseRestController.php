@@ -5,11 +5,6 @@ use YayCheckout\Helpers\Logger;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Class BaseRestController
- *
- * Provides common methods for REST controllers.
- */
 abstract class BaseRestController {
 
     public const REST_NAMESPACE = 'yaycheckout/v1';
@@ -31,11 +26,6 @@ abstract class BaseRestController {
     }
 
     /**
-     * Execute Routes which DO NOT Write to DB.
-     * Treat deep thrown error as internal_error
-     *
-     * @param  callable         $callback
-     * @param  \WP_REST_Request $request
      * @return \WP_REST_Response|\WP_Error|void
      */
     public function exec_read( $callback, \WP_REST_Request $request ) {
@@ -52,20 +42,10 @@ abstract class BaseRestController {
     }
 
     /**
-     * Execute Routes which write through the WordPress API (posts, meta, options).
-     * Treat deep thrown error as internal_error
+     * For posts/meta/options. No SQL transaction on purpose: a ROLLBACK would
+     * leave a persistent object cache holding the rolled-back write. Order
+     * writes inside the callback so a partial failure leaves the old state live.
      *
-     * Deliberately has NO SQL transaction. WordPress writes go through the object
-     * cache, so a ROLLBACK would revert MySQL while leaving a persistent cache
-     * (Redis/Memcached) holding the rolled-back post or option — a phantom write
-     * that is invisible on hosts without a persistent cache and intermittent on
-     * hosts with one. Order the writes inside the callback so that a failure
-     * part-way through leaves the previous state serving requests.
-     *
-     * Use this for WordPress API writes. Use exec_write() for custom tables.
-     *
-     * @param  callable         $callback
-     * @param  \WP_REST_Request $request
      * @return \WP_REST_Response|\WP_Error|void
      */
     public function exec_write_wp( $callback, $request ) {
@@ -82,14 +62,9 @@ abstract class BaseRestController {
     }
 
     /**
-     * Execute Routes which DO Write to DB via custom tables, auto-rollback on error.
-     * Treat deep thrown error as internal_error. Unused until a custom table exists.
+     * For custom tables only; a transaction cannot roll back the object cache.
+     * Unused until a custom table exists.
      *
-     * For WordPress API writes (posts, meta, options) use exec_write_wp() instead —
-     * a SQL transaction cannot roll back the WordPress object cache.
-     *
-     * @param  callable         $callback
-     * @param  \WP_REST_Request $request
      * @return \WP_REST_Response|\WP_Error|void
      */
     public function exec_write( $callback, $request ) {

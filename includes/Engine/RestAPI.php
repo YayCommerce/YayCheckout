@@ -7,11 +7,6 @@ use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Class RestAPI
- *
- * Handles YayCheckout REST API endpoints.
- */
 class RestAPI {
     use SingletonTrait;
 

@@ -8,13 +8,7 @@ interface EditProps {
 	attributes: CheckoutAttributes;
 }
 
-/**
- * Root of a checkout layout. Holds the required sections as inner blocks.
- *
- * templateLock comes from the attribute rather than being hardcoded so the
- * post type's template can decide how much merchants may rearrange without
- * this block being rebuilt.
- */
+/** templateLock is an attribute so the post type's template can set it without a rebuild. */
 export default function Edit( { attributes }: EditProps ) {
 	const blockProps = useBlockProps( { className: 'yaycheckout-checkout' } );
 

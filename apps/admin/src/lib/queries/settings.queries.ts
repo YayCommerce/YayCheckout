@@ -9,25 +9,17 @@ import {
   type Settings,
 } from '@/lib/schema/settings.schema';
 
-/** ─── Query Options ─────────────────────────────────── */
-
 export const SETTINGS_QUERIES = {
   main: queryOptions({
     queryKey: ['settings', 'main'],
     queryFn: getSettings,
-    // The localize bootstrap carries the same envelope GET /settings returns,
-    // so the first render never waits on a request. Parsed strictly: a PHP
-    // key rename fails here rather than surfacing as undefined in a form.
+    // The localize bootstrap carries the same envelope as GET /settings.
     initialData: () => settingsResponseFromWire(settingsResponseWireSchema.parse(window.yayCheckoutAdmin.settings)),
     staleTime: Infinity,
-    // Never garbage-collect: a recreated query would seed itself from the
-    // page-load bootstrap again, resurrecting pre-save values that the next
-    // save would then write back over the newer ones.
+    // A GC'd query would reseed from the page-load bootstrap and resurrect pre-save values.
     gcTime: Infinity,
   }),
 };
-
-/** ─── Hooks ─────────────────────────────────────────── */
 
 export function useSettingsQuery() {
   return useQuery(SETTINGS_QUERIES.main);
@@ -46,15 +38,7 @@ export function useSaveSettingsMutation() {
   });
 }
 
-/**
- * Companion plugins detected on this page load. Not a query: detection is a
- * fact about which plugins are active, which cannot change without an admin
- * reload, so the localize bootstrap is the whole source.
- *
- * The list is filterable in PHP, so entries are validated one by one: a
- * malformed third-party entry is logged and skipped rather than taking the
- * settings route down.
- */
+/** Bootstrap-only (cannot change without a reload). Validated per entry: a bad third-party one is skipped, not fatal. */
 export function useIntegrations(): Integration[] {
   const raw = window.yayCheckoutAdmin.integrations;
   if (!Array.isArray(raw)) return [];

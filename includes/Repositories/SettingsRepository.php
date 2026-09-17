@@ -7,8 +7,7 @@ use YayCheckout\Models\Settings;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * All settings storage access. Every get_option/update_option for the
- * plugin's settings and the review flag belongs here.
+ * All settings storage access.
  */
 class SettingsRepository {
 
@@ -19,10 +18,7 @@ class SettingsRepository {
         );
     }
 
-    /**
-     * Persist already-sanitized values (see Settings::sanitize()) and stamp
-     * the save time.
-     */
+    /** Values must already be through Settings::sanitize(). */
     public function save( array $values ): Settings {
         update_option( Settings::OPTION_SETTINGS, $values );
         update_option( Settings::OPTION_UPDATED_AT, DateHelper::now_iso8601() );

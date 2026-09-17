@@ -1,11 +1,6 @@
 import { ReactNode } from 'react';
 
-/**
- * One setting: title and description on the left, its control on the right.
- * Rows stack inside a tab card with a hairline between them. `warning` is
- * for the rare setting that can break a working store (force-enqueue) and
- * renders under the description in the warning colour.
- */
+/** `warning` is for the rare setting that can break a working store. */
 export function SettingRow({
   title,
   description,

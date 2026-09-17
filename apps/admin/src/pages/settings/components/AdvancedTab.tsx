@@ -9,7 +9,6 @@ import { Switch } from '@/components/ui/switch';
 import { DocLink } from './DocLink';
 import { SettingRow } from './SettingRow';
 
-/** WooCommerce → Status → Logs, filtered to Helpers\Logger's source. */
 const LOGS_URL = `${window.yayCheckoutMeta.wpMeta.adminUrl}admin.php?page=wc-status&tab=logs&source=yaycheckout`;
 
 function lifetimeLabel(minutes: PreviewLinkLifetime): string {
@@ -22,11 +21,6 @@ function lifetimeLabel(minutes: PreviewLinkLifetime): string {
   return sprintf(_n('%d minute', '%d minutes', minutes, 'yaycheckout'), minutes);
 }
 
-/*
- * Support escape hatches. Preview link lifetime is stored only until preview
- * links exist; force-enqueue is consumed by Renderer\CheckoutScripts and is
- * the one setting here that can break a working store, hence the warning.
- */
 export function AdvancedTab() {
   const { control } = useFormContext<Settings>();
 

@@ -4,21 +4,16 @@ namespace YayCheckout\Helpers;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Which companion Yay plugins are present.
- *
- * Core knows the companions it can work with and reports whether each one
- * is loaded. Delivered to the SPA through the localize bootstrap — it is a
- * fact about this page load, so there is no REST route to refetch it.
- * Companions that later declare checkout slots can extend their own entry
- * through the filter.
+ * Which companion Yay plugins are loaded. Localized, not a REST route: it is
+ * a fact about this page load.
  */
 class IntegrationsHelper {
 
-    /** Filter over the integration list; entries follow the shape describe() emits. */
+    /** Entries follow the shape describe() emits. */
     public const FILTER = 'yaycheckout_integrations';
 
     /**
-     * Wire shape consumed by the SPA — snake_case, mirrored by integrationWireSchema.
+     * Mirrored by integrationWireSchema.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -43,9 +38,7 @@ class IntegrationsHelper {
     }
 
     private static function describe( string $slug, string $name, string $description, string $version_const ): array {
-        // A version constant only exists once the companion's main file ran,
-        // so "detected" and "active" are the same fact today. Both are emitted
-        // because a filter-added integration may be installed-but-inactive.
+        // detected == active for core entries; both emitted so a filter-added one can differ.
         $detected = defined( $version_const );
 
         return [

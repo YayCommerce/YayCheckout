@@ -6,11 +6,8 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Injects embed-mode CSS when post.php is loaded with ?yc-embed=1 inside the manager iframe.
- *
- * The React app opens the iframe; this class only detects the flag and hides wp-admin chrome
- * so Gutenberg fills the frame. The post is not checked to be a layout: chrome hides for any
- * post id, because the iframe is the exit path either way.
+ * Hides wp-admin chrome on post.php?yc-embed=1 so Gutenberg fills the manager
+ * iframe. Any post id qualifies: the iframe is the exit path either way.
  */
 class LayoutEditorEmbedStyles {
 
@@ -23,10 +20,6 @@ class LayoutEditorEmbedStyles {
         add_action( 'admin_head', [ $this, 'print_embed_styles' ] );
     }
 
-    /**
-     * @param  string $classes
-     * @return string
-     */
     public function admin_body_class( $classes ) {
         if ( ! $this->is_embed_request() ) {
             return $classes;
@@ -66,10 +59,7 @@ class LayoutEditorEmbedStyles {
                 padding-bottom: 0 !important;
             }
 
-            /*
-             * Gutenberg positions the editor skeleton below the admin bar. Hide
-             * the bar but leave that offset and you get a blank band at the top.
-             */
+            /* Skeleton is offset for the admin bar; without this a blank band remains. */
             body.yc-layout-embed .interface-interface-skeleton {
                 top: 0 !important;
             }
@@ -78,7 +68,7 @@ class LayoutEditorEmbedStyles {
                 right: 0 !important;
             }
 
-            /* Back to post list — parent modal is the exit path. */
+            /* Back-to-list button: the parent modal is the exit path. */
             body.yc-layout-embed .editor-header__back-button {
                 display: none !important;
             }

@@ -20,32 +20,15 @@ export const LAYOUT_KEYS = {
   detail: (id: number) => ['layouts', 'detail', id] as const,
 };
 
-/** ─── Query Options ─────────────────────────────────── */
-
 export const LAYOUT_QUERIES = {
-  /**
-   * Not a bootstrapped singleton state like SETTINGS_QUERIES.main: there is
-   * no initialData and no staleTime of Infinity, because layouts change from
-   * the editor as well as from here.
-   */
+  // No initialData or staleTime: Infinity — layouts also change from the editor.
   list: (params: LayoutListParams = {}) =>
     queryOptions({
       queryKey: LAYOUT_KEYS.list(params),
       queryFn: () => getLayouts(params),
-      /*
-       * Switching Active/Archive is a different queryKey (different status
-       * filter), so without this the whole page would drop back to its
-       * first-load skeleton on every tab switch. Keeps the previous tab's
-       * data on screen — isFetching (not isPending) is what flips true.
-       */
+      // Tab switch is a new key; without this the page drops back to its first-load skeleton.
       placeholderData: keepPreviousData,
     }),
-  /**
-   * No status param and no placeholderData: this key never changes when the
-   * tab switches, so it simply doesn't refetch on tab switch at all — and
-   * with only one cache entry ever, there's no stale/fresh snapshot to
-   * diverge between tabs.
-   */
   counts: queryOptions({
     queryKey: LAYOUT_KEYS.counts,
     queryFn: getLayoutCounts,
@@ -57,8 +40,6 @@ export const LAYOUT_QUERIES = {
       enabled: id > 0,
     }),
 };
-
-/** ─── Hooks ─────────────────────────────────────────── */
 
 export function useLayoutsQuery(params: LayoutListParams = {}) {
   return useQuery(LAYOUT_QUERIES.list(params));
@@ -72,21 +53,15 @@ export function useLayoutQuery(id: number) {
   return useQuery(LAYOUT_QUERIES.detail(id));
 }
 
-/**
- * skipGlobalError: the New layout modal renders its own inline error on
- * failure (form.setError('root', ...)) — a global toast on top would say
- * the same thing twice.
- */
 export function useCreateLayoutDraftMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationKey: ['layouts', 'create-draft'],
     mutationFn: createLayoutDraft,
+    // The modal renders its own inline error.
     meta: { skipGlobalError: true },
     onSuccess: () => {
-      // A new draft always lands in the listed tab — narrower than LAYOUT_KEYS.all
-      // so this doesn't also refetch the archived list.
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
     },
@@ -100,19 +75,13 @@ export function usePublishLayoutMutation() {
     mutationKey: ['layouts', 'publish'],
     mutationFn: publishLayout,
     onSuccess: () => {
-      // Publishing never moves a layout between tabs (draft and published are
-      // both "listed"), so counts don't change — only the row's status badge does.
+      // Counts are untouched: draft and published are both "listed".
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
     },
   });
 }
 
-/**
- * Invalidates the list, not just the row: under Free, activating one layout
- * deactivates whichever was active before, so a row the user never touched
- * changes too. Counts go with it — `active` is part of them, and activating an
- * unpublished layout publishes it, changing its status badge and published-at.
- */
+// Whole list, not the row: on Free, activating one layout deactivates another.
 export function useActivateLayoutMutation() {
   const queryClient = useQueryClient();
 
@@ -126,8 +95,6 @@ export function useActivateLayoutMutation() {
   });
 }
 
-/** Writes only the active-ids option, so status and published-at are untouched —
- * but is_active and the `active` count both move. */
 export function useDeactivateLayoutMutation() {
   const queryClient = useQueryClient();
 
@@ -141,7 +108,6 @@ export function useDeactivateLayoutMutation() {
   });
 }
 
-/** Adds a new draft row, so both the list and the listed count change. */
 export function useDuplicateLayoutMutation() {
   const queryClient = useQueryClient();
 

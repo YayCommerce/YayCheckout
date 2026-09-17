@@ -6,27 +6,18 @@ use YayCheckout\Repositories\LayoutRepository;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Which edition of the plugin is installed.
- *
- * The answer is derived, never declared: is_pro() reports whether the pro
- * service provider actually booted. A build-time constant could disagree with
- * what shipped — say "pro" while the Pro files are absent — and the first
- * pro call would then fatal. A derived flag cannot lie, because the thing
- * it reports is the thing that happened.
- *
- * This is *plan*, not license. An expired Pro license is still the Pro plan;
- * license state is a separate, runtime concern.
+ * Which edition is installed. Derived, not declared: is_pro() reports whether
+ * the Pro provider actually booted, so it cannot claim Pro while the files are
+ * absent. Plan, not license — an expired Pro license is still the Pro plan.
  */
 final class Plan {
 
-    /** Unlimited, matching the wp_revisions_to_keep convention. */
+    /** Same convention as wp_revisions_to_keep. */
     public const UNLIMITED = -1;
 
     private static bool $pro = false;
 
-    /**
-     * Called by ProServiceProvider::boot(), and by nothing else.
-     */
+    /** Only ProServiceProvider::boot() may call this. */
     public static function mark_pro(): void {
         self::$pro = true;
     }
@@ -36,35 +27,19 @@ final class Plan {
     }
 
     /**
-     * How many layouts this edition may hold.
-     *
-     * @return int Layout count, or self::UNLIMITED.
+     * @return int Count, or self::UNLIMITED.
      */
     public static function layout_limit(): int {
         return self::is_pro() ? self::UNLIMITED : LayoutRepository::FREE_LIMIT;
     }
 
-    /**
-     * Whether an existing layout count has used up this edition's allowance.
-     *
-     * The rule lives here so creation and duplication cannot drift apart —
-     * they enforce the same limit through different code paths.
-     *
-     * @param  int $count Layouts that already exist.
-     * @return bool
-     */
+    /** Shared by create and duplicate so the two paths cannot drift. */
     public static function layout_limit_reached( int $count ): bool {
         $limit = self::layout_limit();
 
         return self::UNLIMITED !== $limit && $count >= $limit;
     }
 
-    /**
-     * What a merchant is told when they hit the limit.
-     *
-     * Shared so translators see one string rather than two identical ones,
-     * and so the upgrade wording is changed in a single place.
-     */
     public static function layout_limit_message(): string {
         $limit = self::layout_limit();
 

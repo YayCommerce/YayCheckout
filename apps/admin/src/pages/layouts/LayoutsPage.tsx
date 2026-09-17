@@ -46,30 +46,16 @@ type View = 'listed' | 'archived';
 
 const MIN_ITEMS_FOR_LIST_CONTROLS = 10;
 
-/*
- * GET /layouts (one page of items, matched against `search`) + GET
- * /layouts/counts (tab totals) from LayoutRepository — two separate queries
- * so counts has one cache key instead of diverging per status filter. Edit,
- * Set active, Deactivate, Search and pagination are real; Preview, Restore
- * and Delete for good render with the designed DOM state
- * (enabled/disabled/hidden, labels) but no onClick — see LayoutRowActions —
- * and Health/Compatibility are "Not available yet." placeholders.
- */
 export default function LayoutsPage() {
   const [view, setView] = useState<View>('listed');
   const [pageIndex, setPageIndex] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  // Mirrors searchInput for the trailing debounce callback, which closes over
-  // a stale render. rooks' useDebounceFn exposes no cancel, so the callback
-  // checks this instead when a tab switch has cleared the input under it.
+  // useDebounceFn has no cancel; the trailing callback checks this ref to drop a stale value.
   const searchInputRef = useRef('');
 
-  // Reset to page 1 in the same state update as the filter change, not a
-  // separate effect — an effect would commit a render with the new search
-  // (or view) paired with the stale pageIndex first, firing one fetch for a
-  // page that may not exist under the new filter before a second effect-
-  // driven fetch corrects it.
+  // Page reset happens in the same update as the filter change: a separate
+  // effect would first fetch a page that may not exist under the new filter.
   const [applySearch] = useDebounceFn((value: string) => {
     if (value !== searchInputRef.current) return;
 
@@ -98,10 +84,8 @@ export default function LayoutsPage() {
   });
   const countsQuery = useLayoutCountsQuery();
 
-  // View whose rows are on screen. Lags `view` only while the new tab's first
-  // fetch is in flight — the one case keepPreviousData's placeholder rows
-  // belong to a different tab and must not render under this tab's heading.
-  // A same-tab page/search change keeps its placeholder rows and dims them.
+  // Lags `view` while a new tab's first fetch is in flight, so keepPreviousData's
+  // rows from the other tab never render under this tab's heading.
   const [settledView, setSettledView] = useState(view);
   if (list.data && !list.isPlaceholderData && settledView !== view) setSettledView(view);
 
@@ -114,18 +98,9 @@ export default function LayoutsPage() {
       heading={__('Layouts', 'yaycheckout')}
       description={__('Create, publish and activate checkout layouts.', 'yaycheckout')}
     >
-      {/* isPending only fires once, before both queries have loaded —
-       * `list`'s placeholderData: keepPreviousData flips isFetching instead
-       * on later tab/page/search changes, and `counts` has no status filter
-       * to switch at all, so neither re-fires isPending after the first
-       * load. The body is gated on it too: counts usually lands first, and
-       * without the gate the real tabs would render under the skeleton. */}
+      {/* isPending fires only on first load; keepPreviousData turns later fetches into isFetching. */}
       {isPending && <LayoutsPageSkeleton />}
-      {/* Only a counts failure replaces the page — the tabs can't render
-       * without it. A list failure is passed into the body instead, so the
-       * tabs stay mounted and the user can switch away or back to retry;
-       * placeholderData only covers `pending`, so on error `list.data` is
-       * undefined and gating the body on it would unmount the tabs too. */}
+      {/* Only a counts failure replaces the page; a list failure is shown inside it so the tabs stay mounted. */}
       {countsQuery.error && <p className="text-destructive text-sm">{countsQuery.error.message}</p>}
       {!isPending && countsQuery.data && (
         <LayoutsPageBody
@@ -165,9 +140,9 @@ function LayoutsPageBody({
 }: {
   listData: LayoutListResponse | undefined;
   listError: Error | null;
-  /** Any fetch for this tab (refetch, page, search) — rows stay on screen and dim. */
+  /** Rows stay on screen and dim. */
   listFetching: boolean;
-  /** listData still belongs to the previous tab while this tab's first fetch is in flight. */
+  /** listData still belongs to the previous tab. */
   listIsOtherTabPlaceholder: boolean;
   counts: LayoutCounts;
   countsFetching: boolean;
@@ -189,13 +164,7 @@ function LayoutsPageBody({
   const deactivateMutation = useDeactivateLayoutMutation();
   const duplicateMutation = useDuplicateLayoutMutation();
 
-  /*
-   * Both mutations invalidate the list and the counts rather than patching
-   * rows here: activating one layout deactivates another under Free, so the
-   * row that changed is not only the row that was clicked. The server already
-   * decides that — see LayoutRepository::set_active() — and is_active on every
-   * refetched row reflects it.
-   */
+  // Invalidate rather than patch: on Free, activating one row deactivates another.
   function onActivate(layout: LayoutSummary) {
     activateMutation.mutate(layout.id, {
       onSuccess: () => {
@@ -239,13 +208,10 @@ function LayoutsPageBody({
     }
   };
 
-  // Disabled only while switching tabs — the one fetch whose rows are hidden
-  // behind a skeleton. Page and search fetches keep the controls live.
   const controlsDisabled = listIsOtherTabPlaceholder;
 
-  // >=10 threshold per the Layouts screen design (many long names).
   const showListControls = (view === 'archived' ? counts.archived : counts.listed) >= MIN_ITEMS_FOR_LIST_CONTROLS;
-  // Floor at 1: totalPages is 0 for an empty result.
+  // totalPages is 0 for an empty result.
   const pageCount = Math.max(1, listData?.totalPages ?? 1);
 
   return (
@@ -310,15 +276,8 @@ function LayoutsPageBody({
             </div>
           </div>
 
-          {/* A failed background refetch keeps the previous `listData`, so
-           * the table still renders under the error; a failed first fetch of
-           * a tab has no data and shows only the error, tabs still usable. */}
           {listError && <p className="text-destructive text-sm">{listError.message}</p>}
 
-          {/* Placeholder rows from the other tab never render under this
-           * tab's heading — skeleton until its own arrive. Same-tab page and
-           * search fetches keep the previous rows (or empty state) and dim
-           * them, so the pager stays mounted and nothing jumps. */}
           {listIsOtherTabPlaceholder ? (
             <TableRowsSkeleton />
           ) : !listData ? null : (
@@ -393,7 +352,6 @@ function LayoutsPageBody({
         </Card>
 
         <aside className="space-y-4">
-          {/* No HealthChecker yet — content is a placeholder, not fabricated. */}
           <Card>
             <CardHeader>
               <CardTitle>{__('Health', 'yaycheckout')}</CardTitle>
@@ -401,7 +359,6 @@ function LayoutsPageBody({
             <p className="text-muted-foreground text-sm">{__('Not available yet.', 'yaycheckout')}</p>
           </Card>
 
-          {/* No compatibility scan yet — same treatment as Health. */}
           <Card>
             <CardHeader>
               <CardTitle>{__('Compatibility', 'yaycheckout')}</CardTitle>
@@ -432,13 +389,7 @@ function LayoutsPageBody({
   );
 }
 
-/**
- * Shows a skeleton while the counts query is refetching (create draft, close
- * editor, activate/deactivate, stale-on-focus) so a slow site never displays a stale number as if
- * it were current. The skeleton's fade-in is delayed in CSS: a refetch that
- * finishes within that window unmounts it before it ever becomes visible, so
- * fast sites don't flicker — no timers or state, just `animation-delay`.
- */
+/** The skeleton's fade-in is CSS-delayed so a fast refetch unmounts it before it shows. */
 function CountValue({ loading, value }: { loading: boolean; value: number }) {
   if (!loading) {
     return <>{value}</>;
@@ -471,14 +422,7 @@ function LayoutsTable({
       <TableHeader>
         <TableRow>
           <TableHead>{__('Name', 'yaycheckout')}</TableHead>
-          {/*
-           * Assignment column — Pro only, design shows it when a layout has
-           * an assignment rule (role/country/campaign). No real data yet:
-           * Layout::$rules (META_RULES) exists but is "Unused in 1.x" —
-           * there's no rule-authoring UI or evaluation engine. Uncomment
-           * once LayoutSummary carries a real `assignment` field.
-           * <TableHead>{__('Assignment', 'yaycheckout')}</TableHead>
-           */}
+          {/* TODO: Assignment column (Pro) once LayoutSummary carries an `assignment` field. */}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
           <TableHead>{__('Active', 'yaycheckout')}</TableHead>
           <TableHead>{__('Last published', 'yaycheckout')}</TableHead>
@@ -558,21 +502,6 @@ function LayoutTableRow({
       <TableCell className="max-w-[320px] truncate font-medium" title={layout.title}>
         {layout.title}
       </TableCell>
-      {/*
-       * Pairs with the commented-out Assignment <TableHead> above — same
-       * "no real data yet" reason. Original design:
-       * <TableCell>
-       *   {layout.assignment ? (
-       *     layout.isActive ? (
-       *       <span className="text-muted-foreground font-mono text-xs">{layout.assignment}</span>
-       *     ) : (
-       *       <Badge variant="outline">{layout.assignment}</Badge>
-       *     )
-       *   ) : (
-       *     <span className="text-muted-foreground">—</span>
-       *   )}
-       * </TableCell>
-       */}
       <TableCell>{statusBadge(layout)}</TableCell>
       <TableCell className="font-mono text-xs">
         {layout.isActive ? <Badge variant="success">{__('Active', 'yaycheckout')}</Badge> : '—'}
@@ -594,13 +523,7 @@ function LayoutTableRow({
   );
 }
 
-/**
- * Edit, Set active and the "⋯" menu's Duplicate and Deactivate are real;
- * Deactivate is disabled on a row that isn't active.
- * Unpublished changes show as a badge and a "Preview draft" label but carry no
- * Publish button — publishing is the editor's job. The rest (Preview, Restore,
- * Delete for good) match the designed DOM state but have no onClick yet.
- */
+/** Preview, Restore and Delete for good have no onClick yet; publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,
@@ -632,8 +555,6 @@ function LayoutRowActions({
     );
   }
 
-  // Only changes the Preview label: publishing happens in the editor, not from
-  // this list.
   const canPublish = layout.hasUnpublishedChanges;
 
   return (
@@ -644,8 +565,7 @@ function LayoutRowActions({
       <Button size="sm" variant="outline">
         {canPublish ? __('Preview draft', 'yaycheckout') : __('Preview', 'yaycheckout')}
       </Button>
-      {/* Rendered on every row and disabled once active, so the action column
-       * keeps the same shape from row to row instead of shifting. */}
+      {/* Disabled rather than hidden so the action column keeps its shape. */}
       <Button size="sm" variant="outline" disabled={layout.isActive} onClick={() => onSetActive(layout)}>
         {__('Set active', 'yaycheckout')}
       </Button>
@@ -666,10 +586,6 @@ function LayoutRowActions({
   );
 }
 
-/** Three loading rows — the same shape whether the whole page is loading for
- * the first time (wrapped in its own Card, see LayoutsPageSkeleton) or one
- * tab's table is waiting on its own fetch inside the already-rendered
- * "Your layouts" Card (see the listIsOtherTabPlaceholder branch in LayoutsPageBody). */
 function TableRowsSkeleton() {
   return (
     <div className="space-y-3">

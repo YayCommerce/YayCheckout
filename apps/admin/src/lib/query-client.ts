@@ -4,10 +4,7 @@ import { toast } from 'sonner';
 import { getErrorMsg } from '@/lib/helpers/response.helper';
 import { logger } from '@/lib/logger';
 
-/**
- * Opt out of the global error toast for a single query or mutation, when a
- * screen reports the failure itself and a toast would say it twice.
- */
+/** skipGlobalError: the screen reports the failure itself. */
 export type QueryMeta = {
   skipGlobalError?: boolean;
 };
@@ -22,15 +19,9 @@ export function createQueryClient() {
     },
 
     queryCache: new QueryCache({
-      /*
-       * Only report a refetch that failed while data is already on screen.
-       * A first load has no data to show, so the screen renders the error
-       * itself; a background refetch has nothing to render into and would
-       * otherwise fail invisibly, leaving stale data looking current.
-       */
+      // Toast only a background refetch failure: a first load renders its own error,
+      // but a refetch has nothing to render into and would fail invisibly.
       onError: async (error, query) => {
-        // Logged even when the toast is suppressed: a silent refetch failure
-        // is exactly the case with no other trace.
         logger.error(`query failed: ${JSON.stringify(query.queryKey)}`, error);
 
         if (query.meta?.skipGlobalError || query.state.data === undefined) {
@@ -42,10 +33,7 @@ export function createQueryClient() {
     }),
 
     mutationCache: new MutationCache({
-      /*
-       * Mutations always report. Unlike a query there is no rendered result to
-       * carry the message, so a silent failure looks like nothing happened.
-       */
+      // Mutations always toast: a silent failure looks like nothing happened.
       onError: async (error, variables, _context, mutation) => {
         logger.error(`mutation failed: ${JSON.stringify(mutation.options.mutationKey)}`, error, variables);
 

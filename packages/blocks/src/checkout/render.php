@@ -1,15 +1,11 @@
 <?php
 /**
- * Server render for yaycheckout/checkout.
+ * Read every attribute with a default: markup saved before an attribute
+ * existed must still render.
  *
- * Published layouts are stored as block markup and re-rendered on every
- * request, so every attribute must be read with a default: markup saved before
- * an attribute existed still has to render. That is what lets block attributes
- * be renamed without migrating merchant content.
- *
- * @var array    $attributes Block attributes.
- * @var string   $content    Inner blocks markup, already rendered by core.
- * @var WP_Block $block      Block instance.
+ * @var array    $attributes
+ * @var string   $content    Inner blocks, already rendered by core.
+ * @var WP_Block $block
  *
  * @package yaycommerce/yaycheckout
  */

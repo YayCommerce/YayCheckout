@@ -6,10 +6,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-/**
- * Confirms taking a layout off the storefront. The layout stays published —
- * see LayoutRepository::deactivate() — so this is reversible from the same row.
- */
 export function DeactivateModal({
   layout,
   isLastActive,
@@ -18,7 +14,7 @@ export function DeactivateModal({
   isPending,
 }: {
   layout: LayoutSummary | null;
-  /** Deactivating this one would leave no layout active at all. */
+  /** No layout would remain active. */
   isLastActive: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (layout: LayoutSummary) => void;

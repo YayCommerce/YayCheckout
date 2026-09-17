@@ -11,14 +11,8 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Layout endpoints: GET/POST /wp-json/yaycheckout/v1/layouts...
- *
- * Core's wp/v2/yay_checkout_layout endpoints still own the block editor's
- * draft saves, which bring autosave and revisions with them. Everything else
- * the admin app needs — the filtered list and tab counts, the template
- * catalogue, creation under the plan cap, and the publish/activate sequence —
- * lives here. Both surfaces check manage_woocommerce — core through the post
- * type's capability map, this controller through permission_callback.
+ * /yaycheckout/v1/layouts. Draft saves stay on core's wp/v2 endpoints
+ * (autosave, revisions); everything else the admin app needs lives here.
  */
 class LayoutRestController extends BaseRestController {
 
@@ -40,12 +34,7 @@ class LayoutRestController extends BaseRestController {
                     'args'                => $this->list_args(),
                 ],
                 [
-
-                    /*
-                     * exec_write_wp, not exec_write: create_draft() writes a
-                     * post through wp_insert_post(), and a SQL rollback cannot
-                     * undo what the object cache already holds.
-                     */
+                    // exec_write_wp: a SQL rollback cannot undo what the object cache holds.
                     'methods'             => \WP_REST_Server::CREATABLE,
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'create_draft' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
@@ -136,12 +125,6 @@ class LayoutRestController extends BaseRestController {
             [
                 [
                     'methods'             => \WP_REST_Server::CREATABLE,
-
-                    /*
-                     * exec_write_wp, not exec_write: publishing writes posts and
-                     * meta through the WordPress API, and a SQL rollback cannot
-                     * undo what the object cache already holds.
-                     */
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'publish_layout' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => $this->id_args(),
@@ -155,10 +138,6 @@ class LayoutRestController extends BaseRestController {
             [
                 [
                     'methods'             => \WP_REST_Server::CREATABLE,
-
-                    // exec_write_wp for the same reason publish uses it:
-                    // activating writes an option, and when the layout isn't
-                    // Published yet a post and its meta too.
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'activate_layout' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => $this->id_args(),
@@ -197,9 +176,6 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * The collection: filtered, searched, paginated summaries.
-     *
-     * @param  \WP_REST_Request $request
      * @return array|\WP_Error
      */
     public function get_layouts( \WP_REST_Request $request ) {
@@ -226,19 +202,12 @@ class LayoutRestController extends BaseRestController {
         ];
     }
 
-    /**
-     * Tab totals, independent of the current status filter. Its own route so
-     * the counts query (see LayoutsPage.tsx) doesn't share a cache key or
-     * response payload with the filtered list query.
-     *
-     * @return array
-     */
+    /** Own route so the SPA can cache counts independently of the filtered list. */
     public function get_layout_counts(): array {
         return [ 'counts' => $this->layouts->counts() ];
     }
 
     /**
-     * @param  \WP_REST_Request $request
      * @return array|\WP_Error
      */
     public function get_layout( \WP_REST_Request $request ) {
@@ -251,19 +220,7 @@ class LayoutRestController extends BaseRestController {
         return $layout->to_array();
     }
 
-    /**
-     * Returns the "From library" template catalogue for the New layout modal.
-     * See LayoutTemplateCatalogue for why this is fixture data rather than a
-     * real template library.
-     *
-     * The `plan` param lets the SPA preview against its own build-time edition
-     * (apps/admin/src/lib/plan.ts) rather than this site's actual licence, so
-     * the locked/unlocked grid can be reviewed without rebuilding. Omit it and
-     * the real Plan::is_pro() decides, for any caller outside the SPA.
-     *
-     * @param  \WP_REST_Request $request
-     * @return array
-     */
+    /** `plan` lets the SPA preview its build-time edition; omitted, the real plan decides. */
     public function get_templates( \WP_REST_Request $request ) {
         $plan_param = $request->get_param( 'plan' );
         $is_pro     = $plan_param ? ( 'pro' === $plan_param ) : Plan::is_pro();
@@ -274,17 +231,9 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Creates a layout draft from the New layout modal.
+     * 'library' only checks the template exists; both sources create the same
+     * blank draft until a real catalogue exists. Titles may repeat, as Pages do.
      *
-     * 'blank' and 'library' both create the same blank draft — only the
-     * template's existence is checked for 'library' — until a real catalogue
-     * exists to source markup from.
-     *
-     * No duplicate-title check: titles may repeat, same as WordPress Pages.
-     * Core dedupes post_name via wp_unique_post_slug() when publish() flips
-     * post_status.
-     *
-     * @param  \WP_REST_Request $request
      * @return array|\WP_Error
      */
     public function create_draft( \WP_REST_Request $request ) {
@@ -304,18 +253,12 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * @param  \WP_REST_Request $request
      * @return array|\WP_Error
      */
     public function publish_layout( \WP_REST_Request $request ) {
         $id = (int) $request->get_param( 'id' );
 
-        /*
-         * find() returns null for any post that is not a layout, so an id
-         * belonging to a page or an order cannot be published. Without this the
-         * route would be an arbitrary-post mutation endpoint for anyone holding
-         * manage_woocommerce.
-         */
+        // Post-type check: without it any post id could be mutated by a manage_woocommerce user.
         if ( null === $this->layouts->find( $id ) ) {
             return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
         }
@@ -323,29 +266,18 @@ class LayoutRestController extends BaseRestController {
         try {
             return $this->layouts->publish( $id )->to_array();
         } catch ( \InvalidArgumentException $ex ) {
-            /*
-             * Unusable layout markup is the merchant's problem to fix, not a
-             * plugin fault. Report it as a 400 with the reason rather than
-             * letting exec_write_wp turn it into an opaque 500.
-             */
+            // Bad markup is the merchant's to fix: a 400 with the reason, not an opaque 500.
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
     }
 
     /**
-     * Makes a layout the one shoppers see, publishing its current draft first
-     * unless it already reads as Published (scheduled and pending layouts get
-     * published now). Free swaps the previously active layout out; Pro adds to
-     * the set.
-     *
-     * @param  \WP_REST_Request $request
      * @return array|\WP_Error
      */
     public function activate_layout( \WP_REST_Request $request ) {
         $id = (int) $request->get_param( 'id' );
 
-        // Same reason as publish_layout(): find() rejects any id that is not a
-        // layout, so this cannot activate an arbitrary post.
+        // Post-type check, as in publish_layout().
         if ( null === $this->layouts->find( $id ) ) {
             return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
         }
@@ -358,10 +290,6 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Stops serving a layout to shoppers. Leaves it published, so it can be
-     * activated again without republishing.
-     *
-     * @param  \WP_REST_Request $request
      * @return array|\WP_Error
      */
     public function deactivate_layout( \WP_REST_Request $request ) {
@@ -379,10 +307,6 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Copies a layout's draft into a new draft layout. The plan cap is
-     * enforced in the repository and surfaces here as a 400.
-     *
-     * @param  \WP_REST_Request $request
      * @return array|\WP_Error
      */
     public function duplicate_layout( \WP_REST_Request $request ) {
@@ -400,17 +324,8 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Collection query args.
-     *
-     * `status` has no `type => array`: WP validates type before sanitize, so
-     * `?status=draft,published` (a string) would 400. Accept string or array;
-     * LayoutQuery checks the LayoutStatus vocabulary.
-     *
-     * `search`/`page` drive LayoutQuery::with_search()/with_pagination() — the
-     * list is fetched one page at a time, matched against the whole store.
-     * Page size is fixed server-side (LayoutQuery::PER_PAGE), not a param.
-     *
-     * @return array
+     * `status` has no `type => array`: WP validates type before sanitize, so a
+     * comma-separated string would 400. LayoutQuery validates the vocabulary.
      */
     private function list_args(): array {
         return [
@@ -445,22 +360,13 @@ class LayoutRestController extends BaseRestController {
         ];
     }
 
-    /**
-     * @return array
-     */
     private function id_args(): array {
         return [
             'id' => [
                 'required'          => true,
                 'type'              => 'integer',
                 'sanitize_callback' => 'absint',
-
-                /*
-                 * Wrapped rather than passing 'is_numeric' directly:
-                 * REST calls validate callbacks with three arguments
-                 * ( $value, $request, $param ), and an internal
-                 * function that takes one raises ArgumentCountError.
-                 */
+                // Not bare 'is_numeric': REST passes three args and an internal function throws.
                 'validate_callback' => static function ( $value ) {
                     return is_numeric( $value );
                 },

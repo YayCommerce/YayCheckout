@@ -12,12 +12,7 @@ import {
 
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 
-/**
- * react-hook-form wiring for the app's existing Field primitives
- * (components/ui/field.tsx) — FormItem/FormLabel/FormControl/FormMessage are
- * thin bindings, not a second design system. Every visual class lives in
- * Field.
- */
+// Thin react-hook-form bindings over components/ui/field.tsx; no visual classes here.
 const Form = FormProvider;
 
 type FormFieldContextValue<

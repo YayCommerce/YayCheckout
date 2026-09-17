@@ -8,31 +8,17 @@ use YayCheckout\Helpers\DateHelper;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * A checkout layout.
+ * A checkout layout. Pure entity: no WordPress calls.
  *
- * Dumb entity: it holds data and the storage-key constants, and makes no
- * WordPress calls. Everything it needs is handed to from_post() already
- * fetched, which keeps the draft/snapshot rules readable in one file and
- * lets this class be reasoned about without WordPress loaded.
- *
- * A layout carries two copies of its markup at once:
- *
- *   post_content            the working draft — what the editor saves
- *   _yaycheckout_published  the snapshot — what customers actually see
- *
- * Publishing copies draft to snapshot. Nothing else ever writes the snapshot,
- * and a customer request never reads the draft.
+ * Two copies of the markup live on one post: post_content is the working
+ * draft, _yaycheckout_published the snapshot customers see. Only publishing
+ * writes the snapshot; a customer request never reads the draft.
  */
 class Layout {
 
     public const POST_TYPE = 'yay_checkout_layout';
 
-    /*
-     * Storage keys live here and nowhere else. With two copies of the markup on
-     * one post, a mistyped key silently reads or writes the wrong one — the
-     * renderer serves a draft, or a publish writes nothing — with no error and
-     * no failing test. A constant turns that into a fatal.
-     */
+    // Keys are constants so a typo is a fatal, not a silent read of the wrong copy.
     public const META_PUBLISHED          = '_yaycheckout_published';
     public const META_DERIVED            = '_yaycheckout_derived';
     public const META_PUBLISHED_AT       = '_yaycheckout_published_at';
@@ -45,33 +31,30 @@ class Layout {
     public int $id       = 0;
     public string $title = '';
 
-    /** Working draft markup (post_content). Never rendered to customers. */
+    /** The post_content. Never rendered to customers. */
     public string $draft = '';
 
-    /** Published snapshot markup. What the renderer reads. */
+    /** What the renderer reads. */
     public string $snapshot = '';
 
-    /** GMT MySQL datetime of the last publish; null until first published. */
+    /** GMT MySQL datetime; null until first published. */
     public ?string $published_at = null;
     /** GMT post_date while post_status is 'future'; null otherwise. */
     public ?string $scheduled_at    = null;
     public ?int $published_revision = null;
     public bool $is_active          = false;
 
-    /** WordPress post_status (LayoutPostStatus). Never serialized to REST. */
+    /** LayoutPostStatus value. Never serialized to REST. */
     public string $post_status = LayoutPostStatus::DRAFT;
 
     /** Pro assignment rules. Unused in 1.x. */
     public array $rules = [];
 
-    /** Caches regenerated from the snapshot at publish time. */
+    /** Regenerated from the snapshot at publish time. */
     public array $derived = [];
 
     /**
-     * @param  \WP_Post $post
-     * @param  array    $meta      Raw bulk meta as returned by get_post_meta( $id ).
-     * @param  bool     $is_active
-     * @return self
+     * @param array $meta Bulk meta as returned by get_post_meta( $id ), unserialized.
      */
     public static function from_post( \WP_Post $post, array $meta, bool $is_active ): self {
         $layout = new self();
@@ -96,17 +79,9 @@ class Layout {
     }
 
     /**
-     * Product status for REST (LayoutStatus). Archived wins so a published
-     * layout that has been archived keeps its snapshot (un-archiving later
-     * must read Published, not Draft) without appearing in the listed tab.
-     * Scheduled and Pending likewise come from post_status alone: they
-     * describe what will happen to the draft, regardless of whether an
-     * earlier snapshot is already published.
-     *
-     * Published is decided by the snapshot, never by post_status: the
-     * editor's own Publish button sets 'publish' through wp/v2 without
-     * writing one (and cron's snapshot can fail on bad markup), and a layout
-     * with nothing to serve is not published.
+     * LayoutStatus for REST. Archived, scheduled and pending come from
+     * post_status; published is decided by the snapshot, never post_status —
+     * the editor's Publish button sets 'publish' via wp/v2 without writing one.
      */
     public function status(): string {
         switch ( $this->post_status ) {
@@ -125,15 +100,7 @@ class Layout {
         return $this->is_published() && $this->draft !== $this->snapshot;
     }
 
-    /**
-     * List row. Markup stays off the collection so a Pro store with dozens of
-     * layouts does not ship every draft over the wire.
-     *
-     * Timestamps leave as ISO 8601 UTC, not the GMT MySQL string they are
-     * stored as — see DateHelper for why the zone marker matters.
-     *
-     * @return array
-     */
+    /** List row: no markup, so a large store does not ship every draft. Timestamps as ISO 8601. */
     public function to_summary_array(): array {
         return [
             'id'                      => $this->id,
@@ -146,14 +113,7 @@ class Layout {
         ];
     }
 
-    /**
-     * Serialized shape for REST. Keys are snake_case like every payload field
-     * (see docs/code-standards.md, REST); the wire zod schema in apps/admin
-     * mirrors this exactly and lib/api/layout.api.ts converts it to the
-     * camelCase `Layout` type the rest of the SPA uses.
-     *
-     * @return array
-     */
+    /** Mirrored exactly by the SPA's strict wire schema. */
     public function to_array(): array {
         return array_merge(
             $this->to_summary_array(),
@@ -171,12 +131,8 @@ class Layout {
     }
 
     /**
-     * Unwrap one value from the array-of-arrays that get_post_meta( $id )
-     * returns. Without this every field silently becomes a one-element array.
+     * Unwraps the array-of-arrays get_post_meta( $id ) returns.
      *
-     * @param  array  $meta
-     * @param  string $key
-     * @param  mixed  $fallback
      * @return mixed
      */
     private static function meta_value( array $meta, string $key, $fallback ) {

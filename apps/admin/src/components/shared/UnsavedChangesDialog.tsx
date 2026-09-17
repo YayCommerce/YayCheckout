@@ -11,11 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-/**
- * Shown when a form has unsaved changes and the user is about to navigate
- * away. Pairs with useRouteLeaveGuard: Discard proceeds with the blocked
- * navigation, Save is the caller's submit.
- */
+/** Pairs with useRouteLeaveGuard. */
 export function UnsavedChangesDialog({
   open,
   onDiscard,

@@ -8,13 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { DocLink } from './DocLink';
 import { SettingRow } from './SettingRow';
 
-/*
- * Safe mode, telemetry and uninstall deletion are stored by this form; only
- * uninstall deletion has a consumer today (uninstall.php). Safe mode waits
- * on the storefront renderer and telemetry on a sender. The wizard button
- * renders without a handler — same as the unbuilt row actions on Layouts —
- * until the setup wizard exists.
- */
+// Only uninstall deletion has a consumer yet; safe mode and telemetry are stored, unused.
 export function GeneralTab() {
   const { control } = useFormContext<Settings>();
 

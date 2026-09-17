@@ -4,10 +4,8 @@ namespace YayCheckout\Enums;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Product lifecycle of a layout — the only status vocabulary REST and the
- * SPA speak. How each value is stored is LayoutPostStatus's concern.
- *
- * A constants class rather than a native enum: the plugin supports PHP 7.4.
+ * The only status vocabulary REST and the SPA speak. Constants, not a native
+ * enum: PHP 7.4 support.
  */
 final class LayoutStatus {
 
@@ -25,18 +23,12 @@ final class LayoutStatus {
     }
 
     /**
-     * The Layouts home tab: everything the merchant works with, not archived.
-     *
      * @return string[]
      */
     public static function listed(): array {
         return [ self::DRAFT, self::PENDING, self::SCHEDULED, self::PUBLISHED ];
     }
 
-    /**
-     * @param  mixed $value
-     * @return bool
-     */
     public static function is_valid( $value ): bool {
         return in_array( $value, self::all(), true );
     }

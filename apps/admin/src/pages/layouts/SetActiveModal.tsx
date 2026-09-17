@@ -4,11 +4,6 @@ import type { LayoutSummary } from '@/lib/schema/layout.schema';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-/**
- * Confirms activating a layout. Anything not currently reported as published
- * — draft, pending or scheduled — is published by the same request
- * (LayoutRepository::activate()), which is why the submit button says so.
- */
 export function SetActiveModal({
   layout,
   onOpenChange,
@@ -44,9 +39,7 @@ export function SetActiveModal({
                 {__('Cancel', 'yaycheckout')}
               </Button>
               <Button onClick={() => onConfirm(layout)} disabled={isPending}>
-                {/* Anything not already published gets published by the same
-                 * request — pending and scheduled included, so the label has to
-                 * say so rather than singling out drafts. */}
+                {/* Pending and scheduled are published by the same request, not just drafts. */}
                 {isPending
                   ? __('Activating…', 'yaycheckout')
                   : layout.status === 'published'

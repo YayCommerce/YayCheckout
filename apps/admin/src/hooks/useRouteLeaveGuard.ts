@@ -1,15 +1,7 @@
 import { useEffect, useState } from 'react';
 import { matchPath, useBlocker } from 'react-router';
 
-/**
- * Blocks in-app navigation while a form has unsaved changes and hands the
- * decision to a dialog; also arms the browser's own leave prompt for
- * reloads and tab closes. Routes in `excludedRoutes` (path patterns) never
- * block, so tab switches inside a multi-tab form stay free.
- *
- * Needs a data router (`createHashRouter` qualifies) — `useBlocker` throws
- * under the legacy BrowserRouter.
- */
+/** Needs a data router: useBlocker throws under the legacy BrowserRouter. */
 export function useRouteLeaveGuard(shouldBlock: boolean, excludedRoutes: string[] = []) {
   const [showDialog, setShowDialog] = useState(false);
 

@@ -6,7 +6,6 @@ import type { Settings } from '@/lib/schema/settings.schema';
 import { LoadingButton } from '@/components/ui/button';
 import type { SettingsSubMenu } from '../settings-sub-menus';
 
-/** Count the `true` leaves of react-hook-form's nested dirtyFields map. */
 function countDirtyLeaves(value: unknown): number {
   if (value === true) return 1;
   if (value && typeof value === 'object') {
@@ -15,12 +14,6 @@ function countDirtyLeaves(value: unknown): number {
   return 0;
 }
 
-/*
- * Status text on the left, Save on the right — the wireframe's panel footer.
- * One instance serves every tab: the form spans all of them, so "changes
- * pending" counts edits on any tab, and Save is disabled only when nothing
- * anywhere has changed or a save is in flight.
- */
 export function SettingsFooter({
   activeTab,
   updatedAt,
@@ -30,7 +23,7 @@ export function SettingsFooter({
   updatedAt: string | null;
   isPending: boolean;
 }) {
-  // Read dirtyFields during render so react-hook-form's proxy subscribes to it.
+  // Read during render so react-hook-form's proxy subscribes to dirtyFields.
   const { formState } = useFormContext<Settings>();
   const dirtyCount = countDirtyLeaves(formState.dirtyFields);
   const isDirty = dirtyCount > 0;
