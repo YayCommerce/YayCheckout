@@ -186,7 +186,13 @@ Plan is derived, not declared. `Plan::is_pro()` reports whether the provider act
 
 ## Comments
 
-**Default to no comment. Code shows *how*; comment only to carry *why* — a non-obvious constraint, deliberate deviation, gotcha, or workaround.** Keep the one fact a reader needs at that line, in the fewest words; two lines is the usual ceiling, longer only for a WordPress behaviour the code works around. Never narrate the code ("loop over layouts"), narrate the change ("fixed X", "as requested"), restate names or types, or mark block ends. Docblocks are one line plus only the `@param` / `@return` / `@throws` a caller relies on.
+Two kinds of comment, two rules.
+
+**Docblocks** (class, public/protected method, constant, hook) start with one line saying *what this does for its caller* — the contract an IDE shows before the body is read. Keep it unless the name and signature already say it (`get_id()`: cut; `create()` "a layout draft from the New layout modal": keep). After that line, only the *why* and the `@param` / `@return` / `@throws` a caller relies on. A docblock never opens with a caveat: if there is a why, the purpose line comes first.
+
+**Inline comments** (inside a body) default to none. **Code shows *how*; comment only to carry *why* — a non-obvious constraint, deliberate deviation, gotcha, or workaround.** Keep the one fact a reader needs at that line, in the fewest words; two lines is the usual ceiling, longer only for a WordPress behaviour the code works around. Never narrate the code ("loop over layouts"), narrate the change ("fixed X", "as requested"), or mark block ends.
+
+"Restates the name" means the line adds nothing beyond the identifier — no caller context, trigger, unit, or side effect. A summary that adds one of those is a contract, not a restatement.
 
 **When a comment does exist, it states only what is true of the code directly beneath it — the invariant it protects and what breaks without it.** Never what other code does, what the code used to do, or what it will do. Cross-cutting rationale lives in `docs/system-architecture.md`; the comment points at it (`See docs/system-architecture.md, <section>`).
 
