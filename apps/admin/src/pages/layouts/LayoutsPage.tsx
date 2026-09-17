@@ -11,7 +11,6 @@ import {
   useDeactivateLayoutMutation,
   useLayoutCountsQuery,
   useLayoutsQuery,
-  usePublishLayoutMutation,
 } from '@/lib/queries/layout.queries';
 import {
   LISTED_LAYOUT_STATUSES,
@@ -578,10 +577,10 @@ function LayoutTableRow({
 }
 
 /**
- * Edit and Publish are real; Publish is enabled by unpublished changes alone,
- * regardless of active state. Set active opens SetActiveModal, and the "⋯"
- * menu's Deactivate opens DeactivateModal — disabled on a row that isn't
- * active, since it is the menu's only item. The rest (Preview, Restore,
+ * Edit, Set active and the "⋯" menu's Deactivate are real; Deactivate is
+ * disabled on a row that isn't active, since it is the menu's only item.
+ * Unpublished changes show as a badge and a "Preview draft" label but carry no
+ * Publish button — publishing is the editor's job. The rest (Preview, Restore,
  * Delete for good) match the demo's DOM state but have no onClick yet.
  */
 function LayoutRowActions({
@@ -597,8 +596,6 @@ function LayoutRowActions({
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
 }) {
-  const publishMutation = usePublishLayoutMutation();
-
   if (view === 'archived') {
     return (
       <div className="flex items-center gap-2">
@@ -615,13 +612,9 @@ function LayoutRowActions({
     );
   }
 
+  // Only changes the Preview label: publishing happens in the editor, not from
+  // this list.
   const canPublish = layout.hasUnpublishedChanges;
-
-  function onPublish() {
-    publishMutation.mutate(layout.id, {
-      onSuccess: () => toast.success(__('Layout published.', 'yaycheckout')),
-    });
-  }
 
   return (
     <div className="flex items-center gap-2">
@@ -631,21 +624,11 @@ function LayoutRowActions({
       <Button size="sm" variant="outline">
         {canPublish ? __('Preview draft', 'yaycheckout') : __('Preview', 'yaycheckout')}
       </Button>
-      {canPublish && (
-        <Button size="sm" onClick={onPublish} disabled={publishMutation.isPending}>
-          {publishMutation.isPending ? __('Publishing…', 'yaycheckout') : __('Publish', 'yaycheckout')}
-        </Button>
-      )}
-      {!layout.isActive && (
-        <Button size="sm" variant="outline" onClick={() => onSetActive(layout)}>
-          {__('Set active', 'yaycheckout')}
-        </Button>
-      )}
-      {layout.isActive && !canPublish && (
-        <Button size="sm" variant="outline" disabled>
-          {__('active', 'yaycheckout')}
-        </Button>
-      )}
+      {/* Rendered on every row and disabled once active, so the action column
+       * keeps the same shape from row to row instead of shifting. */}
+      <Button size="sm" variant="outline" disabled={layout.isActive} onClick={() => onSetActive(layout)}>
+        {__('Set active', 'yaycheckout')}
+      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button size="sm" variant="outline">
