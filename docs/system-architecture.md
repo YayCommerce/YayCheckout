@@ -58,7 +58,7 @@ No custom tables in 1.x.
 | `_yaycheckout_derived` | meta | publish — fields, extra_fields, slots, order_modes |
 | `_yaycheckout_published_at` | meta | publish, last |
 | `_yaycheckout_published_revision` | meta | publish |
-| `yaycheckout_active_layout` | option | `set_active()` — one option, so "exactly one active" holds by construction |
+| `yaycheckout_active_layout` | option | `set_active()` / `deactivate()` — an ordered id set; Free replaces it, Pro appends, and `active()` serves the last id |
 
 The four derived caches live in one `_yaycheckout_derived` array rather than four keys. Fewer writes means a smaller window in which new derived data sits against an old snapshot, and one `get_post_meta` on the customer path instead of four.
 

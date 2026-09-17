@@ -18,12 +18,6 @@ class LayoutRepository {
     /** Free edition may hold this many layouts. */
     public const FREE_LIMIT = 3;
 
-    /**
-     * Filters the active-layout set on activation. Free replaces, Pro merges
-     * — see set_active().
-     */
-    public const FILTER_ACTIVE_IDS = 'yaycheckout_active_layout_ids';
-
     public function find( int $id ): ?Layout {
         $post = get_post( $id );
 
@@ -54,7 +48,6 @@ class LayoutRepository {
      * most recent choice and the one they expect to be serving.
      */
     public function active(): ?Layout {
-        // TODO: Need to find a complete function to replace this.
         $ids = $this->active_ids();
         $id  = empty( $ids ) ? 0 : (int) end( $ids );
 
@@ -311,24 +304,28 @@ class LayoutRepository {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
 
-        $remaining = array_values( array_diff( $this->active_ids(), [ $id ] ) );
-
-        update_option( Layout::OPTION_ACTIVE, $remaining );
+        $this->store_ids( array_diff( $this->active_ids(), [ $id ] ) );
 
         return $this->find( $id );
     }
 
     /**
-     * Free replaces the active set with this one layout; Pro merges it in,
-     * through FILTER_ACTIVE_IDS. The filter's default is the Free behaviour,
-     * so the Free build — where nothing hooks it — needs no branch of its own.
+     * Free serves one layout, so activating replaces the set. Pro may hold
+     * several: the id is moved to the end, so re-activating a layout that is
+     * already active makes it the most recent choice active() serves.
+     *
+     * Plan policy lives here, read from Plan, the same way the layout cap
+     * does — no hook for Pro to attach to, because there is no Pro code
+     * involved, only a different rule.
+     *
      * Writes nothing else.
      */
     public function set_active( int $id ): void {
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- FILTER_ACTIVE_IDS carries the yaycheckout_ prefix.
-        $ids = (array) apply_filters( self::FILTER_ACTIVE_IDS, [ $id ], $id, $this->active_ids() );
+        $ids = Plan::is_pro()
+            ? array_merge( array_diff( $this->active_ids(), [ $id ] ), [ $id ] )
+            : [ $id ];
 
-        update_option( Layout::OPTION_ACTIVE, array_values( array_unique( array_map( 'intval', $ids ) ) ) );
+        $this->store_ids( $ids );
     }
 
     /**
@@ -411,18 +408,18 @@ class LayoutRepository {
     }
 
     /**
-     * The active layout ids, as the current plan allows them.
+     * The active layout ids the current plan allows, oldest first.
      *
-     * A bare int is accepted on read: the option held a single id before Pro
-     * could activate several, so a site that stored one keeps working.
+     * A bare int is accepted: the option held a single id before Pro could
+     * activate several, so a site that stored one keeps working.
      *
      * Free serves one layout at a time, but a site that ran Pro can still have
      * several ids stored — nothing prunes the option when the Pro build is
      * swapped out. Keep the last, which set_active() appends and active()
-     * already resolves to, so dropping back to Free leaves the storefront on
-     * the same layout instead of reviving an older one. Filtering on read
-     * rather than rewriting the option means the full set returns intact if
-     * the merchant upgrades again; the next write persists the trimmed set.
+     * resolves to, so dropping back to Free leaves the storefront on the same
+     * layout instead of reviving an older one. The next write persists the
+     * trimmed set: on Free, deactivating the active layout must leave nothing
+     * active, not bring an older Pro-era layout back.
      *
      * @return int[]
      */
@@ -432,6 +429,13 @@ class LayoutRepository {
         $ids    = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
 
         return Plan::is_pro() ? $ids : array_slice( $ids, -1 );
+    }
+
+    /**
+     * @param int[] $ids
+     */
+    private function store_ids( array $ids ): void {
+        update_option( Layout::OPTION_ACTIVE, array_values( $ids ) );
     }
 
     /**

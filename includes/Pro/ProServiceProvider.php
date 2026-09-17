@@ -1,7 +1,6 @@
 <?php
 namespace YayCheckout\Pro;
 
-use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
@@ -32,22 +31,6 @@ class ProServiceProvider {
 
         /*
          * Pro features register here, via add_action/add_filter only.
-         * The layout cap is core behaviour reading Plan, so it needs nothing
-         * on this side.
-         */
-
-        /*
-         * Several layouts may be active at once under Pro. Core's default
-         * replaces the set with the layout being activated; merging is the
-         * whole of the Pro difference.
-         */
-        add_filter(
-            LayoutRepository::FILTER_ACTIVE_IDS,
-            static function ( $ids, $id, $previous ) {
-                return array_merge( (array) $previous, [ $id ] );
-            },
-            10,
-            3
-        );
+         * Empty in 1.x — plan rules that differ between editions.
     }
 }
