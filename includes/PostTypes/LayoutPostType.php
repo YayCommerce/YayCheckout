@@ -9,10 +9,11 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Registers the checkout layout post type.
  *
- * Registration only — no business logic. The layout has no admin UI of its own
- * because the plugin's React app is the interface, but it is exposed to the
- * REST API so the block editor can save drafts through core's own
- * wp/v2/yay_checkout_layout endpoints.
+ * Registration only — no business logic. Hidden from the admin menu because
+ * the plugin's React app is the interface, but show_ui stays on so the block
+ * editor screen can be embedded in it, and it is exposed to the REST API so
+ * that editor saves drafts through core's own wp/v2/yay_checkout_layout
+ * endpoints.
  */
 class LayoutPostType {
 
@@ -42,7 +43,6 @@ class LayoutPostType {
                 'query_var'        => false,
                 'can_export'       => true,
                 'delete_with_user' => false,
-                // 'publicly_queryable' => true,
 
                 /*
                  * Every capability maps to manage_woocommerce so core's REST
@@ -87,11 +87,11 @@ class LayoutPostType {
      * Keep every revision for layouts.
      *
      * _yaycheckout_published_revision stores a revision post ID, and orders
-     * record the layout revision they were placed on. If WP_POST_REVISIONS
+     * will record the layout revision they were placed on. If WP_POST_REVISIONS
      * pruning deleted those rows, support could no longer answer "which layout
      * version produced this order" for exactly the old orders where the
      * question matters. Removing this filter breaks nothing visibly today and
-     * loses that history months later, so it is covered by a test.
+     * loses that history months later.
      *
      * @param  int      $num
      * @param  \WP_Post $post

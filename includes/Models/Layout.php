@@ -95,15 +95,16 @@ class Layout {
 
     /**
      * Product status for REST (LayoutStatus). Archived wins so a published
-     * layout that has been archived keeps its snapshot (restore must return
-     * Published, not Draft) without appearing as live in the listed tab.
+     * layout that has been archived keeps its snapshot (un-archiving later
+     * must read Published, not Draft) without appearing in the listed tab.
      * Scheduled and Pending likewise come from post_status alone: they
      * describe what will happen to the draft, regardless of whether an
-     * earlier snapshot is already live.
+     * earlier snapshot is already published.
      *
      * Published is decided by the snapshot, never by post_status: the
-     * editor's own Publish button and cron both set 'publish' without
-     * writing one, and a layout with nothing to serve is not published.
+     * editor's own Publish button sets 'publish' through wp/v2 without
+     * writing one (and cron's snapshot can fail on bad markup), and a layout
+     * with nothing to serve is not published.
      */
     public function status(): string {
         switch ( $this->post_status ) {

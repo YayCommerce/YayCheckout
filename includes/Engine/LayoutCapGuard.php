@@ -11,10 +11,10 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Enforces the edition's layout limit at the point layouts are created.
  *
- * Layouts are created through core's wp/v2 endpoints rather than a controller
- * of ours, so there is no handler to put a count check in — hence a filter.
- * It has to live server-side: gating only the admin app would be bypassed by
- * anyone posting to wp/v2 directly, which any shop manager can do.
+ * The admin app creates through POST /layouts, where LayoutRepository::create()
+ * checks the limit; but the post type is on wp/v2 and any shop manager can
+ * POST there directly, so the same rule is enforced here as a filter on core's
+ * insert. Gating only the admin app would be bypassed that way.
  */
 class LayoutCapGuard {
 

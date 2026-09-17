@@ -9,8 +9,8 @@ defined( 'ABSPATH' ) || exit;
  * Injects embed-mode CSS when post.php is loaded with ?yc-embed=1 inside the manager iframe.
  *
  * The React app opens the iframe; this class only detects the flag and hides wp-admin chrome
- * so Gutenberg fills the frame. Dump-data IDs may point at a non-layout post — chrome still
- * hides, because the iframe is the exit path either way.
+ * so Gutenberg fills the frame. The post is not checked to be a layout: chrome hides for any
+ * post id, because the iframe is the exit path either way.
  */
 class LayoutEditorEmbedStyles {
 

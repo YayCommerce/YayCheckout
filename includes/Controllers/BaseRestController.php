@@ -83,7 +83,7 @@ abstract class BaseRestController {
 
     /**
      * Execute Routes which DO Write to DB via custom tables, auto-rollback on error.
-     * Treat deep thrown error as internal_error
+     * Treat deep thrown error as internal_error. Unused until a custom table exists.
      *
      * For WordPress API writes (posts, meta, options) use exec_write_wp() instead —
      * a SQL transaction cannot roll back the WordPress object cache.

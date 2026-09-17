@@ -7,16 +7,17 @@
  * uninstall". Off by default so an accidental delete never loses layouts.
  *
  * The plugin autoloader is not loaded here and WooCommerce may be inactive,
- * so the option name and post type are literals. They mirror
- * Settings::OPTION_SETTINGS and Layout::POST_TYPE — the one documented
- * exception to "storage keys are constants" in docs/code-standards.md.
- * Keep them in sync.
+ * so the option name, setting key and post type are literals. They mirror
+ * Settings::OPTION_SETTINGS, the schema key general.delete_data_on_uninstall
+ * and Layout::POST_TYPE — the one documented exception to "storage keys are
+ * constants" in docs/code-standards.md. Keep them in sync.
  *
  * Single site only; a network-wide uninstall loop is not implemented.
  */
 
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
+// Read the flag before touching options — the delete below removes it.
 $yaycheckout_settings = get_option( 'yaycheckout_settings', [] );
 
 if ( empty( $yaycheckout_settings['general']['delete_data_on_uninstall'] ) ) {
@@ -25,7 +26,6 @@ if ( empty( $yaycheckout_settings['general']['delete_data_on_uninstall'] ) ) {
 
 global $wpdb;
 
-// Read the flag before touching options — the delete below removes it.
 // Direct query rather than get_posts(): 'any' excludes trash, and archived
 // layouts are stored as trash (LayoutPostStatus::ARCHIVED).
 $yaycheckout_layout_ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
