@@ -20,12 +20,7 @@ final class LayoutPostStatus {
     public const SCHEDULED = 'future';
 
     /**
-     * TEMPORARY — for local testing only, do not commit.
-     *
-     * 'publish' makes WP_REST_Posts_Controller::check_read_permission() return
-     * true for this post unconditionally (see class-wp-rest-posts-controller.php
-     * line 1791), exposing every published layout's full markup to anonymous
-     * REST reads. Revert to 'private' before any commit.
+     * Published layouts are live.
      */
     public const PUBLISHED = 'publish';
 

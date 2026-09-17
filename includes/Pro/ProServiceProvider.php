@@ -31,8 +31,7 @@ class ProServiceProvider {
 
         /*
          * Pro features register here, via add_action/add_filter only.
-         * Empty in 1.x — the layout cap is core behaviour reading Plan, so it
-         * needs nothing on this side.
+         * Empty in 1.x — plan rules that differ between editions.
          */
     }
 }

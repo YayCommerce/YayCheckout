@@ -147,6 +147,36 @@ class LayoutRestController extends BaseRestController {
                 ],
             ]
         );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
+            '/layouts/(?P<id>\d+)/activate',
+            [
+                [
+                    'methods'             => \WP_REST_Server::CREATABLE,
+
+                    // exec_write_wp for the same reason publish uses it:
+                    // activating writes an option, and on a first activation a
+                    // post and its meta too.
+                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'activate_layout' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $this->id_args(),
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
+            '/layouts/(?P<id>\d+)/deactivate',
+            [
+                [
+                    'methods'             => \WP_REST_Server::CREATABLE,
+                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'deactivate_layout' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $this->id_args(),
+                ],
+            ]
+        );
     }
 
     public function permission_callback(): bool {
@@ -284,6 +314,50 @@ class LayoutRestController extends BaseRestController {
              * plugin fault. Report it as a 400 with the reason rather than
              * letting exec_write_wp turn it into an opaque 500.
              */
+            return $this->error_invalid_arguments( $ex->getMessage() );
+        }
+    }
+
+    /**
+     * Makes a layout the one shoppers see, publishing it first if it never has
+     * been. Free swaps the previously active layout out; Pro adds to the set.
+     *
+     * @param  \WP_REST_Request $request
+     * @return array|\WP_Error
+     */
+    public function activate_layout( \WP_REST_Request $request ) {
+        $id = (int) $request->get_param( 'id' );
+
+        // Same reason as publish_layout(): find() rejects any id that is not a
+        // layout, so this cannot activate an arbitrary post.
+        if ( null === $this->layouts->find( $id ) ) {
+            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+        }
+
+        try {
+            return $this->layouts->activate( $id )->to_array();
+        } catch ( \InvalidArgumentException $ex ) {
+            return $this->error_invalid_arguments( $ex->getMessage() );
+        }
+    }
+
+    /**
+     * Stops serving a layout to shoppers. Leaves it published, so it can be
+     * activated again without republishing.
+     *
+     * @param  \WP_REST_Request $request
+     * @return array|\WP_Error
+     */
+    public function deactivate_layout( \WP_REST_Request $request ) {
+        $id = (int) $request->get_param( 'id' );
+
+        if ( null === $this->layouts->find( $id ) ) {
+            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+        }
+
+        try {
+            return $this->layouts->deactivate( $id )->to_array();
+        } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
     }

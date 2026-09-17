@@ -1,7 +1,9 @@
 import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
+  activateLayout,
   createLayoutDraft,
+  deactivateLayout,
   getLayout,
   getLayoutCounts,
   getLayouts,
@@ -99,6 +101,45 @@ export function usePublishLayoutMutation() {
     onSuccess: () => {
       // Publishing never moves a layout between tabs (draft and published are
       // both "listed"), so counts don't change — only the row's status badge does.
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+    },
+  });
+}
+
+/**
+ * Which layout is active is tracked in the page's own state, seeded from
+ * window.yayCheckoutMeta — the list is still invalidated because activating an
+ * unpublished layout publishes it, changing its status, badge and published-at.
+ */
+/**
+ * Invalidates the list, not just the row: under Free, activating one layout
+ * deactivates whichever was active before, so a row the user never touched
+ * changes too. Counts go with it — `active` is part of them, and activating an
+ * unpublished layout publishes it, changing its status badge and published-at.
+ */
+export function useActivateLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'activate'],
+    mutationFn: activateLayout,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+    },
+  });
+}
+
+/** Writes only the active-ids option, so status and published-at are untouched —
+ * but is_active and the `active` count both move. */
+export function useDeactivateLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'deactivate'],
+    mutationFn: deactivateLayout,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
     },
   });
