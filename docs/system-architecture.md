@@ -93,7 +93,7 @@ The block editor saves drafts through **core's** `wp/v2/yay_checkout_layout` —
 
 Both check `manage_woocommerce`. Core does so because the post type maps every capability to it at registration; our controllers do so in `permission_callback`. One rule, declared in one place, no `map_meta_cap` filter.
 
-**A published layout's `post_status` was `private`, never `publish`.** `WP_REST_Posts_Controller::check_read_permission()` returns true for any post whose status is `publish` without consulting the post type's capabilities — so publishing makes layout markup readable through `wp/v2` by anonymous visitors, bypassing the capability map entirely. `private` routes the read through `read_post`. **Open decision (2026-09-17):** `LayoutPostStatus::PUBLISHED` is currently `publish`; the table below shows the value the code holds today, and the anonymous-read exposure is unresolved until the team picks `private`, a REST guard, or accepts it.
+**Known gap: published layouts are anonymously readable through `wp/v2`.** `WP_REST_Posts_Controller::check_read_permission()` returns true for any post whose status is `publish` without consulting the post type's capabilities, so `GET wp/v2/yay_checkout_layout/{id}` (and the collection) answers a logged-out request with the layout's title, slug, author id, dates and rendered draft markup. Our own `yaycheckout/v1` routes still return 401. Verified 2026-09-17 on a local site. **Decision (2026-09-17): keep `publish`** — it keeps the editor's Publish button, `edit.php` and cron's `publish_future_post` honest — **and add a REST guard later** (a `rest_pre_dispatch` or `rest_yay_checkout_layout_query` check for `manage_woocommerce`). Until then, treat layout markup as public.
 
 Full map, owned by `LayoutPostStatus`:
 
@@ -102,7 +102,7 @@ Full map, owned by `LayoutPostStatus`:
 | `draft` | `draft` |
 | `pending` | `pending` |
 | `scheduled` | `future` |
-| `published` | `publish` (see open decision above) |
+| `published` | `publish` (see the known gap above) |
 | `archived` | `trash` |
 
 ### Scheduled layouts
@@ -200,4 +200,4 @@ It uses `require_once` rather than `require`. A malformed class name — a doubl
 
 ## Deliberately not built
 
-Pro assignment rules (`resolve_for_request()` returns the active layout and is the seam for them), `_yaycheckout_tokens_override`, the `yay_checkout_pattern` library CPT, import/export, the extra-field registry, the storefront renderer (`Renderer/` holds only the force-enqueue hook; layouts are not yet rendered into WooCommerce's checkout), order meta writes, self-test, telemetry (the opt-in is stored, nothing is sent), preview links (the lifetime is stored, no links exist), safe-mode enforcement (stored, unread until the renderer exists), the 1.3 analytics table, and `yay_cart_layout` / `yay_thankyou_layout`.
+Pro assignment rules (`resolve_for_request()` returns the active layout and is the seam for them), `_yaycheckout_tokens_override`, the `yay_checkout_pattern` library CPT, import/export, the extra-field registry, the storefront renderer (`Renderer/` holds only the force-enqueue hook; layouts are not yet rendered into WooCommerce's checkout), order meta writes, the `wp/v2` read guard for published layouts (see Two REST surfaces), self-test, telemetry (the opt-in is stored, nothing is sent), preview links (the lifetime is stored, no links exist), safe-mode enforcement (stored, unread until the renderer exists), the 1.3 analytics table, and `yay_cart_layout` / `yay_thankyou_layout`.
