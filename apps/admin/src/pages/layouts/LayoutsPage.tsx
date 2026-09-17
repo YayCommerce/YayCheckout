@@ -9,6 +9,7 @@ import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
   useDeactivateLayoutMutation,
+  useDuplicateLayoutMutation,
   useLayoutCountsQuery,
   useLayoutsQuery,
 } from '@/lib/queries/layout.queries';
@@ -185,6 +186,7 @@ function LayoutsPageBody({
 
   const activateMutation = useActivateLayoutMutation();
   const deactivateMutation = useDeactivateLayoutMutation();
+  const duplicateMutation = useDuplicateLayoutMutation();
 
   /*
    * Both mutations invalidate the list and the counts rather than patching
@@ -208,6 +210,12 @@ function LayoutsPageBody({
         setDeactivatingLayout(null);
         toast.success(__('Layout deactivated.', 'yaycheckout'));
       },
+    });
+  }
+
+  function onDuplicate(layout: LayoutSummary) {
+    duplicateMutation.mutate(layout.id, {
+      onSuccess: () => toast.success(__('Layout duplicated.', 'yaycheckout')),
     });
   }
 
@@ -360,6 +368,7 @@ function LayoutsPageBody({
                       onEditLayout={setEditingLayoutId}
                       onSetActive={setActivatingLayout}
                       onDeactivate={setDeactivatingLayout}
+                      onDuplicate={onDuplicate}
                     />
                   </div>
                   {showListControls && (
@@ -447,12 +456,14 @@ function LayoutsTable({
   onEditLayout,
   onSetActive,
   onDeactivate,
+  onDuplicate,
 }: {
   items: LayoutSummary[];
   view: View;
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
+  onDuplicate: (layout: LayoutSummary) => void;
 }) {
   return (
     <Table>
@@ -482,6 +493,7 @@ function LayoutsTable({
             onEditLayout={onEditLayout}
             onSetActive={onSetActive}
             onDeactivate={onDeactivate}
+            onDuplicate={onDuplicate}
           />
         ))}
       </TableBody>
@@ -531,12 +543,14 @@ function LayoutTableRow({
   onEditLayout,
   onSetActive,
   onDeactivate,
+  onDuplicate,
 }: {
   layout: LayoutSummary;
   view: View;
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
+  onDuplicate: (layout: LayoutSummary) => void;
 }) {
   return (
     <TableRow>
@@ -570,6 +584,7 @@ function LayoutTableRow({
           onEditLayout={onEditLayout}
           onSetActive={onSetActive}
           onDeactivate={onDeactivate}
+          onDuplicate={onDuplicate}
         />
       </TableCell>
     </TableRow>
@@ -577,8 +592,8 @@ function LayoutTableRow({
 }
 
 /**
- * Edit, Set active and the "⋯" menu's Deactivate are real; Deactivate is
- * disabled on a row that isn't active, since it is the menu's only item.
+ * Edit, Set active and the "⋯" menu's Duplicate and Deactivate are real;
+ * Deactivate is disabled on a row that isn't active.
  * Unpublished changes show as a badge and a "Preview draft" label but carry no
  * Publish button — publishing is the editor's job. The rest (Preview, Restore,
  * Delete for good) match the designed DOM state but have no onClick yet.
@@ -589,12 +604,14 @@ function LayoutRowActions({
   onEditLayout,
   onSetActive,
   onDeactivate,
+  onDuplicate,
 }: {
   layout: LayoutSummary;
   view: View;
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
+  onDuplicate: (layout: LayoutSummary) => void;
 }) {
   if (view === 'archived') {
     return (
@@ -636,6 +653,7 @@ function LayoutRowActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
             {__('Deactivate', 'yaycheckout')}
           </DropdownMenuItem>
