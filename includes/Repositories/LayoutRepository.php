@@ -237,10 +237,6 @@ class LayoutRepository {
         // Commit marker, written last.
         update_post_meta( $id, Layout::META_PUBLISHED_AT, current_time( 'mysql', true ) );
 
-        /*
-         * post_status records only that this layout has been published at least
-         * once. See LayoutPostStatus::PUBLISHED for why it is never 'publish'.
-         */
         if ( LayoutPostStatus::PUBLISHED !== $post->post_status ) {
             wp_update_post(
                 [
