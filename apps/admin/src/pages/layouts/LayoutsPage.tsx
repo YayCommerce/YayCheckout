@@ -223,6 +223,10 @@ function LayoutsPageBody({
       onSuccess: () => {
         setArchivingLayout(null);
         toast.success(__('Layout archived.', 'yaycheckout'));
+
+        if (listData?.items.length === 1 && pageIndex > 0) {
+          onPageIndexChange(pageIndex - 1);
+        }
       },
     });
   }
