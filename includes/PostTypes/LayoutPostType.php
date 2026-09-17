@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\PostTypes;
 
+use YayCheckout\Controllers\LayoutCoreRestController;
 use YayCheckout\Models\Layout;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -23,26 +24,28 @@ class LayoutPostType {
         register_post_type(
             Layout::POST_TYPE,
             [
-                'labels'           => [
+                'labels'                => [
                     'name'          => __( 'Checkout Layouts', 'yaycheckout' ),
                     'singular_name' => __( 'Checkout Layout', 'yaycheckout' ),
                 ],
-                'public'           => false,
-                'show_ui'          => true,
-                'show_in_menu'     => false,
-                'show_in_rest'     => true,
-                'rest_base'        => Layout::POST_TYPE,
-                'supports'         => [ 'title', 'editor', 'revisions', 'custom-fields', 'author', 'thumbnail', 'page-attributes' ],
-                'has_archive'      => false,
-                'rewrite'          => false,
-                'query_var'        => false,
-                'can_export'       => true,
-                'delete_with_user' => false,
+                'public'                => false,
+                'show_ui'               => true,
+                'show_in_menu'          => false,
+                'show_in_rest'          => true,
+                'rest_base'             => Layout::POST_TYPE,
+                // Core would serve every 'publish' layout anonymously; see the controller.
+                'rest_controller_class' => LayoutCoreRestController::class,
+                'supports'              => [ 'title', 'editor', 'revisions', 'custom-fields', 'author', 'thumbnail', 'page-attributes' ],
+                'has_archive'           => false,
+                'rewrite'               => false,
+                'query_var'             => false,
+                'can_export'            => true,
+                'delete_with_user'      => false,
 
                 // Every cap → manage_woocommerce, so core's REST and our controllers check the same thing.
-                'capability_type'  => 'post',
-                'map_meta_cap'     => false,
-                'capabilities'     => [
+                'capability_type'       => 'post',
+                'map_meta_cap'          => false,
+                'capabilities'          => [
                     'edit_post'              => 'manage_woocommerce',
                     'read_post'              => 'manage_woocommerce',
                     'delete_post'            => 'manage_woocommerce',
@@ -60,10 +63,10 @@ class LayoutPostType {
                 ],
 
                 // template_lock governs the top level only; inner locking is the checkout block's templateLock.
-                'template'         => [
+                'template'              => [
                     [ 'yaycheckout/checkout' ],
                 ],
-                'template_lock'    => 'all',
+                'template_lock'         => 'all',
             ]
         );
     }

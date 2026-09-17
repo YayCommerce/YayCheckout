@@ -13,13 +13,7 @@ final class LayoutStatus {
     public const PENDING   = 'pending';
     public const SCHEDULED = 'future';
 
-    /**
-     * Always carries a snapshot; see docs/system-architecture.md, "Two REST surfaces".
-     *
-     * TODO: guard anonymous wp/v2 reads — core serves any 'publish' post
-     * without consulting the capability map. Add a manage_woocommerce check on
-     * rest_pre_dispatch; 'private' fights the editor's Publish button and cron.
-     */
+    /** Always carries a snapshot; see docs/system-architecture.md, "Two REST surfaces". */
     public const PUBLISHED = 'publish';
 
     /** WP cron empties trash after EMPTY_TRASH_DAYS, so archive is not indefinite. */

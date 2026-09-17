@@ -30,7 +30,7 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `Models/` | `Layout`, `LayoutQuery`, `Settings` | `Layout` and `Settings` are dumb entities; **every storage key constant lives here**; zero WP calls. `Settings` owns `schema()` (the single description of every setting), `from_option()` (read projection through the schema), and `sanitize()` (strict type and enum validation, unknown keys stripped). `LayoutQuery` is immutable value object for filtered/paginated queries. |
 | `Repositories/` | `LayoutRepository`, `SettingsRepository` | all storage access: layouts (owns the publish sequence and the active-layout set — Free replaces, Pro appends, last id serves), settings (get/save/is_reviewed/mark_reviewed) |
 | `Services/` | `DerivedCacheBuilder` | pure markup → derived caches |
-| `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutTemplateCatalogue` | routing, validation, permissions; template catalogue (placeholder, static list) |
+| `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue` | routing, validation, permissions; core's wp/v2 layout controller with reads gated on `manage_woocommerce`; template catalogue (placeholder, static list) |
 | `Blocks/` | `BlockRegistry` | registers built block directories |
 | `Support/` | `Plan` | Free/Pro flag derived from provider boot; owns the layout limit and its message |
 | `Pro/` | `ProServiceProvider` | **absent from the Free build** |
