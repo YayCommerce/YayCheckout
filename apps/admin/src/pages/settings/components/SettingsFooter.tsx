@@ -25,7 +25,7 @@ const lastSavedFormat = new Intl.DateTimeFormat(undefined, {
  * Status text on the left, Save on the right — the wireframe's panel footer.
  * One instance serves every tab: the form spans all of them, so "changes
  * pending" counts edits on any tab, and Save is disabled only when nothing
- * anywhere has changed.
+ * anywhere has changed or a save is in flight.
  */
 export function SettingsFooter({
   activeTab,

@@ -4,8 +4,7 @@ namespace YayCheckout\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Template catalogue for the "New layout" → "From library" step in
- * YC-02b_New_Layout_Modal.dc.html.
+ * Template catalogue for the "New layout" → "From library" step.
  *
  * Currently a fixed list standing in for a real template source — does not
  * touch the database. Repoint templates()/catalogue() at real markup once it
@@ -15,7 +14,7 @@ class LayoutTemplateCatalogue {
 
     /**
      * The first N templates a Free/Lite licence may pick — the rest render
-     * locked, as in yc02-10.
+     * locked.
      */
     private const FREE_UNLOCKED_COUNT = 3;
 

@@ -31,7 +31,9 @@ class ProServiceProvider {
 
         /*
          * Pro features register here, via add_action/add_filter only.
-         * Empty in 1.x — plan rules that differ between editions.
+         * Empty in 1.x: the only edition differences so far are plan rules
+         * (layout cap, active set), which core reads from Plan::is_pro()
+         * rather than through hooks.
          */
     }
 }

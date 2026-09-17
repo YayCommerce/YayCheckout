@@ -27,9 +27,10 @@ interface ProGateProps {
  * That is acceptable only because the Free build's PHP has no matching
  * endpoint, so revealing the UI reveals nothing and calls nothing.
  *
- * Use `ProOnly` instead for anything that would render real customer data
- * or call a real endpoint. If you find yourself wrapping a working data panel
- * in ProGate, that is the wrong component.
+ * Use `ProOnly` instead (or a call-site `isPro &&` branch when the code must
+ * not ship at all) for anything that would render real customer data or call
+ * a real endpoint. If you find yourself wrapping a working data panel in
+ * ProGate, that is the wrong component.
  */
 export function ProGate({ children, inline = false, className }: ProGateProps) {
   if (isPro) {

@@ -12,8 +12,9 @@ defined( 'ABSPATH' ) || exit;
  * published layout keeps serving.
  *
  * Blocks declare what they contribute through a contributor map rather than
- * this class knowing every block type. Pro ships as a separate plugin and adds
- * its blocks through the filter without touching core.
+ * this class knowing every block type. Pro lives in includes/Pro/ and attaches
+ * through the filter rather than core naming its blocks, so the Free build
+ * works with that directory removed.
  */
 class DerivedCacheBuilder {
 

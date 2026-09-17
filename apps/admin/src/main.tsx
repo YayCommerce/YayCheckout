@@ -14,7 +14,8 @@ const queryClient = createQueryClient();
 /*
  * import.meta.env.DEV is replaced with a literal at build time, so the whole
  * branch and its dynamic import are dropped from the production bundle. That
- * keeps the build to the single js/main.js that RegisterProd enqueues.
+ * keeps the build to the single js/main.js that RegisterProd registers (and
+ * Admin\Settings enqueues).
  */
 const QueryDevtools = import.meta.env.DEV ? lazy(() => import('@/components/shared/QueryDevtools')) : null;
 

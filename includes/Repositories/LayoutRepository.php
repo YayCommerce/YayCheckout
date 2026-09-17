@@ -59,8 +59,8 @@ class LayoutRepository {
      * The layout that should render for the current request.
      *
      * 1.x resolves to the active layout. Pro assignment rules
-     * (Layout::META_RULES, ordered by menu_order) are evaluated here first and
-     * fall back to this same active layout when none match.
+     * (Layout::META_RULES, ordered by menu_order) will be evaluated here
+     * first and fall back to this same active layout when none match.
      */
     public function resolve_for_request(): ?Layout {
         return $this->active();
@@ -71,12 +71,11 @@ class LayoutRepository {
      * $query's search/page/per_page. One WP_Query: found_posts gives the
      * total without a second, unbounded query.
      *
-     * Search() matches post_title only — LayoutRestController's `search` arg
-     * is documented as searching by name, and post_content is Gutenberg block
-     * markup, not user-facing text WP's default title+content 's' should
-     * match against.
+     * Search matches post_title only (docs/system-architecture.md, Search and
+     * pagination): post_content is Gutenberg block markup, not user-facing
+     * text WP's default title+content 's' should match against.
      *
-     * @return array{items: Layout[], total: int}
+     * @return array{items: Layout[], total: int, total_pages: int}
      */
     public function query( LayoutQuery $query ): array {
         add_filter( 'posts_search', [ $this, 'match_search_to_title' ], 10, 2 );
@@ -148,10 +147,10 @@ class LayoutRepository {
 
     /**
      * Layouts that consume a Free slot. Archived layouts do not count: the
-     * merchant can archive all three and still add a new draft (YC-02.13).
+     * merchant can archive all three and still add a new draft.
      *
-     * Called with no argument from LayoutCapGuard and duplicate(); pass a
-     * LayoutQuery to count a filtered set.
+     * Called with no argument from LayoutCapGuard, create() and duplicate();
+     * pass a LayoutQuery to count a filtered set.
      */
     public function count( ?LayoutQuery $query = null ): int {
         $query = $query ?? LayoutQuery::listed();
@@ -172,7 +171,7 @@ class LayoutRepository {
     /**
      * Tab totals for the whole store, independent of the current status filter.
      *
-     * @return array{listed: int, archived: int}
+     * @return array{listed: int, archived: int, active: int}
      */
     public function counts(): array {
         return [
@@ -193,12 +192,13 @@ class LayoutRepository {
      *
      * The write order matters. Derived caches are built first and in memory, so
      * unusable markup throws before anything is stored and the previously
-     * published layout keeps serving. The published-at marker is written last,
-     * so a failure part-way through leaves the old snapshot in place rather
-     * than a half-updated one.
+     * published layout keeps serving. The published-at marker is the last
+     * meta write, so a failure part-way through leaves the old snapshot in
+     * place rather than a half-updated one; the post_status/date update that
+     * follows is cosmetic to status().
      *
-     * Publishing a scheduled layout overrides the schedule: it goes live now
-     * and its date moves to now, so nothing is left for cron to publish.
+     * Publishing a scheduled layout overrides the schedule: it is published
+     * now and its date moves to now, so nothing is left for cron to publish.
      *
      * @param  int $id
      * @return Layout
@@ -252,8 +252,8 @@ class LayoutRepository {
              * date is ahead, whatever the current status — a pending layout
              * can carry a future date too. Moving the date to now keeps the
              * status honest; core's own transition handling then clears the
-             * publish_future_post event. A zero date parses as false and is
-             * left for core to fill in.
+             * publish_future_post event. A zero date parses to a far-past
+             * timestamp (or false on 32-bit), so it is left for core to fill in.
              */
             if ( strtotime( $post->post_date_gmt . ' GMT' ) > time() ) {
                 $now                     = current_time( 'mysql', true );
@@ -404,12 +404,12 @@ class LayoutRepository {
      * Create a new blank layout draft.
      *
      * The content defaults to the locked root block rather than an empty
-     * string: LayoutPostType's template_lock 'all' requires it, so a blank
-     * default keeps a brand-new draft a working checkout immediately.
+     * string: DerivedCacheBuilder rejects empty markup, so a draft that was
+     * never opened in the editor can still be published and activated.
      *
      * @param  string $title
      * @return Layout
-     * @throws \InvalidArgumentException When the Free/Pro layout limit is reached
+     * @throws \InvalidArgumentException When the edition's layout limit is reached
      *                                    or the insert fails.
      */
     public function create( string $title ): Layout {
@@ -443,7 +443,8 @@ class LayoutRepository {
      *
      * @param  int $id
      * @return Layout
-     * @throws \InvalidArgumentException When the source layout does not exist.
+     * @throws \InvalidArgumentException When the source layout is missing, the
+     *                                    layout limit is reached, or the insert fails.
      */
     public function duplicate( int $id ): Layout {
         $source = $this->find( $id );
@@ -453,22 +454,26 @@ class LayoutRepository {
         }
 
         /*
-         * The cap applies here too. LayoutCapGuard covers creation through
-         * core's REST endpoints, but duplicating is our own code path and would
-         * otherwise be the obvious way around the limit.
+         * The cap applies here too, as in create(): LayoutCapGuard only sees
+         * core's wp/v2 inserts, and our own code paths would otherwise be the
+         * obvious way around the limit.
          */
         if ( Plan::layout_limit_reached( $this->count() ) ) {
             throw new \InvalidArgumentException( Plan::layout_limit_message() );
         }
 
+        // wp_insert_post() unslashes its input, which would strip the \uXXXX
+        // escapes block attributes use for &, <, > and quotes.
         $new_id = wp_insert_post(
-            [
-                'post_type'    => Layout::POST_TYPE,
-                'post_status'  => LayoutPostStatus::DRAFT,
-                /* translators: %s: source layout title. */
-                'post_title'   => sprintf( __( '%s (copy)', 'yaycheckout' ), $source->title ),
-                'post_content' => $source->draft,
-            ],
+            wp_slash(
+                [
+                    'post_type'    => Layout::POST_TYPE,
+                    'post_status'  => LayoutPostStatus::DRAFT,
+                    /* translators: %s: source layout title. */
+                    'post_title'   => sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ),
+                    'post_content' => $source->draft,
+                ]
+            ),
             true
         );
 

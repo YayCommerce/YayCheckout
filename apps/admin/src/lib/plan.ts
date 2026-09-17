@@ -2,8 +2,9 @@
  * Which edition of the plugin this bundle was built for.
  *
  * The single source in the SPA. `__YAYCHECKOUT_PLAN__` is a compile-time
- * constant injected by vite.config.ts, so the bundler can fold these checks to
- * a literal and drop `ProOnly` branches from the Free build entirely.
+ * constant injected by vite.config.ts, so the bundler can fold `isPro` to a
+ * literal and drop `{isPro && …}` call-site branches from the Free build.
+ * `ProOnly` itself only gates rendering — see ProGate.tsx.
  *
  * This is *plan*, not license: it says which edition was built, not whether a
  * license is currently valid. An expired Pro license is still the Pro plan.

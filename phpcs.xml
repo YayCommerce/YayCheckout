@@ -42,7 +42,7 @@
         -->
         <exclude name="WordPress.Files.FileName"/>
 
-        <!-- Not every file needs a docblock header; classes and methods do. -->
+        <!-- Not every file needs a docblock header; classes do. -->
         <exclude name="Squiz.Commenting.FileComment"/>
         <exclude name="Squiz.Commenting.ClassComment"/>
 
@@ -114,7 +114,6 @@
         <properties>
             <property name="custom_capabilities" type="array">
                 <element value="manage_woocommerce"/>
-                <element value="edit_shop_orders"/>
             </property>
         </properties>
     </rule>

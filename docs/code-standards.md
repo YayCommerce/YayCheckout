@@ -182,6 +182,29 @@ The single permitted reference is the guarded bootstrap in `YayCheckout::boot_pr
 
 Plan is derived, not declared. `Plan::is_pro()` reports whether the provider actually booted, so it cannot claim Pro while the files are missing. It describes **plan**, not license — an expired Pro license is still the Pro plan.
 
+## Comments
+
+**A comment states only what is true of the code directly beneath it — the invariant it protects and what breaks without it.** Never what other code does, what the code used to do, or what it will do. Cross-cutting rationale lives in `docs/system-architecture.md`; the comment points at it (`See docs/system-architecture.md, <section>`).
+
+The rule exists because comments that describe something outside their own block rot silently: the other module changes, the comment does not, and the next reader is sent down the wrong path. A 2026-09 audit found 53 such comments; none of the comments about a block's own invariant were wrong.
+
+A comment survives review when all four hold:
+
+1. **Owns its claim** — describes only the code beneath it. Not the SPA, not cron, not a controller, not a modal, not a commit.
+2. **States an invariant or a why** — what this code guarantees or guards, and what breaks without it.
+3. **Not derivable** — reading the code would not tell you this. Library semantics (TanStack, react-hook-form, WP core) are not ours to document unless the code works around them.
+4. **Points, doesn't repeat** — if `system-architecture.md` has the full rationale, the comment is one or two lines plus a pointer.
+
+Cut: other-module behaviour · narrated history ("this used to…") · restated code or library defaults · rationale duplicated from `docs/` · future tense and promises · performance folklore · design or wireframe IDs.
+
+Keep: guards whose removal is a silent bug · ordering constraints (one line + pointer) · WordPress behaviours the code works around · every `@param` / `@return` / `@throws` a caller depends on · real `TODO:` markers.
+
+The review question is: *does this comment describe something outside this function?* If yes, cut it or move it to the doc.
+
+`TODO:` is for planned work only — one line, what and why not now. Not for wishes.
+
+With no test suite, invariant comments are the spec. Trim them; do not delete them.
+
 ## Formatting
 
 Enforced by `phpcs.xml`; notable deviations from WPCS defaults, all matching existing code:
@@ -190,6 +213,5 @@ Enforced by `phpcs.xml`; notable deviations from WPCS defaults, all matching exi
 - aligned `=>` in multi-line arrays
 - no Yoda conditions
 - short array syntax
-- docblocks where they explain something non-obvious, not on every method
 
 `scoper.inc.php` is excluded — it is php-scoper build config, not WordPress runtime code.

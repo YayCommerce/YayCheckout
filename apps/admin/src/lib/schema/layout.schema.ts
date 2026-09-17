@@ -136,9 +136,10 @@ export type LayoutListResponse = {
 };
 
 /**
- * Client-side validation for the New layout form. Mirrors the server rule in
- * LayoutRestController::create_draft() (templateSlug required precisely when
- * source is 'library') so a bad submission never reaches the network.
+ * Client-side validation for the New layout form. Mirrors the `template_slug`
+ * arg's validate_callback in LayoutRestController (templateSlug required
+ * precisely when source is 'library') so a bad submission never reaches the
+ * network; catalogue membership is still checked server-side only.
  */
 export const newLayoutFormSchema = z
   .object({

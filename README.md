@@ -30,7 +30,7 @@ For the admin SPA with hot reload, add to `wp-config.php`:
 define( 'YAYCHECKOUT_IS_DEVELOPMENT', true );
 ```
 
-That switches asset registration from `RegisterProd` (built files) to `RegisterDev` (Vite dev server on :3040). Without it the dev server runs but WordPress still loads the built bundle.
+That switches asset registration from `RegisterProd` (built files) to `RegisterDev` (Vite dev server on :3040). The constant defaults to `false` in `yaycheckout.php`; without the define the dev server runs but WordPress still loads the built bundle.
 
 ## Commands
 

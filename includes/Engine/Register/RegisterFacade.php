@@ -12,7 +12,9 @@ use YayCheckout\Engine\Register\ScriptName;
  * Register Facade.
  *
  * Picks RegisterDev (Vite dev server + HMR) or RegisterProd (built assets)
- * based on the YAYCHECKOUT_IS_DEVELOPMENT constant (define it in wp-config.php).
+ * based on YAYCHECKOUT_IS_DEVELOPMENT. yaycheckout.php defaults it to false;
+ * define it true in wp-config.php to use the dev server. The release ZIP
+ * strips RegisterDev.php, hence the class_exists() guards.
  *
  * @method static RegisterFacade get_instance()
  */

@@ -9,7 +9,8 @@ defined( 'ABSPATH' ) || exit;
  * How to ask for layouts.
  *
  * Speaks LayoutStatus only, never WordPress post_status. Carries search and
- * pagination too — LayoutRepository::query()/count() read them directly.
+ * pagination too — LayoutRepository::query() reads them directly; count()
+ * uses the statuses only.
  */
 class LayoutQuery {
 

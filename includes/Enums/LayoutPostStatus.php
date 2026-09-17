@@ -20,7 +20,16 @@ final class LayoutPostStatus {
     public const SCHEDULED = 'future';
 
     /**
-     * Published layouts are live.
+     * Core's 'publish'. Says the draft was pushed, not that shoppers see it:
+     * serving is the active-layout option, and Layout::status() still needs
+     * a snapshot to report Published.
+     *
+     * TODO: guard anonymous wp/v2 reads. Core's REST read check passes any
+     * 'publish' post without consulting the capability map, so wp/v2 serves
+     * published layouts to logged-out requests. Accepted for now; add a
+     * manage_woocommerce check on rest_pre_dispatch or the
+     * rest_yay_checkout_layout_query filter. 'private' was rejected because it
+     * fights the editor's Publish button and cron.
      */
     public const PUBLISHED = 'publish';
 

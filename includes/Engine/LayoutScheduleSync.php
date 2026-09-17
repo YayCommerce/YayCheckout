@@ -45,8 +45,9 @@ class LayoutScheduleSync {
         try {
             ( new LayoutRepository() )->publish( (int) $post->ID );
         } catch ( \InvalidArgumentException $ex ) {
-            // Unusable markup: post_status is already 'publish', the previous
-            // snapshot (if any) keeps serving, same as a failed manual publish.
+            // Unusable markup: the previous snapshot (if any) keeps serving,
+            // as after a failed manual publish — but unlike that case
+            // post_status already reads 'publish'.
             Logger::exception( $ex, 'publish_future_post', [ 'layout_id' => (int) $post->ID ] );
         }
     }

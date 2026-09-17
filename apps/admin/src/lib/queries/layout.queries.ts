@@ -5,6 +5,7 @@ import {
   archiveLayout,
   createLayoutDraft,
   deactivateLayout,
+  duplicateLayout,
   getLayout,
   getLayoutCounts,
   getLayouts,
@@ -108,11 +109,6 @@ export function usePublishLayoutMutation() {
 }
 
 /**
- * Which layout is active is tracked in the page's own state, seeded from
- * window.yayCheckoutMeta — the list is still invalidated because activating an
- * unpublished layout publishes it, changing its status, badge and published-at.
- */
-/**
  * Invalidates the list, not just the row: under Free, activating one layout
  * deactivates whichever was active before, so a row the user never touched
  * changes too. Counts go with it — `active` is part of them, and activating an
@@ -156,6 +152,20 @@ export function useArchiveLayoutMutation() {
     mutationFn: archiveLayout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+    },
+  });
+}
+
+/** Adds a new draft row, so both the list and the listed count change. */
+export function useDuplicateLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'duplicate'],
+    mutationFn: duplicateLayout,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
     },
   });
 }

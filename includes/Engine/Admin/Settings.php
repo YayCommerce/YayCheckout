@@ -7,7 +7,8 @@ use YayCheckout\Engine\Register\ScriptName;
 
 defined( 'ABSPATH' ) || exit;
 /**
- * Settings Page
+ * Admin app page — enqueues the SPA bundle and its localized data on the
+ * YayCheckout menu screen.
  */
 class Settings {
     use SingletonTrait;

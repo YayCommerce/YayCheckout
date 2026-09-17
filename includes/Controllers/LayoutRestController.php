@@ -13,11 +13,12 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Layout endpoints: GET/POST /wp-json/yaycheckout/v1/layouts...
  *
- * Only the operations core cannot express live here. The block editor saves a
- * layout's draft through core's own wp/v2/yay_checkout_layout endpoints, which
- * bring autosave and revisions with them; publishing is a sequence rather than
- * a field, so it is ours. Both surfaces check manage_woocommerce — core through
- * the post type's capability map, this controller through permission_callback.
+ * Core's wp/v2/yay_checkout_layout endpoints still own the block editor's
+ * draft saves, which bring autosave and revisions with them. Everything else
+ * the admin app needs — the filtered list and tab counts, the template
+ * catalogue, creation under the plan cap, and the publish/activate sequence —
+ * lives here. Both surfaces check manage_woocommerce — core through the post
+ * type's capability map, this controller through permission_callback.
  */
 class LayoutRestController extends BaseRestController {
 
@@ -156,8 +157,8 @@ class LayoutRestController extends BaseRestController {
                     'methods'             => \WP_REST_Server::CREATABLE,
 
                     // exec_write_wp for the same reason publish uses it:
-                    // activating writes an option, and on a first activation a
-                    // post and its meta too.
+                    // activating writes an option, and when the layout isn't
+                    // Published yet a post and its meta too.
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'activate_layout' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => $this->id_args(),
@@ -185,6 +186,19 @@ class LayoutRestController extends BaseRestController {
                 [
                     'methods'             => \WP_REST_Server::CREATABLE,
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'archive_layout' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $this->id_args(),
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
+            '/layouts/(?P<id>\d+)/duplicate',
+            [
+                [
+                    'methods'             => \WP_REST_Server::CREATABLE,
+                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'duplicate_layout' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => $this->id_args(),
                 ],
@@ -252,9 +266,9 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Returns the "From library" template catalogue for the New layout modal
-     * (YC-02b_New_Layout_Modal.dc.html). See LayoutTemplateCatalogue for why
-     * this is fixture data rather than a real template library.
+     * Returns the "From library" template catalogue for the New layout modal.
+     * See LayoutTemplateCatalogue for why this is fixture data rather than a
+     * real template library.
      *
      * The `plan` param lets the SPA preview against its own build-time edition
      * (apps/admin/src/lib/plan.ts) rather than this site's actual licence, so
@@ -281,7 +295,8 @@ class LayoutRestController extends BaseRestController {
      * exists to source markup from.
      *
      * No duplicate-title check: titles may repeat, same as WordPress Pages.
-     * publish() dedupes the post_name slug on its own once first published.
+     * Core dedupes post_name via wp_unique_post_slug() when publish() flips
+     * post_status.
      *
      * @param  \WP_REST_Request $request
      * @return array|\WP_Error
@@ -332,8 +347,10 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Makes a layout the one shoppers see, publishing it first if it never has
-     * been. Free swaps the previously active layout out; Pro adds to the set.
+     * Makes a layout the one shoppers see, publishing its current draft first
+     * unless it already reads as Published (scheduled and pending layouts get
+     * published now). Free swaps the previously active layout out; Pro adds to
+     * the set.
      *
      * @param  \WP_REST_Request $request
      * @return array|\WP_Error
@@ -390,6 +407,27 @@ class LayoutRestController extends BaseRestController {
 
         try {
             return $this->layouts->archive( $id )->to_array();
+        } catch ( \InvalidArgumentException $ex ) {
+            return $this->error_invalid_arguments( $ex->getMessage() );
+        }
+    }
+
+    /**
+     * Copies a layout's draft into a new draft layout. The plan cap is
+     * enforced in the repository and surfaces here as a 400.
+     *
+     * @param  \WP_REST_Request $request
+     * @return array|\WP_Error
+     */
+    public function duplicate_layout( \WP_REST_Request $request ) {
+        $id = (int) $request->get_param( 'id' );
+
+        if ( null === $this->layouts->find( $id ) ) {
+            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+        }
+
+        try {
+            return $this->layouts->duplicate( $id )->to_array();
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }

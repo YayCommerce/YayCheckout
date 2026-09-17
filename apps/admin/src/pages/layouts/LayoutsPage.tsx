@@ -10,6 +10,7 @@ import {
   useActivateLayoutMutation,
   useArchiveLayoutMutation,
   useDeactivateLayoutMutation,
+  useDuplicateLayoutMutation,
   useLayoutCountsQuery,
   useLayoutsQuery,
 } from '@/lib/queries/layout.queries';
@@ -50,10 +51,11 @@ const MIN_ITEMS_FOR_LIST_CONTROLS = 10;
  * GET /layouts (one page of items, matched against `search`) + GET
  * /layouts/counts (tab totals) from LayoutRepository — two separate queries
  * so counts has one cache key instead of diverging per status filter. Edit,
- * Publish, Set active, Deactivate, Archive, Search and pagination are real;
- * Health/Compatibility, Preview, Restore and Delete for good render with
- * the demo's exact DOM state (enabled/disabled/hidden, labels) but no
- * onClick. See LayoutRowActions.
+ * Set active, Deactivate, Duplicate, Archive, Search and pagination are
+ * real; Preview, Restore and Delete for good render with the designed DOM
+ * state (enabled/disabled/hidden, labels) but no onClick — see
+ * LayoutRowActions — and Health/Compatibility are "Not available yet."
+ * placeholders.
  */
 export default function LayoutsPage() {
   const [view, setView] = useState<View>('listed');
@@ -189,6 +191,7 @@ function LayoutsPageBody({
   const activateMutation = useActivateLayoutMutation();
   const deactivateMutation = useDeactivateLayoutMutation();
   const archiveMutation = useArchiveLayoutMutation();
+  const duplicateMutation = useDuplicateLayoutMutation();
 
   /*
    * Both mutations invalidate the list and the counts rather than patching
@@ -221,6 +224,12 @@ function LayoutsPageBody({
         setArchivingLayout(null);
         toast.success(__('Layout archived.', 'yaycheckout'));
       },
+    });
+  }
+
+  function onDuplicate(layout: LayoutSummary) {
+    duplicateMutation.mutate(layout.id, {
+      onSuccess: () => toast.success(__('Layout duplicated.', 'yaycheckout')),
     });
   }
 
@@ -381,6 +390,7 @@ function LayoutsPageBody({
                       onSetActive={setActivatingLayout}
                       onDeactivate={setDeactivatingLayout}
                       onArchive={setArchivingLayout}
+                      onDuplicate={onDuplicate}
                     />
                   </div>
                   {showListControls && (
@@ -445,7 +455,7 @@ function LayoutsPageBody({
 
 /**
  * Shows a skeleton while the counts query is refetching (create draft, close
- * editor, stale-on-focus) so a slow site never displays a stale number as if
+ * editor, activate/deactivate, stale-on-focus) so a slow site never displays a stale number as if
  * it were current. The skeleton's fade-in is delayed in CSS: a refetch that
  * finishes within that window unmounts it before it ever becomes visible, so
  * fast sites don't flicker — no timers or state, just `animation-delay`.
@@ -469,6 +479,7 @@ function LayoutsTable({
   onSetActive,
   onDeactivate,
   onArchive,
+  onDuplicate,
 }: {
   items: LayoutSummary[];
   view: View;
@@ -476,6 +487,7 @@ function LayoutsTable({
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
   onArchive: (layout: LayoutSummary) => void;
+  onDuplicate: (layout: LayoutSummary) => void;
 }) {
   return (
     <Table>
@@ -506,6 +518,7 @@ function LayoutsTable({
             onSetActive={onSetActive}
             onDeactivate={onDeactivate}
             onArchive={onArchive}
+            onDuplicate={onDuplicate}
           />
         ))}
       </TableBody>
@@ -556,6 +569,7 @@ function LayoutTableRow({
   onSetActive,
   onDeactivate,
   onArchive,
+  onDuplicate,
 }: {
   layout: LayoutSummary;
   view: View;
@@ -563,6 +577,7 @@ function LayoutTableRow({
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
   onArchive: (layout: LayoutSummary) => void;
+  onDuplicate: (layout: LayoutSummary) => void;
 }) {
   return (
     <TableRow>
@@ -597,6 +612,7 @@ function LayoutTableRow({
           onSetActive={onSetActive}
           onDeactivate={onDeactivate}
           onArchive={onArchive}
+          onDuplicate={onDuplicate}
         />
       </TableCell>
     </TableRow>
@@ -604,12 +620,12 @@ function LayoutTableRow({
 }
 
 /**
- * Edit, Set active and the "⋯" menu's Deactivate and Archive are real;
- * Deactivate is disabled on a row that isn't active, Archive never is — an
- * active row can be archived, and ArchiveModal warns about it.
+ * Edit, Set active and the "⋯" menu's Duplicate, Deactivate and Archive are
+ * real; Deactivate is disabled on a row that isn't active, Archive never is —
+ * an active row can be archived, and ArchiveModal warns about it.
  * Unpublished changes show as a badge and a "Preview draft" label but carry no
  * Publish button — publishing is the editor's job. The rest (Preview, Restore,
- * Delete for good) match the demo's DOM state but have no onClick yet.
+ * Delete for good) match the designed DOM state but have no onClick yet.
  */
 function LayoutRowActions({
   layout,
@@ -618,6 +634,7 @@ function LayoutRowActions({
   onSetActive,
   onDeactivate,
   onArchive,
+  onDuplicate,
 }: {
   layout: LayoutSummary;
   view: View;
@@ -625,6 +642,7 @@ function LayoutRowActions({
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
   onArchive: (layout: LayoutSummary) => void;
+  onDuplicate: (layout: LayoutSummary) => void;
 }) {
   if (view === 'archived') {
     return (
@@ -666,6 +684,7 @@ function LayoutRowActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
             {__('Deactivate', 'yaycheckout')}
           </DropdownMenuItem>
@@ -679,7 +698,7 @@ function LayoutRowActions({
 /** Three loading rows — the same shape whether the whole page is loading for
  * the first time (wrapped in its own Card, see LayoutsPageSkeleton) or one
  * tab's table is waiting on its own fetch inside the already-rendered
- * "Your layouts" Card (see the listIsPlaceholder branch in LayoutsPageBody). */
+ * "Your layouts" Card (see the listIsOtherTabPlaceholder branch in LayoutsPageBody). */
 function TableRowsSkeleton() {
   return (
     <div className="space-y-3">

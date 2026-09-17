@@ -4,13 +4,14 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input';
 
 /**
- * The Name field shared by both New-layout steps (yc02-9, yc02-10/10b). Reads
+ * The Name field shared by both New-layout steps. Reads
  * its form context from the ambient FormProvider in NewLayoutModal, so no
  * `control` prop is needed here.
  *
  * No uniqueness check: layout titles may repeat, same as WordPress Pages —
  * the post_name slug is what WordPress deduplicates, automatically, once the
- * layout is first published (see LayoutRepository::publish()).
+ * layout leaves draft (core's wp_unique_post_slug(), run by the
+ * wp_update_post() in LayoutRepository::publish()).
  */
 export function NameField() {
   return (
