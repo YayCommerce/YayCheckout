@@ -241,16 +241,17 @@ class LayoutRepository {
             ];
 
             /*
-             * A scheduled layout keeps its future date, and wp_insert_post()
-             * turns 'publish' back into 'future' while the date is ahead.
-             * Moving the date to now keeps the status honest; core's own
-             * transition handling then clears the publish_future_post event.
+             * wp_insert_post() turns 'publish' back into 'future' while the
+             * date is ahead, whatever the current status — a pending layout
+             * can carry a future date too. Moving the date to now keeps the
+             * status honest; core's own transition handling then clears the
+             * publish_future_post event. A zero date parses as false and is
+             * left for core to fill in.
              */
-            if ( LayoutPostStatus::SCHEDULED === $post->post_status ) {
+            if ( strtotime( $post->post_date_gmt . ' GMT' ) > time() ) {
                 $now                     = current_time( 'mysql', true );
                 $update['post_date_gmt'] = $now;
                 $update['post_date']     = get_date_from_gmt( $now );
-                $update['edit_date']     = true;
             }
 
             wp_update_post( $update );
