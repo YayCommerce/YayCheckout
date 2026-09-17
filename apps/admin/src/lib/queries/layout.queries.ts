@@ -2,6 +2,7 @@ import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient }
 
 import {
   activateLayout,
+  archiveLayout,
   createLayoutDraft,
   deactivateLayout,
   getLayout,
@@ -141,6 +142,20 @@ export function useDeactivateLayoutMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+    },
+  });
+}
+
+/** The row leaves the listed tab and appears in the archived one, so both
+ * list caches move — hence `all`, not one status filter. */
+export function useArchiveLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'archive'],
+    mutationFn: archiveLayout,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
     },
   });
 }

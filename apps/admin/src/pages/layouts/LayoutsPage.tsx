@@ -8,6 +8,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
+  useArchiveLayoutMutation,
   useDeactivateLayoutMutation,
   useLayoutCountsQuery,
   useLayoutsQuery,
@@ -35,6 +36,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import { SetActiveModal } from '@/pages/layouts/SetActiveModal';
@@ -48,7 +50,7 @@ const MIN_ITEMS_FOR_LIST_CONTROLS = 10;
  * GET /layouts (one page of items, matched against `search`) + GET
  * /layouts/counts (tab totals) from LayoutRepository — two separate queries
  * so counts has one cache key instead of diverging per status filter. Edit,
- * Publish, Set active, Deactivate, Search and pagination are real;
+ * Publish, Set active, Deactivate, Archive, Search and pagination are real;
  * Health/Compatibility, Preview, Restore and Delete for good render with
  * the demo's exact DOM state (enabled/disabled/hidden, labels) but no
  * onClick. See LayoutRowActions.
@@ -182,9 +184,11 @@ function LayoutsPageBody({
   const [editingLayoutId, setEditingLayoutId] = useState<number | null>(null);
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
+  const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
 
   const activateMutation = useActivateLayoutMutation();
   const deactivateMutation = useDeactivateLayoutMutation();
+  const archiveMutation = useArchiveLayoutMutation();
 
   /*
    * Both mutations invalidate the list and the counts rather than patching
@@ -207,6 +211,15 @@ function LayoutsPageBody({
       onSuccess: () => {
         setDeactivatingLayout(null);
         toast.success(__('Layout deactivated.', 'yaycheckout'));
+      },
+    });
+  }
+
+  function onArchive(layout: LayoutSummary) {
+    archiveMutation.mutate(layout.id, {
+      onSuccess: () => {
+        setArchivingLayout(null);
+        toast.success(__('Layout archived.', 'yaycheckout'));
       },
     });
   }
@@ -254,6 +267,13 @@ function LayoutsPageBody({
         onOpenChange={(open) => !open && setDeactivatingLayout(null)}
         onConfirm={onDeactivate}
         isPending={deactivateMutation.isPending}
+      />
+      <ArchiveModal
+        layout={archivingLayout}
+        isLastActive={counts.active === 1}
+        onOpenChange={(open) => !open && setArchivingLayout(null)}
+        onConfirm={onArchive}
+        isPending={archiveMutation.isPending}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
@@ -360,6 +380,7 @@ function LayoutsPageBody({
                       onEditLayout={setEditingLayoutId}
                       onSetActive={setActivatingLayout}
                       onDeactivate={setDeactivatingLayout}
+                      onArchive={setArchivingLayout}
                     />
                   </div>
                   {showListControls && (
@@ -447,12 +468,14 @@ function LayoutsTable({
   onEditLayout,
   onSetActive,
   onDeactivate,
+  onArchive,
 }: {
   items: LayoutSummary[];
   view: View;
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
+  onArchive: (layout: LayoutSummary) => void;
 }) {
   return (
     <Table>
@@ -482,6 +505,7 @@ function LayoutsTable({
             onEditLayout={onEditLayout}
             onSetActive={onSetActive}
             onDeactivate={onDeactivate}
+            onArchive={onArchive}
           />
         ))}
       </TableBody>
@@ -531,12 +555,14 @@ function LayoutTableRow({
   onEditLayout,
   onSetActive,
   onDeactivate,
+  onArchive,
 }: {
   layout: LayoutSummary;
   view: View;
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
+  onArchive: (layout: LayoutSummary) => void;
 }) {
   return (
     <TableRow>
@@ -570,6 +596,7 @@ function LayoutTableRow({
           onEditLayout={onEditLayout}
           onSetActive={onSetActive}
           onDeactivate={onDeactivate}
+          onArchive={onArchive}
         />
       </TableCell>
     </TableRow>
@@ -577,8 +604,9 @@ function LayoutTableRow({
 }
 
 /**
- * Edit, Set active and the "⋯" menu's Deactivate are real; Deactivate is
- * disabled on a row that isn't active, since it is the menu's only item.
+ * Edit, Set active and the "⋯" menu's Deactivate and Archive are real;
+ * Deactivate is disabled on a row that isn't active, Archive never is — an
+ * active row can be archived, and ArchiveModal warns about it.
  * Unpublished changes show as a badge and a "Preview draft" label but carry no
  * Publish button — publishing is the editor's job. The rest (Preview, Restore,
  * Delete for good) match the demo's DOM state but have no onClick yet.
@@ -589,12 +617,14 @@ function LayoutRowActions({
   onEditLayout,
   onSetActive,
   onDeactivate,
+  onArchive,
 }: {
   layout: LayoutSummary;
   view: View;
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
+  onArchive: (layout: LayoutSummary) => void;
 }) {
   if (view === 'archived') {
     return (
@@ -639,6 +669,7 @@ function LayoutRowActions({
           <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
             {__('Deactivate', 'yaycheckout')}
           </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onArchive(layout)}>{__('Archive', 'yaycheckout')}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

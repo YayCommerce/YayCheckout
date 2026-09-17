@@ -330,6 +330,45 @@ class LayoutRepository {
     }
 
     /**
+     * Move a layout to the trash and drop it from the active set. Blocks,
+     * meta and revisions stay; the layout can be restored later.
+     *
+     * @param  int $id
+     * @return Layout
+     * @throws \InvalidArgumentException When the layout is missing or already archived.
+     */
+    public function archive( int $id ): Layout {
+        $post = get_post( $id );
+
+        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        if ( LayoutPostStatus::ARCHIVED === $post->post_status ) {
+            throw new \InvalidArgumentException( __( 'This layout is already archived.', 'yaycheckout' ) );
+        }
+
+        /*
+         * Not wp_trash_post(): it stamps _wp_trash_meta_time, which cron
+         * turns into a permanent delete after EMPTY_TRASH_DAYS, and with
+         * EMPTY_TRASH_DAYS = 0 it deletes outright before any filter runs.
+         * Archived means kept, so write the status ourselves. The previous
+         * status is saved the same way core does, for restore.
+         */
+        add_post_meta( $id, '_wp_trash_meta_status', $post->post_status );
+        wp_update_post(
+            [
+                'ID'          => $id,
+                'post_status' => LayoutPostStatus::ARCHIVED,
+            ]
+        );
+
+        $this->store_ids( array_diff( $this->active_ids(), [ $id ] ) );
+
+        return $this->find( $id );
+    }
+
+    /**
      * Free serves one layout, so activating replaces the set. Pro may hold
      * several: the id is moved to the end, so re-activating a layout that is
      * already active makes it the most recent choice active() serves.

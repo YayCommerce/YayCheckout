@@ -177,6 +177,19 @@ class LayoutRestController extends BaseRestController {
                 ],
             ]
         );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
+            '/layouts/(?P<id>\d+)/archive',
+            [
+                [
+                    'methods'             => \WP_REST_Server::CREATABLE,
+                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'archive_layout' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $this->id_args(),
+                ],
+            ]
+        );
     }
 
     public function permission_callback(): bool {
@@ -357,6 +370,26 @@ class LayoutRestController extends BaseRestController {
 
         try {
             return $this->layouts->deactivate( $id )->to_array();
+        } catch ( \InvalidArgumentException $ex ) {
+            return $this->error_invalid_arguments( $ex->getMessage() );
+        }
+    }
+
+    /**
+     * Moves a layout to the archive, deactivating it if it was active.
+     *
+     * @param  \WP_REST_Request $request
+     * @return array|\WP_Error
+     */
+    public function archive_layout( \WP_REST_Request $request ) {
+        $id = (int) $request->get_param( 'id' );
+
+        if ( null === $this->layouts->find( $id ) ) {
+            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+        }
+
+        try {
+            return $this->layouts->archive( $id )->to_array();
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
