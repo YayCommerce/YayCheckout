@@ -261,9 +261,9 @@ class LayoutRepository {
      * @throws \InvalidArgumentException When the layout is missing or its markup is unusable.
      */
     public function activate( int $id ): Layout {
-        $post = get_post( $id );
+        $layout = $this->find( $id );
 
-        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
+        if ( null === $layout ) {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
 
@@ -272,13 +272,19 @@ class LayoutRepository {
          * trash, and on Free push the layout count past FREE_LIMIT. Restoring
          * is the merchant's decision, so refuse rather than decide for them.
          */
-        if ( LayoutPostStatus::ARCHIVED === $post->post_status ) {
+        if ( LayoutPostStatus::ARCHIVED === $layout->post_status ) {
             throw new \InvalidArgumentException(
                 __( 'Restore this layout from the archive before activating it.', 'yaycheckout' )
             );
         }
 
-        if ( LayoutPostStatus::PUBLISHED !== $post->post_status ) {
+        /*
+         * Decided by the snapshot, not post_status. The editor's own Publish
+         * button and cron on a scheduled post both set post_status to
+         * 'publish' without ever going through publish(), so a status check
+         * would activate a layout with nothing to serve.
+         */
+        if ( ! $layout->is_published() ) {
             $this->publish( $id );
         }
 
