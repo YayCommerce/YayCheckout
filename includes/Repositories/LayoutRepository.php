@@ -44,6 +44,7 @@ class LayoutRepository {
      * most recent choice and the one they expect to be serving.
      */
     public function active(): ?Layout {
+        // TODO: Need to find a complete function to replace this.
         $ids = $this->active_ids();
         $id  = empty( $ids ) ? 0 : (int) end( $ids );
 
