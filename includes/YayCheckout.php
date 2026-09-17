@@ -19,7 +19,8 @@ class YayCheckout {
         \YayCheckout\Blocks\BlockRegistry::get_instance();
         \YayCheckout\PostTypes\LayoutPostType::get_instance();
         \YayCheckout\Engine\LayoutCapGuard::get_instance();
-        \YayCheckout\Engine\LayoutScheduleSync::get_instance();
+        \YayCheckout\Engine\LayoutPublishGuard::get_instance();
+        \YayCheckout\Engine\LayoutPublishSync::get_instance();
         \YayCheckout\Engine\Admin\LayoutEditorEmbedStyles::get_instance();
         \YayCheckout\Renderer\CheckoutScripts::get_instance();
     }

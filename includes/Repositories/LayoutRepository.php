@@ -1,7 +1,6 @@
 <?php
 namespace YayCheckout\Repositories;
 
-use YayCheckout\Enums\LayoutPostStatus;
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
@@ -17,6 +16,13 @@ class LayoutRepository {
 
     /** Layouts the Free edition may hold. */
     public const FREE_LIMIT = 3;
+
+    private static bool $publishing = false;
+
+    /** True while publish() runs: its own status flip fires the transition LayoutPublishSync listens to. */
+    public static function is_publishing(): bool {
+        return self::$publishing;
+    }
 
     public function find( int $id ): ?Layout {
         $post = get_post( $id );
@@ -62,7 +68,7 @@ class LayoutRepository {
         $wp_query = new \WP_Query(
             [
                 'post_type'              => Layout::POST_TYPE,
-                'post_status'            => $this->post_statuses_for( $query->statuses() ),
+                'post_status'            => $query->statuses(),
                 's'                      => $query->search(),
                 'posts_per_page'         => $query->per_page(),
                 'paged'                  => $query->page(),
@@ -122,7 +128,7 @@ class LayoutRepository {
         $wp_query = new \WP_Query(
             [
                 'post_type'      => Layout::POST_TYPE,
-                'post_status'    => $this->post_statuses_for( $query->statuses() ),
+                'post_status'    => $query->statuses(),
                 'posts_per_page' => -1,
                 'fields'         => 'ids',
                 'no_found_rows'  => true,
@@ -148,13 +154,29 @@ class LayoutRepository {
     /**
      * Copy the working draft to the published snapshot.
      *
+     * Flagged so LayoutPublishSync ignores the status flip this itself makes;
+     * finally, so a throw cannot leave later transitions silently unsnapshotted.
+     *
+     * @throws \InvalidArgumentException When the layout is missing or its markup is unusable.
+     */
+    public function publish( int $id ): Layout {
+        self::$publishing = true;
+
+        try {
+            return $this->write_snapshot( $id );
+        } finally {
+            self::$publishing = false;
+        }
+    }
+
+    /**
      * Write order is the safety net: derived caches build in memory first so
      * bad markup throws before anything is stored, and the published-at
      * marker is written last so a partial failure keeps the old snapshot live.
      *
      * @throws \InvalidArgumentException When the layout is missing or its markup is unusable.
      */
-    public function publish( int $id ): Layout {
+    private function write_snapshot( int $id ): Layout {
         $post = get_post( $id );
 
         if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
@@ -178,10 +200,10 @@ class LayoutRepository {
         // Commit marker; must stay the last meta write.
         update_post_meta( $id, Layout::META_PUBLISHED_AT, current_time( 'mysql', true ) );
 
-        if ( LayoutPostStatus::PUBLISHED !== $post->post_status ) {
+        if ( LayoutStatus::PUBLISHED !== $post->post_status ) {
             $update = [
                 'ID'          => $id,
-                'post_status' => LayoutPostStatus::PUBLISHED,
+                'post_status' => LayoutStatus::PUBLISHED,
             ];
 
             // wp_insert_post() flips 'publish' back to 'future' while the date is ahead;
@@ -212,14 +234,15 @@ class LayoutRepository {
         }
 
         // Publishing would silently restore it from the trash and could exceed FREE_LIMIT.
-        if ( LayoutPostStatus::ARCHIVED === $layout->post_status ) {
+        if ( LayoutStatus::ARCHIVED === $layout->post_status ) {
             throw new \InvalidArgumentException(
                 __( 'Restore this layout from the archive before activating it.', 'yaycheckout' )
             );
         }
 
         // Scheduled and pending count too: activating overrides the schedule or review.
-        if ( LayoutStatus::PUBLISHED !== $layout->status() ) {
+        // A publish row with no snapshot (non-REST publish of unusable markup) must not go live empty.
+        if ( ! $layout->is_published() || '' === $layout->snapshot ) {
             $this->publish( $id );
         }
 
@@ -269,7 +292,7 @@ class LayoutRepository {
         $new_id = wp_insert_post(
             [
                 'post_type'    => Layout::POST_TYPE,
-                'post_status'  => LayoutPostStatus::DRAFT,
+                'post_status'  => LayoutStatus::DRAFT,
                 'post_title'   => $title,
                 'post_content' => '<!-- wp:yaycheckout/checkout /-->',
             ],
@@ -306,7 +329,7 @@ class LayoutRepository {
             wp_slash(
                 [
                     'post_type'    => Layout::POST_TYPE,
-                    'post_status'  => LayoutPostStatus::DRAFT,
+                    'post_status'  => LayoutStatus::DRAFT,
                     /* translators: %s: source layout title. */
                     'post_title'   => sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ),
                     'post_content' => $source->draft,
@@ -362,15 +385,5 @@ class LayoutRepository {
         }
 
         return $meta;
-    }
-
-    /**
-     * @param  string[] $statuses
-     * @return string[]
-     */
-    private function post_statuses_for( array $statuses ): array {
-        $post_statuses = array_map( [ LayoutPostStatus::class, 'for_status' ], $statuses );
-
-        return array_values( array_unique( array_filter( $post_statuses ) ) );
     }
 }
