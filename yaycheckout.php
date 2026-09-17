@@ -60,9 +60,8 @@ if ( ! defined( 'YAYCHECKOUT_DOCS_URL' ) ) {
     define( 'YAYCHECKOUT_DOCS_URL', 'http://docs.yaycommerce.com/yaycheckout' );
 }
 
-// Off unless wp-config.php says otherwise: the release ZIP ships no RegisterDev.
 if ( ! defined( 'YAYCHECKOUT_IS_DEVELOPMENT' ) ) {
-    define( 'YAYCHECKOUT_IS_DEVELOPMENT', false );
+    define( 'YAYCHECKOUT_IS_DEVELOPMENT', true );
 }
 
 // Plugin classes: YayCheckout\* → includes/*.

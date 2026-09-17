@@ -192,7 +192,7 @@ cmd_dev() {
     resolve_pnpm
     install_admin_deps
 
-    print_info "Make sure wp-config.php defines YAYCHECKOUT_IS_DEVELOPMENT as true (defaults to false)"
+    print_info "Make sure YAYCHECKOUT_IS_DEVELOPMENT as true"
     print_step "Starting Vite dev server (http://localhost:3040)..."
     cd "$ADMIN_DIR"
     $PNPM dev
