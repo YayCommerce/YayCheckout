@@ -143,6 +143,10 @@ it, which is why the former `ui/custom/` moved to `shared/`.
   `ProGate.tsx`, `Header.tsx`, `BuilderPage.tsx`.
 - Non-component modules stay kebab-case: `layout.api.ts`, `use-settings-form.ts`.
 
+### FormItem collapses inline controls
+
+shadcn's `FormItem` renders a vertical `Field` whose `*:w-auto` overrides the width of every direct child, so a `Switch` inside it loses its track and shows as a bare thumb. For a control that has no label or message of its own (a toggle or select in a settings row), render it straight from `FormField`'s render prop and skip `FormItem`/`FormControl` — `pages/settings/components/GeneralTab.tsx` is the pattern, and so is YayWholesale's settings page.
+
 ## Logging
 
 `Helpers\Logger` writes to WooCommerce's log under the `yaycheckout` source, visible at WooCommerce → Status → Logs, which is where support already looks.

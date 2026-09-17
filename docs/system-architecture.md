@@ -58,9 +58,16 @@ No custom tables in 1.x.
 | `_yaycheckout_derived` | meta | publish — fields, extra_fields, slots, order_modes |
 | `_yaycheckout_published_at` | meta | publish, last |
 | `_yaycheckout_published_revision` | meta | publish |
-| `yaycheckout_active_layout` | option | `set_active()` — one option, so "exactly one active" holds by construction |
+| `yaycheckout_active_layout` | option | `set_active()` — exactly one active, enforced by construction |
+| `yaycheckout_settings` | option | `SettingsRepository::save()` — the sanitized settings array |
+| `yaycheckout_settings_updated_at` | option | `SettingsRepository::save()` — ISO 8601 UTC timestamp of last save |
+| `yaycheckout_reviewed` | option | `SettingsRepository::mark_reviewed()` — boolean, suppresses the review prompt |
 
 The four derived caches live in one `_yaycheckout_derived` array rather than four keys. Fewer writes means a smaller window in which new derived data sits against an old snapshot, and one `get_post_meta` on the customer path instead of four.
+
+## Settings are a schema, not a defaults array
+
+`Models\Settings::schema()` is the single description of every setting — section, key, type, default, and allowed enum values. When reading from the option, `from_option()` projects the stored array through the schema: a key missing or stale returns its default, and an invalid stored value is replaced with the default. When writing, `SettingsRepository::save()` expects already-sanitized data (from `Settings::sanitize()`), which validates types, enum membership and strips unknown keys. This design means the admin SPA cannot crash on stale stored values from an older version — invalid data reads as defaults instead — and callers cannot accept a setting that was not declared in the schema, so adding a setting never requires updating a separate defaults array.
 
 ## Search and pagination
 

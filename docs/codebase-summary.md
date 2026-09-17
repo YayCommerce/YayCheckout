@@ -9,7 +9,7 @@ WooCommerce checkout builder. WordPress 6.5+, PHP 7.4+, WooCommerce 10+, HPOS co
 ```
 yaycheckout.php          bootstrap: constants, autoloader, admin shell, duplicate guard
 uninstall.php            opt-in data removal on plugin delete (no autoloader; literals mirror Model constants)
-includes/                plugin PHP (~1,800 lines)
+includes/                plugin PHP (~2,900 lines)
 apps/admin/              React settings SPA (Vite)      → assets/dist/admin/
 packages/blocks/         editor blocks (@wordpress/scripts) → assets/dist/blocks/
 assets/dist/             build output, gitignored
@@ -25,15 +25,15 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | Directory | Holds | Notes |
 |---|---|---|
 | `PostTypes/` | `LayoutPostType` | registration only: caps, template, revision policy |
-| `Models/` | `Layout`, `LayoutQuery`, `Settings` | `Layout` and `Settings` are dumb entities; **every storage key constant lives here**; zero WP calls. `Settings` also owns the settings schema and `sanitize()`. `LayoutQuery` is immutable value object for filtered/paginated queries. |
-| `Repositories/` | `LayoutRepository`, `SettingsRepository` | all storage access: layouts (owns the publish sequence), settings option + review flag |
+| `Models/` | `Layout`, `LayoutQuery`, `Settings` | `Layout` and `Settings` are dumb entities; **every storage key constant lives here**; zero WP calls. `Settings` owns `schema()` (the single description of every setting), `from_option()` (read projection through the schema), and `sanitize()` (strict type and enum validation, unknown keys stripped). `LayoutQuery` is immutable value object for filtered/paginated queries. |
+| `Repositories/` | `LayoutRepository`, `SettingsRepository` | all storage access: layouts (owns the publish sequence), settings (get/save/is_reviewed/mark_reviewed) |
 | `Services/` | `DerivedCacheBuilder` | pure markup → derived caches |
 | `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController` | routing, validation, permissions |
 | `Blocks/` | `BlockRegistry` | registers built block directories |
 | `Support/` | `Plan` | Free/Pro flag derived from provider boot; owns the layout limit and its message |
 | `Pro/` | `ProServiceProvider` | **absent from the Free build** |
-| `Helpers/` | `IntegrationsHelper`, `LocalizeHelper`, `Logger` | companion detection, SPA bootstrap payload, WooCommerce logging |
-| `Renderer/` | `CheckoutScripts` | storefront hooks; today only the force-enqueue escape hatch |
+| `Helpers/` | `IntegrationsHelper`, `LocalizeHelper`, `Logger` | YayBoost/YayLoyalty detection (via defined constants + filter), SPA bootstrap payload, WooCommerce logging |
+| `Renderer/` | `CheckoutScripts` | WooCommerce storefront hooks; today only force-enqueueing checkout scripts when `advanced.force_enqueue_checkout_scripts` is on |
 | `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `Admin/`, `Register/` | wiring, asset registration, the layout cap |
 | `Utils/` | `SingletonTrait` | |
 
@@ -57,8 +57,8 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
 | `yaycheckout/v1/layouts/{id}/publish` | POST | draft → snapshot |
-| `yaycheckout/v1/settings` | GET/POST | envelope `{ settings, updated_at }`; POST takes the settings object, strips unknown keys, 400 on a wrong type or enum value |
-| `yaycheckout/v1/mark-reviewed` | POST | review prompt |
+| `yaycheckout/v1/settings` | GET/POST | envelope `{ settings, updated_at }`; POST merges over stored settings, strips unknown keys, rejects wrong types/enum values with 400 |
+| `yaycheckout/v1/mark-reviewed` | POST | review prompt dismissed |
 
 All require `manage_woocommerce`.
 
@@ -69,9 +69,11 @@ React 18 + TypeScript, Vite, hash router, TanStack Query, zod, Tailwind 4, shadc
 ```
 src/
   main.tsx              root: QueryClientProvider, router, dev-only devtools
-  router.tsx            hash routes; settings has :subMenu tabs (general | integrations | advanced)
+  router.tsx            hash routes; settings/:subMenu has tabs (general | integrations | advanced)
   AppLayout.tsx         chrome + Toaster
   pages/{page}/         route components; page-private components/ and hooks/ alongside
+    settings/           one form across tabs, Save in the panel footer, unsaved-changes guard;
+                        settings-sub-menus.ts is the tab list shared with router.tsx
   components/
     ui/                 shadcn primitives (kebab-case, CLI-generated)
     shared/             ours, used by two or more pages
@@ -114,13 +116,14 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 ## Where to start
 
 - Understanding storage → `includes/Models/Layout.php`, then `LayoutRepository::publish()`
+- Adding a setting → `Models/Settings::schema()`, then `settings.schema.ts`, then a form field in `pages/settings/components/`
 - Adding an endpoint → `LayoutRestController`, then the `lib/` triplet
 - Adding a block → `packages/blocks/src/`, then `BlockRegistry`
 - Free/Pro → `includes/Support/Plan.php` and `scripts/check-pro-boundary.sh`
 
 ## Not yet built
 
-No tests. `Renderer/` holds only the force-enqueue hook — the plugin does not yet render layouts into WooCommerce's checkout, so published layouts are stored and rendered by `do_blocks()` but not wired into the storefront. Safe mode, telemetry opt-in and preview-link lifetime are stored settings with no consumer yet; the Integrations tab detects companions but no companion declares checkout slots.
+No tests. `Renderer/` holds only the force-enqueue hook — the plugin does not yet render layouts into WooCommerce's checkout, so published layouts are stored and rendered by `do_blocks()` but not wired into the storefront. Safe mode, telemetry opt-in and preview-link lifetime are stored settings with no consumer yet (telemetry data is not sent; preview links are not generated). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots.
 
 `Controllers/LayoutTemplateCatalogue` is a placeholder controller: a fixed template library, no database — repoint it at a real template source once one exists. Row actions (Health, Preview, Set active, Restore, Delete) render but have no backend yet.
 
