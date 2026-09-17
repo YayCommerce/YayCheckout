@@ -389,14 +389,18 @@ class LayoutRepository {
             throw new \InvalidArgumentException( Plan::layout_limit_message() );
         }
 
+        // wp_insert_post() unslashes its input, which would strip the \uXXXX
+        // escapes block attributes use for &, <, > and quotes.
         $new_id = wp_insert_post(
-            [
-                'post_type'    => Layout::POST_TYPE,
-                'post_status'  => LayoutPostStatus::DRAFT,
-                /* translators: %s: source layout title. */
-                'post_title'   => sprintf( __( '%s (copy)', 'yaycheckout' ), $source->title ),
-                'post_content' => $source->draft,
-            ],
+            wp_slash(
+                [
+                    'post_type'    => Layout::POST_TYPE,
+                    'post_status'  => LayoutPostStatus::DRAFT,
+                    /* translators: %s: source layout title. */
+                    'post_title'   => sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ),
+                    'post_content' => $source->draft,
+                ]
+            ),
             true
         );
 
