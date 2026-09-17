@@ -94,6 +94,13 @@ Full map, owned by `LayoutPostStatus`:
 | `published` | `private` |
 | `archived` | `trash` |
 
+### Scheduled layouts
+
+Scheduling is core's: the editor sets `future` and a `post_date`, and WP cron's `publish_future_post` flips the status when the date arrives. Two plugin rules sit on top:
+
+- **A published layout is one with a snapshot**, not one whose `post_status` says so. Cron only changes the status, so `Engine/LayoutScheduleSync` runs after core on the same action and calls `LayoutRepository::publish()` for the layout core just published. It hooks `publish_future_post`, not `transition_post_status`, because `publish()` moves a scheduled layout to `publish` itself (below) and a transition hook would fire from inside that call. Cron runs on traffic unless the host triggers it externally, so a quiet store publishes late — a WordPress property, not ours.
+- **Publishing a scheduled layout overrides the schedule.** Both `/publish` and `/activate` (whose modal reads "Publish & activate") go through `publish()`, which moves the date to now: `wp_insert_post()` would otherwise turn `publish` back into `future` while the date is ahead, leaving a layout live for shoppers while the row still read "Scheduled". Core's own transition handling clears the cron event. `activate()` decides whether to publish by `Layout::is_published()` (snapshot present), so a layout that reached `publish` through the editor's own button or through cron is still given a snapshot before it is served.
+
 ## Blocks are dynamic
 
 `save()` returns `null`; all markup comes from `render.php`. Published layouts are stored as markup and re-rendered on every request, so a renamed attribute is absorbed by a default in the render callback. Static save output would instead need a block deprecation for every attribute rename, and existing merchant content would show as invalid.

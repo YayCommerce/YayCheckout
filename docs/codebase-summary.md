@@ -25,14 +25,14 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 |---|---|---|
 | `PostTypes/` | `LayoutPostType` | registration only: caps, template, revision policy |
 | `Models/` | `Layout`, `LayoutQuery` | `Layout` is dumb entity; **every storage key constant lives here**; zero WP calls. `LayoutQuery` is immutable value object for filtered/paginated queries. |
-| `Repositories/` | `LayoutRepository` | all layout storage access; owns the publish sequence |
+| `Repositories/` | `LayoutRepository` | all layout storage access; owns the publish sequence and the active-layout set (Free replaces, Pro appends, last id serves) |
 | `Services/` | `DerivedCacheBuilder` | pure markup → derived caches |
 | `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController` | routing, validation, permissions |
 | `Blocks/` | `BlockRegistry` | registers built block directories |
 | `Support/` | `Plan` | Free/Pro flag derived from provider boot; owns the layout limit and its message |
 | `Pro/` | `ProServiceProvider` | **absent from the Free build** |
 | `Helpers/` | `SettingsHelper`, `LocalizeHelper`, `Logger` | option wrappers, SPA bootstrap payload, WooCommerce logging |
-| `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `Admin/`, `Register/` | wiring, asset registration, the layout cap |
+| `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutScheduleSync`, `Admin/`, `Register/` | wiring, asset registration, the layout cap, snapshot on cron publish |
 | `Utils/` | `SingletonTrait` | |
 
 Most classes use `SingletonTrait` and are constructed from `YayCheckout::__construct()`.
@@ -51,10 +51,12 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `wp/v2/yay_checkout_layout` | GET/POST | core: draft save, autosave, revisions |
 | `yaycheckout/v1/layouts` | GET | list one page; args: `status` (comma list), `search` (string), `page` (int ≥1); envelope `{ items, total, page, total_pages }` |
 | `yaycheckout/v1/layouts` | POST | create draft; args: `name`, `source` (blank\|library), `template_slug` |
-| `yaycheckout/v1/layouts/counts` | GET | per-tab totals: `listed` (everything not archived) and `archived` |
+| `yaycheckout/v1/layouts/counts` | GET | per-tab totals: `listed` (everything not archived), `archived`, and store-wide `active` |
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
-| `yaycheckout/v1/layouts/{id}/publish` | POST | draft → snapshot |
+| `yaycheckout/v1/layouts/{id}/publish` | POST | draft → snapshot; a scheduled layout goes live now and loses its date |
+| `yaycheckout/v1/layouts/{id}/activate` | POST | publish first if there is no snapshot, then add to the active set |
+| `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; snapshot and status untouched |
 | `yaycheckout/v1/settings` | GET/POST | settings |
 | `yaycheckout/v1/mark-reviewed` | POST | review prompt |
 
@@ -120,6 +122,6 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 
 No tests. No `Renderer/` — the plugin does not yet hook WooCommerce's checkout, so published layouts are stored and rendered by `do_blocks()` but not wired into the storefront checkout.
 
-`Controllers/LayoutTemplateCatalogue` is a placeholder controller: a fixed template library, no database — repoint it at a real template source once one exists. Row actions (Health, Preview, Set active, Restore, Delete) render but have no backend yet.
+`Controllers/LayoutTemplateCatalogue` is a placeholder controller: a fixed template library, no database — repoint it at a real template source once one exists. Row actions Health, Preview, Restore and Delete render but have no backend yet; Set active / Deactivate are wired to `/activate` and `/deactivate`.
 
 See the end of `system-architecture.md` for the full deferred list.
