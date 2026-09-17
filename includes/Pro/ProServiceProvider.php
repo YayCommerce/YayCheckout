@@ -32,5 +32,6 @@ class ProServiceProvider {
         /*
          * Pro features register here, via add_action/add_filter only.
          * Empty in 1.x — plan rules that differ between editions.
+         */
     }
 }
