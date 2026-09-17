@@ -18,11 +18,11 @@ export const layoutDerivedSchema = z.preprocess(
   }),
 );
 
-/** Mirrors LayoutStatus::all() in PHP. */
-export const layoutStatusSchema = z.enum(['draft', 'pending', 'scheduled', 'published', 'archived']);
+/** Mirrors LayoutStatus::all() in PHP: WordPress post_status values, not friendlier names. */
+export const layoutStatusSchema = z.enum(['draft', 'pending', 'future', 'publish', 'trash']);
 
 /** Mirrors LayoutStatus::listed(). */
-export const LISTED_LAYOUT_STATUSES = layoutStatusSchema.options.filter((status) => status !== 'archived');
+export const LISTED_LAYOUT_STATUSES = layoutStatusSchema.options.filter((status) => status !== 'trash');
 
 // Wire schemas: the PHP shape, exactly. Only lib/api/layout.api.ts reads them.
 
@@ -34,7 +34,7 @@ const layoutSummaryWireFields = {
   is_active: z.boolean(),
   /** ISO 8601 UTC; null until first published. */
   published_at: z.string().nullable(),
-  /** ISO 8601 UTC while status is 'scheduled'; null otherwise. */
+  /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduled_at: z.string().nullable(),
 };
 
@@ -95,7 +95,7 @@ export type LayoutSummary = {
   isActive: boolean;
   /** ISO 8601 UTC; null until first published. Format with lib/helpers/date.helper. */
   publishedAt: string | null;
-  /** ISO 8601 UTC while status is 'scheduled'; null otherwise. */
+  /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduledAt: string | null;
 };
 

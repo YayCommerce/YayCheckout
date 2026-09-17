@@ -4,16 +4,26 @@ namespace YayCheckout\Enums;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The only status vocabulary REST and the SPA speak. Constants, not a native
- * enum: PHP 7.4 support.
+ * The one status vocabulary: WordPress post_status values, spoken by storage,
+ * REST and the SPA alike. Constants, not a native enum: PHP 7.4 support.
  */
 final class LayoutStatus {
 
     public const DRAFT     = 'draft';
     public const PENDING   = 'pending';
-    public const SCHEDULED = 'scheduled';
-    public const PUBLISHED = 'published';
-    public const ARCHIVED  = 'archived';
+    public const SCHEDULED = 'future';
+
+    /**
+     * Always carries a snapshot; see docs/system-architecture.md, "Two REST surfaces".
+     *
+     * TODO: guard anonymous wp/v2 reads — core serves any 'publish' post
+     * without consulting the capability map. Add a manage_woocommerce check on
+     * rest_pre_dispatch; 'private' fights the editor's Publish button and cron.
+     */
+    public const PUBLISHED = 'publish';
+
+    /** WP cron empties trash after EMPTY_TRASH_DAYS, so archive is not indefinite. */
+    public const ARCHIVED = 'trash';
 
     /**
      * @return string[]

@@ -78,7 +78,7 @@ export default function LayoutsPage() {
   }
 
   const list = useLayoutsQuery({
-    status: view === 'archived' ? ['archived'] : LISTED_LAYOUT_STATUSES,
+    status: view === 'archived' ? ['trash'] : LISTED_LAYOUT_STATUSES,
     search,
     page: pageIndex + 1,
   });
@@ -447,11 +447,11 @@ function LayoutsTable({
 }
 
 function statusBadge(layout: LayoutSummary) {
-  if (layout.status === 'archived') {
+  if (layout.status === 'trash') {
     return <Badge variant="destructive-soft">{__('Archived', 'yaycheckout')}</Badge>;
   }
 
-  if (layout.status === 'published') {
+  if (layout.status === 'publish') {
     return (
       <Badge variant="success">
         {layout.hasUnpublishedChanges
@@ -461,7 +461,7 @@ function statusBadge(layout: LayoutSummary) {
     );
   }
 
-  if (layout.status === 'scheduled') {
+  if (layout.status === 'future') {
     return (
       <Badge variant="outline">
         {layout.scheduledAt

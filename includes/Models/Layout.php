@@ -1,7 +1,6 @@
 <?php
 namespace YayCheckout\Models;
 
-use YayCheckout\Enums\LayoutPostStatus;
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Helpers\DateHelper;
 
@@ -12,7 +11,9 @@ defined( 'ABSPATH' ) || exit;
  *
  * Two copies of the markup live on one post: post_content is the working
  * draft, _yaycheckout_published the snapshot customers see. Only publishing
- * writes the snapshot; a customer request never reads the draft.
+ * writes the snapshot; a customer request never reads the draft. A 'publish'
+ * post_status always has one: LayoutPublishSync writes it on the transition
+ * and LayoutPublishGuard refuses REST publishes it could not write.
  */
 class Layout {
 
@@ -44,8 +45,8 @@ class Layout {
     public ?int $published_revision = null;
     public bool $is_active          = false;
 
-    /** LayoutPostStatus value. Never serialized to REST. */
-    public string $post_status = LayoutPostStatus::DRAFT;
+    /** LayoutStatus value; the wire status as-is. */
+    public string $post_status = LayoutStatus::DRAFT;
 
     /** Pro assignment rules. Unused in 1.x. */
     public array $rules = [];
@@ -64,7 +65,7 @@ class Layout {
         $layout->draft        = (string) $post->post_content;
         $layout->snapshot     = (string) self::meta_value( $meta, self::META_PUBLISHED, '' );
         $layout->post_status  = (string) $post->post_status;
-        $layout->scheduled_at = LayoutPostStatus::SCHEDULED === $layout->post_status ? (string) $post->post_date_gmt : null;
+        $layout->scheduled_at = LayoutStatus::SCHEDULED === $layout->post_status ? (string) $post->post_date_gmt : null;
 
         $published_at = self::meta_value( $meta, self::META_PUBLISHED_AT, null );
         $revision     = self::meta_value( $meta, self::META_PUBLISHED_REVISION, null );
@@ -78,24 +79,6 @@ class Layout {
         return $layout;
     }
 
-    /**
-     * LayoutStatus for REST. Archived, scheduled and pending come from
-     * post_status; published is decided by the snapshot, never post_status —
-     * the editor's Publish button sets 'publish' via wp/v2 without writing one.
-     */
-    public function status(): string {
-        switch ( $this->post_status ) {
-            case LayoutPostStatus::ARCHIVED:
-                return LayoutStatus::ARCHIVED;
-            case LayoutPostStatus::SCHEDULED:
-                return LayoutStatus::SCHEDULED;
-            case LayoutPostStatus::PENDING:
-                return LayoutStatus::PENDING;
-        }
-
-        return $this->is_published() ? LayoutStatus::PUBLISHED : LayoutStatus::DRAFT;
-    }
-
     public function has_unpublished_changes(): bool {
         return $this->is_published() && $this->draft !== $this->snapshot;
     }
@@ -105,7 +88,7 @@ class Layout {
         return [
             'id'                      => $this->id,
             'title'                   => $this->title,
-            'status'                  => $this->status(),
+            'status'                  => $this->post_status,
             'has_unpublished_changes' => $this->has_unpublished_changes(),
             'is_active'               => $this->is_active,
             'published_at'            => DateHelper::to_iso8601( $this->published_at ),
@@ -127,7 +110,7 @@ class Layout {
     }
 
     public function is_published(): bool {
-        return null !== $this->published_at && '' !== $this->snapshot;
+        return LayoutStatus::PUBLISHED === $this->post_status;
     }
 
     /**

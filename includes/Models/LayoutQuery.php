@@ -6,7 +6,7 @@ use YayCheckout\Enums\LayoutStatus;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * How to ask for layouts. Speaks LayoutStatus only, never post_status.
+ * How to ask for layouts. Speaks LayoutStatus, which is the post_status vocabulary.
  */
 class LayoutQuery {
 

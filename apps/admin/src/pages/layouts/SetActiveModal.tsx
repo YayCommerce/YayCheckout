@@ -43,7 +43,7 @@ export function SetActiveModal({
                 {/* Pending and scheduled are published by the same request, not just drafts. */}
                 {isPending
                   ? __('Activating…', 'yaycheckout')
-                  : layout.status === 'published'
+                  : layout.status === 'publish'
                     ? __('Activate', 'yaycheckout')
                     : __('Publish & activate', 'yaycheckout')}
               </Button>
