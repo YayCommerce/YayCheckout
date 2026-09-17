@@ -15,6 +15,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class LayoutRepository {
 
+    /** Layouts the Free edition may hold. */
     public const FREE_LIMIT = 3;
 
     public function find( int $id ): ?Layout {
@@ -31,12 +32,12 @@ class LayoutRepository {
         );
     }
 
-    /** Cheap per row: the option is in alloptions cache. */
+    /** Whether the layout is in the active set. Cheap per row: the option is in alloptions cache. */
     public function is_active( int $id ): bool {
         return in_array( $id, $this->active_ids(), true );
     }
 
-    /** Last of the set: set_active() appends, so the end is the most recent choice. */
+    /** The active layout; the last activated when Pro holds several. set_active() appends, so the end is the most recent choice. */
     public function active(): ?Layout {
         $ids = $this->active_ids();
         $id  = empty( $ids ) ? 0 : (int) end( $ids );
@@ -44,12 +45,13 @@ class LayoutRepository {
         return $id > 0 ? $this->find( $id ) : null;
     }
 
-    /** Pro assignment rules (Layout::META_RULES) will be evaluated here before falling back to active(). */
+    /** The layout that should render for the current request. Pro assignment rules (Layout::META_RULES) will be evaluated here before falling back to active(). */
     public function resolve_for_request(): ?Layout {
         return $this->active();
     }
 
     /**
+     * One page of matching layouts and the total across all pages.
      * Search matches post_title only: post_content is block markup, not text.
      *
      * @return array{items: Layout[], total: int, total_pages: int}
@@ -113,7 +115,7 @@ class LayoutRepository {
         return ' AND (' . implode( ' AND ', $clauses ) . ') ';
     }
 
-    /** Archived layouts do not consume a Free slot. */
+    /** Layouts that consume a Free slot. Archived layouts do not. */
     public function count( ?LayoutQuery $query = null ): int {
         $query = $query ?? LayoutQuery::listed();
 
@@ -197,7 +199,8 @@ class LayoutRepository {
     }
 
     /**
-     * Publish first so an active layout always has a snapshot to serve.
+     * Publishes the layout unless it already reads as published, then makes it
+     * active. Publish first so an active layout always has a snapshot to serve.
      *
      * @throws \InvalidArgumentException When the layout is missing, archived, or its markup is unusable.
      */
@@ -226,7 +229,8 @@ class LayoutRepository {
     }
 
     /**
-     * Leaves post_status alone: deactivate means stop serving, not unpublish.
+     * Drops a layout from the active set. Leaves post_status alone: deactivate
+     * means stop serving, not unpublish.
      *
      * @throws \InvalidArgumentException When the layout is missing.
      */
@@ -252,7 +256,8 @@ class LayoutRepository {
     }
 
     /**
-     * Content starts as the root block, not '': empty markup cannot be published.
+     * Creates a blank layout draft. Content starts as the root block, not '':
+     * empty markup cannot be published.
      *
      * @throws \InvalidArgumentException When the layout limit is reached or the insert fails.
      */
@@ -279,7 +284,8 @@ class LayoutRepository {
     }
 
     /**
-     * Copies the draft only: inheriting a snapshot would put unpublished content live.
+     * Copies a layout's draft into a new layout. The draft only: inheriting a
+     * snapshot would put unpublished content live.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -317,6 +323,7 @@ class LayoutRepository {
     }
 
     /**
+     * The active ids the current plan allows, oldest first.
      * Accepts a bare int (pre-Pro storage). On Free, keeps only the last id so
      * a site dropping back from Pro stays on the same layout and deactivating
      * it does not revive an older one.
@@ -339,7 +346,8 @@ class LayoutRepository {
     }
 
     /**
-     * Keyless get_post_meta() skips maybe_unserialize, so array meta arrives as strings.
+     * Unserializes bulk post meta. Keyless get_post_meta() skips
+     * maybe_unserialize, so array meta arrives as strings.
      *
      * @param  mixed $meta
      * @return array

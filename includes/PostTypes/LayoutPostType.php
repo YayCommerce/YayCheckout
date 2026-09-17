@@ -7,7 +7,7 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Registration only. show_ui stays on (the editor screen is embedded in the
+ * Registers the checkout layout post type. Registration only: show_ui stays on (the editor screen is embedded in the
  * SPA) and show_in_rest so the editor saves drafts through core's wp/v2.
  */
 class LayoutPostType {
@@ -69,7 +69,7 @@ class LayoutPostType {
     }
 
     /**
-     * Orders will reference a layout revision id; pruning would silently lose
+     * Keeps every revision for layouts. Orders will reference a layout revision id; pruning would silently lose
      * that history months later.
      */
     public function keep_all_revisions( $num, $post ) {

@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-/** Pairs with useRouteLeaveGuard. */
+/** Asks to leave or stay when a form has unsaved changes. Pairs with useRouteLeaveGuard. */
 export function UnsavedChangesDialog({
   open,
   onDiscard,

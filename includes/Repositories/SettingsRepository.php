@@ -18,7 +18,7 @@ class SettingsRepository {
         );
     }
 
-    /** Values must already be through Settings::sanitize(). */
+    /** Persists values and stamps updated_at. Values must already be through Settings::sanitize(). */
     public function save( array $values ): Settings {
         update_option( Settings::OPTION_SETTINGS, $values );
         update_option( Settings::OPTION_UPDATED_AT, DateHelper::now_iso8601() );

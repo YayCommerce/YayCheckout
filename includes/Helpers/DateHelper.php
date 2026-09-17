@@ -13,7 +13,7 @@ class DateHelper {
 
     private const MYSQL_FORMAT = 'Y-m-d H:i:s';
 
-    /** Null, empty, the zero date and unparseable input all become null. */
+    /** GMT MySQL datetime → ISO 8601 UTC. Null, empty, the zero date and unparseable input all become null. */
     public static function to_iso8601( ?string $mysql_gmt ): ?string {
         if ( null === $mysql_gmt || '' === $mysql_gmt || '0000-00-00 00:00:00' === $mysql_gmt ) {
             return null;

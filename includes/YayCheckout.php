@@ -5,6 +5,7 @@ use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
+/** Plugin entry point: boots Pro, then every component. */
 class YayCheckout {
 
     use SingletonTrait;
@@ -28,6 +29,7 @@ class YayCheckout {
     }
 
     /**
+     * Loads the Pro service provider when this build ships one.
      * The only place core may name a YayCheckout\Pro class
      * (scripts/check-pro-boundary.sh). Must run before every other component
      * so Plan::is_pro() is settled.

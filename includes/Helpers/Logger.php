@@ -33,6 +33,8 @@ class Logger {
     }
 
     /**
+     * Records a caught throwable and where it came from.
+     *
      * @param string $where What was being attempted, e.g. a REST route.
      */
     public static function exception( \Throwable $error, string $where, array $context = [] ): void {

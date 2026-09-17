@@ -8,6 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use YayCheckout\Utils\SingletonTrait;
 use YayCheckout\Engine\Register\ScriptName;
 
+/** Loads the admin app from the built assets. */
 class RegisterProd {
     use SingletonTrait;
 

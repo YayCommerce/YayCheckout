@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
+/** Confirms taking a layout off the storefront. It stays published. */
 export function DeactivateModal({
   layout,
   isLastActive,

@@ -13,7 +13,7 @@ class IntegrationsHelper {
     public const FILTER = 'yaycheckout_integrations';
 
     /**
-     * Mirrored by integrationWireSchema.
+     * Wire shape consumed by the SPA; mirrored by integrationWireSchema.
      *
      * @return array<int, array<string, mixed>>
      */

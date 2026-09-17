@@ -9,6 +9,7 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
+ * Writes the snapshot when cron publishes a scheduled layout.
  * Core's cron only flips post_status; the snapshot must be written here or a
  * scheduled layout reaches its date with nothing to serve.
  */

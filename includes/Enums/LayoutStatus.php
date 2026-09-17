@@ -23,6 +23,8 @@ final class LayoutStatus {
     }
 
     /**
+     * The Layouts home tab: everything not archived.
+     *
      * @return string[]
      */
     public static function listed(): array {

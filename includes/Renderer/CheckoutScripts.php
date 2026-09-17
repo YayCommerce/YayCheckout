@@ -7,6 +7,7 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
+ * Force-enqueues the classic checkout scripts on the checkout page.
  * Support escape hatch: WooCommerce skips wc-checkout on block checkouts and
  * some themes, and a layout relying on it then breaks silently.
  */

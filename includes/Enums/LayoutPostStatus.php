@@ -27,6 +27,8 @@ final class LayoutPostStatus {
     public const ARCHIVED = 'trash';
 
     /**
+     * The post_status that stores a given LayoutStatus.
+     *
      * @return string|null Null for an unknown status.
      */
     public static function for_status( string $status ): ?string {

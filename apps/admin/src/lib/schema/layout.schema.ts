@@ -39,8 +39,10 @@ const layoutSummaryWireFields = {
 };
 
 // .strict() so a renamed PHP key fails loudly instead of parsing to undefined.
+/** Collection row. Mirrors Layout::to_summary_array(): no markup. */
 export const layoutSummaryWireSchema = z.object(layoutSummaryWireFields).strict();
 
+/** Full layout. Mirrors Layout::to_array(). */
 export const layoutWireSchema = z
   .object({
     ...layoutSummaryWireFields,
@@ -69,6 +71,7 @@ export const layoutCountsSchema = z
   })
   .strict();
 
+/** GET /layouts/counts. */
 export const layoutCountsResponseSchema = z
   .object({
     counts: layoutCountsSchema,
@@ -83,6 +86,7 @@ export type LayoutWire = z.infer<typeof layoutWireSchema>;
 export type LayoutListResponseWire = z.infer<typeof layoutListResponseWireSchema>;
 
 // App-side shapes, camelCase. Built by layout.api.ts; what pages and hooks consume.
+/** App-side shapes, camelCase. Built from the wire types by layout.api.ts; what pages and hooks consume. */
 export type LayoutSummary = {
   id: number;
   title: string;
@@ -110,7 +114,7 @@ export type LayoutListResponse = {
   totalPages: number;
 };
 
-/** Mirrors LayoutRestController's template_slug rule; catalogue membership is server-side only. */
+/** Client-side validation for the New layout form. Mirrors LayoutRestController's template_slug rule; catalogue membership is server-side only. */
 export const newLayoutFormSchema = z
   .object({
     name: z.string().trim().min(1, __('Name is required', 'yaycheckout')),

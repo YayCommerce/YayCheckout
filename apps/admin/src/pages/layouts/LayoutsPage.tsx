@@ -389,7 +389,7 @@ function LayoutsPageBody({
   );
 }
 
-/** The skeleton's fade-in is CSS-delayed so a fast refetch unmounts it before it shows. */
+/** Tab count, or a skeleton while the counts query refetches. Its fade-in is CSS-delayed so a fast refetch unmounts it before it shows. */
 function CountValue({ loading, value }: { loading: boolean; value: number }) {
   if (!loading) {
     return <>{value}</>;
@@ -523,7 +523,7 @@ function LayoutTableRow({
   );
 }
 
-/** Preview, Restore and Delete for good have no onClick yet; publishing is the editor's job. */
+/** Per-row actions: Edit, Set active and the "⋯" menu. Preview, Restore and Delete for good have no onClick yet; publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,

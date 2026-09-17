@@ -6,7 +6,7 @@ use YayCheckout\Enums\LayoutStatus;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Speaks LayoutStatus only, never post_status.
+ * How to ask for layouts. Speaks LayoutStatus only, never post_status.
  */
 class LayoutQuery {
 
@@ -53,6 +53,7 @@ class LayoutQuery {
         return $clone;
     }
 
+    /** The Layouts home tab: everything not archived. */
     public static function listed(): self {
         return new self( LayoutStatus::listed() );
     }

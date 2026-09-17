@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 // Controlled-or-uncontrolled state. Copied from Mantine hooks.
 
+/** State that is either controlled or uncontrolled. Copied from Mantine hooks. */
 export interface UseUncontrolledOptions<T> {
   value?: T;
   defaultValue?: T;

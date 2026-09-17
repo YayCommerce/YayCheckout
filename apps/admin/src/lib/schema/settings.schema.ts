@@ -37,7 +37,7 @@ export const settingsResponseWireSchema = z
   })
   .strict();
 
-/** Not strict: the yaycheckout_integrations filter may add fields. */
+/** Mirrors IntegrationsHelper::describe() in PHP. Not strict: the yaycheckout_integrations filter may add fields. */
 export const integrationWireSchema = z.object({
   slug: z.string(),
   name: z.string(),

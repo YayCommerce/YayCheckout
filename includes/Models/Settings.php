@@ -44,6 +44,7 @@ class Settings {
     }
 
     /**
+     * Builds from the stored option value, projected through the schema.
      * Walks the schema, not the stored array: a stale or invalid stored value
      * reads back as its default instead of failing the SPA's strict wire schema.
      *
@@ -67,6 +68,7 @@ class Settings {
     }
 
     /**
+     * Whitelists and type-checks an incoming settings array against the schema.
      * Unknown keys are dropped; types are strict (a string "true" is a bug,
      * not coerced); a missing key becomes its default, so partial updates
      * must merge with stored values first.
@@ -100,6 +102,7 @@ class Settings {
         return $clean;
     }
 
+    /** The shape both GET/POST /settings and the localize bootstrap emit. */
     public function to_array(): array {
         return [
             'settings'   => [

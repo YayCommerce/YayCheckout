@@ -80,7 +80,7 @@ class DerivedCacheBuilder {
         }
     }
 
-    /** Later block wins on a duplicate field key; slots and order_modes are unique lists. */
+    /** Merges one block's contribution into the derived array. Later block wins on a duplicate field key; slots and order_modes are unique lists. */
     private static function merge( array &$derived, array $contribution ): void {
         foreach ( [ 'fields', 'extra_fields' ] as $key ) {
             if ( ! empty( $contribution[ $key ] ) ) {

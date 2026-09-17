@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { DocLink } from './DocLink';
 import { SettingRow } from './SettingRow';
 
+/** WooCommerce → Status → Logs, filtered to Helpers\Logger's source. */
 const LOGS_URL = `${window.yayCheckoutMeta.wpMeta.adminUrl}admin.php?page=wc-status&tab=logs&source=yaycheckout`;
 
 function lifetimeLabel(minutes: PreviewLinkLifetime): string {

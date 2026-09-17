@@ -113,7 +113,7 @@ class Layout {
         ];
     }
 
-    /** Mirrored exactly by the SPA's strict wire schema. */
+    /** Serialized shape for REST. Mirrored exactly by the SPA's strict wire schema. */
     public function to_array(): array {
         return array_merge(
             $this->to_summary_array(),

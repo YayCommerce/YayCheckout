@@ -11,7 +11,7 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * /yaycheckout/v1/layouts. Draft saves stay on core's wp/v2 endpoints
+ * Layout endpoints under /yaycheckout/v1/layouts. Draft saves stay on core's wp/v2 endpoints
  * (autosave, revisions); everything else the admin app needs lives here.
  */
 class LayoutRestController extends BaseRestController {
@@ -176,6 +176,8 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
+     * The collection: filtered, searched, paginated summaries.
+     *
      * @return array|\WP_Error
      */
     public function get_layouts( \WP_REST_Request $request ) {
@@ -202,7 +204,7 @@ class LayoutRestController extends BaseRestController {
         ];
     }
 
-    /** Own route so the SPA can cache counts independently of the filtered list. */
+    /** Tab totals, independent of the status filter. Own route so the SPA can cache them independently of the filtered list. */
     public function get_layout_counts(): array {
         return [ 'counts' => $this->layouts->counts() ];
     }
@@ -220,7 +222,7 @@ class LayoutRestController extends BaseRestController {
         return $layout->to_array();
     }
 
-    /** `plan` lets the SPA preview its build-time edition; omitted, the real plan decides. */
+    /** The "From library" template catalogue for the New layout modal. `plan` lets the SPA preview its build-time edition; omitted, the real plan decides. */
     public function get_templates( \WP_REST_Request $request ) {
         $plan_param = $request->get_param( 'plan' );
         $is_pro     = $plan_param ? ( 'pro' === $plan_param ) : Plan::is_pro();
@@ -231,6 +233,7 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
+     * Creates a layout draft from the New layout modal.
      * 'library' only checks the template exists; both sources create the same
      * blank draft until a real catalogue exists. Titles may repeat, as Pages do.
      *
@@ -272,6 +275,8 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
+     * Makes a layout the one shoppers see, publishing its draft first.
+     *
      * @return array|\WP_Error
      */
     public function activate_layout( \WP_REST_Request $request ) {
@@ -290,6 +295,8 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
+     * Stops serving a layout to shoppers. It stays published.
+     *
      * @return array|\WP_Error
      */
     public function deactivate_layout( \WP_REST_Request $request ) {
@@ -307,6 +314,8 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
+     * Copies a layout's draft into a new draft layout.
+     *
      * @return array|\WP_Error
      */
     public function duplicate_layout( \WP_REST_Request $request ) {
@@ -324,7 +333,7 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * `status` has no `type => array`: WP validates type before sanitize, so a
+     * Collection query args. `status` has no `type => array`: WP validates type before sanitize, so a
      * comma-separated string would 400. LayoutQuery validates the vocabulary.
      */
     private function list_args(): array {

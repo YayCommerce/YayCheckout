@@ -9,7 +9,8 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The post type is on wp/v2, so the layout cap must also gate core's insert
+ * Enforces the edition's layout limit where layouts are created.
+ * The post type is on wp/v2, so the cap must also gate core's insert
  * or a direct POST bypasses it.
  */
 class LayoutCapGuard {

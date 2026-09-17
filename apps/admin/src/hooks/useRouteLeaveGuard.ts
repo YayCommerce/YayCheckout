@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { matchPath, useBlocker } from 'react-router';
 
-/** Needs a data router: useBlocker throws under the legacy BrowserRouter. */
+/**
+ * Blocks in-app navigation while a form has unsaved changes and hands the
+ * blocked transition to the caller. Needs a data router: useBlocker throws
+ * under the legacy BrowserRouter.
+ */
 export function useRouteLeaveGuard(shouldBlock: boolean, excludedRoutes: string[] = []) {
   const [showDialog, setShowDialog] = useState(false);
 

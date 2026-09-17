@@ -6,6 +6,8 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
+ * Registers the editor blocks and their category.
+ *
  * Registers from the built assets/dist/blocks/<block>/ directory, so deps and
  * render callback come from build output, not a second PHP declaration.
  */

@@ -19,6 +19,8 @@ interface ProGateProps {
 }
 
 /**
+ * Shows pro content to Pro builds and a blurred upsell to Free builds.
+ *
  * Cosmetic gate, not a security boundary: Free users can unblur it with
  * devtools. Safe only because the Free build's PHP has no matching endpoint.
  * Never wrap real data or a real endpoint in it; use ProOnly or a call-site
@@ -47,6 +49,8 @@ export function ProGate({ children, inline = false, className }: ProGateProps) {
 }
 
 /**
+ * Renders children only in a Pro build.
+ *
  * Prevents rendering only; children still ship in the bundle. To drop them,
  * branch at the call site (`{isPro && <X />}`) so the bundler can fold it.
  */
@@ -54,7 +58,7 @@ export function ProOnly({ children }: { children: ReactNode }) {
   return isPro ? <>{children}</> : null;
 }
 
-/** Runtime-only, as ProOnly. */
+/** Renders children only in a Free build. Runtime-only, as ProOnly. */
 export function FreeOnly({ children }: { children: ReactNode }) {
   return isPro ? null : <>{children}</>;
 }
@@ -87,7 +91,7 @@ export function ProTag({ className }: { className?: string }) {
   );
 }
 
-/** No default onClick: not every Upgrade button goes to the same place. */
+/** Plain "Upgrade" CTA. No default onClick: not every Upgrade button goes to the same place. */
 export function UpgradeButton(props: Omit<ComponentProps<typeof Button>, 'children'>) {
   return (
     <Button size="sm" variant="primary-outline" {...props}>
@@ -96,6 +100,7 @@ export function UpgradeButton(props: Omit<ComponentProps<typeof Button>, 'childr
   );
 }
 
+/** Standalone upsell card, for a whole page with no content to blur. */
 export function UpgradePrompt() {
   return (
     <Empty className="my-5">

@@ -15,6 +15,7 @@ import { NameField } from '@/pages/layouts/new-layout/NameField';
 
 const ALL_CATEGORIES = __('All', 'yaycheckout');
 
+/** Template picker. Free sees the grid mostly locked; Pro the full grid. */
 export function LibraryStep({
   onBack,
   onCancel,

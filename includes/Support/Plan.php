@@ -27,19 +27,22 @@ final class Plan {
     }
 
     /**
+     * How many layouts this edition may hold.
+     *
      * @return int Count, or self::UNLIMITED.
      */
     public static function layout_limit(): int {
         return self::is_pro() ? self::UNLIMITED : LayoutRepository::FREE_LIMIT;
     }
 
-    /** Shared by create and duplicate so the two paths cannot drift. */
+    /** Whether a layout count has used up this edition's allowance. Shared by create and duplicate so the two paths cannot drift. */
     public static function layout_limit_reached( int $count ): bool {
         $limit = self::layout_limit();
 
         return self::UNLIMITED !== $limit && $count >= $limit;
     }
 
+    /** What a merchant is told when they hit the limit. */
     public static function layout_limit_message(): string {
         $limit = self::layout_limit();
 

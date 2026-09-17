@@ -21,6 +21,8 @@ const DEFAULT_VALUES: NewLayoutFormValues = {
 };
 
 /**
+ * The two-step "New layout" flow: Blank vs From library, then name.
+ *
  * State lives in NewLayoutForm inside DialogContent: Radix unmounts it after
  * the close animation, so each open starts fresh without a reset effect.
  */

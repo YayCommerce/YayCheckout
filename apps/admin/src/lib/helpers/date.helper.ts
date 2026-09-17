@@ -5,7 +5,10 @@ import { dateI18n, getSettings } from '@wordpress/date';
 
 const viewerTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-/** Null and empty pass through as '' so callers can `|| __('never')`. */
+/**
+ * Formats an ISO 8601 timestamp in the site's date+time format, in the
+ * browser's zone. Null and empty pass through as '' so callers can `|| __('never')`.
+ */
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '';
   return dateI18n(getSettings().formats.datetime, iso, viewerTimeZone);

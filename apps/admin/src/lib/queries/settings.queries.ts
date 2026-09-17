@@ -38,7 +38,10 @@ export function useSaveSettingsMutation() {
   });
 }
 
-/** Bootstrap-only (cannot change without a reload). Validated per entry: a bad third-party one is skipped, not fatal. */
+/**
+ * Companion plugins detected on this page load. Bootstrap-only (cannot change
+ * without a reload). Validated per entry: a bad third-party one is skipped, not fatal.
+ */
 export function useIntegrations(): Integration[] {
   const raw = window.yayCheckoutAdmin.integrations;
   if (!Array.isArray(raw)) return [];
