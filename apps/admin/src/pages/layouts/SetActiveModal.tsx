@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 /**
- * Confirms activating a layout. A layout that has never been published is
- * published by the same request, which is why the submit button says so.
+ * Confirms activating a layout. Anything not currently reported as published
+ * — draft, pending or scheduled — is published by the same request
+ * (LayoutRepository::activate()), which is why the submit button says so.
  */
 export function SetActiveModal({
   layout,

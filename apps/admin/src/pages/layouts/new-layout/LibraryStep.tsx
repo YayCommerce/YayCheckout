@@ -15,8 +15,9 @@ import { NameField } from '@/pages/layouts/new-layout/NameField';
 
 const ALL_CATEGORIES = __('All', 'yaycheckout');
 
-/** yc02-10 (Free, mostly locked) / yc02-10b (Pro, full grid + filter chips):
- * category chips are derived from the fetched template list, not hardcoded. */
+/** Template picker — Free sees the grid mostly locked, Pro the full grid with
+ * filter chips. Category chips are derived from the fetched template list,
+ * not hardcoded. */
 export function LibraryStep({
   onBack,
   onCancel,

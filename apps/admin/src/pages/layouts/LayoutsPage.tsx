@@ -48,10 +48,10 @@ const MIN_ITEMS_FOR_LIST_CONTROLS = 10;
  * GET /layouts (one page of items, matched against `search`) + GET
  * /layouts/counts (tab totals) from LayoutRepository — two separate queries
  * so counts has one cache key instead of diverging per status filter. Edit,
- * Publish, Set active, Deactivate, Search and pagination are real;
- * Health/Compatibility, Preview, Restore and Delete for good render with
- * the demo's exact DOM state (enabled/disabled/hidden, labels) but no
- * onClick. See LayoutRowActions.
+ * Set active, Deactivate, Search and pagination are real; Preview, Restore
+ * and Delete for good render with the designed DOM state
+ * (enabled/disabled/hidden, labels) but no onClick — see LayoutRowActions —
+ * and Health/Compatibility are "Not available yet." placeholders.
  */
 export default function LayoutsPage() {
   const [view, setView] = useState<View>('listed');
@@ -424,7 +424,7 @@ function LayoutsPageBody({
 
 /**
  * Shows a skeleton while the counts query is refetching (create draft, close
- * editor, stale-on-focus) so a slow site never displays a stale number as if
+ * editor, activate/deactivate, stale-on-focus) so a slow site never displays a stale number as if
  * it were current. The skeleton's fade-in is delayed in CSS: a refetch that
  * finishes within that window unmounts it before it ever becomes visible, so
  * fast sites don't flicker — no timers or state, just `animation-delay`.
@@ -581,7 +581,7 @@ function LayoutTableRow({
  * disabled on a row that isn't active, since it is the menu's only item.
  * Unpublished changes show as a badge and a "Preview draft" label but carry no
  * Publish button — publishing is the editor's job. The rest (Preview, Restore,
- * Delete for good) match the demo's DOM state but have no onClick yet.
+ * Delete for good) match the designed DOM state but have no onClick yet.
  */
 function LayoutRowActions({
   layout,
@@ -648,7 +648,7 @@ function LayoutRowActions({
 /** Three loading rows — the same shape whether the whole page is loading for
  * the first time (wrapped in its own Card, see LayoutsPageSkeleton) or one
  * tab's table is waiting on its own fetch inside the already-rendered
- * "Your layouts" Card (see the listIsPlaceholder branch in LayoutsPageBody). */
+ * "Your layouts" Card (see the listIsOtherTabPlaceholder branch in LayoutsPageBody). */
 function TableRowsSkeleton() {
   return (
     <div className="space-y-3">

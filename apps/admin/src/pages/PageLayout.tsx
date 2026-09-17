@@ -10,8 +10,9 @@ import { ReactNode } from 'react';
  * plan badge — styled by the page; PageLayout only owns the slot. heading and
  * description are plain props. The content area stacks its direct children
  * with a consistent gap, so a page that lays out several sections gets even
- * spacing without setting it itself. A right info rail (e.g. the Health box
- * on Layouts) is not modelled yet — add an `aside` prop once a screen needs one.
+ * spacing without setting it itself. No `aside` prop yet — Layouts lays out
+ * its Health/Compatibility rail inside its own grid; lift it here once a
+ * second screen needs a rail.
  */
 export default function PageLayout({
   heading,

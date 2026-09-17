@@ -21,9 +21,8 @@ const DEFAULT_VALUES: NewLayoutFormValues = {
 };
 
 /**
- * Orchestrates the two-step "New layout" flow from
- * YC-02b_New_Layout_Modal.dc.html: choosing Blank vs From library (state 9),
- * then — for From library — picking a template (states 10/10b). One
+ * Orchestrates the two-step "New layout" flow: choosing Blank vs From
+ * library, then — for From library — picking a template. One
  * react-hook-form instance backs both steps; Create draft calls the real
  * POST /layouts endpoint — see LayoutRestController::create_draft().
  *
@@ -58,11 +57,11 @@ function NewLayoutForm({ onClose }: { onClose: () => void }) {
   const mutation = useCreateLayoutDraftMutation();
 
   /*
-   * Back (from the header breadcrumb or LibraryStep's own Back button) only
-   * changes which step renders — it never touched the form's `source` field.
-   * That let the source step's radio still show "From library" checked, so
-   * its Create draft button could submit a library draft using a stale
-   * template selection instead of the blank layout this step promises.
+   * Back (from the header breadcrumb or LibraryStep's own Back button) must
+   * also reset `source` to 'blank': changing the step alone leaves the source
+   * step's radio on "From library", so its Create draft button would submit a
+   * library draft with a stale template selection instead of the blank layout
+   * this step promises.
    */
   function backToSource() {
     form.setValue('source', 'blank');

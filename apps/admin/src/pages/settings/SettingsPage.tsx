@@ -31,7 +31,8 @@ const TAB_PANEL_CLASS = 'bg-card rounded-md border';
  * One react-hook-form spans all three tabs; the tab rail is a Radix Tabs
  * list wrapped in the UI kit's vertical SideNavMenu, and the active tab is
  * the :subMenu route param (validated by the router loader). Save lives in
- * the panel footer, not the header portal, per the YC-06 wireframe.
+ * the panel footer, not the header portal, so status text and the button
+ * sit together.
  */
 export default function SettingsPage() {
   const { subMenu } = useParams<{ subMenu: SettingsSubMenu }>();

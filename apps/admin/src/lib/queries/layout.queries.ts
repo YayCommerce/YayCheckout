@@ -107,11 +107,6 @@ export function usePublishLayoutMutation() {
 }
 
 /**
- * Which layout is active is tracked in the page's own state, seeded from
- * window.yayCheckoutMeta — the list is still invalidated because activating an
- * unpublished layout publishes it, changing its status, badge and published-at.
- */
-/**
  * Invalidates the list, not just the row: under Free, activating one layout
  * deactivates whichever was active before, so a row the user never touched
  * changes too. Counts go with it — `active` is part of them, and activating an
