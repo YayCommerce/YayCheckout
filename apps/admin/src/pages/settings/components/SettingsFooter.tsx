@@ -1,6 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
+import { formatDateTime } from '@/lib/helpers/date.helper';
 import type { Settings } from '@/lib/schema/settings.schema';
 import { LoadingButton } from '@/components/ui/button';
 import type { SettingsSubMenu } from '../settings-sub-menus';
@@ -13,13 +14,6 @@ function countDirtyLeaves(value: unknown): number {
   }
   return 0;
 }
-
-const lastSavedFormat = new Intl.DateTimeFormat(undefined, {
-  day: 'numeric',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-});
 
 /*
  * Status text on the left, Save on the right — the wireframe's panel footer.
@@ -49,7 +43,7 @@ export function SettingsFooter({
     status = __('nothing to save on this tab', 'yaycheckout');
   } else if (updatedAt) {
     /* translators: %s: date and time of the last save */
-    status = sprintf(__('last saved %s', 'yaycheckout'), lastSavedFormat.format(new Date(updatedAt)));
+    status = sprintf(__('last saved %s', 'yaycheckout'), formatDateTime(updatedAt));
   } else {
     status = __('not saved yet', 'yaycheckout');
   }

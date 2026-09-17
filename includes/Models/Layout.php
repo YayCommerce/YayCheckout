@@ -3,6 +3,7 @@ namespace YayCheckout\Models;
 
 use YayCheckout\Enums\LayoutPostStatus;
 use YayCheckout\Enums\LayoutStatus;
+use YayCheckout\Helpers\DateHelper;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -50,7 +51,8 @@ class Layout {
     /** Published snapshot markup. What the renderer reads. */
     public string $snapshot = '';
 
-    public ?string $published_at    = null;
+    /** GMT MySQL datetime of the last publish; null until first published. */
+    public ?string $published_at = null;
     /** GMT post_date while post_status is 'future'; null otherwise. */
     public ?string $scheduled_at    = null;
     public ?int $published_revision = null;
@@ -127,6 +129,9 @@ class Layout {
      * List row. Markup stays off the collection so a Pro store with dozens of
      * layouts does not ship every draft over the wire.
      *
+     * Timestamps leave as ISO 8601 UTC, not the GMT MySQL string they are
+     * stored as — see DateHelper for why the zone marker matters.
+     *
      * @return array
      */
     public function to_summary_array(): array {
@@ -136,8 +141,8 @@ class Layout {
             'status'                  => $this->status(),
             'has_unpublished_changes' => $this->has_unpublished_changes(),
             'is_active'               => $this->is_active,
-            'published_at'            => $this->published_at,
-            'scheduled_at'            => $this->scheduled_at,
+            'published_at'            => DateHelper::to_iso8601( $this->published_at ),
+            'scheduled_at'            => DateHelper::to_iso8601( $this->scheduled_at ),
         ];
     }
 

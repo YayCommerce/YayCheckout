@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Repositories;
 
+use YayCheckout\Helpers\DateHelper;
 use YayCheckout\Models\Settings;
 
 defined( 'ABSPATH' ) || exit;
@@ -24,7 +25,7 @@ class SettingsRepository {
      */
     public function save( array $values ): Settings {
         update_option( Settings::OPTION_SETTINGS, $values );
-        update_option( Settings::OPTION_UPDATED_AT, gmdate( 'c' ) );
+        update_option( Settings::OPTION_UPDATED_AT, DateHelper::now_iso8601() );
 
         return $this->get();
     }

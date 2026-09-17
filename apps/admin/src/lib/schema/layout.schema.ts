@@ -46,8 +46,9 @@ const layoutSummaryWireFields = {
   status: layoutStatusSchema,
   has_unpublished_changes: z.boolean(),
   is_active: z.boolean(),
+  /** ISO 8601 UTC; null until first published. Format with lib/helpers/date.helper. */
   published_at: z.string().nullable(),
-  /** GMT publish date while status is 'scheduled'; null otherwise. */
+  /** ISO 8601 UTC publish date while status is 'scheduled'; null otherwise. */
   scheduled_at: z.string().nullable(),
 };
 
@@ -114,8 +115,9 @@ export type LayoutSummary = {
   status: LayoutStatus;
   hasUnpublishedChanges: boolean;
   isActive: boolean;
+  /** ISO 8601 UTC; null until first published. Format with lib/helpers/date.helper. */
   publishedAt: string | null;
-  /** GMT publish date while status is 'scheduled'; null otherwise. */
+  /** ISO 8601 UTC publish date while status is 'scheduled'; null otherwise. */
   scheduledAt: string | null;
 };
 

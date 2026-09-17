@@ -5,6 +5,7 @@ import { useDebounceFn } from 'rooks';
 import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
 
+import { formatDateTime } from '@/lib/helpers/date.helper';
 import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
@@ -523,7 +524,7 @@ function statusBadge(layout: LayoutSummary) {
           ? sprintf(
               /* translators: %s: scheduled publish date */
               __('Scheduled · %s', 'yaycheckout'),
-              layout.scheduledAt,
+              formatDateTime(layout.scheduledAt),
             )
           : __('Scheduled', 'yaycheckout')}
       </Badge>
@@ -576,7 +577,9 @@ function LayoutTableRow({
       <TableCell className="font-mono text-xs">
         {layout.isActive ? <Badge variant="success">{__('Active', 'yaycheckout')}</Badge> : '—'}
       </TableCell>
-      <TableCell className="font-mono text-xs">{layout.publishedAt ?? __('never', 'yaycheckout')}</TableCell>
+      <TableCell className="font-mono text-xs">
+        {formatDateTime(layout.publishedAt) || __('never', 'yaycheckout')}
+      </TableCell>
       <TableCell>
         <LayoutRowActions
           layout={layout}

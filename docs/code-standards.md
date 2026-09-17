@@ -106,6 +106,8 @@ Three files per feature, matching the existing `settings.*` set:
 
 The zod wire schema is the only place the PHP shape is asserted in JS — keep it exact and `.strict()`, so a renamed PHP key fails loudly instead of parsing to `undefined`.
 
+**Timestamps on the wire are ISO 8601 with an explicit UTC offset** (`2026-09-17T09:25:41+00:00`), never the zone-less GMT MySQL string WordPress stores. PHP converts at the serialization boundary through `Helpers\DateHelper::to_iso8601()` (storage keeps core's MySQL shape); the SPA formats only through `lib/helpers/date.helper.ts` (`formatDateTime`), which applies the site's Settings → General date/time format in the viewer's browser timezone — a deliberate departure from core's site-timezone lists, so each admin reads a timestamp against their own clock. Never render a raw wire timestamp or reach for `new Date(...)`/`Intl.DateTimeFormat` in a page.
+
 ### Where components live
 
 A component lives at the narrowest scope that covers its consumers.
