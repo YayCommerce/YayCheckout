@@ -211,6 +211,13 @@ class LayoutRepository {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
 
+        // Same refusal as activate(): the status write below would un-archive it.
+        if ( LayoutPostStatus::ARCHIVED === $post->post_status ) {
+            throw new \InvalidArgumentException(
+                __( 'Restore this layout from the archive before publishing it.', 'yaycheckout' )
+            );
+        }
+
         $markup = (string) $post->post_content;
 
         // Pure, and first: nothing is written if this throws.
@@ -336,6 +343,7 @@ class LayoutRepository {
      * @param  int $id
      * @return Layout
      * @throws \InvalidArgumentException When the layout is missing or already archived.
+     * @throws \RuntimeException         When the status write fails.
      */
     public function archive( int $id ): Layout {
         $post = get_post( $id );
@@ -355,13 +363,18 @@ class LayoutRepository {
          * Archived means kept, so write the status ourselves. The previous
          * status is saved the same way core does, for restore.
          */
-        add_post_meta( $id, '_wp_trash_meta_status', $post->post_status );
-        wp_update_post(
+        update_post_meta( $id, '_wp_trash_meta_status', $post->post_status );
+        $updated = wp_update_post(
             [
                 'ID'          => $id,
                 'post_status' => LayoutPostStatus::ARCHIVED,
-            ]
+            ],
+            true
         );
+
+        if ( is_wp_error( $updated ) ) {
+            throw new \RuntimeException( $updated->get_error_message() );
+        }
 
         $this->store_ids( array_diff( $this->active_ids(), [ $id ] ) );
 
