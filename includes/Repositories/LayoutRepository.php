@@ -196,6 +196,9 @@ class LayoutRepository {
      * so a failure part-way through leaves the old snapshot in place rather
      * than a half-updated one.
      *
+     * Publishing a scheduled layout overrides the schedule: it goes live now
+     * and its date moves to now, so nothing is left for cron to publish.
+     *
      * @param  int $id
      * @return Layout
      * @throws \InvalidArgumentException When the layout is missing or its markup is unusable.
@@ -231,12 +234,25 @@ class LayoutRepository {
         update_post_meta( $id, Layout::META_PUBLISHED_AT, current_time( 'mysql', true ) );
 
         if ( LayoutPostStatus::PUBLISHED !== $post->post_status ) {
-            wp_update_post(
-                [
-                    'ID'          => $id,
-                    'post_status' => LayoutPostStatus::PUBLISHED,
-                ]
-            );
+            $update = [
+                'ID'          => $id,
+                'post_status' => LayoutPostStatus::PUBLISHED,
+            ];
+
+            /*
+             * A scheduled layout keeps its future date, and wp_insert_post()
+             * turns 'publish' back into 'future' while the date is ahead.
+             * Moving the date to now keeps the status honest; core's own
+             * transition handling then clears the publish_future_post event.
+             */
+            if ( LayoutPostStatus::SCHEDULED === $post->post_status ) {
+                $now                     = current_time( 'mysql', true );
+                $update['post_date_gmt'] = $now;
+                $update['post_date']     = get_date_from_gmt( $now );
+                $update['edit_date']     = true;
+            }
+
+            wp_update_post( $update );
         }
 
         return $this->find( $id );
