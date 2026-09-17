@@ -32,13 +32,29 @@ class Settings {
     public static function schema(): array {
         return [
             'general'  => [
-                'safe_mode'                => [ 'type' => 'bool', 'default' => false ],
-                'share_usage_data'         => [ 'type' => 'bool', 'default' => false ],
-                'delete_data_on_uninstall' => [ 'type' => 'bool', 'default' => false ],
+                'safe_mode'                => [
+					'type'    => 'bool',
+					'default' => false,
+				],
+                'share_usage_data'         => [
+					'type'    => 'bool',
+					'default' => false,
+                ],
+                'delete_data_on_uninstall' => [
+					'type'    => 'bool',
+					'default' => false,
+                ],
             ],
             'advanced' => [
-                'preview_link_lifetime'          => [ 'type' => 'int', 'default' => 60, 'enum' => self::PREVIEW_LINK_LIFETIMES ],
-                'force_enqueue_checkout_scripts' => [ 'type' => 'bool', 'default' => false ],
+                'preview_link_lifetime'          => [
+					'type'    => 'int',
+					'default' => 60,
+					'enum'    => self::PREVIEW_LINK_LIFETIMES,
+				],
+                'force_enqueue_checkout_scripts' => [
+					'type'    => 'bool',
+					'default' => false,
+                ],
             ],
         ];
     }
