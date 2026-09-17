@@ -2,6 +2,7 @@
 namespace YayCheckout\Repositories;
 
 use YayCheckout\Enums\LayoutPostStatus;
+use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Services\DerivedCacheBuilder;
@@ -259,7 +260,8 @@ class LayoutRepository {
     }
 
     /**
-     * Publish the layout if it has never been published, then make it active.
+     * Publish the layout unless it already reads as published, then make it
+     * active.
      *
      * Publishing first keeps the invariant that an active layout always has a
      * snapshot to serve: activating a draft would otherwise put a layout live
@@ -288,12 +290,13 @@ class LayoutRepository {
         }
 
         /*
-         * Decided by the snapshot, not post_status. The editor's own Publish
-         * button and cron on a scheduled post both set post_status to
-         * 'publish' without ever going through publish(), so a status check
-         * would activate a layout with nothing to serve.
+         * Same rule as the admin's Set active modal, which reads "Publish &
+         * activate" for anything not reported as published: a layout with
+         * no snapshot gets one, and a scheduled or pending layout — even one
+         * published before — has its current draft published now, because
+         * activating it is the merchant overriding the schedule or review.
          */
-        if ( ! $layout->is_published() ) {
+        if ( LayoutStatus::PUBLISHED !== $layout->status() ) {
             $this->publish( $id );
         }
 
