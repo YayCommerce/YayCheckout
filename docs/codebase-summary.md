@@ -54,8 +54,8 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/counts` | GET | per-tab totals: `listed` (everything not archived), `archived`, and store-wide `active` |
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
-| `yaycheckout/v1/layouts/{id}/publish` | POST | draft → snapshot; a scheduled layout goes live now and loses its date |
-| `yaycheckout/v1/layouts/{id}/activate` | POST | publish first if there is no snapshot, then add to the active set |
+| `yaycheckout/v1/layouts/{id}/publish` | POST | draft → snapshot; a layout dated in the future goes live now, its date moved to now |
+| `yaycheckout/v1/layouts/{id}/activate` | POST | publish first unless the layout already reads as Published, then add to the active set |
 | `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; snapshot and status untouched |
 | `yaycheckout/v1/settings` | GET/POST | settings |
 | `yaycheckout/v1/mark-reviewed` | POST | review prompt |

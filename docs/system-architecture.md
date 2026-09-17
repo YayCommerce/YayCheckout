@@ -82,7 +82,7 @@ The block editor saves drafts through **core's** `wp/v2/yay_checkout_layout` —
 
 Both check `manage_woocommerce`. Core does so because the post type maps every capability to it at registration; our controllers do so in `permission_callback`. One rule, declared in one place, no `map_meta_cap` filter.
 
-**A published layout's `post_status` is `private`, never `publish`.** `WP_REST_Posts_Controller::check_read_permission()` returns true for any post whose status is `publish` without consulting the post type's capabilities — so publishing would have made layout markup readable through `wp/v2` by anonymous visitors, bypassing the capability map entirely. `private` routes the read through `read_post`.
+**A published layout's `post_status` was `private`, never `publish`.** `WP_REST_Posts_Controller::check_read_permission()` returns true for any post whose status is `publish` without consulting the post type's capabilities — so publishing makes layout markup readable through `wp/v2` by anonymous visitors, bypassing the capability map entirely. `private` routes the read through `read_post`. **Open decision (2026-09-17):** `LayoutPostStatus::PUBLISHED` is currently `publish`; the table below shows the value the code holds today, and the anonymous-read exposure is unresolved until the team picks `private`, a REST guard, or accepts it.
 
 Full map, owned by `LayoutPostStatus`:
 
@@ -91,15 +91,15 @@ Full map, owned by `LayoutPostStatus`:
 | `draft` | `draft` |
 | `pending` | `pending` |
 | `scheduled` | `future` |
-| `published` | `private` |
+| `published` | `publish` (see open decision above) |
 | `archived` | `trash` |
 
 ### Scheduled layouts
 
 Scheduling is core's: the editor sets `future` and a `post_date`, and WP cron's `publish_future_post` flips the status when the date arrives. Two plugin rules sit on top:
 
-- **A published layout is one with a snapshot**, not one whose `post_status` says so. Cron only changes the status, so `Engine/LayoutScheduleSync` runs after core on the same action and calls `LayoutRepository::publish()` for the layout core just published. It hooks `publish_future_post`, not `transition_post_status`, because `publish()` moves a scheduled layout to `publish` itself (below) and a transition hook would fire from inside that call. Cron runs on traffic unless the host triggers it externally, so a quiet store publishes late — a WordPress property, not ours.
-- **Publishing a scheduled layout overrides the schedule.** Both `/publish` and `/activate` (whose modal reads "Publish & activate") go through `publish()`, which moves the date to now: `wp_insert_post()` would otherwise turn `publish` back into `future` while the date is ahead, leaving a layout live for shoppers while the row still read "Scheduled". Core's own transition handling clears the cron event. `activate()` decides whether to publish by `Layout::is_published()` (snapshot present), so a layout that reached `publish` through the editor's own button or through cron is still given a snapshot before it is served.
+- **A published layout is one with a snapshot**, not one whose `post_status` says so. `Layout::status()` reports Published only when the snapshot exists; a layout the editor's own Publish button or cron moved to `publish` without one reads as Draft. Cron only changes the status, so `Engine/LayoutScheduleSync` listens to the `future_to_publish` transition while core's `publish_future_post` action is running and calls `LayoutRepository::publish()` — once per real transition, so an overlapping cron run cannot snapshot twice, and never from inside `publish()`'s own early-publish transition, which happens outside that action. Cron runs on traffic unless the host triggers it externally, so a quiet store publishes late — a WordPress property, not ours.
+- **Publishing a scheduled layout overrides the schedule.** Both `/publish` and `/activate` (whose modal reads "Publish & activate") go through `publish()`, which moves the date to now whenever `post_date_gmt` is ahead — a pending layout can carry a future date too: `wp_insert_post()` would otherwise turn `publish` back into `future`, leaving a layout live for shoppers while the row still read "Scheduled". Core's own transition handling clears the cron event. `activate()` publishes unless `Layout::status()` already says Published — the same rule the modal uses — so a rescheduled or pending layout that was published before has its current draft published, and a `publish`-status layout with no snapshot gets one before it is served.
 
 ## Blocks are dynamic
 
