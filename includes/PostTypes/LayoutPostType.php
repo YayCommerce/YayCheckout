@@ -70,15 +70,13 @@ class LayoutPostType {
                 ],
 
                 /*
-                 * One locked root block. template_lock 'all' governs the top
-                 * level only: it stops the root being removed, moved or joined
-                 * by siblings. What merchants may rearrange inside the layout
-                 * is the checkout block's own templateLock attribute.
+                 * Seed a Checkout root on new layouts. Inserting another one
+                 * after delete is allowed (no template_lock); JS/PHP still
+                 * permit only one Checkout at the document root.
                  */
                 'template'         => [
                     [ 'yaycheckout/checkout' ],
                 ],
-                'template_lock'    => 'all',
             ]
         );
     }

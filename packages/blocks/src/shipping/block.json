@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/shipping",
+  "title": "Shipping",
+  "category": "yaycheckout",
+  "description": "Shipping address canvas. Fields, layout and text blocks can sit inside it.",
+  "textdomain": "yaycheckout",
+  "parent": [ "yaycheckout/checkout" ],
+  "attributes": {
+    "title": {
+      "type": "string",
+      "default": "Shipping"
+    },
+    "showTitle": {
+      "type": "boolean",
+      "default": true
+    },
+    "shipToDifferent": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}

@@ -23,6 +23,10 @@ class BlockRegistry {
     /** Built block directories, relative to assets/dist/blocks/. */
     private const BLOCKS = [
         'checkout',
+        'contact',
+        'billing',
+        'shipping',
+        'field',
     ];
 
     protected function __construct() {
