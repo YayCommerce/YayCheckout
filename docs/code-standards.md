@@ -8,7 +8,7 @@ Run `composer lint` (and `composer lint:fix` for the auto-fixable subset).
 
 ```
 includes/
-  Enums/        constants classes: status enums, post_status maps. Zero WP calls.
+  Enums/        constants classes: status enum. Zero WP calls.
   PostTypes/    register_post_type only — caps, template, labels. No logic.
   Models/       dumb entities. Typed props, from_post()/to_array(). Zero WP calls.
   Repositories/ ALL get_post/update_post_meta/get_option. Returns Models. Owns invariants.
