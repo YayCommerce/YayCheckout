@@ -34,8 +34,18 @@ class LayoutRepository {
         return Layout::from_post(
             $post,
             $this->hydrate_meta( get_post_meta( $id ) ),
-            in_array( $id, $this->active_ids(), true )
+            $this->is_active( $id )
         );
+    }
+
+    /**
+     * Whether the layout is in the active set the current plan allows.
+     *
+     * Cheap to call per row: the option comes from WordPress's alloptions
+     * cache and the plan flag is a static read, so callers need not hoist it.
+     */
+    public function is_active( int $id ): bool {
+        return in_array( $id, $this->active_ids(), true );
     }
 
     /**
@@ -93,8 +103,7 @@ class LayoutRepository {
 
         remove_filter( 'posts_search', [ $this, 'match_search_to_title' ], 10 );
 
-        $active_ids = $this->active_ids();
-        $layouts    = [];
+        $layouts = [];
 
         foreach ( $wp_query->posts as $post ) {
             if ( ! $post instanceof \WP_Post ) {
@@ -104,7 +113,7 @@ class LayoutRepository {
             $layouts[] = Layout::from_post(
                 $post,
                 $this->hydrate_meta( get_post_meta( $post->ID ) ),
-                in_array( (int) $post->ID, $active_ids, true )
+                $this->is_active( (int) $post->ID )
             );
         }
 
