@@ -4,6 +4,7 @@ import {
   activateLayout,
   createLayoutDraft,
   deactivateLayout,
+  duplicateLayout,
   getLayout,
   getLayoutCounts,
   getLayouts,
@@ -138,6 +139,20 @@ export function useDeactivateLayoutMutation() {
   return useMutation({
     mutationKey: ['layouts', 'deactivate'],
     mutationFn: deactivateLayout,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+    },
+  });
+}
+
+/** Adds a new draft row, so both the list and the listed count change. */
+export function useDuplicateLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'duplicate'],
+    mutationFn: duplicateLayout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
