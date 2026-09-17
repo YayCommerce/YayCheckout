@@ -1,0 +1,112 @@
+# Copyright (C) 2026 YayCommerce
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: YayCheckout - WooCommerce Checkout Builder 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/yaycheckout\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-09-16T10:30:12+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.9.0\n"
+"X-Domain: yaycheckout\n"
+
+#. Plugin Name of the plugin
+msgid "YayCheckout - WooCommerce Checkout Builder"
+msgstr ""
+
+#. Plugin URI of the plugin
+msgid "https://yaycommerce.com/"
+msgstr ""
+
+#. Description of the plugin
+msgid "Checkout builder plugin for WooCommerce: customize checkout fields, layout and design."
+msgstr ""
+
+#. Author of the plugin
+msgid "YayCommerce"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://yaycommerce.com"
+msgstr ""
+
+#: includes/Blocks/BlockRegistry.php:59
+msgid "YayCheckout"
+msgstr ""
+
+#: includes/Controllers/LayoutRestController.php:205
+#: includes/Controllers/LayoutRestController.php:276
+msgid "Layout not found."
+msgstr ""
+
+#: includes/Controllers/LayoutRestController.php:252
+msgid "Unknown template."
+msgstr ""
+
+#. translators: %s: Woocommerce link
+#: includes/Engine/ActDeact.php:15
+msgid "YayCheckout is enabled but not effective. It requires %s in order to work"
+msgstr ""
+
+#: includes/Fallback.php:11
+msgid "It looks like you have another YayCheckout version installed, please delete it before activating this new version. All of the settings and data are still preserved."
+msgstr ""
+
+#: includes/Fallback.php:12
+msgid "Read more details."
+msgstr ""
+
+#: includes/Helpers/IntegrationsHelper.php:29
+msgid "YayBoost"
+msgstr ""
+
+#: includes/Helpers/IntegrationsHelper.php:30
+msgid "Order bumps you can place as a block."
+msgstr ""
+
+#: includes/Helpers/IntegrationsHelper.php:35
+msgid "YayLoyalty"
+msgstr ""
+
+#: includes/Helpers/IntegrationsHelper.php:36
+msgid "Points balance and redemption at checkout."
+msgstr ""
+
+#. translators: %s: dotted path of the setting, e.g. advanced.preview_link_lifetime
+#: includes/Helpers/SettingsHelper.php:96
+msgid "Invalid value for %s."
+msgstr ""
+
+#: includes/PostTypes/LayoutPostType.php:31
+msgid "Checkout Layouts"
+msgstr ""
+
+#: includes/PostTypes/LayoutPostType.php:32
+msgid "Checkout Layout"
+msgstr ""
+
+#. translators: %s: source layout title.
+#: includes/Repositories/LayoutRepository.php:301
+msgid "%s (copy)"
+msgstr ""
+
+#. translators: %d: number of layouts allowed on the current plan.
+#: includes/Support/Plan.php:73
+msgid "Your plan includes %d checkout layout. Upgrade to Pro for unlimited layouts."
+msgid_plural "Your plan includes %d checkout layouts. Upgrade to Pro for unlimited layouts."
+msgstr[0] ""
+msgstr[1] ""
+
+#: packages/blocks/src/checkout/block.json
+msgctxt "block title"
+msgid "Checkout"
+msgstr ""
+
+#: packages/blocks/src/checkout/block.json
+msgctxt "block description"
+msgid "Root container for a YayCheckout checkout layout."
+msgstr ""

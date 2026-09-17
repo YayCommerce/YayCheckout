@@ -56,6 +56,10 @@ if ( ! defined( 'YAYCHECKOUT_MENU_ORDER' ) ) {
     define( 'YAYCHECKOUT_MENU_ORDER', 4 );
 }
 
+if ( ! defined( 'YAYCHECKOUT_DOCS_URL' ) ) {
+    define( 'YAYCHECKOUT_DOCS_URL', 'http://docs.yaycommerce.com/yaycheckout' );
+}
+
 if ( ! defined( 'YAYCHECKOUT_IS_DEVELOPMENT' ) ) {
     define( 'YAYCHECKOUT_IS_DEVELOPMENT', true );
 }

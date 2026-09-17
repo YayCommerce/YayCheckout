@@ -13,9 +13,9 @@ includes/
   Repositories/ ALL get_post/update_post_meta/get_option. Returns Models. Owns invariants.
   Services/     only when an op spans repos or is pure computation.
   Controllers/  REST routing, arg validation, permissions. Thin.
-  Renderer/     frontend WooCommerce hooks. Read-only. (planned; not yet present)
+  Renderer/     frontend WooCommerce hooks. Read-only.
   Blocks/       PHP block registration + render_callbacks.
-  Helpers/      stateless statics: option wrappers, Logger, localize payload.
+  Helpers/      stateless statics: Logger, localize payload, detection. No option storage — that is a Repository.
   Support/      plugin-lifecycle primitives (Plan). No WP calls.
   Pro/      everything Pro-only. Absent from the Free build.
   Engine/       boot, wiring, asset registration.
@@ -64,6 +64,12 @@ grep -rn "_yaycheckout_" includes/ --include=*.php
 ```
 
 Matches should appear only in `Models/`.
+
+The one exception is `uninstall.php`: WordPress runs it without the plugin's autoloader, so it repeats `yaycheckout_settings` and `yay_checkout_layout` as literals, each with a comment naming the constant it mirrors. Change the constant, change the literal.
+
+### Settings are declared once
+
+`Models\Settings::schema()` is the only description of a setting — section, key, type, default, allowed values. `Settings::from_option()`, `Settings::sanitize()` and defaulting all walk it, so a key cannot be accepted without a default or defaulted without validation, and a stale or hand-edited stored value reads back as its default. Adding a setting is one schema entry, the matching wire/app zod entries in `settings.schema.ts`, and a form field. No separate defaults array, no per-key sanitize function.
 
 ## REST controllers
 
@@ -136,6 +142,10 @@ it, which is why the former `ui/custom/` moved to `shared/`.
 - Everything we author is PascalCase matching the component it exports:
   `ProGate.tsx`, `Header.tsx`, `BuilderPage.tsx`.
 - Non-component modules stay kebab-case: `layout.api.ts`, `use-settings-form.ts`.
+
+### FormItem collapses inline controls
+
+shadcn's `FormItem` renders a vertical `Field` whose `*:w-auto` overrides the width of every direct child, so a `Switch` inside it loses its track and shows as a bare thumb. For a control that has no label or message of its own (a toggle or select in a settings row), render it straight from `FormField`'s render prop and skip `FormItem`/`FormControl` — `pages/settings/components/GeneralTab.tsx` is the pattern, and so is YayWholesale's settings page.
 
 ## Logging
 
