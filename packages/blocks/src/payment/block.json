@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/payment",
+  "title": "Payment",
+  "category": "yaycheckout",
+  "description": "Payment method list for classic checkout.",
+  "textdomain": "yaycheckout",
+  "parent": [ "yaycheckout/checkout" ],
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "Payment"
+    }
+  },
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}

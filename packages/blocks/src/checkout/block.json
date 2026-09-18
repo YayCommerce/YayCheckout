@@ -9,12 +9,12 @@
   "attributes": {
     "templateLock": {
       "type": [ "string", "boolean" ],
-      "default": "insert"
+      "default": false
     }
   },
   "supports": {
     "html": false,
-    "inserter": false,
+    "multiple": false,
     "reusable": false,
     "lock": false
   },
