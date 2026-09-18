@@ -162,24 +162,9 @@ class LayoutRepository {
             );
         }
 
-        if ( LayoutStatus::PUBLISHED !== $post->post_status ) {
-            $update = [
-                'ID'          => $id,
-                'post_status' => LayoutStatus::PUBLISHED,
-            ];
+        wp_publish_post( $id );
 
-            // wp_insert_post() flips 'publish' back to 'future' while the date is ahead;
-            // moving it to now also lets core clear the publish_future_post event.
-            if ( strtotime( $post->post_date_gmt . ' GMT' ) > time() ) {
-                $now                     = current_time( 'mysql', true );
-                $update['post_date_gmt'] = $now;
-                $update['post_date']     = get_date_from_gmt( $now );
-            }
-
-            wp_update_post( $update );
-        }
-
-        return $this->find( $id );
+        return Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $id ) ), $this->is_active( $id ) );
     }
 
     /**
@@ -227,7 +212,7 @@ class LayoutRepository {
 
         $this->store_ids( array_diff( $this->active_ids(), [ $id ] ) );
 
-        return $this->find( $id );
+        return Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $id ) ), false );
     }
 
     /**
