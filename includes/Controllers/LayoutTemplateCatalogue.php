@@ -4,23 +4,15 @@ namespace YayCheckout\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Template catalogue for the "New layout" → "From library" step in
- * YC-02b_New_Layout_Modal.dc.html.
- *
- * Currently a fixed list standing in for a real template source — does not
- * touch the database. Repoint templates()/catalogue() at real markup once it
- * exists.
+ * Fixture list standing in for a real template source; repoint catalogue()
+ * at real markup once it exists.
  */
 class LayoutTemplateCatalogue {
 
-    /**
-     * The first N templates a Free/Lite licence may pick — the rest render
-     * locked, as in yc02-10.
-     */
+    /** Free picks the first N; the rest render locked. */
     private const FREE_UNLOCKED_COUNT = 3;
 
     /**
-     * @param  bool $is_pro Whether the caller may use every template.
      * @return array{ slug: string, name: string, category: string, locked: bool }[]
      */
     public static function templates( bool $is_pro ): array {
@@ -33,10 +25,6 @@ class LayoutTemplateCatalogue {
         return $templates;
     }
 
-    /**
-     * @param  string $slug
-     * @return bool Whether $slug is one of the catalogue's templates.
-     */
     public static function has_template( string $slug ): bool {
         foreach ( self::catalogue() as $template ) {
             if ( $template['slug'] === $slug ) {

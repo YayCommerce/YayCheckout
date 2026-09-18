@@ -9,17 +9,12 @@ use YayCheckout\Utils\SingletonTrait;
 use YayCheckout\Engine\Register\ScriptName;
 
 /**
- * Register Facade.
- *
- * Picks RegisterDev (Vite dev server + HMR) or RegisterProd (built assets)
- * based on the YAYCHECKOUT_IS_DEVELOPMENT constant (define it in wp-config.php).
- *
- * @method static RegisterFacade get_instance()
+ * Picks RegisterDev or RegisterProd by YAYCHECKOUT_IS_DEVELOPMENT. The
+ * release ZIP strips RegisterDev.php, hence the class_exists() guards.
  */
 class RegisterFacade {
     use SingletonTrait;
 
-    /** Hooks Initialization */
     protected function __construct() {
         add_filter( 'script_loader_tag', [ $this, 'add_entry_as_module' ], 10, 3 );
         add_action( 'init', [ $this, 'register_all_assets' ] );
@@ -56,14 +51,7 @@ class RegisterFacade {
         );
     }
 
-    /**
-     * YayCheckout scripts translations are all in MO file.
-     *
-     * @param string $json_translations
-     * @param string $file
-     * @param string $handle
-     * @param string $domain
-     */
+    /** Script translations come from the MO file, not per-handle JSON. */
     public function use_mo_file_for_script_translations( $json_translations, $file, $handle, $domain ) {
         $all_handles = [
             ScriptName::PAGE_SETTINGS,

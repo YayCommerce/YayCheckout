@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/field",
+  "title": "Field",
+  "category": "yaycheckout",
+  "description": "A checkout form field. Only insertable inside Billing or Shipping.",
+  "textdomain": "yaycheckout",
+  "ancestor": [ "yaycheckout/billing", "yaycheckout/shipping" ],
+  "attributes": {
+    "fieldKey": {
+      "type": "string",
+      "default": ""
+    },
+    "type": {
+      "type": "string",
+      "enum": [ "text", "email", "tel", "select", "country", "state", "textarea", "checkbox", "password", "hidden" ],
+      "default": "text"
+    },
+    "label": {
+      "type": "string",
+      "default": ""
+    },
+    "placeholder": {
+      "type": "string",
+      "default": ""
+    },
+    "description": {
+      "type": "string",
+      "default": ""
+    },
+    "required": {
+      "type": "boolean",
+      "default": false
+    },
+    "autocomplete": {
+      "type": "string",
+      "default": ""
+    },
+    "validate": {
+      "type": "array",
+      "default": []
+    },
+    "width": {
+      "type": "string",
+      "enum": [ "full", "half" ],
+      "default": "full"
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}

@@ -1,12 +1,71 @@
 import { api } from '@/lib/api/api';
-import { Settings } from '@/lib/schema/settings.schema';
+import {
+  Integration,
+  IntegrationWire,
+  Settings,
+  SettingsResponse,
+  SettingsResponseWire,
+  settingsResponseWireSchema,
+  SettingsWire,
+} from '@/lib/schema/settings.schema';
 
-export function getSettings() {
-  return api.get('settings').json<Settings>();
+// The only place wire snake_case meets app camelCase.
+
+export function settingsFromWire(wire: SettingsWire): Settings {
+  return {
+    general: {
+      safeMode: wire.general.safe_mode,
+      shareUsageData: wire.general.share_usage_data,
+      deleteDataOnUninstall: wire.general.delete_data_on_uninstall,
+    },
+    advanced: {
+      previewLinkLifetime: wire.advanced.preview_link_lifetime,
+      forceEnqueueCheckoutScripts: wire.advanced.force_enqueue_checkout_scripts,
+    },
+  };
 }
 
-export function postSettings(data: Settings) {
-  return api.post('settings', { json: data }).json<Settings>();
+export function settingsToWire(settings: Settings): SettingsWire {
+  return {
+    general: {
+      safe_mode: settings.general.safeMode,
+      share_usage_data: settings.general.shareUsageData,
+      delete_data_on_uninstall: settings.general.deleteDataOnUninstall,
+    },
+    advanced: {
+      preview_link_lifetime: settings.advanced.previewLinkLifetime,
+      force_enqueue_checkout_scripts: settings.advanced.forceEnqueueCheckoutScripts,
+    },
+  };
+}
+
+export function settingsResponseFromWire(wire: SettingsResponseWire): SettingsResponse {
+  return {
+    settings: settingsFromWire(wire.settings),
+    updatedAt: wire.updated_at,
+  };
+}
+
+export function integrationFromWire(wire: IntegrationWire): Integration {
+  return {
+    slug: wire.slug,
+    name: wire.name,
+    description: wire.description,
+    detected: wire.detected,
+    version: wire.version,
+    active: wire.active,
+    learnMoreUrl: wire.learn_more_url,
+  };
+}
+
+export async function getSettings(): Promise<SettingsResponse> {
+  return settingsResponseFromWire(settingsResponseWireSchema.parse(await api.get('settings').json()));
+}
+
+export async function postSettings(data: Settings): Promise<SettingsResponse> {
+  return settingsResponseFromWire(
+    settingsResponseWireSchema.parse(await api.post('settings', { json: settingsToWire(data) }).json()),
+  );
 }
 
 export function markReviewed() {

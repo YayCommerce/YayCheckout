@@ -1,21 +1,20 @@
 <?php
 namespace YayCheckout\Repositories;
 
-use YayCheckout\Enums\LayoutPostStatus;
+use YayCheckout\Enums\LayoutStatus;
+use YayCheckout\Helpers\BlockMarkup;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
-use YayCheckout\Services\DerivedCacheBuilder;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * All layout storage access. Every get_post/update_post_meta/get_option call
- * for layouts belongs here so the draft/snapshot rules have one owner.
+ * All layout storage access; publishing and the active set have one owner.
  */
 class LayoutRepository {
 
-    /** Free edition may hold this many layouts. */
+    /** Layouts the Free edition may hold. */
     public const FREE_LIMIT = 3;
 
     public function find( int $id ): ?Layout {
@@ -28,48 +27,54 @@ class LayoutRepository {
         return Layout::from_post(
             $post,
             $this->hydrate_meta( get_post_meta( $id ) ),
-            $this->active_id() === $id
+            $this->is_active( $id )
         );
     }
 
+    /** Whether the layout is in the active set. Cheap per row: the option is in alloptions cache. */
+    public function is_active( int $id ): bool {
+        return in_array( $id, $this->active_ids(), true );
+    }
+
+    /** The active layout; the last activated when Pro holds several. set_active() appends, so the end is the most recent choice. */
     public function active(): ?Layout {
-        $id = $this->active_id();
+        $ids = $this->active_ids();
+        $id  = empty( $ids ) ? 0 : (int) end( $ids );
 
         return $id > 0 ? $this->find( $id ) : null;
     }
 
-    /**
-     * The layout that should render for the current request.
-     *
-     * 1.x resolves to the active layout. Pro assignment rules
-     * (Layout::META_RULES, ordered by menu_order) are evaluated here first and
-     * fall back to this same active layout when none match.
-     */
+    /** The layout that should render for the current request. Pro assignment rules (Layout::META_RULES) will be evaluated here before falling back to active(). */
     public function resolve_for_request(): ?Layout {
         return $this->active();
     }
 
     /**
-     * Every matching layout. Search and pagination are the SPA's job over this list.
+     * One page of matching layouts and the total across all pages.
+     * Search matches post_title only: post_content is block markup, not text.
      *
-     * @return Layout[]
+     * @return array{items: Layout[], total: int, total_pages: int}
      */
     public function query( LayoutQuery $query ): array {
+        add_filter( 'posts_search', [ $this, 'match_search_to_title' ], 10, 2 );
+
         $wp_query = new \WP_Query(
             [
                 'post_type'              => Layout::POST_TYPE,
-                'post_status'            => $this->post_statuses_for( $query->statuses() ),
-                'posts_per_page'         => -1,
-                'orderby'                => 'menu_order ID',
-                'order'                  => 'ASC',
+                'post_status'            => $query->statuses(),
+                's'                      => $query->search(),
+                'posts_per_page'         => $query->per_page(),
+                'paged'                  => $query->page(),
+                'orderby'                => 'date ID',
+                'order'                  => 'DESC',
                 'update_post_meta_cache' => true,
                 'update_post_term_cache' => false,
-                'no_found_rows'          => true,
             ]
         );
 
-        $active_id = $this->active_id();
-        $layouts   = [];
+        remove_filter( 'posts_search', [ $this, 'match_search_to_title' ], 10 );
+
+        $layouts = [];
 
         foreach ( $wp_query->posts as $post ) {
             if ( ! $post instanceof \WP_Post ) {
@@ -79,27 +84,44 @@ class LayoutRepository {
             $layouts[] = Layout::from_post(
                 $post,
                 $this->hydrate_meta( get_post_meta( $post->ID ) ),
-                $active_id === (int) $post->ID
+                $this->is_active( (int) $post->ID )
             );
         }
 
-        return $layouts;
+        return [
+            'items'       => $layouts,
+            'total'       => (int) $wp_query->found_posts,
+            'total_pages' => (int) $wp_query->max_num_pages,
+        ];
     }
 
-    /**
-     * Layouts that consume a Free slot. Archived layouts do not count: the
-     * merchant can archive all three and still add a new draft (YC-02.13).
-     *
-     * Called with no argument from LayoutCapGuard and duplicate(); pass a
-     * LayoutQuery to count a filtered set.
-     */
+    /** Same AND-of-terms shape as WP_Query::parse_search(), restricted to post_title. */
+    public function match_search_to_title( string $search, \WP_Query $wp_query ): string {
+        global $wpdb;
+
+        $terms = $wp_query->query_vars['search_terms'] ?? [];
+
+        if ( '' === $search || empty( $terms ) || Layout::POST_TYPE !== $wp_query->get( 'post_type' ) ) {
+            return $search;
+        }
+
+        $clauses = [];
+
+        foreach ( (array) $terms as $term ) {
+            $clauses[] = $wpdb->prepare( "{$wpdb->posts}.post_title LIKE %s", '%' . $wpdb->esc_like( $term ) . '%' );
+        }
+
+        return ' AND (' . implode( ' AND ', $clauses ) . ') ';
+    }
+
+    /** Layouts that consume a Free slot. Archived layouts do not. */
     public function count( ?LayoutQuery $query = null ): int {
         $query = $query ?? LayoutQuery::listed();
 
         $wp_query = new \WP_Query(
             [
                 'post_type'      => Layout::POST_TYPE,
-                'post_status'    => $this->post_statuses_for( $query->statuses() ),
+                'post_status'    => $query->statuses(),
                 'posts_per_page' => -1,
                 'fields'         => 'ids',
                 'no_found_rows'  => true,
@@ -110,29 +132,22 @@ class LayoutRepository {
     }
 
     /**
-     * Tab totals for the whole store, independent of the current status filter.
+     * Store-wide totals, independent of the current status filter.
      *
-     * @return array{listed: int, archived: int}
+     * @return array{listed: int, archived: int, active: int}
      */
     public function counts(): array {
         return [
             'listed'   => $this->count( LayoutQuery::listed() ),
             'archived' => $this->count( LayoutQuery::archived() ),
+            'active'   => count( $this->active_ids() ),
         ];
     }
 
     /**
-     * Copy the working draft to the published snapshot.
+     * Publishes a layout: a post_status change, as the editor's own button does.
      *
-     * The write order matters. Derived caches are built first and in memory, so
-     * unusable markup throws before anything is stored and the previously
-     * published layout keeps serving. The published-at marker is written last,
-     * so a failure part-way through leaves the old snapshot in place rather
-     * than a half-updated one.
-     *
-     * @param  int $id
-     * @return Layout
-     * @throws \InvalidArgumentException When the layout is missing or its markup is unusable.
+     * @throws \InvalidArgumentException When the layout is missing or archived.
      */
     public function publish( int $id ): Layout {
         $post = get_post( $id );
@@ -141,77 +156,157 @@ class LayoutRepository {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
 
-        $markup = (string) $post->post_content;
-
-        // Pure, and first: nothing is written if this throws.
-        $derived = DerivedCacheBuilder::build( $markup );
-
-        $revision_id = wp_save_post_revision( $id );
-
-        update_post_meta( $id, Layout::META_DERIVED, $derived );
-        update_post_meta( $id, Layout::META_PUBLISHED, $markup );
-
-        /*
-         * wp_save_post_revision() returns null when the content is unchanged
-         * since the last revision, which is the normal case when republishing
-         * an untouched draft. Keep the previous revision id rather than
-         * clearing the pointer that orders rely on.
-         */
-        if ( $revision_id ) {
-            update_post_meta( $id, Layout::META_PUBLISHED_REVISION, (int) $revision_id );
-        }
-
-        // Commit marker, written last.
-        update_post_meta( $id, Layout::META_PUBLISHED_AT, current_time( 'mysql', true ) );
-
-        /*
-         * post_status records only that this layout has been published at least
-         * once. See LayoutPostStatus::PUBLISHED for why it is never 'publish'.
-         */
-        if ( LayoutPostStatus::PUBLISHED !== $post->post_status ) {
-            wp_update_post(
-                [
-                    'ID'          => $id,
-                    'post_status' => LayoutPostStatus::PUBLISHED,
-                ]
+        // Same refusal as activate(): the status write below would un-archive it.
+        if ( LayoutStatus::ARCHIVED === $post->post_status ) {
+            throw new \InvalidArgumentException(
+                __( 'Restore this layout from the archive before publishing it.', 'yaycheckout' )
             );
         }
+
+        wp_publish_post( $id );
+
+        return Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $id ) ), $this->is_active( $id ) );
+    }
+
+    /**
+     * Publishes the layout unless it already is, then makes it active, so an
+     * active layout is always one shoppers may see.
+     *
+     * @throws \InvalidArgumentException When the layout is missing or archived.
+     */
+    public function activate( int $id ): Layout {
+        $layout = $this->find( $id );
+
+        if ( null === $layout ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        // Publishing would silently restore it from the trash and could exceed FREE_LIMIT.
+        if ( LayoutStatus::ARCHIVED === $layout->post_status ) {
+            throw new \InvalidArgumentException(
+                __( 'Restore this layout from the archive before activating it.', 'yaycheckout' )
+            );
+        }
+
+        // Scheduled and pending count too: activating overrides the schedule or review.
+        if ( ! $layout->is_published() ) {
+            $this->publish( $id );
+        }
+
+        $this->set_active( $id );
 
         return $this->find( $id );
     }
 
     /**
-     * Exactly one layout is active, held as a single option, so the invariant
-     * cannot be violated by construction. Writes nothing else.
+     * Drops a layout from the active set. Leaves post_status alone: deactivate
+     * means stop serving, not unpublish.
+     *
+     * @throws \InvalidArgumentException When the layout is missing.
      */
-    public function set_active( int $id ): void {
-        update_option( Layout::OPTION_ACTIVE, $id );
+    public function deactivate( int $id ): Layout {
+        $post = get_post( $id );
+
+        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        $this->store_ids( array_diff( $this->active_ids(), [ $id ] ) );
+
+        return Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $id ) ), false );
     }
 
     /**
-     * Create a new blank layout draft.
+     * Move a layout to the trash and drop it from the active set. Blocks,
+     * meta and revisions stay; the layout can be restored later.
      *
-     * The content defaults to the locked root block rather than an empty
-     * string: LayoutPostType's template_lock 'all' requires it, so a blank
-     * default keeps a brand-new draft a working checkout immediately.
-     *
-     * @param  string $title
+     * @param  int $id
      * @return Layout
-     * @throws \InvalidArgumentException When the Free/Pro layout limit is reached
-     *                                    or the insert fails.
+     * @throws \InvalidArgumentException When the layout is missing or already archived.
+     * @throws \RuntimeException         When WordPress refuses or fails to trash it.
+     */
+    public function archive( int $id ): Layout {
+
+        if ( Layout::POST_TYPE !== get_post_type( $id ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        $trashed = wp_trash_post( $id );
+
+        if ( ! $trashed instanceof \WP_Post ) {
+            throw new \RuntimeException( sprintf( 'Layout %d could not be archived.', $id ) );
+        }
+
+        // wp_trash_post() hands back the pre-update object; only the status moved.
+        $trashed->post_status = LayoutStatus::ARCHIVED;
+
+        return Layout::from_post( $trashed, $this->hydrate_meta( get_post_meta( $id ) ), false );
+    }
+
+    /**
+     * Moves an archived layout back to draft. WP always assigns 'draft' on
+     * untrash (since 5.6) regardless of the layout's pre-archive status, which
+     * is exactly the behaviour this method wants — no extra status handling needed.
+     *
+     * @throws \InvalidArgumentException When the layout is missing or not archived.
+     * @throws \RuntimeException         When WordPress refuses or fails to untrash it.
+     */
+    public function restore( int $id ): Layout {
+        $post = get_post( $id );
+
+        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        if ( LayoutStatus::ARCHIVED !== $post->post_status ) {
+            throw new \InvalidArgumentException( __( 'Layout is not archived.', 'yaycheckout' ) );
+        }
+
+        $restored = wp_untrash_post( $id );
+
+        if ( ! $restored instanceof \WP_Post ) {
+            throw new \RuntimeException( sprintf( 'Layout %d could not be restored.', $id ) );
+        }
+
+        // wp_untrash_post() hands back the pre-update object; only the status moved.
+        $restored->post_status = LayoutStatus::DRAFT;
+
+        // Deliberately no Plan::layout_limit_reached() check: restoring an
+        // existing layout is allowed to exceed the Free cap, unlike create()/duplicate().
+        return Layout::from_post( $restored, $this->hydrate_meta( get_post_meta( $id ) ), false );
+    }
+
+    /** Free replaces the set; Pro moves the id to the end so active() serves it. */
+    public function set_active( int $id ): void {
+        $ids = Plan::is_pro()
+            ? array_merge( array_diff( $this->active_ids(), [ $id ] ), [ $id ] )
+            : [ $id ];
+
+        $this->store_ids( $ids );
+    }
+
+    /**
+     * Creates a layout draft seeded with a complete checkout, so activating it
+     * as-is lets a shopper place an order. The post type's template only
+     * applies to auto-drafts, not to this insert.
+     *
+     * @throws \InvalidArgumentException When the layout limit is reached or the insert fails.
      */
     public function create( string $title ): Layout {
         if ( Plan::layout_limit_reached( $this->count() ) ) {
             throw new \InvalidArgumentException( Plan::layout_limit_message() );
         }
 
+        // wp_insert_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
         $new_id = wp_insert_post(
-            [
-                'post_type'    => Layout::POST_TYPE,
-                'post_status'  => LayoutPostStatus::DRAFT,
-                'post_title'   => $title,
-                'post_content' => '<!-- wp:yaycheckout/checkout /-->',
-            ],
+            wp_slash(
+                [
+                    'post_type'    => Layout::POST_TYPE,
+                    'post_status'  => LayoutStatus::DRAFT,
+                    'post_title'   => $title,
+                    'post_content' => self::default_markup(),
+                ]
+            ),
             true
         );
 
@@ -223,15 +318,9 @@ class LayoutRepository {
     }
 
     /**
-     * Copy a layout's draft into a new layout.
+     * Copies a layout's content into a new draft layout.
      *
-     * The snapshot and its derived caches are deliberately not copied: the copy
-     * has never been published, and inheriting another layout's published
-     * markup would put content live that nobody published.
-     *
-     * @param  int $id
-     * @return Layout
-     * @throws \InvalidArgumentException When the source layout does not exist.
+     * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
     public function duplicate( int $id ): Layout {
         $source = $this->find( $id );
@@ -240,23 +329,22 @@ class LayoutRepository {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
 
-        /*
-         * The cap applies here too. LayoutCapGuard covers creation through
-         * core's REST endpoints, but duplicating is our own code path and would
-         * otherwise be the obvious way around the limit.
-         */
+        // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.
         if ( Plan::layout_limit_reached( $this->count() ) ) {
             throw new \InvalidArgumentException( Plan::layout_limit_message() );
         }
 
+        // wp_insert_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
         $new_id = wp_insert_post(
-            [
-                'post_type'    => Layout::POST_TYPE,
-                'post_status'  => LayoutPostStatus::DRAFT,
-                /* translators: %s: source layout title. */
-                'post_title'   => sprintf( __( '%s (copy)', 'yaycheckout' ), $source->title ),
-                'post_content' => $source->draft,
-            ],
+            wp_slash(
+                [
+                    'post_type'    => Layout::POST_TYPE,
+                    'post_status'  => LayoutStatus::DRAFT,
+                    /* translators: %s: source layout title. */
+                    'post_title'   => sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ),
+                    'post_content' => $source->content,
+                ]
+            ),
             true
         );
 
@@ -267,17 +355,113 @@ class LayoutRepository {
         return $this->find( (int) $new_id );
     }
 
-    private function active_id(): int {
-        return (int) get_option( Layout::OPTION_ACTIVE, 0 );
+    /**
+     * Permanently removes an archived layout with its revisions and meta.
+     * Archived only: the archive is the reversible step, this one is not.
+     *
+     * @throws \InvalidArgumentException When the layout is missing, not archived, or still active.
+     * @throws \RuntimeException         When WordPress refuses the delete.
+     */
+    public function delete( int $id ): void {
+        $post = get_post( $id );
+
+        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        if ( LayoutStatus::ARCHIVED !== $post->post_status ) {
+            throw new \InvalidArgumentException( __( 'Archive this layout before deleting it.', 'yaycheckout' ) );
+        }
+
+        if ( $this->is_active( $id ) ) {
+            throw new \InvalidArgumentException( __( 'Deactivate this layout before deleting it.', 'yaycheckout' ) );
+        }
+
+        if ( ! wp_delete_post( $id, true ) ) {
+            throw new \RuntimeException( sprintf( 'Layout %d could not be deleted.', $id ) );
+        }
     }
 
     /**
-     * Unserialize bulk post meta.
+     * Block markup for a new layout: contact, billing, shipping, order review.
      *
-     * With no key, get_post_meta( $id ) returns the raw meta cache: unlike the
-     * single-key call it does not run maybe_unserialize, so array values such
-     * as the derived caches arrive as serialized strings. Doing it here keeps
-     * the model free of WordPress calls.
+     * The address keys mirror packages/blocks/src/shared/address-fields.ts,
+     * the editor's field picker; keep the two in step.
+     */
+    public static function default_markup(): string {
+        return BlockMarkup::serialize(
+            [
+                BlockMarkup::block(
+                    'yaycheckout/checkout',
+                    [],
+                    [
+                        BlockMarkup::block( 'yaycheckout/contact' ),
+                        BlockMarkup::block( 'yaycheckout/billing', [], self::address_field_blocks( 'billing' ) ),
+                        BlockMarkup::block( 'yaycheckout/shipping', [], self::address_field_blocks( 'shipping' ) ),
+                        BlockMarkup::block( 'yaycheckout/order-review' ),
+                    ]
+                ),
+            ]
+        );
+    }
+
+    /**
+     * @return array[] Field blocks for one address section.
+     */
+    private static function address_field_blocks( string $prefix ): array {
+        $fields = [
+            'first_name' => [ 'text', __( 'First name', 'yaycheckout' ) ],
+            'last_name'  => [ 'text', __( 'Last name', 'yaycheckout' ) ],
+            'country'    => [ 'country', __( 'Country / Region', 'yaycheckout' ) ],
+            'address_1'  => [ 'text', __( 'Street address', 'yaycheckout' ) ],
+            'city'       => [ 'text', __( 'Town / City', 'yaycheckout' ) ],
+            'state'      => [ 'state', __( 'State / County', 'yaycheckout' ) ],
+            'postcode'   => [ 'text', __( 'Postcode / ZIP', 'yaycheckout' ) ],
+        ];
+
+        $blocks = [];
+
+        foreach ( $fields as $suffix => [ $type, $label ] ) {
+            $blocks[] = BlockMarkup::block(
+                'yaycheckout/field',
+                [
+                    'fieldKey' => $prefix . '_' . $suffix,
+                    'type'     => $type,
+                    'label'    => $label,
+                    'required' => true,
+                ]
+            );
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * The active ids the current plan allows, oldest first.
+     * Accepts a bare int (pre-Pro storage). On Free, keeps only the last id so
+     * a site dropping back from Pro stays on the same layout and deactivating
+     * it does not revive an older one.
+     *
+     * @return int[]
+     */
+    private function active_ids(): array {
+        $stored = get_option( Layout::OPTION_ACTIVE, [] );
+        $ids    = is_array( $stored ) ? $stored : [ $stored ];
+        $ids    = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
+
+        return Plan::is_pro() ? $ids : array_slice( $ids, -1 );
+    }
+
+    /**
+     * @param int[] $ids
+     */
+    private function store_ids( array $ids ): void {
+        update_option( Layout::OPTION_ACTIVE, array_values( $ids ) );
+    }
+
+    /**
+     * Unserializes bulk post meta. Keyless get_post_meta() skips
+     * maybe_unserialize, so array meta arrives as strings.
      *
      * @param  mixed $meta
      * @return array
@@ -292,15 +476,5 @@ class LayoutRepository {
         }
 
         return $meta;
-    }
-
-    /**
-     * @param  string[] $statuses
-     * @return string[]
-     */
-    private function post_statuses_for( array $statuses ): array {
-        $post_statuses = array_map( [ LayoutPostStatus::class, 'for_status' ], $statuses );
-
-        return array_values( array_unique( array_filter( $post_statuses ) ) );
     }
 }

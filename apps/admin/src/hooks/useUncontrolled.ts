@@ -1,35 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 
-/**
- * A hook that manages a state which can be either controlled or uncontrolled. Copy from mantine hooks.
- * Use this for Custom Input components follow Shadcn UI pattern.
- */
+// Controlled-or-uncontrolled state. Copied from Mantine hooks.
 
+/** State that is either controlled or uncontrolled. Copied from Mantine hooks. */
 export interface UseUncontrolledOptions<T> {
-  /** Value for controlled state */
   value?: T;
-
-  /** Initial value for uncontrolled state */
   defaultValue?: T;
-
-  /** Final value for uncontrolled state when value and defaultValue are not provided */
+  /** Used when neither value nor defaultValue is provided. */
   finalValue?: T;
-
-  /** Controlled state onChange handler */
   onChange?: (value: T, ...payload: any[]) => void;
 }
 
-export type UseUncontrolledReturnValue<T> = [
-  /** Current value */
-  T,
-
-  /** Handler to update the state, passes `value` and `payload` to `onChange` */
-  (value: T, ...payload: any[]) => void,
-
-  /** True if the state is controlled, false if uncontrolled */
-  boolean,
-];
+export type UseUncontrolledReturnValue<T> = [T, (value: T, ...payload: any[]) => void, boolean];
 
 export function useUncontrolled<T>({
   value,

@@ -1,13 +1,21 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { Plus, Search } from 'lucide-react';
+import { useDebounceFn } from 'rooks';
 import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
 
+import { formatDateTime } from '@/lib/helpers/date.helper';
 import {
   LAYOUT_KEYS,
+  useActivateLayoutMutation,
+  useArchiveLayoutMutation,
+  useDeactivateLayoutMutation,
+  useDeleteLayoutMutation,
+  useDuplicateLayoutMutation,
   useLayoutCountsQuery,
   useLayoutsQuery,
-  usePublishLayoutMutation,
+  useRestoreLayoutMutation,
 } from '@/lib/queries/layout.queries';
 import {
   LISTED_LAYOUT_STATUSES,
@@ -20,29 +28,73 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
-import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { Pagination } from '@/components/ui/pagination';
+import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
+import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
+import { DeleteModal } from '@/pages/layouts/DeleteModal';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
+import { SetActiveModal } from '@/pages/layouts/SetActiveModal';
 import PageLayout from '@/pages/PageLayout';
 
 type View = 'listed' | 'archived';
 
-/*
- * GET /layouts (items) + GET /layouts/counts (tab totals) from
- * LayoutRepository — two separate queries so counts has one cache key
- * instead of diverging per status filter. Edit and Publish are real; Search,
- * Health/Compatibility, Preview, Set active, "⋯", Restore and Delete for good
- * render with the demo's exact DOM state (enabled/disabled/hidden, labels)
- * but no onClick — each still lacks a backend action. See LayoutRowActions.
- */
+const MIN_ITEMS_FOR_LIST_CONTROLS = 10;
+
 export default function LayoutsPage() {
   const [view, setView] = useState<View>('listed');
+  const [pageIndex, setPageIndex] = useState(0);
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  // useDebounceFn has no cancel; the trailing callback checks this ref to drop a stale value.
+  const searchInputRef = useRef('');
+
+  // Page reset happens in the same update as the filter change: a separate
+  // effect would first fetch a page that may not exist under the new filter.
+  const [applySearch] = useDebounceFn((value: string) => {
+    if (value !== searchInputRef.current) return;
+
+    setSearch(value);
+    setPageIndex(0);
+  }, 300);
+
+  function onSearchInputChange(value: string) {
+    searchInputRef.current = value;
+    setSearchInput(value);
+    applySearch(value);
+  }
+
+  function onViewChange(next: View) {
+    searchInputRef.current = '';
+    setView(next);
+    setSearchInput('');
+    setSearch('');
+    setPageIndex(0);
+  }
+
   const list = useLayoutsQuery({
-    status: view === 'archived' ? ['archived'] : LISTED_LAYOUT_STATUSES,
+    status: view === 'archived' ? ['trash'] : LISTED_LAYOUT_STATUSES,
+    search,
+    page: pageIndex + 1,
   });
   const countsQuery = useLayoutCountsQuery();
+
+  // Lags `view` while a new tab's first fetch is in flight, so keepPreviousData's
+  // rows from the other tab never render under this tab's heading.
+  const [settledView, setSettledView] = useState(view);
+  if (list.data && !list.isPlaceholderData && settledView !== view) setSettledView(view);
+
+  const listIsOtherTabPlaceholder = list.isPlaceholderData && settledView !== view;
 
   const isPending = list.isPending || countsQuery.isPending;
 
@@ -51,27 +103,25 @@ export default function LayoutsPage() {
       heading={__('Layouts', 'yaycheckout')}
       description={__('Create, publish and activate checkout layouts.', 'yaycheckout')}
     >
-      {/* isPending only fires once, before either query has ever loaded —
-       * `list`'s placeholderData: keepPreviousData flips isFetching instead
-       * on later tab switches, and `counts` has no status filter to switch
-       * at all, so neither re-fires isPending after the first load. */}
+      {/* isPending fires only on first load; keepPreviousData turns later fetches into isFetching. */}
       {isPending && <LayoutsPageSkeleton />}
-      {/* Only a counts failure replaces the page — the tabs can't render
-       * without it. A list failure is passed into the body instead, so the
-       * tabs stay mounted and the user can switch away or back to retry;
-       * placeholderData only covers `pending`, so on error `list.data` is
-       * undefined and gating the body on it would unmount the tabs too. */}
+      {/* Only a counts failure replaces the page; a list failure is shown inside it so the tabs stay mounted. */}
       {countsQuery.error && <p className="text-destructive text-sm">{countsQuery.error.message}</p>}
-      {countsQuery.data && (
+      {!isPending && countsQuery.data && (
         <LayoutsPageBody
           listData={list.data}
           listError={list.error}
           listFetching={list.isFetching}
-          listIsPlaceholder={list.isPlaceholderData}
+          listIsOtherTabPlaceholder={listIsOtherTabPlaceholder}
           counts={countsQuery.data}
           countsFetching={countsQuery.isFetching}
           view={view}
-          onViewChange={setView}
+          onViewChange={onViewChange}
+          search={search}
+          searchInput={searchInput}
+          onSearchInputChange={onSearchInputChange}
+          pageIndex={pageIndex}
+          onPageIndexChange={setPageIndex}
         />
       )}
     </PageLayout>
@@ -82,26 +132,111 @@ function LayoutsPageBody({
   listData,
   listError,
   listFetching,
-  listIsPlaceholder,
+  listIsOtherTabPlaceholder,
   counts,
   countsFetching,
   view,
   onViewChange,
+  search,
+  searchInput,
+  onSearchInputChange,
+  pageIndex,
+  onPageIndexChange,
 }: {
   listData: LayoutListResponse | undefined;
   listError: Error | null;
-  /** Background refetch of the current tab — real rows stay, table dims. */
+  /** Rows stay on screen and dim. */
   listFetching: boolean;
-  /** listData still belongs to the previous tab while this tab's first fetch is in flight. */
-  listIsPlaceholder: boolean;
+  /** listData still belongs to the previous tab. */
+  listIsOtherTabPlaceholder: boolean;
   counts: LayoutCounts;
   countsFetching: boolean;
   view: View;
   onViewChange: (view: View) => void;
+  search: string;
+  searchInput: string;
+  onSearchInputChange: (value: string) => void;
+  pageIndex: number;
+  onPageIndexChange: (pageIndex: number) => void;
 }) {
   const queryClient = useQueryClient();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
   const [editingLayoutId, setEditingLayoutId] = useState<number | null>(null);
+  const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
+  const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
+  const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
+  const [deletingLayout, setDeletingLayout] = useState<LayoutSummary | null>(null);
+
+  const activateMutation = useActivateLayoutMutation();
+  const deactivateMutation = useDeactivateLayoutMutation();
+  const archiveMutation = useArchiveLayoutMutation();
+  const restoreMutation = useRestoreLayoutMutation();
+  const deleteMutation = useDeleteLayoutMutation();
+  const duplicateMutation = useDuplicateLayoutMutation();
+
+  // Invalidate rather than patch: on Free, activating one row deactivates another.
+  function onActivate(layout: LayoutSummary) {
+    activateMutation.mutate(layout.id, {
+      onSuccess: () => {
+        setActivatingLayout(null);
+        toast.success(__('Layout activated.', 'yaycheckout'));
+      },
+    });
+  }
+
+  function onDeactivate(layout: LayoutSummary) {
+    deactivateMutation.mutate(layout.id, {
+      onSuccess: () => {
+        setDeactivatingLayout(null);
+        toast.success(__('Layout deactivated.', 'yaycheckout'));
+      },
+    });
+  }
+
+  function onArchive(layout: LayoutSummary) {
+    archiveMutation.mutate(layout.id, {
+      onSuccess: () => {
+        setArchivingLayout(null);
+        toast.success(__('Layout archived.', 'yaycheckout'));
+
+        if (listData?.items.length === 1 && pageIndex > 0) {
+          onPageIndexChange(pageIndex - 1);
+        }
+      },
+    });
+  }
+
+  function onRestore(layout: LayoutSummary) {
+    restoreMutation.mutate(layout.id, {
+      onSuccess: () => {
+        toast.success(__('Layout restored.', 'yaycheckout'));
+
+        if (listData?.items.length === 1 && pageIndex > 0) {
+          onPageIndexChange(pageIndex - 1);
+        }
+      },
+    });
+  }
+
+  function onDelete(layout: LayoutSummary) {
+    deleteMutation.mutate(layout.id, {
+      onSuccess: () => {
+        setDeletingLayout(null);
+        toast.success(__('Layout deleted.', 'yaycheckout'));
+
+        // The last row of a later page is gone; that page no longer exists.
+        if (listData?.items.length === 1 && pageIndex > 0) {
+          onPageIndexChange(pageIndex - 1);
+        }
+      },
+    });
+  }
+
+  function onDuplicate(layout: LayoutSummary) {
+    duplicateMutation.mutate(layout.id, {
+      onSuccess: () => toast.success(__('Layout duplicated.', 'yaycheckout')),
+    });
+  }
 
   const editorUrl = useMemo(() => {
     if (!editingLayoutId) {
@@ -122,104 +257,165 @@ function LayoutsPageBody({
     }
   };
 
+  const controlsDisabled = listIsOtherTabPlaceholder;
+
+  const showListControls = (view === 'archived' ? counts.archived : counts.listed) >= MIN_ITEMS_FOR_LIST_CONTROLS;
+  // totalPages is 0 for an empty result.
+  const pageCount = Math.max(1, listData?.totalPages ?? 1);
+
   return (
     <div className="space-y-4">
       <NewLayoutModal open={newLayoutOpen} onOpenChange={setNewLayoutOpen} />
+      <SetActiveModal
+        layout={activatingLayout}
+        onOpenChange={(open) => !open && setActivatingLayout(null)}
+        onConfirm={onActivate}
+        isPending={activateMutation.isPending}
+      />
+      <DeactivateModal
+        layout={deactivatingLayout}
+        isLastActive={counts.active === 1}
+        onOpenChange={(open) => !open && setDeactivatingLayout(null)}
+        onConfirm={onDeactivate}
+        isPending={deactivateMutation.isPending}
+      />
+      <ArchiveModal
+        layout={archivingLayout}
+        onOpenChange={(open) => !open && setArchivingLayout(null)}
+        onConfirm={onArchive}
+        isPending={archiveMutation.isPending}
+      />
+      <DeleteModal
+        layout={deletingLayout}
+        onOpenChange={(open) => !open && setDeletingLayout(null)}
+        onConfirm={onDelete}
+        isPending={deleteMutation.isPending}
+      />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <h2 className="flex-1 text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
-            {/* No search arg on GET /layouts yet — visible once the list is
-             * long enough to need it, but not wired to a query. Sourced from
-             * counts, not listData.items.length, so this row doesn't depend on
-             * the list query at all. */}
-            {(view === 'archived' ? counts.archived : counts.listed) >= 10 && (
-              <Input placeholder={__('Search layouts…', 'yaycheckout')} className="w-52" />
-            )}
-            <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
-              {__('Add layout', 'yaycheckout')}
-            </Button>
+      <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
+        <Card className="min-w-0">
+          <h2 className="text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Segmented
+              size="sm"
+              value={view}
+              onValueChange={(next) => next && onViewChange(next as View)}
+              disabled={controlsDisabled}
+            >
+              <SegmentedItem value="listed">
+                {__('Active list', 'yaycheckout')}
+                <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
+                  <CountValue loading={countsFetching} value={counts.listed} />
+                </Badge>
+              </SegmentedItem>
+              <SegmentedItem value="archived">
+                {__('Archive', 'yaycheckout')}
+                <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
+                  <CountValue loading={countsFetching} value={counts.archived} />
+                </Badge>
+              </SegmentedItem>
+            </Segmented>
+
+            <div className="flex items-center gap-3">
+              {showListControls && (
+                <InputGroup size="small" className="w-64">
+                  <InputGroupInput
+                    placeholder={__('Search layouts…', 'yaycheckout')}
+                    value={searchInput}
+                    onChange={(e) => onSearchInputChange(e.target.value)}
+                  />
+                  <InputGroupAddon align="inline-end">
+                    <Search className="size-4" />
+                  </InputGroupAddon>
+                </InputGroup>
+              )}
+              <Button size="sm" variant="primary-outline" onClick={() => setNewLayoutOpen(true)}>
+                <Plus className="size-4" />
+                {__('Add layout', 'yaycheckout')}
+              </Button>
+            </div>
           </div>
 
-          {/* Never disabled during a tab switch: each status filter is its
-           * own cache entry, so clicking back mid-fetch shows the previous
-           * tab instantly and the abandoned fetch just settles into cache. */}
-          <div className="flex">
-            <Button
-              size="sm"
-              variant={view === 'listed' ? 'primary' : 'outline'}
-              className="rounded-r-none"
-              onClick={() => onViewChange('listed')}
-            >
-              {__('Active list', 'yaycheckout')} (<CountValue loading={countsFetching} value={counts.listed} />)
-            </Button>
-            <Button
-              size="sm"
-              variant={view === 'archived' ? 'primary' : 'outline'}
-              className="rounded-l-none"
-              onClick={() => onViewChange('archived')}
-            >
-              {__('Archive', 'yaycheckout')} (<CountValue loading={countsFetching} value={counts.archived} />)
-            </Button>
-          </div>
-
-          {/* A failed background refetch keeps the previous `listData`, so
-           * the table still renders under the error; a failed first fetch of
-           * a tab has no data and shows only the error, tabs still usable. */}
           {listError && <p className="text-destructive text-sm">{listError.message}</p>}
 
-          {/* Placeholder rows are the other tab's layouts — never render them
-           * under this tab's heading, show the skeleton until its own arrive. */}
-          {listIsPlaceholder ? (
+          {listIsOtherTabPlaceholder ? (
             <TableRowsSkeleton />
-          ) : !listData ? null : listData.items.length === 0 ? (
-            <Card>
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon" />
-                  <EmptyTitle>
-                    {view === 'archived'
-                      ? __('Nothing archived', 'yaycheckout')
-                      : __('Nothing here yet', 'yaycheckout')}
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    {view === 'archived'
-                      ? __('Layouts you archive will show up here.', 'yaycheckout')
-                      : counts.archived > 0
-                        ? __(
-                            'All of your layouts are archived. Restore one to bring it back to this list, or start a new draft. Archiving never deletes anything.',
-                            'yaycheckout',
-                          )
-                        : __('Create your first checkout layout to get started.', 'yaycheckout')}
-                  </EmptyDescription>
-                </EmptyHeader>
-                {view === 'listed' && (
-                  <EmptyContent>
-                    <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
-                      {__('Add layout', 'yaycheckout')}
-                    </Button>
-                    {counts.archived > 0 && (
-                      <Button size="sm" variant="outline" onClick={() => onViewChange('archived')}>
-                        {__('Restore from archive', 'yaycheckout')}
+          ) : !listData ? null : (
+            <div className={cn('min-w-0 transition-opacity', listFetching && 'opacity-60')}>
+              {listData.items.length === 0 ? (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon" />
+                    <EmptyTitle>
+                      {search
+                        ? __('No matching layouts', 'yaycheckout')
+                        : view === 'archived'
+                          ? __('Nothing archived', 'yaycheckout')
+                          : __('Nothing here yet', 'yaycheckout')}
+                    </EmptyTitle>
+                    <EmptyDescription>
+                      {search
+                        ? __('No layouts match your search. Try a different name.', 'yaycheckout')
+                        : view === 'archived'
+                          ? __('Layouts you archive will show up here.', 'yaycheckout')
+                          : counts.archived > 0
+                            ? __(
+                                'All of your layouts are archived. Restore one to bring it back to this list, or start a new draft. Archiving never deletes anything.',
+                                'yaycheckout',
+                              )
+                            : __('Create your first checkout layout to get started.', 'yaycheckout')}
+                    </EmptyDescription>
+                  </EmptyHeader>
+                  {view === 'listed' && !search && (
+                    <EmptyContent>
+                      <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
+                        {__('Add layout', 'yaycheckout')}
                       </Button>
-                    )}
-                  </EmptyContent>
-                )}
-              </Empty>
-            </Card>
-          ) : (
-            <Card className={cn('transition-opacity', listFetching && 'opacity-60')}>
-              <LayoutsTable items={listData.items} view={view} onEditLayout={setEditingLayoutId} />
-              {/* No page/per_page args on GET /layouts yet — the list is
-               * already fetched whole, so page buttons are visual only. */}
-              {listData.items.length >= 10 && <LayoutsPagination itemCount={listData.items.length} />}
-            </Card>
+                      {counts.archived > 0 && (
+                        <Button size="sm" variant="outline" onClick={() => onViewChange('archived')}>
+                          {__('Restore from archive', 'yaycheckout')}
+                        </Button>
+                      )}
+                    </EmptyContent>
+                  )}
+                </Empty>
+              ) : (
+                <>
+                  <div className="overflow-x-auto rounded-lg border">
+                    <LayoutsTable
+                      items={listData.items}
+                      view={view}
+                      onEditLayout={setEditingLayoutId}
+                      onSetActive={setActivatingLayout}
+                      onDeactivate={setDeactivatingLayout}
+                      onArchive={setArchivingLayout}
+                      onRestore={onRestore}
+                      onDelete={setDeletingLayout}
+                      onDuplicate={onDuplicate}
+                    />
+                  </div>
+                  {showListControls && (
+                    <div className="mt-3 flex items-center justify-end gap-4">
+                      <Pagination
+                        pageIndex={pageIndex}
+                        pageCount={pageCount}
+                        onPreviousPage={() => onPageIndexChange(pageIndex - 1)}
+                        onNextPage={() => onPageIndexChange(pageIndex + 1)}
+                        onPageChange={onPageIndexChange}
+                        canPreviousPage={pageIndex > 0}
+                        canNextPage={pageIndex + 1 < pageCount}
+                        disabled={controlsDisabled}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           )}
-        </div>
+        </Card>
 
         <aside className="space-y-4">
-          {/* No HealthChecker yet — content is a placeholder, not fabricated. */}
           <Card>
             <CardHeader>
               <CardTitle>{__('Health', 'yaycheckout')}</CardTitle>
@@ -227,7 +423,6 @@ function LayoutsPageBody({
             <p className="text-muted-foreground text-sm">{__('Not available yet.', 'yaycheckout')}</p>
           </Card>
 
-          {/* No compatibility scan yet — same treatment as Health. */}
           <Card>
             <CardHeader>
               <CardTitle>{__('Compatibility', 'yaycheckout')}</CardTitle>
@@ -258,13 +453,7 @@ function LayoutsPageBody({
   );
 }
 
-/**
- * Shows a skeleton while the counts query is refetching (create draft, close
- * editor, stale-on-focus) so a slow site never displays a stale number as if
- * it were current. The skeleton's fade-in is delayed in CSS: a refetch that
- * finishes within that window unmounts it before it ever becomes visible, so
- * fast sites don't flicker — no timers or state, just `animation-delay`.
- */
+/** Tab count, or a skeleton while the counts query refetches. Its fade-in is CSS-delayed so a fast refetch unmounts it before it shows. */
 function CountValue({ loading, value }: { loading: boolean; value: number }) {
   if (!loading) {
     return <>{value}</>;
@@ -277,61 +466,53 @@ function CountValue({ loading, value }: { loading: boolean; value: number }) {
   );
 }
 
-const PAGE_SIZE = 10;
-
-/** Visual only — see the "No page/per_page args" note above its call site. */
-function LayoutsPagination({ itemCount }: { itemCount: number }) {
-  const totalPages = Math.ceil(itemCount / PAGE_SIZE);
-
-  return (
-    <div className="mt-3 flex items-center gap-4 border-t pt-3">
-      <div className="flex">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <Button
-            key={page}
-            size="sm"
-            variant={page === 1 ? 'primary' : 'outline'}
-            className="h-7 rounded-none px-2.5 text-xs first:rounded-l-md last:rounded-r-md"
-          >
-            {page}
-          </Button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function LayoutsTable({
   items,
   view,
   onEditLayout,
+  onSetActive,
+  onDeactivate,
+  onArchive,
+  onRestore,
+  onDelete,
+  onDuplicate,
 }: {
   items: LayoutSummary[];
   view: View;
   onEditLayout: (id: number) => void;
+  onSetActive: (layout: LayoutSummary) => void;
+  onDeactivate: (layout: LayoutSummary) => void;
+  onArchive: (layout: LayoutSummary) => void;
+  onRestore: (layout: LayoutSummary) => void;
+  onDelete: (layout: LayoutSummary) => void;
+  onDuplicate: (layout: LayoutSummary) => void;
 }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>{__('Name', 'yaycheckout')}</TableHead>
-          {/*
-           * Assignment column — Pro only, design shows it when a layout has
-           * an assignment rule (role/country/campaign). No real data yet:
-           * Layout::$rules (META_RULES) exists but is "Unused in 1.x" —
-           * there's no rule-authoring UI or evaluation engine. Uncomment
-           * once LayoutSummary carries a real `assignment` field.
-           * <TableHead>{__('Assignment', 'yaycheckout')}</TableHead>
-           */}
+          {/* TODO: Assignment column (Pro) once LayoutSummary carries an `assignment` field. */}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
           <TableHead>{__('Active', 'yaycheckout')}</TableHead>
-          <TableHead>{__('Last published', 'yaycheckout')}</TableHead>
+          <TableHead>{__('Published', 'yaycheckout')}</TableHead>
           <TableHead>{__('Actions', 'yaycheckout')}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {items.map((layout) => (
-          <LayoutTableRow key={layout.id} layout={layout} view={view} onEditLayout={onEditLayout} />
+          <LayoutTableRow
+            key={layout.id}
+            layout={layout}
+            view={view}
+            onEditLayout={onEditLayout}
+            onSetActive={onSetActive}
+            onDeactivate={onDeactivate}
+            onArchive={onArchive}
+            onRestore={onRestore}
+            onDelete={onDelete}
+            onDuplicate={onDuplicate}
+          />
         ))}
       </TableBody>
     </Table>
@@ -339,28 +520,22 @@ function LayoutsTable({
 }
 
 function statusBadge(layout: LayoutSummary) {
-  if (layout.status === 'archived') {
+  if (layout.status === 'trash') {
     return <Badge variant="destructive-soft">{__('Archived', 'yaycheckout')}</Badge>;
   }
 
-  if (layout.status === 'published') {
-    return (
-      <Badge variant="success">
-        {layout.hasUnpublishedChanges
-          ? __('Published · unpublished changes', 'yaycheckout')
-          : __('Published', 'yaycheckout')}
-      </Badge>
-    );
+  if (layout.status === 'publish') {
+    return <Badge variant="success">{__('Published', 'yaycheckout')}</Badge>;
   }
 
-  if (layout.status === 'scheduled') {
+  if (layout.status === 'future') {
     return (
       <Badge variant="outline">
         {layout.scheduledAt
           ? sprintf(
               /* translators: %s: scheduled publish date */
               __('Scheduled · %s', 'yaycheckout'),
-              layout.scheduledAt,
+              formatDateTime(layout.scheduledAt),
             )
           : __('Scheduled', 'yaycheckout')}
       </Badge>
@@ -378,81 +553,88 @@ function LayoutTableRow({
   layout,
   view,
   onEditLayout,
+  onSetActive,
+  onDeactivate,
+  onArchive,
+  onRestore,
+  onDelete,
+  onDuplicate,
 }: {
   layout: LayoutSummary;
   view: View;
   onEditLayout: (id: number) => void;
+  onSetActive: (layout: LayoutSummary) => void;
+  onDeactivate: (layout: LayoutSummary) => void;
+  onArchive: (layout: LayoutSummary) => void;
+  onRestore: (layout: LayoutSummary) => void;
+  onDelete: (layout: LayoutSummary) => void;
+  onDuplicate: (layout: LayoutSummary) => void;
 }) {
   return (
     <TableRow>
       <TableCell className="max-w-[320px] truncate font-medium" title={layout.title}>
         {layout.title}
       </TableCell>
-      {/*
-       * Pairs with the commented-out Assignment <TableHead> above — same
-       * "no real data yet" reason. Original design:
-       * <TableCell>
-       *   {layout.assignment ? (
-       *     layout.isActive ? (
-       *       <span className="text-muted-foreground font-mono text-xs">{layout.assignment}</span>
-       *     ) : (
-       *       <Badge variant="outline">{layout.assignment}</Badge>
-       *     )
-       *   ) : (
-       *     <span className="text-muted-foreground">—</span>
-       *   )}
-       * </TableCell>
-       */}
       <TableCell>{statusBadge(layout)}</TableCell>
       <TableCell className="font-mono text-xs">
         {layout.isActive ? <Badge variant="success">{__('Active', 'yaycheckout')}</Badge> : '—'}
       </TableCell>
-      <TableCell className="font-mono text-xs">{layout.publishedAt ?? __('never', 'yaycheckout')}</TableCell>
+      <TableCell className="font-mono text-xs">
+        {formatDateTime(layout.publishedAt) || __('never', 'yaycheckout')}
+      </TableCell>
       <TableCell>
-        <LayoutRowActions layout={layout} view={view} onEditLayout={onEditLayout} />
+        <LayoutRowActions
+          layout={layout}
+          view={view}
+          onEditLayout={onEditLayout}
+          onSetActive={onSetActive}
+          onDeactivate={onDeactivate}
+          onArchive={onArchive}
+          onRestore={onRestore}
+          onDelete={onDelete}
+          onDuplicate={onDuplicate}
+        />
       </TableCell>
     </TableRow>
   );
 }
 
-/**
- * Edit and Publish are real; Publish is enabled by unpublished changes alone,
- * regardless of active state. The rest (Preview, Set active, "⋯", Restore,
- * Delete for good) match the demo's DOM state but have no onClick yet.
- */
+/** Per-row actions: Edit, Set active, Delete for good and the "⋯" menu (Duplicate, Deactivate, Archive). Archive is disabled on the active row (LayoutActiveGuard refuses it server-side). Preview has no onClick yet; publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,
   onEditLayout,
+  onSetActive,
+  onDeactivate,
+  onArchive,
+  onRestore,
+  onDelete,
+  onDuplicate,
 }: {
   layout: LayoutSummary;
   view: View;
   onEditLayout: (id: number) => void;
+  onSetActive: (layout: LayoutSummary) => void;
+  onDeactivate: (layout: LayoutSummary) => void;
+  onArchive: (layout: LayoutSummary) => void;
+  onRestore: (layout: LayoutSummary) => void;
+  onDelete: (layout: LayoutSummary) => void;
+  onDuplicate: (layout: LayoutSummary) => void;
 }) {
-  const publishMutation = usePublishLayoutMutation();
-
   if (view === 'archived') {
     return (
       <div className="flex items-center gap-2">
         <Button size="sm" variant="outline">
           {__('Preview', 'yaycheckout')}
         </Button>
-        <Button size="sm" variant="outline">
+        <Button size="sm" variant="outline" onClick={() => onRestore(layout)}>
           {__('Restore', 'yaycheckout')}
         </Button>
-        <Button size="sm" variant="destructive-outline">
+        <Button size="sm" variant="destructive-outline" onClick={() => onDelete(layout)}>
           {__('Delete for good', 'yaycheckout')}
         </Button>
       </div>
     );
-  }
-
-  const canPublish = layout.hasUnpublishedChanges;
-
-  function onPublish() {
-    publishMutation.mutate(layout.id, {
-      onSuccess: () => toast.success(__('Layout published.', 'yaycheckout')),
-    });
   }
 
   return (
@@ -461,47 +643,48 @@ function LayoutRowActions({
         {__('Edit', 'yaycheckout')}
       </Button>
       <Button size="sm" variant="outline">
-        {canPublish ? __('Preview draft', 'yaycheckout') : __('Preview', 'yaycheckout')}
+        {__('Preview', 'yaycheckout')}
       </Button>
-      {canPublish && (
-        <Button size="sm" onClick={onPublish} disabled={publishMutation.isPending}>
-          {publishMutation.isPending ? __('Publishing…', 'yaycheckout') : __('Publish', 'yaycheckout')}
-        </Button>
-      )}
-      {!layout.isActive && (
-        <Button size="sm" variant="outline" disabled={layout.status !== 'published'}>
-          {__('Set active', 'yaycheckout')}
-        </Button>
-      )}
-      {layout.isActive && !canPublish && (
-        <span className="text-muted-foreground text-xs">{__('active', 'yaycheckout')}</span>
-      )}
-      <Button size="sm" variant="outline">
-        ⋯
+      {/* Disabled rather than hidden so the action column keeps its shape. */}
+      <Button size="sm" variant="outline" disabled={layout.isActive} onClick={() => onSetActive(layout)}>
+        {__('Set active', 'yaycheckout')}
       </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="sm" variant="outline">
+            ⋯
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
+          <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
+            {__('Deactivate', 'yaycheckout')}
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled={layout.isActive} onSelect={() => onArchive(layout)}>
+            {__('Archive', 'yaycheckout')}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
 
-/** Three loading rows in a Card — the same shape whether the whole page is
- * loading for the first time or one tab's table is waiting on its own fetch
- * (see the listIsPlaceholder branch in LayoutsPageBody). */
 function TableRowsSkeleton() {
   return (
-    <Card>
-      <div className="space-y-3">
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-10 w-full" />
-        ))}
-      </div>
-    </Card>
+    <div className="space-y-3">
+      {[0, 1, 2].map((i) => (
+        <Skeleton key={i} className="h-10 w-full" />
+      ))}
+    </div>
   );
 }
 
 function LayoutsPageSkeleton() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <TableRowsSkeleton />
+    <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
+      <Card>
+        <TableRowsSkeleton />
+      </Card>
       <aside className="space-y-4">
         <Card>
           <Skeleton className="h-4 w-24" />

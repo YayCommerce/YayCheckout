@@ -1,18 +1,6 @@
 import { ReactNode } from 'react';
 
-/**
- * Shared frame for every route: a page header (heading + description on the
- * left, actions on the right, vertically centred on the heading) above the
- * page content. Keeps heading style, action placement and the content
- * container width consistent across pages.
- *
- * `actions` takes whatever each page needs — one button, a button group, a
- * plan badge — styled by the page; PageLayout only owns the slot. heading and
- * description are plain props. The content area stacks its direct children
- * with a consistent gap, so a page that lays out several sections gets even
- * spacing without setting it itself. A right info rail (e.g. the Health box
- * on Layouts) is not modelled yet — add an `aside` prop once a screen needs one.
- */
+/** Shared page frame: header with an actions slot, then stacked content. */
 export default function PageLayout({
   heading,
   description,
@@ -21,7 +9,6 @@ export default function PageLayout({
 }: {
   heading: string;
   description?: string;
-  /** Right-aligned slot in the header, e.g. an "Add layout" or "Save" button. */
   actions?: ReactNode;
   children?: ReactNode;
 }) {

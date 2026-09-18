@@ -1,13 +1,8 @@
 <?php
 namespace YayCheckout\Engine;
 
-use YayCheckout\Helpers\SettingsHelper;
-
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Activate and deactivate methods of the plugin.
- */
 class ActDeact {
 
     public static function install_woocommerce_admin_notice() {
@@ -47,8 +42,7 @@ class ActDeact {
     public static function deactivate() {
     }
 
+    /** Nothing to seed: settings derive from Settings::schema() on read. */
     protected static function single_activate() {
-        // Seed default settings on first activation.
-        SettingsHelper::get_settings();
     }
 }

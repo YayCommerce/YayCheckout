@@ -34,7 +34,7 @@ export default defineConfig([
           {
             kind: SelectorKind.Callee,
             match: [{ type: 'strings' }],
-            name: '^div|h1|h2|h3|h4|h5|h6|p|a|span|label|li$', // styled.div('...')
+            name: '^div|h1|h2|h3|h4|h5|h6|p|a|span|label|li$', // styled.div('...') — inherited from the shared YayCommerce admin config; no such callees here yet
           },
         ],
       },

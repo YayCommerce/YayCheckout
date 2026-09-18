@@ -1,4 +1,4 @@
-import { Settings } from '@/lib/schema/settings.schema';
+import { IntegrationWire, SettingsResponseWire } from '@/lib/schema/settings.schema';
 
 export type Meta = {
   wpMeta: {
@@ -16,10 +16,13 @@ export type Meta = {
     assetsUrl: string;
 
     version: string;
+    docsUrl: string;
     reviewed: boolean;
   };
 };
 
+/** Wire shapes; parsed by settings.queries.ts before use. */
 export type AdminData = {
-  settings: Settings;
+  settings: SettingsResponseWire;
+  integrations: IntegrationWire[];
 };

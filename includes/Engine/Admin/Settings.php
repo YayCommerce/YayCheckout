@@ -7,7 +7,7 @@ use YayCheckout\Engine\Register\ScriptName;
 
 defined( 'ABSPATH' ) || exit;
 /**
- * Settings Page
+ * Enqueues the SPA bundle and its localized data on the YayCheckout screen.
  */
 class Settings {
     use SingletonTrait;
@@ -28,7 +28,7 @@ class Settings {
 
     public function admin_enqueue_scripts( $hook_suffix ) {
 
-        // Hook suffix of the AdminShell submenu page: yaycommerce (parent) + yaycheckout (slug).
+        // AdminShell submenu: yaycommerce (parent) + yaycheckout (slug).
         $allow_hook_suffixes = [ 'yaycommerce_page_yaycheckout' ];
 
         if ( ! in_array( $hook_suffix, $allow_hook_suffixes, true ) ) {

@@ -7,8 +7,10 @@
     <file>yaycheckout.php</file>
     <file>index.php</file>
     <file>YayCheckoutPluginAdapter.php</file>
+    <file>uninstall.php</file>
     <!-- Block render callbacks live beside their block.json, per wp-scripts convention. -->
     <file>packages/blocks/src</file>
+    <file>templates</file>
 
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/vendor-prefixed/*</exclude-pattern>
@@ -41,7 +43,7 @@
         -->
         <exclude name="WordPress.Files.FileName"/>
 
-        <!-- Not every file needs a docblock header; classes and methods do. -->
+        <!-- Not every file needs a docblock header; classes do. -->
         <exclude name="Squiz.Commenting.FileComment"/>
         <exclude name="Squiz.Commenting.ClassComment"/>
 
@@ -113,7 +115,6 @@
         <properties>
             <property name="custom_capabilities" type="array">
                 <element value="manage_woocommerce"/>
-                <element value="edit_shop_orders"/>
             </property>
         </properties>
     </rule>

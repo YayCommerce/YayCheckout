@@ -5,11 +5,11 @@
 #
 # Commands:
 #   dev                - Update admin shell + start Vite dev server (HMR on :3040)
-#   build              - Build admin dashboard for production
+#   build              - Build admin dashboard + blocks for production
 #   release [version]  - Create release ZIP package (prompts for version)
 #   bump <version>     - Bump version number in plugin files
 #   info               - Show current version info
-#   clean              - Remove build artifacts
+#   clean              - Remove admin build artifacts (blocks output is left)
 #   help               - Show this help message
 #
 
@@ -192,7 +192,7 @@ cmd_dev() {
     resolve_pnpm
     install_admin_deps
 
-    print_info "Make sure YAYCHECKOUT_IS_DEVELOPMENT is true in wp-config.php"
+    print_info "Make sure YAYCHECKOUT_IS_DEVELOPMENT as true"
     print_step "Starting Vite dev server (http://localhost:3040)..."
     cd "$ADMIN_DIR"
     $PNPM dev
@@ -300,10 +300,12 @@ cmd_release() {
     cp "$PLUGIN_DIR/index.php" "$temp_dir/"
     cp "$PLUGIN_DIR/YayCheckoutPluginAdapter.php" "$temp_dir/"
     cp "$PLUGIN_DIR/readme.txt" "$temp_dir/"
+    cp "$PLUGIN_DIR/uninstall.php" "$temp_dir/"
 
     cp -r "$PLUGIN_DIR/assets" "$temp_dir/"
     cp -r "$PLUGIN_DIR/includes" "$temp_dir/"
     cp -r "$PLUGIN_DIR/languages" "$temp_dir/"
+    cp -r "$PLUGIN_DIR/templates" "$temp_dir/"
     cp -r "$PLUGIN_DIR/vendor-prefixed" "$temp_dir/"
 
     # Composer autoload only (no packages needed at runtime)
@@ -415,12 +417,12 @@ cmd_help() {
     echo ""
     echo "Commands:"
     echo "  dev                          Update admin shell + start Vite dev server (:3040)"
-    echo "  build                        Build admin dashboard for production"
+    echo "  build                        Build admin dashboard + blocks for production"
     echo "  release [version] [--plan=free|pro] [--no-prompt]"
     echo "                               Create release ZIP in release/ (default --plan=free)"
     echo "  bump <version>               Bump version in plugin files"
     echo "  info                         Show current version info"
-    echo "  clean                        Remove build artifacts"
+    echo "  clean                        Remove admin build artifacts (blocks output is left)"
     echo "  help                         Show this help message"
     echo ""
     echo "Examples:"

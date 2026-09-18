@@ -8,18 +8,21 @@ Run `composer lint` (and `composer lint:fix` for the auto-fixable subset).
 
 ```
 includes/
+  Enums/        constants classes: status enum. Zero WP calls.
   PostTypes/    register_post_type only — caps, template, labels. No logic.
   Models/       dumb entities. Typed props, from_post()/to_array(). Zero WP calls.
   Repositories/ ALL get_post/update_post_meta/get_option. Returns Models. Owns invariants.
   Services/     only when an op spans repos or is pure computation.
   Controllers/  REST routing, arg validation, permissions. Thin.
-  Renderer/     frontend WooCommerce hooks. Read-only. (planned; not yet present)
+  Renderer/     frontend WooCommerce hooks. Read-only.
   Blocks/       PHP block registration + render_callbacks.
-  Helpers/      stateless statics: option wrappers, Logger, localize payload.
+  Helpers/      stateless statics: Logger, localize payload, detection. No option storage — that is a Repository.
   Support/      plugin-lifecycle primitives (Plan). No WP calls.
-  Pro/      everything Pro-only. Absent from the Free build.
+  Pro/          everything Pro-only. Absent from the Free build.
   Engine/       boot, wiring, asset registration.
   Utils/        traits.
+  Fallback.php  duplicate-guard admin notice. Standalone file wired in bootstrap.
+  I18n.php      textdomain loader. Standalone file wired in bootstrap.
 ```
 
 **A WP core function call outside `Repositories/`, `Helpers/`, `Engine/`, `Renderer/`, `Blocks/` is a bug.**
@@ -49,13 +52,13 @@ grep -rnE "get_post|update_post_meta|get_option|wp_insert_post" includes/Models 
 
 ```php
 // Yes
-update_post_meta( $id, Layout::META_PUBLISHED, $markup );
+get_option( Layout::OPTION_ACTIVE, [] );
 
 // No
-update_post_meta( $id, '_yaycheckout_published', $markup );
+get_option( 'yaycheckout_active_layout', [] );
 ```
 
-Layouts keep a working draft (`post_content`) and a published snapshot (`_yaycheckout_published`) at the same time. A typo'd key silently reads or writes the wrong copy — the renderer serves a draft to a customer, or a publish writes nowhere. No error, no test failure, just wrong output. The constant is what makes that a fatal error instead.
+A typo'd key silently reads nothing — the store forgets its active layout with no error and no failing test. The constant is what makes that a fatal error instead.
 
 Verify with:
 
@@ -64,6 +67,12 @@ grep -rn "_yaycheckout_" includes/ --include=*.php
 ```
 
 Matches should appear only in `Models/`.
+
+The one exception is `uninstall.php`: WordPress runs it without the plugin's autoloader, so it repeats `yaycheckout_settings` and `yay_checkout_layout` as literals, each with a comment naming the constant it mirrors. Change the constant, change the literal.
+
+### Settings are declared once
+
+`Models\Settings::schema()` is the only description of a setting — section, key, type, default, allowed values. `Settings::from_option()`, `Settings::sanitize()` and defaulting all walk it, so a key cannot be accepted without a default or defaulted without validation, and a stale or hand-edited stored value reads back as its default. Adding a setting is one schema entry, the matching wire/app zod entries in `settings.schema.ts`, and a form field. No separate defaults array, no per-key sanitize function.
 
 ## REST controllers
 
@@ -93,7 +102,11 @@ Three files per feature, matching the existing `settings.*` set:
 - `src/lib/api/{feature}.api.ts` — ky calls, one function per endpoint
 - `src/lib/queries/{feature}.queries.ts` — `queryOptions` object + hooks
 
-PHP `to_array()` emits camelCase so the TS side stays idiomatic. The zod schema is the only place the PHP shape is asserted in JS — keep it exact.
+**Wire vs app naming — same rule as every YayCommerce plugin.** Everything on the wire is `snake_case`: query params follow WP REST core spelling (`page`, `search`, `status`), request bodies (`template_slug`) and every payload field PHP `to_array()` / `to_summary_array()` emits (`is_active`, `published_at`, `total_pages`). Everything TS-side is camelCase (`Layout`, `LayoutListResponse`, form values, hook params). The two meet in exactly one place: `src/lib/api/{feature}.api.ts`, which parses responses against the strict `*WireSchema` in `lib/schema/` and converts to the app types (`summaryFromWire`, `layoutFromWire`), and converts request bodies on the way out. Pages and hooks never see a snake_case key; PHP never learns how the SPA spells one. The `wp_localize_script` bootstrap (`LocalizeHelper`, `window.yayCheckoutMeta`) is the one exception: its top-level keys follow the YayCommerce house camelCase shape (`wpMeta.siteUrl`).
+
+The zod wire schema is the only place the PHP shape is asserted in JS — keep it exact and `.strict()`, so a renamed PHP key fails loudly instead of parsing to `undefined`.
+
+**Timestamps on the wire are ISO 8601 with an explicit UTC offset** (`2026-09-17T09:25:41+00:00`), never the zone-less GMT MySQL string WordPress stores. PHP converts at the serialization boundary through `Helpers\DateHelper::to_iso8601()` (storage keeps core's MySQL shape); the SPA formats only through `lib/helpers/date.helper.ts` (`formatDateTime`), which applies the site's Settings → General date/time format in the viewer's browser timezone — a deliberate departure from core's site-timezone lists, so each admin reads a timestamp against their own clock. Never render a raw wire timestamp or reach for `new Date(...)`/`Intl.DateTimeFormat` in a page.
 
 ### Where components live
 
@@ -135,6 +148,10 @@ it, which is why the former `ui/custom/` moved to `shared/`.
   `ProGate.tsx`, `Header.tsx`, `BuilderPage.tsx`.
 - Non-component modules stay kebab-case: `layout.api.ts`, `use-settings-form.ts`.
 
+### FormItem collapses inline controls
+
+shadcn's `FormItem` renders a vertical `Field` whose `*:w-auto` overrides the width of every direct child, so a `Switch` inside it loses its track and shows as a bare thumb. For a control that has no label or message of its own (a toggle or select in a settings row), render it straight from `FormField`'s render prop and skip `FormItem`/`FormControl` — `pages/settings/components/GeneralTab.tsx` is the pattern, and so is YayWholesale's settings page.
+
 ## Logging
 
 `Helpers\Logger` writes to WooCommerce's log under the `yaycheckout` source, visible at WooCommerce → Status → Logs, which is where support already looks.
@@ -161,11 +178,42 @@ This is a browser aid, not a record. The server-side counterpart is `Helpers\Log
 
 > **No file outside `includes/Pro/` may name a `YayCheckout\Pro\*` class.**
 
-The single permitted reference is the guarded bootstrap in `YayCheckout::boot_pro()`. Pro features attach to core through hooks and filters — `DerivedCacheBuilder::FILTER_CONTRIBUTORS` is the model — so core never calls into Pro code.
+The single permitted reference is the guarded bootstrap in `YayCheckout::boot_pro()`. Pro features attach to core through hooks and filters, so core never calls into Pro code.
 
 `composer lint` runs `scripts/check-pro-boundary.sh`, which fails on a second reference. This is not a style preference: without it, one `use` statement makes the Free build impossible, and nothing else would reveal that until a customer installed the artifact.
 
 Plan is derived, not declared. `Plan::is_pro()` reports whether the provider actually booted, so it cannot claim Pro while the files are missing. It describes **plan**, not license — an expired Pro license is still the Pro plan.
+
+## Comments
+
+Two kinds of comment, two rules.
+
+**Docblocks** (class, public/protected method, constant, hook) start with one line saying *what this does for its caller* — the contract an IDE shows before the body is read. Keep it unless the name and signature already say it (`get_id()`: cut; `create()` "a layout draft from the New layout modal": keep). After that line, only the *why* and the `@param` / `@return` / `@throws` a caller relies on. A docblock never opens with a caveat: if there is a why, the purpose line comes first.
+
+**Inline comments** (inside a body) default to none. **Code shows *how*; comment only to carry *why* — a non-obvious constraint, deliberate deviation, gotcha, or workaround.** Keep the one fact a reader needs at that line, in the fewest words; two lines is the usual ceiling, longer only for a WordPress behaviour the code works around. Never narrate the code ("loop over layouts"), narrate the change ("fixed X", "as requested"), or mark block ends.
+
+"Restates the name" means the line adds nothing beyond the identifier — no caller context, trigger, unit, or side effect. A summary that adds one of those is a contract, not a restatement.
+
+**When a comment does exist, it states only what is true of the code directly beneath it — the invariant it protects and what breaks without it.** Never what other code does, what the code used to do, or what it will do. Cross-cutting rationale lives in `docs/system-architecture.md`; the comment points at it (`See docs/system-architecture.md, <section>`).
+
+The rule exists because comments that describe something outside their own block rot silently: the other module changes, the comment does not, and the next reader is sent down the wrong path. A 2026-09 audit found 53 such comments; none of the comments about a block's own invariant were wrong.
+
+A comment survives review when all four hold:
+
+1. **Owns its claim** — describes only the code beneath it. Not the SPA, not cron, not a controller, not a modal, not a commit.
+2. **States an invariant or a why** — what this code guarantees or guards, and what breaks without it.
+3. **Not derivable** — reading the code would not tell you this. Library semantics (TanStack, react-hook-form, WP core) are not ours to document unless the code works around them.
+4. **Points, doesn't repeat** — if `system-architecture.md` has the full rationale, the comment is one or two lines plus a pointer.
+
+Cut: other-module behaviour · narrated history ("this used to…") · restated code or library defaults · rationale duplicated from `docs/` · future tense and promises · performance folklore · design or wireframe IDs.
+
+Keep: guards whose removal is a silent bug · ordering constraints (one line + pointer) · WordPress behaviours the code works around · every `@param` / `@return` / `@throws` a caller depends on · real `TODO:` markers.
+
+The review question is: *does this comment describe something outside this function?* If yes, cut it or move it to the doc.
+
+`TODO:` is for planned work only — one line, what and why not now. Not for wishes.
+
+With no test suite, invariant comments are the spec. Trim them to the invariant; delete only when the code already says it.
 
 ## Formatting
 
@@ -175,6 +223,5 @@ Enforced by `phpcs.xml`; notable deviations from WPCS defaults, all matching exi
 - aligned `=>` in multi-line arrays
 - no Yoda conditions
 - short array syntax
-- docblocks where they explain something non-obvious, not on every method
 
 `scoper.inc.php` is excluded — it is php-scoper build config, not WordPress runtime code.

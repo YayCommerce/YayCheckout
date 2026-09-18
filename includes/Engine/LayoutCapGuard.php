@@ -9,12 +9,9 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Enforces the edition's layout limit at the point layouts are created.
- *
- * Layouts are created through core's wp/v2 endpoints rather than a controller
- * of ours, so there is no handler to put a count check in — hence a filter.
- * It has to live server-side: gating only the admin app would be bypassed by
- * anyone posting to wp/v2 directly, which any shop manager can do.
+ * Enforces the edition's layout limit where layouts are created.
+ * The post type is on wp/v2, so the cap must also gate core's insert
+ * or a direct POST bypasses it.
  */
 class LayoutCapGuard {
 
@@ -25,18 +22,12 @@ class LayoutCapGuard {
     }
 
     /**
-     * @param  \stdClass        $prepared_post
-     * @param  \WP_REST_Request $request
      * @return \stdClass|\WP_Error
      */
     public function enforce_limit( $prepared_post, $request ) {
         unset( $request );
 
-        /*
-         * This filter fires for updates as well as inserts. An update carries
-         * the existing post ID, and editing a layout must keep working once the
-         * limit is reached — only creating another one consumes a slot.
-         */
+        // Fires for updates too; only an insert consumes a slot.
         if ( ! empty( $prepared_post->ID ) ) {
             return $prepared_post;
         }

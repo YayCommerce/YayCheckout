@@ -11,6 +11,7 @@ yaycheckout.php          plugin bootstrap: constants, autoloader, admin shell
 includes/                plugin PHP (see docs/code-standards.md for layering)
 apps/admin/              React settings SPA (Vite) → assets/dist/admin/
 packages/blocks/         checkout blocks (@wordpress/scripts) → assets/dist/blocks/
+templates/               checkout page template (the root Checkout block is the form)
 assets/dist/             build output, gitignored
 scripts/run.sh           dev / build / release
 docs/                    project documentation
@@ -30,7 +31,7 @@ For the admin SPA with hot reload, add to `wp-config.php`:
 define( 'YAYCHECKOUT_IS_DEVELOPMENT', true );
 ```
 
-That switches asset registration from `RegisterProd` (built files) to `RegisterDev` (Vite dev server on :3040). Without it the dev server runs but WordPress still loads the built bundle.
+That switches asset registration from `RegisterProd` (built files) to `RegisterDev` (Vite dev server on :3040). The constant defaults to `false` in `yaycheckout.php`; without the define the dev server runs but WordPress still loads the built bundle.
 
 ## Commands
 
@@ -75,5 +76,7 @@ actually withholds the features.
 
 ## Documentation
 
-- [`docs/code-standards.md`](docs/code-standards.md) — layering, naming, REST conventions
+- [`docs/codebase-summary.md`](docs/codebase-summary.md) — orientation map of the codebase structure
+- [`docs/system-architecture.md`](docs/system-architecture.md) — design decisions and data flow
+- [`docs/code-standards.md`](docs/code-standards.md) — layering, naming, and conventions
 - `plans/` — implementation plans (gitignored)
