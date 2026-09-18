@@ -240,14 +240,9 @@ class LayoutRepository {
      * @throws \RuntimeException         When WordPress refuses or fails to trash it.
      */
     public function archive( int $id ): Layout {
-        $post = get_post( $id );
 
-        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
+        if ( Layout::POST_TYPE !== get_post_type( $id ) ) {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
-        }
-
-        if ( LayoutStatus::ARCHIVED === $post->post_status ) {
-            throw new \InvalidArgumentException( __( 'This layout is already archived.', 'yaycheckout' ) );
         }
 
         $trashed = wp_trash_post( $id );
