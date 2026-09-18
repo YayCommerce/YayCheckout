@@ -15,6 +15,7 @@ import {
   useDuplicateLayoutMutation,
   useLayoutCountsQuery,
   useLayoutsQuery,
+  useRestoreLayoutMutation,
 } from '@/lib/queries/layout.queries';
 import {
   LISTED_LAYOUT_STATUSES,
@@ -169,6 +170,7 @@ function LayoutsPageBody({
   const activateMutation = useActivateLayoutMutation();
   const deactivateMutation = useDeactivateLayoutMutation();
   const archiveMutation = useArchiveLayoutMutation();
+  const restoreMutation = useRestoreLayoutMutation();
   const deleteMutation = useDeleteLayoutMutation();
   const duplicateMutation = useDuplicateLayoutMutation();
 
@@ -196,6 +198,18 @@ function LayoutsPageBody({
       onSuccess: () => {
         setArchivingLayout(null);
         toast.success(__('Layout archived.', 'yaycheckout'));
+
+        if (listData?.items.length === 1 && pageIndex > 0) {
+          onPageIndexChange(pageIndex - 1);
+        }
+      },
+    });
+  }
+
+  function onRestore(layout: LayoutSummary) {
+    restoreMutation.mutate(layout.id, {
+      onSuccess: () => {
+        toast.success(__('Layout restored.', 'yaycheckout'));
 
         if (listData?.items.length === 1 && pageIndex > 0) {
           onPageIndexChange(pageIndex - 1);
@@ -376,6 +390,7 @@ function LayoutsPageBody({
                       onSetActive={setActivatingLayout}
                       onDeactivate={setDeactivatingLayout}
                       onArchive={setArchivingLayout}
+                      onRestore={onRestore}
                       onDelete={setDeletingLayout}
                       onDuplicate={onDuplicate}
                     />
@@ -458,6 +473,7 @@ function LayoutsTable({
   onSetActive,
   onDeactivate,
   onArchive,
+  onRestore,
   onDelete,
   onDuplicate,
 }: {
@@ -467,6 +483,7 @@ function LayoutsTable({
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
   onArchive: (layout: LayoutSummary) => void;
+  onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
 }) {
@@ -492,6 +509,7 @@ function LayoutsTable({
             onSetActive={onSetActive}
             onDeactivate={onDeactivate}
             onArchive={onArchive}
+            onRestore={onRestore}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
           />
@@ -538,6 +556,7 @@ function LayoutTableRow({
   onSetActive,
   onDeactivate,
   onArchive,
+  onRestore,
   onDelete,
   onDuplicate,
 }: {
@@ -547,6 +566,7 @@ function LayoutTableRow({
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
   onArchive: (layout: LayoutSummary) => void;
+  onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
 }) {
@@ -570,6 +590,7 @@ function LayoutTableRow({
           onSetActive={onSetActive}
           onDeactivate={onDeactivate}
           onArchive={onArchive}
+          onRestore={onRestore}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
         />
@@ -578,7 +599,7 @@ function LayoutTableRow({
   );
 }
 
-/** Per-row actions: Edit, Set active, Delete for good and the "⋯" menu (Duplicate, Deactivate, Archive). Archive is disabled on the active row (LayoutActiveGuard refuses it server-side). Preview and Restore have no onClick yet; publishing is the editor's job. */
+/** Per-row actions: Edit, Set active, Delete for good and the "⋯" menu (Duplicate, Deactivate, Archive). Archive is disabled on the active row (LayoutActiveGuard refuses it server-side). Preview has no onClick yet; publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,
@@ -586,6 +607,7 @@ function LayoutRowActions({
   onSetActive,
   onDeactivate,
   onArchive,
+  onRestore,
   onDelete,
   onDuplicate,
 }: {
@@ -595,6 +617,7 @@ function LayoutRowActions({
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
   onArchive: (layout: LayoutSummary) => void;
+  onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
 }) {
@@ -604,7 +627,7 @@ function LayoutRowActions({
         <Button size="sm" variant="outline">
           {__('Preview', 'yaycheckout')}
         </Button>
-        <Button size="sm" variant="outline">
+        <Button size="sm" variant="outline" onClick={() => onRestore(layout)}>
           {__('Restore', 'yaycheckout')}
         </Button>
         <Button size="sm" variant="destructive-outline" onClick={() => onDelete(layout)}>
