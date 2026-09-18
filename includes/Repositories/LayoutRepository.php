@@ -100,7 +100,7 @@ class LayoutRepository {
 
         $terms = $wp_query->query_vars['search_terms'] ?? [];
 
-        if ( '' === $search || empty( $terms ) ) {
+        if ( '' === $search || empty( $terms ) || Layout::POST_TYPE !== $wp_query->get( 'post_type' ) ) {
             return $search;
         }
 
@@ -146,13 +146,20 @@ class LayoutRepository {
     /**
      * Publishes a layout: a post_status change, as the editor's own button does.
      *
-     * @throws \InvalidArgumentException When the layout is missing.
+     * @throws \InvalidArgumentException When the layout is missing or archived.
      */
     public function publish( int $id ): Layout {
         $post = get_post( $id );
 
         if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        // Same refusal as activate(): the status write below would un-archive it.
+        if ( LayoutStatus::ARCHIVED === $post->post_status ) {
+            throw new \InvalidArgumentException(
+                __( 'Restore this layout from the archive before publishing it.', 'yaycheckout' )
+            );
         }
 
         if ( LayoutStatus::PUBLISHED !== $post->post_status ) {
@@ -221,6 +228,38 @@ class LayoutRepository {
         $this->store_ids( array_diff( $this->active_ids(), [ $id ] ) );
 
         return $this->find( $id );
+    }
+
+    /**
+     * Move a layout to the trash and drop it from the active set. Blocks,
+     * meta and revisions stay; the layout can be restored later.
+     *
+     * @param  int $id
+     * @return Layout
+     * @throws \InvalidArgumentException When the layout is missing or already archived.
+     * @throws \RuntimeException         When WordPress refuses or fails to trash it.
+     */
+    public function archive( int $id ): Layout {
+        $post = get_post( $id );
+
+        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        if ( LayoutStatus::ARCHIVED === $post->post_status ) {
+            throw new \InvalidArgumentException( __( 'This layout is already archived.', 'yaycheckout' ) );
+        }
+
+        $trashed = wp_trash_post( $id );
+
+        if ( ! $trashed instanceof \WP_Post ) {
+            throw new \RuntimeException( sprintf( 'Layout %d could not be archived.', $id ) );
+        }
+
+        // wp_trash_post() hands back the pre-update object; only the status moved.
+        $trashed->post_status = LayoutStatus::ARCHIVED;
+
+        return Layout::from_post( $trashed, $this->hydrate_meta( get_post_meta( $id ) ), false );
     }
 
     /** Free replaces the set; Pro moves the id to the end so active() serves it. */

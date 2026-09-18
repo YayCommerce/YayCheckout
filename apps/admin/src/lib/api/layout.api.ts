@@ -79,6 +79,10 @@ export async function deactivateLayout(id: number): Promise<Layout> {
   return parseLayout(await api.post(`layouts/${id}/deactivate`).json());
 }
 
+export async function archiveLayout(id: number): Promise<Layout> {
+  return parseLayout(await api.post(`layouts/${id}/archive`).json());
+}
+
 export async function duplicateLayout(id: number): Promise<Layout> {
   return parseLayout(await api.post(`layouts/${id}/duplicate`).json());
 }

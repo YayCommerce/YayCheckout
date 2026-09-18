@@ -2,6 +2,7 @@ import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient }
 
 import {
   activateLayout,
+  archiveLayout,
   createLayoutDraft,
   deactivateLayout,
   duplicateLayout,
@@ -108,6 +109,21 @@ export function useDeactivateLayoutMutation() {
   });
 }
 
+/** The row leaves the listed tab and appears in the archived one, so both
+ * list caches move — hence `all`, not one status filter. */
+export function useArchiveLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'archive'],
+    mutationFn: archiveLayout,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+    },
+  });
+}
+
+/** Adds a new draft row, so both the list and the listed count change. */
 export function useDuplicateLayoutMutation() {
   const queryClient = useQueryClient();
 

@@ -9,6 +9,7 @@ import { formatDateTime } from '@/lib/helpers/date.helper';
 import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
+  useArchiveLayoutMutation,
   useDeactivateLayoutMutation,
   useDuplicateLayoutMutation,
   useLayoutCountsQuery,
@@ -37,6 +38,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import { SetActiveModal } from '@/pages/layouts/SetActiveModal';
@@ -159,9 +161,11 @@ function LayoutsPageBody({
   const [editingLayoutId, setEditingLayoutId] = useState<number | null>(null);
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
+  const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
 
   const activateMutation = useActivateLayoutMutation();
   const deactivateMutation = useDeactivateLayoutMutation();
+  const archiveMutation = useArchiveLayoutMutation();
   const duplicateMutation = useDuplicateLayoutMutation();
 
   // Invalidate rather than patch: on Free, activating one row deactivates another.
@@ -179,6 +183,19 @@ function LayoutsPageBody({
       onSuccess: () => {
         setDeactivatingLayout(null);
         toast.success(__('Layout deactivated.', 'yaycheckout'));
+      },
+    });
+  }
+
+  function onArchive(layout: LayoutSummary) {
+    archiveMutation.mutate(layout.id, {
+      onSuccess: () => {
+        setArchivingLayout(null);
+        toast.success(__('Layout archived.', 'yaycheckout'));
+
+        if (listData?.items.length === 1 && pageIndex > 0) {
+          onPageIndexChange(pageIndex - 1);
+        }
       },
     });
   }
@@ -229,6 +246,12 @@ function LayoutsPageBody({
         onOpenChange={(open) => !open && setDeactivatingLayout(null)}
         onConfirm={onDeactivate}
         isPending={deactivateMutation.isPending}
+      />
+      <ArchiveModal
+        layout={archivingLayout}
+        onOpenChange={(open) => !open && setArchivingLayout(null)}
+        onConfirm={onArchive}
+        isPending={archiveMutation.isPending}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
@@ -328,6 +351,7 @@ function LayoutsPageBody({
                       onEditLayout={setEditingLayoutId}
                       onSetActive={setActivatingLayout}
                       onDeactivate={setDeactivatingLayout}
+                      onArchive={setArchivingLayout}
                       onDuplicate={onDuplicate}
                     />
                   </div>
@@ -408,6 +432,7 @@ function LayoutsTable({
   onEditLayout,
   onSetActive,
   onDeactivate,
+  onArchive,
   onDuplicate,
 }: {
   items: LayoutSummary[];
@@ -415,6 +440,7 @@ function LayoutsTable({
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
+  onArchive: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
 }) {
   return (
@@ -438,6 +464,7 @@ function LayoutsTable({
             onEditLayout={onEditLayout}
             onSetActive={onSetActive}
             onDeactivate={onDeactivate}
+            onArchive={onArchive}
             onDuplicate={onDuplicate}
           />
         ))}
@@ -482,6 +509,7 @@ function LayoutTableRow({
   onEditLayout,
   onSetActive,
   onDeactivate,
+  onArchive,
   onDuplicate,
 }: {
   layout: LayoutSummary;
@@ -489,6 +517,7 @@ function LayoutTableRow({
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
+  onArchive: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
 }) {
   return (
@@ -510,6 +539,7 @@ function LayoutTableRow({
           onEditLayout={onEditLayout}
           onSetActive={onSetActive}
           onDeactivate={onDeactivate}
+          onArchive={onArchive}
           onDuplicate={onDuplicate}
         />
       </TableCell>
@@ -517,13 +547,14 @@ function LayoutTableRow({
   );
 }
 
-/** Per-row actions: Edit, Set active and the "⋯" menu. Preview, Restore and Delete for good have no onClick yet; publishing is the editor's job. */
+/** Per-row actions: Edit, Set active and the "⋯" menu (Duplicate, Deactivate, Archive). Archive is disabled on the active row (LayoutActiveGuard refuses it server-side). Preview, Restore and Delete for good have no onClick yet; publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,
   onEditLayout,
   onSetActive,
   onDeactivate,
+  onArchive,
   onDuplicate,
 }: {
   layout: LayoutSummary;
@@ -531,6 +562,7 @@ function LayoutRowActions({
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
+  onArchive: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
 }) {
   if (view === 'archived') {
@@ -571,6 +603,9 @@ function LayoutRowActions({
           <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
             {__('Deactivate', 'yaycheckout')}
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled={layout.isActive} onSelect={() => onArchive(layout)}>
+            {__('Archive', 'yaycheckout')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
