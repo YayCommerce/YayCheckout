@@ -11,10 +11,16 @@
     <!-- Block render callbacks live beside their block.json, per wp-scripts convention. -->
     <file>packages/blocks/src</file>
     <file>templates</file>
+    <file>tests</file>
 
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/vendor-prefixed/*</exclude-pattern>
     <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <!-- Test-library config and bootstrap: procedural glue, not plugin code. -->
+    <exclude-pattern>tests/wp-tests-config.php</exclude-pattern>
+    <exclude-pattern>tests/bootstrap.php</exclude-pattern>
+    <!-- Fake plugins and themes the hook scan reads; their headers, not their style, are the point. -->
+    <exclude-pattern>tests/fixtures/*</exclude-pattern>
     <exclude-pattern>*/apps/*</exclude-pattern>
     <exclude-pattern>*/packages/*/node_modules/*</exclude-pattern>
     <exclude-pattern>*/assets/dist/*</exclude-pattern>

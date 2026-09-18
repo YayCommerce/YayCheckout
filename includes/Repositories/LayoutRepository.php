@@ -230,10 +230,18 @@ class LayoutRepository {
      * @throws \RuntimeException         When WordPress refuses or fails to trash it.
      */
     public function archive( int $id ): Layout {
+        $post = get_post( $id );
 
-        if ( Layout::POST_TYPE !== get_post_type( $id ) ) {
+        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
+
+        if ( LayoutStatus::ARCHIVED === $post->post_status ) {
+            throw new \InvalidArgumentException( __( 'This layout is already archived.', 'yaycheckout' ) );
+        }
+
+        // LayoutActiveGuard refuses to trash the active layout; archiving is the merchant's explicit choice, so deactivate first.
+        $this->deactivate( $id );
 
         $trashed = wp_trash_post( $id );
 

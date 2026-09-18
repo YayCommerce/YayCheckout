@@ -9,12 +9,13 @@ WooCommerce checkout builder. WordPress 6.5+, PHP 7.4+, WooCommerce 10+, HPOS co
 ```
 yaycheckout.php          bootstrap: constants, autoloader, admin shell, duplicate guard
 uninstall.php            opt-in data removal on plugin delete (no autoloader; literals mirror Model constants)
-includes/                plugin PHP (~3,200 lines)
+includes/                plugin PHP (~4,000 lines)
 apps/admin/              React settings SPA (Vite)      → assets/dist/admin/
 packages/blocks/         editor blocks (@wordpress/scripts) → assets/dist/blocks/
 templates/               checkout page template (theme header/footer around the layout); the root block is the form
 assets/dist/             build output, gitignored
 scripts/run.sh           dev / build / release
+tests/                   PHPUnit integration suite (wp-phpunit, WooCommerce booted); fixtures/ holds fake plugins/themes for the hook scan
 docs/                    this
 plans/                   implementation plans (gitignored)
 ```
@@ -28,12 +29,12 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `Enums/` | `LayoutStatus` | constants class (no native enums on PHP 7.4); the WP `post_status` values, which are also the wire vocabulary |
 | `PostTypes/` | `LayoutPostType` | registration only: caps, template, revision policy |
 | `Models/` | `Layout`, `LayoutQuery`, `Settings` | `Layout` and `Settings` are dumb entities; **every storage key constant lives here**; zero WP calls. `Settings` owns `schema()` (the single description of every setting), `from_option()` (read projection through the schema), and `sanitize()` (strict type and enum validation, unknown keys stripped). `LayoutQuery` is immutable value object for filtered/paginated queries. |
-| `Repositories/` | `LayoutRepository`, `SettingsRepository` | all storage access: layouts (owns the publish sequence and the active-layout set — Free replaces, Pro appends, last id serves), settings (get/save/is_reviewed/mark_reviewed) |
-| `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue` | routing, validation, permissions; core's wp/v2 layout controller with reads gated on `manage_woocommerce` and delete withheld from the embedded editor; template catalogue (placeholder, static list) |
+| `Repositories/` | `LayoutRepository`, `SettingsRepository`, `CompatibilityCatalogueRepository` | all storage access: layouts (owns the publish sequence and the active-layout set — Free replaces, Pro appends, last id serves), settings (get/save/is_reviewed/mark_reviewed), compatibility catalogue (transient → remote JSON → bundled fallback) |
+| `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue`, `CompatibilityRestController` | routing, validation, permissions; core's wp/v2 layout controller with reads gated on `manage_woocommerce` and delete withheld from the embedded editor; template catalogue (placeholder, static list); the Compatibility page's one read |
 | `Blocks/` | `BlockRegistry` | registers built block directories |
-| `Support/` | `Plan` | Free/Pro flag derived from provider boot; owns the layout limit and its message |
+| `Support/` | `Plan`, `CompatibilityCatalogue` | Free/Pro flag derived from provider boot; owns the layout limit and its message. Compatibility catalogue: status vocabulary, bundled list, `normalize()` for the remote JSON, transient key and TTLs — pure |
 | `Pro/` | `ProServiceProvider` | **absent from the Free build** |
-| `Helpers/` | `BlockMarkup`, `IntegrationsHelper`, `LocalizeHelper`, `Logger`, `PreviewToken` | stateless HMAC preview tokens (`mint`/`parse`, no storage); server-side block markup builder (seeds, library templates), YayBoost/YayLoyalty detection (via defined constants + filter), SPA bootstrap payload, WooCommerce logging |
+| `Helpers/` | `BlockMarkup`, `IntegrationsHelper`, `LocalizeHelper`, `Logger`, `PreviewToken`, `StoreEnvironmentHelper`, `GatewayCompatibilityHelper`, `CheckoutHookScanHelper`, `PluginHeaderHelper` | stateless HMAC preview tokens (`mint`/`parse`, no storage); server-side block markup builder (seeds, library templates), YayBoost/YayLoyalty detection (via defined constants + filter), SPA bootstrap payload, WooCommerce logging; compatibility detection — store facts, enabled gateways + block-only diff, `$wp_filter` scan of checkout hooks mapped to plugin/mu-plugin/theme, plugin/theme header reads |
 | `Renderer/` | `CheckoutScripts`, `CheckoutPage`, `PreviewRequest` | Storefront takeover: `CheckoutPage` swaps in the checkout page template on every checkout-page request; `PreviewRequest` turns a checkout-page request with `?yaycheckout_preview=TOKEN` into a preview of that layout (sample cart, ordering refused, 410 on a bad token) and strips sample items from every non-preview request; `CheckoutScripts` force-enqueues checkout scripts when `advanced.force_enqueue_checkout_scripts` is on |
 | `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin/` (Settings, LayoutEditorEmbed), `Register/` (RegisterFacade, RegisterDev, RegisterProd, ScriptName) | wiring, asset registration, the layout cap, trashed layouts kept out of WP's purge, active-set integrity (no trashing the active layout; draft/pending deactivates), embedded-editor chrome and REST tagging, dev/prod asset registration |
 | `Utils/` | `SingletonTrait` | |
@@ -66,6 +67,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; status untouched |
 | `yaycheckout/v1/layouts/{id}/archive` | POST | move to the archive (trash), deactivating it first if it was active |
 | `yaycheckout/v1/layouts/{id}/preview-link` | POST | `{ url, expires_at }`: the checkout URL with a fresh token, lifetime from `advanced.preview_link_lifetime`; any status, nothing stored |
+| `yaycheckout/v1/compatibility` | GET | `{ store, gateways, plugins, catalogue: { source, fetched_at } }`; arg `refresh` (bool) drops the cached catalogue first |
 | `yaycheckout/v1/settings` | GET/POST | envelope `{ settings, updated_at }`; POST merges over stored settings, strips unknown keys, rejects wrong types/enum values with 400 |
 | `yaycheckout/v1/mark-reviewed` | POST | review prompt dismissed |
 
@@ -95,7 +97,10 @@ src/
       new-layout/       NewLayoutModal, SourceStep, LibraryStep, NameField
     settings/           one form across tabs, Save in the panel footer, unsaved-changes guard;
                         settings-sub-menus.ts is the tab list shared with router.tsx
-    design/  tools/  compatibility/   placeholder route components
+    compatibility/      CompatibilityPage: warning banner, Store / Payment gateways / Plugins touching checkout, Re-scan, catalogue footnote
+      compatibility-warnings.ts   report → { blockOnly, unverifiedPlugins }
+      components/       WarningBanner, StoreSection, GatewaysSection (block-only "Why?" expander + vendor request), PluginsSection, StatusBadge
+    design/  tools/     placeholder route components
   components/
     ui/                 shadcn primitives (kebab-case, CLI-generated)
     shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip; used by multiple pages
@@ -110,11 +115,11 @@ src/
     api/                ky calls per feature
     queries/            queryOptions + hooks per feature
     schema/             zod schemas mirroring PHP to_array()
-    helpers/            error unwrapping
+    helpers/            error unwrapping, date formatting, clipboard with select-text fallback
     logger.ts           namespaced console; error/warn kept in production
     plan.ts             Free/Pro, from the build-time constant
     query-client.ts     QueryClient + global error toasts
-    template.* (triplet) — template schema/api/queries alongside settings.* and layout.*
+    template.* / compatibility.* (triplets) — alongside settings.* and layout.*
   types/                window globals, module augmentation
 ```
 
@@ -147,12 +152,13 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 - Understanding storage → `includes/Models/Layout.php`, then `LayoutRepository::publish()` and `activate()`
 - Adding a setting → `Models/Settings::schema()`, then `settings.schema.ts`, then a form field in `pages/settings/components/`
 - Adding an endpoint → `LayoutRestController`, then the `lib/` triplet
+- Compatibility statuses → the bundled list in `Support/CompatibilityCatalogue`, or the remote JSON at `YAYCHECKOUT_COMPATIBILITY_CATALOGUE_URL`; new checkout hooks → `CheckoutHookScanHelper::HOOKS`
 - Adding a block → `packages/blocks/src/`, then `BlockRegistry`
 - Free/Pro → `includes/Support/Plan.php` and `scripts/check-pro-boundary.sh`
 
 ## Not yet built
 
-Telemetry is a stored setting with no consumer yet (data is not sent). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots.
+Telemetry is a stored setting with no consumer yet (data is not sent). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots. The Compatibility page has no self-test, report modal or header warning chip yet, and its remote catalogue URL is a placeholder, so every install runs on the bundled list until it is published.
 
 `Controllers/LayoutTemplateCatalogue` is a placeholder: a fixed template library, no database — repoint it at a real template source once one exists. The Health row action renders placeholder DOM but has no backend; Preview / Set active / Deactivate / Archive / Restore / Delete are wired to `/preview-link`, `/activate`, `/deactivate`, `/archive`, `/restore` and the delete endpoint; Edit, Publish, Search and pagination are fully functional. `restore()` deliberately does not re-check the Free-plan layout cap that `create()`/`duplicate()` enforce.
 

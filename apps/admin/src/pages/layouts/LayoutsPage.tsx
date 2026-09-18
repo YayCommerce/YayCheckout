@@ -631,7 +631,7 @@ function LayoutTableRow({
   );
 }
 
-/** Per-row actions: Edit, Preview, Set active, Delete for good and the "⋯" menu (Duplicate, Deactivate, Archive). Archive is disabled on the active row (LayoutActiveGuard refuses it server-side). Publishing is the editor's job. */
+/** Per-row actions: Edit, Preview, Set active, Delete for good and the "⋯" menu (Duplicate, Deactivate, Archive). Archive is disabled on the active row: deactivating must be an explicit choice. Publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,

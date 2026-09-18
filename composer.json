@@ -15,7 +15,10 @@
     "humbug/php-scoper": "^0.18.18",
     "squizlabs/php_codesniffer": "^3.9",
     "thecodingmachine/safe": "^3.4",
-    "wp-coding-standards/wpcs": "^3.1"
+    "wp-coding-standards/wpcs": "^3.1",
+    "phpunit/phpunit": "^9.6",
+    "yoast/phpunit-polyfills": "^2",
+    "wp-phpunit/wp-phpunit": "^7.1"
   },
   "autoload": {
     "classmap": [
@@ -35,6 +38,12 @@
       "@check:boundary",
       "phpcs"
     ],
-    "lint:fix": "phpcbf"
+    "lint:fix": "phpcbf",
+    "test": "phpunit"
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "YayCheckout\\Tests\\": "tests/"
+    }
   }
 }

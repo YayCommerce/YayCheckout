@@ -60,6 +60,10 @@ if ( ! defined( 'YAYCHECKOUT_DOCS_URL' ) ) {
     define( 'YAYCHECKOUT_DOCS_URL', 'http://docs.yaycommerce.com/yaycheckout' );
 }
 
+if ( ! defined( 'YAYCHECKOUT_COMPATIBILITY_CATALOGUE_URL' ) ) {
+    define( 'YAYCHECKOUT_COMPATIBILITY_CATALOGUE_URL', 'https://yaycommerce.com/yaycheckout/compatibility.json' );
+}
+
 if ( ! defined( 'YAYCHECKOUT_IS_DEVELOPMENT' ) ) {
     define( 'YAYCHECKOUT_IS_DEVELOPMENT', true );
 }

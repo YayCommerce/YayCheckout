@@ -3,6 +3,7 @@ import { ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
 
+import { copyToClipboard } from '@/lib/helpers/clipboard.helper';
 import { formatRelative } from '@/lib/helpers/date.helper';
 import type { LayoutSummary, PreviewLink } from '@/lib/schema/layout.schema';
 import { Button } from '@/components/ui/button';
@@ -24,12 +25,9 @@ export function PreviewLinkModal({
   async function onCopy() {
     if (!link) return;
 
-    try {
-      await navigator.clipboard.writeText(link.url);
+    if (await copyToClipboard(link.url, inputRef.current)) {
       toast.success(__('Link copied.', 'yaycheckout'));
-    } catch {
-      // No clipboard on http origins; leave the URL selected so Ctrl+C works.
-      inputRef.current?.select();
+    } else {
       toast.info(__('Press Ctrl+C / ⌘C to copy the link.', 'yaycheckout'));
     }
   }
