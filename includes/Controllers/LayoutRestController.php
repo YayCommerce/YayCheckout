@@ -116,6 +116,12 @@ class LayoutRestController extends BaseRestController {
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => $this->id_args(),
                 ],
+                [
+                    'methods'             => \WP_REST_Server::DELETABLE,
+                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'delete_layout' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $this->id_args(),
+                ],
             ]
         );
 
@@ -330,6 +336,30 @@ class LayoutRestController extends BaseRestController {
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
+    }
+
+    /**
+     * Permanently deletes an archived layout. Refusals (not archived, still active) surface as a 400.
+     *
+     * @return array|\WP_Error
+     */
+    public function delete_layout( \WP_REST_Request $request ) {
+        $id = (int) $request->get_param( 'id' );
+
+        if ( null === $this->layouts->find( $id ) ) {
+            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+        }
+
+        try {
+            $this->layouts->delete( $id );
+        } catch ( \InvalidArgumentException $ex ) {
+            return $this->error_invalid_arguments( $ex->getMessage() );
+        }
+
+        return [
+            'id'      => $id,
+            'deleted' => true,
+        ];
     }
 
     /**
