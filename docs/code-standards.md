@@ -52,13 +52,13 @@ grep -rnE "get_post|update_post_meta|get_option|wp_insert_post" includes/Models 
 
 ```php
 // Yes
-update_post_meta( $id, Layout::META_PUBLISHED, $markup );
+get_option( Layout::OPTION_ACTIVE, [] );
 
 // No
-update_post_meta( $id, '_yaycheckout_published', $markup );
+get_option( 'yaycheckout_active_layout', [] );
 ```
 
-Layouts keep a working draft (`post_content`) and a published snapshot (`_yaycheckout_published`) at the same time. A typo'd key silently reads or writes the wrong copy — the renderer serves a draft to a customer, or a publish writes nowhere. No error, no test failure, just wrong output. The constant is what makes that a fatal error instead.
+A typo'd key silently reads nothing — the store forgets its active layout with no error and no failing test. The constant is what makes that a fatal error instead.
 
 Verify with:
 
@@ -102,7 +102,7 @@ Three files per feature, matching the existing `settings.*` set:
 - `src/lib/api/{feature}.api.ts` — ky calls, one function per endpoint
 - `src/lib/queries/{feature}.queries.ts` — `queryOptions` object + hooks
 
-**Wire vs app naming — same rule as every YayCommerce plugin.** Everything on the wire is `snake_case`: query params follow WP REST core spelling (`page`, `search`, `status`), request bodies (`template_slug`) and every payload field PHP `to_array()` / `to_summary_array()` emits (`has_unpublished_changes`, `published_at`, `total_pages`). Everything TS-side is camelCase (`Layout`, `LayoutListResponse`, form values, hook params). The two meet in exactly one place: `src/lib/api/{feature}.api.ts`, which parses responses against the strict `*WireSchema` in `lib/schema/` and converts to the app types (`summaryFromWire`, `layoutFromWire`), and converts request bodies on the way out. Pages and hooks never see a snake_case key; PHP never learns how the SPA spells one. The `wp_localize_script` bootstrap (`LocalizeHelper`, `window.yayCheckoutMeta`) is the one exception: its top-level keys follow the YayCommerce house camelCase shape (`wpMeta.siteUrl`).
+**Wire vs app naming — same rule as every YayCommerce plugin.** Everything on the wire is `snake_case`: query params follow WP REST core spelling (`page`, `search`, `status`), request bodies (`template_slug`) and every payload field PHP `to_array()` / `to_summary_array()` emits (`is_active`, `published_at`, `total_pages`). Everything TS-side is camelCase (`Layout`, `LayoutListResponse`, form values, hook params). The two meet in exactly one place: `src/lib/api/{feature}.api.ts`, which parses responses against the strict `*WireSchema` in `lib/schema/` and converts to the app types (`summaryFromWire`, `layoutFromWire`), and converts request bodies on the way out. Pages and hooks never see a snake_case key; PHP never learns how the SPA spells one. The `wp_localize_script` bootstrap (`LocalizeHelper`, `window.yayCheckoutMeta`) is the one exception: its top-level keys follow the YayCommerce house camelCase shape (`wpMeta.siteUrl`).
 
 The zod wire schema is the only place the PHP shape is asserted in JS — keep it exact and `.strict()`, so a renamed PHP key fails loudly instead of parsing to `undefined`.
 
@@ -178,7 +178,7 @@ This is a browser aid, not a record. The server-side counterpart is `Helpers\Log
 
 > **No file outside `includes/Pro/` may name a `YayCheckout\Pro\*` class.**
 
-The single permitted reference is the guarded bootstrap in `YayCheckout::boot_pro()`. Pro features attach to core through hooks and filters — `DerivedCacheBuilder::FILTER_CONTRIBUTORS` is the model — so core never calls into Pro code.
+The single permitted reference is the guarded bootstrap in `YayCheckout::boot_pro()`. Pro features attach to core through hooks and filters, so core never calls into Pro code.
 
 `composer lint` runs `scripts/check-pro-boundary.sh`, which fails on a second reference. This is not a style preference: without it, one `use` statement makes the Free build impossible, and nothing else would reveal that until a customer installed the artifact.
 

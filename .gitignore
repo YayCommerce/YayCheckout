@@ -3,8 +3,6 @@
 vendor-prefixed/
 node_modules/
 composer.lock
-/phpunit.xml
-.phpunit.result.cache
 pnpm-lock.yaml
 **/pnpm-lock.yaml
 yarn.lock
@@ -25,7 +23,6 @@ package-lock.json
 # AI / planning artifacts
 plans/
 .claude/
-CLAUDE.md
 AGENTS.md
 .opencode/
 .repomixignore

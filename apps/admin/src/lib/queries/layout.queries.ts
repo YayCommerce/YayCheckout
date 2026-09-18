@@ -2,6 +2,7 @@ import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient }
 
 import {
   activateLayout,
+  archiveLayout,
   createLayoutDraft,
   deactivateLayout,
   deleteLayout,
@@ -109,6 +110,20 @@ export function useDeactivateLayoutMutation() {
   });
 }
 
+/** The row leaves the listed tab and appears in the archived one, so both
+ * list caches move — hence `all`, not one status filter. */
+export function useArchiveLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'archive'],
+    mutationFn: archiveLayout,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+    },
+  });
+}
+
 /**
  * Every list and the counts, but not `all`: the modal's detail query for
  * the deleted id is still mounted here, and refetching (or removing) it
@@ -127,6 +142,7 @@ export function useDeleteLayoutMutation() {
   });
 }
 
+/** Adds a new draft row, so both the list and the listed count change. */
 export function useDuplicateLayoutMutation() {
   const queryClient = useQueryClient();
 

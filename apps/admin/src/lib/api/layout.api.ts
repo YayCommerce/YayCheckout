@@ -18,7 +18,6 @@ function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
     id: wire.id,
     title: wire.title,
     status: wire.status,
-    hasUnpublishedChanges: wire.has_unpublished_changes,
     isActive: wire.is_active,
     publishedAt: wire.published_at,
     scheduledAt: wire.scheduled_at,
@@ -28,10 +27,7 @@ function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
 function layoutFromWire(wire: LayoutWire): Layout {
   return {
     ...summaryFromWire(wire),
-    draft: wire.draft,
-    snapshot: wire.snapshot,
-    publishedRevision: wire.published_revision,
-    derived: wire.derived,
+    content: wire.content,
   };
 }
 
@@ -81,6 +77,10 @@ export async function activateLayout(id: number): Promise<Layout> {
 
 export async function deactivateLayout(id: number): Promise<Layout> {
   return parseLayout(await api.post(`layouts/${id}/deactivate`).json());
+}
+
+export async function archiveLayout(id: number): Promise<Layout> {
+  return parseLayout(await api.post(`layouts/${id}/archive`).json());
 }
 
 export async function duplicateLayout(id: number): Promise<Layout> {

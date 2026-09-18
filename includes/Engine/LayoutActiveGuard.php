@@ -13,9 +13,12 @@ defined( 'ABSPATH' ) || exit;
  * Trash and delete are refused: the capability is denied so the editor hides
  * Move to trash and wp/v2 and wp-admin answer 403, and the pre_* filters catch
  * wp_trash_post() and wp_delete_post() called directly (WP-CLI, other
- * plugins), which check no capability. Deactivating first is the merchant's
- * decision, not a side effect. Moving an active layout back to draft or
- * pending is a decision too, so that one deactivates instead of being refused.
+ * plugins), which check no capability. Deactivation must be the merchant's
+ * decision: the SPA disables Archive on the active row, and
+ * LayoutRepository::archive() deactivates before it trashes so a direct
+ * caller is not refused here. Core surfaces cannot warn, so they refuse.
+ * Moving an active layout back to draft or pending is a decision too, so that
+ * one deactivates instead of being refused.
  */
 class LayoutActiveGuard {
 
@@ -28,7 +31,7 @@ class LayoutActiveGuard {
         add_action( 'transition_post_status', [ $this, 'deactivate_when_unpublished' ], 10, 3 );
     }
 
-    /** A scheduled layout stays active: its snapshot still serves until the new date replaces it. */
+    /** A scheduled layout stays active: its current content serves until the new date replaces it. */
     public function deactivate_when_unpublished( $new_status, $old_status, $post ): void {
         unset( $old_status );
 

@@ -13,7 +13,6 @@ final class LayoutStatus {
     public const PENDING   = 'pending';
     public const SCHEDULED = 'future';
 
-    /** Always carries a snapshot; see docs/system-architecture.md, "Two REST surfaces". */
     public const PUBLISHED = 'publish';
 
     /** WP cron empties trash after EMPTY_TRASH_DAYS, so archive is not indefinite. */

@@ -9,6 +9,7 @@ import { formatDateTime } from '@/lib/helpers/date.helper';
 import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
+  useArchiveLayoutMutation,
   useDeactivateLayoutMutation,
   useDeleteLayoutMutation,
   useDuplicateLayoutMutation,
@@ -38,6 +39,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { DeleteModal } from '@/pages/layouts/DeleteModal';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
@@ -161,10 +163,12 @@ function LayoutsPageBody({
   const [editingLayoutId, setEditingLayoutId] = useState<number | null>(null);
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
+  const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
   const [deletingLayout, setDeletingLayout] = useState<LayoutSummary | null>(null);
 
   const activateMutation = useActivateLayoutMutation();
   const deactivateMutation = useDeactivateLayoutMutation();
+  const archiveMutation = useArchiveLayoutMutation();
   const deleteMutation = useDeleteLayoutMutation();
   const duplicateMutation = useDuplicateLayoutMutation();
 
@@ -183,6 +187,19 @@ function LayoutsPageBody({
       onSuccess: () => {
         setDeactivatingLayout(null);
         toast.success(__('Layout deactivated.', 'yaycheckout'));
+      },
+    });
+  }
+
+  function onArchive(layout: LayoutSummary) {
+    archiveMutation.mutate(layout.id, {
+      onSuccess: () => {
+        setArchivingLayout(null);
+        toast.success(__('Layout archived.', 'yaycheckout'));
+
+        if (listData?.items.length === 1 && pageIndex > 0) {
+          onPageIndexChange(pageIndex - 1);
+        }
       },
     });
   }
@@ -247,6 +264,12 @@ function LayoutsPageBody({
         onOpenChange={(open) => !open && setDeactivatingLayout(null)}
         onConfirm={onDeactivate}
         isPending={deactivateMutation.isPending}
+      />
+      <ArchiveModal
+        layout={archivingLayout}
+        onOpenChange={(open) => !open && setArchivingLayout(null)}
+        onConfirm={onArchive}
+        isPending={archiveMutation.isPending}
       />
       <DeleteModal
         layout={deletingLayout}
@@ -352,6 +375,7 @@ function LayoutsPageBody({
                       onEditLayout={setEditingLayoutId}
                       onSetActive={setActivatingLayout}
                       onDeactivate={setDeactivatingLayout}
+                      onArchive={setArchivingLayout}
                       onDelete={setDeletingLayout}
                       onDuplicate={onDuplicate}
                     />
@@ -433,6 +457,7 @@ function LayoutsTable({
   onEditLayout,
   onSetActive,
   onDeactivate,
+  onArchive,
   onDelete,
   onDuplicate,
 }: {
@@ -441,6 +466,7 @@ function LayoutsTable({
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
+  onArchive: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
 }) {
@@ -452,7 +478,7 @@ function LayoutsTable({
           {/* TODO: Assignment column (Pro) once LayoutSummary carries an `assignment` field. */}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
           <TableHead>{__('Active', 'yaycheckout')}</TableHead>
-          <TableHead>{__('Last published', 'yaycheckout')}</TableHead>
+          <TableHead>{__('Published', 'yaycheckout')}</TableHead>
           <TableHead>{__('Actions', 'yaycheckout')}</TableHead>
         </TableRow>
       </TableHeader>
@@ -465,6 +491,7 @@ function LayoutsTable({
             onEditLayout={onEditLayout}
             onSetActive={onSetActive}
             onDeactivate={onDeactivate}
+            onArchive={onArchive}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
           />
@@ -480,13 +507,7 @@ function statusBadge(layout: LayoutSummary) {
   }
 
   if (layout.status === 'publish') {
-    return (
-      <Badge variant="success">
-        {layout.hasUnpublishedChanges
-          ? __('Published · unpublished changes', 'yaycheckout')
-          : __('Published', 'yaycheckout')}
-      </Badge>
-    );
+    return <Badge variant="success">{__('Published', 'yaycheckout')}</Badge>;
   }
 
   if (layout.status === 'future') {
@@ -516,6 +537,7 @@ function LayoutTableRow({
   onEditLayout,
   onSetActive,
   onDeactivate,
+  onArchive,
   onDelete,
   onDuplicate,
 }: {
@@ -524,6 +546,7 @@ function LayoutTableRow({
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
+  onArchive: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
 }) {
@@ -546,6 +569,7 @@ function LayoutTableRow({
           onEditLayout={onEditLayout}
           onSetActive={onSetActive}
           onDeactivate={onDeactivate}
+          onArchive={onArchive}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
         />
@@ -554,13 +578,14 @@ function LayoutTableRow({
   );
 }
 
-/** Per-row actions: Edit, Set active, Delete for good and the "⋯" menu. Preview and Restore have no onClick yet; publishing is the editor's job. */
+/** Per-row actions: Edit, Set active, Delete for good and the "⋯" menu (Duplicate, Deactivate, Archive). Archive is disabled on the active row (LayoutActiveGuard refuses it server-side). Preview and Restore have no onClick yet; publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,
   onEditLayout,
   onSetActive,
   onDeactivate,
+  onArchive,
   onDelete,
   onDuplicate,
 }: {
@@ -569,6 +594,7 @@ function LayoutRowActions({
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
+  onArchive: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
 }) {
@@ -588,15 +614,13 @@ function LayoutRowActions({
     );
   }
 
-  const canPublish = layout.hasUnpublishedChanges;
-
   return (
     <div className="flex items-center gap-2">
       <Button size="sm" variant="outline" onClick={() => onEditLayout(layout.id)}>
         {__('Edit', 'yaycheckout')}
       </Button>
       <Button size="sm" variant="outline">
-        {canPublish ? __('Preview draft', 'yaycheckout') : __('Preview', 'yaycheckout')}
+        {__('Preview', 'yaycheckout')}
       </Button>
       {/* Disabled rather than hidden so the action column keeps its shape. */}
       <Button size="sm" variant="outline" disabled={layout.isActive} onClick={() => onSetActive(layout)}>
@@ -612,6 +636,9 @@ function LayoutRowActions({
           <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
             {__('Deactivate', 'yaycheckout')}
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled={layout.isActive} onSelect={() => onArchive(layout)}>
+            {__('Archive', 'yaycheckout')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
