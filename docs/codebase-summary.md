@@ -33,8 +33,8 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `Blocks/` | `BlockRegistry` | registers built block directories |
 | `Support/` | `Plan` | Free/Pro flag derived from provider boot; owns the layout limit and its message |
 | `Pro/` | `ProServiceProvider` | **absent from the Free build** |
-| `Helpers/` | `BlockMarkup`, `IntegrationsHelper`, `LocalizeHelper`, `Logger` | server-side block markup builder (seeds, library templates), YayBoost/YayLoyalty detection (via defined constants + filter), SPA bootstrap payload, WooCommerce logging |
-| `Renderer/` | `CheckoutScripts`, `CheckoutPage` | Storefront takeover: `CheckoutPage` swaps in the checkout page template on every checkout-page request; `CheckoutScripts` force-enqueues checkout scripts when `advanced.force_enqueue_checkout_scripts` is on |
+| `Helpers/` | `BlockMarkup`, `IntegrationsHelper`, `LocalizeHelper`, `Logger`, `PreviewToken` | stateless HMAC preview tokens (`mint`/`parse`, no storage); server-side block markup builder (seeds, library templates), YayBoost/YayLoyalty detection (via defined constants + filter), SPA bootstrap payload, WooCommerce logging |
+| `Renderer/` | `CheckoutScripts`, `CheckoutPage`, `PreviewRequest` | Storefront takeover: `CheckoutPage` swaps in the checkout page template on every checkout-page request; `PreviewRequest` turns a checkout-page request with `?yaycheckout_preview=TOKEN` into a preview of that layout (sample cart, ordering refused, 410 on a bad token) and strips sample items from every non-preview request; `CheckoutScripts` force-enqueues checkout scripts when `advanced.force_enqueue_checkout_scripts` is on |
 | `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin/` (Settings, LayoutEditorEmbed), `Register/` (RegisterFacade, RegisterDev, RegisterProd, ScriptName) | wiring, asset registration, the layout cap, trashed layouts kept out of WP's purge, active-set integrity (no trashing the active layout; draft/pending deactivates), embedded-editor chrome and REST tagging, dev/prod asset registration |
 | `Utils/` | `SingletonTrait` | |
 | `Fallback.php` | duplicate-guard admin notice | shown when another YayCheckout copy is installed; wired in yaycheckout.php |
@@ -45,7 +45,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 ### Entry points
 
 - `yaycheckout.php` → `plugin_init()` on `plugins_loaded`, after a WooCommerce check; also registers `I18n::load_plugin_textdomain()` on `plugins_loaded`
-- `YayCheckout::__construct()` boots in order: `boot_pro()`, `RestAPI`, `RegisterFacade`, `Admin\Settings`, `BlockRegistry`, `LayoutPostType`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin\LayoutEditorEmbed`, `Renderer\CheckoutScripts`, `Renderer\CheckoutPage`
+- `YayCheckout::__construct()` boots in order: `boot_pro()`, `RestAPI`, `RegisterFacade`, `Admin\Settings`, `BlockRegistry`, `LayoutPostType`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin\LayoutEditorEmbed`, `Renderer\PreviewRequest`, `Renderer\CheckoutScripts`, `Renderer\CheckoutPage`
 - `Engine\RestAPI` instantiates controllers on `rest_api_init`
 - `Engine\Admin\Settings` enqueues the SPA and localises `yayCheckoutMeta` / `yayCheckoutAdmin`, gated on the admin-shell hook suffix
 - `Engine\Register\RegisterFacade` branches to RegisterDev or RegisterProd on `init`, conditionally based on `YAYCHECKOUT_IS_DEVELOPMENT`
@@ -65,6 +65,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/{id}/activate` | POST | publish first unless `post_status` is already `publish`, then add to the active set |
 | `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; status untouched |
 | `yaycheckout/v1/layouts/{id}/archive` | POST | move to the archive (trash), deactivating it first if it was active |
+| `yaycheckout/v1/layouts/{id}/preview-link` | POST | `{ url, expires_at }`: the checkout URL with a fresh token, lifetime from `advanced.preview_link_lifetime`; any status, nothing stored |
 | `yaycheckout/v1/settings` | GET/POST | envelope `{ settings, updated_at }`; POST merges over stored settings, strips unknown keys, rejects wrong types/enum values with 400 |
 | `yaycheckout/v1/mark-reviewed` | POST | review prompt dismissed |
 
@@ -85,7 +86,8 @@ src/
   pages/
     404.tsx  500.tsx    error pages
     layouts/            LayoutsPage (queries, filters, modals)
-      LayoutsPage.tsx   list with pagination, search, status tabs; Edit/Publish/Set active/Deactivate/Archive/Restore/Delete for good real; Health/Preview placeholder DOM
+      LayoutsPage.tsx   list with pagination, search, status tabs; Edit/Preview/Publish/Set active/Deactivate/Archive/Restore/Delete for good real; Health placeholder DOM
+      PreviewLinkModal.tsx  minted preview URL with Copy (select-text fallback on http) and Open
       SetActiveModal.tsx    Set active modal (real)
       DeactivateModal.tsx   Deactivate modal (real)
       ArchiveModal.tsx      Archive modal (real)
@@ -150,8 +152,8 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 
 ## Not yet built
 
-Telemetry and preview-link lifetime are stored settings with no consumer yet (telemetry data is not sent; preview links are not generated). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots.
+Telemetry is a stored setting with no consumer yet (data is not sent). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots.
 
-`Controllers/LayoutTemplateCatalogue` is a placeholder: a fixed template library, no database — repoint it at a real template source once one exists. Row actions Health and Preview render placeholder DOM with correct states (enabled/disabled/hidden, labels) but have no backend; Set active / Deactivate / Archive / Restore / Delete are wired to `/activate`, `/deactivate`, `/archive`, `/restore` and the delete endpoint; Edit, Publish, Search and pagination are fully functional. `restore()` deliberately does not re-check the Free-plan layout cap that `create()`/`duplicate()` enforce.
+`Controllers/LayoutTemplateCatalogue` is a placeholder: a fixed template library, no database — repoint it at a real template source once one exists. The Health row action renders placeholder DOM but has no backend; Preview / Set active / Deactivate / Archive / Restore / Delete are wired to `/preview-link`, `/activate`, `/deactivate`, `/archive`, `/restore` and the delete endpoint; Edit, Publish, Search and pagination are fully functional. `restore()` deliberately does not re-check the Free-plan layout cap that `create()`/`duplicate()` enforce.
 
 See the end of `system-architecture.md` for the full deferred list.

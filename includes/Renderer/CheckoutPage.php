@@ -15,7 +15,8 @@ defined( 'ABSPATH' ) || exit;
  * included; WooCommerce's own validation is untouched.
  *
  * Stands down entirely, leaving WooCommerce untouched, when safe mode is on
- * or no layout resolves. Full rules in docs/system-architecture.md, § Storefront.
+ * or no layout resolves; a preview link (PreviewRequest) renders its layout
+ * regardless. Full rules in docs/system-architecture.md, § Storefront.
  */
 class CheckoutPage {
     use SingletonTrait;
@@ -61,6 +62,13 @@ class CheckoutPage {
     }
 
     private function resolve(): ?Layout {
+        $preview_id = PreviewRequest::get_instance()->layout_id();
+
+        // Before the safe-mode check: safe mode protects shoppers, a preview is the merchant looking.
+        if ( null !== $preview_id ) {
+            return ( new LayoutRepository() )->resolve_for_request( $preview_id );
+        }
+
         if ( ! empty( ( new SettingsRepository() )->get()->general['safe_mode'] ) ) {
             return null;
         }

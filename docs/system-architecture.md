@@ -38,6 +38,8 @@ No custom tables in 1.x.
 | `yaycheckout_settings_updated_at` | option | `SettingsRepository::save()` — ISO 8601 UTC timestamp of last save |
 | `yaycheckout_reviewed` | option | `SettingsRepository::mark_reviewed()` — boolean, suppresses the review prompt |
 
+Preview links store nothing: the token is its own record (see Preview links).
+
 ## Settings are a schema, not a defaults array
 
 `Models\Settings::schema()` is the single description of every setting — section, key, type, default, and allowed enum values. When reading from the option, `from_option()` projects the stored array through the schema: a key missing or stale returns its default, and an invalid stored value is replaced with the default. When writing, `SettingsRepository::save()` expects already-sanitized data (from `Settings::sanitize()`), which validates types, enum membership and strips unknown keys. This design means the admin SPA cannot crash on stale stored values from an older version — invalid data reads as defaults instead — and callers cannot accept a setting that was not declared in the schema, so adding a setting never requires updating a separate defaults array.
@@ -87,6 +89,21 @@ Renderer takeover happens on every request for the checkout page (`is_page( chec
 **Blocks and WooCommerce:** The `order-review` block wraps a cart guard (`WC()->cart instanceof WC_Cart`) and fires `woocommerce_checkout_before/after_order_review` and `woocommerce_checkout_order_review` inside `#order_review`, empty on non-storefront requests. The `shipping` block prints WooCommerce's `ship_to_different_address` checkbox (copied verbatim from `form-shipping.php`) and wraps fields in `div.shipping_address`; it renders nothing when the cart needs no shipping or the store ships to billing only. Both `billing` and `shipping` blocks carry class `woocommerce-billing/shipping-fields`, and field blocks carry `address-field` (for `country-select.js` integration) and `update_totals_on_change` (for checkout.js country/postcode handlers).
 
 **Seeded layouts:** `LayoutRepository::create()` seeds contact, billing, shipping, and order-review blocks via `default_markup()`, which mirrors the editor's field picker (`packages/blocks/src/shared/address-fields.ts`): contact + name, country, address-1, city, state, postcode for both billing and shipping (no company, address-2, or phone). Layouts created before this renderer existed are root-only and render as an empty form.
+
+### Preview links
+
+A preview is the same renderer with a different layout. `POST /layouts/{id}/preview-link` mints `base64url("v1|blog|id|exp") . "." . HMAC-SHA256` (`Helpers\PreviewToken`) keyed by `hash_hmac('sha256', 'yaycheckout-preview|' . blog_id, wp_salt('auth'))` — purpose- and site-bound so an auth-salt reuse elsewhere cannot forge one — and returns the checkout URL with `?yaycheckout_preview=TOKEN`. The lifetime (`advanced.preview_link_lifetime`) is read at mint time; changing it never shortens an issued link. Anyone with the link, no login. Per-link revocation is not built; the upgrade path is a per-layout secret mixed into the key.
+
+`Renderer\PreviewRequest` reads the token once at `init`, and on `wp` @5 (before `CheckoutPage` at 10) applies the rules:
+
+- **410, never fall-through.** A presented token that does not resolve to a layout (bad MAC, expired, wrong blog, deleted) on the checkout page is `wp_die( 410 )`. Falling back to the active layout would let a stale link quietly show the wrong thing.
+- **Preview wins over safe mode.** `CheckoutPage::resolve()` returns the previewed layout before the safe-mode check: safe mode protects shoppers, a preview is the merchant looking. `LayoutRepository::resolve_for_request( ?int $preview_id )` keeps the repository ignorant of request state.
+- **Scope.** Hooks attach only when the request is the checkout page or a wc-ajax call; the same token on any other URL does nothing (no cart stuffing from arbitrary URLs). Ordering is refused and the button disabled whenever the arg is *present*, valid or not, so a token expiring while the page is open cannot turn the sample cart into a real order on the next `update_order_review`. `woocommerce_checkout_process` attaches at `init` because the non-JS form POST is processed at `wp_loaded`, before `wp`.
+- **Transport.** The token lives in `$_GET` only. `woocommerce_ajax_get_endpoint` and `woocommerce_get_checkout_url` are filtered so `wc_ajax_url` (every `update_order_review` / `checkout` call) and the form `action` carry it — a hidden input never reaches `update_order_review`'s `post_data`. The filter appends by hand: `add_query_arg()` re-encodes WooCommerce's `%%endpoint%%` placeholder to `%25%25`.
+- **Sample cart.** On the checkout page (not order-pay/received) with an empty cart, the two newest `publish` + `instock` + purchasable simple products are added with cart-item data `yaycheckout_preview => true`; WC notices are restored around the adds so a refusal never shows. `woocommerce_checkout_redirect_empty_cart` and `woocommerce_checkout_update_order_review_expired` are off so a store with no products still renders the layout (the banner says so). A non-empty cart is left alone. On every request **without** the token, `woocommerce_cart_loaded_from_session` @5 removes marked items and recalculates, so a shopper who followed a preview link never checks out with sample items.
+- **No ordering.** `woocommerce_order_button_html` is a disabled button; `woocommerce_checkout_process` adds an error notice, so both the AJAX and non-JS paths refuse before an order exists. `nocache_headers()` on every preview response.
+
+The template prints a `woocommerce-info` banner above the layout (title, status, minutes left) when the request is a preview.
 
 ## Blocks are dynamic
 
@@ -174,4 +191,4 @@ It uses `require_once` rather than `require`. A malformed class name — a doubl
 
 ## Deliberately not built
 
-Pro assignment rules (`resolve_for_request()` returns the active layout and is the seam for them), `_yaycheckout_tokens_override`, the `yay_checkout_pattern` library CPT, import/export, the extra-field registry, order meta writes, the `wp/v2` read guard for published layouts (see Two REST surfaces), self-test, telemetry (the opt-in is stored, nothing is sent), preview links (the lifetime is stored, no links exist), core-block canvas whitelist (which core blocks render where), custom field keys and per-block `required` (fields inherited from WooCommerce only), mid-checkout layout-switch protection, the 1.3 analytics table, and `yay_cart_layout` / `yay_thankyou_layout`.
+Pro assignment rules (`resolve_for_request()` returns the previewed or active layout and is the seam for them), `_yaycheckout_tokens_override`, the `yay_checkout_pattern` library CPT, import/export, the extra-field registry, order meta writes, the `wp/v2` read guard for published layouts (see Two REST surfaces), self-test, telemetry (the opt-in is stored, nothing is sent), per-link preview revocation, core-block canvas whitelist (which core blocks render where), custom field keys and per-block `required` (fields inherited from WooCommerce only), mid-checkout layout-switch protection, the 1.3 analytics table, and `yay_cart_layout` / `yay_thankyou_layout`.
