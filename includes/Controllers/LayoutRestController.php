@@ -255,7 +255,7 @@ class LayoutRestController extends BaseRestController {
     /**
      * Creates a layout draft from the New layout modal.
      * 'library' only checks the template exists; both sources create the same
-     * blank draft until a real catalogue exists. Titles may repeat, as Pages do.
+     * seeded default draft until a real catalogue exists. Titles may repeat, as Pages do.
      *
      * @return array|\WP_Error
      */

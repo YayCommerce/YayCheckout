@@ -23,6 +23,7 @@ class YayCheckout {
         \YayCheckout\Engine\LayoutActiveGuard::get_instance();
         \YayCheckout\Engine\Admin\LayoutEditorEmbed::get_instance();
         \YayCheckout\Renderer\CheckoutScripts::get_instance();
+        \YayCheckout\Renderer\CheckoutPage::get_instance();
     }
 
     public static function initialize() {

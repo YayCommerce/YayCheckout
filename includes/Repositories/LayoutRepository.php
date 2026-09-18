@@ -252,8 +252,9 @@ class LayoutRepository {
     }
 
     /**
-     * Creates a blank layout draft. Content starts as the root block, not '':
-     * empty markup cannot be published.
+     * Creates a layout draft seeded with a complete checkout, so activating it
+     * as-is lets a shopper place an order. The post type's template only
+     * applies to auto-drafts, not to this insert.
      *
      * @throws \InvalidArgumentException When the layout limit is reached or the insert fails.
      */
@@ -262,13 +263,16 @@ class LayoutRepository {
             throw new \InvalidArgumentException( Plan::layout_limit_message() );
         }
 
+        // wp_insert_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
         $new_id = wp_insert_post(
-            [
-                'post_type'    => Layout::POST_TYPE,
-                'post_status'  => LayoutStatus::DRAFT,
-                'post_title'   => $title,
-                'post_content' => '<!-- wp:yaycheckout/checkout /-->',
-            ],
+            wp_slash(
+                [
+                    'post_type'    => Layout::POST_TYPE,
+                    'post_status'  => LayoutStatus::DRAFT,
+                    'post_title'   => $title,
+                    'post_content' => self::default_markup(),
+                ]
+            ),
             true
         );
 
@@ -342,6 +346,77 @@ class LayoutRepository {
         if ( ! wp_delete_post( $id, true ) ) {
             throw new \RuntimeException( sprintf( 'Layout %d could not be deleted.', $id ) );
         }
+    }
+
+    /**
+     * Block markup for a new layout: contact, billing, shipping, order review.
+     * Built with serialize_blocks() rather than a literal so attribute JSON is
+     * escaped the way the editor expects.
+     *
+     * The address keys mirror packages/blocks/src/shared/address-fields.ts,
+     * the editor's field picker; keep the two in step.
+     */
+    public static function default_markup(): string {
+        return serialize_blocks(
+            [
+                self::block(
+                    'yaycheckout/checkout',
+                    [],
+                    [
+                        self::block( 'yaycheckout/contact' ),
+                        self::block( 'yaycheckout/billing', [], self::address_field_blocks( 'billing' ) ),
+                        self::block( 'yaycheckout/shipping', [], self::address_field_blocks( 'shipping' ) ),
+                        self::block( 'yaycheckout/order-review' ),
+                    ]
+                ),
+            ]
+        );
+    }
+
+    /**
+     * @return array[] Field blocks for one address section.
+     */
+    private static function address_field_blocks( string $prefix ): array {
+        $fields = [
+            'first_name' => [ 'text', __( 'First name', 'yaycheckout' ) ],
+            'last_name'  => [ 'text', __( 'Last name', 'yaycheckout' ) ],
+            'country'    => [ 'country', __( 'Country / Region', 'yaycheckout' ) ],
+            'address_1'  => [ 'text', __( 'Street address', 'yaycheckout' ) ],
+            'city'       => [ 'text', __( 'Town / City', 'yaycheckout' ) ],
+            'state'      => [ 'state', __( 'State / County', 'yaycheckout' ) ],
+            'postcode'   => [ 'text', __( 'Postcode / ZIP', 'yaycheckout' ) ],
+        ];
+
+        $blocks = [];
+
+        foreach ( $fields as $suffix => [ $type, $label ] ) {
+            $blocks[] = self::block(
+                'yaycheckout/field',
+                [
+                    'fieldKey' => $prefix . '_' . $suffix,
+                    'type'     => $type,
+                    'label'    => $label,
+                    'required' => true,
+                ]
+            );
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * A parsed-block array in the shape serialize_blocks() takes.
+     *
+     * @param array[] $inner_blocks
+     */
+    private static function block( string $name, array $attrs = [], array $inner_blocks = [] ): array {
+        return [
+            'blockName'    => $name,
+            'attrs'        => $attrs,
+            'innerBlocks'  => $inner_blocks,
+            'innerHTML'    => '',
+            'innerContent' => array_fill( 0, count( $inner_blocks ), null ),
+        ];
     }
 
     /**

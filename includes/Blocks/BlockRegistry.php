@@ -24,6 +24,7 @@ class BlockRegistry {
         'billing',
         'shipping',
         'field',
+        'order-review',
     ];
 
     protected function __construct() {

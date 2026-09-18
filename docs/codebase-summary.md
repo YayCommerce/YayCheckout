@@ -12,6 +12,7 @@ uninstall.php            opt-in data removal on plugin delete (no autoloader; li
 includes/                plugin PHP (~3,200 lines)
 apps/admin/              React settings SPA (Vite)      → assets/dist/admin/
 packages/blocks/         editor blocks (@wordpress/scripts) → assets/dist/blocks/
+templates/               checkout page template (theme header/footer around the layout); the root block is the form
 assets/dist/             build output, gitignored
 scripts/run.sh           dev / build / release
 docs/                    this
@@ -33,7 +34,7 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `Support/` | `Plan` | Free/Pro flag derived from provider boot; owns the layout limit and its message |
 | `Pro/` | `ProServiceProvider` | **absent from the Free build** |
 | `Helpers/` | `IntegrationsHelper`, `LocalizeHelper`, `Logger` | YayBoost/YayLoyalty detection (via defined constants + filter), SPA bootstrap payload, WooCommerce logging |
-| `Renderer/` | `CheckoutScripts` | WooCommerce storefront hooks; today only force-enqueueing checkout scripts when `advanced.force_enqueue_checkout_scripts` is on |
+| `Renderer/` | `CheckoutScripts`, `CheckoutPage` | Storefront takeover: `CheckoutPage` swaps in the checkout page template on every checkout-page request; `CheckoutScripts` force-enqueues checkout scripts when `advanced.force_enqueue_checkout_scripts` is on |
 | `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin/` (Settings, LayoutEditorEmbed), `Register/` (RegisterFacade, RegisterDev, RegisterProd, ScriptName) | wiring, asset registration, the layout cap, trashed layouts kept out of WP's purge, active-set integrity (no trashing the active layout; draft/pending deactivates), embedded-editor chrome and REST tagging, dev/prod asset registration |
 | `Utils/` | `SingletonTrait` | |
 | `Fallback.php` | duplicate-guard admin notice | shown when another YayCheckout copy is installed; wired in yaycheckout.php |
@@ -44,7 +45,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 ### Entry points
 
 - `yaycheckout.php` → `plugin_init()` on `plugins_loaded`, after a WooCommerce check; also registers `I18n::load_plugin_textdomain()` on `plugins_loaded`
-- `YayCheckout::__construct()` boots in order: `boot_pro()`, `RestAPI`, `RegisterFacade`, `Admin\Settings`, `BlockRegistry`, `LayoutPostType`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin\LayoutEditorEmbed`, `Renderer\CheckoutScripts`
+- `YayCheckout::__construct()` boots in order: `boot_pro()`, `RestAPI`, `RegisterFacade`, `Admin\Settings`, `BlockRegistry`, `LayoutPostType`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin\LayoutEditorEmbed`, `Renderer\CheckoutScripts`, `Renderer\CheckoutPage`
 - `Engine\RestAPI` instantiates controllers on `rest_api_init`
 - `Engine\Admin\Settings` enqueues the SPA and localises `yayCheckoutMeta` / `yayCheckoutAdmin`, gated on the admin-shell hook suffix
 - `Engine\Register\RegisterFacade` branches to RegisterDev or RegisterProd on `init`, conditionally based on `YAYCHECKOUT_IS_DEVELOPMENT`
@@ -55,7 +56,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 |---|---|---|
 | `wp/v2/yay_checkout_layout` | GET/POST | core: draft save, autosave, revisions |
 | `yaycheckout/v1/layouts` | GET | list one page; args: `status` (comma list), `search` (string), `page` (int ≥1); envelope `{ items, total, page, total_pages }` |
-| `yaycheckout/v1/layouts` | POST | create draft; args: `name`, `source` (blank\|library), `template_slug` |
+| `yaycheckout/v1/layouts` | POST | create draft seeded with contact, billing, shipping, order-review; args: `name`, `source` (blank\|library), `template_slug` |
 | `yaycheckout/v1/layouts/counts` | GET | per-tab totals: `listed` (everything not archived), `archived`, and store-wide `active` |
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
@@ -123,7 +124,7 @@ Query errors surface centrally — background refetch failures toast, first-load
 
 ## Blocks (`packages/blocks/`)
 
-One block so far: `yaycheckout/checkout`, the locked root of a layout. Dynamic (`save()` returns `null`), rendered by `render.php`. Built by `@wordpress/scripts`, which emits `index.asset.php` so `wp-*` dependencies are extracted rather than hand-listed.
+Six blocks: `checkout` (locked root), `contact` (email field), `billing` (address section), `shipping` (address section with cart guard), `field` (text/select/country/state/etc), `order-review` (cart total, payment, place-order with cart guard). All dynamic (`save()` returns `null`), rendered by `render.php`. Built by `@wordpress/scripts`, which emits `index.asset.php` so `wp-*` dependencies are extracted rather than hand-listed.
 
 ## Tooling
 
@@ -149,7 +150,7 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 
 ## Not yet built
 
-`Renderer/` holds only the force-enqueue hook — the plugin does not yet render layouts into WooCommerce's checkout, so published layouts are stored but not rendered into the storefront. Safe mode, telemetry opt-in and preview-link lifetime are stored settings with no consumer yet (telemetry data is not sent; preview links are not generated). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots.
+Telemetry and preview-link lifetime are stored settings with no consumer yet (telemetry data is not sent; preview links are not generated). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots.
 
 `Controllers/LayoutTemplateCatalogue` is a placeholder: a fixed template library, no database — repoint it at a real template source once one exists. Row actions Health, Preview, Restore and Delete render placeholder DOM with correct states (enabled/disabled/hidden, labels) but have no backend; Set active / Deactivate are wired to `/activate` and `/deactivate`; Edit, Publish, Search and pagination are fully functional.
 

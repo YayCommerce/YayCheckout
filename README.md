@@ -11,6 +11,7 @@ yaycheckout.php          plugin bootstrap: constants, autoloader, admin shell
 includes/                plugin PHP (see docs/code-standards.md for layering)
 apps/admin/              React settings SPA (Vite) → assets/dist/admin/
 packages/blocks/         checkout blocks (@wordpress/scripts) → assets/dist/blocks/
+templates/               checkout page template (the root Checkout block is the form)
 assets/dist/             build output, gitignored
 scripts/run.sh           dev / build / release
 docs/                    project documentation
