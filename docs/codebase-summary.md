@@ -36,7 +36,7 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `Pro/` | `ProServiceProvider` | **absent from the Free build** |
 | `Helpers/` | `IntegrationsHelper`, `LocalizeHelper`, `Logger` | YayBoost/YayLoyalty detection (via defined constants + filter), SPA bootstrap payload, WooCommerce logging |
 | `Renderer/` | `CheckoutScripts` | WooCommerce storefront hooks; today only force-enqueueing checkout scripts when `advanced.force_enqueue_checkout_scripts` is on |
-| `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutActiveGuard`, `LayoutPublishGuard`, `LayoutPublishSync`, `Admin/` (Settings, LayoutEditorEmbed), `Register/` (RegisterFacade, RegisterDev, RegisterProd, ScriptName) | wiring, asset registration, the layout cap, no trashing the active layout, markup check on REST publish, snapshot on any transition into publish, embedded-editor chrome and REST tagging, dev/prod asset registration |
+| `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutActiveGuard`, `LayoutPublishGuard`, `LayoutPublishSync`, `Admin/` (Settings, LayoutEditorEmbed), `Register/` (RegisterFacade, RegisterDev, RegisterProd, ScriptName) | wiring, asset registration, the layout cap, active-set integrity (no trashing the active layout; draft/pending deactivates), markup check on REST publish, snapshot on any transition into publish, embedded-editor chrome and REST tagging, dev/prod asset registration |
 | `Utils/` | `SingletonTrait` | |
 | `Fallback.php` | duplicate-guard admin notice | shown when another YayCheckout copy is installed; wired in yaycheckout.php |
 | `I18n.php` | textdomain loader | loaded via plugins_loaded, handles i18n with locale detection |

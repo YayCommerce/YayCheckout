@@ -6,8 +6,8 @@ use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Tests\Support\LayoutFactory;
 
-/** The active layout is what shoppers see; trashing or deleting it must be refused until it is deactivated. */
-class ActiveLayoutDeleteGuardTest extends WP_UnitTestCase {
+/** The active layout is what shoppers see: it cannot be trashed, and leaving publish or future drops it from the active set. */
+class ActiveLayoutGuardTest extends WP_UnitTestCase {
 
     private LayoutRepository $repository;
 
@@ -46,6 +46,28 @@ class ActiveLayoutDeleteGuardTest extends WP_UnitTestCase {
 
         $this->assertTrue( current_user_can( 'delete_post', $other ) );
         $this->assertTrue( current_user_can( 'edit_post', $this->id ) );
+    }
+
+    public function test_switching_to_draft_or_pending_deactivates(): void {
+        LayoutFactory::rest_update( $this->id, [ 'status' => 'draft' ] );
+        $this->assertFalse( $this->repository->is_active( $this->id ) );
+
+        $this->repository->activate( $this->id );
+        LayoutFactory::rest_update( $this->id, [ 'status' => 'pending' ] );
+        $this->assertFalse( $this->repository->is_active( $this->id ) );
+    }
+
+    public function test_rescheduling_keeps_it_active(): void {
+        LayoutFactory::rest_update(
+            $this->id,
+            [
+                'status'   => 'future',
+                'date_gmt' => gmdate( 'Y-m-d\TH:i:s', time() + DAY_IN_SECONDS ),
+            ]
+        );
+
+        $this->assertSame( 'future', get_post( $this->id )->post_status );
+        $this->assertTrue( $this->repository->is_active( $this->id ) );
     }
 
     private function rest_delete(): \WP_REST_Response {

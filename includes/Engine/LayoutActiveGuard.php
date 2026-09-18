@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Engine;
 
+use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Utils\SingletonTrait;
@@ -8,11 +9,13 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Refuses to trash or delete the active layout.
- * The capability is denied so the editor hides Move to trash and wp/v2 and
- * wp-admin answer 403; the pre_* filters catch wp_trash_post() and
- * wp_delete_post() called directly (WP-CLI, other plugins), which check no
- * capability. Deactivating first is the merchant's decision, not a side effect.
+ * Keeps the active set pointing only at layouts shoppers may see.
+ * Trash and delete are refused: the capability is denied so the editor hides
+ * Move to trash and wp/v2 and wp-admin answer 403, and the pre_* filters catch
+ * wp_trash_post() and wp_delete_post() called directly (WP-CLI, other
+ * plugins), which check no capability. Deactivating first is the merchant's
+ * decision, not a side effect. Moving an active layout back to draft or
+ * pending is a decision too, so that one deactivates instead of being refused.
  */
 class LayoutActiveGuard {
 
@@ -22,6 +25,20 @@ class LayoutActiveGuard {
         add_filter( 'user_has_cap', [ $this, 'deny_deleting_active_layout' ], 10, 3 );
         add_filter( 'pre_trash_post', [ $this, 'refuse_for_active_layout' ], 10, 2 );
         add_filter( 'pre_delete_post', [ $this, 'refuse_for_active_layout' ], 10, 2 );
+        add_action( 'transition_post_status', [ $this, 'deactivate_when_unpublished' ], 10, 3 );
+    }
+
+    /** A scheduled layout stays active: its snapshot still serves until the new date replaces it. */
+    public function deactivate_when_unpublished( $new_status, $old_status, $post ): void {
+        unset( $old_status );
+
+        if ( in_array( $new_status, [ LayoutStatus::PUBLISHED, LayoutStatus::SCHEDULED ], true ) ) {
+            return;
+        }
+
+        if ( $this->is_active_layout( $post ) ) {
+            ( new LayoutRepository() )->deactivate( (int) $post->ID );
+        }
     }
 
     /**
