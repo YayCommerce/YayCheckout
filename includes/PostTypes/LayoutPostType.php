@@ -62,11 +62,14 @@ class LayoutPostType {
                     'create_posts'           => 'manage_woocommerce',
                 ],
 
-                // template_lock governs the top level only; inner locking is the checkout block's templateLock.
+                /*
+                 * Seed a Checkout root on new layouts. Inserting another one
+                 * after delete is allowed (no template_lock); JS/PHP still
+                 * permit only one Checkout at the document root.
+                 */
                 'template'              => [
                     [ 'yaycheckout/checkout' ],
                 ],
-                'template_lock'         => 'all',
             ]
         );
     }

@@ -54,6 +54,10 @@ class DerivedCacheBuilder {
     private static function contributors(): array {
         $map = [
             'yaycheckout/checkout' => [ self::class, 'contribute_checkout' ],
+            'yaycheckout/contact'  => [ self::class, 'contribute_contact' ],
+            'yaycheckout/billing'  => [ self::class, 'contribute_billing' ],
+            'yaycheckout/shipping' => [ self::class, 'contribute_shipping' ],
+            'yaycheckout/field'    => [ self::class, 'contribute_field' ],
         ];
 
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- FILTER_CONTRIBUTORS is a yaycheckout_ prefixed constant.
@@ -64,6 +68,86 @@ class DerivedCacheBuilder {
     public static function contribute_checkout( array $block ): array {
         unset( $block );
         return [];
+    }
+
+    /**
+     * @param  array $block
+     * @return array
+     */
+    public static function contribute_contact( array $block ): array {
+        $attrs = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : [];
+        $field = self::contribute_field(
+            [
+                'attrs' => [
+                    'fieldKey'    => 'billing_email',
+                    'type'        => 'email',
+                    'label'       => isset( $attrs['label'] ) && is_string( $attrs['label'] ) ? $attrs['label'] : '',
+                    'placeholder' => isset( $attrs['placeholder'] ) && is_string( $attrs['placeholder'] ) ? $attrs['placeholder'] : '',
+                    'required'    => ! isset( $attrs['required'] ) || (bool) $attrs['required'],
+                ],
+            ]
+        );
+
+        return array_merge( [ 'slots' => [ 'contact' ] ], $field );
+    }
+
+    /**
+     * @param  array $block
+     * @return array
+     */
+    public static function contribute_billing( array $block ): array {
+        unset( $block );
+        return [ 'slots' => [ 'billing' ] ];
+    }
+
+    /**
+     * @param  array $block
+     * @return array
+     */
+    public static function contribute_shipping( array $block ): array {
+        unset( $block );
+        return [ 'slots' => [ 'shipping' ] ];
+    }
+
+    /**
+     * Empty fieldKey is skipped so a placeholder field cannot clobber the
+     * derived map under "". Later blocks with the same key win on merge.
+     *
+     * @param  array $block
+     * @return array
+     */
+    public static function contribute_field( array $block ): array {
+        $attrs = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : [];
+        $key   = isset( $attrs['fieldKey'] ) ? trim( (string) $attrs['fieldKey'] ) : '';
+
+        if ( '' === $key ) {
+            return [];
+        }
+
+        $validate = [];
+        if ( isset( $attrs['validate'] ) && is_array( $attrs['validate'] ) ) {
+            $validate = array_values( array_map( 'strval', $attrs['validate'] ) );
+        }
+
+        $type  = isset( $attrs['type'] ) && is_string( $attrs['type'] ) && '' !== $attrs['type'] ? $attrs['type'] : 'text';
+        $width = isset( $attrs['width'] ) && is_string( $attrs['width'] ) && '' !== $attrs['width'] ? $attrs['width'] : 'full';
+
+        return [
+            'fields' => [
+                $key => [
+                    'fieldKey'     => $key,
+                    'type'         => $type,
+                    'label'        => isset( $attrs['label'] ) && is_string( $attrs['label'] ) ? $attrs['label'] : '',
+                    'placeholder'  => isset( $attrs['placeholder'] ) && is_string( $attrs['placeholder'] ) ? $attrs['placeholder'] : '',
+                    'description'  => isset( $attrs['description'] ) && is_string( $attrs['description'] ) ? $attrs['description'] : '',
+                    'required'     => ! empty( $attrs['required'] ),
+                    'enabled'      => true,
+                    'autocomplete' => isset( $attrs['autocomplete'] ) && is_string( $attrs['autocomplete'] ) ? $attrs['autocomplete'] : '',
+                    'validate'     => $validate,
+                    'width'        => $width,
+                ],
+            ],
+        ];
     }
 
     private static function walk( array $blocks, array $contributors, array &$derived ): void {

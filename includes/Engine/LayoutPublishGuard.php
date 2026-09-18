@@ -10,8 +10,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Rejects a core-REST publish or schedule whose markup the renderer could
- * not serve. The editor cannot produce one (template_lock => 'all'); this
- * exists for hand-crafted wp/v2 POSTs. Scheduling is checked too because
+ * not serve: the root is not locked, so the editor can delete the Checkout
+ * block and hit Publish. Scheduling is checked too because
  * cron (or a past date) turns it into a publish nothing else inspects.
  */
 class LayoutPublishGuard {
