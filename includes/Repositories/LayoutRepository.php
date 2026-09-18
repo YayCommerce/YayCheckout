@@ -243,6 +243,39 @@ class LayoutRepository {
         return Layout::from_post( $trashed, $this->hydrate_meta( get_post_meta( $id ) ), false );
     }
 
+    /**
+     * Moves an archived layout back to draft. WP always assigns 'draft' on
+     * untrash (since 5.6) regardless of the layout's pre-archive status, which
+     * is exactly the behaviour this method wants — no extra status handling needed.
+     *
+     * @throws \InvalidArgumentException When the layout is missing or not archived.
+     * @throws \RuntimeException         When WordPress refuses or fails to untrash it.
+     */
+    public function restore( int $id ): Layout {
+        $post = get_post( $id );
+
+        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        if ( LayoutStatus::ARCHIVED !== $post->post_status ) {
+            throw new \InvalidArgumentException( __( 'Layout is not archived.', 'yaycheckout' ) );
+        }
+
+        $restored = wp_untrash_post( $id );
+
+        if ( ! $restored instanceof \WP_Post ) {
+            throw new \RuntimeException( sprintf( 'Layout %d could not be restored.', $id ) );
+        }
+
+        // wp_untrash_post() hands back the pre-update object; only the status moved.
+        $restored->post_status = LayoutStatus::DRAFT;
+
+        // Deliberately no Plan::layout_limit_reached() check: restoring an
+        // existing layout is allowed to exceed the Free cap, unlike create()/duplicate().
+        return Layout::from_post( $restored, $this->hydrate_meta( get_post_meta( $id ) ), false );
+    }
+
     /** Free replaces the set; Pro moves the id to the end so active() serves it. */
     public function set_active( int $id ): void {
         $ids = Plan::is_pro()

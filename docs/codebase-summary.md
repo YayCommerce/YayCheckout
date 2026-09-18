@@ -85,7 +85,7 @@ src/
   pages/
     404.tsx  500.tsx    error pages
     layouts/            LayoutsPage (queries, filters, modals)
-      LayoutsPage.tsx   list with pagination, search, status tabs; Edit/Publish/Set active/Deactivate/Archive/Delete for good real; Health/Preview/Restore placeholder DOM
+      LayoutsPage.tsx   list with pagination, search, status tabs; Edit/Publish/Set active/Deactivate/Archive/Restore/Delete for good real; Health/Preview placeholder DOM
       SetActiveModal.tsx    Set active modal (real)
       DeactivateModal.tsx   Deactivate modal (real)
       ArchiveModal.tsx      Archive modal (real)
@@ -152,6 +152,6 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 
 Telemetry and preview-link lifetime are stored settings with no consumer yet (telemetry data is not sent; preview links are not generated). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots.
 
-`Controllers/LayoutTemplateCatalogue` is a placeholder: a fixed template library, no database — repoint it at a real template source once one exists. Row actions Health, Preview, Restore and Delete render placeholder DOM with correct states (enabled/disabled/hidden, labels) but have no backend; Set active / Deactivate are wired to `/activate` and `/deactivate`; Edit, Publish, Search and pagination are fully functional.
+`Controllers/LayoutTemplateCatalogue` is a placeholder: a fixed template library, no database — repoint it at a real template source once one exists. Row actions Health and Preview render placeholder DOM with correct states (enabled/disabled/hidden, labels) but have no backend; Set active / Deactivate / Archive / Restore / Delete are wired to `/activate`, `/deactivate`, `/archive`, `/restore` and the delete endpoint; Edit, Publish, Search and pagination are fully functional. `restore()` deliberately does not re-check the Free-plan layout cap that `create()`/`duplicate()` enforce.
 
 See the end of `system-architecture.md` for the full deferred list.
