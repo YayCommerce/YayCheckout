@@ -12,6 +12,7 @@ import {
   getLayouts,
   LayoutListParams,
   publishLayout,
+  restoreLayout,
 } from '@/lib/api/layout.api';
 import { LISTED_LAYOUT_STATUSES } from '@/lib/schema/layout.schema';
 
@@ -118,6 +119,20 @@ export function useArchiveLayoutMutation() {
   return useMutation({
     mutationKey: ['layouts', 'archive'],
     mutationFn: archiveLayout,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+    },
+  });
+}
+
+/** The row leaves the archived tab and appears in the listed one, so both
+ * list caches move — hence `all`, not one status filter. */
+export function useRestoreLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'restore'],
+    mutationFn: restoreLayout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
     },
