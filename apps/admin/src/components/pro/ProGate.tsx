@@ -12,9 +12,8 @@ import { YayCheckoutToolTip } from '@/components/shared/YayCheckoutToolTip';
 const UPGRADE_URL = 'https://yaycommerce.com/yaycheckout-for-woocommerce/';
 
 interface ProGateProps {
-  /** Pro content, shown blurred to Free users. */
   children?: ReactNode;
-  /** Renders the small inline PRO badge instead of the full overlay. */
+  /** Small PRO badge instead of the full overlay. */
   inline?: boolean;
   className?: string;
 }
@@ -22,15 +21,10 @@ interface ProGateProps {
 /**
  * Shows pro content to Pro builds and a blurred upsell to Free builds.
  *
- * IMPORTANT — this gate is cosmetic, not a security boundary. Free users
- * receive these components in their bundle and can unblur them with devtools.
- * That is acceptable only because the Free build's PHP has no matching
- * endpoint, so revealing the UI reveals nothing and calls nothing.
- *
- * Use `ProOnly` instead (or a call-site `isPro &&` branch when the code must
- * not ship at all) for anything that would render real customer data or call
- * a real endpoint. If you find yourself wrapping a working data panel in
- * ProGate, that is the wrong component.
+ * Cosmetic gate, not a security boundary: Free users can unblur it with
+ * devtools. Safe only because the Free build's PHP has no matching endpoint.
+ * Never wrap real data or a real endpoint in it; use ProOnly or a call-site
+ * `isPro &&` branch.
  */
 export function ProGate({ children, inline = false, className }: ProGateProps) {
   if (isPro) {
@@ -57,29 +51,19 @@ export function ProGate({ children, inline = false, className }: ProGateProps) {
 /**
  * Renders children only in a Pro build.
  *
- * This prevents rendering; it does NOT remove the children from the bundle.
- * JSX compiles children into createElement arguments, so they are constructed
- * whatever this returns — verified by building both plans and grepping the
- * output.
- *
- * When the code must actually be absent from the Free bundle, branch at the
- * call site instead, where the folded constant lets the bundler drop it:
- *
- *     {isPro && <SomeProPanel />}
- *
- * For 1.x that distinction is cosmetic anyway: the Free build's PHP has no
- * pro endpoints, so unreferenced pro UI can call nothing.
+ * Prevents rendering only; children still ship in the bundle. To drop them,
+ * branch at the call site (`{isPro && <X />}`) so the bundler can fold it.
  */
 export function ProOnly({ children }: { children: ReactNode }) {
   return isPro ? <>{children}</> : null;
 }
 
-/** Renders children only in a Free build. Runtime-only, as ProOnly above. */
+/** Renders children only in a Free build. Runtime-only, as ProOnly. */
 export function FreeOnly({ children }: { children: ReactNode }) {
   return isPro ? null : <>{children}</>;
 }
 
-/** Small PRO chip for menu items and section headings. */
+/** Clickable chip for menu items and headings; links to the upgrade page. */
 export function ProBadge({ className }: { className?: string }) {
   return (
     <YayCheckoutToolTip
@@ -98,11 +82,7 @@ export function ProBadge({ className }: { className?: string }) {
   );
 }
 
-/**
- * Neutral "PRO" chip for marking a single locked item inline (a grid card,
- * a teaser box) — no click, no tooltip. For the clickable menu/heading chip
- * that links to the upgrade page, use ProBadge above instead.
- */
+/** Inert chip for a locked item; ProBadge is the clickable one. */
 export function ProTag({ className }: { className?: string }) {
   return (
     <Badge variant="outline" className={cn('px-1.5 text-[10px]', className)}>
@@ -111,12 +91,7 @@ export function ProTag({ className }: { className?: string }) {
   );
 }
 
-/**
- * Plain "Upgrade" CTA button. Callers wire their own onClick (most current
- * ones don't yet — the real upgrade flow isn't built) rather than this
- * defaulting to UPGRADE_URL, since not every "Upgrade" button in the app
- * should necessarily go to the same place.
- */
+/** Plain "Upgrade" CTA. No default onClick: not every Upgrade button goes to the same place. */
 export function UpgradeButton(props: Omit<ComponentProps<typeof Button>, 'children'>) {
   return (
     <Button size="sm" variant="primary-outline" {...props}>

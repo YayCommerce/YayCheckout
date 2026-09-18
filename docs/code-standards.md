@@ -8,7 +8,7 @@ Run `composer lint` (and `composer lint:fix` for the auto-fixable subset).
 
 ```
 includes/
-  Enums/        constants classes: status enums, post_status maps. Zero WP calls.
+  Enums/        constants classes: status enum. Zero WP calls.
   PostTypes/    register_post_type only — caps, template, labels. No logic.
   Models/       dumb entities. Typed props, from_post()/to_array(). Zero WP calls.
   Repositories/ ALL get_post/update_post_meta/get_option. Returns Models. Owns invariants.
@@ -106,6 +106,8 @@ Three files per feature, matching the existing `settings.*` set:
 
 The zod wire schema is the only place the PHP shape is asserted in JS — keep it exact and `.strict()`, so a renamed PHP key fails loudly instead of parsing to `undefined`.
 
+**Timestamps on the wire are ISO 8601 with an explicit UTC offset** (`2026-09-17T09:25:41+00:00`), never the zone-less GMT MySQL string WordPress stores. PHP converts at the serialization boundary through `Helpers\DateHelper::to_iso8601()` (storage keeps core's MySQL shape); the SPA formats only through `lib/helpers/date.helper.ts` (`formatDateTime`), which applies the site's Settings → General date/time format in the viewer's browser timezone — a deliberate departure from core's site-timezone lists, so each admin reads a timestamp against their own clock. Never render a raw wire timestamp or reach for `new Date(...)`/`Intl.DateTimeFormat` in a page.
+
 ### Where components live
 
 A component lives at the narrowest scope that covers its consumers.
@@ -184,7 +186,15 @@ Plan is derived, not declared. `Plan::is_pro()` reports whether the provider act
 
 ## Comments
 
-**A comment states only what is true of the code directly beneath it — the invariant it protects and what breaks without it.** Never what other code does, what the code used to do, or what it will do. Cross-cutting rationale lives in `docs/system-architecture.md`; the comment points at it (`See docs/system-architecture.md, <section>`).
+Two kinds of comment, two rules.
+
+**Docblocks** (class, public/protected method, constant, hook) start with one line saying *what this does for its caller* — the contract an IDE shows before the body is read. Keep it unless the name and signature already say it (`get_id()`: cut; `create()` "a layout draft from the New layout modal": keep). After that line, only the *why* and the `@param` / `@return` / `@throws` a caller relies on. A docblock never opens with a caveat: if there is a why, the purpose line comes first.
+
+**Inline comments** (inside a body) default to none. **Code shows *how*; comment only to carry *why* — a non-obvious constraint, deliberate deviation, gotcha, or workaround.** Keep the one fact a reader needs at that line, in the fewest words; two lines is the usual ceiling, longer only for a WordPress behaviour the code works around. Never narrate the code ("loop over layouts"), narrate the change ("fixed X", "as requested"), or mark block ends.
+
+"Restates the name" means the line adds nothing beyond the identifier — no caller context, trigger, unit, or side effect. A summary that adds one of those is a contract, not a restatement.
+
+**When a comment does exist, it states only what is true of the code directly beneath it — the invariant it protects and what breaks without it.** Never what other code does, what the code used to do, or what it will do. Cross-cutting rationale lives in `docs/system-architecture.md`; the comment points at it (`See docs/system-architecture.md, <section>`).
 
 The rule exists because comments that describe something outside their own block rot silently: the other module changes, the comment does not, and the next reader is sent down the wrong path. A 2026-09 audit found 53 such comments; none of the comments about a block's own invariant were wrong.
 
@@ -203,7 +213,7 @@ The review question is: *does this comment describe something outside this funct
 
 `TODO:` is for planned work only — one line, what and why not now. Not for wishes.
 
-With no test suite, invariant comments are the spec. Trim them; do not delete them.
+With no test suite, invariant comments are the spec. Trim them to the invariant; delete only when the code already says it.
 
 ## Formatting
 

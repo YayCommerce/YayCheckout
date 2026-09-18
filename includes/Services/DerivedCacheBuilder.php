@@ -4,23 +4,17 @@ namespace YayCheckout\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Turns published block markup into the derived caches a customer request reads.
+ * Published block markup → the derived caches a customer request reads.
  *
- * Pure: a function of its input markup, with no storage reads or writes. That
- * is what lets publish() call this first and treat a failure as a no-op — bad
- * markup throws here, before anything has been written, so the previously
- * published layout keeps serving.
- *
- * Blocks declare what they contribute through a contributor map rather than
- * this class knowing every block type. Pro lives in includes/Pro/ and attaches
- * through the filter rather than core naming its blocks, so the Free build
- * works with that directory removed.
+ * Must stay pure (no storage): publish() relies on a throw here meaning
+ * nothing was written. Blocks contribute via the filter so Pro can attach
+ * without core naming its blocks.
  */
 class DerivedCacheBuilder {
 
     public const FILTER_CONTRIBUTORS = 'yaycheckout_block_contributors';
 
-    /** Shape of the derived array. Keys are stable; consumers rely on them. */
+    /** Keys are a contract consumers rely on. */
     private const EMPTY = [
         'fields'       => [],
         'extra_fields' => [],
@@ -29,8 +23,6 @@ class DerivedCacheBuilder {
     ];
 
     /**
-     * @param  string $markup Published block markup.
-     * @return array
      * @throws \InvalidArgumentException When the markup is not a usable layout.
      */
     public static function build( string $markup ): array {
@@ -58,12 +50,7 @@ class DerivedCacheBuilder {
         return $derived;
     }
 
-    /**
-     * Block name => callable( array $block ): array returning a partial derived
-     * array. Seeded with the blocks this plugin ships; extended via the filter.
-     *
-     * @return array
-     */
+    /** Block name => callable( array $block ): array (partial derived array). */
     private static function contributors(): array {
         $map = [
             'yaycheckout/checkout' => [ self::class, 'contribute_checkout' ],
@@ -73,24 +60,12 @@ class DerivedCacheBuilder {
         return (array) apply_filters( self::FILTER_CONTRIBUTORS, $map );
     }
 
-    /**
-     * The root block is a container: it holds sections but contributes no
-     * fields, slots or order modes of its own. Present so the contributor
-     * contract is visible to the blocks added in later phases and to Pro.
-     *
-     * @param  array $block
-     * @return array
-     */
+    /** The root is a container; kept so the contributor contract has a visible example. */
     public static function contribute_checkout( array $block ): array {
         unset( $block );
         return [];
     }
 
-    /**
-     * @param array $blocks
-     * @param array $contributors
-     * @param array $derived      Accumulated by reference.
-     */
     private static function walk( array $blocks, array $contributors, array &$derived ): void {
         foreach ( $blocks as $block ) {
             $name = $block['blockName'];
@@ -105,15 +80,7 @@ class DerivedCacheBuilder {
         }
     }
 
-    /**
-     * Merge one block's contribution into the accumulated derived array.
-     *
-     * Fields and extra_fields are keyed by field name, so later blocks with the
-     * same key win. Slots and order_modes are flat lists kept unique.
-     *
-     * @param array $derived
-     * @param array $contribution
-     */
+    /** Merges one block's contribution into the derived array. Later block wins on a duplicate field key; slots and order_modes are unique lists. */
     private static function merge( array &$derived, array $contribution ): void {
         foreach ( [ 'fields', 'extra_fields' ] as $key ) {
             if ( ! empty( $contribution[ $key ] ) ) {
@@ -130,13 +97,7 @@ class DerivedCacheBuilder {
         }
     }
 
-    /**
-     * Drops the entries parse_blocks() emits with a null blockName for the
-     * whitespace between blocks, so callers can treat index 0 as the root.
-     *
-     * @param  array $blocks
-     * @return array
-     */
+    /** Drops the null-name entries parse_blocks() emits for whitespace, so index 0 is the root. */
     private static function real_blocks( array $blocks ): array {
         return array_values(
             array_filter(

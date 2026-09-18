@@ -3,9 +3,6 @@
 namespace YayCheckout;
 
 defined( 'ABSPATH' ) || exit;
-/**
- * I18n Logic
- */
 class I18n {
 
     public static function load_plugin_textdomain() {

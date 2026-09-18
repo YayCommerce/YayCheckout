@@ -11,11 +11,7 @@ import {
   layoutWireSchema,
 } from '@/lib/schema/layout.schema';
 
-/*
- * The only place the wire's snake_case meets the app's camelCase — see
- * docs/code-standards.md (REST). Responses are parsed against the strict wire
- * schemas, then converted; request bodies are converted on the way out.
- */
+// The only place wire snake_case meets app camelCase.
 
 function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
   return {
@@ -99,7 +95,6 @@ export type CreateLayoutDraftPayload =
   { name: string; source: 'blank' } | { name: string; source: 'library'; templateSlug: string };
 
 export async function createLayoutDraft(payload: CreateLayoutDraftPayload): Promise<Layout> {
-  // `template_slug` is the wire spelling — see LayoutRestController's create args.
   const json =
     payload.source === 'library'
       ? { name: payload.name, source: payload.source, template_slug: payload.templateSlug }

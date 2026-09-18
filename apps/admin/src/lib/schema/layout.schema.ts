@@ -1,21 +1,13 @@
 import { z } from 'zod';
 import { __ } from '@wordpress/i18n';
 
-/**
- * PHP encodes an empty associative array as `[]`, not `{}`, so any map that
- * happens to be empty arrives as an empty JSON array. Normalise that before
- * validating rather than loosening the map type.
- */
+// PHP encodes an empty associative array as `[]`, not `{}`.
 const phpMap = z.preprocess(
   (value) => (Array.isArray(value) && value.length === 0 ? {} : value),
   z.record(z.string(), z.unknown()),
 );
 
-/**
- * Derived caches, regenerated from the published snapshot at publish time.
- * Keys mirror DerivedCacheBuilder's output and are stable. A layout that has
- * never been published has no derived caches at all.
- */
+/** Mirrors DerivedCacheBuilder's output; empty until first published. */
 export const layoutDerivedSchema = z.preprocess(
   (value) => (Array.isArray(value) && value.length === 0 ? {} : value),
   z.object({
@@ -26,19 +18,13 @@ export const layoutDerivedSchema = z.preprocess(
   }),
 );
 
-/** Mirrors LayoutStatus::all() in PHP. */
-export const layoutStatusSchema = z.enum(['draft', 'pending', 'scheduled', 'published', 'archived']);
+/** Mirrors LayoutStatus::all() in PHP: WordPress post_status values, not friendlier names. */
+export const layoutStatusSchema = z.enum(['draft', 'pending', 'future', 'publish', 'trash']);
 
-/** Mirrors LayoutStatus::listed(): the Active tab, everything not archived. */
-export const LISTED_LAYOUT_STATUSES = layoutStatusSchema.options.filter((status) => status !== 'archived');
+/** Mirrors LayoutStatus::listed(). */
+export const LISTED_LAYOUT_STATUSES = layoutStatusSchema.options.filter((status) => status !== 'trash');
 
-/*
- * Wire schemas below assert the PHP shape exactly — snake_case, like every
- * payload field (docs/code-standards.md, REST). The SPA never touches them
- * directly: lib/api/layout.api.ts parses with these and converts to the
- * camelCase app types at the bottom of this file, so the conversion lives in
- * one place and no component knows how PHP spells a key.
- */
+// Wire schemas: the PHP shape, exactly. Only lib/api/layout.api.ts reads them.
 
 const layoutSummaryWireFields = {
   id: z.number(),
@@ -46,29 +32,22 @@ const layoutSummaryWireFields = {
   status: layoutStatusSchema,
   has_unpublished_changes: z.boolean(),
   is_active: z.boolean(),
+  /** ISO 8601 UTC; null until first published. */
   published_at: z.string().nullable(),
-  /** GMT publish date while status is 'scheduled'; null otherwise. */
+  /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduled_at: z.string().nullable(),
 };
 
-/**
- * Collection row. Mirrors Layout::to_summary_array() — no markup.
- *
- * .strict() is deliberate: without it a renamed key parses to undefined instead
- * of failing, and a rename on the PHP side would surface as a blank field in
- * the UI rather than an error.
- */
+// .strict() so a renamed PHP key fails loudly instead of parsing to undefined.
+/** Collection row. Mirrors Layout::to_summary_array(): no markup. */
 export const layoutSummaryWireSchema = z.object(layoutSummaryWireFields).strict();
 
-/**
- * Full layout. Mirrors Layout::to_array().
- */
+/** Full layout. Mirrors Layout::to_array(). */
 export const layoutWireSchema = z
   .object({
     ...layoutSummaryWireFields,
-    /** Working draft. Never rendered to customers. */
     draft: z.string(),
-    /** Published snapshot. Empty until the layout has been published. */
+    /** Empty until first published. */
     snapshot: z.string(),
     published_revision: z.number().nullable(),
     derived: layoutDerivedSchema,
@@ -92,8 +71,7 @@ export const layoutCountsSchema = z
   })
   .strict();
 
-/** GET /layouts/counts — its own endpoint so tab totals have one cache key,
- * independent of whichever status filter the list query is on. */
+/** GET /layouts/counts. */
 export const layoutCountsResponseSchema = z
   .object({
     counts: layoutCountsSchema,
@@ -107,22 +85,23 @@ export type LayoutSummaryWire = z.infer<typeof layoutSummaryWireSchema>;
 export type LayoutWire = z.infer<typeof layoutWireSchema>;
 export type LayoutListResponseWire = z.infer<typeof layoutListResponseWireSchema>;
 
-/** App-side shapes — camelCase. Built from the wire types by `layout.api.ts`; this is what pages and hooks consume. */
+// App-side shapes, camelCase. Built by layout.api.ts; what pages and hooks consume.
+/** App-side shapes, camelCase. Built from the wire types by layout.api.ts; what pages and hooks consume. */
 export type LayoutSummary = {
   id: number;
   title: string;
   status: LayoutStatus;
   hasUnpublishedChanges: boolean;
   isActive: boolean;
+  /** ISO 8601 UTC; null until first published. Format with lib/helpers/date.helper. */
   publishedAt: string | null;
-  /** GMT publish date while status is 'scheduled'; null otherwise. */
+  /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduledAt: string | null;
 };
 
 export type Layout = LayoutSummary & {
-  /** Working draft. Never rendered to customers. */
   draft: string;
-  /** Published snapshot. Empty until the layout has been published. */
+  /** Empty until first published. */
   snapshot: string;
   publishedRevision: number | null;
   derived: z.infer<typeof layoutDerivedSchema>;
@@ -135,12 +114,7 @@ export type LayoutListResponse = {
   totalPages: number;
 };
 
-/**
- * Client-side validation for the New layout form. Mirrors the `template_slug`
- * arg's validate_callback in LayoutRestController (templateSlug required
- * precisely when source is 'library') so a bad submission never reaches the
- * network; catalogue membership is still checked server-side only.
- */
+/** Client-side validation for the New layout form. Mirrors LayoutRestController's template_slug rule; catalogue membership is server-side only. */
 export const newLayoutFormSchema = z
   .object({
     name: z.string().trim().min(1, __('Name is required', 'yaycheckout')),

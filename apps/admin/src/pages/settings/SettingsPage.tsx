@@ -27,19 +27,13 @@ const TAB_LABELS: Record<SettingsSubMenu, string> = {
 
 const TAB_PANEL_CLASS = 'bg-card rounded-md border';
 
-/*
- * One react-hook-form spans all three tabs; the tab rail is a Radix Tabs
- * list wrapped in the UI kit's vertical SideNavMenu, and the active tab is
- * the :subMenu route param (validated by the router loader). Save lives in
- * the panel footer, not the header portal, so status text and the button
- * sit together.
- */
+// One react-hook-form spans all tabs; the active tab is the :subMenu route param.
 export default function SettingsPage() {
   const { subMenu } = useParams<{ subMenu: SettingsSubMenu }>();
   const activeTab: SettingsSubMenu = subMenu ?? 'general';
   const navigate = useNavigate();
 
-  // initialData comes from the localize bootstrap, so data is defined on first render.
+  // initialData from the bootstrap: data is defined on first render.
   const { data } = useSettingsQuery();
   const saveMutation = useSaveSettingsMutation();
 
@@ -49,7 +43,7 @@ export default function SettingsPage() {
   });
   const { isDirty } = form.formState;
 
-  /** Resolves true on a successful save so the leave dialog knows whether to proceed. */
+  /** Resolves true on success so the leave dialog knows whether to proceed. */
   async function onSubmit(values: Settings): Promise<boolean> {
     if (saveMutation.isPending) return false;
 
@@ -64,7 +58,6 @@ export default function SettingsPage() {
     }
   }
 
-  // Switching tabs stays inside /settings/* and never blocks; leaving the page does.
   const { showDialog, confirmLeave, cancelLeave } = useRouteLeaveGuard(isDirty, ['/settings/*']);
 
   return (
@@ -110,8 +103,7 @@ export default function SettingsPage() {
         open={showDialog}
         onDiscard={confirmLeave}
         onSave={async () => {
-          // Save, then continue the navigation the guard blocked; on a failed
-          // save stay put so the edits are not lost.
+          // A failed save stays put so the edits are not lost.
           let saved = false;
           await form.handleSubmit(async (values) => {
             saved = await onSubmit(values);

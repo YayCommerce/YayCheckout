@@ -8,11 +8,7 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Settings REST endpoints: GET/POST /wp-json/yaycheckout/v1/settings
- *
- * Both return the envelope { settings, updated_at }. POST takes the settings
- * object (snake_case, typed JSON); unknown keys are dropped and a wrong type
- * or enum value is a 400. See Settings::sanitize() for the rules.
+ * GET/POST /yaycheckout/v1/settings. Both return { settings, updated_at }.
  */
 class SettingsRestController extends BaseRestController {
     use SingletonTrait;
@@ -65,8 +61,7 @@ class SettingsRestController extends BaseRestController {
             return $this->error_invalid_arguments();
         }
 
-        // Merge over the stored values first so a partial body updates only
-        // the keys it names instead of resetting the rest to defaults.
+        // Merge over stored values: sanitize() defaults any key the body omits.
         $clean = Settings::sanitize( array_replace_recursive( $this->settings->get()->values(), $input ) );
 
         if ( is_wp_error( $clean ) ) {

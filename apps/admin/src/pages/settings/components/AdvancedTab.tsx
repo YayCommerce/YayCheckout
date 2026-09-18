@@ -22,11 +22,6 @@ function lifetimeLabel(minutes: PreviewLinkLifetime): string {
   return sprintf(_n('%d minute', '%d minutes', minutes, 'yaycheckout'), minutes);
 }
 
-/*
- * Support escape hatches. Preview link lifetime is stored only until preview
- * links exist; force-enqueue is consumed by Renderer\CheckoutScripts and is
- * the one setting here that can break a working store, hence the warning.
- */
 export function AdvancedTab() {
   const { control } = useFormContext<Settings>();
 

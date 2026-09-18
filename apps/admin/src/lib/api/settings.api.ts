@@ -9,11 +9,7 @@ import {
   SettingsWire,
 } from '@/lib/schema/settings.schema';
 
-/*
- * The only place the wire's snake_case meets the app's camelCase — see
- * docs/code-standards.md (REST). Responses are parsed against the strict wire
- * schemas, then converted; request bodies are converted on the way out.
- */
+// The only place wire snake_case meets app camelCase.
 
 export function settingsFromWire(wire: SettingsWire): Settings {
   return {

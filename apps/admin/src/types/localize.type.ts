@@ -16,13 +16,12 @@ export type Meta = {
     assetsUrl: string;
 
     version: string;
-    /** Product documentation root; feature pages hang off it. */
     docsUrl: string;
     reviewed: boolean;
   };
 };
 
-/** Raw localize payload — wire shapes, parsed by lib/queries/settings.queries.ts before use. */
+/** Wire shapes; parsed by settings.queries.ts before use. */
 export type AdminData = {
   settings: SettingsResponseWire;
   integrations: IntegrationWire[];

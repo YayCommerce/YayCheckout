@@ -13,6 +13,7 @@ apps/admin/              React settings SPA (Vite) → assets/dist/admin/
 packages/blocks/         checkout blocks (@wordpress/scripts) → assets/dist/blocks/
 assets/dist/             build output, gitignored
 scripts/run.sh           dev / build / release
+tests/                   PHPUnit integration suites (composer test)
 docs/                    project documentation
 ```
 
@@ -44,6 +45,7 @@ That switches asset registration from `RegisterProd` (built files) to `RegisterD
 
 composer lint              # phpcs
 composer lint:fix          # phpcbf
+composer test              # PHPUnit + WordPress test library; DB env vars in phpunit.xml.dist
 pnpm makepot               # regenerate languages/yaycheckout.pot
 ```
 

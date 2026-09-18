@@ -21,20 +21,10 @@ const DEFAULT_VALUES: NewLayoutFormValues = {
 };
 
 /**
- * Orchestrates the two-step "New layout" flow: choosing Blank vs From
- * library, then — for From library — picking a template. One
- * react-hook-form instance backs both steps; Create draft calls the real
- * POST /layouts endpoint — see LayoutRestController::create_draft().
+ * The two-step "New layout" flow: Blank vs From library, then name.
  *
- * No duplicate-name handling: layout titles may repeat, same as WordPress
- * Pages — the post_name slug is what WordPress deduplicates, automatically,
- * once the layout is first published.
- *
- * All per-session state (step, form, mutation) lives in NewLayoutForm,
- * which sits inside DialogContent. Radix unmounts that subtree once the
- * close animation ends and mounts it fresh on the next open, so each open
- * starts from defaults without a reset effect — and without the flash a
- * reset-on-open or reset-on-close effect painted over the fade.
+ * State lives in NewLayoutForm inside DialogContent: Radix unmounts it after
+ * the close animation, so each open starts fresh without a reset effect.
  */
 export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
@@ -56,13 +46,7 @@ function NewLayoutForm({ onClose }: { onClose: () => void }) {
 
   const mutation = useCreateLayoutDraftMutation();
 
-  /*
-   * Back (from the header breadcrumb or LibraryStep's own Back button) must
-   * also reset `source` to 'blank': changing the step alone leaves the source
-   * step's radio on "From library", so its Create draft button would submit a
-   * library draft with a stale template selection instead of the blank layout
-   * this step promises.
-   */
+  // Must reset `source` too, or Create draft would submit a stale library selection.
   function backToSource() {
     form.setValue('source', 'blank');
     setStep('source');

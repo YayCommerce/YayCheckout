@@ -4,62 +4,65 @@ namespace YayCheckout\Models;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Plugin settings.
+ * Plugin settings. Pure entity: no WordPress calls.
  *
- * Dumb entity, like Layout: it holds the option-key constants, the schema,
- * and the pure rules for reading and validating a settings array, and makes
- * no WordPress calls. SettingsRepository hands it already-fetched data.
- *
- * schema() is the one description of every setting: section, key, type,
- * default and (for enums) the allowed values. from_option() and sanitize()
- * both walk it, so a setting cannot be accepted without a default or
- * defaulted without validation. Adding a setting is one entry here, plus the
- * wire/app zod schema and a form field in the SPA.
+ * The schema() is the single description of every setting; from_option() and
+ * sanitize() both walk it, so nothing is accepted without a default or
+ * defaulted without validation.
  */
 class Settings {
 
-    /*
-     * Option names live here and nowhere else — the same rule as Layout's
-     * meta keys. uninstall.php is the documented exception: it runs without
-     * the autoloader and repeats OPTION_SETTINGS as a literal.
-     */
+    // uninstall.php repeats OPTION_SETTINGS as a literal: it runs without the autoloader.
     public const OPTION_SETTINGS   = 'yaycheckout_settings';
     public const OPTION_UPDATED_AT = 'yaycheckout_settings_updated_at';
     public const OPTION_REVIEWED   = 'yaycheckout_reviewed';
 
-    /** Minutes a shared preview URL stays valid. Mirrored by PREVIEW_LINK_LIFETIME_OPTIONS in the SPA. */
+    /** Minutes. Mirrored by PREVIEW_LINK_LIFETIME_OPTIONS in the SPA. */
     public const PREVIEW_LINK_LIFETIMES = [ 15, 30, 60, 120, 1440 ];
 
     public array $general  = [];
     public array $advanced = [];
 
-    /** ISO 8601 UTC of the last save, or null when settings were never saved. */
+    /** ISO 8601 UTC; null when never saved. */
     public ?string $updated_at = null;
 
     /**
-     * section => key => [ 'type' => 'bool'|'int', 'default' => mixed, 'enum' => int[] (optional) ]
+     * Shape: section => key => [ 'type' => 'bool'|'int', 'default' => mixed, 'enum' => int[] (optional) ]
      */
     public static function schema(): array {
         return [
             'general'  => [
-                'safe_mode'                => [ 'type' => 'bool', 'default' => false ],
-                'share_usage_data'         => [ 'type' => 'bool', 'default' => false ],
-                'delete_data_on_uninstall' => [ 'type' => 'bool', 'default' => false ],
+                'safe_mode'                => [
+					'type'    => 'bool',
+					'default' => false,
+				],
+                'share_usage_data'         => [
+					'type'    => 'bool',
+					'default' => false,
+                ],
+                'delete_data_on_uninstall' => [
+					'type'    => 'bool',
+					'default' => false,
+                ],
             ],
             'advanced' => [
-                'preview_link_lifetime'          => [ 'type' => 'int', 'default' => 60, 'enum' => self::PREVIEW_LINK_LIFETIMES ],
-                'force_enqueue_checkout_scripts' => [ 'type' => 'bool', 'default' => false ],
+                'preview_link_lifetime'          => [
+					'type'    => 'int',
+					'default' => 60,
+					'enum'    => self::PREVIEW_LINK_LIFETIMES,
+				],
+                'force_enqueue_checkout_scripts' => [
+					'type'    => 'bool',
+					'default' => false,
+                ],
             ],
         ];
     }
 
     /**
-     * Build from the stored option value, projected through the schema.
-     *
-     * Walks the schema rather than merging blindly, so a key that no longer
-     * exists, or a stored value that is no longer valid (written by an older
-     * version, or edited by hand), reads back as its default instead of
-     * reaching the SPA, whose strict wire schema would refuse the payload.
+     * Builds from the stored option value, projected through the schema.
+     * Walks the schema, not the stored array: a stale or invalid stored value
+     * reads back as its default instead of failing the SPA's strict wire schema.
      *
      * @param mixed $saved Raw option value; anything but an array is treated as empty.
      */
@@ -81,14 +84,10 @@ class Settings {
     }
 
     /**
-     * Whitelist and type-check an incoming settings array against the schema.
-     *
-     * Walks the schema rather than the input, so unknown sections and keys
-     * are dropped silently. Types are strict: the only client is the SPA,
-     * which sends typed JSON, so a string "true" means a bug and is rejected
-     * rather than coerced. A key missing from the input falls back to its
-     * default — callers wanting a partial update merge with the stored
-     * values first.
+     * Whitelists and type-checks an incoming settings array against the schema.
+     * Unknown keys are dropped; types are strict (a string "true" is a bug,
+     * not coerced); a missing key becomes its default, so partial updates
+     * must merge with stored values first.
      *
      * @return array|\WP_Error Clean settings, or the first validation failure.
      */
@@ -130,7 +129,7 @@ class Settings {
         ];
     }
 
-    /** The settings object alone — what sanitize() takes and the option stores. */
+    /** What sanitize() takes and the option stores. */
     public function values(): array {
         return $this->to_array()['settings'];
     }

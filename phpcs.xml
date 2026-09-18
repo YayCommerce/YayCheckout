@@ -10,6 +10,7 @@
     <file>uninstall.php</file>
     <!-- Block render callbacks live beside their block.json, per wp-scripts convention. -->
     <file>packages/blocks/src</file>
+    <file>tests</file>
 
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/vendor-prefixed/*</exclude-pattern>
@@ -20,6 +21,9 @@
     <exclude-pattern>*/release/*</exclude-pattern>
     <!-- php-scoper build config: compact symbol lists, not WordPress runtime code. -->
     <exclude-pattern>scoper.inc.php</exclude-pattern>
+    <!-- WordPress test-library config and bootstrap: define core constants and env, by design. -->
+    <exclude-pattern>tests/wp-tests-config.php</exclude-pattern>
+    <exclude-pattern>tests/bootstrap.php</exclude-pattern>
 
     <arg name="extensions" value="php"/>
     <arg name="colors"/>
