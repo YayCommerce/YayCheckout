@@ -318,6 +318,33 @@ class LayoutRepository {
     }
 
     /**
+     * Permanently removes an archived layout with its revisions and meta.
+     * Archived only: the archive is the reversible step, this one is not.
+     *
+     * @throws \InvalidArgumentException When the layout is missing, not archived, or still active.
+     * @throws \RuntimeException         When WordPress refuses the delete.
+     */
+    public function delete( int $id ): void {
+        $post = get_post( $id );
+
+        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        if ( LayoutStatus::ARCHIVED !== $post->post_status ) {
+            throw new \InvalidArgumentException( __( 'Archive this layout before deleting it.', 'yaycheckout' ) );
+        }
+
+        if ( $this->is_active( $id ) ) {
+            throw new \InvalidArgumentException( __( 'Deactivate this layout before deleting it.', 'yaycheckout' ) );
+        }
+
+        if ( ! wp_delete_post( $id, true ) ) {
+            throw new \RuntimeException( sprintf( 'Layout %d could not be deleted.', $id ) );
+        }
+    }
+
+    /**
      * The active ids the current plan allows, oldest first.
      * Accepts a bare int (pre-Pro storage). On Free, keeps only the last id so
      * a site dropping back from Pro stays on the same layout and deactivating

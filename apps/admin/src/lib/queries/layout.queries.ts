@@ -5,6 +5,7 @@ import {
   archiveLayout,
   createLayoutDraft,
   deactivateLayout,
+  deleteLayout,
   duplicateLayout,
   getLayout,
   getLayoutCounts,
@@ -119,6 +120,24 @@ export function useArchiveLayoutMutation() {
     mutationFn: archiveLayout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+    },
+  });
+}
+
+/**
+ * Every list and the counts, but not `all`: the modal's detail query for
+ * the deleted id is still mounted here, and refetching (or removing) it
+ * would fire a 404. Nothing reads that id again; it ages out of the cache.
+ */
+export function useDeleteLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'delete'],
+    mutationFn: deleteLayout,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
     },
   });
 }

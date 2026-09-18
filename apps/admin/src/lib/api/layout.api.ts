@@ -87,6 +87,10 @@ export async function duplicateLayout(id: number): Promise<Layout> {
   return parseLayout(await api.post(`layouts/${id}/duplicate`).json());
 }
 
+export async function deleteLayout(id: number): Promise<void> {
+  await api.delete(`layouts/${id}`);
+}
+
 export type CreateLayoutDraftPayload =
   { name: string; source: 'blank' } | { name: string; source: 'library'; templateSlug: string };
 

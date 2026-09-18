@@ -59,9 +59,11 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/counts` | GET | per-tab totals: `listed` (everything not archived), `archived`, and store-wide `active` |
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
+| `yaycheckout/v1/layouts/{id}` | DELETE | permanent delete with revisions and meta; archived, non-active layouts only (400 otherwise) |
 | `yaycheckout/v1/layouts/{id}/publish` | POST | status → `publish`; a layout dated in the future goes live now, its date moved to now |
 | `yaycheckout/v1/layouts/{id}/activate` | POST | publish first unless `post_status` is already `publish`, then add to the active set |
 | `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; status untouched |
+| `yaycheckout/v1/layouts/{id}/archive` | POST | move to the archive (trash), deactivating it first if it was active |
 | `yaycheckout/v1/settings` | GET/POST | envelope `{ settings, updated_at }`; POST merges over stored settings, strips unknown keys, rejects wrong types/enum values with 400 |
 | `yaycheckout/v1/mark-reviewed` | POST | review prompt dismissed |
 
@@ -82,9 +84,11 @@ src/
   pages/
     404.tsx  500.tsx    error pages
     layouts/            LayoutsPage (queries, filters, modals)
-      LayoutsPage.tsx   list with pagination, search, status tabs; Edit/Publish/Set active/Deactivate real; Health/Preview/Restore/Delete placeholder DOM
+      LayoutsPage.tsx   list with pagination, search, status tabs; Edit/Publish/Set active/Deactivate/Archive/Delete for good real; Health/Preview/Restore placeholder DOM
       SetActiveModal.tsx    Set active modal (real)
       DeactivateModal.tsx   Deactivate modal (real)
+      ArchiveModal.tsx      Archive modal (real)
+      DeleteModal.tsx       Delete-for-good modal: typed DELETE gate (real)
       new-layout/       NewLayoutModal, SourceStep, LibraryStep, NameField
     settings/           one form across tabs, Save in the panel footer, unsaved-changes guard;
                         settings-sub-menus.ts is the tab list shared with router.tsx
