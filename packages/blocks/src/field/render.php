@@ -35,24 +35,12 @@ if ( '' === $yaycheckout_key ) {
 
 $yaycheckout_wrapper = get_block_wrapper_attributes( [ 'class' => 'yaycheckout-field form-row' ] );
 
-// The classes checkout.js binds its refresh handlers to; without them a country or postcode change never updates shipping and totals.
-$yaycheckout_classes = [ 'form-row-wide' ];
-
-if ( preg_match( '/^(billing|shipping)_/', $yaycheckout_key ) ) {
-    $yaycheckout_classes[] = 'address-field';
-}
-
-if ( 'country' === $yaycheckout_type ) {
-    $yaycheckout_classes[] = 'update_totals_on_change';
-}
-
 if ( function_exists( 'woocommerce_form_field' ) ) {
     echo '<div ' . $yaycheckout_wrapper . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
     woocommerce_form_field(
         $yaycheckout_key,
         [
             'type'         => $yaycheckout_type,
-            'class'        => $yaycheckout_classes,
             'label'        => $yaycheckout_label,
             'required'     => $yaycheckout_required,
             'placeholder'  => $yaycheckout_placeholder,

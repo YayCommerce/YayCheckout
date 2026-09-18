@@ -2,6 +2,7 @@
 namespace YayCheckout\Repositories;
 
 use YayCheckout\Enums\LayoutStatus;
+use YayCheckout\Helpers\BlockMarkup;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Support\Plan;
@@ -350,23 +351,21 @@ class LayoutRepository {
 
     /**
      * Block markup for a new layout: contact, billing, shipping, order review.
-     * Built with serialize_blocks() rather than a literal so attribute JSON is
-     * escaped the way the editor expects.
      *
      * The address keys mirror packages/blocks/src/shared/address-fields.ts,
      * the editor's field picker; keep the two in step.
      */
     public static function default_markup(): string {
-        return serialize_blocks(
+        return BlockMarkup::serialize(
             [
-                self::block(
+                BlockMarkup::block(
                     'yaycheckout/checkout',
                     [],
                     [
-                        self::block( 'yaycheckout/contact' ),
-                        self::block( 'yaycheckout/billing', [], self::address_field_blocks( 'billing' ) ),
-                        self::block( 'yaycheckout/shipping', [], self::address_field_blocks( 'shipping' ) ),
-                        self::block( 'yaycheckout/order-review' ),
+                        BlockMarkup::block( 'yaycheckout/contact' ),
+                        BlockMarkup::block( 'yaycheckout/billing', [], self::address_field_blocks( 'billing' ) ),
+                        BlockMarkup::block( 'yaycheckout/shipping', [], self::address_field_blocks( 'shipping' ) ),
+                        BlockMarkup::block( 'yaycheckout/order-review' ),
                     ]
                 ),
             ]
@@ -390,7 +389,7 @@ class LayoutRepository {
         $blocks = [];
 
         foreach ( $fields as $suffix => [ $type, $label ] ) {
-            $blocks[] = self::block(
+            $blocks[] = BlockMarkup::block(
                 'yaycheckout/field',
                 [
                     'fieldKey' => $prefix . '_' . $suffix,
@@ -402,21 +401,6 @@ class LayoutRepository {
         }
 
         return $blocks;
-    }
-
-    /**
-     * A parsed-block array in the shape serialize_blocks() takes.
-     *
-     * @param array[] $inner_blocks
-     */
-    private static function block( string $name, array $attrs = [], array $inner_blocks = [] ): array {
-        return [
-            'blockName'    => $name,
-            'attrs'        => $attrs,
-            'innerBlocks'  => $inner_blocks,
-            'innerHTML'    => '',
-            'innerContent' => array_fill( 0, count( $inner_blocks ), null ),
-        ];
     }
 
     /**
