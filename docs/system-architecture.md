@@ -7,11 +7,11 @@ How YayCheckout is put together, and why. `code-standards.md` covers conventions
 ```
 WordPress admin                          Storefront
   │                                        │
-  ├─ React SPA (apps/admin)                └─ published snapshot → blocks render
-  │    ├─ core wp/v2  ──► draft (post_content)
+  ├─ React SPA (apps/admin)                └─ published layout → blocks render
+  │    ├─ core wp/v2  ──► post_content
   │    └─ yaycheckout/v1 ──► publish, list
   │
-  └─ Block editor (packages/blocks) ──► draft
+  └─ Block editor (packages/blocks) ──► post_content
 ```
 
 Three build outputs, all under `assets/dist/`: the admin SPA (Vite), the editor blocks (`@wordpress/scripts`), and PHP that is shipped as-is.
@@ -20,36 +20,11 @@ Three build outputs, all under `assets/dist/`: the admin SPA (Vite), the editor 
 
 Edit on a layout row opens core's `post.php` editor in a modal iframe with `?yc-embed=1`. `Engine\Admin\LayoutEditorEmbed` sees the flag, adds a body class and prints CSS that hides the admin bar, admin menu, footer and the editor's own back button, and removes the admin-bar offset so the editor skeleton fills the frame. It also tags the page's REST calls with an `X-YayCheckout-Embed` header, and `Controllers/LayoutCoreRestController::delete_item_permissions_check()` refuses delete for that header or for the embed page request itself (the editor preloads its permissions server-side). Gutenberg reads that answer to decide whether to render Move to trash, so the embed has none: after a trash core hard-navigates the frame to `edit.php`, a screen the modal cannot host. Nothing else about Gutenberg or saving changes — drafts still go through core's `wp/v2` — and closing the modal is the only exit, so the list refetches when it closes.
 
-## A layout carries two copies of its markup
+## A layout is one post
 
-The single most important thing to understand.
+`post_content` holds the block markup; `post_status` says whether shoppers may see it. There is no second copy: publishing is a status change, the same one the editor's Publish button and cron's `publish_future_post` make. `LayoutRepository::publish()` sets `publish` through `wp_update_post()` and, for a layout dated ahead, moves the date to now (`wp_insert_post()` would otherwise turn `publish` straight back into `future`).
 
-| Where | What | Read by |
-|---|---|---|
-| `post_content` | working draft | editor, nonce-signed previews |
-| `_yaycheckout_published` | published snapshot | the renderer, i.e. customers |
-
-WordPress core cannot hold two versions of one post, so publishing copies draft → snapshot. Nothing else writes the snapshot, and **a customer request never reads the draft**.
-
-This is why every storage key is a constant on `Models\Layout`: a mistyped key silently reads or writes the wrong copy — the renderer serving an unpublished draft, or a publish landing nowhere — with no error and no failing test.
-
-### Publishing is an ordered sequence
-
-`LayoutRepository::publish()`:
-
-1. Read the draft.
-2. `DerivedCacheBuilder::build()` — **pure, in memory**. Unusable markup throws here, before anything is written, so the previously published layout keeps serving.
-3. Save a WP revision, capturing its ID.
-4. Write `_yaycheckout_derived`.
-5. Write `_yaycheckout_published` and `_yaycheckout_published_revision`.
-6. Write `_yaycheckout_published_at` **last, as the commit marker**.
-
-The order means a failure part-way through leaves the old snapshot intact rather than a half-updated one. WordPress offers no atomicity across meta writes, so ordering is the only tool available.
-
-Two subtleties worth keeping:
-
-- `wp_save_post_revision()` returns `null` when content is unchanged, which is the normal case when republishing an untouched draft. The previous revision ID must be kept, not cleared — orders point at it.
-- Layout revisions are exempt from `WP_POST_REVISIONS` pruning (`wp_revisions_to_keep` returns `-1` for this post type). Orders record the layout revision they were placed on, so pruning would erase that history for exactly the old orders where support needs it.
+Every storage key is a constant on `Models\Layout` so a mistyped key is a fatal, not a silent read of nothing.
 
 ## Storage
 
@@ -57,17 +32,11 @@ No custom tables in 1.x.
 
 | Key | Kind | Written by |
 |---|---|---|
-| `post_content` | post field | core REST (draft) |
-| `_yaycheckout_published` | meta | publish |
-| `_yaycheckout_derived` | meta | publish — fields, extra_fields, slots, order_modes |
-| `_yaycheckout_published_at` | meta | publish, last |
-| `_yaycheckout_published_revision` | meta | publish |
+| `post_content` | post field | core REST (the editor) |
 | `yaycheckout_active_layout` | option | `set_active()` / `deactivate()` — an ordered id set; Free replaces it, Pro appends, and `active()` serves the last id |
 | `yaycheckout_settings` | option | `SettingsRepository::save()` — the sanitized settings array |
 | `yaycheckout_settings_updated_at` | option | `SettingsRepository::save()` — ISO 8601 UTC timestamp of last save |
 | `yaycheckout_reviewed` | option | `SettingsRepository::mark_reviewed()` — boolean, suppresses the review prompt |
-
-The four derived caches live in one `_yaycheckout_derived` array rather than four keys. Fewer writes means a smaller window in which new derived data sits against an old snapshot, and one `get_post_meta` on the customer path instead of four.
 
 ## Settings are a schema, not a defaults array
 
@@ -95,25 +64,23 @@ Both check `manage_woocommerce`. Core does so because `LayoutPostType` maps ever
 
 Reads need one more step. `WP_REST_Posts_Controller::check_read_permission()` returns true for any post whose status is `publish` before it consults the post type's capabilities, so core alone would answer a logged-out `GET wp/v2/yay_checkout_layout/{id}` (and the collection) with the layout's title, author id, dates and draft markup. `Controllers/LayoutCoreRestController` is registered as the post type's `rest_controller_class` and requires `manage_woocommerce` in `check_read_permission()` and `get_items_permissions_check()`, so both surfaces answer 401 to the same requests. Revisions and autosaves already go through `edit_post`; `/wp/v2/search` indexes `public` post types only. `publish` itself stays: `private` would fight the editor's Publish button, `edit.php` and cron's `publish_future_post`.
 
-The wire `status` **is** `post_status` (`draft`, `pending`, `future`, `publish`, `trash`), owned by `Enums/LayoutStatus` and mirrored by the SPA's zod enum. There is no friendlier vocabulary to translate: `publish` is trustworthy because two mechanisms keep it so — `Engine/LayoutPublishSync` writes the snapshot on any transition **into** `publish` (editor Publish button, cron, quick edit, WP-CLI), skipping the transition `LayoutRepository::publish()` makes itself; and `Engine/LayoutPublishGuard` dry-runs `DerivedCacheBuilder::build()` on `rest_pre_insert_yay_checkout_layout` when a `wp/v2` request moves a layout to `publish` or `future`, answering 400 `yaycheckout_layout_markup_invalid` before core saves. The root block is not locked (a deleted Checkout block can be re-inserted), so the editor itself can reach this 400 by publishing without one. Non-REST paths can still reach `publish()`'s throw — the row then reads `publish` while the previous snapshot keeps serving, and the failure is logged.
+The wire `status` **is** `post_status` (`draft`, `pending`, `future`, `publish`, `trash`), owned by `Enums/LayoutStatus` and mirrored by the SPA's zod enum. There is no friendlier vocabulary to translate, and nothing sits beside the status: `publish` in `post_status` is the whole of "published". `published_at` on the wire is `post_date_gmt` while the status is `publish`, null otherwise.
 
 ### Scheduled layouts
 
 Scheduling is core's: the editor sets `future` and a `post_date`, and WP cron's `publish_future_post` flips the status when the date arrives. Two plugin rules sit on top:
 
-- **Cron only changes the status.** `Engine/LayoutPublishSync` (above) turns that transition into a snapshot; `LayoutRepository::is_publishing()` keeps it from re-entering when `publish()` flips the status itself. A second cron run finds the status already `publish` and does nothing. Cron runs on traffic unless the host triggers it externally, so a quiet store publishes late — a WordPress property, not ours.
-- **Publishing a scheduled layout overrides the schedule.** Both `/publish` and `/activate` (whose modal reads "Publish & activate") go through `publish()`, which moves the date to now whenever `post_date_gmt` is ahead — a pending layout can carry a future date too: `wp_insert_post()` would otherwise turn `publish` back into `future`, leaving a layout live for shoppers while the row still read "Scheduled". Core's own transition handling clears the cron event. `activate()` publishes unless `post_status` is already `publish` — the same rule the modal uses — so a rescheduled or pending layout that was published before has its current draft published. It also publishes a `publish` row that has no snapshot (the logged non-REST corner above), so an active layout always has something to serve.
+- **Cron only changes the status, which is all publishing is.** A second cron run finds the status already `publish` and does nothing. Cron runs on traffic unless the host triggers it externally, so a quiet store publishes late — a WordPress property, not ours.
+- **Publishing a scheduled layout overrides the schedule.** Both `/publish` and `/activate` (whose modal reads "Publish & activate") go through `publish()`, which moves the date to now whenever `post_date_gmt` is ahead — a pending layout can carry a future date too: `wp_insert_post()` would otherwise turn `publish` back into `future`, leaving a layout live for shoppers while the row still read "Scheduled". Core's own transition handling clears the cron event. `activate()` publishes unless `post_status` is already `publish` — the same rule the modal uses — so a rescheduled or pending layout goes live as it is.
 - **Activating an archived layout is refused.** Publishing would silently restore it from the trash and, on Free, push the layout count past the limit. Restoring is the merchant's decision, so `activate()` throws rather than deciding for them.
 - **Trashing or deleting the active layout is refused.** The mirror rule: `Engine/LayoutActiveGuard` denies the `delete_post` capability for a layout in the active set (so the editor hides Move to trash, `wp/v2` and wp-admin answer 403) and short-circuits `pre_trash_post` / `pre_delete_post` for direct calls that check no capability. Deactivate first; the store never silently loses its checkout.
-- **Moving the active layout back to draft or pending deactivates it.** The same guard listens to `transition_post_status`: a status shoppers may not see drops the layout from the active set, so the store falls back rather than serving a layout its own row calls Draft. `future` keeps it active — the current snapshot serves until the scheduled date replaces it.
+- **Moving the active layout back to draft or pending deactivates it.** The same guard listens to `transition_post_status`: a status shoppers may not see drops the layout from the active set, so the store falls back rather than serving a layout its own row calls Draft. `future` keeps it active — the current content serves until the scheduled date replaces it.
 
 ## Blocks are dynamic
 
 `save()` returns `null`; all markup comes from `render.php`. Published layouts are stored as markup and re-rendered on every request, so a renamed attribute is absorbed by a default in the render callback. Static save output would instead need a block deprecation for every attribute rename, and existing merchant content would show as invalid.
 
 `block.json` has one home: `packages/blocks/src/{block}/`. `@wordpress/scripts` copies it and `render.php` into `assets/dist/blocks/{block}/`, and `BlockRegistry` registers that built directory — so script dependencies come from the generated `index.asset.php` rather than being hand-listed in PHP.
-
-Blocks contribute to the derived caches through a filtered map (`DerivedCacheBuilder::FILTER_CONTRIBUTORS`), so Pro can add blocks without changing core.
 
 ## Free and Pro
 

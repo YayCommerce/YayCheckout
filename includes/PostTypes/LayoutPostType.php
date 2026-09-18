@@ -17,7 +17,6 @@ class LayoutPostType {
 
     protected function __construct() {
         add_action( 'init', [ $this, 'register' ] );
-        add_filter( 'wp_revisions_to_keep', [ $this, 'keep_all_revisions' ], 10, 2 );
     }
 
     public function register() {
@@ -72,17 +71,5 @@ class LayoutPostType {
                 ],
             ]
         );
-    }
-
-    /**
-     * Keeps every revision for layouts. Orders will reference a layout revision id; pruning would silently lose
-     * that history months later.
-     */
-    public function keep_all_revisions( $num, $post ) {
-        if ( $post instanceof \WP_Post && Layout::POST_TYPE === $post->post_type ) {
-            return -1;
-        }
-
-        return $num;
     }
 }

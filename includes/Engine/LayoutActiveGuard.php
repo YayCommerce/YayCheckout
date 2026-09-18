@@ -28,7 +28,7 @@ class LayoutActiveGuard {
         add_action( 'transition_post_status', [ $this, 'deactivate_when_unpublished' ], 10, 3 );
     }
 
-    /** A scheduled layout stays active: its snapshot still serves until the new date replaces it. */
+    /** A scheduled layout stays active: its current content serves until the new date replaces it. */
     public function deactivate_when_unpublished( $new_status, $old_status, $post ): void {
         unset( $old_status );
 

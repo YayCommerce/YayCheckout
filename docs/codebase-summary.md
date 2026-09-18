@@ -14,7 +14,6 @@ apps/admin/              React settings SPA (Vite)      → assets/dist/admin/
 packages/blocks/         editor blocks (@wordpress/scripts) → assets/dist/blocks/
 assets/dist/             build output, gitignored
 scripts/run.sh           dev / build / release
-tests/                   PHPUnit integration suites on the WordPress test library (`composer test`)
 docs/                    this
 plans/                   implementation plans (gitignored)
 ```
@@ -29,14 +28,13 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `PostTypes/` | `LayoutPostType` | registration only: caps, template, revision policy |
 | `Models/` | `Layout`, `LayoutQuery`, `Settings` | `Layout` and `Settings` are dumb entities; **every storage key constant lives here**; zero WP calls. `Settings` owns `schema()` (the single description of every setting), `from_option()` (read projection through the schema), and `sanitize()` (strict type and enum validation, unknown keys stripped). `LayoutQuery` is immutable value object for filtered/paginated queries. |
 | `Repositories/` | `LayoutRepository`, `SettingsRepository` | all storage access: layouts (owns the publish sequence and the active-layout set — Free replaces, Pro appends, last id serves), settings (get/save/is_reviewed/mark_reviewed) |
-| `Services/` | `DerivedCacheBuilder` | pure markup → derived caches |
 | `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue` | routing, validation, permissions; core's wp/v2 layout controller with reads gated on `manage_woocommerce` and delete withheld from the embedded editor; template catalogue (placeholder, static list) |
 | `Blocks/` | `BlockRegistry` | registers built block directories |
 | `Support/` | `Plan` | Free/Pro flag derived from provider boot; owns the layout limit and its message |
 | `Pro/` | `ProServiceProvider` | **absent from the Free build** |
 | `Helpers/` | `IntegrationsHelper`, `LocalizeHelper`, `Logger` | YayBoost/YayLoyalty detection (via defined constants + filter), SPA bootstrap payload, WooCommerce logging |
 | `Renderer/` | `CheckoutScripts` | WooCommerce storefront hooks; today only force-enqueueing checkout scripts when `advanced.force_enqueue_checkout_scripts` is on |
-| `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutActiveGuard`, `LayoutPublishGuard`, `LayoutPublishSync`, `Admin/` (Settings, LayoutEditorEmbed), `Register/` (RegisterFacade, RegisterDev, RegisterProd, ScriptName) | wiring, asset registration, the layout cap, active-set integrity (no trashing the active layout; draft/pending deactivates), markup check on REST publish, snapshot on any transition into publish, embedded-editor chrome and REST tagging, dev/prod asset registration |
+| `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutActiveGuard`, `Admin/` (Settings, LayoutEditorEmbed), `Register/` (RegisterFacade, RegisterDev, RegisterProd, ScriptName) | wiring, asset registration, the layout cap, active-set integrity (no trashing the active layout; draft/pending deactivates), embedded-editor chrome and REST tagging, dev/prod asset registration |
 | `Utils/` | `SingletonTrait` | |
 | `Fallback.php` | duplicate-guard admin notice | shown when another YayCheckout copy is installed; wired in yaycheckout.php |
 | `I18n.php` | textdomain loader | loaded via plugins_loaded, handles i18n with locale detection |
@@ -46,7 +44,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 ### Entry points
 
 - `yaycheckout.php` → `plugin_init()` on `plugins_loaded`, after a WooCommerce check; also registers `I18n::load_plugin_textdomain()` on `plugins_loaded`
-- `YayCheckout::__construct()` boots in order: `boot_pro()`, `RestAPI`, `RegisterFacade`, `Admin\Settings`, `BlockRegistry`, `LayoutPostType`, `LayoutCapGuard`, `LayoutActiveGuard`, `LayoutPublishGuard`, `LayoutPublishSync`, `Admin\LayoutEditorEmbed`, `Renderer\CheckoutScripts`
+- `YayCheckout::__construct()` boots in order: `boot_pro()`, `RestAPI`, `RegisterFacade`, `Admin\Settings`, `BlockRegistry`, `LayoutPostType`, `LayoutCapGuard`, `LayoutActiveGuard`, `Admin\LayoutEditorEmbed`, `Renderer\CheckoutScripts`
 - `Engine\RestAPI` instantiates controllers on `rest_api_init`
 - `Engine\Admin\Settings` enqueues the SPA and localises `yayCheckoutMeta` / `yayCheckoutAdmin`, gated on the admin-shell hook suffix
 - `Engine\Register\RegisterFacade` branches to RegisterDev or RegisterProd on `init`, conditionally based on `YAYCHECKOUT_IS_DEVELOPMENT`
@@ -61,9 +59,9 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/counts` | GET | per-tab totals: `listed` (everything not archived), `archived`, and store-wide `active` |
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
-| `yaycheckout/v1/layouts/{id}/publish` | POST | draft → snapshot; a layout dated in the future goes live now, its date moved to now |
-| `yaycheckout/v1/layouts/{id}/activate` | POST | publish first unless `post_status` is already `publish` with a snapshot, then add to the active set |
-| `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; snapshot and status untouched |
+| `yaycheckout/v1/layouts/{id}/publish` | POST | status → `publish`; a layout dated in the future goes live now, its date moved to now |
+| `yaycheckout/v1/layouts/{id}/activate` | POST | publish first unless `post_status` is already `publish`, then add to the active set |
+| `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; status untouched |
 | `yaycheckout/v1/settings` | GET/POST | envelope `{ settings, updated_at }`; POST merges over stored settings, strips unknown keys, rejects wrong types/enum values with 400 |
 | `yaycheckout/v1/mark-reviewed` | POST | review prompt dismissed |
 
@@ -139,7 +137,7 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 
 ## Where to start
 
-- Understanding storage → `includes/Models/Layout.php`, then `LayoutRepository::publish()`
+- Understanding storage → `includes/Models/Layout.php`, then `LayoutRepository::publish()` and `activate()`
 - Adding a setting → `Models/Settings::schema()`, then `settings.schema.ts`, then a form field in `pages/settings/components/`
 - Adding an endpoint → `LayoutRestController`, then the `lib/` triplet
 - Adding a block → `packages/blocks/src/`, then `BlockRegistry`
@@ -147,7 +145,7 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 
 ## Not yet built
 
-Only layout status and publishing are covered by tests. `Renderer/` holds only the force-enqueue hook — the plugin does not yet render layouts into WooCommerce's checkout, so published layouts are stored and rendered by `do_blocks()` but not wired into the storefront. Safe mode, telemetry opt-in and preview-link lifetime are stored settings with no consumer yet (telemetry data is not sent; preview links are not generated). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots.
+`Renderer/` holds only the force-enqueue hook — the plugin does not yet render layouts into WooCommerce's checkout, so published layouts are stored but not rendered into the storefront. Safe mode, telemetry opt-in and preview-link lifetime are stored settings with no consumer yet (telemetry data is not sent; preview links are not generated). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots.
 
 `Controllers/LayoutTemplateCatalogue` is a placeholder: a fixed template library, no database — repoint it at a real template source once one exists. Row actions Health, Preview, Restore and Delete render placeholder DOM with correct states (enabled/disabled/hidden, labels) but have no backend; Set active / Deactivate are wired to `/activate` and `/deactivate`; Edit, Publish, Search and pagination are fully functional.
 

@@ -425,7 +425,7 @@ function LayoutsTable({
           {/* TODO: Assignment column (Pro) once LayoutSummary carries an `assignment` field. */}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
           <TableHead>{__('Active', 'yaycheckout')}</TableHead>
-          <TableHead>{__('Last published', 'yaycheckout')}</TableHead>
+          <TableHead>{__('Published', 'yaycheckout')}</TableHead>
           <TableHead>{__('Actions', 'yaycheckout')}</TableHead>
         </TableRow>
       </TableHeader>
@@ -452,13 +452,7 @@ function statusBadge(layout: LayoutSummary) {
   }
 
   if (layout.status === 'publish') {
-    return (
-      <Badge variant="success">
-        {layout.hasUnpublishedChanges
-          ? __('Published · unpublished changes', 'yaycheckout')
-          : __('Published', 'yaycheckout')}
-      </Badge>
-    );
+    return <Badge variant="success">{__('Published', 'yaycheckout')}</Badge>;
   }
 
   if (layout.status === 'future') {
@@ -555,15 +549,13 @@ function LayoutRowActions({
     );
   }
 
-  const canPublish = layout.hasUnpublishedChanges;
-
   return (
     <div className="flex items-center gap-2">
       <Button size="sm" variant="outline" onClick={() => onEditLayout(layout.id)}>
         {__('Edit', 'yaycheckout')}
       </Button>
       <Button size="sm" variant="outline">
-        {canPublish ? __('Preview draft', 'yaycheckout') : __('Preview', 'yaycheckout')}
+        {__('Preview', 'yaycheckout')}
       </Button>
       {/* Disabled rather than hidden so the action column keeps its shape. */}
       <Button size="sm" variant="outline" disabled={layout.isActive} onClick={() => onSetActive(layout)}>

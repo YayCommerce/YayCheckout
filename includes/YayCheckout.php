@@ -20,8 +20,6 @@ class YayCheckout {
         \YayCheckout\PostTypes\LayoutPostType::get_instance();
         \YayCheckout\Engine\LayoutCapGuard::get_instance();
         \YayCheckout\Engine\LayoutActiveGuard::get_instance();
-        \YayCheckout\Engine\LayoutPublishGuard::get_instance();
-        \YayCheckout\Engine\LayoutPublishSync::get_instance();
         \YayCheckout\Engine\Admin\LayoutEditorEmbed::get_instance();
         \YayCheckout\Renderer\CheckoutScripts::get_instance();
     }
