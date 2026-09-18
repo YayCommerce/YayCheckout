@@ -17,7 +17,6 @@ class LayoutPostType {
 
     protected function __construct() {
         add_action( 'init', [ $this, 'register' ] );
-        add_filter( 'wp_revisions_to_keep', [ $this, 'keep_all_revisions' ], 10, 2 );
     }
 
     public function register() {
@@ -62,24 +61,15 @@ class LayoutPostType {
                     'create_posts'           => 'manage_woocommerce',
                 ],
 
-                // template_lock governs the top level only; inner locking is the checkout block's templateLock.
+                /*
+                 * Seed a Checkout root on new layouts. Inserting another one
+                 * after delete is allowed (no template_lock); JS/PHP still
+                 * permit only one Checkout at the document root.
+                 */
                 'template'              => [
                     [ 'yaycheckout/checkout' ],
                 ],
-                'template_lock'         => 'all',
             ]
         );
-    }
-
-    /**
-     * Keeps every revision for layouts. Orders will reference a layout revision id; pruning would silently lose
-     * that history months later.
-     */
-    public function keep_all_revisions( $num, $post ) {
-        if ( $post instanceof \WP_Post && Layout::POST_TYPE === $post->post_type ) {
-            return -1;
-        }
-
-        return $num;
     }
 }

@@ -1,23 +1,6 @@
 import { z } from 'zod';
 import { __ } from '@wordpress/i18n';
 
-// PHP encodes an empty associative array as `[]`, not `{}`.
-const phpMap = z.preprocess(
-  (value) => (Array.isArray(value) && value.length === 0 ? {} : value),
-  z.record(z.string(), z.unknown()),
-);
-
-/** Mirrors DerivedCacheBuilder's output; empty until first published. */
-export const layoutDerivedSchema = z.preprocess(
-  (value) => (Array.isArray(value) && value.length === 0 ? {} : value),
-  z.object({
-    fields: phpMap.optional(),
-    extra_fields: phpMap.optional(),
-    slots: z.array(z.string()).optional(),
-    order_modes: z.array(z.string()).optional(),
-  }),
-);
-
 /** Mirrors LayoutStatus::all() in PHP: WordPress post_status values, not friendlier names. */
 export const layoutStatusSchema = z.enum(['draft', 'pending', 'future', 'publish', 'trash']);
 
@@ -30,9 +13,8 @@ const layoutSummaryWireFields = {
   id: z.number(),
   title: z.string(),
   status: layoutStatusSchema,
-  has_unpublished_changes: z.boolean(),
   is_active: z.boolean(),
-  /** ISO 8601 UTC; null until first published. */
+  /** ISO 8601 UTC while status is 'publish'; null otherwise. */
   published_at: z.string().nullable(),
   /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduled_at: z.string().nullable(),
@@ -46,11 +28,7 @@ export const layoutSummaryWireSchema = z.object(layoutSummaryWireFields).strict(
 export const layoutWireSchema = z
   .object({
     ...layoutSummaryWireFields,
-    draft: z.string(),
-    /** Empty until first published. */
-    snapshot: z.string(),
-    published_revision: z.number().nullable(),
-    derived: layoutDerivedSchema,
+    content: z.string(),
   })
   .strict();
 
@@ -91,20 +69,15 @@ export type LayoutSummary = {
   id: number;
   title: string;
   status: LayoutStatus;
-  hasUnpublishedChanges: boolean;
   isActive: boolean;
-  /** ISO 8601 UTC; null until first published. Format with lib/helpers/date.helper. */
+  /** ISO 8601 UTC while status is 'publish'; null otherwise. Format with lib/helpers/date.helper. */
   publishedAt: string | null;
   /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduledAt: string | null;
 };
 
 export type Layout = LayoutSummary & {
-  draft: string;
-  /** Empty until first published. */
-  snapshot: string;
-  publishedRevision: number | null;
-  derived: z.infer<typeof layoutDerivedSchema>;
+  content: string;
 };
 
 export type LayoutListResponse = {

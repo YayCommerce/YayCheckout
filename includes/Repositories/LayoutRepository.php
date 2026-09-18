@@ -4,25 +4,17 @@ namespace YayCheckout\Repositories;
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
-use YayCheckout\Services\DerivedCacheBuilder;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * All layout storage access; the draft/snapshot rules have one owner.
+ * All layout storage access; publishing and the active set have one owner.
  */
 class LayoutRepository {
 
     /** Layouts the Free edition may hold. */
     public const FREE_LIMIT = 3;
-
-    private static bool $publishing = false;
-
-    /** True while publish() runs: its own status flip fires the transition LayoutPublishSync listens to. */
-    public static function is_publishing(): bool {
-        return self::$publishing;
-    }
 
     public function find( int $id ): ?Layout {
         $post = get_post( $id );
@@ -152,31 +144,11 @@ class LayoutRepository {
     }
 
     /**
-     * Copy the working draft to the published snapshot.
+     * Publishes a layout: a post_status change, as the editor's own button does.
      *
-     * Flagged so LayoutPublishSync ignores the status flip this itself makes;
-     * finally, so a throw cannot leave later transitions silently unsnapshotted.
-     *
-     * @throws \InvalidArgumentException When the layout is missing or its markup is unusable.
+     * @throws \InvalidArgumentException When the layout is missing or archived.
      */
     public function publish( int $id ): Layout {
-        self::$publishing = true;
-
-        try {
-            return $this->write_snapshot( $id );
-        } finally {
-            self::$publishing = false;
-        }
-    }
-
-    /**
-     * Write order is the safety net: derived caches build in memory first so
-     * bad markup throws before anything is stored, and the published-at
-     * marker is written last so a partial failure keeps the old snapshot live.
-     *
-     * @throws \InvalidArgumentException When the layout is missing or its markup is unusable.
-     */
-    private function write_snapshot( int $id ): Layout {
         $post = get_post( $id );
 
         if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
@@ -189,23 +161,6 @@ class LayoutRepository {
                 __( 'Restore this layout from the archive before publishing it.', 'yaycheckout' )
             );
         }
-
-        $markup = (string) $post->post_content;
-
-        $derived = DerivedCacheBuilder::build( $markup );
-
-        $revision_id = wp_save_post_revision( $id );
-
-        update_post_meta( $id, Layout::META_DERIVED, $derived );
-        update_post_meta( $id, Layout::META_PUBLISHED, $markup );
-
-        // Null when content is unchanged since the last revision; keep the pointer orders rely on.
-        if ( $revision_id ) {
-            update_post_meta( $id, Layout::META_PUBLISHED_REVISION, (int) $revision_id );
-        }
-
-        // Commit marker; must stay the last meta write.
-        update_post_meta( $id, Layout::META_PUBLISHED_AT, current_time( 'mysql', true ) );
 
         if ( LayoutStatus::PUBLISHED !== $post->post_status ) {
             $update = [
@@ -228,10 +183,10 @@ class LayoutRepository {
     }
 
     /**
-     * Publishes the layout unless it already reads as published, then makes it
-     * active. Publish first so an active layout always has a snapshot to serve.
+     * Publishes the layout unless it already is, then makes it active, so an
+     * active layout is always one shoppers may see.
      *
-     * @throws \InvalidArgumentException When the layout is missing, archived, or its markup is unusable.
+     * @throws \InvalidArgumentException When the layout is missing or archived.
      */
     public function activate( int $id ): Layout {
         $layout = $this->find( $id );
@@ -248,8 +203,7 @@ class LayoutRepository {
         }
 
         // Scheduled and pending count too: activating overrides the schedule or review.
-        // A publish row with no snapshot (non-REST publish of unusable markup) must not go live empty.
-        if ( ! $layout->is_published() || '' === $layout->snapshot ) {
+        if ( ! $layout->is_published() ) {
             $this->publish( $id );
         }
 
@@ -350,8 +304,7 @@ class LayoutRepository {
     }
 
     /**
-     * Copies a layout's draft into a new layout. The draft only: inheriting a
-     * snapshot would put unpublished content live.
+     * Copies a layout's content into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -375,7 +328,7 @@ class LayoutRepository {
                     'post_status'  => LayoutStatus::DRAFT,
                     /* translators: %s: source layout title. */
                     'post_title'   => sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ),
-                    'post_content' => $source->draft,
+                    'post_content' => $source->content,
                 ]
             ),
             true

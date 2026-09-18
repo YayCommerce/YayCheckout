@@ -283,13 +283,12 @@ class LayoutRestController extends BaseRestController {
         try {
             return $this->layouts->publish( $id )->to_array();
         } catch ( \InvalidArgumentException $ex ) {
-            // Bad markup is the merchant's to fix: a 400 with the reason, not an opaque 500.
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
     }
 
     /**
-     * Makes a layout the one shoppers see, publishing its draft first.
+     * Makes a layout the one shoppers see, publishing it first.
      *
      * @return array|\WP_Error
      */
@@ -348,7 +347,7 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Copies a layout's draft into a new draft layout.
+     * Copies a layout's content into a new draft layout.
      *
      * @return array|\WP_Error
      */

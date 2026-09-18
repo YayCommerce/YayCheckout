@@ -20,6 +20,10 @@ class BlockRegistry {
     /** Relative to assets/dist/blocks/. */
     private const BLOCKS = [
         'checkout',
+        'contact',
+        'billing',
+        'shipping',
+        'field',
     ];
 
     protected function __construct() {
