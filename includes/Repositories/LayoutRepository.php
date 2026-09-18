@@ -250,10 +250,6 @@ class LayoutRepository {
             throw new \InvalidArgumentException( __( 'This layout is already archived.', 'yaycheckout' ) );
         }
 
-        // Before the trash: LayoutActiveGuard refuses wp_trash_post() on an
-        // active layout, and a direct caller may not have deactivated first.
-        $this->store_ids( array_diff( $this->active_ids(), [ $id ] ) );
-
         $trashed = wp_trash_post( $id );
 
         if ( ! $trashed instanceof \WP_Post ) {
