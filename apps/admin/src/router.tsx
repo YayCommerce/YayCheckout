@@ -6,6 +6,7 @@ import ErrorPage from './pages/500';
 import CompatibilityPage from './pages/compatibility/CompatibilityPage';
 import DesignPage from './pages/design/DesignPage';
 import LayoutsPage from './pages/layouts/LayoutsPage';
+import { SETTINGS_SUB_MENUS } from './pages/settings/settings-sub-menus';
 import SettingsPage from './pages/settings/SettingsPage';
 import ToolsPage from './pages/tools/ToolsPage';
 
@@ -63,4 +64,4 @@ export function getManagerRouter() {
   ]);
 }
 
-const settingSubMenus = ['general', 'emails', 'advanced'];
+const settingSubMenus: readonly string[] = SETTINGS_SUB_MENUS;

@@ -4,18 +4,20 @@ namespace YayCheckout\Enums;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Product lifecycle of a layout — the only status vocabulary REST and the
- * SPA speak. How each value is stored is LayoutPostStatus's concern.
- *
- * A constants class rather than a native enum: the plugin supports PHP 7.4.
+ * The one status vocabulary: WordPress post_status values, spoken by storage,
+ * REST and the SPA alike. Constants, not a native enum: PHP 7.4 support.
  */
 final class LayoutStatus {
 
     public const DRAFT     = 'draft';
     public const PENDING   = 'pending';
-    public const SCHEDULED = 'scheduled';
-    public const PUBLISHED = 'published';
-    public const ARCHIVED  = 'archived';
+    public const SCHEDULED = 'future';
+
+    /** Always carries a snapshot; see docs/system-architecture.md, "Two REST surfaces". */
+    public const PUBLISHED = 'publish';
+
+    /** WP cron empties trash after EMPTY_TRASH_DAYS, so archive is not indefinite. */
+    public const ARCHIVED = 'trash';
 
     /**
      * @return string[]
@@ -25,7 +27,7 @@ final class LayoutStatus {
     }
 
     /**
-     * The Layouts home tab: everything the merchant works with, not archived.
+     * The Layouts home tab: everything not archived.
      *
      * @return string[]
      */
@@ -33,10 +35,6 @@ final class LayoutStatus {
         return [ self::DRAFT, self::PENDING, self::SCHEDULED, self::PUBLISHED ];
     }
 
-    /**
-     * @param  mixed $value
-     * @return bool
-     */
     public static function is_valid( $value ): bool {
         return in_array( $value, self::all(), true );
     }

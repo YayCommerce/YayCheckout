@@ -1,38 +1,100 @@
 import { api } from '@/lib/api/api';
 import {
-  LayoutStatus,
+  Layout,
   layoutCountsResponseSchema,
-  layoutListResponseSchema,
-  layoutSchema,
+  LayoutListResponse,
+  layoutListResponseWireSchema,
+  LayoutStatus,
+  LayoutSummary,
+  LayoutSummaryWire,
+  LayoutWire,
+  layoutWireSchema,
 } from '@/lib/schema/layout.schema';
+
+// The only place wire snake_case meets app camelCase.
+
+function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
+  return {
+    id: wire.id,
+    title: wire.title,
+    status: wire.status,
+    hasUnpublishedChanges: wire.has_unpublished_changes,
+    isActive: wire.is_active,
+    publishedAt: wire.published_at,
+    scheduledAt: wire.scheduled_at,
+  };
+}
+
+function layoutFromWire(wire: LayoutWire): Layout {
+  return {
+    ...summaryFromWire(wire),
+    draft: wire.draft,
+    snapshot: wire.snapshot,
+    publishedRevision: wire.published_revision,
+    derived: wire.derived,
+  };
+}
+
+function parseLayout(payload: unknown): Layout {
+  return layoutFromWire(layoutWireSchema.parse(payload));
+}
 
 export type LayoutListParams = {
   status?: LayoutStatus[];
+  search?: string;
+  page?: number;
 };
 
-export async function getLayouts(params: LayoutListParams = {}) {
-  const searchParams = params.status?.length ? { status: params.status.join(',') } : undefined;
+export async function getLayouts(params: LayoutListParams = {}): Promise<LayoutListResponse> {
+  const searchParams: Record<string, string> = {};
+  if (params.status?.length) searchParams.status = params.status.join(',');
+  if (params.search) searchParams.search = params.search;
+  if (params.page != null) searchParams.page = String(params.page);
 
-  return layoutListResponseSchema.parse(
-    await api.get('layouts', searchParams ? { searchParams } : undefined).json(),
+  const wire = layoutListResponseWireSchema.parse(
+    await api.get('layouts', Object.keys(searchParams).length ? { searchParams } : undefined).json(),
   );
+
+  return {
+    items: wire.items.map(summaryFromWire),
+    total: wire.total,
+    page: wire.page,
+    totalPages: wire.total_pages,
+  };
 }
 
 export async function getLayoutCounts() {
   return layoutCountsResponseSchema.parse(await api.get('layouts/counts').json()).counts;
 }
 
-export async function getLayout(id: number) {
-  return layoutSchema.parse(await api.get(`layouts/${id}`).json());
+export async function getLayout(id: number): Promise<Layout> {
+  return parseLayout(await api.get(`layouts/${id}`).json());
 }
 
-export async function publishLayout(id: number) {
-  return layoutSchema.parse(await api.post(`layouts/${id}/publish`).json());
+export async function publishLayout(id: number): Promise<Layout> {
+  return parseLayout(await api.post(`layouts/${id}/publish`).json());
+}
+
+export async function activateLayout(id: number): Promise<Layout> {
+  return parseLayout(await api.post(`layouts/${id}/activate`).json());
+}
+
+export async function deactivateLayout(id: number): Promise<Layout> {
+  return parseLayout(await api.post(`layouts/${id}/deactivate`).json());
+}
+
+export async function duplicateLayout(id: number): Promise<Layout> {
+  return parseLayout(await api.post(`layouts/${id}/duplicate`).json());
 }
 
 export type CreateLayoutDraftPayload =
   { name: string; source: 'blank' } | { name: string; source: 'library'; templateSlug: string };
 
-export async function createLayoutDraft(payload: CreateLayoutDraftPayload) {
-  return layoutSchema.parse(await api.post('layouts', { json: payload }).json());
+export async function createLayoutDraft(payload: CreateLayoutDraftPayload): Promise<Layout> {
+  const json =
+    payload.source === 'library'
+      ? { name: payload.name, source: payload.source, template_slug: payload.templateSlug }
+      : { name: payload.name, source: payload.source };
+
+  return parseLayout(await api.post('layouts', { json }).json());
 }

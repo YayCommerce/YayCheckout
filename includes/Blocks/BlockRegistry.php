@@ -6,13 +6,10 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Registers YayCheckout editor blocks and their category.
+ * Registers the editor blocks and their category.
  *
- * Blocks are built by packages/blocks (@wordpress/scripts) into
- * assets/dist/blocks/<block>/, which holds block.json, index.js, render.php and
- * index.asset.php. register_block_type() reads that directory, so script
- * dependencies and the render callback come from build output rather than being
- * declared a second time in PHP.
+ * Registers from the built assets/dist/blocks/<block>/ directory, so deps and
+ * render callback come from build output, not a second PHP declaration.
  */
 class BlockRegistry {
 
@@ -20,7 +17,7 @@ class BlockRegistry {
 
     public const CATEGORY = 'yaycheckout';
 
-    /** Built block directories, relative to assets/dist/blocks/. */
+    /** Relative to assets/dist/blocks/. */
     private const BLOCKS = [
         'checkout',
         'contact',
@@ -38,11 +35,7 @@ class BlockRegistry {
         foreach ( self::BLOCKS as $block ) {
             $dir = YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/' . $block;
 
-            /*
-             * Build output is gitignored, so a source checkout that has not run
-             * `pnpm build:blocks` has no block.json here. Skip rather than let
-             * register_block_type() emit a doing_it_wrong notice on every request.
-             */
+            // Unbuilt checkout: skip rather than emit doing_it_wrong on every request.
             if ( ! file_exists( $dir . '/block.json' ) ) {
                 continue;
             }
@@ -51,10 +44,6 @@ class BlockRegistry {
         }
     }
 
-    /**
-     * @param  array $categories
-     * @return array
-     */
     public function register_category( $categories ) {
         return array_merge(
             [

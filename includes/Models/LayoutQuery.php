@@ -6,20 +6,21 @@ use YayCheckout\Enums\LayoutStatus;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * How to ask for layouts.
- *
- * Speaks LayoutStatus only, never WordPress post_status. Search and
- * pagination belong to the admin UI over the returned list, not here.
+ * How to ask for layouts. Speaks LayoutStatus, which is the post_status vocabulary.
  */
 class LayoutQuery {
 
-    /**
-     * @var string[]
-     */
+    /** Fixed server-side; not a request param. */
+    public const PER_PAGE = 10;
+
+    /** @var string[] */
     private array $statuses;
 
+    private string $search = '';
+
+    private int $page = 1;
+
     /**
-     * @param string[] $statuses
      * @throws \InvalidArgumentException When $statuses is empty or contains an unknown status.
      */
     private function __construct( array $statuses ) {
@@ -38,9 +39,21 @@ class LayoutQuery {
         $this->statuses = $unique;
     }
 
-    /**
-     * The Layouts home tab: everything the merchant works with, not archived.
-     */
+    public function with_search( string $search ): self {
+        $clone         = clone $this;
+        $clone->search = trim( $search );
+
+        return $clone;
+    }
+
+    public function with_pagination( int $page ): self {
+        $clone       = clone $this;
+        $clone->page = max( 1, $page );
+
+        return $clone;
+    }
+
+    /** The Layouts home tab: everything not archived. */
     public static function listed(): self {
         return new self( LayoutStatus::listed() );
     }
@@ -54,8 +67,6 @@ class LayoutQuery {
     }
 
     /**
-     * @param  string[] $statuses
-     * @return self
      * @throws \InvalidArgumentException When $statuses is empty or contains an unknown status.
      */
     public static function of_statuses( array $statuses ): self {
@@ -67,5 +78,17 @@ class LayoutQuery {
      */
     public function statuses(): array {
         return $this->statuses;
+    }
+
+    public function search(): string {
+        return $this->search;
+    }
+
+    public function page(): int {
+        return $this->page;
+    }
+
+    public function per_page(): int {
+        return self::PER_PAGE;
     }
 }

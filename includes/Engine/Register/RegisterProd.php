@@ -8,11 +8,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 use YayCheckout\Utils\SingletonTrait;
 use YayCheckout\Engine\Register\ScriptName;
 
-/** Register in Production Mode */
+/** Loads the admin app from the built assets. */
 class RegisterProd {
     use SingletonTrait;
 
-    /** Hooks Initialization */
     protected function __construct() {
         add_action( 'init', [ $this, 'register_all_scripts' ] );
     }

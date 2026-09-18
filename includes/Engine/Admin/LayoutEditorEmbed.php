@@ -6,29 +6,42 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Injects embed-mode CSS when post.php is loaded with ?yc-embed=1 inside the manager iframe.
- *
- * The React app opens the iframe; this class only detects the flag and hides wp-admin chrome
- * so Gutenberg fills the frame. Dump-data IDs may point at a non-layout post — chrome still
- * hides, because the iframe is the exit path either way.
+ * Makes post.php?yc-embed=1 fit the manager's iframe: wp-admin chrome hidden,
+ * and every REST call tagged so LayoutCoreRestController can withhold delete.
+ * Any post id qualifies: the iframe is the exit path either way.
  */
-class LayoutEditorEmbedStyles {
+class LayoutEditorEmbed {
 
     use SingletonTrait;
 
     public const QUERY_FLAG = 'yc-embed';
 
+    /** Sent by the embed's apiFetch; read by LayoutCoreRestController::delete_item_permissions_check(). */
+    public const REST_HEADER = 'X-YayCheckout-Embed';
+
     protected function __construct() {
         add_filter( 'admin_body_class', [ $this, 'admin_body_class' ] );
         add_action( 'admin_head', [ $this, 'print_embed_styles' ] );
+        add_action( 'admin_enqueue_scripts', [ $this, 'tag_rest_requests' ] );
     }
 
-    /**
-     * @param  string $classes
-     * @return string
-     */
+    /** Gutenberg asks canUser('delete') over REST, so the tag has to travel with the request, not the page. */
+    public function tag_rest_requests(): void {
+        if ( ! self::is_embed_request() ) {
+            return;
+        }
+
+        wp_add_inline_script(
+            'wp-api-fetch',
+            sprintf(
+                'wp.apiFetch.use( function ( options, next ) { return next( { ...options, headers: { ...( options.headers || {} ), %s: "1" } } ); } );',
+                wp_json_encode( self::REST_HEADER )
+            )
+        );
+    }
+
     public function admin_body_class( $classes ) {
-        if ( ! $this->is_embed_request() ) {
+        if ( ! self::is_embed_request() ) {
             return $classes;
         }
 
@@ -36,7 +49,7 @@ class LayoutEditorEmbedStyles {
     }
 
     public function print_embed_styles() {
-        if ( ! $this->is_embed_request() ) {
+        if ( ! self::is_embed_request() ) {
             return;
         }
 
@@ -66,10 +79,7 @@ class LayoutEditorEmbedStyles {
                 padding-bottom: 0 !important;
             }
 
-            /*
-             * Gutenberg positions the editor skeleton below the admin bar. Hide
-             * the bar but leave that offset and you get a blank band at the top.
-             */
+            /* Skeleton is offset for the admin bar; without this a blank band remains. */
             body.yc-layout-embed .interface-interface-skeleton {
                 top: 0 !important;
             }
@@ -78,7 +88,7 @@ class LayoutEditorEmbedStyles {
                 right: 0 !important;
             }
 
-            /* Back to post list — parent modal is the exit path. */
+            /* Back-to-list button: the parent modal is the exit path. */
             body.yc-layout-embed .editor-header__back-button {
                 display: none !important;
             }
@@ -86,7 +96,12 @@ class LayoutEditorEmbedStyles {
         <?php
     }
 
-    private function is_embed_request(): bool {
+    /**
+     * Whether the current page request is the embedded editor. Also true while
+     * the editor preloads its REST data server-side, which is why the delete
+     * check consults this as well as the header.
+     */
+    public static function is_embed_request(): bool {
         if ( ! is_admin() || ! isset( $_GET[ self::QUERY_FLAG ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             return false;
         }

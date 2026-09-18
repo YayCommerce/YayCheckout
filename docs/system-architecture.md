@@ -16,6 +16,10 @@ WordPress admin                          Storefront
 
 Three build outputs, all under `assets/dist/`: the admin SPA (Vite), the editor blocks (`@wordpress/scripts`), and PHP that is shipped as-is.
 
+## Layout editor: embedded Gutenberg iframe
+
+Edit on a layout row opens core's `post.php` editor in a modal iframe with `?yc-embed=1`. `Engine\Admin\LayoutEditorEmbed` sees the flag, adds a body class and prints CSS that hides the admin bar, admin menu, footer and the editor's own back button, and removes the admin-bar offset so the editor skeleton fills the frame. It also tags the page's REST calls with an `X-YayCheckout-Embed` header, and `Controllers/LayoutCoreRestController::delete_item_permissions_check()` refuses delete for that header or for the embed page request itself (the editor preloads its permissions server-side). Gutenberg reads that answer to decide whether to render Move to trash, so the embed has none: after a trash core hard-navigates the frame to `edit.php`, a screen the modal cannot host. Nothing else about Gutenberg or saving changes — drafts still go through core's `wp/v2` — and closing the modal is the only exit, so the list refetches when it closes.
+
 ## A layout carries two copies of its markup
 
 The single most important thing to understand.
@@ -58,27 +62,50 @@ No custom tables in 1.x.
 | `_yaycheckout_derived` | meta | publish — fields, extra_fields, slots, order_modes |
 | `_yaycheckout_published_at` | meta | publish, last |
 | `_yaycheckout_published_revision` | meta | publish |
-| `yaycheckout_active_layout` | option | `set_active()` — one option, so "exactly one active" holds by construction |
+| `yaycheckout_active_layout` | option | `set_active()` / `deactivate()` — an ordered id set; Free replaces it, Pro appends, and `active()` serves the last id |
+| `yaycheckout_settings` | option | `SettingsRepository::save()` — the sanitized settings array |
+| `yaycheckout_settings_updated_at` | option | `SettingsRepository::save()` — ISO 8601 UTC timestamp of last save |
+| `yaycheckout_reviewed` | option | `SettingsRepository::mark_reviewed()` — boolean, suppresses the review prompt |
 
 The four derived caches live in one `_yaycheckout_derived` array rather than four keys. Fewer writes means a smaller window in which new derived data sits against an old snapshot, and one `get_post_meta` on the customer path instead of four.
+
+## Settings are a schema, not a defaults array
+
+`Models\Settings::schema()` is the single description of every setting — section, key, type, default, and allowed enum values. When reading from the option, `from_option()` projects the stored array through the schema: a key missing or stale returns its default, and an invalid stored value is replaced with the default. When writing, `SettingsRepository::save()` expects already-sanitized data (from `Settings::sanitize()`), which validates types, enum membership and strips unknown keys. This design means the admin SPA cannot crash on stale stored values from an older version — invalid data reads as defaults instead — and callers cannot accept a setting that was not declared in the schema, so adding a setting never requires updating a separate defaults array.
+
+## Search and pagination
+
+Layout lists are queried server-side via `LayoutQuery` — an immutable value object that carries `status`, `search` term, and `page` number.
+
+Search matches `post_title` only. Post content is block markup, not user-facing text, so WP's default title + excerpt + content search would match block attribute names and markup rather than the layout's name. A filter (`match_search_to_title`) narrows WP's `s` parameter to the title, preserving the AND-of-terms shape merchants expect from the WordPress admin.
+
+Page size is fixed server-side (`LayoutQuery::PER_PAGE = 10`), never client-chosen. Backend does not clamp out-of-range pages — it returns the requested page's items (empty if the page is out of bounds) with the real total count (`total_pages` on the wire, `totalPages` in the app). The SPA clamps in a `useEffect` when the data shows the current page is now beyond it.
+
+## Admin SPA layout list
+
+The layouts page (`LayoutsPage.tsx`) uses two independent queries: `GET /layouts` (one page, filtered by status and search) and `GET /layouts/counts` (tab totals). Separate queries keep counts on a stable cache key while the list rotates through status/search/page combinations.
+
+Search is debounced 300ms client-side. When search or tab changes, both `search` and `pageIndex` reset in the same state update — not in a separate effect — to avoid a fetch for a page that may not exist under the new filter. List data uses `keepPreviousData` so the page never drops back to its first-load skeleton, but the previous rows are shown differently depending on where they came from: a same-tab page or search change keeps them on screen dimmed with the pager mounted, while a tab switch hides them behind a row skeleton because they belong to the other tab. The page tracks the view whose rows last settled to tell the two apart. The first-load skeleton is gated on `isPending` from both queries, which fires only once — later tab, page and search changes flip `isFetching` instead — and the gate covers the body too, because counts usually lands first and the real tabs would otherwise render under the skeleton. A counts failure replaces the whole page (the tabs cannot render without it); a list failure is passed into the body so the tabs stay mounted and the user can switch away or back to retry. When a refetch returns fewer `totalPages` than the SPA is on (the layout being edited was trashed in the embedded editor, or another admin removed layouts before a stale refetch), a `useEffect` clamps `pageIndex` back to the valid range — floored at page 1, since `totalPages` is `0` for an empty result and the API rejects `page=0`.
 
 ## Two REST surfaces, one auth rule
 
 The block editor saves drafts through **core's** `wp/v2/yay_checkout_layout` — autosave and revisions come free. Operations core cannot express are ours, under `yaycheckout/v1`.
 
-Both check `manage_woocommerce`. Core does so because the post type maps every capability to it at registration; our controllers do so in `permission_callback`. One rule, declared in one place, no `map_meta_cap` filter.
+Both check `manage_woocommerce`. Core does so because `LayoutPostType` maps every capability (`edit_post`, `read_post`, `delete_post`, `create_posts`, …) to it at registration with `map_meta_cap => false`; our controllers do so in `permission_callback`. One rule, declared in one place, no `map_meta_cap` filter.
 
-**A published layout's `post_status` is `private`, never `publish`.** `WP_REST_Posts_Controller::check_read_permission()` returns true for any post whose status is `publish` without consulting the post type's capabilities — so publishing would have made layout markup readable through `wp/v2` by anonymous visitors, bypassing the capability map entirely. `private` routes the read through `read_post`.
+Reads need one more step. `WP_REST_Posts_Controller::check_read_permission()` returns true for any post whose status is `publish` before it consults the post type's capabilities, so core alone would answer a logged-out `GET wp/v2/yay_checkout_layout/{id}` (and the collection) with the layout's title, author id, dates and draft markup. `Controllers/LayoutCoreRestController` is registered as the post type's `rest_controller_class` and requires `manage_woocommerce` in `check_read_permission()` and `get_items_permissions_check()`, so both surfaces answer 401 to the same requests. Revisions and autosaves already go through `edit_post`; `/wp/v2/search` indexes `public` post types only. `publish` itself stays: `private` would fight the editor's Publish button, `edit.php` and cron's `publish_future_post`.
 
-Full map, owned by `LayoutPostStatus`:
+The wire `status` **is** `post_status` (`draft`, `pending`, `future`, `publish`, `trash`), owned by `Enums/LayoutStatus` and mirrored by the SPA's zod enum. There is no friendlier vocabulary to translate: `publish` is trustworthy because two mechanisms keep it so — `Engine/LayoutPublishSync` writes the snapshot on any transition **into** `publish` (editor Publish button, cron, quick edit, WP-CLI), skipping the transition `LayoutRepository::publish()` makes itself; and `Engine/LayoutPublishGuard` dry-runs `DerivedCacheBuilder::build()` on `rest_pre_insert_yay_checkout_layout` when a `wp/v2` request moves a layout to `publish` or `future`, answering 400 `yaycheckout_layout_markup_invalid` before core saves. The root block is not locked (a deleted Checkout block can be re-inserted), so the editor itself can reach this 400 by publishing without one. Non-REST paths can still reach `publish()`'s throw — the row then reads `publish` while the previous snapshot keeps serving, and the failure is logged.
 
-| `LayoutStatus` | `post_status` |
-|---|---|
-| `draft` | `draft` |
-| `pending` | `pending` |
-| `scheduled` | `future` |
-| `published` | `private` |
-| `archived` | `trash` |
+### Scheduled layouts
+
+Scheduling is core's: the editor sets `future` and a `post_date`, and WP cron's `publish_future_post` flips the status when the date arrives. Two plugin rules sit on top:
+
+- **Cron only changes the status.** `Engine/LayoutPublishSync` (above) turns that transition into a snapshot; `LayoutRepository::is_publishing()` keeps it from re-entering when `publish()` flips the status itself. A second cron run finds the status already `publish` and does nothing. Cron runs on traffic unless the host triggers it externally, so a quiet store publishes late — a WordPress property, not ours.
+- **Publishing a scheduled layout overrides the schedule.** Both `/publish` and `/activate` (whose modal reads "Publish & activate") go through `publish()`, which moves the date to now whenever `post_date_gmt` is ahead — a pending layout can carry a future date too: `wp_insert_post()` would otherwise turn `publish` back into `future`, leaving a layout live for shoppers while the row still read "Scheduled". Core's own transition handling clears the cron event. `activate()` publishes unless `post_status` is already `publish` — the same rule the modal uses — so a rescheduled or pending layout that was published before has its current draft published. It also publishes a `publish` row that has no snapshot (the logged non-REST corner above), so an active layout always has something to serve.
+- **Activating an archived layout is refused.** Publishing would silently restore it from the trash and, on Free, push the layout count past the limit. Restoring is the merchant's decision, so `activate()` throws rather than deciding for them.
+- **Trashing or deleting the active layout is refused.** The mirror rule: `Engine/LayoutActiveGuard` denies the `delete_post` capability for a layout in the active set (so the editor hides Move to trash, `wp/v2` and wp-admin answer 403) and short-circuits `pre_trash_post` / `pre_delete_post` for direct calls that check no capability. Deactivate first; the store never silently loses its checkout.
+- **Moving the active layout back to draft or pending deactivates it.** The same guard listens to `transition_post_status`: a status shoppers may not see drops the layout from the active set, so the store falls back rather than serving a layout its own row calls Draft. `future` keeps it active — the current snapshot serves until the scheduled date replaces it.
 
 ## Blocks are dynamic
 
@@ -112,11 +139,9 @@ Pro installs to its own directory rather than replacing Free: if Free is ever li
 
 ### Enforcing the layout limit
 
-Free allows three layouts, Pro is unlimited — but layouts are created through **core's** `wp/v2` endpoints, so there is no handler of ours to hold a count check. `LayoutCapGuard` filters `rest_pre_insert_yay_checkout_layout` instead, which is the only seam at the point of creation.
+Free allows three layouts, Pro is unlimited. The rule is checked at three sites that all read `Plan::layout_limit_reached()` so it cannot drift: `LayoutRepository::create()` (the admin app's `POST /layouts`), `LayoutRepository::duplicate()`, and `LayoutCapGuard`, which filters `rest_pre_insert_yay_checkout_layout` because the post type is also on **core's** `wp/v2` and any shop manager can POST there directly.
 
 That filter also fires on **updates**, so it returns early when the prepared post already carries an ID. Without that, editing any layout would start failing the moment a merchant reached the limit — a worse bug than the one being fixed.
-
-`LayoutRepository::duplicate()` enforces the same limit separately, because it is our own code path rather than core's and would otherwise be the obvious way around a create-time cap. Both read `Plan::layout_limit_reached()` so the rule cannot drift between them.
 
 Enforcement is server-side because gating only the admin app would be bypassed by posting to `wp/v2` directly, which any shop manager can do.
 
@@ -168,4 +193,4 @@ It uses `require_once` rather than `require`. A malformed class name — a doubl
 
 ## Deliberately not built
 
-Pro assignment rules (`resolve_for_request()` returns the active layout and is the seam for them), `_yaycheckout_tokens_override`, the `yay_checkout_pattern` library CPT, import/export, the extra-field registry, `Renderer/` and the WooCommerce checkout hooks, order meta writes, self-test, telemetry, the 1.3 analytics table, and `yay_cart_layout` / `yay_thankyou_layout`.
+Pro assignment rules (`resolve_for_request()` returns the active layout and is the seam for them), `_yaycheckout_tokens_override`, the `yay_checkout_pattern` library CPT, import/export, the extra-field registry, the storefront renderer (`Renderer/` holds only the force-enqueue hook; layouts are not yet rendered into WooCommerce's checkout), order meta writes, the `wp/v2` read guard for published layouts (see Two REST surfaces), self-test, telemetry (the opt-in is stored, nothing is sent), preview links (the lifetime is stored, no links exist), safe-mode enforcement (stored, unread until the renderer exists), the 1.3 analytics table, and `yay_cart_layout` / `yay_thankyou_layout`.

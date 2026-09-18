@@ -35,14 +35,11 @@ export default function Footer({
       }
     };
 
-    // Initial calculation
     updateContainerRect();
 
-    // Listen for window resize and scroll
     window.addEventListener('resize', updateContainerRect);
     window.addEventListener('scroll', updateContainerRect);
 
-    // Use ResizeObserver to watch for container size changes
     let resizeObserver: ResizeObserver | null = null;
     if (containerRef.current && window.ResizeObserver) {
       resizeObserver = new ResizeObserver(updateContainerRect);
@@ -70,7 +67,7 @@ export default function Footer({
 
   return (
     <>
-      {/* Invisible container to measure */}
+      {/* Measures the content column so the fixed footer can match its width. */}
       <div ref={containerRef} className="pointer-events-none absolute inset-0" />
 
       <footer
@@ -82,7 +79,6 @@ export default function Footer({
           width: `${containerRect.width}px`,
         }}
       >
-        {/* breadcrumb */}
         <Breadcrumb>
           <BreadcrumbList className="text-xs">
             <BreadcrumbItem>
@@ -126,7 +122,6 @@ export default function Footer({
           </BreadcrumbList>
         </Breadcrumb>
 
-        {/* review text */}
         {!hasReviewed ? (
           <p className="text-center text-xs">
             {createInterpolateElement(

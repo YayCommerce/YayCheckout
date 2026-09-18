@@ -1,9 +1,6 @@
 <?php
 namespace YayCheckout\Engine\Register;
 
-/**
- * Script Name Constants
- */
 class ScriptName {
 
     public const STYLE_SETTINGS = 'yaycheckout/style/settings';

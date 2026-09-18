@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
 import pluginExternal from 'vite-plugin-external';
 
-// Dev server port — must match RegisterDev.php (includes/Engine/Register/RegisterDev.php)
+// Must match RegisterDev::DEV_SERVER.
 const DEV_PORT = 3040;
 
 // https://vitejs.dev/config/
@@ -12,15 +12,7 @@ export default defineConfig(({ command, mode }) => {
   const envDir = path.resolve(__dirname, 'env');
   const env = loadEnv(mode, envDir);
 
-  /*
-   * Free/Pro plan, resolved here so there is exactly one source.
-   *
-   * The dev server defaults to pro: someone working on the Pro product should
-   * see the full UI rather than a wall of upgrade gates. Builds default to
-   * free, so an unflagged build cannot accidentally ship premium UI.
-   * scripts/run.sh sets YAYCHECKOUT_PLAN explicitly for releases, which
-   * overrides both.
-   */
+  // Dev defaults to pro (see the full UI); builds default to free so an unflagged build cannot ship premium UI.
   const plan = process.env.YAYCHECKOUT_PLAN ?? (command === 'serve' ? 'pro' : 'free');
 
   return {

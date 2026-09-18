@@ -9,7 +9,7 @@ import { FormField } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { NameField } from '@/pages/layouts/new-layout/NameField';
 
-/** yc02-9: choosing Blank vs From library. Picking "From library" advances
+/** Source step: choosing Blank vs From library. Picking "From library" advances
  * straight to the library step — it never submits from here. */
 export function SourceStep({
   onChooseLibrary,

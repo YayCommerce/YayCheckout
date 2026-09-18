@@ -2,6 +2,7 @@
 namespace YayCheckout\Helpers;
 
 use YayCheckout\Controllers\BaseRestController;
+use YayCheckout\Repositories\SettingsRepository;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -15,7 +16,8 @@ class LocalizeHelper {
 
     public static function get_admin_data() {
         $admin_data = [
-            'settings' => SettingsHelper::get_settings(),
+            'settings'     => ( new SettingsRepository() )->get()->to_array(),
+            'integrations' => IntegrationsHelper::get_integrations(),
         ];
 
         return apply_filters( 'yaycheckout_localize_admin_data', $admin_data );
@@ -37,7 +39,8 @@ class LocalizeHelper {
                 'pluginUrl' => YAYCHECKOUT_PLUGIN_URL,
                 'assetsUrl' => YAYCHECKOUT_PLUGIN_URL . 'assets',
                 'version'   => YAYCHECKOUT_VERSION,
-                'reviewed'  => (bool) get_option( SettingsHelper::OPTION_REVIEWED, false ),
+                'docsUrl'   => YAYCHECKOUT_DOCS_URL,
+                'reviewed'  => ( new SettingsRepository() )->is_reviewed(),
             ],
         ];
 

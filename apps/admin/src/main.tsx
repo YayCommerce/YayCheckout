@@ -11,11 +11,7 @@ import { getManagerRouter } from '@/router';
 
 const queryClient = createQueryClient();
 
-/*
- * import.meta.env.DEV is replaced with a literal at build time, so the whole
- * branch and its dynamic import are dropped from the production bundle. That
- * keeps the build to the single js/main.js that RegisterProd enqueues.
- */
+// Folded out of the production bundle, which must stay a single chunk.
 const QueryDevtools = import.meta.env.DEV ? lazy(() => import('@/components/shared/QueryDevtools')) : null;
 
 createRoot(document.getElementById('yaycheckout') as HTMLElement).render(

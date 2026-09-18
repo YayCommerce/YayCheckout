@@ -14,19 +14,16 @@ function ImagePicker({
   const imgFallback = '';
 
   const handleImageUpload = () => {
-    // Create the media frame.
     const file_frame = (window.wp.media.frames.downloadable_file = window.wp.media({
       title: 'Choose an image',
       multiple: false,
     }));
-    // When an image is selected, run a callback.
     file_frame.on('select', function () {
       const attachment = file_frame.state().get('selection').first().toJSON();
       const attachment_thumbnail = attachment.sizes.full || attachment.sizes.thumbnail;
 
       onSelectCover(attachment_thumbnail.url);
     });
-    // Finally, open the modal.
     file_frame.open();
   };
 
