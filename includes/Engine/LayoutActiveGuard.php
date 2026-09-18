@@ -14,11 +14,11 @@ defined( 'ABSPATH' ) || exit;
  * Move to trash and wp/v2 and wp-admin answer 403, and the pre_* filters catch
  * wp_trash_post() and wp_delete_post() called directly (WP-CLI, other
  * plugins), which check no capability. Deactivation must be the merchant's
- * decision: the SPA's Archive action makes it one (ArchiveModal warns, then
- * LayoutRepository::archive() writes the status itself, outside these
- * filters); core surfaces cannot warn, so they refuse. Moving an active
- * layout back to draft or pending is a decision too, so that one deactivates
- * instead of being refused.
+ * decision: the SPA disables Archive on the active row, and
+ * LayoutRepository::archive() deactivates before it trashes so a direct
+ * caller is not refused here. Core surfaces cannot warn, so they refuse.
+ * Moving an active layout back to draft or pending is a decision too, so that
+ * one deactivates instead of being refused.
  */
 class LayoutActiveGuard {
 

@@ -283,7 +283,7 @@ class LayoutRepository {
      * @param  int $id
      * @return Layout
      * @throws \InvalidArgumentException When the layout is missing or already archived.
-     * @throws \RuntimeException         When the status write fails.
+     * @throws \RuntimeException         When WordPress refuses or fails to trash it.
      */
     public function archive( int $id ): Layout {
         $post = get_post( $id );
@@ -296,29 +296,20 @@ class LayoutRepository {
             throw new \InvalidArgumentException( __( 'This layout is already archived.', 'yaycheckout' ) );
         }
 
-        /*
-         * Not wp_trash_post(): it stamps _wp_trash_meta_time, which cron
-         * turns into a permanent delete after EMPTY_TRASH_DAYS, and with
-         * EMPTY_TRASH_DAYS = 0 it deletes outright before any filter runs.
-         * Archived means kept, so write the status ourselves. The previous
-         * status is saved the same way core does, for restore.
-         */
-        update_post_meta( $id, '_wp_trash_meta_status', $post->post_status );
-        $updated = wp_update_post(
-            [
-                'ID'          => $id,
-                'post_status' => LayoutStatus::ARCHIVED,
-            ],
-            true
-        );
-
-        if ( is_wp_error( $updated ) ) {
-            throw new \RuntimeException( $updated->get_error_message() );
-        }
-
+        // Before the trash: LayoutActiveGuard refuses wp_trash_post() on an
+        // active layout, and a direct caller may not have deactivated first.
         $this->store_ids( array_diff( $this->active_ids(), [ $id ] ) );
 
-        return $this->find( $id );
+        $trashed = wp_trash_post( $id );
+
+        if ( ! $trashed instanceof \WP_Post ) {
+            throw new \RuntimeException( sprintf( 'Layout %d could not be archived.', $id ) );
+        }
+
+        // wp_trash_post() hands back the pre-update object; only the status moved.
+        $trashed->post_status = LayoutStatus::ARCHIVED;
+
+        return Layout::from_post( $trashed, $this->hydrate_meta( get_post_meta( $id ) ), false );
     }
 
     /** Free replaces the set; Pro moves the id to the end so active() serves it. */

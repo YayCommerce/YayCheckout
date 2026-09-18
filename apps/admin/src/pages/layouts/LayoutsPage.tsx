@@ -249,7 +249,6 @@ function LayoutsPageBody({
       />
       <ArchiveModal
         layout={archivingLayout}
-        isLastActive={counts.active === 1}
         onOpenChange={(open) => !open && setArchivingLayout(null)}
         onConfirm={onArchive}
         isPending={archiveMutation.isPending}
@@ -554,7 +553,7 @@ function LayoutTableRow({
   );
 }
 
-/** Per-row actions: Edit, Set active and the "⋯" menu (Duplicate, Deactivate, Archive). Archive stays enabled on the active row; ArchiveModal warns. Preview, Restore and Delete for good have no onClick yet; publishing is the editor's job. */
+/** Per-row actions: Edit, Set active and the "⋯" menu (Duplicate, Deactivate, Archive). Archive is disabled on the active row (LayoutActiveGuard refuses it server-side). Preview, Restore and Delete for good have no onClick yet; publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,
@@ -613,7 +612,9 @@ function LayoutRowActions({
           <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
             {__('Deactivate', 'yaycheckout')}
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => onArchive(layout)}>{__('Archive', 'yaycheckout')}</DropdownMenuItem>
+          <DropdownMenuItem disabled={layout.isActive} onSelect={() => onArchive(layout)}>
+            {__('Archive', 'yaycheckout')}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

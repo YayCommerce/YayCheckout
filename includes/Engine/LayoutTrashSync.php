@@ -10,9 +10,9 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Keeps a trashed layout out of the active set and out of WP's trash purge.
  *
- * LayoutRepository::archive() does both itself, but a layout can also reach
- * the trash through wp-admin or core's wp/v2 DELETE, where wp_trash_post()
- * stamps _wp_trash_meta_time and wp_scheduled_delete erases the post after
+ * Every path into the trash — LayoutRepository::archive(), wp-admin, core's
+ * wp/v2 DELETE — goes through wp_trash_post(), which stamps
+ * _wp_trash_meta_time so wp_scheduled_delete erases the post after
  * EMPTY_TRASH_DAYS. Archived means kept, on every path.
  */
 class LayoutTrashSync {
