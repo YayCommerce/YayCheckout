@@ -1,7 +1,7 @@
 <?php
 namespace YayCheckout\Services;
 
-use YayCheckout\Checkout\ExtraFieldKey;
+use YayCheckout\Helpers\ExtraFieldKeyHelper;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -54,7 +54,7 @@ class DerivedCacheBuilder {
         }
 
         $derived = self::EMPTY;
-        ExtraFieldKey::reset();
+        ExtraFieldKeyHelper::reset();
         self::walk( $blocks, self::contributors(), $derived );
 
         return $derived;
@@ -198,7 +198,7 @@ class DerivedCacheBuilder {
      */
     public static function contribute_extra_field( array $block ): array {
         $attrs = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : [];
-        $key   = ExtraFieldKey::from_attributes( $attrs );
+        $key   = ExtraFieldKeyHelper::from_attributes( $attrs );
 
         $type    = isset( $attrs['type'] ) && is_string( $attrs['type'] ) && '' !== $attrs['type'] ? $attrs['type'] : 'text';
         $options = [];

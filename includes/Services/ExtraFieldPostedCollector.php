@@ -1,5 +1,5 @@
 <?php
-namespace YayCheckout\Checkout;
+namespace YayCheckout\Services;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
  * Pure: no storage, no Woo hooks. Checkout only persists keys this returns,
  * so a crafted POST cannot write arbitrary order meta.
  */
-class ExtraFieldPostedValues {
+class ExtraFieldPostedCollector {
 
     /**
      * @param  array $fields extra_fields map from Layout::$derived.

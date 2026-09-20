@@ -1,9 +1,10 @@
 <?php
-namespace YayCheckout\Checkout;
+namespace YayCheckout\Renderer;
 
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Services\DerivedCacheBuilder;
+use YayCheckout\Services\ExtraFieldPostedCollector;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -14,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * Reads the active layout from storage, not the storefront renderer, so this
  * class can ship with the extra-field block before CheckoutPage exists.
  */
-class ExtraFields {
+class CheckoutExtraFields {
 
     use SingletonTrait;
 
@@ -49,7 +50,7 @@ class ExtraFields {
             return;
         }
 
-        $result = ExtraFieldPostedValues::collect( $fields, $this->posted() );
+        $result = ExtraFieldPostedCollector::collect( $fields, $this->posted() );
 
         foreach ( $result['errors'] as $error ) {
             $key   = isset( $error['key'] ) ? (string) $error['key'] : '';
@@ -93,7 +94,7 @@ class ExtraFields {
             return;
         }
 
-        $result = ExtraFieldPostedValues::collect( $fields, $this->posted() );
+        $result = ExtraFieldPostedCollector::collect( $fields, $this->posted() );
 
         if ( [] !== $result['errors'] || [] === $result['rows'] ) {
             return;
@@ -236,7 +237,7 @@ class ExtraFields {
             return [];
         }
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Keys are limited to the derived extra_fields map; ExtraFieldPostedValues sanitizes values.
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Keys are limited to the derived extra_fields map; ExtraFieldPostedCollector sanitizes values.
         return wp_unslash( $_POST );
     }
 }

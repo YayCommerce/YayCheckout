@@ -1,5 +1,5 @@
 <?php
-namespace YayCheckout\Checkout;
+namespace YayCheckout\Helpers;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
  * left Key empty, otherwise checkout posts yaycheckout_extra_1 and persist
  * looks for nothing.
  */
-class ExtraFieldKey {
+class ExtraFieldKeyHelper {
 
     private static int $unnamed = 0;
 
