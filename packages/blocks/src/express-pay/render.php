@@ -15,11 +15,13 @@ defined( 'ABSPATH' ) || exit;
 
 unset( $attributes, $content, $block );
 
+$yaycheckout_has_cart = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart;
+
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-express-pay' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php
-    if ( class_exists( '\YayCheckout\Renderer\CheckoutStorefront' ) && \YayCheckout\Renderer\CheckoutStorefront::is_storefront() ) {
-        \YayCheckout\Renderer\CheckoutStorefront::print_express_pay();
+    if ( $yaycheckout_has_cart && function_exists( 'wc_get_pay_buttons' ) ) {
+        wc_get_pay_buttons();
     }
     ?>
 </div>

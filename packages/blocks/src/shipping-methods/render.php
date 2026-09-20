@@ -3,6 +3,7 @@
  * Server render for yaycheckout/shipping-methods.
  *
  * Storefront prints classic shipping radios. The editor keeps a placeholder.
+ * AJAX totals replace .yaycheckout-shipping-methods__rates; see CheckoutFragments.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
@@ -22,7 +23,5 @@ $yaycheckout_wrapper = get_block_wrapper_attributes( [ 'class' => 'yaycheckout-s
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <h3><?php echo esc_html( $yaycheckout_label ); ?></h3>
-    <?php if ( class_exists( '\YayCheckout\Renderer\CheckoutStorefront' ) && \YayCheckout\Renderer\CheckoutStorefront::is_storefront() ) : ?>
-        <?php \YayCheckout\Renderer\CheckoutStorefront::print_shipping_rates(); ?>
-    <?php endif; ?>
+    <?php \YayCheckout\Renderer\CheckoutFragments::print_shipping_rates(); ?>
 </div>

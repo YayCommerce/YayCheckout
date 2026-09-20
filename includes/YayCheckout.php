@@ -24,6 +24,7 @@ class YayCheckout {
         \YayCheckout\Engine\Admin\LayoutEditorEmbed::get_instance();
         \YayCheckout\Renderer\CheckoutScripts::get_instance();
         \YayCheckout\Renderer\CheckoutPage::get_instance();
+        \YayCheckout\Renderer\CheckoutFragments::get_instance();
         \YayCheckout\Checkout\ExtraFields::get_instance();
     }
 
