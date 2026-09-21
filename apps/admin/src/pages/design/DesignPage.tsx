@@ -93,14 +93,11 @@ export default function DesignPage() {
   }
 
   async function resetToTheme() {
-    // Theme defaults are not "the Default preset applied": no chip lights up.
-    applyPreset(data.defaultTokens, null);
-
-    // Same failure handling as Save: a rejected save keeps the modal open with the edits intact.
-    let saved = false;
-    await form.handleSubmit(async (values) => {
-      saved = await onSubmit(values);
-    })();
+    const saved = await onSubmit({
+      tokens: data.defaultTokens,
+      presetId: null,
+      customCss: form.getValues('customCss'),
+    });
     if (saved) setResetCount(null);
   }
 
