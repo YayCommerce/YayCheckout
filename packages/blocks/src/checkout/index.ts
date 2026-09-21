@@ -2,6 +2,8 @@ import { registerBlockType } from '@wordpress/blocks';
 
 import metadata from './block.json';
 import Edit from './edit';
+import './insert-guard';
+import './inserter-root';
 
 /**
  * save() must stay null: with static save output every attribute rename
