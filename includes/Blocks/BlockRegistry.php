@@ -25,6 +25,13 @@ class BlockRegistry {
         'shipping',
         'field',
         'order-review',
+        'extra-field',
+        'shipping-methods',
+        'express-pay',
+        'payment',
+        'order-summary',
+        'place-order',
+        'slot',
     ];
 
     protected function __construct() {

@@ -1,13 +1,7 @@
-import { registerBlockType } from '@wordpress/blocks';
-
 import metadata from './block.json';
 import Edit from './edit';
+import { registerDynamicBlock, saveNestedBlocks } from '../shared/register-dynamic-block';
+import './insert-guard';
+import './inserter-root';
 
-/**
- * save() must stay null: with static save output every attribute rename
- * would need a deprecation entry and invalidate published layouts.
- */
-registerBlockType( metadata.name, {
-	edit: Edit,
-	save: () => null,
-} );
+registerDynamicBlock( metadata.name, Edit, saveNestedBlocks );
