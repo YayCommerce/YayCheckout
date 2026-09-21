@@ -7,9 +7,21 @@ const LAYOUT_POST_TYPE = 'yay_checkout_layout';
 const CHECKOUT_BLOCK = 'yaycheckout/checkout';
 const FIELD_BLOCK = 'yaycheckout/field';
 const CONTACT_BLOCK = 'yaycheckout/contact';
+const EXTRA_FIELD_BLOCK = 'yaycheckout/extra-field';
+const SLOT_BLOCK = 'yaycheckout/slot';
 const ADDRESS_SECTIONS = [ 'yaycheckout/billing', 'yaycheckout/shipping' ];
-const SECTION_BLOCKS = [ CONTACT_BLOCK, ...ADDRESS_SECTIONS ];
-const NESTED_YAY = [ ...SECTION_BLOCKS, FIELD_BLOCK ];
+const UNIQUE_LEAVES = [
+	CONTACT_BLOCK,
+	...ADDRESS_SECTIONS,
+	'yaycheckout/order-review',
+	'yaycheckout/shipping-methods',
+	'yaycheckout/express-pay',
+	'yaycheckout/payment',
+	'yaycheckout/order-summary',
+	'yaycheckout/place-order',
+];
+const CHECKOUT_LEAVES = [ ...UNIQUE_LEAVES, EXTRA_FIELD_BLOCK, SLOT_BLOCK ];
+const NESTED_YAY = [ ...CHECKOUT_LEAVES, FIELD_BLOCK ];
 const WOO_CHECKOUT = 'woocommerce/checkout';
 
 function currentPostType(): string | undefined {
@@ -90,7 +102,7 @@ addFilter(
 			return chainHas( chain, ADDRESS_SECTIONS );
 		}
 
-		if ( SECTION_BLOCKS.includes( name ) ) {
+		if ( CHECKOUT_LEAVES.includes( name ) ) {
 			return parentName === CHECKOUT_BLOCK;
 		}
 

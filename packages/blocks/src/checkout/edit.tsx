@@ -3,7 +3,7 @@ import { InnerBlocks, useBlockProps } from '@wordpress/block-editor';
 /**
  * Root of a checkout layout. Holds sections as inner blocks.
  *
- * templateLock is always false so merchants can insert Contact, Billing, etc.
+ * templateLock is always false so merchants can insert Payment, Slot, etc.
  * Saved "insert" from older layouts is ignored — that lock hid every child
  * from the inserter.
  */
