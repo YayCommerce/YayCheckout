@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import { getErrorMsg } from '@/lib/helpers/response.helper';
 import { useDeleteDesignPresetMutation, useDesignQuery, useSaveDesignMutation } from '@/lib/queries/design.queries';
@@ -20,6 +20,7 @@ import { useRouteLeaveGuard } from '@/hooks/useRouteLeaveGuard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
+import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ProGate, ProTag } from '@/components/pro/ProGate';
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog';
 import PageLayout from '@/pages/PageLayout';
@@ -103,8 +104,8 @@ export default function DesignPage() {
 
   async function deletePreset(id: string) {
     const saved = await deletePresetMutation.mutateAsync(id);
-    // resetField() only works on registered inputs and presetId has none, so follow the server value via setValue.
-    if (presetId === id) form.setValue('presetId', saved.presetId, { shouldDirty: true });
+    if (!form.formState.isDirty) form.reset(toFormValues(saved));
+    else if (presetId === id) form.setValue('presetId', saved.presetId, { shouldDirty: true });
     toast.success(__('Preset deleted.', 'yaycheckout'));
   }
 
@@ -129,7 +130,7 @@ export default function DesignPage() {
       <Form {...form}>
         <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-5 lg:flex-row">
-            <div className="flex w-full shrink-0 flex-col gap-3 lg:w-100">
+            <div className="flex w-full shrink-0 flex-col gap-3 lg:w-110">
               <ProGate>
                 <Card className="gap-3 p-4">
                   <div className="flex items-center gap-2">
@@ -155,15 +156,45 @@ export default function DesignPage() {
                           {preset.name}
                         </button>
                         {!preset.builtin && (
-                          <button
-                            type="button"
-                            aria-label={__('Delete preset', 'yaycheckout')}
-                            onClick={() => deletePreset(preset.id)}
-                            disabled={deletePresetMutation.isPending}
-                            className="cursor-pointer pe-2 opacity-60 hover:opacity-100"
-                          >
-                            <X className="size-3" />
-                          </button>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                aria-label={__('Delete preset', 'yaycheckout')}
+                                className="cursor-pointer pe-2 opacity-60 hover:opacity-100"
+                              >
+                                <X className="size-3" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent align="start" className="flex w-auto flex-col gap-3 p-3">
+                              <p className="text-xs">
+                                {sprintf(
+                                  /* translators: %s: preset name */
+                                  __('Delete preset "%s"?', 'yaycheckout'),
+                                  preset.name,
+                                )}
+                              </p>
+                              <div className="flex justify-end gap-2">
+                                <PopoverClose asChild>
+                                  <Button type="button" variant="outline" size="sm" className="h-7 px-2.5 text-xs">
+                                    {__('Cancel', 'yaycheckout')}
+                                  </Button>
+                                </PopoverClose>
+                                <PopoverClose asChild>
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    className="h-7 px-2.5 text-xs"
+                                    onClick={() => deletePreset(preset.id)}
+                                    disabled={deletePresetMutation.isPending}
+                                  >
+                                    {__('Delete', 'yaycheckout')}
+                                  </Button>
+                                </PopoverClose>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         )}
                       </span>
                     ))}
@@ -193,8 +224,9 @@ export default function DesignPage() {
         open={savePresetOpen}
         tokens={form.getValues('tokens')}
         onOpenChange={setSavePresetOpen}
-        onSaved={(id) => {
-          form.setValue('presetId', id, { shouldDirty: true });
+        onSaved={(saved, id) => {
+          if (!form.formState.isDirty) form.reset(toFormValues(saved));
+          else form.setValue('presetId', id, { shouldDirty: true });
           toast.success(__('Preset saved.', 'yaycheckout'));
         }}
       />

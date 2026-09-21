@@ -309,6 +309,11 @@ class Design {
 
         $this->presets[] = $preset;
 
+        // Saving the applied tokens as a preset means that preset is now the applied one.
+        if ( $tokens === $this->tokens ) {
+            $this->preset_id = $id;
+        }
+
         return $preset;
     }
 

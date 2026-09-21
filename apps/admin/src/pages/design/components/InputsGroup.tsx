@@ -19,9 +19,15 @@ export function InputsGroup() {
       <TokenField section="inputs" token="size" label={__('Size', 'yaycheckout')}>
         {(field) => (
           <Segmented size="sm" value={field.value} onValueChange={(value) => value && field.onChange(value)}>
-            <SegmentedItem value="small">{__('Small', 'yaycheckout')}</SegmentedItem>
-            <SegmentedItem value="medium">{__('Medium', 'yaycheckout')}</SegmentedItem>
-            <SegmentedItem value="large">{__('Large', 'yaycheckout')}</SegmentedItem>
+            <SegmentedItem value="small" className="px-2">
+              {__('Small', 'yaycheckout')}
+            </SegmentedItem>
+            <SegmentedItem value="medium" className="px-2">
+              {__('Medium', 'yaycheckout')}
+            </SegmentedItem>
+            <SegmentedItem value="large" className="px-2">
+              {__('Large', 'yaycheckout')}
+            </SegmentedItem>
           </Segmented>
         )}
       </TokenField>

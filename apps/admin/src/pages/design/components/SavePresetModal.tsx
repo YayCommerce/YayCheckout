@@ -5,7 +5,7 @@ import { __ } from '@wordpress/i18n';
 
 import { getErrorMsg } from '@/lib/helpers/response.helper';
 import { useSaveDesignPresetMutation } from '@/lib/queries/design.queries';
-import type { DesignTokens } from '@/lib/schema/design.schema';
+import type { DesignResponse, DesignTokens } from '@/lib/schema/design.schema';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -26,7 +26,7 @@ export function SavePresetModal({
   open: boolean;
   tokens: DesignTokens;
   onOpenChange: (open: boolean) => void;
-  onSaved: (presetId: string) => void;
+  onSaved: (saved: DesignResponse, presetId: string) => void;
 }) {
   const form = useForm<z.infer<typeof formSchema>>({ resolver: zodResolver(formSchema), defaultValues: { name: '' } });
   const mutation = useSaveDesignPresetMutation();
@@ -35,7 +35,7 @@ export function SavePresetModal({
     try {
       const saved = await mutation.mutateAsync({ name, tokens });
       // The new preset is the last one; PHP appends.
-      onSaved(saved.presets[saved.presets.length - 1].id);
+      onSaved(saved, saved.presets[saved.presets.length - 1].id);
       form.reset();
       onOpenChange(false);
     } catch (error) {
