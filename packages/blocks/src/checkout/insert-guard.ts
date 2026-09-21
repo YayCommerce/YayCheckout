@@ -24,11 +24,11 @@ const CHECKOUT_LEAVES = [ ...UNIQUE_LEAVES, EXTRA_FIELD_BLOCK, SLOT_BLOCK ];
 const NESTED_YAY = [ ...CHECKOUT_LEAVES, FIELD_BLOCK ];
 const WOO_CHECKOUT = 'woocommerce/checkout';
 
-function isLayoutEditor(): boolean {
+function currentPostType(): string | undefined {
 	try {
-		return select( editorStore ).getCurrentPostType() === LAYOUT_POST_TYPE;
+		return select( editorStore ).getCurrentPostType() || undefined;
 	} catch ( e ) {
-		return false;
+		return undefined;
 	}
 }
 
@@ -50,19 +50,26 @@ function chainHas( chain: string[], names: string[] ): boolean {
 }
 
 /**
- * Checkout is `multiple: false` — hidden after the first copy, back in the
- * inserter if deleted. Nested YayCheckout leaves only go inside Checkout.
- * Field is Billing/Shipping only. Woo Checkout Blocks stay out.
+ * YayCheckout blocks insert only on the layout CPT. Nested leaves only go
+ * inside Checkout; Field is Billing/Shipping only. Woo Checkout stays out.
+ * Checkout is `multiple: false` — hidden after the first copy, back if deleted.
  */
 addFilter(
 	'blocks.canInsertBlockType',
 	'yaycheckout/layout-insert',
 	( canInsert: boolean, blockType: { name: string }, rootClientId?: string ) => {
-		if ( ! isLayoutEditor() ) {
+		const postType = currentPostType();
+		const name = blockType.name;
+
+		// getCurrentPostType() is often empty while this filter runs; treating
+		// that as "not layout" hid Checkout from its own CPT template.
+		if ( ! postType ) {
 			return canInsert;
 		}
 
-		const name = blockType.name;
+		if ( postType !== LAYOUT_POST_TYPE ) {
+			return name.startsWith( 'yaycheckout/' ) ? false : canInsert;
+		}
 
 		if ( name === WOO_CHECKOUT ) {
 			return false;
