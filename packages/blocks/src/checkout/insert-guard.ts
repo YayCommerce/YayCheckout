@@ -63,12 +63,12 @@ addFilter(
 
 		// getCurrentPostType() is often empty while this filter runs; treating
 		// that as "not layout" hid Checkout from its own CPT template.
-		if ( postType && postType !== LAYOUT_POST_TYPE ) {
-			return name.startsWith( 'yaycheckout/' ) ? false : canInsert;
+		if ( ! postType ) {
+			return canInsert;
 		}
 
 		if ( postType !== LAYOUT_POST_TYPE ) {
-			return canInsert;
+			return name.startsWith( 'yaycheckout/' ) ? false : canInsert;
 		}
 
 		if ( name === WOO_CHECKOUT ) {
