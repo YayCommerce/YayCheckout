@@ -7,16 +7,28 @@ const LAYOUT_POST_TYPE = 'yay_checkout_layout';
 const CHECKOUT_BLOCK = 'yaycheckout/checkout';
 const FIELD_BLOCK = 'yaycheckout/field';
 const CONTACT_BLOCK = 'yaycheckout/contact';
+const EXTRA_FIELD_BLOCK = 'yaycheckout/extra-field';
+const SLOT_BLOCK = 'yaycheckout/slot';
 const ADDRESS_SECTIONS = [ 'yaycheckout/billing', 'yaycheckout/shipping' ];
-const SECTION_BLOCKS = [ CONTACT_BLOCK, ...ADDRESS_SECTIONS ];
-const NESTED_YAY = [ ...SECTION_BLOCKS, FIELD_BLOCK ];
+const UNIQUE_LEAVES = [
+	CONTACT_BLOCK,
+	...ADDRESS_SECTIONS,
+	'yaycheckout/order-review',
+	'yaycheckout/shipping-methods',
+	'yaycheckout/express-pay',
+	'yaycheckout/payment',
+	'yaycheckout/order-summary',
+	'yaycheckout/place-order',
+];
+const CHECKOUT_LEAVES = [ ...UNIQUE_LEAVES, EXTRA_FIELD_BLOCK, SLOT_BLOCK ];
+const NESTED_YAY = [ ...CHECKOUT_LEAVES, FIELD_BLOCK ];
 const WOO_CHECKOUT = 'woocommerce/checkout';
 
-function isLayoutEditor(): boolean {
+function currentPostType(): string | undefined {
 	try {
-		return select( editorStore ).getCurrentPostType() === LAYOUT_POST_TYPE;
+		return select( editorStore ).getCurrentPostType() || undefined;
 	} catch ( e ) {
-		return false;
+		return undefined;
 	}
 }
 
@@ -38,21 +50,26 @@ function chainHas( chain: string[], names: string[] ): boolean {
 }
 
 /**
- * Checkout / Contact / Billing / Shipping are `multiple: false` — Gutenberg
- * hides them from the inserter after the first copy. This filter never
- * re-enables a block core already denied. Field is Billing/Shipping only
- * (including nested Rows). Contact is a leaf email block, not a canvas.
- * Woo Checkout Blocks stay out.
+ * YayCheckout blocks insert only on the layout CPT. Nested leaves only go
+ * inside Checkout; Field is Billing/Shipping only. Woo Checkout stays out.
+ * Checkout is `multiple: false` — hidden after the first copy, back if deleted.
  */
 addFilter(
 	'blocks.canInsertBlockType',
 	'yaycheckout/layout-insert',
 	( canInsert: boolean, blockType: { name: string }, rootClientId?: string ) => {
-		if ( ! isLayoutEditor() ) {
+		const postType = currentPostType();
+		const name = blockType.name;
+
+		// getCurrentPostType() is often empty while this filter runs; treating
+		// that as "not layout" hid Checkout from its own CPT template.
+		if ( ! postType ) {
 			return canInsert;
 		}
 
-		const name = blockType.name;
+		if ( postType !== LAYOUT_POST_TYPE ) {
+			return name.startsWith( 'yaycheckout/' ) ? false : canInsert;
+		}
 
 		if ( name === WOO_CHECKOUT ) {
 			return false;
@@ -85,7 +102,7 @@ addFilter(
 			return chainHas( chain, ADDRESS_SECTIONS );
 		}
 
-		if ( SECTION_BLOCKS.includes( name ) ) {
+		if ( CHECKOUT_LEAVES.includes( name ) ) {
 			return parentName === CHECKOUT_BLOCK;
 		}
 

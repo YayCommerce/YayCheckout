@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/order-review",
+  "title": "Order review",
+  "category": "yaycheckout",
+  "description": "Order summary, payment methods and the Place order button. WooCommerce renders these; the block only places them.",
+  "textdomain": "yaycheckout",
+  "parent": [ "yaycheckout/checkout" ],
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/extra-field",
+  "title": "Extra Field",
+  "category": "yaycheckout",
+  "description": "A custom checkout field that is not part of the WooCommerce address catalog.",
+  "textdomain": "yaycheckout",
+  "parent": [ "yaycheckout/checkout" ],
+  "attributes": {
+    "fieldKey": {
+      "type": "string",
+      "default": ""
+    },
+    "label": {
+      "type": "string",
+      "default": ""
+    },
+    "placeholder": {
+      "type": "string",
+      "default": ""
+    },
+    "required": {
+      "type": "boolean",
+      "default": false
+    },
+    "type": {
+      "type": "string",
+      "enum": [ "text", "select", "radio", "checkbox", "datetime" ],
+      "default": "text"
+    },
+    "options": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}

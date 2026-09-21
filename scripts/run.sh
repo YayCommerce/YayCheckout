@@ -305,6 +305,7 @@ cmd_release() {
     cp -r "$PLUGIN_DIR/assets" "$temp_dir/"
     cp -r "$PLUGIN_DIR/includes" "$temp_dir/"
     cp -r "$PLUGIN_DIR/languages" "$temp_dir/"
+    cp -r "$PLUGIN_DIR/templates" "$temp_dir/"
     cp -r "$PLUGIN_DIR/vendor-prefixed" "$temp_dir/"
 
     # Composer autoload only (no packages needed at runtime)

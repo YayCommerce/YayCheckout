@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/slot",
+  "title": "Slot",
+  "category": "yaycheckout",
+  "description": "Named empty place for other plugins or Pro to inject content.",
+  "textdomain": "yaycheckout",
+  "parent": [ "yaycheckout/checkout" ],
+  "attributes": {
+    "slotName": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}

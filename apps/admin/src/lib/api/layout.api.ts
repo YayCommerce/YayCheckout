@@ -9,6 +9,8 @@ import {
   LayoutSummaryWire,
   LayoutWire,
   layoutWireSchema,
+  PreviewLink,
+  previewLinkWireSchema,
 } from '@/lib/schema/layout.schema';
 
 // The only place wire snake_case meets app camelCase.
@@ -89,6 +91,12 @@ export async function restoreLayout(id: number): Promise<Layout> {
 
 export async function duplicateLayout(id: number): Promise<Layout> {
   return parseLayout(await api.post(`layouts/${id}/duplicate`).json());
+}
+
+export async function createPreviewLink(id: number): Promise<PreviewLink> {
+  const wire = previewLinkWireSchema.parse(await api.post(`layouts/${id}/preview-link`).json());
+
+  return { url: wire.url, expiresAt: wire.expires_at };
 }
 
 export async function deleteLayout(id: number): Promise<void> {

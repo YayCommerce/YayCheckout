@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/shipping-methods",
+  "title": "Shipping Methods",
+  "category": "yaycheckout",
+  "description": "Shipping rate list. Classic checkout radios, not the shipping address form.",
+  "textdomain": "yaycheckout",
+  "parent": [ "yaycheckout/checkout" ],
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "Shipping methods"
+    }
+  },
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}

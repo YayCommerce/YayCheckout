@@ -32,6 +32,7 @@ class Settings {
     public static function schema(): array {
         return [
             'general'  => [
+                // Read by Renderer\CheckoutPage: on, the storefront is WooCommerce's stock checkout.
                 'safe_mode'                => [
 					'type'    => 'bool',
 					'default' => false,

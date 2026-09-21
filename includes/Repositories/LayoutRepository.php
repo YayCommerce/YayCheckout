@@ -2,6 +2,7 @@
 namespace YayCheckout\Repositories;
 
 use YayCheckout\Enums\LayoutStatus;
+use YayCheckout\Helpers\BlockMarkup;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Support\Plan;
@@ -43,9 +44,13 @@ class LayoutRepository {
         return $id > 0 ? $this->find( $id ) : null;
     }
 
-    /** The layout that should render for the current request. Pro assignment rules (Layout::META_RULES) will be evaluated here before falling back to active(). */
-    public function resolve_for_request(): ?Layout {
-        return $this->active();
+    /**
+     * The layout that should render for the current request: the previewed one when the
+     * renderer passes an id, else the active one. Pro assignment rules (Layout::META_RULES)
+     * will be evaluated here before falling back to active().
+     */
+    public function resolve_for_request( ?int $preview_id = null ): ?Layout {
+        return null !== $preview_id ? $this->find( $preview_id ) : $this->active();
     }
 
     /**
@@ -225,10 +230,18 @@ class LayoutRepository {
      * @throws \RuntimeException         When WordPress refuses or fails to trash it.
      */
     public function archive( int $id ): Layout {
+        $post = get_post( $id );
 
-        if ( Layout::POST_TYPE !== get_post_type( $id ) ) {
+        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
+
+        if ( LayoutStatus::ARCHIVED === $post->post_status ) {
+            throw new \InvalidArgumentException( __( 'This layout is already archived.', 'yaycheckout' ) );
+        }
+
+        // LayoutActiveGuard refuses to trash the active layout; archiving is the merchant's explicit choice, so deactivate first.
+        $this->deactivate( $id );
 
         $trashed = wp_trash_post( $id );
 
@@ -285,8 +298,9 @@ class LayoutRepository {
     }
 
     /**
-     * Creates a blank layout draft. Content starts as the root block, not '':
-     * empty markup cannot be published.
+     * Creates a layout draft seeded with a complete checkout, so activating it
+     * as-is lets a shopper place an order. The post type's template only
+     * applies to auto-drafts, not to this insert.
      *
      * @throws \InvalidArgumentException When the layout limit is reached or the insert fails.
      */
@@ -295,13 +309,16 @@ class LayoutRepository {
             throw new \InvalidArgumentException( Plan::layout_limit_message() );
         }
 
+        // wp_insert_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
         $new_id = wp_insert_post(
-            [
-                'post_type'    => Layout::POST_TYPE,
-                'post_status'  => LayoutStatus::DRAFT,
-                'post_title'   => $title,
-                'post_content' => '<!-- wp:yaycheckout/checkout /-->',
-            ],
+            wp_slash(
+                [
+                    'post_type'    => Layout::POST_TYPE,
+                    'post_status'  => LayoutStatus::DRAFT,
+                    'post_title'   => $title,
+                    'post_content' => self::default_markup(),
+                ]
+            ),
             true
         );
 
@@ -375,6 +392,60 @@ class LayoutRepository {
         if ( ! wp_delete_post( $id, true ) ) {
             throw new \RuntimeException( sprintf( 'Layout %d could not be deleted.', $id ) );
         }
+    }
+
+    /**
+     * Block markup for a new layout: contact, billing, shipping, order review.
+     *
+     * The address keys mirror packages/blocks/src/shared/address-fields.ts,
+     * the editor's field picker; keep the two in step.
+     */
+    public static function default_markup(): string {
+        return BlockMarkup::serialize(
+            [
+                BlockMarkup::block(
+                    'yaycheckout/checkout',
+                    [],
+                    [
+                        BlockMarkup::block( 'yaycheckout/contact' ),
+                        BlockMarkup::block( 'yaycheckout/billing', [], self::address_field_blocks( 'billing' ) ),
+                        BlockMarkup::block( 'yaycheckout/shipping', [], self::address_field_blocks( 'shipping' ) ),
+                        BlockMarkup::block( 'yaycheckout/order-review' ),
+                    ]
+                ),
+            ]
+        );
+    }
+
+    /**
+     * @return array[] Field blocks for one address section.
+     */
+    private static function address_field_blocks( string $prefix ): array {
+        $fields = [
+            'first_name' => [ 'text', __( 'First name', 'yaycheckout' ) ],
+            'last_name'  => [ 'text', __( 'Last name', 'yaycheckout' ) ],
+            'country'    => [ 'country', __( 'Country / Region', 'yaycheckout' ) ],
+            'address_1'  => [ 'text', __( 'Street address', 'yaycheckout' ) ],
+            'city'       => [ 'text', __( 'Town / City', 'yaycheckout' ) ],
+            'state'      => [ 'state', __( 'State / County', 'yaycheckout' ) ],
+            'postcode'   => [ 'text', __( 'Postcode / ZIP', 'yaycheckout' ) ],
+        ];
+
+        $blocks = [];
+
+        foreach ( $fields as $suffix => [ $type, $label ] ) {
+            $blocks[] = BlockMarkup::block(
+                'yaycheckout/field',
+                [
+                    'fieldKey' => $prefix . '_' . $suffix,
+                    'type'     => $type,
+                    'label'    => $label,
+                    'required' => true,
+                ]
+            );
+        }
+
+        return $blocks;
     }
 
     /**

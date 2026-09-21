@@ -4,6 +4,7 @@ import {
   activateLayout,
   archiveLayout,
   createLayoutDraft,
+  createPreviewLink,
   deactivateLayout,
   deleteLayout,
   duplicateLayout,
@@ -168,5 +169,13 @@ export function useDuplicateLayoutMutation() {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
     },
+  });
+}
+
+/** Nothing to invalidate: a link is minted, not stored. */
+export function useCreatePreviewLinkMutation() {
+  return useMutation({
+    mutationKey: ['layouts', 'preview-link'],
+    mutationFn: createPreviewLink,
   });
 }
