@@ -20,6 +20,8 @@ class Design {
 
     public const CUSTOM_CSS_MAX_BYTES = 50000;
 
+    public const PRESET_NAME_MAX_CHARS = 60;
+
     public array $tokens = [];
 
     public string $custom_css = '';
@@ -265,81 +267,6 @@ class Design {
         return $design;
     }
 
-    public const PRESET_NAME_MAX_CHARS = 60;
-
-    /**
-     * Appends a merchant preset built from $tokens. The id is an ASCII slug of
-     * the name, suffixed until unique, so it stays readable in the option.
-     * $name must already be plain text (the controller strips markup).
-     *
-     * @return array|\WP_Error The stored { id, name, builtin, tokens }, or why it was rejected.
-     */
-    public function add_preset( $name, $tokens ) {
-        $name = is_string( $name ) ? trim( $name ) : '';
-
-        if ( '' === $name || mb_strlen( $name ) > self::PRESET_NAME_MAX_CHARS ) {
-            return self::invalid( 'name' );
-        }
-
-        if ( ! is_array( $tokens ) ) {
-            return self::invalid( 'tokens' );
-        }
-
-        $tokens = self::sanitize( $tokens );
-
-        if ( $tokens instanceof \WP_Error ) {
-            return $tokens;
-        }
-
-        $base = trim( preg_replace( '/[^a-z0-9]+/', '-', strtolower( $name ) ), '-' );
-        $base = '' === $base ? 'preset' : $base;
-        $id   = $base;
-        $n    = 1;
-
-        while ( $this->has_preset( $id ) ) {
-            ++$n;
-            $id = $base . '-' . $n;
-        }
-
-        $preset = [
-            'id'      => $id,
-            'name'    => $name,
-            'builtin' => false,
-            'tokens'  => $tokens,
-        ];
-
-        $this->presets[] = $preset;
-
-        // Saving the applied tokens as a preset means that preset is now the applied one.
-        if ( $tokens === $this->tokens ) {
-            $this->preset_id = $id;
-        }
-
-        return $preset;
-    }
-
-    /**
-     * Drops a merchant preset; built-ins cannot be removed. A design that had
-     * it applied falls back to no preset, its tokens untouched.
-     *
-     * @return true|\WP_Error
-     */
-    public function remove_preset( $id ) {
-        foreach ( $this->presets as $index => $preset ) {
-            if ( $preset['id'] === $id && ! $preset['builtin'] ) {
-                array_splice( $this->presets, $index, 1 );
-
-                if ( $this->preset_id === $id ) {
-                    $this->preset_id = null;
-                }
-
-                return true;
-            }
-        }
-
-        return new \WP_Error( 'invalid_arguments', __( 'Unknown preset.', 'yaycheckout' ) );
-    }
-
     /** Merchant-saved presets only; the built-ins live in code. */
     private function user_presets(): array {
         return array_values( array_filter( $this->presets, fn( array $preset ) => ! $preset['builtin'] ) );
@@ -348,6 +275,46 @@ class Design {
     /** Whether $id names a preset in the current list; null is never one. */
     public function has_preset( $id ): bool {
         return self::is_id( $id ) && in_array( $id, array_column( $this->presets, 'id' ), true );
+    }
+
+    /** The preset's index in $presets, or null; built-ins are excluded so callers cannot touch them. */
+    public function user_preset_index( $id ): ?int {
+        foreach ( $this->presets as $index => $preset ) {
+            if ( $preset['id'] === $id && ! $preset['builtin'] ) {
+                return $index;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Validates a { name, tokens } preset payload. Name is trimmed plain text;
+     * tokens must be a full set (see sanitize()).
+     *
+     * @return array|\WP_Error [ 'name', 'tokens' ] clean, or the first failure.
+     */
+    public static function sanitize_preset( array $input ) {
+        $name = is_string( $input['name'] ?? null ) ? trim( $input['name'] ) : '';
+
+        if ( '' === $name || mb_strlen( $name ) > self::PRESET_NAME_MAX_CHARS ) {
+            return self::invalid( 'name' );
+        }
+
+        if ( ! is_array( $input['tokens'] ?? null ) ) {
+            return self::invalid( 'tokens' );
+        }
+
+        $tokens = self::sanitize( $input['tokens'] );
+
+        if ( $tokens instanceof \WP_Error ) {
+            return $tokens;
+        }
+
+        return [
+            'name'   => $name,
+            'tokens' => $tokens,
+        ];
     }
 
     /**

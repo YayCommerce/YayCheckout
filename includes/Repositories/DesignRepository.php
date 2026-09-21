@@ -18,54 +18,98 @@ class DesignRepository {
     }
 
     /**
-     * Persists the applied design and stamps updated_at; stored user presets
-     * are carried over untouched. Input must already be through Design::sanitize_input().
+     * Validates and persists the applied design, stamping updated_at; stored
+     * user presets are carried over untouched.
      *
-     * @param array $clean [ 'tokens', 'preset_id', 'custom_css' ].
+     * @param array $input Raw { tokens, preset_id, custom_css } body.
+     * @throws \InvalidArgumentException When the body fails Design::sanitize_input().
      */
-    public function save( array $clean ): Design {
+    public function save( array $input ): Design {
         $design = $this->get();
+        $clean  = $design->sanitize_input( $input );
+
+        if ( $clean instanceof \WP_Error ) {
+            throw new \InvalidArgumentException( $clean->get_error_message() );
+        }
 
         $design->tokens     = $clean['tokens'];
         $design->preset_id  = $clean['preset_id'];
         $design->custom_css = $clean['custom_css'];
         $design->updated_at = DateHelper::now_iso8601();
 
-        update_option( Design::OPTION_DESIGN, $design->to_option() );
+        $this->persist( $design );
 
         return $design;
     }
 
     /**
-     * Stores a new merchant preset. The applied design is left as is: the
-     * SPA decides whether to point preset_id at it on its next Save.
+     * Appends a merchant preset. The id is an ASCII slug of the name, suffixed
+     * until unique, so it stays readable in the option. Saving the applied
+     * tokens under a name makes that preset the applied one.
      *
-     * @return Design|\WP_Error
+     * @param array $input Raw { name, tokens } body; name must already be plain text.
+     * @throws \InvalidArgumentException When the body fails Design::sanitize_preset().
      */
-    public function add_preset( $name, $tokens ) {
+    public function add_preset( array $input ): Design {
         $design = $this->get();
-        $result = $design->add_preset( $name, $tokens );
+        $clean  = Design::sanitize_preset( $input );
 
-        if ( $result instanceof \WP_Error ) {
-            return $result;
+        if ( $clean instanceof \WP_Error ) {
+            throw new \InvalidArgumentException( $clean->get_error_message() );
         }
 
-        update_option( Design::OPTION_DESIGN, $design->to_option() );
+        $base = trim( preg_replace( '/[^a-z0-9]+/', '-', strtolower( $clean['name'] ) ), '-' );
+        $base = '' === $base ? 'preset' : $base;
+        $id   = $base;
+        $n    = 1;
+
+        while ( $design->has_preset( $id ) ) {
+            ++$n;
+            $id = $base . '-' . $n;
+        }
+
+        $design->presets[] = [
+            'id'      => $id,
+            'name'    => $clean['name'],
+            'builtin' => false,
+            'tokens'  => $clean['tokens'],
+        ];
+
+        if ( $clean['tokens'] === $design->tokens ) {
+            $design->preset_id = $id;
+        }
+
+        $this->persist( $design );
 
         return $design;
     }
 
-    /** @return Design|\WP_Error */
-    public function delete_preset( $id ) {
+    /**
+     * Drops a merchant preset; built-ins cannot be removed. A design that had
+     * it applied falls back to no preset, its tokens untouched.
+     *
+     * @throws \InvalidArgumentException When $id is not a merchant preset.
+     */
+    public function delete_preset( string $id ): Design {
         $design = $this->get();
-        $result = $design->remove_preset( $id );
+        $index  = $design->user_preset_index( $id );
 
-        if ( $result instanceof \WP_Error ) {
-            return $result;
+        if ( null === $index ) {
+            throw new \InvalidArgumentException( __( 'Unknown preset.', 'yaycheckout' ) );
         }
 
-        update_option( Design::OPTION_DESIGN, $design->to_option() );
+        array_splice( $design->presets, $index, 1 );
+
+        if ( $design->preset_id === $id ) {
+            $design->preset_id = null;
+        }
+
+        $this->persist( $design );
 
         return $design;
+    }
+
+    private function persist( Design $design ): void {
+        update_option( Design::OPTION_DESIGN, $design->to_option() );
     }
 }

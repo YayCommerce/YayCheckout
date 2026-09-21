@@ -51,12 +51,10 @@ class DesignRestController extends BaseRestController {
             return $this->error_invalid_arguments();
         }
 
-        $clean = $this->design->get()->sanitize_input( $input );
-
-        if ( is_wp_error( $clean ) ) {
-            return $this->error_invalid_arguments( $clean->get_error_message() );
+        try {
+            return $this->design->save( $input )->to_array();
+        } catch ( \InvalidArgumentException $ex ) {
+            return $this->error_invalid_arguments( $ex->getMessage() );
         }
-
-        return $this->design->save( $clean )->to_array();
     }
 }

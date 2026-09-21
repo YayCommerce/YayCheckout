@@ -53,23 +53,22 @@ class DesignPresetRestController extends BaseRestController {
             return $this->error_invalid_arguments();
         }
 
-        $name   = sanitize_text_field( (string) ( $input['name'] ?? '' ) );
-        $design = $this->design->add_preset( $name, $input['tokens'] ?? null );
-
-        if ( is_wp_error( $design ) ) {
-            return $this->error_invalid_arguments( $design->get_error_message() );
+        if ( is_string( $input['name'] ?? null ) ) {
+            $input['name'] = sanitize_text_field( $input['name'] );
         }
 
-        return $design->to_array();
+        try {
+            return $this->design->add_preset( $input )->to_array();
+        } catch ( \InvalidArgumentException $ex ) {
+            return $this->error_invalid_arguments( $ex->getMessage() );
+        }
     }
 
     public function delete_preset( \WP_REST_Request $request ) {
-        $design = $this->design->delete_preset( $request->get_param( 'id' ) );
-
-        if ( is_wp_error( $design ) ) {
-            return $this->error_not_found( $design->get_error_message() );
+        try {
+            return $this->design->delete_preset( (string) $request->get_param( 'id' ) )->to_array();
+        } catch ( \InvalidArgumentException $ex ) {
+            return $this->error_invalid_arguments( $ex->getMessage() );
         }
-
-        return $design->to_array();
     }
 }
