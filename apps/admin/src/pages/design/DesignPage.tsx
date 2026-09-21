@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
 import { getErrorMsg } from '@/lib/helpers/response.helper';
-import { useDesignQuery, useSaveDesignMutation } from '@/lib/queries/design.queries';
-import { designFormSchema, type DesignForm, type DesignResponse, type DesignTokens } from '@/lib/schema/design.schema';
+import { useDeleteDesignPresetMutation, useDesignQuery, useSaveDesignMutation } from '@/lib/queries/design.queries';
+import {
+  designFormSchema,
+  type DesignForm,
+  type DesignResponse,
+  type DesignTokens,
+  type TokenSection,
+} from '@/lib/schema/design.schema';
+import { cn } from '@/lib/utils';
 import { useRouteLeaveGuard } from '@/hooks/useRouteLeaveGuard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,6 +25,7 @@ import PageLayout from '@/pages/PageLayout';
 import { DesignActions } from './components/DesignActions';
 import { PreviewPane } from './components/PreviewPane';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
+import { SavePresetModal } from './components/SavePresetModal';
 import { TokenGroups } from './components/TokenGroups';
 
 const FORM_ID = 'design-form';
@@ -26,25 +34,39 @@ function toFormValues(design: DesignResponse): DesignForm {
   return { tokens: design.tokens, presetId: design.presetId, customCss: design.customCss };
 }
 
+function sameTokens(a: DesignTokens, b: DesignTokens): boolean {
+  return (Object.keys(a) as TokenSection[]).every((section) => {
+    const [x, y] = [a[section], b[section]] as Record<string, unknown>[];
+    return Object.keys(x).every((key) => x[key] === y[key]);
+  });
+}
+
 export default function DesignPage() {
   // initialData from the bootstrap: data is defined on first render.
   const { data } = useDesignQuery();
   const saveMutation = useSaveDesignMutation();
   // Null while closed; the override count the modal quotes once opened.
   const [resetCount, setResetCount] = useState<number | null>(null);
+  const [savePresetOpen, setSavePresetOpen] = useState(false);
+  const deletePresetMutation = useDeleteDesignPresetMutation();
 
   const form = useForm<DesignForm>({
     resolver: zodResolver(designFormSchema),
     defaultValues: toFormValues(data),
   });
   const { isDirty } = form.formState;
+  const presetId = form.watch('presetId');
+  const tokens = form.watch('tokens');
+  // A preset counts as applied only while the tokens still match it; a hand edit silently leaves it.
+  const activePreset = data.presets.find((preset) => preset.id === presetId && sameTokens(preset.tokens, tokens));
+  const activePresetId = activePreset?.id ?? null;
 
   /** Resolves true on success so the leave dialog knows whether to proceed. */
   async function onSubmit(values: DesignForm): Promise<boolean> {
     if (saveMutation.isPending) return false;
 
     try {
-      const saved = await saveMutation.mutateAsync(values);
+      const saved = await saveMutation.mutateAsync({ ...values, presetId: activePresetId });
       form.reset(toFormValues(saved));
       toast.success(__('Design saved.', 'yaycheckout'));
       return true;
@@ -62,6 +84,13 @@ export default function DesignPage() {
   function resetToTheme() {
     applyPreset(data.defaultTokens, 'default');
     setResetCount(null);
+  }
+
+  async function deletePreset(id: string) {
+    const saved = await deletePresetMutation.mutateAsync(id);
+    // resetField() only works on registered inputs and presetId has none, so follow the server value via setValue.
+    if (presetId === id) form.setValue('presetId', saved.presetId, { shouldDirty: true });
+    toast.success(__('Preset deleted.', 'yaycheckout'));
   }
 
   const { showDialog, confirmLeave, cancelLeave } = useRouteLeaveGuard(isDirty);
@@ -96,13 +125,41 @@ export default function DesignPage() {
                     {data.presets.map((preset) => (
                       <span
                         key={preset.id}
-                        className="bg-background inline-flex h-7 items-center rounded-full border px-3 font-mono text-xs"
+                        className={cn(
+                          'transition-default inline-flex h-7 items-center rounded-full border font-mono text-xs',
+                          preset.id === activePresetId
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'bg-background hover:bg-accent',
+                        )}
                       >
-                        {preset.name}
+                        <button
+                          type="button"
+                          onClick={() => applyPreset(preset.tokens, preset.id)}
+                          className={cn('cursor-pointer px-3', !preset.builtin && 'pe-1')}
+                        >
+                          {preset.name}
+                        </button>
+                        {!preset.builtin && (
+                          <button
+                            type="button"
+                            aria-label={__('Delete preset', 'yaycheckout')}
+                            onClick={() => deletePreset(preset.id)}
+                            disabled={deletePresetMutation.isPending}
+                            className="cursor-pointer pe-2 opacity-60 hover:opacity-100"
+                          >
+                            <X className="size-3" />
+                          </button>
+                        )}
                       </span>
                     ))}
                   </div>
-                  <Button type="button" variant="outline" size="sm" className="self-start" disabled>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="self-start"
+                    onClick={() => setSavePresetOpen(true)}
+                  >
                     <Plus />
                     {__('Save current as preset', 'yaycheckout')}
                   </Button>
@@ -116,6 +173,16 @@ export default function DesignPage() {
           </div>
         </form>
       </Form>
+
+      <SavePresetModal
+        open={savePresetOpen}
+        tokens={form.getValues('tokens')}
+        onOpenChange={setSavePresetOpen}
+        onSaved={(id) => {
+          form.setValue('presetId', id, { shouldDirty: true });
+          toast.success(__('Preset saved.', 'yaycheckout'));
+        }}
+      />
 
       <ResetConfirmModal
         open={null !== resetCount}

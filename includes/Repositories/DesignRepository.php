@@ -35,4 +35,37 @@ class DesignRepository {
 
         return $design;
     }
+
+    /**
+     * Stores a new merchant preset. The applied design is left as is: the
+     * SPA decides whether to point preset_id at it on its next Save.
+     *
+     * @return Design|\WP_Error
+     */
+    public function add_preset( $name, $tokens ) {
+        $design = $this->get();
+        $result = $design->add_preset( $name, $tokens );
+
+        if ( $result instanceof \WP_Error ) {
+            return $result;
+        }
+
+        update_option( Design::OPTION_DESIGN, $design->to_option() );
+
+        return $design;
+    }
+
+    /** @return Design|\WP_Error */
+    public function delete_preset( $id ) {
+        $design = $this->get();
+        $result = $design->remove_preset( $id );
+
+        if ( $result instanceof \WP_Error ) {
+            return $result;
+        }
+
+        update_option( Design::OPTION_DESIGN, $design->to_option() );
+
+        return $design;
+    }
 }

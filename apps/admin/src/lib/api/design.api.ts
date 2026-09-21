@@ -75,3 +75,15 @@ export async function postDesign(form: DesignForm): Promise<DesignResponse> {
     ),
   );
 }
+
+export async function postDesignPreset(name: string, tokens: DesignTokens): Promise<DesignResponse> {
+  return designResponseFromWire(
+    designResponseWireSchema.parse(
+      await api.post('design/presets', { json: { name, tokens: tokensToWire(tokens) } }).json(),
+    ),
+  );
+}
+
+export async function deleteDesignPreset(id: string): Promise<DesignResponse> {
+  return designResponseFromWire(designResponseWireSchema.parse(await api.delete(`design/presets/${id}`).json()));
+}

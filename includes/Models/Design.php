@@ -265,6 +265,75 @@ class Design {
         return $design;
     }
 
+    public const PRESET_NAME_MAX_CHARS = 60;
+
+    /**
+     * Appends a merchant preset built from $tokens. The id is a slug of the
+     * name, suffixed until unique, so it stays readable in the option.
+     *
+     * @return array|\WP_Error The stored { id, name, builtin, tokens }, or why it was rejected.
+     */
+    public function add_preset( $name, $tokens ) {
+        $name = is_string( $name ) ? trim( wp_strip_all_tags( $name ) ) : '';
+
+        if ( '' === $name || mb_strlen( $name ) > self::PRESET_NAME_MAX_CHARS ) {
+            return self::invalid( 'name' );
+        }
+
+        if ( ! is_array( $tokens ) ) {
+            return self::invalid( 'tokens' );
+        }
+
+        $tokens = self::sanitize( $tokens );
+
+        if ( $tokens instanceof \WP_Error ) {
+            return $tokens;
+        }
+
+        $base = sanitize_title( $name );
+        $base = '' === $base ? 'preset' : $base;
+        $id   = $base;
+        $n    = 1;
+
+        while ( $this->has_preset( $id ) ) {
+            ++$n;
+            $id = $base . '-' . $n;
+        }
+
+        $preset = [
+            'id'      => $id,
+            'name'    => $name,
+            'builtin' => false,
+            'tokens'  => $tokens,
+        ];
+
+        $this->presets[] = $preset;
+
+        return $preset;
+    }
+
+    /**
+     * Drops a merchant preset; built-ins cannot be removed. A design that had
+     * it applied falls back to no preset, its tokens untouched.
+     *
+     * @return true|\WP_Error
+     */
+    public function remove_preset( $id ) {
+        foreach ( $this->presets as $index => $preset ) {
+            if ( $preset['id'] === $id && ! $preset['builtin'] ) {
+                array_splice( $this->presets, $index, 1 );
+
+                if ( $this->preset_id === $id ) {
+                    $this->preset_id = null;
+                }
+
+                return true;
+            }
+        }
+
+        return new \WP_Error( 'invalid_arguments', __( 'Unknown preset.', 'yaycheckout' ) );
+    }
+
     /** Merchant-saved presets only; the built-ins live in code. */
     private function user_presets(): array {
         return array_values( array_filter( $this->presets, fn( array $preset ) => ! $preset['builtin'] ) );
