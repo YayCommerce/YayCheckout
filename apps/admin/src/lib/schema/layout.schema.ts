@@ -56,6 +56,15 @@ export const layoutCountsResponseSchema = z
   })
   .strict();
 
+/** POST /layouts/{id}/preview-link. */
+export const previewLinkWireSchema = z
+  .object({
+    url: z.string(),
+    /** ISO 8601 UTC. */
+    expires_at: z.string(),
+  })
+  .strict();
+
 export type LayoutStatus = z.infer<typeof layoutStatusSchema>;
 export type LayoutCounts = z.infer<typeof layoutCountsSchema>;
 
@@ -85,6 +94,12 @@ export type LayoutListResponse = {
   total: number;
   page: number;
   totalPages: number;
+};
+
+export type PreviewLink = {
+  url: string;
+  /** ISO 8601 UTC. Format with lib/helpers/date.helper. */
+  expiresAt: string;
 };
 
 /** Client-side validation for the New layout form. Mirrors LayoutRestController's template_slug rule; catalogue membership is server-side only. */

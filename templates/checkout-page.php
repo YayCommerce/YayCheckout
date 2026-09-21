@@ -14,6 +14,7 @@
 defined( 'ABSPATH' ) || exit;
 
 $yaycheckout_layout   = \YayCheckout\Renderer\CheckoutPage::get_instance()->layout();
+$yaycheckout_preview  = \YayCheckout\Renderer\PreviewRequest::get_instance();
 $yaycheckout_is_block = wp_is_block_theme();
 
 if ( $yaycheckout_is_block ) :
@@ -36,6 +37,10 @@ endif;
 ?>
 <div class="woocommerce yaycheckout-page">
     <?php
+    if ( null !== $yaycheckout_layout && $yaycheckout_preview->active() ) {
+        $yaycheckout_preview->banner( $yaycheckout_layout );
+    }
+
     if ( null !== $yaycheckout_layout ) {
         // Shipping packages only exist after a calculation; session totals alone leave the order table without shipping rows.
         WC()->cart->calculate_totals();

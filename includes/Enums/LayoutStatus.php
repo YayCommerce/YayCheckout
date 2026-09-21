@@ -34,6 +34,19 @@ final class LayoutStatus {
         return [ self::DRAFT, self::PENDING, self::SCHEDULED, self::PUBLISHED ];
     }
 
+    /** Human label for a status; the raw value for anything unknown. */
+    public static function label( string $status ): string {
+        $labels = [
+            self::DRAFT     => __( 'Draft', 'yaycheckout' ),
+            self::PENDING   => __( 'Pending review', 'yaycheckout' ),
+            self::SCHEDULED => __( 'Scheduled', 'yaycheckout' ),
+            self::PUBLISHED => __( 'Published', 'yaycheckout' ),
+            self::ARCHIVED  => __( 'Archived', 'yaycheckout' ),
+        ];
+
+        return $labels[ $status ] ?? $status;
+    }
+
     public static function is_valid( $value ): bool {
         return in_array( $value, self::all(), true );
     }

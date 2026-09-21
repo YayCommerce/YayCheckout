@@ -44,9 +44,13 @@ class LayoutRepository {
         return $id > 0 ? $this->find( $id ) : null;
     }
 
-    /** The layout that should render for the current request. Pro assignment rules (Layout::META_RULES) will be evaluated here before falling back to active(). */
-    public function resolve_for_request(): ?Layout {
-        return $this->active();
+    /**
+     * The layout that should render for the current request: the previewed one when the
+     * renderer passes an id, else the active one. Pro assignment rules (Layout::META_RULES)
+     * will be evaluated here before falling back to active().
+     */
+    public function resolve_for_request( ?int $preview_id = null ): ?Layout {
+        return null !== $preview_id ? $this->find( $preview_id ) : $this->active();
     }
 
     /**
