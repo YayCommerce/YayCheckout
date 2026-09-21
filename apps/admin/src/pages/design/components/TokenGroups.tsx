@@ -8,6 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { ButtonsGroup } from './ButtonsGroup';
 import { ColoursGroup } from './ColoursGroup';
+import { CustomCssGroup } from './CustomCssGroup';
 import { InputsGroup } from './InputsGroup';
 import { SpacingGroup } from './SpacingGroup';
 import { TypographyGroup } from './TypographyGroup';
@@ -18,7 +19,7 @@ const GROUPS: { id: TokenSection | 'customCss'; label: string; body?: () => Reac
   { id: 'spacing', label: __('Spacing & radius', 'yaycheckout'), body: SpacingGroup },
   { id: 'buttons', label: __('Buttons', 'yaycheckout'), body: ButtonsGroup },
   { id: 'inputs', label: __('Inputs', 'yaycheckout'), body: InputsGroup },
-  { id: 'customCss', label: __('Custom CSS', 'yaycheckout') },
+  { id: 'customCss', label: __('Custom CSS', 'yaycheckout'), body: CustomCssGroup },
 ];
 
 /**
