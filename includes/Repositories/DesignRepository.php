@@ -19,49 +19,20 @@ class DesignRepository {
 
     /**
      * Persists the applied design and stamps updated_at; stored user presets
-     * are carried over untouched. Inputs must already be validated
-     * (Design::sanitize(), sanitize_custom_css(), has_preset()).
-     */
-    public function save( array $tokens, string $custom_css, ?string $preset_id ): Design {
-        $this->write(
-            [
-                'tokens'     => $tokens,
-                'preset_id'  => $preset_id,
-                'custom_css' => $custom_css,
-                'updated_at' => DateHelper::now_iso8601(),
-            ],
-            $this->get()
-        );
-
-        return $this->get();
-    }
-
-    /**
-     * Replaces the merchant-saved preset list and nothing else — updated_at
-     * describes the applied design, which this does not change. Pro-only
-     * writes; core never calls it.
+     * are carried over untouched. Input must already be through Design::sanitize_input().
      *
-     * @param array $presets Each { id, name, tokens, created_at }, already validated.
+     * @param array $clean [ 'tokens', 'preset_id', 'custom_css' ].
      */
-    public function save_user_presets( array $presets ): Design {
-        $this->write( [ 'presets' => $presets ], $this->get() );
+    public function save( array $clean ): Design {
+        $design = $this->get();
 
-        return $this->get();
-    }
+        $design->tokens     = $clean['tokens'];
+        $design->preset_id  = $clean['preset_id'];
+        $design->custom_css = $clean['custom_css'];
+        $design->updated_at = DateHelper::now_iso8601();
 
-    private function write( array $changes, Design $current ): void {
-        update_option(
-            Design::OPTION_DESIGN,
-            array_replace(
-                [
-                    'tokens'     => $current->tokens,
-                    'preset_id'  => $current->preset_id,
-                    'custom_css' => $current->custom_css,
-                    'updated_at' => $current->updated_at,
-                    'presets'    => $current->user_presets,
-                ],
-                $changes
-            )
-        );
+        update_option( Design::OPTION_DESIGN, $design->to_option() );
+
+        return $design;
     }
 }

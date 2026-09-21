@@ -8,12 +8,11 @@ defined( 'ABSPATH' ) || exit;
  * from, and every preset (built-in plus merchant-saved). Pure entity: no WordPress calls.
  *
  * The schema() is the single description of every token; from_option(), sanitize()
- * and defaults() all walk it. The Default preset is the schema defaults, so
- * "Reset to theme" in the SPA is a form reset to presets()[0] — no server call.
+ * and defaults() all walk it. The Default preset is the schema defaults.
  *
  * Applying a preset copies its tokens into $tokens; $preset_id only records
- * which one, so the editor can show edits relative to it. Rendering never
- * resolves the id — a deleted preset changes nothing on the storefront.
+ * which one. Nothing resolves the id back to tokens, so a deleted preset
+ * leaves $tokens as they are.
  */
 class Design {
 
@@ -31,7 +30,7 @@ class Design {
     /**
      * Fonts the merchant can pick; '' means the theme's own font. Widely used
      * Google fonts that WordPress's Font Library ships, so a theme is likely to
-     * have them already. Loading them on the storefront is a separate concern.
+     * have them already.
      */
     public const FONT_FAMILIES = [
         '',
@@ -55,10 +54,7 @@ class Design {
     /** ISO 8601 UTC; null when never saved. */
     public ?string $updated_at = null;
 
-    /** Merchant-saved presets as stored: { id, name, tokens, created_at }. Written by Pro; always [] on Free. */
-    public array $user_presets = [];
-
-    /** Built-ins followed by user presets, each { id, name, builtin, tokens } — the list the SPA shows. */
+    /** Built-ins first, then merchant-saved ones; each { id, name, builtin, tokens }. */
     public array $presets = [];
 
     /**
@@ -66,10 +62,9 @@ class Design {
      *   'enum' => array (enum only), 'min'/'max' => int (int only) ]
      *
      * The layout-wide corner radius is spacing.radius; buttons.radius and
-     * inputs.radius are stored on their own so the editor can push the shared
-     * value into them and still let each be tuned afterwards. Both spacing.scale
-     * and inputs.size are abstract steps; what they mean in px is decided where
-     * they are rendered.
+     * inputs.radius are stored on their own so each can still differ from it.
+     * Both spacing.scale and inputs.size are abstract steps; what they mean in
+     * px is decided where they are rendered.
      */
     public static function schema(): array {
         return [
@@ -248,31 +243,20 @@ class Design {
             ? $saved['updated_at']
             : null;
 
+        $design->presets = self::presets();
+
         foreach ( is_array( $saved['presets'] ?? null ) ? $saved['presets'] : [] as $preset ) {
             if ( ! is_array( $preset ) || ! self::is_id( $preset['id'] ?? null ) || ! is_string( $preset['name'] ?? null ) ) {
                 continue;
             }
 
-            $design->user_presets[] = [
-                'id'         => $preset['id'],
-                'name'       => $preset['name'],
-                'tokens'     => self::project( $preset['tokens'] ?? null ),
-                'created_at' => is_string( $preset['created_at'] ?? null ) ? $preset['created_at'] : null,
+            $design->presets[] = [
+                'id'      => $preset['id'],
+                'name'    => $preset['name'],
+                'builtin' => false,
+                'tokens'  => self::project( $preset['tokens'] ?? null ),
             ];
         }
-
-        $design->presets = array_merge(
-            self::presets(),
-            array_map(
-                fn( array $preset ) => [
-                    'id'      => $preset['id'],
-                    'name'    => $preset['name'],
-                    'builtin' => false,
-                    'tokens'  => $preset['tokens'],
-                ],
-                $design->user_presets
-            )
-        );
 
         $preset_id         = $saved['preset_id'] ?? null;
         $design->preset_id = $design->has_preset( $preset_id ) ? $preset_id : null;
@@ -280,9 +264,58 @@ class Design {
         return $design;
     }
 
+    /** Merchant-saved presets only; the built-ins live in code. */
+    private function user_presets(): array {
+        return array_values( array_filter( $this->presets, fn( array $preset ) => ! $preset['builtin'] ) );
+    }
+
     /** Whether $id names a preset in the current list; null is never one. */
     public function has_preset( $id ): bool {
         return self::is_id( $id ) && in_array( $id, array_column( $this->presets, 'id' ), true );
+    }
+
+    /**
+     * Validates a full { tokens, preset_id, custom_css } payload against this
+     * design's preset list. All three keys are required.
+     *
+     * @return array|\WP_Error [ 'tokens', 'preset_id', 'custom_css' ] clean, or the first failure.
+     */
+    public function sanitize_input( array $input ) {
+        foreach ( [ 'tokens', 'preset_id', 'custom_css' ] as $key ) {
+            if ( ! array_key_exists( $key, $input ) ) {
+                return self::invalid( $key );
+            }
+        }
+
+        if ( ! is_array( $input['tokens'] ) ) {
+            return self::invalid( 'tokens' );
+        }
+
+        $tokens = self::sanitize( $input['tokens'] );
+
+        if ( $tokens instanceof \WP_Error ) {
+            return $tokens;
+        }
+
+        if ( null !== $input['preset_id'] && ! $this->has_preset( $input['preset_id'] ) ) {
+            return new \WP_Error( 'invalid_arguments', __( 'Unknown preset.', 'yaycheckout' ) );
+        }
+
+        if ( ! is_string( $input['custom_css'] ) ) {
+            return self::invalid( 'custom_css' );
+        }
+
+        $custom_css = self::sanitize_custom_css( $input['custom_css'] );
+
+        if ( $custom_css instanceof \WP_Error ) {
+            return $custom_css;
+        }
+
+        return [
+            'tokens'     => $tokens,
+            'preset_id'  => $input['preset_id'],
+            'custom_css' => $custom_css,
+        ];
     }
 
     /** Every schema token, taken from $tokens when valid there and from the default otherwise. */
@@ -364,6 +397,17 @@ class Design {
         }
 
         return $css;
+    }
+
+    /** The option value, exactly as from_option() reads it back. Built-in presets are never stored. */
+    public function to_option(): array {
+        return [
+            'tokens'     => $this->tokens,
+            'preset_id'  => $this->preset_id,
+            'custom_css' => $this->custom_css,
+            'updated_at' => $this->updated_at,
+            'presets'    => $this->user_presets(),
+        ];
     }
 
     /** The shape both GET/POST /design and the localize bootstrap emit. */

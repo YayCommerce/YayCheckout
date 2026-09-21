@@ -1,3 +1,4 @@
+import { DesignResponseWire } from '@/lib/schema/design.schema';
 import { IntegrationWire, SettingsResponseWire } from '@/lib/schema/settings.schema';
 
 export type Meta = {
@@ -21,8 +22,9 @@ export type Meta = {
   };
 };
 
-/** Wire shapes; parsed by settings.queries.ts before use. */
+/** Wire shapes; parsed by the matching *.queries.ts before use. */
 export type AdminData = {
   settings: SettingsResponseWire;
   integrations: IntegrationWire[];
+  design: DesignResponseWire;
 };
