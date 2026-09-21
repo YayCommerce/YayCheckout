@@ -28,24 +28,25 @@ class Design {
     public ?string $preset_id = null;
 
     /**
-     * Fonts the merchant can pick; '' means the theme's own font. Widely used
+     * Fonts the merchant can pick, keyed by the slug stored in tokens; '' means
+     * the theme's own font. Values are the CSS font-family names. Widely used
      * Google fonts that WordPress's Font Library ships, so a theme is likely to
      * have them already.
      */
     public const FONT_FAMILIES = [
-        '',
-        'Inter',
-        'Roboto',
-        'Open Sans',
-        'Lato',
-        'Montserrat',
-        'Poppins',
-        'Nunito',
-        'Source Sans 3',
-        'Manrope',
-        'Merriweather',
-        'Playfair Display',
-        'Roboto Slab',
+        ''                 => '',
+        'inter'            => 'Inter',
+        'roboto'           => 'Roboto',
+        'open-sans'        => 'Open Sans',
+        'lato'             => 'Lato',
+        'montserrat'       => 'Montserrat',
+        'poppins'          => 'Poppins',
+        'nunito'           => 'Nunito',
+        'source-sans-3'    => 'Source Sans 3',
+        'manrope'          => 'Manrope',
+        'merriweather'     => 'Merriweather',
+        'playfair-display' => 'Playfair Display',
+        'roboto-slab'      => 'Roboto Slab',
     ];
 
     /** Spacing multipliers the merchant can pick, as floats so 1.0 and 1 stay one value. */
@@ -94,7 +95,7 @@ class Design {
                 'font_family' => [
                     'type'    => 'enum',
                     'default' => '',
-                    'enum'    => self::FONT_FAMILIES,
+                    'enum'    => array_keys( self::FONT_FAMILIES ),
                 ],
                 'base_size'   => [
                     'type'    => 'int',

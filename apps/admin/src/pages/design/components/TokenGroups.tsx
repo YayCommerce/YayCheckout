@@ -7,10 +7,11 @@ import type { DesignForm, TokenSection } from '@/lib/schema/design.schema';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { ColoursGroup } from './ColoursGroup';
+import { TypographyGroup } from './TypographyGroup';
 
 const GROUPS: { id: TokenSection | 'customCss'; label: string; body?: () => ReactNode }[] = [
   { id: 'colours', label: __('Colours', 'yaycheckout'), body: ColoursGroup },
-  { id: 'typography', label: __('Typography', 'yaycheckout') },
+  { id: 'typography', label: __('Typography', 'yaycheckout'), body: TypographyGroup },
   { id: 'spacing', label: __('Spacing & radius', 'yaycheckout') },
   { id: 'buttons', label: __('Buttons', 'yaycheckout') },
   { id: 'inputs', label: __('Inputs', 'yaycheckout') },

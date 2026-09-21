@@ -1,21 +1,24 @@
 import { z } from 'zod';
 
-/** Mirrors Design::FONT_FAMILIES in PHP; '' is the theme's own font. */
-export const FONT_FAMILY_OPTIONS = [
-  '',
-  'Inter',
-  'Roboto',
-  'Open Sans',
-  'Lato',
-  'Montserrat',
-  'Poppins',
-  'Nunito',
-  'Source Sans 3',
-  'Manrope',
-  'Merriweather',
-  'Playfair Display',
-  'Roboto Slab',
-] as const;
+/** Mirrors Design::FONT_FAMILIES in PHP: slug stored in tokens → CSS font-family name; '' is the theme's own font. */
+export const FONT_FAMILIES = {
+  '': '',
+  inter: 'Inter',
+  roboto: 'Roboto',
+  'open-sans': 'Open Sans',
+  lato: 'Lato',
+  montserrat: 'Montserrat',
+  poppins: 'Poppins',
+  nunito: 'Nunito',
+  'source-sans-3': 'Source Sans 3',
+  manrope: 'Manrope',
+  merriweather: 'Merriweather',
+  'playfair-display': 'Playfair Display',
+  'roboto-slab': 'Roboto Slab',
+} as const;
+export type FontFamily = keyof typeof FONT_FAMILIES;
+
+export const FONT_FAMILY_KEYS = Object.keys(FONT_FAMILIES) as [FontFamily, ...FontFamily[]];
 
 /** Mirrors Design::SPACING_SCALES in PHP. */
 export const SPACING_SCALE_OPTIONS = [1, 1.5, 2, 2.5, 3, 3.5, 4] as const;
@@ -45,7 +48,7 @@ export const designTokensWireSchema = z
     typography: z
       .object({
         inherit: z.boolean(),
-        font_family: z.enum(FONT_FAMILY_OPTIONS),
+        font_family: z.enum(FONT_FAMILY_KEYS),
         base_size: z.number().int().min(10).max(24),
       })
       .strict(),
@@ -84,7 +87,7 @@ export const designTokensSchema = z.object({
   }),
   typography: z.object({
     inherit: z.boolean(),
-    fontFamily: z.enum(FONT_FAMILY_OPTIONS),
+    fontFamily: z.enum(FONT_FAMILY_KEYS),
     baseSize: z.number().int().min(10).max(24),
   }),
   spacing: z.object({ scale: spacingScaleSchema, radius: radiusSchema }),
