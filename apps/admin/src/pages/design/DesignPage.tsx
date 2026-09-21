@@ -10,6 +10,7 @@ import { useDeleteDesignPresetMutation, useDesignQuery, useSaveDesignMutation } 
 import {
   designFormSchema,
   type DesignForm,
+  type DesignPreset,
   type DesignResponse,
   type DesignTokens,
   type TokenSection,
@@ -41,6 +42,12 @@ function sameTokens(a: DesignTokens, b: DesignTokens): boolean {
   });
 }
 
+/** A preset counts as applied only while the tokens still match it; a hand edit silently leaves it. */
+function activePresetIdFor(presets: DesignPreset[], presetId: string | null, tokens: DesignTokens): string | null {
+  const preset = presets.find((preset) => preset.id === presetId && sameTokens(preset.tokens, tokens));
+  return preset?.id ?? null;
+}
+
 export default function DesignPage() {
   // initialData from the bootstrap: data is defined on first render.
   const { data } = useDesignQuery();
@@ -58,15 +65,17 @@ export default function DesignPage() {
   const presetId = form.watch('presetId');
   const tokens = form.watch('tokens');
   // A preset counts as applied only while the tokens still match it; a hand edit silently leaves it.
-  const activePreset = data.presets.find((preset) => preset.id === presetId && sameTokens(preset.tokens, tokens));
-  const activePresetId = activePreset?.id ?? null;
+  const activePresetId = activePresetIdFor(data.presets, presetId, tokens);
 
   /** Resolves true on success so the leave dialog knows whether to proceed. */
   async function onSubmit(values: DesignForm): Promise<boolean> {
     if (saveMutation.isPending) return false;
 
     try {
-      const saved = await saveMutation.mutateAsync({ ...values, presetId: activePresetId });
+      const saved = await saveMutation.mutateAsync({
+        ...values,
+        presetId: activePresetIdFor(data.presets, values.presetId, values.tokens),
+      });
       form.reset(toFormValues(saved));
       toast.success(__('Design saved.', 'yaycheckout'));
       return true;
@@ -81,9 +90,15 @@ export default function DesignPage() {
     form.reset({ tokens, presetId, customCss: form.getValues('customCss') }, { keepDefaultValues: true });
   }
 
-  function resetToTheme() {
+  async function resetToTheme() {
     applyPreset(data.defaultTokens, 'default');
-    setResetCount(null);
+
+    // Same failure handling as Save: a rejected save keeps the modal open with the edits intact.
+    let saved = false;
+    await form.handleSubmit(async (values) => {
+      saved = await onSubmit(values);
+    })();
+    if (saved) setResetCount(null);
   }
 
   async function deletePreset(id: string) {
@@ -187,6 +202,7 @@ export default function DesignPage() {
       <ResetConfirmModal
         open={null !== resetCount}
         overrideCount={resetCount ?? 0}
+        isPending={saveMutation.isPending}
         onOpenChange={(open) => {
           if (!open) setResetCount(null);
         }}

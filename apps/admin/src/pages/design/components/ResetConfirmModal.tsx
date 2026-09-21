@@ -2,21 +2,23 @@ import { Info } from 'lucide-react';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Button, LoadingButton } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 /**
- * Confirms loading the Default preset over every token. Nothing is written until
- * Save, but the merchant cannot undo it after saving — hence the destructive button.
+ * Confirms loading the Default preset over every token and saves immediately —
+ * hence the destructive button, since this one cannot be undone by leaving unsaved.
  */
 export function ResetConfirmModal({
   open,
   overrideCount,
+  isPending,
   onOpenChange,
   onConfirm,
 }: {
   open: boolean;
   overrideCount: number;
+  isPending: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 }) {
@@ -29,7 +31,7 @@ export function ResetConfirmModal({
 
         <p className="text-muted-foreground text-sm">
           {__(
-            'Colours, typography, spacing, buttons and inputs go back to the Default preset. Custom CSS is kept.',
+            'Colours, typography, spacing, buttons and inputs go back to the Default preset and save immediately. Custom CSS is kept.',
             'yaycheckout',
           )}
         </p>
@@ -51,12 +53,12 @@ export function ResetConfirmModal({
         </Alert>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             {__('Cancel', 'yaycheckout')}
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
+          <LoadingButton variant="destructive" loading={isPending} onClick={onConfirm}>
             {__('Reset', 'yaycheckout')}
-          </Button>
+          </LoadingButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
