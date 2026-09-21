@@ -42,9 +42,7 @@ export function TokenField<S extends TokenSection, K extends keyof DesignTokens[
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <FormField control={control} name={name} render={({ field }) => <>{children(field)}</>} />
       </div>
-      {tag ? (
-        <span className={cn('shrink-0 font-mono text-[10px]', !isDirty && 'text-muted-foreground')}>{tag}</span>
-      ) : null}
+      {tag ? <span className={cn('shrink-0 text-xs', !isDirty && 'text-muted-foreground')}>{tag}</span> : null}
     </div>
   );
 }

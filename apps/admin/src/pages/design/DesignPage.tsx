@@ -145,7 +145,7 @@ export default function DesignPage() {
                       <span
                         key={preset.id}
                         className={cn(
-                          'transition-default inline-flex h-7 items-center rounded-full border font-mono text-xs',
+                          'transition-default inline-flex h-7 items-center rounded-full border text-xs',
                           preset.id === activePresetId
                             ? 'border-primary bg-primary text-primary-foreground'
                             : 'bg-background hover:bg-accent',

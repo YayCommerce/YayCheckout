@@ -42,7 +42,7 @@ export function TokenGroups() {
             <AccordionTrigger>
               <span className="flex-1">{label}</span>
               {changed > 0 ? (
-                <Badge variant="outline" className="font-mono text-[10px]">
+                <Badge variant="outline" className="text-xs">
                   {sprintf(
                     /* translators: %d: number of tokens in this group edited since the last save */
                     __('%d changed', 'yaycheckout'),

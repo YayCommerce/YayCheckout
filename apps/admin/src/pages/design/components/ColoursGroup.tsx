@@ -24,7 +24,7 @@ export function ColoursGroup() {
         <TokenField key={colour} section="colours" token={colour} label={COLOUR_LABELS[colour]}>
           {(field) => (
             <ColorPicker value={field.value} onValueChange={field.onChange}>
-              <ColorPickerTrigger className="h-8 font-mono text-xs" />
+              <ColorPickerTrigger className="h-8 text-xs" />
               <ColorPickerContent>
                 <ColorPickerPanel />
                 <ColorPickerInput />

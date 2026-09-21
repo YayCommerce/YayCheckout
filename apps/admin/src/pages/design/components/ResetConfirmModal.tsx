@@ -38,7 +38,7 @@ export function ResetConfirmModal({
 
         <Alert variant="muted">
           <Info />
-          <AlertDescription className="font-mono text-xs">
+          <AlertDescription className="text-xs">
             {sprintf(
               /* translators: %d: number of tokens that differ from the Default preset */
               _n(
