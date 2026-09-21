@@ -102,11 +102,14 @@ export default function DesignPage() {
     if (saved) setResetCount(null);
   }
 
-  async function deletePreset(id: string) {
-    const saved = await deletePresetMutation.mutateAsync(id);
-    if (!form.formState.isDirty) form.reset(toFormValues(saved));
-    else if (presetId === id) form.setValue('presetId', saved.presetId, { shouldDirty: true });
-    toast.success(__('Preset deleted.', 'yaycheckout'));
+  function deletePreset(id: string) {
+    deletePresetMutation.mutate(id, {
+      onSuccess: (saved) => {
+        if (!form.formState.isDirty) form.reset(toFormValues(saved));
+        else if (presetId === id) form.setValue('presetId', saved.presetId, { shouldDirty: true });
+        toast.success(__('Preset deleted.', 'yaycheckout'));
+      },
+    });
   }
 
   const { showDialog, confirmLeave, cancelLeave } = useRouteLeaveGuard(isDirty);

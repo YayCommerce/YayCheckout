@@ -84,12 +84,13 @@ export function PreviewPane() {
           viewport !== 'desktop' && 'bg-muted p-4',
         )}
       >
-        {customCss ? <style>{customCss}</style> : null}
+        {/* CSS nesting keeps a stray `* { display: none }` inside the preview instead of hiding the admin. */}
+        {customCss ? <style>{`.yaycheckout-preview { ${customCss} }`}</style> : null}
 
         <div
           style={{ width: VIEWPORT_WIDTH[viewport] }}
           className={cn(
-            'bg-background flex max-w-full flex-col',
+            'yaycheckout-preview bg-background flex max-w-full flex-col',
             viewport !== 'desktop' && 'self-start rounded-md border shadow-sm',
           )}
         >

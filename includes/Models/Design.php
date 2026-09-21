@@ -268,13 +268,14 @@ class Design {
     public const PRESET_NAME_MAX_CHARS = 60;
 
     /**
-     * Appends a merchant preset built from $tokens. The id is a slug of the
-     * name, suffixed until unique, so it stays readable in the option.
+     * Appends a merchant preset built from $tokens. The id is an ASCII slug of
+     * the name, suffixed until unique, so it stays readable in the option.
+     * $name must already be plain text (the controller strips markup).
      *
      * @return array|\WP_Error The stored { id, name, builtin, tokens }, or why it was rejected.
      */
     public function add_preset( $name, $tokens ) {
-        $name = is_string( $name ) ? trim( wp_strip_all_tags( $name ) ) : '';
+        $name = is_string( $name ) ? trim( $name ) : '';
 
         if ( '' === $name || mb_strlen( $name ) > self::PRESET_NAME_MAX_CHARS ) {
             return self::invalid( 'name' );
@@ -290,7 +291,7 @@ class Design {
             return $tokens;
         }
 
-        $base = sanitize_title( $name );
+        $base = trim( preg_replace( '/[^a-z0-9]+/', '-', strtolower( $name ) ), '-' );
         $base = '' === $base ? 'preset' : $base;
         $id   = $base;
         $n    = 1;

@@ -35,7 +35,8 @@ export function DesignActions({
   // Read during render so react-hook-form's proxy subscribes to dirtyFields.
   const { control, formState } = useFormContext<DesignForm>();
   const tokens = useWatch({ control, name: 'tokens' });
-  const dirtyCount = countDirtyLeaves(formState.dirtyFields);
+  // presetId is bookkeeping, not an edit the merchant made.
+  const dirtyCount = countDirtyLeaves(formState.dirtyFields.tokens) + countDirtyLeaves(formState.dirtyFields.customCss);
   const { isDirty } = formState;
   const overrideCount = countOverrides(tokens, defaultTokens);
 

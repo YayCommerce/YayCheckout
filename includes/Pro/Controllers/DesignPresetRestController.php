@@ -53,7 +53,8 @@ class DesignPresetRestController extends BaseRestController {
             return $this->error_invalid_arguments();
         }
 
-        $design = $this->design->add_preset( $input['name'] ?? null, $input['tokens'] ?? null );
+        $name   = sanitize_text_field( (string) ( $input['name'] ?? '' ) );
+        $design = $this->design->add_preset( $name, $input['tokens'] ?? null );
 
         if ( is_wp_error( $design ) ) {
             return $this->error_invalid_arguments( $design->get_error_message() );
