@@ -52,7 +52,7 @@ export function DesignActions({
 
   return (
     <>
-      <span className="text-muted-foreground font-mono text-xs">{status}</span>
+      <span className="text-muted-foreground text-sm">{status}</span>
       <Button
         type="button"
         variant="link"
