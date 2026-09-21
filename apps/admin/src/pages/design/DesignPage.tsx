@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { getErrorMsg } from '@/lib/helpers/response.helper';
+import { isPro } from '@/lib/plan';
 import { useDeleteDesignPresetMutation, useDesignQuery, useSaveDesignMutation } from '@/lib/queries/design.queries';
 import {
   designFormSchema,
@@ -21,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ProGate, ProTag } from '@/components/pro/ProGate';
+import { ProTag } from '@/components/pro/ProGate';
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog';
 import PageLayout from '@/pages/PageLayout';
 import { DesignActions } from './components/DesignActions';
@@ -87,12 +88,13 @@ export default function DesignPage() {
   }
 
   // keepDefaultValues keeps dirtiness measured against the last save, so Save stays enabled.
-  function applyPreset(tokens: DesignTokens, presetId: string) {
+  function applyPreset(tokens: DesignTokens, presetId: string | null) {
     form.reset({ tokens, presetId, customCss: form.getValues('customCss') }, { keepDefaultValues: true });
   }
 
   async function resetToTheme() {
-    applyPreset(data.defaultTokens, 'default');
+    // Theme defaults are not "the Default preset applied": no chip lights up.
+    applyPreset(data.defaultTokens, null);
 
     // Same failure handling as Save: a rejected save keeps the modal open with the edits intact.
     let saved = false;
@@ -134,14 +136,16 @@ export default function DesignPage() {
         <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-5 lg:flex-row">
             <div className="flex w-full shrink-0 flex-col gap-3 lg:w-110">
-              <ProGate>
-                <Card className="gap-3 p-4">
-                  <div className="flex items-center gap-2">
-                    <span className="flex-1 text-sm font-semibold">{__('Presets', 'yaycheckout')}</span>
-                    <ProTag />
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {data.presets.map((preset) => (
+              {/* Free sees the presets but cannot use them: the PRO tag says why. */}
+              <Card className={cn('gap-3 p-4', !isPro && 'opacity-60')}>
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 text-sm font-semibold">{__('Presets', 'yaycheckout')}</span>
+                  <ProTag />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {data.presets
+                    .filter((preset) => isPro || preset.builtin)
+                    .map((preset) => (
                       <span
                         key={preset.id}
                         className={cn(
@@ -154,7 +158,8 @@ export default function DesignPage() {
                         <button
                           type="button"
                           onClick={() => applyPreset(preset.tokens, preset.id)}
-                          className={cn('cursor-pointer px-3', !preset.builtin && 'pe-1')}
+                          disabled={!isPro}
+                          className={cn('cursor-pointer px-3 disabled:cursor-default', !preset.builtin && 'pe-1')}
                         >
                           {preset.name}
                         </button>
@@ -164,7 +169,8 @@ export default function DesignPage() {
                               <button
                                 type="button"
                                 aria-label={__('Delete preset', 'yaycheckout')}
-                                className="cursor-pointer pe-2 opacity-60 hover:opacity-100"
+                                disabled={!isPro}
+                                className="cursor-pointer pe-2 opacity-60 hover:opacity-100 disabled:cursor-default"
                               >
                                 <X className="size-3" />
                               </button>
@@ -201,19 +207,19 @@ export default function DesignPage() {
                         )}
                       </span>
                     ))}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="self-start"
-                    onClick={() => setSavePresetOpen(true)}
-                  >
-                    <Plus />
-                    {__('Save current as preset', 'yaycheckout')}
-                  </Button>
-                </Card>
-              </ProGate>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="self-start"
+                  disabled={!isPro}
+                  onClick={() => setSavePresetOpen(true)}
+                >
+                  <Plus />
+                  {__('Save current as preset', 'yaycheckout')}
+                </Button>
+              </Card>
 
               <TokenGroups />
             </div>

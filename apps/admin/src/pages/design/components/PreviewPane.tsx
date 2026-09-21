@@ -3,7 +3,7 @@ import { Monitor, Smartphone, Tablet } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { __ } from '@wordpress/i18n';
 
-import type { DesignForm } from '@/lib/schema/design.schema';
+import { FONT_FAMILIES, type DesignForm } from '@/lib/schema/design.schema';
 import { cn } from '@/lib/utils';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 
@@ -37,7 +37,10 @@ export function PreviewPane() {
   const rootStyle: CSSProperties = {
     color: colours.text,
     backgroundColor: colours.background,
-    fontFamily: typography.inherit || '' === typography.fontFamily ? DEFAULT_FONT_STACK : typography.fontFamily,
+    fontFamily:
+      typography.inherit || '' === typography.fontFamily
+        ? DEFAULT_FONT_STACK
+        : `"${FONT_FAMILIES[typography.fontFamily]}", ${DEFAULT_FONT_STACK}`,
     fontSize: typography.inherit ? undefined : `${typography.baseSize}px`,
   };
 
@@ -99,7 +102,10 @@ export function PreviewPane() {
             store.example/checkout
           </div>
 
-          <div className="yaycheckout-checkout flex flex-col gap-6 p-6 md:flex-row" style={rootStyle}>
+          <div
+            className={cn('yaycheckout-checkout flex gap-6 p-6', viewport === 'mobile' ? 'flex-col' : 'flex-row')}
+            style={rootStyle}
+          >
             <div className="flex flex-1 flex-col" style={{ gap: 1.5 * gap }}>
               <p className="m-0 text-xl font-bold">{__('Checkout', 'yaycheckout')}</p>
 
@@ -139,7 +145,7 @@ export function PreviewPane() {
             </div>
 
             <div
-              className="bg-muted/40 flex w-full flex-col md:w-64"
+              className={cn('bg-muted/40 flex flex-col', viewport === 'mobile' ? 'w-full' : 'w-64 shrink-0')}
               style={{ gap, padding: 1.5 * gap, borderRadius: inputs.radius }}
             >
               <p className="m-0" style={SECTION_LABEL_STYLE}>
