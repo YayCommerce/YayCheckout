@@ -11,11 +11,11 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Makes the active layout the checkout page: our template in place of the
  * theme's, the theme's header and footer around the layout's blocks (the
- * root block is the form). Every request for the checkout page is taken over, endpoints
- * included; WooCommerce's own validation is untouched.
+ * root block is the form). WooCommerce's own validation is untouched.
  *
- * Stands down entirely, leaving WooCommerce untouched, when safe mode is on
- * or no layout resolves. Full rules in docs/system-architecture.md, § Storefront.
+ * Stands down, leaving WooCommerce untouched, when safe mode is on, no
+ * layout resolves, or the request is Woo's order-received or order-pay
+ * endpoint. Full rules in docs/system-architecture.md, § Storefront.
  */
 class CheckoutPage {
     use SingletonTrait;
@@ -68,8 +68,18 @@ class CheckoutPage {
         return ( new LayoutRepository() )->resolve_for_request();
     }
 
-    /** Not is_checkout(): WooCommerce memoises it per process. */
+    /**
+     * True when this request is the checkout form, not a checkout-page endpoint.
+     *
+     * Not is_checkout(): WooCommerce memoises it per process. Order-received
+     * and order-pay share the checkout page; taking them over reprints the
+     * form instead of Woo's thank-you / pay templates.
+     */
     private function on_checkout_page(): bool {
-        return is_page( wc_get_page_id( 'checkout' ) );
+        if ( ! is_page( wc_get_page_id( 'checkout' ) ) ) {
+            return false;
+        }
+
+        return ! is_order_received_page() && ! is_checkout_pay_page();
     }
 }
