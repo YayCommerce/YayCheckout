@@ -1,7 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
-use YayCheckout\Services\DerivedCacheBuilder;
+use YayCheckout\Services\LayoutBlockIndex;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -152,12 +152,12 @@ class CheckoutFragments {
         }
 
         try {
-            $derived = DerivedCacheBuilder::build( $layout->content );
+            $index = LayoutBlockIndex::from_markup( $layout->content );
         } catch ( \InvalidArgumentException $ex ) {
             return [];
         }
 
-        $slots = $derived['slots'] ?? [];
+        $slots = $index['slots'] ?? [];
 
         return is_array( $slots ) ? $slots : [];
     }

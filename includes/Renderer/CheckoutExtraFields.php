@@ -3,7 +3,7 @@ namespace YayCheckout\Renderer;
 
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
-use YayCheckout\Services\DerivedCacheBuilder;
+use YayCheckout\Services\LayoutBlockIndex;
 use YayCheckout\Services\ExtraFieldPostedCollector;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -218,12 +218,12 @@ class CheckoutExtraFields {
         }
 
         try {
-            $derived = DerivedCacheBuilder::build( $layout->content );
+            $index = LayoutBlockIndex::from_markup( $layout->content );
         } catch ( \InvalidArgumentException $ex ) {
             return [];
         }
 
-        $fields = $derived['extra_fields'] ?? [];
+        $fields = $index['extra_fields'] ?? [];
 
         return is_array( $fields ) ? $fields : [];
     }
@@ -237,7 +237,7 @@ class CheckoutExtraFields {
             return [];
         }
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Keys are limited to the derived extra_fields map; ExtraFieldPostedCollector sanitizes values.
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Keys are limited to the extra_fields map; ExtraFieldPostedCollector sanitizes values.
         return wp_unslash( $_POST );
     }
 }

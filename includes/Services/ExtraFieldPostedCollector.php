@@ -4,7 +4,7 @@ namespace YayCheckout\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Reads posted extra-field values against the published derived map.
+ * Reads posted extra-field values against the extra_fields map from the layout.
  *
  * Pure: no storage, no Woo hooks. Checkout only persists keys this returns,
  * so a crafted POST cannot write arbitrary order meta.
@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 class ExtraFieldPostedCollector {
 
     /**
-     * @param  array $fields extra_fields map from Layout::$derived.
+     * @param  array $fields extra_fields map from LayoutBlockIndex::from_markup().
      * @param  array $posted Request payload (typically unslashed $_POST).
      * @return array{rows: array<int, array>, errors: array<int, array{key: string, code: string}>}
      */

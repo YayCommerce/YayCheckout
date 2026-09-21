@@ -6,9 +6,9 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Posted name for an extra-field block.
  *
- * Render and the derived cache must invent the same fallback when the merchant
- * left Key empty, otherwise checkout posts yaycheckout_extra_1 and persist
- * looks for nothing.
+ * Render and the layout block index must invent the same fallback when the
+ * merchant left Key empty, otherwise checkout posts yaycheckout_extra_1 and
+ * persist looks for nothing.
  */
 class ExtraFieldKeyHelper {
 

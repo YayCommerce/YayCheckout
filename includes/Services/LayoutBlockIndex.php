@@ -6,22 +6,18 @@ use YayCheckout\Helpers\ExtraFieldKeyHelper;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Turns published block markup into the derived caches a customer request reads.
+ * Indexes a layout's block markup into fields, extra_fields, slots, and order_modes.
  *
- * Pure: a function of its input markup, with no storage reads or writes. That
- * is what lets publish() call this first and treat a failure as a no-op — bad
- * markup throws here, before anything has been written, so the previously
- * published layout keeps serving.
- *
- * Blocks declare what they contribute through a contributor map rather than
- * this class knowing every block type. Pro ships as a separate plugin and adds
- * its blocks through the filter without touching core.
+ * Pure: a function of its input markup, with no storage reads or writes. Blocks
+ * declare what they contribute through a contributor map rather than this class
+ * knowing every block type. Pro adds blocks through the filter without touching
+ * core.
  */
-class DerivedCacheBuilder {
+class LayoutBlockIndex {
 
     public const FILTER_CONTRIBUTORS = 'yaycheckout_block_contributors';
 
-    /** Shape of the derived array. Keys are stable; consumers rely on them. */
+    /** Shape of the index. Keys are stable; consumers rely on them. */
     private const EMPTY = [
         'fields'       => [],
         'extra_fields' => [],
@@ -34,7 +30,7 @@ class DerivedCacheBuilder {
      * @return array
      * @throws \InvalidArgumentException When the markup is not a usable layout.
      */
-    public static function build( string $markup ): array {
+    public static function from_markup( string $markup ): array {
         if ( '' === trim( $markup ) ) {
             throw new \InvalidArgumentException( 'Layout markup is empty.' );
         }
@@ -53,16 +49,16 @@ class DerivedCacheBuilder {
             );
         }
 
-        $derived = self::EMPTY;
+        $index = self::EMPTY;
         ExtraFieldKeyHelper::reset();
-        self::walk( $blocks, self::contributors(), $derived );
+        self::walk( $blocks, self::contributors(), $index );
 
-        return $derived;
+        return $index;
     }
 
     /**
-     * Block name => callable( array $block ): array returning a partial derived
-     * array. Seeded with the blocks this plugin ships; extended via the filter.
+     * Block name => callable( array $block ): array returning a partial index.
+     * Seeded with the blocks this plugin ships; extended via the filter.
      *
      * @return array
      */
@@ -141,7 +137,7 @@ class DerivedCacheBuilder {
 
     /**
      * Empty fieldKey is skipped so a placeholder field cannot clobber the
-     * derived map under "". Later blocks with the same key win on merge.
+     * index under "". Later blocks with the same key win on merge.
      *
      * @param  array $block
      * @return array
@@ -302,42 +298,42 @@ class DerivedCacheBuilder {
     /**
      * @param array $blocks
      * @param array $contributors
-     * @param array $derived      Accumulated by reference.
+     * @param array $index        Accumulated by reference.
      */
-    private static function walk( array $blocks, array $contributors, array &$derived ): void {
+    private static function walk( array $blocks, array $contributors, array &$index ): void {
         foreach ( $blocks as $block ) {
             $name = $block['blockName'];
 
             if ( isset( $contributors[ $name ] ) && is_callable( $contributors[ $name ] ) ) {
-                self::merge( $derived, (array) call_user_func( $contributors[ $name ], $block ) );
+                self::merge( $index, (array) call_user_func( $contributors[ $name ], $block ) );
             }
 
             if ( ! empty( $block['innerBlocks'] ) ) {
-                self::walk( self::real_blocks( $block['innerBlocks'] ), $contributors, $derived );
+                self::walk( self::real_blocks( $block['innerBlocks'] ), $contributors, $index );
             }
         }
     }
 
     /**
-     * Merge one block's contribution into the accumulated derived array.
+     * Merge one block's contribution into the accumulated index.
      *
      * Fields and extra_fields are keyed by field name, so later blocks with the
      * same key win. Slots and order_modes are flat lists kept unique.
      *
-     * @param array $derived
+     * @param array $index
      * @param array $contribution
      */
-    private static function merge( array &$derived, array $contribution ): void {
+    private static function merge( array &$index, array $contribution ): void {
         foreach ( [ 'fields', 'extra_fields' ] as $key ) {
             if ( ! empty( $contribution[ $key ] ) ) {
-                $derived[ $key ] = array_merge( $derived[ $key ], (array) $contribution[ $key ] );
+                $index[ $key ] = array_merge( $index[ $key ], (array) $contribution[ $key ] );
             }
         }
 
         foreach ( [ 'slots', 'order_modes' ] as $key ) {
             if ( ! empty( $contribution[ $key ] ) ) {
-                $derived[ $key ] = array_values(
-                    array_unique( array_merge( $derived[ $key ], (array) $contribution[ $key ] ) )
+                $index[ $key ] = array_values(
+                    array_unique( array_merge( $index[ $key ], (array) $contribution[ $key ] ) )
                 );
             }
         }
