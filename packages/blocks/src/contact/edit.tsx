@@ -1,5 +1,6 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
+import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { FieldPreview } from '../shared/field-preview';
 
@@ -22,6 +23,12 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps( { className: 'yaycheckout-contact' } );
 	const canvasLabel = label || __( 'Email address', 'yaycheckout' );
 
+	useEffect( () => {
+		if ( ! required ) {
+			setAttributes( { required: true } );
+		}
+	}, [ required, setAttributes ] );
+
 	return (
 		<>
 			<InspectorControls>
@@ -38,8 +45,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					/>
 					<ToggleControl
 						label={ __( 'Required', 'yaycheckout' ) }
-						checked={ required }
-						onChange={ ( value ) => setAttributes( { required: value } ) }
+						checked
+						disabled
+						help={ __( 'Email is always required.', 'yaycheckout' ) }
 					/>
 				</PanelBody>
 			</InspectorControls>
@@ -47,7 +55,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				<FieldPreview
 					label={ canvasLabel }
 					type="email"
-					required={ required }
+					required
 					placeholder={ placeholder }
 				/>
 			</div>

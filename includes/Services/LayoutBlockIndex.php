@@ -109,7 +109,7 @@ class LayoutBlockIndex {
                     'type'        => 'email',
                     'label'       => isset( $attrs['label'] ) && is_string( $attrs['label'] ) ? $attrs['label'] : '',
                     'placeholder' => isset( $attrs['placeholder'] ) && is_string( $attrs['placeholder'] ) ? $attrs['placeholder'] : '',
-                    'required'    => ! isset( $attrs['required'] ) || (bool) $attrs['required'],
+                    'required'    => true, // Email is the only way to reach the customer.
                 ],
             ]
         );

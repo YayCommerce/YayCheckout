@@ -1,6 +1,7 @@
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
+import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { CSSProperties } from 'react';
 import { billingAddressFields, shippingAddressFields, type AddressFieldDef } from '../shared/address-fields';
@@ -91,6 +92,14 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		[ clientId ]
 	);
 	const catalog = addressSection ? catalogFor( addressSection ) : [];
+	const isEmail = type === 'email' || fieldKey === 'billing_email';
+
+	useEffect( () => {
+		if ( isEmail && ! required ) {
+			setAttributes( { required: true } );
+		}
+	}, [ isEmail, required, setAttributes ] );
+
 	const keyOptions = [
 		{ label: __( 'Select a field', 'yaycheckout' ), value: '' },
 		...catalog
@@ -135,7 +144,13 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					/>
 					<ToggleControl
 						label={ __( 'Required', 'yaycheckout' ) }
-						checked={ required }
+						checked={ isEmail || required }
+						disabled={ isEmail }
+						help={
+							isEmail
+								? __( 'Email is always required.', 'yaycheckout' )
+								: undefined
+						}
 						onChange={ ( value ) => setAttributes( { required: value } ) }
 					/>
 				</PanelBody>
@@ -144,7 +159,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 				<FieldPreview
 					label={ canvasLabel }
 					type={ type }
-					required={ required }
+					required={ isEmail || required }
 					placeholder={ placeholder }
 					labelStyle={ labelStyle }
 				/>

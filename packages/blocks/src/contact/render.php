@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 
 $yaycheckout_label       = isset( $attributes['label'] ) && is_string( $attributes['label'] ) && '' !== $attributes['label'] ? $attributes['label'] : __( 'Email address', 'yaycheckout' );
 $yaycheckout_placeholder = isset( $attributes['placeholder'] ) && is_string( $attributes['placeholder'] ) ? $attributes['placeholder'] : '';
-$yaycheckout_required    = ! isset( $attributes['required'] ) || (bool) $attributes['required'];
+$yaycheckout_required    = true;
 $yaycheckout_key         = 'billing_email';
 
 $yaycheckout_wrapper = get_block_wrapper_attributes( [ 'class' => 'yaycheckout-contact form-row' ] );
@@ -31,6 +31,7 @@ if ( function_exists( 'woocommerce_form_field' ) ) {
             'label'       => $yaycheckout_label,
             'required'    => $yaycheckout_required,
             'placeholder' => $yaycheckout_placeholder,
+            'validate'    => [ 'email' ],
             'return'      => false,
         ]
     );
