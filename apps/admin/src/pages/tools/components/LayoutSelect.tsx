@@ -2,14 +2,14 @@ import { useEffect } from 'react';
 import { __ } from '@wordpress/i18n';
 
 import { useLayoutsQuery } from '@/lib/queries/layout.queries';
-import { LISTED_LAYOUT_STATUSES } from '@/lib/schema/layout.schema';
+import { LISTED_LAYOUT_STATUSES, type LayoutSummary } from '@/lib/schema/layout.schema';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface LayoutSelectProps {
-  value: number | null;
-  onChange: (id: number) => void;
+  value: LayoutSummary | null;
+  onChange: (layout: LayoutSummary) => void;
 }
 
 /** Layout picker for the Tools cards; picks the active layout once the list arrives. */
@@ -19,7 +19,7 @@ export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
 
   useEffect(() => {
     if (value !== null || layouts.length === 0) return;
-    onChange((layouts.find((layout) => layout.isActive) ?? layouts[0]).id);
+    onChange(layouts.find((layout) => layout.isActive) ?? layouts[0]);
   }, [value, layouts, onChange]);
 
   return (
@@ -30,7 +30,13 @@ export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
       {list.isPending ? (
         <Skeleton className="h-9 w-full" />
       ) : (
-        <Select value={value === null ? undefined : String(value)} onValueChange={(next) => onChange(Number(next))}>
+        <Select
+          value={value === null ? undefined : String(value.id)}
+          onValueChange={(next) => {
+            const picked = layouts.find((layout) => String(layout.id) === next);
+            if (picked) onChange(picked);
+          }}
+        >
           <SelectTrigger className="w-full">
             <SelectValue placeholder={__('Select a layout', 'yaycheckout')} />
           </SelectTrigger>
