@@ -25,6 +25,8 @@ class CheckoutFieldRequirements {
     /** After CheckoutPage enqueues wc-address-i18n. */
     private const SCRIPTS_PRIORITY = 21;
 
+    private const SCRIPT_HANDLE = 'yaycheckout-field-requirements';
+
     protected function __construct() {
         add_filter( 'woocommerce_checkout_fields', [ $this, 'filter_fields' ], self::FILTER_PRIORITY );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_script' ], self::SCRIPTS_PRIORITY );
@@ -65,45 +67,19 @@ class CheckoutFieldRequirements {
             return;
         }
 
-        $script = str_replace(
-            '__REQUIRED__',
-            $json,
-            <<<'JS'
-jQuery(function($){
-    var required = __REQUIRED__ || {};
-    var optionalText = (typeof wc_address_i18n_params !== 'undefined' && wc_address_i18n_params.i18n_optional_text)
-        ? wc_address_i18n_params.i18n_optional_text
-        : 'optional';
-
-    function applyRequired() {
-        $.each(required, function(key, isRequired) {
-            var field = $('#' + key + '_field');
-            if (!field.length) {
-                return;
-            }
-            if (isRequired) {
-                field.find('label .optional').remove();
-                field.addClass('validate-required');
-                if (field.find('label .required[aria-hidden="true"]').length === 0) {
-                    field.find('label').append('&nbsp;<span class="required" aria-hidden="true">*</span>');
-                }
-            } else {
-                field.find('label .required').remove();
-                field.removeClass('validate-required woocommerce-invalid woocommerce-invalid-required-field');
-                if (field.find('label .optional').length === 0) {
-                    field.find('label').append('&nbsp;<span class="optional">(' + optionalText + ')</span>');
-                }
-            }
-        });
-    }
-
-    $(document.body).on('country_to_state_changing', applyRequired);
-    applyRequired();
-});
-JS
+        wp_enqueue_script(
+            self::SCRIPT_HANDLE,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-field-requirements.js',
+            [ 'jquery', 'wc-address-i18n' ],
+            YAYCHECKOUT_VERSION,
+            true
         );
 
-        wp_add_inline_script( 'wc-address-i18n', $script, 'after' );
+        wp_add_inline_script(
+            self::SCRIPT_HANDLE,
+            'window.yayCheckoutRequired = ' . $json . ';',
+            'before'
+        );
     }
 
     /**
