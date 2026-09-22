@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { YayCheckoutToolTip } from '@/components/shared/YayCheckoutToolTip';
 
-const UPGRADE_URL = 'https://yaycommerce.com/yaycheckout-for-woocommerce/';
+export const UPGRADE_URL = 'https://yaycommerce.com/yaycheckout-for-woocommerce/';
 
 interface ProGateProps {
   children?: ReactNode;
