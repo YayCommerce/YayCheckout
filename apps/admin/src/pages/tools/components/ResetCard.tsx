@@ -12,7 +12,7 @@ export function ResetCard() {
   const [confirming, setConfirming] = useState(false);
 
   return (
-    <Card>
+    <Card className="bg-muted/30">
       <CardHeader>
         <CardTitle>{__('Reset to default layout', 'yaycheckout')}</CardTitle>
         <CardDescription>
@@ -29,7 +29,7 @@ export function ResetCard() {
         </p>
       </CardContent>
       <CardFooter>
-        <Button variant="outline" disabled={layout === null} onClick={() => setConfirming(true)}>
+        <Button disabled={layout === null} onClick={() => setConfirming(true)}>
           {__('Reset layout', 'yaycheckout')}
         </Button>
       </CardFooter>

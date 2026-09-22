@@ -14,7 +14,7 @@ export default function ToolsPage() {
       heading={__('Tools', 'yaycheckout')}
       description={__('Import, export and maintenance utilities for your checkout.', 'yaycheckout')}
     >
-      <div className={cn('grid gap-6 md:grid-cols-2', isPro && 'xl:grid-cols-3')}>
+      <div className={cn('bg-card grid gap-6 rounded-md border p-6 md:grid-cols-2', isPro && 'xl:grid-cols-3')}>
         {isPro ? (
           <>
             <ExportCard />

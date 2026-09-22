@@ -32,7 +32,7 @@ export function ImportCard() {
   };
 
   return (
-    <Card>
+    <Card className="bg-muted/30">
       <CardHeader>
         <CardTitle>{__('Import', 'yaycheckout')}</CardTitle>
         <CardDescription>{__('Creates a draft. Never touches the live layout.', 'yaycheckout')}</CardDescription>

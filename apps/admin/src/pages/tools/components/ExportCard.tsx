@@ -11,7 +11,7 @@ export function ExportCard() {
   const [layout, setLayout] = useState<LayoutSummary | null>(null);
 
   return (
-    <Card>
+    <Card className="bg-muted/30">
       <CardHeader>
         <CardTitle>{__('Export', 'yaycheckout')}</CardTitle>
         <CardDescription>{__('Downloads one layout with its tokens and slots.', 'yaycheckout')}</CardDescription>
@@ -20,7 +20,7 @@ export function ExportCard() {
         <LayoutSelect value={layout} onChange={setLayout} />
       </CardContent>
       <CardFooter className="gap-3">
-        <Button variant="outline" disabled={layout === null} onClick={() => logger.info('export layout', layout?.id)}>
+        <Button disabled={layout === null} onClick={() => logger.info('export layout', layout?.id)}>
           {__('Download .json', 'yaycheckout')}
         </Button>
         <span className="text-muted-foreground text-xs">{__('~34 KB', 'yaycheckout')}</span>
