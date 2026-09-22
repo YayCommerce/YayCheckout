@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { focusVariants } from '@/components/ui/variants/focus.variants';
 import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
 import { NameField } from '@/pages/layouts/new-layout/NameField';
+import { TemplateThumbnail } from '@/pages/layouts/new-layout/TemplateThumbnail';
 
 const ALL_CATEGORIES = __('All', 'yaycheckout');
 
@@ -72,14 +73,11 @@ export function LibraryStep({
       <div className="flex flex-col gap-3 rounded-md border p-4">
         <div className="flex items-center justify-between gap-2">
           <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
-            {isPro
-              ? __('Pro — full grid, filterable', 'yaycheckout')
-              : __('Templates included in Lite', 'yaycheckout')}
+            {isPro ? __('Pro — full grid, filterable', 'yaycheckout') : __('Templates included in Lite', 'yaycheckout')}
           </span>
           {isPro && data && (
             <span className="text-muted-foreground text-xs">
-              {data.templates.length}{' '}
-              {_n('template', 'templates', data.templates.length, 'yaycheckout')}
+              {data.templates.length} {_n('template', 'templates', data.templates.length, 'yaycheckout')}
             </span>
           )}
         </div>
@@ -126,7 +124,9 @@ export function LibraryStep({
                   template.locked ? 'cursor-not-allowed opacity-50' : 'hover:border-muted-foreground',
                 )}
               >
-                <div className="bg-muted h-16 w-full rounded-sm" />
+                <div className="aspect-3/2 w-full overflow-hidden rounded-sm border">
+                  <TemplateThumbnail slug={template.slug} />
+                </div>
                 <div className="flex w-full items-center justify-between gap-1">
                   <span className="text-xs font-medium">{template.name}</span>
                   {template.locked && <ProTag />}
@@ -148,7 +148,9 @@ export function LibraryStep({
                     template.slug === selectedSlug && 'border-primary ring-primary ring-1',
                   )}
                 >
-                  <div className="bg-muted h-16 w-full rounded-sm" />
+                  <div className="aspect-3/2 w-full overflow-hidden rounded-sm border">
+                    <TemplateThumbnail slug={template.slug} />
+                  </div>
                   <span className="text-xs font-medium">{template.name}</span>
                 </button>
               ))}
@@ -159,15 +161,18 @@ export function LibraryStep({
                 <div className="flex items-center gap-2">
                   <ProTag />
                   <span className="text-muted-foreground flex-1 text-xs">
-                    {lockedCount}{' '}
-                    {_n('more template', 'more templates', lockedCount, 'yaycheckout')}
+                    {lockedCount} {_n('more template', 'more templates', lockedCount, 'yaycheckout')}
                   </span>
                   <UpgradeButton />
                 </div>
-                <div className="grid grid-cols-5 gap-2 opacity-45">
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <div key={i} className="bg-muted border-muted-foreground/30 h-11 rounded-sm border" />
-                  ))}
+                <div className="grid grid-cols-4 gap-2 opacity-45">
+                  {data?.templates
+                    .filter((template) => template.locked)
+                    .map((template) => (
+                      <div key={template.slug} className="aspect-3/2 overflow-hidden rounded-sm border">
+                        <TemplateThumbnail slug={template.slug} />
+                      </div>
+                    ))}
                 </div>
               </div>
             )}

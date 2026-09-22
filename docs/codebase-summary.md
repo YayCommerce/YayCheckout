@@ -98,7 +98,7 @@ src/
       DeactivateModal.tsx   Deactivate modal (real)
       ArchiveModal.tsx      Archive modal (real)
       DeleteModal.tsx       Delete-for-good modal: typed DELETE gate (real)
-      new-layout/       NewLayoutModal, SourceStep, LibraryStep, NameField
+      new-layout/       NewLayoutModal, SourceStep, LibraryStep, NameField, TemplateThumbnail + template-thumbnail-sketches (SVG sketch per catalogue slug)
     design/             Design tokens page (real)
       DesignPage.tsx    form with token groups, preset picker, custom CSS, Save/Reset actions
       components/       TokenGroups (summary + accordion), TokenField, PxInput; PresetsCard (built-in + merchant); ColoursGroup, TypographyGroup, SpacingGroup, ButtonsGroup, InputsGroup, CustomCssGroup; PreviewPane, DesignActions, SavePresetModal (Pro), ResetConfirmModal
@@ -167,6 +167,6 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 
 Telemetry is a stored setting with no consumer yet (data is not sent). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots. The Compatibility page has no self-test, report modal or header warning chip yet, and its remote catalogue URL is a placeholder, so every install runs on the bundled list until it is published. The storefront does not yet render design tokens in CSS.
 
-`Controllers/LayoutTemplateCatalogue` is a placeholder: a fixed template library, no database — repoint it at a real template source once one exists. The Health row action renders placeholder DOM but has no backend; Preview / Set active / Deactivate / Archive / Restore / Delete are wired to `/preview-link`, `/activate`, `/deactivate`, `/archive`, `/restore` and the delete endpoint; Edit, Publish, Search and pagination are fully functional. `restore()` deliberately does not re-check the Free-plan layout cap that `create()`/`duplicate()` enforce.
+`Controllers/LayoutTemplateCatalogue` is a fixed list of the 11 v1.1 templates (order matters: Free unlocks the first three), no database; the SPA draws each slug's layout sketch in `new-layout/template-thumbnail-sketches.tsx`, but `create_draft` still seeds the same default markup for every slug — repoint it at real template markup once that exists. The Health row action renders placeholder DOM but has no backend; Preview / Set active / Deactivate / Archive / Restore / Delete are wired to `/preview-link`, `/activate`, `/deactivate`, `/archive`, `/restore` and the delete endpoint; Edit, Publish, Search and pagination are fully functional. `restore()` deliberately does not re-check the Free-plan layout cap that `create()`/`duplicate()` enforce.
 
 See the end of `system-architecture.md` for the full deferred list.
