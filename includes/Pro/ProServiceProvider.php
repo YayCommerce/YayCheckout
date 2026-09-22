@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Pro;
 
+use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
@@ -16,6 +17,10 @@ class ProServiceProvider {
         // Must be first: everything downstream reads Plan::is_pro().
         Plan::mark_pro();
 
-        // Pro features register here via add_action/add_filter. Empty in 1.x.
+        add_action( 'rest_api_init', [ $this, 'rest_endpoints' ] );
+    }
+
+    public function rest_endpoints(): void {
+        LayoutExportRestController::get_instance();
     }
 }

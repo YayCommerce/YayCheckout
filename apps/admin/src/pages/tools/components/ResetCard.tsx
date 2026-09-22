@@ -4,8 +4,8 @@ import { __ } from '@wordpress/i18n';
 import type { LayoutSummary } from '@/lib/schema/layout.schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ResetModal } from '../reset-modal/ResetModal';
 import { LayoutSelect } from './LayoutSelect';
+import { ResetModal } from './ResetModal';
 
 export function ResetCard() {
   const [layout, setLayout] = useState<LayoutSummary | null>(null);

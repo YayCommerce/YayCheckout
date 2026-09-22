@@ -22,6 +22,9 @@ class Layout {
 
     public const OPTION_ACTIVE = 'yaycheckout_active_layout';
 
+    /** Export envelope identity; `plugin_version` carries compatibility, so there is no separate format version. */
+    public const EXPORT_FORMAT = 'yaycheckout-layout';
+
     public int $id       = 0;
     public string $title = '';
 
@@ -76,6 +79,14 @@ class Layout {
             $this->to_summary_array(),
             [ 'content' => $this->content ]
         );
+    }
+
+    /** The portable part of a layout for an export file: what a fresh site needs to recreate it as a draft. Status, active flag and dates are site state and stay behind. */
+    public function to_export_array(): array {
+        return [
+            'title'   => $this->title,
+            'content' => $this->content,
+        ];
     }
 
     public function is_published(): bool {
