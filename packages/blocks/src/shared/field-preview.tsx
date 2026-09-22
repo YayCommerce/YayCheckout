@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 export function previewInputType( type: string ): string {
 	if ( [ 'email', 'tel', 'password' ].includes( type ) ) {
 		return type;
@@ -21,6 +23,7 @@ interface FieldPreviewProps {
 	required?: boolean;
 	placeholder?: string;
 	options?: FieldOption[];
+	labelStyle?: CSSProperties;
 }
 
 const inputStyle = {
@@ -43,12 +46,13 @@ export function FieldPreview( {
 	required = false,
 	placeholder = '',
 	options = [],
+	labelStyle,
 }: FieldPreviewProps ) {
 	const usableOptions = options.filter( ( option ) => option.label !== '' || option.value !== '' );
 
 	return (
 		<div style={ { marginBottom: '12px' } }>
-			<label style={ { display: 'block', fontSize: '13px', fontWeight: 600 } }>
+			<label style={ { display: 'block', fontSize: '13px', fontWeight: 600, ...labelStyle } }>
 				{ label }
 				{ required && <span style={ { color: '#cc1818', marginLeft: '4px' } }>*</span> }
 			</label>

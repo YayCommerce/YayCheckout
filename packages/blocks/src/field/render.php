@@ -33,7 +33,7 @@ if ( '' === $yaycheckout_key ) {
     $yaycheckout_key = 'yaycheckout_field_' . $yaycheckout_field_i;
 }
 
-$yaycheckout_wrapper = get_block_wrapper_attributes( [ 'class' => 'yaycheckout-field form-row' ] );
+$yaycheckout_wrapper = get_block_wrapper_attributes( array( 'class' => 'yaycheckout-field form-row' ) );
 
 if ( function_exists( 'woocommerce_form_field' ) ) {
     echo '<div ' . $yaycheckout_wrapper . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
