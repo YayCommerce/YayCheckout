@@ -1,11 +1,22 @@
 import { Check } from 'lucide-react';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { Button } from '@/components/ui/button';
+import type { ImportReview } from '@/lib/schema/tools.schema';
+import { Button, LoadingButton } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { SummaryStrip } from './StepStrip';
 
-export function SourceStep({ onCancel, onNext }: { onCancel: () => void; onNext: () => void }) {
+export function SourceStep({
+  review,
+  isPending,
+  onCancel,
+  onImport,
+}: {
+  review: ImportReview;
+  isPending: boolean;
+  onCancel: () => void;
+  onImport: () => void;
+}) {
   return (
     <>
       <div className="flex gap-3">
@@ -14,34 +25,39 @@ export function SourceStep({ onCancel, onNext }: { onCancel: () => void; onNext:
         </span>
         <div className="space-y-1">
           <h3 className="text-base/snug font-semibold">
-            {__('We found FunnelKit checkout "Main checkout" with 16 fields and 2 custom fields', 'yaycheckout')}
+            {sprintf(
+              /* translators: %s: layout title */
+              __('Ready to import "%s"', 'yaycheckout'),
+              review.title,
+            )}
           </h3>
           <p className="text-muted-foreground text-sm">
-            {__(
-              'Nothing is changed yet. The next step shows exactly which YayCheckout block each field becomes.',
-              'yaycheckout',
-            )}
+            {__('A new draft is created. Your current layouts stay as they are.', 'yaycheckout')}
           </p>
         </div>
       </div>
 
       <SummaryStrip
         items={[
-          [__('Source', 'yaycheckout'), 'FunnelKit 3.4.2'],
-          [__('Checkout', 'yaycheckout'), 'Main checkout'],
-          [__('Fields', 'yaycheckout'), '16 + 2 custom'],
-          [__('Steps', 'yaycheckout'), '2'],
+          [__('Layout', 'yaycheckout'), review.title],
+          [
+            __('Blocks', 'yaycheckout'),
+            sprintf(
+              /* translators: %d: number of blocks */
+              _n('%d block', '%d blocks', review.blocks, 'yaycheckout'),
+              review.blocks,
+            ),
+          ],
         ]}
       />
 
-      <DialogFooter className="items-center border-t pt-4 sm:justify-between">
-        <p className="text-muted-foreground text-sm">{__('FunnelKit stays installed and enabled.', 'yaycheckout')}</p>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onCancel}>
-            {__('Cancel', 'yaycheckout')}
-          </Button>
-          <Button onClick={onNext}>{__('Preview mapping', 'yaycheckout')}</Button>
-        </div>
+      <DialogFooter className="border-t pt-4">
+        <Button variant="outline" onClick={onCancel} disabled={isPending}>
+          {__('Cancel', 'yaycheckout')}
+        </Button>
+        <LoadingButton loading={isPending} disabled={isPending} onClick={onImport}>
+          {__('Import', 'yaycheckout')}
+        </LoadingButton>
       </DialogFooter>
     </>
   );

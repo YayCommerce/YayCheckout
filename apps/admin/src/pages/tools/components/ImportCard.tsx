@@ -1,34 +1,59 @@
 import { DragEvent, useRef, useState } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 
+import { parseExportFile } from '@/lib/api/tools.api';
+import { getErrorMsg } from '@/lib/helpers/response.helper';
+import { useValidateImportMutation } from '@/lib/queries/tools.queries';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ImportModal } from '../import-modal/ImportModal';
+import { ImportModal, type ImportSession } from '../import-modal/ImportModal';
 
-type ImportResult = { status: 'idle' } | { status: 'success'; message: string } | { status: 'error'; message: string };
+type ImportResult =
+  | { status: 'idle' }
+  | { status: 'checking' }
+  | { status: 'ready'; message: string }
+  | { status: 'error'; message: string };
 
 export function ImportCard() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<ImportResult>({ status: 'idle' });
-  const [modalOpen, setModalOpen] = useState(false);
+  const [session, setSession] = useState<ImportSession | null>(null);
+  const validate = useValidateImportMutation();
 
-  const pick = (picked: File | undefined) => {
+  const pick = async (picked: File | undefined) => {
     if (!picked) return;
     setFile(picked);
+
     if (!picked.name.toLowerCase().endsWith('.json')) {
       setResult({ status: 'error', message: __('Only .json files can be imported.', 'yaycheckout') });
       return;
     }
-    setResult({ status: 'idle' });
-    setModalOpen(true);
+
+    setResult({ status: 'checking' });
+    try {
+      const envelope = parseExportFile(await picked.text());
+      const review = await validate.mutateAsync(envelope);
+      setResult({
+        status: 'ready',
+        message: sprintf(
+          /* translators: 1: layout title, 2: number of blocks */
+          __('"%1$s" · %2$d blocks', 'yaycheckout'),
+          review.title,
+          review.blocks,
+        ),
+      });
+      setSession({ envelope, review });
+    } catch (error) {
+      setResult({ status: 'error', message: await getErrorMsg(error) });
+    }
   };
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragging(false);
-    pick(event.dataTransfer.files[0]);
+    void pick(event.dataTransfer.files[0]);
   };
 
   return (
@@ -69,22 +94,28 @@ export function ImportCard() {
             type="file"
             accept=".json,application/json"
             className="hidden"
-            onChange={(event) => pick(event.target.files?.[0])}
+            onChange={(event) => {
+              void pick(event.target.files?.[0]);
+              // Cleared so choosing the same file again still fires change.
+              event.target.value = '';
+            }}
           />
         </div>
 
         <div
           className={cn(
             'rounded-md border px-4 py-3 text-xs',
-            result.status === 'idle' && 'bg-muted/30 text-muted-foreground',
-            result.status === 'success' && 'border-green-600/30 bg-green-50 text-green-700',
+            (result.status === 'idle' || result.status === 'checking') && 'bg-muted/30 text-muted-foreground',
+            result.status === 'ready' && 'border-success/30 bg-success/6 text-success',
             result.status === 'error' && 'border-destructive/30 bg-destructive/5 text-destructive',
           )}
         >
-          {result.status === 'idle' ? __('validation result appears here', 'yaycheckout') : result.message}
+          {result.status === 'idle' && __('validation result appears here', 'yaycheckout')}
+          {result.status === 'checking' && __('Checking file…', 'yaycheckout')}
+          {(result.status === 'ready' || result.status === 'error') && result.message}
         </div>
       </CardContent>
-      <ImportModal open={modalOpen} onOpenChange={setModalOpen} />
+      <ImportModal session={session} onOpenChange={(open) => !open && setSession(null)} />
     </Card>
   );
 }

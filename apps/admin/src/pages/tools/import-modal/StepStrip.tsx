@@ -1,29 +1,41 @@
+import { Fragment } from 'react';
 import { __ } from '@wordpress/i18n';
 
-import { cn } from '@/lib/utils';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
-export type ImportStep = 'source' | 'mapping' | 'draft';
+export type ImportStep = 'source' | 'draft';
 
-export const IMPORT_STEPS: ImportStep[] = ['source', 'mapping', 'draft'];
+export const IMPORT_STEPS: ImportStep[] = ['source', 'draft'];
 
 const STEP_LABELS: Record<ImportStep, string> = {
   source: __('Source', 'yaycheckout'),
-  mapping: __('Mapping', 'yaycheckout'),
   draft: __('Draft', 'yaycheckout'),
 };
 
 export function StepStrip({ current }: { current: ImportStep }) {
   return (
-    <ol className="text-muted-foreground flex items-center gap-2 text-sm">
-      {IMPORT_STEPS.map((step, index) => (
-        <li key={step} className="flex items-center gap-2">
-          {index > 0 && <span aria-hidden>·</span>}
-          <span className={cn(step === current && 'text-foreground font-medium')}>
-            {index + 1} {STEP_LABELS[step]}
-          </span>
-        </li>
-      ))}
-    </ol>
+    <Breadcrumb>
+      <BreadcrumbList>
+        {IMPORT_STEPS.map((step, index) => (
+          <Fragment key={step}>
+            {index > 0 && <BreadcrumbSeparator />}
+            <BreadcrumbItem>
+              {step === current ? (
+                <BreadcrumbPage>{STEP_LABELS[step]}</BreadcrumbPage>
+              ) : (
+                <span>{STEP_LABELS[step]}</span>
+              )}
+            </BreadcrumbItem>
+          </Fragment>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 }
 
@@ -33,7 +45,7 @@ export function SummaryStrip({ items }: { items: [string, string][] }) {
     <dl className="bg-muted/30 flex flex-wrap gap-x-8 gap-y-2 rounded-md border px-4 py-2.5 text-sm">
       {items.map(([label, value]) => (
         <div key={label}>
-          <dt className="text-muted-foreground text-xs">{label}</dt>
+          <dt className="text-muted-foreground mb-1 text-xs">{label}</dt>
           <dd className="font-medium">{value}</dd>
         </div>
       ))}

@@ -33,7 +33,7 @@ function layoutFromWire(wire: LayoutWire): Layout {
   };
 }
 
-function parseLayout(payload: unknown): Layout {
+export function parseLayout(payload: unknown): Layout {
   return layoutFromWire(layoutWireSchema.parse(payload));
 }
 

@@ -1,14 +1,19 @@
 import { Check } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
-import { logger } from '@/lib/logger';
+import type { Layout } from '@/lib/schema/layout.schema';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { SummaryStrip } from './StepStrip';
 
-export function DraftStep({ onClose }: { onClose: () => void }) {
+export function DraftStep({ layout, onClose }: { layout: Layout; onClose: () => void }) {
   const navigate = useNavigate();
+
+  const go = (search = '') => {
+    onClose();
+    navigate({ pathname: '/layouts', search });
+  };
 
   return (
     <>
@@ -18,22 +23,22 @@ export function DraftStep({ onClose }: { onClose: () => void }) {
         </span>
         <div className="space-y-1">
           <h3 className="text-base/snug font-semibold">
-            {__('Draft "Imported from FunnelKit" created — nothing is live', 'yaycheckout')}
+            {sprintf(
+              /* translators: %s: layout title */
+              __('Draft "%s" created — nothing is live', 'yaycheckout'),
+              layout.title,
+            )}
           </h3>
           <p className="text-muted-foreground text-sm">
-            {__(
-              '18 blocks, 2 extra fields and a 2-step structure. FunnelKit is still enabled and still serving your live checkout.',
-              'yaycheckout',
-            )}
+            {__('Your active layout is still serving checkout.', 'yaycheckout')}
           </p>
         </div>
       </div>
 
       <SummaryStrip
         items={[
-          [__('Layout', 'yaycheckout'), 'Imported from FunnelKit'],
+          [__('Layout', 'yaycheckout'), layout.title],
           [__('Status', 'yaycheckout'), __('Draft', 'yaycheckout')],
-          [__('Blocks', 'yaycheckout'), '18'],
         ]}
       />
 
@@ -42,18 +47,11 @@ export function DraftStep({ onClose }: { onClose: () => void }) {
           {__('Publish and set active when you are happy with it.', 'yaycheckout')}
         </p>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              onClose();
-              navigate('/layouts');
-            }}
-          >
+          <Button variant="outline" onClick={() => go()}>
             {__('Go to Layouts', 'yaycheckout')}
           </Button>
-          <Button onClick={() => logger.info('open imported draft in editor')}>
-            {__('Open in editor', 'yaycheckout')}
-          </Button>
+          {/* LayoutsPage reads ?edit=ID and opens its embedded editor, so this is the same editor the Edit action uses. */}
+          <Button onClick={() => go(`?edit=${layout.id}`)}>{__('Open in editor', 'yaycheckout')}</Button>
         </div>
       </DialogFooter>
     </>

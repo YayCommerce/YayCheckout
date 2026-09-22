@@ -29,3 +29,12 @@ export interface LayoutExportFile {
   /** The wire envelope verbatim, so the file re-imports without a camelCase round trip. */
   json: string;
 }
+
+/** The parsed export file. Sent back to PHP verbatim, so it keeps its wire spelling. */
+export type LayoutExportEnvelope = LayoutExportWire;
+
+// Wire schema: the PHP shape of POST /layouts/import/validate, exactly. Same spelling on both sides, so no projection.
+
+export const importReviewSchema = z.object({ title: z.string(), blocks: z.number() }).strict();
+
+export type ImportReview = z.infer<typeof importReviewSchema>;

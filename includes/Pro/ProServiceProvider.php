@@ -2,6 +2,7 @@
 namespace YayCheckout\Pro;
 
 use YayCheckout\Pro\Controllers\LayoutExportRestController;
+use YayCheckout\Pro\Controllers\LayoutImportRestController;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
@@ -22,5 +23,6 @@ class ProServiceProvider {
 
     public function rest_endpoints(): void {
         LayoutExportRestController::get_instance();
+        LayoutImportRestController::get_instance();
     }
 }

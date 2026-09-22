@@ -31,7 +31,9 @@ export function ExportCard() {
     <Card className="bg-muted/30">
       <CardHeader>
         <CardTitle>{__('Export', 'yaycheckout')}</CardTitle>
-        <CardDescription>{__('Downloads one layout as a .json file you can import on another site.', 'yaycheckout')}</CardDescription>
+        <CardDescription>
+          {__('Downloads one layout as a .json file you can import on another site.', 'yaycheckout')}
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex-1">
         <LayoutSelect value={layout} onChange={setLayout} />

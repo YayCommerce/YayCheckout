@@ -1,35 +1,67 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
 
+import { useImportLayoutMutation } from '@/lib/queries/tools.queries';
+import type { Layout } from '@/lib/schema/layout.schema';
+import type { ImportReview, LayoutExportEnvelope } from '@/lib/schema/tools.schema';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DraftStep } from './DraftStep';
-import { MappingStep } from './MappingStep';
 import { SourceStep } from './SourceStep';
 import { IMPORT_STEPS, StepStrip, type ImportStep } from './StepStrip';
 
+export interface ImportSession {
+  envelope: LayoutExportEnvelope;
+  review: ImportReview;
+}
+
 /**
- * The three-step import flow: Source → Mapping → Draft.
+ * The two-step import flow: Source → Draft.
  *
  * Step state lives in ImportFlow inside DialogContent: Radix unmounts it after
  * the close animation, so each open starts at Source without a reset effect.
  */
-export function ImportModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function ImportModal({
+  session,
+  onOpenChange,
+}: {
+  session: ImportSession | null;
+  onOpenChange: (open: boolean) => void;
+}) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={session !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] sm:max-w-3xl">
-        <ImportFlow onClose={() => onOpenChange(false)} />
+        {session && <ImportFlow session={session} onClose={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>
   );
 }
 
-function ImportFlow({ onClose }: { onClose: () => void }) {
+function ImportFlow({ session, onClose }: { session: ImportSession; onClose: () => void }) {
   const [step, setStep] = useState<ImportStep>('source');
+  const [created, setCreated] = useState<Layout | null>(null);
+  const importMutation = useImportLayoutMutation();
+
+  // A failed import is toasted by the global MutationCache; the flow stays on Source so the merchant can retry or cancel.
+  const createDraft = () =>
+    importMutation.mutate(session.envelope, {
+      onSuccess: (layout) => {
+        setCreated(layout);
+        setStep('draft');
+        toast.success(
+          sprintf(
+            /* translators: %s: layout title */
+            __('Draft "%s" created.', 'yaycheckout'),
+            layout.title,
+          ),
+        );
+      },
+    });
 
   return (
     <>
       <DialogHeader className="flex-row items-center justify-between pr-8">
-        <DialogTitle>{__('Import from FunnelKit', 'yaycheckout')}</DialogTitle>
+        <DialogTitle>{__('Import layout', 'yaycheckout')}</DialogTitle>
         <span className="text-muted-foreground text-xs">
           {sprintf(
             /* translators: 1: current step, 2: total steps */
@@ -42,9 +74,15 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
 
       <StepStrip current={step} />
 
-      {step === 'source' && <SourceStep onCancel={onClose} onNext={() => setStep('mapping')} />}
-      {step === 'mapping' && <MappingStep onBack={() => setStep('source')} onNext={() => setStep('draft')} />}
-      {step === 'draft' && <DraftStep onClose={onClose} />}
+      {step === 'source' && (
+        <SourceStep
+          review={session.review}
+          isPending={importMutation.isPending}
+          onCancel={onClose}
+          onImport={createDraft}
+        />
+      )}
+      {step === 'draft' && created && <DraftStep layout={created} onClose={onClose} />}
     </>
   );
 }

@@ -346,7 +346,7 @@ class LayoutBlockIndex {
      * @param  array $blocks
      * @return array
      */
-    private static function real_blocks( array $blocks ): array {
+    public static function real_blocks( array $blocks ): array {
         return array_values(
             array_filter(
                 $blocks,

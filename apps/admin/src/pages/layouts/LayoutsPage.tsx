@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Search } from 'lucide-react';
+import { useSearchParams } from 'react-router';
 import { useDebounceFn } from 'rooks';
 import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
@@ -163,8 +164,10 @@ function LayoutsPageBody({
   onPageIndexChange: (pageIndex: number) => void;
 }) {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
-  const [editingLayoutId, setEditingLayoutId] = useState<number | null>(null);
+  // `?edit=ID` lets another screen (Tools → Import) land straight in the embedded editor.
+  const [editingLayoutId, setEditingLayoutId] = useState<number | null>(() => Number(searchParams.get('edit')) || null);
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
   const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
@@ -264,6 +267,7 @@ function LayoutsPageBody({
   const onEditorOpenChange = (open: boolean) => {
     if (!open) {
       setEditingLayoutId(null);
+      if (searchParams.has('edit')) setSearchParams({}, { replace: true });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
     }
   };

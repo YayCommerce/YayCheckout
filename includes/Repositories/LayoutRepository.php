@@ -305,28 +305,7 @@ class LayoutRepository {
      * @throws \InvalidArgumentException When the layout limit is reached or the insert fails.
      */
     public function create( string $title ): Layout {
-        if ( Plan::layout_limit_reached( $this->count() ) ) {
-            throw new \InvalidArgumentException( Plan::layout_limit_message() );
-        }
-
-        // wp_insert_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
-        $new_id = wp_insert_post(
-            wp_slash(
-                [
-                    'post_type'    => Layout::POST_TYPE,
-                    'post_status'  => LayoutStatus::DRAFT,
-                    'post_title'   => $title,
-                    'post_content' => self::default_markup(),
-                ]
-            ),
-            true
-        );
-
-        if ( is_wp_error( $new_id ) ) {
-            throw new \InvalidArgumentException( $new_id->get_error_message() );
-        }
-
-        return $this->find( (int) $new_id );
+        return $this->insert_draft( $title, self::default_markup() );
     }
 
     /**
@@ -341,6 +320,26 @@ class LayoutRepository {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
 
+        /* translators: %s: source layout title. */
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content );
+    }
+
+    /**
+     * Creates a draft from an export file's title and markup, verbatim.
+     * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
+     *
+     * @throws \InvalidArgumentException When the limit is reached or the insert fails.
+     */
+    public function import( string $title, string $content ): Layout {
+        return $this->insert_draft( $title, $content );
+    }
+
+    /**
+     * The one insert path for a new draft; every way of making a layout funnels through it so the cap and slashing cannot drift.
+     *
+     * @throws \InvalidArgumentException When the limit is reached or the insert fails.
+     */
+    private function insert_draft( string $title, string $content ): Layout {
         // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.
         if ( Plan::layout_limit_reached( $this->count() ) ) {
             throw new \InvalidArgumentException( Plan::layout_limit_message() );
@@ -352,9 +351,8 @@ class LayoutRepository {
                 [
                     'post_type'    => Layout::POST_TYPE,
                     'post_status'  => LayoutStatus::DRAFT,
-                    /* translators: %s: source layout title. */
-                    'post_title'   => sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ),
-                    'post_content' => $source->content,
+                    'post_title'   => $title,
+                    'post_content' => $content,
                 ]
             ),
             true
