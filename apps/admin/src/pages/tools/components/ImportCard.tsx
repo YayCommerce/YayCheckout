@@ -3,6 +3,7 @@ import { __, sprintf } from '@wordpress/i18n';
 
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ImportModal } from '../import-modal/ImportModal';
 
 type ImportResult = { status: 'idle' } | { status: 'success'; message: string } | { status: 'error'; message: string };
 
@@ -11,15 +12,17 @@ export function ImportCard() {
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<ImportResult>({ status: 'idle' });
+  const [modalOpen, setModalOpen] = useState(false);
 
   const pick = (picked: File | undefined) => {
     if (!picked) return;
     setFile(picked);
-    setResult(
-      picked.name.toLowerCase().endsWith('.json')
-        ? { status: 'idle' }
-        : { status: 'error', message: __('Only .json files can be imported.', 'yaycheckout') },
-    );
+    if (!picked.name.toLowerCase().endsWith('.json')) {
+      setResult({ status: 'error', message: __('Only .json files can be imported.', 'yaycheckout') });
+      return;
+    }
+    setResult({ status: 'idle' });
+    setModalOpen(true);
   };
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
@@ -60,7 +63,7 @@ export function ImportCard() {
                 )
               : __('Drop a .json file here', 'yaycheckout')}
           </span>
-          <span className="text-muted-foreground font-mono text-xs">{__('or click to browse', 'yaycheckout')}</span>
+          <span className="text-muted-foreground text-xs">{__('or click to browse', 'yaycheckout')}</span>
           <input
             ref={inputRef}
             type="file"
@@ -72,7 +75,7 @@ export function ImportCard() {
 
         <div
           className={cn(
-            'rounded-md border px-4 py-3 font-mono text-xs',
+            'rounded-md border px-4 py-3 text-xs',
             result.status === 'idle' && 'bg-muted/30 text-muted-foreground',
             result.status === 'success' && 'border-green-600/30 bg-green-50 text-green-700',
             result.status === 'error' && 'border-destructive/30 bg-destructive/5 text-destructive',
@@ -81,6 +84,7 @@ export function ImportCard() {
           {result.status === 'idle' ? __('validation result appears here', 'yaycheckout') : result.message}
         </div>
       </CardContent>
+      <ImportModal open={modalOpen} onOpenChange={setModalOpen} />
     </Card>
   );
 }
