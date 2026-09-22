@@ -1,10 +1,10 @@
 import { useFormContext } from 'react-hook-form';
 import { __ } from '@wordpress/i18n';
 
-import { FONT_FAMILIES, FONT_FAMILY_KEYS, type DesignForm } from '@/lib/schema/design.schema';
-import { NumberInputInput, NumberInputRoot, NumberInputUnit } from '@/components/ui/number-input';
+import { BASE_SIZE_RANGE, FONT_FAMILIES, FONT_FAMILY_KEYS, type DesignForm } from '@/lib/schema/design.schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { PxInput } from './PxInput';
 import { TokenField } from './TokenField';
 
 // Radix Select treats value="" as "nothing selected", so the theme-default option needs a stand-in.
@@ -43,18 +43,7 @@ export function TypographyGroup() {
 
       <TokenField section="typography" token="baseSize" label={__('Base size', 'yaycheckout')}>
         {(field) => (
-          <NumberInputRoot
-            value={field.value}
-            onValueChange={field.onChange}
-            min={10}
-            max={24}
-            size="small"
-            disabled={inherit}
-            className="w-28"
-          >
-            <NumberInputInput />
-            <NumberInputUnit unit="px" />
-          </NumberInputRoot>
+          <PxInput value={field.value} onChange={field.onChange} range={BASE_SIZE_RANGE} disabled={inherit} />
         )}
       </TokenField>
     </>

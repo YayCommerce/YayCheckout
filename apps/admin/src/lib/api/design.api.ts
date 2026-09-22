@@ -1,5 +1,6 @@
 import { api } from '@/lib/api/api';
 import {
+  DEFAULT_PRESET_ID,
   DesignForm,
   DesignPreset,
   DesignPresetWire,
@@ -46,8 +47,7 @@ function presetFromWire(wire: DesignPresetWire): DesignPreset {
 
 export function designResponseFromWire(wire: DesignResponseWire): DesignResponse {
   const presets = wire.presets.map(presetFromWire);
-  // PHP always emits the built-in Default preset under this id.
-  const defaultPreset = presets.find((preset) => preset.id === 'default');
+  const defaultPreset = presets.find((preset) => preset.id === DEFAULT_PRESET_ID);
   if (!defaultPreset) throw new Error('Design payload has no Default preset');
 
   return {
@@ -64,12 +64,12 @@ export async function getDesign(): Promise<DesignResponse> {
   return designResponseFromWire(designResponseWireSchema.parse(await api.get('design').json()));
 }
 
-export async function postDesign(form: DesignForm): Promise<DesignResponse> {
+export async function postDesign(form: DesignForm, presetId: string | null): Promise<DesignResponse> {
   return designResponseFromWire(
     designResponseWireSchema.parse(
       await api
         .post('design', {
-          json: { tokens: tokensToWire(form.tokens), preset_id: form.presetId, custom_css: form.customCss },
+          json: { tokens: tokensToWire(form.tokens), preset_id: presetId, custom_css: form.customCss },
         })
         .json(),
     ),

@@ -2,30 +2,18 @@ import type { ReactNode } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
+import { countTokenDiffs } from '@/lib/helpers/design.helper';
 import { countDirtyLeaves } from '@/lib/helpers/form.helper';
 import { useDesignQuery } from '@/lib/queries/design.queries';
 import { FONT_FAMILIES, type DesignForm, type DesignTokens, type TokenSection } from '@/lib/schema/design.schema';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { ButtonsGroup } from './ButtonsGroup';
+import { BUTTON_STYLE_LABELS, ButtonsGroup } from './ButtonsGroup';
 import { ColoursGroup } from './ColoursGroup';
 import { CustomCssGroup } from './CustomCssGroup';
-import { InputsGroup } from './InputsGroup';
+import { INPUT_SIZE_LABELS, INPUT_STYLE_LABELS, InputsGroup } from './InputsGroup';
 import { SpacingGroup } from './SpacingGroup';
 import { TypographyGroup } from './TypographyGroup';
-
-const STYLE_LABELS: Record<
-  DesignTokens['buttons']['style'] | DesignTokens['inputs']['style'] | DesignTokens['inputs']['size'],
-  string
-> = {
-  fill: __('Fill', 'yaycheckout'),
-  outline: __('Outline', 'yaycheckout'),
-  boxed: __('Boxed', 'yaycheckout'),
-  underline: __('Underline', 'yaycheckout'),
-  small: __('Small', 'yaycheckout'),
-  medium: __('Medium', 'yaycheckout'),
-  large: __('Large', 'yaycheckout'),
-};
 
 /** Each group header restates its current values so a collapsed list still reads as a design. */
 const GROUPS: {
@@ -59,13 +47,14 @@ const GROUPS: {
     id: 'buttons',
     label: __('Buttons', 'yaycheckout'),
     body: ButtonsGroup,
-    summary: ({ buttons }) => `${STYLE_LABELS[buttons.style]} · ${buttons.radius}px`,
+    summary: ({ buttons }) => `${BUTTON_STYLE_LABELS[buttons.style]} · ${buttons.radius}px`,
   },
   {
     id: 'inputs',
     label: __('Inputs', 'yaycheckout'),
     body: InputsGroup,
-    summary: ({ inputs }) => `${STYLE_LABELS[inputs.style]} · ${STYLE_LABELS[inputs.size]} · ${inputs.radius}px`,
+    summary: ({ inputs }) =>
+      `${INPUT_STYLE_LABELS[inputs.style]} · ${INPUT_SIZE_LABELS[inputs.size]} · ${inputs.radius}px`,
   },
   {
     id: 'customCss',
@@ -97,9 +86,7 @@ export function TokenGroups() {
     <Accordion type="multiple" defaultValue={['colours']} className="flex flex-col gap-3">
       {GROUPS.map(({ id, label, body: Body, summary }) => {
         const changed = countDirtyLeaves('customCss' === id ? dirtyFields.customCss : dirtyFields.tokens?.[id]);
-        const fromTheme =
-          'customCss' !== id &&
-          Object.entries(tokens[id]).every(([key, value]) => value === data.defaultTokens[id][key as never]);
+        const fromTheme = 'customCss' !== id && 0 === countTokenDiffs(tokens, data.defaultTokens, id);
 
         return (
           <AccordionItem key={id} value={id}>

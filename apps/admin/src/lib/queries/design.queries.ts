@@ -29,7 +29,7 @@ export function useSaveDesignMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ['design', 'save'],
-    mutationFn: (form: DesignForm) => postDesign(form),
+    mutationFn: ({ form, presetId }: { form: DesignForm; presetId: string | null }) => postDesign(form, presetId),
     // The page toasts the failure itself so it can keep the form dirty.
     meta: { skipGlobalError: true },
     onSuccess: (response) => {

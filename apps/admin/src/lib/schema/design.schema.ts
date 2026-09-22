@@ -30,8 +30,16 @@ const spacingScaleSchema = z.custom<SpacingScale>(
   { message: 'Not an allowed spacing scale' },
 );
 
+/** Mirrors the int bounds in Design::schema() in PHP. */
+export const RADIUS_RANGE = { min: 0, max: 24 } as const;
+export const BASE_SIZE_RANGE = { min: 10, max: 24 } as const;
+
+/** Mirrors Design::presets()[0]['id'] in PHP: the built-in preset every payload carries. */
+export const DEFAULT_PRESET_ID = 'default';
+
 const hexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
-const radiusSchema = z.number().int().min(0).max(24);
+const radiusSchema = z.number().int().min(RADIUS_RANGE.min).max(RADIUS_RANGE.max);
+const baseSizeSchema = z.number().int().min(BASE_SIZE_RANGE.min).max(BASE_SIZE_RANGE.max);
 const buttonStyleSchema = z.enum(['fill', 'outline']);
 const inputStyleSchema = z.enum(['boxed', 'underline']);
 const inputSizeSchema = z.enum(['small', 'medium', 'large']);
@@ -49,7 +57,7 @@ export const designTokensWireSchema = z
       .object({
         inherit: z.boolean(),
         font_family: z.enum(FONT_FAMILY_KEYS),
-        base_size: z.number().int().min(10).max(24),
+        base_size: baseSizeSchema,
       })
       .strict(),
     spacing: z.object({ scale: spacingScaleSchema, radius: radiusSchema }).strict(),
@@ -77,27 +85,23 @@ export type DesignPresetWire = z.infer<typeof designPresetWireSchema>;
 export type DesignResponseWire = z.infer<typeof designResponseWireSchema>;
 
 // App types, camelCase. designFormSchema doubles as the react-hook-form resolver.
+// Only typography is renamed on the way in; the other sections are the wire shape as-is.
 
 export const designTokensSchema = z.object({
-  colours: z.object({
-    primary: hexColorSchema,
-    text: hexColorSchema,
-    background: hexColorSchema,
-    border: hexColorSchema,
-  }),
+  colours: designTokensWireSchema.shape.colours,
   typography: z.object({
     inherit: z.boolean(),
     fontFamily: z.enum(FONT_FAMILY_KEYS),
-    baseSize: z.number().int().min(10).max(24),
+    baseSize: baseSizeSchema,
   }),
-  spacing: z.object({ scale: spacingScaleSchema, radius: radiusSchema }),
-  buttons: z.object({ style: buttonStyleSchema, radius: radiusSchema }),
-  inputs: z.object({ style: inputStyleSchema, size: inputSizeSchema, radius: radiusSchema }),
+  spacing: designTokensWireSchema.shape.spacing,
+  buttons: designTokensWireSchema.shape.buttons,
+  inputs: designTokensWireSchema.shape.inputs,
 });
 
+/** What the editor edits; which preset the tokens came from is page state, not a field. */
 export const designFormSchema = z.object({
   tokens: designTokensSchema,
-  presetId: z.string().nullable(),
   customCss: z.string().max(CUSTOM_CSS_MAX_BYTES),
 });
 

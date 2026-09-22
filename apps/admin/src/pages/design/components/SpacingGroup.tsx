@@ -1,9 +1,9 @@
 import { useFormContext } from 'react-hook-form';
 import { __ } from '@wordpress/i18n';
 
-import { SPACING_SCALE_OPTIONS, type DesignForm } from '@/lib/schema/design.schema';
-import { NumberInputInput, NumberInputRoot, NumberInputUnit } from '@/components/ui/number-input';
+import { RADIUS_RANGE, SPACING_SCALE_OPTIONS, type DesignForm } from '@/lib/schema/design.schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PxInput } from './PxInput';
 import { TokenField } from './TokenField';
 
 /**
@@ -34,21 +34,15 @@ export function SpacingGroup() {
 
       <TokenField section="spacing" token="radius" label={__('Radius', 'yaycheckout')}>
         {(field) => (
-          <NumberInputRoot
+          <PxInput
             value={field.value}
-            onValueChange={(value) => {
+            onChange={(value) => {
               field.onChange(value);
               setValue('tokens.buttons.radius', value, { shouldDirty: true });
               setValue('tokens.inputs.radius', value, { shouldDirty: true });
             }}
-            min={0}
-            max={24}
-            size="small"
-            className="w-28"
-          >
-            <NumberInputInput />
-            <NumberInputUnit unit="px" />
-          </NumberInputRoot>
+            range={RADIUS_RANGE}
+          />
         )}
       </TokenField>
     </>

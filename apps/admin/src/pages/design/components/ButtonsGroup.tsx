@@ -1,8 +1,14 @@
 import { __ } from '@wordpress/i18n';
 
-import { NumberInputInput, NumberInputRoot, NumberInputUnit } from '@/components/ui/number-input';
+import { RADIUS_RANGE, type DesignTokens } from '@/lib/schema/design.schema';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
+import { PxInput } from './PxInput';
 import { TokenField } from './TokenField';
+
+export const BUTTON_STYLE_LABELS: Record<DesignTokens['buttons']['style'], string> = {
+  fill: __('Fill', 'yaycheckout'),
+  outline: __('Outline', 'yaycheckout'),
+};
 
 export function ButtonsGroup() {
   return (
@@ -10,26 +16,17 @@ export function ButtonsGroup() {
       <TokenField section="buttons" token="style" label={__('Style', 'yaycheckout')}>
         {(field) => (
           <Segmented size="sm" value={field.value} onValueChange={(value) => value && field.onChange(value)}>
-            <SegmentedItem value="fill">{__('Fill', 'yaycheckout')}</SegmentedItem>
-            <SegmentedItem value="outline">{__('Outline', 'yaycheckout')}</SegmentedItem>
+            {Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => (
+              <SegmentedItem key={value} value={value}>
+                {label}
+              </SegmentedItem>
+            ))}
           </Segmented>
         )}
       </TokenField>
 
       <TokenField section="buttons" token="radius" label={__('Radius', 'yaycheckout')}>
-        {(field) => (
-          <NumberInputRoot
-            value={field.value}
-            onValueChange={field.onChange}
-            min={0}
-            max={24}
-            size="small"
-            className="w-28"
-          >
-            <NumberInputInput />
-            <NumberInputUnit unit="px" />
-          </NumberInputRoot>
-        )}
+        {(field) => <PxInput value={field.value} onChange={field.onChange} range={RADIUS_RANGE} />}
       </TokenField>
     </>
   );
