@@ -4,6 +4,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { formatDateTime } from '@/lib/helpers/date.helper';
 import { useCompatibilityQuery, useRescanMutation } from '@/lib/queries/compatibility.queries';
 import { LoadingButton } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import PageLayout from '@/pages/PageLayout';
 import { deriveWarnings } from './compatibility-warnings';
@@ -57,12 +58,36 @@ export default function CompatibilityPage() {
   );
 }
 
+/** Mirrors the three section cards (Store, Payment gateways, Plugins) so the page keeps its shape while the scan runs. */
 function CompatibilityPageSkeleton() {
   return (
-    <div className="space-y-6">
-      <Skeleton className="h-32 w-full" />
-      <Skeleton className="h-48 w-full" />
-      <Skeleton className="h-40 w-full" />
-    </div>
+    <>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-4 w-24" />
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex gap-8">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+      {[0, 1].map((card) => (
+        <Card key={card}>
+          <CardHeader>
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="mt-1 h-3 w-24" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </CardContent>
+        </Card>
+      ))}
+    </>
   );
 }
