@@ -105,11 +105,13 @@ class LayoutBlockIndex {
         $field = self::contribute_field(
             [
                 'attrs' => [
-                    'fieldKey'    => 'billing_email',
-                    'type'        => 'email',
-                    'label'       => isset( $attrs['label'] ) && is_string( $attrs['label'] ) ? $attrs['label'] : '',
-                    'placeholder' => isset( $attrs['placeholder'] ) && is_string( $attrs['placeholder'] ) ? $attrs['placeholder'] : '',
-                    'required'    => true, // Email is the only way to reach the customer.
+                    'fieldKey'     => 'billing_email',
+                    'type'         => 'email',
+                    'label'        => isset( $attrs['label'] ) && is_string( $attrs['label'] ) ? $attrs['label'] : '',
+                    'placeholder'  => isset( $attrs['placeholder'] ) && is_string( $attrs['placeholder'] ) ? $attrs['placeholder'] : '',
+                    'required'     => true, // Email is the only way to reach the customer.
+                    'requiredMark' => self::indicator_attr( $attrs, 'requiredMark' ),
+                    'optionalText' => self::indicator_attr( $attrs, 'optionalText' ),
                 ],
             ]
         );
@@ -167,6 +169,8 @@ class LayoutBlockIndex {
                     'placeholder'  => isset( $attrs['placeholder'] ) && is_string( $attrs['placeholder'] ) ? $attrs['placeholder'] : '',
                     'description'  => isset( $attrs['description'] ) && is_string( $attrs['description'] ) ? $attrs['description'] : '',
                     'required'     => ! empty( $attrs['required'] ),
+                    'requiredMark' => self::indicator_attr( $attrs, 'requiredMark' ),
+                    'optionalText' => self::indicator_attr( $attrs, 'optionalText' ),
                     'enabled'      => true,
                     'autocomplete' => isset( $attrs['autocomplete'] ) && is_string( $attrs['autocomplete'] ) ? $attrs['autocomplete'] : '',
                     'validate'     => $validate,
@@ -222,12 +226,14 @@ class LayoutBlockIndex {
         return [
             'extra_fields' => [
                 $key => [
-                    'fieldKey'    => $key,
-                    'type'        => $type,
-                    'label'       => isset( $attrs['label'] ) && is_string( $attrs['label'] ) ? $attrs['label'] : '',
-                    'placeholder' => isset( $attrs['placeholder'] ) && is_string( $attrs['placeholder'] ) ? $attrs['placeholder'] : '',
-                    'required'    => ! empty( $attrs['required'] ),
-                    'options'     => $options,
+                    'fieldKey'     => $key,
+                    'type'         => $type,
+                    'label'        => isset( $attrs['label'] ) && is_string( $attrs['label'] ) ? $attrs['label'] : '',
+                    'placeholder'  => isset( $attrs['placeholder'] ) && is_string( $attrs['placeholder'] ) ? $attrs['placeholder'] : '',
+                    'required'     => ! empty( $attrs['required'] ),
+                    'requiredMark' => self::indicator_attr( $attrs, 'requiredMark' ),
+                    'optionalText' => self::indicator_attr( $attrs, 'optionalText' ),
+                    'options'      => $options,
                 ],
             ],
         ];
@@ -293,6 +299,10 @@ class LayoutBlockIndex {
         }
 
         return [ 'slots' => [ $name ] ];
+    }
+
+    private static function indicator_attr( array $attrs, string $key ): string {
+        return isset( $attrs[ $key ] ) && is_string( $attrs[ $key ] ) ? trim( $attrs[ $key ] ) : '';
     }
 
     /**

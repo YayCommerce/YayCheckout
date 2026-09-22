@@ -52,10 +52,11 @@ class CheckoutFieldRequirements {
     }
 
     /**
-     * Field keys mapped to required, for the storefront script that undoes address-i18n.js.
+     * Field keys mapped to required + indicator strings, for the storefront
+     * script that undoes address-i18n.js.
      *
      * @param  array $layout_fields
-     * @return array<string, bool>
+     * @return array<string, array{required: bool, requiredMark: string, optionalText: string}>
      */
     public static function required_map( array $layout_fields ): array {
         $map = [];
@@ -71,10 +72,78 @@ class CheckoutFieldRequirements {
                 continue;
             }
 
-            $map[ $key ] = self::is_required( $key, [], $layout );
+            $map[ $key ] = [
+                'required'     => self::is_required( $key, [], $layout ),
+                'requiredMark' => self::indicator_string( $layout, 'requiredMark' ),
+                'optionalText' => self::indicator_string( $layout, 'optionalText' ),
+            ];
         }
 
         return $map;
+    }
+
+    /**
+     * Swaps WooCommerce's * / (optional) for the layout's strings. Unknown keys
+     * and empty strings are left alone so stock markup stays the default.
+     *
+     * @param  mixed  $field
+     * @param  string $key
+     * @param  array  $args
+     * @param  array  $layout_fields
+     * @return mixed
+     */
+    public static function replace_form_field( $field, string $key, array $args, array $layout_fields ) {
+        if ( ! is_string( $field ) || '' === $field ) {
+            return $field;
+        }
+
+        $layout = self::layout_field( $layout_fields, $key );
+
+        if ( null === $layout ) {
+            return $field;
+        }
+
+        if ( ! empty( $args['required'] ) ) {
+            $mark = self::indicator_string( $layout, 'requiredMark' );
+
+            if ( '' === $mark ) {
+                return $field;
+            }
+
+            return self::replace_span( $field, 'required', esc_html( $mark ) );
+        }
+
+        $text = self::indicator_string( $layout, 'optionalText' );
+
+        if ( '' === $text ) {
+            return $field;
+        }
+
+        return self::replace_span( $field, 'optional', '(' . esc_html( $text ) . ')' );
+    }
+
+    /**
+     * Label suffix when woocommerce_form_field is unavailable. Empty layout
+     * strings fall back to WooCommerce's * and (optional).
+     */
+    public static function indicator_html( bool $required, array $layout ): string {
+        if ( $required ) {
+            $mark = self::indicator_string( $layout, 'requiredMark' );
+
+            if ( '' === $mark ) {
+                $mark = '*';
+            }
+
+            return '&nbsp;<span class="required" aria-hidden="true">' . esc_html( $mark ) . '</span>';
+        }
+
+        $text = self::indicator_string( $layout, 'optionalText' );
+
+        if ( '' === $text ) {
+            $text = 'optional';
+        }
+
+        return '&nbsp;<span class="optional">(' . esc_html( $text ) . ')</span>';
     }
 
     /**
@@ -202,5 +271,32 @@ class CheckoutFieldRequirements {
         }
 
         return $rules;
+    }
+
+    private static function indicator_string( array $layout, string $key ): string {
+        return isset( $layout[ $key ] ) && is_string( $layout[ $key ] ) ? trim( $layout[ $key ] ) : '';
+    }
+
+    /**
+     * @param  string $field
+     * @param  string $span_class required or optional.
+     * @param  string $inner      Already escaped.
+     * @return string
+     */
+    private static function replace_span( string $field, string $span_class, string $inner ): string {
+        $pattern = sprintf( '/<span class="%s"[^>]*>.*?<\/span>/s', preg_quote( $span_class, '/' ) );
+
+        $replaced = preg_replace_callback(
+            $pattern,
+            static function () use ( $span_class, $inner ) {
+                $attrs = 'required' === $span_class ? ' class="required" aria-hidden="true"' : ' class="optional"';
+
+                return '<span' . $attrs . '>' . $inner . '</span>';
+            },
+            $field,
+            1
+        );
+
+        return is_string( $replaced ) ? $replaced : $field;
     }
 }

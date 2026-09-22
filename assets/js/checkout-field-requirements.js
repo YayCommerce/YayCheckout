@@ -4,30 +4,54 @@
  * Renderer\CheckoutFieldRequirements.
  */
 jQuery(function ($) {
-    var required = window.yayCheckoutRequired || {};
-    var optionalText =
+    var map = window.yayCheckoutRequired || {};
+    var fallbackOptional =
         typeof wc_address_i18n_params !== 'undefined' && wc_address_i18n_params.i18n_optional_text
             ? wc_address_i18n_params.i18n_optional_text
             : 'optional';
 
+    function configFor(entry) {
+        if (entry && typeof entry === 'object') {
+            return {
+                required: !!entry.required,
+                requiredMark: entry.requiredMark || '',
+                optionalText: entry.optionalText || '',
+            };
+        }
+        return {
+            required: !!entry,
+            requiredMark: '',
+            optionalText: '',
+        };
+    }
+
     function applyRequired() {
-        $.each(required, function (key, isRequired) {
+        $.each(map, function (key, entry) {
             var field = $('#' + key + '_field');
             if (!field.length) {
                 return;
             }
-            if (isRequired) {
+            var config = configFor(entry);
+            if (config.required) {
                 field.find('label .optional').remove();
                 field.addClass('validate-required');
-                if (field.find('label .required[aria-hidden="true"]').length === 0) {
-                    field.find('label').append('&nbsp;<span class="required" aria-hidden="true">*</span>');
+                var mark = config.requiredMark !== '' ? config.requiredMark : '*';
+                var $req = field.find('label .required');
+                if (!$req.length) {
+                    field.find('label').append('&nbsp;<span class="required" aria-hidden="true"></span>');
+                    $req = field.find('label .required');
                 }
+                $req.text(mark);
             } else {
                 field.find('label .required').remove();
                 field.removeClass('validate-required woocommerce-invalid woocommerce-invalid-required-field');
-                if (field.find('label .optional').length === 0) {
-                    field.find('label').append('&nbsp;<span class="optional">(' + optionalText + ')</span>');
+                var optional = config.optionalText !== '' ? config.optionalText : fallbackOptional;
+                var $opt = field.find('label .optional');
+                if (!$opt.length) {
+                    field.find('label').append('&nbsp;<span class="optional"></span>');
+                    $opt = field.find('label .optional');
                 }
+                $opt.text('(' + optional + ')');
             }
         });
     }

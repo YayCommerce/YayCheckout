@@ -1,11 +1,12 @@
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
+import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { CSSProperties } from 'react';
 import { billingAddressFields, shippingAddressFields, type AddressFieldDef } from '../shared/address-fields';
 import { FieldPreview } from '../shared/field-preview';
+import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
 
 const ADDRESS_PARENTS = {
 	'yaycheckout/billing': 'billing',
@@ -50,6 +51,8 @@ interface FieldAttributes {
 	placeholder: string;
 	description: string;
 	required: boolean;
+	requiredMark: string;
+	optionalText: string;
 	autocomplete: string;
 	validate: string[];
 	width: string;
@@ -66,7 +69,7 @@ interface EditProps {
  * across the whole section, including fields nested in Rows/Columns.
  */
 export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
-	const { fieldKey, type, label, placeholder, required } = attributes;
+	const { fieldKey, type, label, placeholder, required, requiredMark = '', optionalText = '' } = attributes;
 	const { addressSection, usedKeys } = useSelect(
 		( select ) => {
 			const { getBlockParents, getBlockName, getBlocks } = select( blockEditorStore );
@@ -142,16 +145,19 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						value={ label }
 						onChange={ ( value ) => setAttributes( { label: value } ) }
 					/>
-					<ToggleControl
-						label={ __( 'Required', 'yaycheckout' ) }
-						checked={ isEmail || required }
-						disabled={ isEmail }
-						help={
+					<RequiredIndicatorControls
+						required={ isEmail || required }
+						requiredMark={ requiredMark }
+						optionalText={ optionalText }
+						requiredLocked={ isEmail }
+						requiredHelp={
 							isEmail
 								? __( 'Email is always required.', 'yaycheckout' )
 								: undefined
 						}
-						onChange={ ( value ) => setAttributes( { required: value } ) }
+						onRequiredChange={ ( value ) => setAttributes( { required: value } ) }
+						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
+						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
 					/>
 				</PanelBody>
 			</InspectorControls>
@@ -160,6 +166,8 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					label={ canvasLabel }
 					type={ type }
 					required={ isEmail || required }
+					requiredMark={ requiredMark }
+					optionalText={ optionalText }
 					placeholder={ placeholder }
 					labelStyle={ labelStyle }
 				/>

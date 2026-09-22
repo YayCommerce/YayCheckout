@@ -27,8 +27,12 @@ class CheckoutFieldRequirements {
 
     private const SCRIPT_HANDLE = 'yaycheckout-field-requirements';
 
+    /** @var array|null|false false until first resolved. */
+    private $index = false;
+
     protected function __construct() {
         add_filter( 'woocommerce_checkout_fields', [ $this, 'filter_fields' ], self::FILTER_PRIORITY );
+        add_filter( 'woocommerce_form_field', [ $this, 'filter_form_field' ], self::FILTER_PRIORITY, 3 );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_script' ], self::SCRIPTS_PRIORITY );
     }
 
@@ -50,12 +54,33 @@ class CheckoutFieldRequirements {
         return Requirements::apply( $fields, $layout_fields );
     }
 
+    /**
+     * @param  mixed $field
+     * @param  mixed $key
+     * @param  mixed $args
+     * @return mixed
+     */
+    public function filter_form_field( $field, $key, $args ) {
+        $layout_fields = $this->indicator_fields();
+
+        if ( null === $layout_fields ) {
+            return $field;
+        }
+
+        return Requirements::replace_form_field(
+            $field,
+            is_string( $key ) ? $key : '',
+            is_array( $args ) ? $args : [],
+            $layout_fields
+        );
+    }
+
     public function enqueue_script(): void {
         if ( ! wp_script_is( 'wc-address-i18n', 'enqueued' ) ) {
             return;
         }
 
-        $layout_fields = $this->layout_fields();
+        $layout_fields = $this->indicator_fields();
 
         if ( null === $layout_fields ) {
             return;
@@ -86,20 +111,58 @@ class CheckoutFieldRequirements {
      * @return array|null Null when the renderer stands down.
      */
     private function layout_fields(): ?array {
-        $layout = CheckoutPage::get_instance()->layout();
+        $index = $this->layout_index();
 
-        if ( ! $layout instanceof Layout || '' === trim( $layout->content ) ) {
-            return null;
-        }
-
-        try {
-            $index = LayoutBlockIndex::from_markup( $layout->content );
-        } catch ( \InvalidArgumentException $ex ) {
+        if ( null === $index ) {
             return null;
         }
 
         $fields = $index['fields'] ?? [];
 
         return is_array( $fields ) ? $fields : [];
+    }
+
+    /**
+     * Address fields plus extra fields, so form_field and the storefront script
+     * share one lookup.
+     *
+     * @return array|null Null when the renderer stands down.
+     */
+    private function indicator_fields(): ?array {
+        $index = $this->layout_index();
+
+        if ( null === $index ) {
+            return null;
+        }
+
+        $fields = isset( $index['fields'] ) && is_array( $index['fields'] ) ? $index['fields'] : [];
+        $extra  = isset( $index['extra_fields'] ) && is_array( $index['extra_fields'] ) ? $index['extra_fields'] : [];
+
+        return array_merge( $fields, $extra );
+    }
+
+    /**
+     * @return array|null Null when the renderer stands down.
+     */
+    private function layout_index(): ?array {
+        if ( false !== $this->index ) {
+            return $this->index;
+        }
+
+        $layout = CheckoutPage::get_instance()->layout();
+
+        if ( ! $layout instanceof Layout || '' === trim( $layout->content ) ) {
+            $this->index = null;
+
+            return null;
+        }
+
+        try {
+            $this->index = LayoutBlockIndex::from_markup( $layout->content );
+        } catch ( \InvalidArgumentException $ex ) {
+            $this->index = null;
+        }
+
+        return $this->index;
     }
 }
