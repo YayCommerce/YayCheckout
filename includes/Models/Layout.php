@@ -88,14 +88,6 @@ class Layout {
         );
     }
 
-    /** The portable part of a layout for an export file: what a fresh site needs to recreate it as a draft. Status, active flag and dates are site state and stay behind. */
-    public function to_export_array(): array {
-        return [
-            'title'   => $this->title,
-            'content' => $this->content,
-        ];
-    }
-
     public function is_published(): bool {
         return LayoutStatus::PUBLISHED === $this->post_status;
     }
