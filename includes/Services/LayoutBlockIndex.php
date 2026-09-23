@@ -31,23 +31,15 @@ class LayoutBlockIndex {
      * @throws \InvalidArgumentException When the markup is not a usable layout.
      */
     public static function from_markup( string $markup ): array {
-        if ( '' === trim( $markup ) ) {
-            throw new \InvalidArgumentException( 'Layout markup is empty.' );
-        }
-
-        $blocks = self::real_blocks( parse_blocks( $markup ) );
-
-        if ( empty( $blocks ) ) {
-            throw new \InvalidArgumentException( 'Layout markup contains no blocks.' );
-        }
-
-        if ( ! self::has_checkout( $blocks ) ) {
-            throw new \InvalidArgumentException( 'Layout has no top-level yaycheckout/checkout block.' );
+        // Checkout may come first, after other blocks, or inside one: wrapping it in a Group nests it
+        // without passing the inserter's guard. has_block() matches the serialized name at any depth.
+        if ( ! has_block( 'yaycheckout/checkout', $markup ) ) {
+            throw new \InvalidArgumentException( 'Layout has no yaycheckout/checkout block.' );
         }
 
         $index = self::EMPTY;
         ExtraFieldKeyHelper::reset();
-        self::walk( $blocks, self::contributors(), $index );
+        self::walk( self::real_blocks( parse_blocks( $markup ) ), self::contributors(), $index );
 
         return $index;
     }
@@ -336,18 +328,8 @@ class LayoutBlockIndex {
     }
 
     /**
-     * Whether a Checkout block sits at the document's top level. Other blocks may come before or
-     * after it; the editor only inserts Checkout at the top level, so nested copies do not count.
-     *
-     * @param array $blocks Top-level blocks from parse_blocks(); its null-named whitespace entries never match.
-     */
-    public static function has_checkout( array $blocks ): bool {
-        return in_array( 'yaycheckout/checkout', array_column( $blocks, 'blockName' ), true );
-    }
-
-    /**
      * Drops the entries parse_blocks() emits with a null blockName for the
-     * whitespace between blocks, so the emptiness check and walk() see real blocks only.
+     * whitespace between blocks, so walk() sees real blocks only.
      *
      * @param  array $blocks
      * @return array

@@ -2,7 +2,6 @@
 namespace YayCheckout\Pro\Services;
 
 use YayCheckout\Models\Layout;
-use YayCheckout\Services\LayoutBlockIndex;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -17,13 +16,13 @@ class LayoutImportReview {
     /**
      * @param  array $envelope Decoded export file.
      * @return array { title, content }
-     * @throws \InvalidArgumentException When the file is not an export or has no top-level Checkout block.
+     * @throws \InvalidArgumentException When the file is not an export or has no Checkout block.
      */
     public static function from_envelope( array $envelope ): array {
         $layout = self::layout( $envelope );
 
         // Same rule the renderer enforces in LayoutBlockIndex::from_markup().
-        if ( ! LayoutBlockIndex::has_checkout( parse_blocks( $layout['content'] ) ) ) {
+        if ( ! has_block( 'yaycheckout/checkout', $layout['content'] ) ) {
             throw new \InvalidArgumentException( __( 'The file does not contain a checkout layout.', 'yaycheckout' ) );
         }
 

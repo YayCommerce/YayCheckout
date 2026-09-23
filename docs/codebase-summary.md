@@ -70,7 +70,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/{id}/reset` | POST | replace `post_content` with `LayoutRepository::default_markup()`; title, status, active flag and meta stay, the old markup becomes a revision; 404 when missing |
 | `yaycheckout/v1/layouts/{id}/preview-link` | POST | `{ url, expires_at }`: the checkout URL with a fresh token, lifetime from `advanced.preview_link_lifetime`; any status, nothing stored |
 | `yaycheckout/v1/layouts/{id}/export` | GET | **Pro.** `{ format, plugin_version, exported_at, layouts: [{ title, content }] }`: the portable envelope the Tools page downloads as .json; status, active flag and dates stay behind |
-| `yaycheckout/v1/layouts/import` | POST | **Pro.** body `{ file: <export envelope> }` → 201 with the new draft (`Layout::to_array()`); 400 for a foreign or multi-layout file, or no top-level `yaycheckout/checkout` block; any other block passes |
+| `yaycheckout/v1/layouts/import` | POST | **Pro.** body `{ file: <export envelope> }` → 201 with the new draft (`Layout::to_array()`); 400 for a foreign or multi-layout file, or no `yaycheckout/checkout` block anywhere in the tree; any other block passes |
 | `yaycheckout/v1/design` | GET/POST | envelope `{ tokens, preset_id, custom_css, updated_at, presets }`; POST replaces the whole design (all three keys required) |
 | `yaycheckout/v1/design/presets` | POST | `{ name, tokens }`; returns full design envelope; Pro only |
 | `yaycheckout/v1/design/presets/{id}` | DELETE | drop merchant preset; returns full design envelope; Pro only |

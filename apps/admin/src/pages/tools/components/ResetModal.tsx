@@ -27,7 +27,7 @@ export function ResetModal({
 
   useEffect(() => setTyped(''), [layout?.id]);
 
-  const canReset = typed.trim().toUpperCase() === CONFIRM_PHRASE;
+  const canReset = typed.trim() === CONFIRM_PHRASE;
 
   return (
     <Dialog open={null !== layout} onOpenChange={onOpenChange}>

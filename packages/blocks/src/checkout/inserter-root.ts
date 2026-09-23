@@ -21,9 +21,9 @@ function LayoutInserterRoot() {
 			return null;
 		}
 
-		const { getBlocks, getBlockCount, getSelectedBlock } = select( blockEditorStore );
-		// Other blocks may sit before Checkout at the top level.
-		const root = getBlocks().find( ( block ) => block.name === CHECKOUT_BLOCK );
+		const { getBlock, getBlockCount, getBlocksByName, getSelectedBlock } = select( blockEditorStore );
+		// Checkout may follow other blocks or sit inside one, e.g. a Group.
+		const root = getBlock( getBlocksByName( CHECKOUT_BLOCK )[ 0 ] ?? '' );
 
 		if ( ! root ) {
 			return null;
