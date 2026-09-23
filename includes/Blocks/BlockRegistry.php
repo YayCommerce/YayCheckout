@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Registers from the built assets/dist/blocks/<block>/ directory, so deps and
  * render callback come from build output, not a second PHP declaration.
- * Inserter visibility is layout-CPT only; storefront rendering is not gated here.
+ * Which editors offer the blocks is gated here; storefront rendering is not.
  */
 class BlockRegistry {
 
@@ -77,20 +77,33 @@ class BlockRegistry {
     }
 
     /**
-     * Drops YayCheckout blocks from every editor except the layout CPT.
+     * Keeps YayCheckout blocks in the layout editor and WooCommerce's Checkout
+     * block out of it.
      *
+     * WooCommerce's Checkout would be a second checkout form inside the
+     * layout's own. See docs/system-architecture.md, blocks.
      * Types stay registered so checkout-page.php can still do_blocks() the layout.
      * Unknown context is left alone: stripping then hid Checkout from the layout editor.
      */
     public function restrict_to_layout_editor( $allowed_block_types, $editor_context ) {
-        if ( ! $this->is_known_non_layout_editor( $editor_context ) ) {
-            return $allowed_block_types;
+        if ( $this->is_layout_editor_context( $editor_context ) ) {
+            return self::without( $allowed_block_types, [ 'woocommerce/checkout' ] );
         }
 
-        $yay = $this->block_names();
+        if ( $this->is_known_non_layout_editor( $editor_context ) ) {
+            return self::without( $allowed_block_types, $this->block_names() );
+        }
 
+        return $allowed_block_types;
+    }
+
+    /**
+     * @param  bool|string[] $allowed_block_types
+     * @return bool|string[]
+     */
+    private static function without( $allowed_block_types, array $names ) {
         if ( true === $allowed_block_types ) {
-            // true means "all"; subtract by naming every registered type except ours.
+            // true means "all"; subtract by naming every registered type.
             $allowed_block_types = array_keys( \WP_Block_Type_Registry::get_instance()->get_all_registered() );
         }
 
@@ -98,7 +111,7 @@ class BlockRegistry {
             return $allowed_block_types;
         }
 
-        return array_values( array_diff( $allowed_block_types, $yay ) );
+        return array_values( array_diff( $allowed_block_types, $names ) );
     }
 
     private function is_layout_editor_context( $editor_context ): bool {
