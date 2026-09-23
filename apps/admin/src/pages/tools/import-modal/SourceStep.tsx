@@ -1,5 +1,5 @@
 import { Check, TriangleAlert } from 'lucide-react';
-import { __, _n, sprintf } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import type { ImportReview } from '@/lib/schema/tools.schema';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -44,14 +44,7 @@ export function SourceStep({
       <SummaryStrip
         items={[
           [__('Layout', 'yaycheckout'), review.title],
-          [
-            __('Blocks', 'yaycheckout'),
-            sprintf(
-              /* translators: %d: number of blocks */
-              _n('%d block', '%d blocks', review.blocks, 'yaycheckout'),
-              review.blocks,
-            ),
-          ],
+          [__('Checkout blocks', 'yaycheckout'), String(review.blocks)],
         ]}
       />
 

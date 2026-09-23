@@ -10,6 +10,7 @@ import { Button, LoadingButton } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { HelpTip } from '@/components/ui/tooltip';
 
 const CONFIRM_PHRASE = 'RESET';
 
@@ -71,12 +72,20 @@ export function ResetModal({
             <dl className="bg-muted/30 space-y-1 rounded-md border px-4 py-3 text-sm">
               <div className="flex gap-2">
                 <dt className="text-muted-foreground">{__('Removes:', 'yaycheckout')}</dt>
-                <dd>
+                <dd className="flex items-center gap-1.5">
                   {sprintf(
-                    /* translators: %d: number of blocks */
-                    _n('%d block', '%d blocks', layout.blocks, 'yaycheckout'),
+                    /* translators: %d: number of YayCheckout blocks */
+                    _n('%d checkout block', '%d checkout blocks', layout.blocks, 'yaycheckout'),
                     layout.blocks,
                   )}
+                  {/* HelpTip, not YayCheckoutToolTip: its layer sits above the dialog's. */}
+                  <HelpTip
+                    className="max-w-64"
+                    content={__(
+                      'Only YayCheckout blocks are counted: sections, fields and slots. Other blocks are not included.',
+                      'yaycheckout',
+                    )}
+                  />
                 </dd>
               </div>
               <div className="flex gap-2">

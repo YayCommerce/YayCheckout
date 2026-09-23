@@ -1,5 +1,5 @@
 import { DragEvent, useRef, useState } from 'react';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { parseExportFile, reviewExportFile } from '@/lib/api/tools.api';
 import { getErrorMsg } from '@/lib/helpers/response.helper';
@@ -32,8 +32,8 @@ export function ImportCard() {
       setResult({
         status: 'ready',
         message: sprintf(
-          /* translators: 1: layout title, 2: number of blocks */
-          __('"%1$s" · %2$d blocks', 'yaycheckout'),
+          /* translators: 1: layout title, 2: number of YayCheckout blocks */
+          _n('"%1$s" · %2$d checkout block', '"%1$s" · %2$d checkout blocks', review.blocks, 'yaycheckout'),
           review.title,
           review.blocks,
         ),

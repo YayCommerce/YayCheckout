@@ -34,8 +34,8 @@ export async function exportLayout(id: number): Promise<LayoutExportFile> {
 export function reviewExportFile(envelope: LayoutExportEnvelope): ImportReview {
   const layout = envelope.layouts[0];
 
-  // Same count as the `blocks` field of Layout::to_summary_array(): one `<!-- wp:` opens each serialized block.
-  return { title: layout.title, blocks: layout.content.split('<!-- wp:').length - 1 };
+  // Same count as the `blocks` field of Layout::to_summary_array(): our blocks only, one `<!-- wp:yaycheckout/` each.
+  return { title: layout.title, blocks: layout.content.split('<!-- wp:yaycheckout/').length - 1 };
 }
 
 /** Client-side gate before any request: not JSON, or JSON that is not an export envelope, never reaches PHP. */

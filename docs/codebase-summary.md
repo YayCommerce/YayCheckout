@@ -57,7 +57,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | Route | Method | Purpose |
 |---|---|---|
 | `wp/v2/yay_checkout_layout` | GET/POST | core: draft save, autosave, revisions |
-| `yaycheckout/v1/layouts` | GET | list one page; args: `status` (comma list), `search` (string), `page` (int ≥1); envelope `{ items, total, page, total_pages }`. A row carries `blocks` and `size` (bytes of its markup) so the Tools cards need no detail fetch |
+| `yaycheckout/v1/layouts` | GET | list one page; args: `status` (comma list), `search` (string), `page` (int ≥1); envelope `{ items, total, page, total_pages }`. A row carries `blocks` (count of `yaycheckout/*` blocks in its markup) and `size` (bytes of markup) so the Tools cards need no detail fetch |
 | `yaycheckout/v1/layouts` | POST | create draft seeded with contact, billing, shipping, order-review; args: `name`, `source` (blank\|library), `template_slug` |
 | `yaycheckout/v1/layouts/counts` | GET | per-tab totals: `listed` (everything not archived), `archived`, and store-wide `active` |
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |

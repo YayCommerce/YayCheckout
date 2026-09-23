@@ -68,8 +68,8 @@ class Layout {
             'title'        => $this->title,
             'status'       => $this->post_status,
             'is_active'    => $this->is_active,
-            // One `<!-- wp:` opens each serialized block; closers read `<!-- /wp:`.
-            'blocks'       => substr_count( $this->content, '<!-- wp:' ),
+            // Our blocks only: each opens with one `<!-- wp:yaycheckout/`; closers read `<!-- /wp:`.
+            'blocks'       => substr_count( $this->content, '<!-- wp:yaycheckout/' ),
             'size'         => strlen( $this->content ),
             'published_at' => DateHelper::to_iso8601( $this->published_at ),
             'scheduled_at' => DateHelper::to_iso8601( $this->scheduled_at ),
