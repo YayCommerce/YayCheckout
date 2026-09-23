@@ -87,7 +87,7 @@ class BlockRegistry {
             return $allowed_block_types;
         }
 
-        $yay = self::block_names();
+        $yay = $this->block_names();
 
         if ( true === $allowed_block_types ) {
             // true means "all"; subtract by naming every registered type except ours.
@@ -140,8 +140,7 @@ class BlockRegistry {
         return $screen->post_type;
     }
 
-    /** Every block this plugin registers, namespaced. The import review whitelists against this list so it cannot drift from registration. */
-    public static function block_names(): array {
+    private function block_names(): array {
         $names = [];
 
         foreach ( self::BLOCKS as $slug ) {

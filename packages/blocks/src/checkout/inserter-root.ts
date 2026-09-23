@@ -22,9 +22,10 @@ function LayoutInserterRoot() {
 		}
 
 		const { getBlocks, getBlockCount, getSelectedBlock } = select( blockEditorStore );
-		const root = getBlocks()[ 0 ];
+		// Other blocks may sit before Checkout at the top level.
+		const root = getBlocks().find( ( block ) => block.name === CHECKOUT_BLOCK );
 
-		if ( ! root || root.name !== CHECKOUT_BLOCK ) {
+		if ( ! root ) {
 			return null;
 		}
 

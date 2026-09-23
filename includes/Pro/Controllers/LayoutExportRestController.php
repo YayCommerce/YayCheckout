@@ -82,7 +82,8 @@ class LayoutExportRestController extends BaseRestController {
 
     /** `yaycheckout-b2b-checkout-20260922.json`: slug from the title, date from the export moment. */
     private static function filename( Layout $layout, string $exported_at ): string {
-        $slug = sanitize_title( $layout->title );
+        // sanitize_title() keeps what it cannot transliterate (emoji, CJK) as %xx octets; drop them from a file name.
+        $slug = trim( preg_replace( [ '/%[0-9a-f]{2}/', '/-+/' ], [ '', '-' ], sanitize_title( $layout->title ) ), '-' );
 
         return sprintf(
             'yaycheckout-%s-%s.json',

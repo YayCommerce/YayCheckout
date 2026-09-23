@@ -41,12 +41,8 @@ class LayoutBlockIndex {
             throw new \InvalidArgumentException( 'Layout markup contains no blocks.' );
         }
 
-        $root = $blocks[0];
-
-        if ( 'yaycheckout/checkout' !== $root['blockName'] ) {
-            throw new \InvalidArgumentException(
-                sprintf( 'Layout root must be yaycheckout/checkout, found %s.', $root['blockName'] )
-            );
+        if ( ! self::has_checkout( $blocks ) ) {
+            throw new \InvalidArgumentException( 'Layout has no top-level yaycheckout/checkout block.' );
         }
 
         $index = self::EMPTY;
@@ -340,13 +336,23 @@ class LayoutBlockIndex {
     }
 
     /**
+     * Whether a Checkout block sits at the document's top level. Other blocks may come before or
+     * after it; the editor only inserts Checkout at the top level, so nested copies do not count.
+     *
+     * @param array $blocks Top-level blocks from parse_blocks(); its null-named whitespace entries never match.
+     */
+    public static function has_checkout( array $blocks ): bool {
+        return in_array( 'yaycheckout/checkout', array_column( $blocks, 'blockName' ), true );
+    }
+
+    /**
      * Drops the entries parse_blocks() emits with a null blockName for the
-     * whitespace between blocks, so callers can treat index 0 as the root.
+     * whitespace between blocks, so the emptiness check and walk() see real blocks only.
      *
      * @param  array $blocks
      * @return array
      */
-    public static function real_blocks( array $blocks ): array {
+    private static function real_blocks( array $blocks ): array {
         return array_values(
             array_filter(
                 $blocks,
