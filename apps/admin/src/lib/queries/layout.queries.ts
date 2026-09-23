@@ -64,6 +64,8 @@ export function useInfiniteLayoutsQuery(params: LayoutListParams = {}) {
     queryFn: ({ pageParam }) => getLayouts({ ...params, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
+    // A new search is a new key; without this the open list empties while it loads.
+    placeholderData: keepPreviousData,
   });
 }
 

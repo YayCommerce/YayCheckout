@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { useLayoutQuery, useResetLayoutMutation } from '@/lib/queries/layout.queries';
 import type { LayoutSummary } from '@/lib/schema/layout.schema';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button, LoadingButton } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Field, FieldLabel } from '@/components/ui/field';
@@ -104,6 +106,16 @@ export function ResetModal({
                 onChange={(event) => setTyped(event.target.value)}
               />
             </Field>
+
+            {layout.isActive && (
+              // Tinted like the rest of the dialog's boxes; a bare line here read as loose text next to the footer rule.
+              <Alert variant="outline" destructive className="border-destructive/30 bg-destructive/5 -mt-1">
+                <TriangleAlert />
+                <AlertDescription>
+                  {__('This layout is active: shoppers see the change as soon as you reset it.', 'yaycheckout')}
+                </AlertDescription>
+              </Alert>
+            )}
 
             <DialogFooter className="border-t pt-4">
               <Button type="button" variant="outline" disabled={reset.isPending} onClick={() => onOpenChange(false)}>

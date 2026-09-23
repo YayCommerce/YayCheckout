@@ -115,7 +115,16 @@ export function ImportCard() {
           {(result.status === 'ready' || result.status === 'error') && result.message}
         </div>
       </CardContent>
-      <ImportModal session={session} onOpenChange={(open) => !open && setSession(null)} />
+      <ImportModal
+        session={session}
+        onOpenChange={(open) => {
+          if (open) return;
+          // The card's file and result belong to that session; leaving them would show a ready file with no way to import it.
+          setSession(null);
+          setFile(null);
+          setResult({ status: 'idle' });
+        }}
+      />
     </Card>
   );
 }

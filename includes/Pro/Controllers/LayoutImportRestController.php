@@ -60,7 +60,13 @@ class LayoutImportRestController extends BaseRestController {
      */
     public function validate_import( \WP_REST_Request $request ) {
         try {
-            return LayoutImportReview::from_envelope( (array) $request->get_param( 'file' ) );
+            $layout = LayoutImportReview::from_envelope( (array) $request->get_param( 'file' ) );
+
+            // The markup stays here: the SPA already holds the file it sent.
+            return [
+                'title'  => $layout['title'],
+                'blocks' => $layout['blocks'],
+            ];
         } catch ( \InvalidArgumentException $e ) {
             return $this->error_invalid_arguments( $e->getMessage() );
         }
@@ -72,11 +78,8 @@ class LayoutImportRestController extends BaseRestController {
      * @return \WP_REST_Response|\WP_Error
      */
     public function import_layout( \WP_REST_Request $request ) {
-        $envelope = (array) $request->get_param( 'file' );
-
         try {
-            LayoutImportReview::from_envelope( $envelope );
-            $layout = LayoutImportReview::layout( $envelope );
+            $layout = LayoutImportReview::from_envelope( (array) $request->get_param( 'file' ) );
 
             return new \WP_REST_Response( $this->layouts->import( $layout['title'], $layout['content'] )->to_array(), 201 );
         } catch ( \InvalidArgumentException $e ) {

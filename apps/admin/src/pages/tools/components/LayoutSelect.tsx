@@ -6,6 +6,7 @@ import { __ } from '@wordpress/i18n';
 import { useInfiniteLayoutsQuery } from '@/lib/queries/layout.queries';
 import { LISTED_LAYOUT_STATUSES, type LayoutSummary } from '@/lib/schema/layout.schema';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { ComboboxIcon, ComboboxTrigger } from '@/components/ui/combobox';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Field, FieldLabel } from '@/components/ui/field';
@@ -68,6 +69,7 @@ export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
                 }}
               />
               <CommandList
+                className={cn('transition-opacity', list.isPlaceholderData && 'opacity-60')}
                 onScroll={(event) => {
                   const el = event.currentTarget;
                   if (!list.hasNextPage || list.isFetchingNextPage) return;
@@ -94,6 +96,11 @@ export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
                           className="data-[selected=true]:text-primary size-3.5 stroke-[2.5px] text-transparent"
                         />
                         <span className="truncate">{layout.title}</span>
+                        {layout.isActive && (
+                          <Badge variant="success-soft" className="ml-auto">
+                            {__('Active', 'yaycheckout')}
+                          </Badge>
+                        )}
                       </CommandItem>
                     ))}
                   </CommandGroup>

@@ -17,7 +17,7 @@ class LayoutImportReview {
 
     /**
      * @param  array $envelope Decoded export file.
-     * @return array { title, blocks }
+     * @return array { title, content, blocks }
      * @throws \InvalidArgumentException When the file is not an export, has no checkout root, or uses a block this site lacks.
      */
     public static function from_envelope( array $envelope ): array {
@@ -30,8 +30,9 @@ class LayoutImportReview {
         }
 
         return [
-            'title'  => $layout['title'],
-            'blocks' => self::count_known( $blocks ),
+            'title'   => $layout['title'],
+            'content' => $layout['content'],
+            'blocks'  => self::count_known( $blocks ),
         ];
     }
 
@@ -41,7 +42,7 @@ class LayoutImportReview {
      * @return array { title, content }
      * @throws \InvalidArgumentException When the envelope is not a YayCheckout export.
      */
-    public static function layout( array $envelope ): array {
+    private static function layout( array $envelope ): array {
         if ( Layout::EXPORT_FORMAT !== ( $envelope['format'] ?? null ) ) {
             throw new \InvalidArgumentException( __( 'This file is not a YayCheckout layout export.', 'yaycheckout' ) );
         }
