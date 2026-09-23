@@ -1,7 +1,6 @@
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { CSSProperties } from 'react';
 import { billingAddressFields, shippingAddressFields, type AddressFieldDef } from '../shared/address-fields';
@@ -96,12 +95,6 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	);
 	const catalog = addressSection ? catalogFor( addressSection ) : [];
 	const isEmail = type === 'email' || fieldKey === 'billing_email';
-
-	useEffect( () => {
-		if ( isEmail && ! required ) {
-			setAttributes( { required: true } );
-		}
-	}, [ isEmail, required, setAttributes ] );
 
 	const keyOptions = [
 		{ label: __( 'Select a field', 'yaycheckout' ), value: '' },

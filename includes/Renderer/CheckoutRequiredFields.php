@@ -2,7 +2,7 @@
 namespace YayCheckout\Renderer;
 
 use YayCheckout\Models\Layout;
-use YayCheckout\Services\CheckoutFieldRequirements as Requirements;
+use YayCheckout\Services\CheckoutFieldRequirements;
 use YayCheckout\Services\LayoutBlockIndex;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * Stands down when CheckoutPage has no layout, so stock WooCommerce checkout
  * keeps its own required set. See docs/system-architecture.md, Validation.
  */
-class CheckoutFieldRequirements {
+class CheckoutRequiredFields {
 
     use SingletonTrait;
 
@@ -31,6 +31,7 @@ class CheckoutFieldRequirements {
     private $index = false;
 
     protected function __construct() {
+        // Checkout POST validates at wp_loaded, before is_page() exists. Gating this filter on the page would drop layout required flags on submit.
         add_filter( 'woocommerce_checkout_fields', [ $this, 'filter_fields' ], self::FILTER_PRIORITY );
         add_filter( 'woocommerce_form_field', [ $this, 'filter_form_field' ], self::FILTER_PRIORITY, 3 );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_script' ], self::SCRIPTS_PRIORITY );
@@ -51,7 +52,7 @@ class CheckoutFieldRequirements {
             return $fields;
         }
 
-        return Requirements::apply( $fields, $layout_fields );
+        return CheckoutFieldRequirements::apply( $fields, $layout_fields );
     }
 
     /**
@@ -61,13 +62,18 @@ class CheckoutFieldRequirements {
      * @return mixed
      */
     public function filter_form_field( $field, $key, $args ) {
+        // Account and registration forms use this hook. is_checkout() stays true on wc-ajax; is_page() does not.
+        if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+            return $field;
+        }
+
         $layout_fields = $this->indicator_fields();
 
         if ( null === $layout_fields ) {
             return $field;
         }
 
-        return Requirements::replace_form_field(
+        return CheckoutFieldRequirements::replace_form_field(
             $field,
             is_string( $key ) ? $key : '',
             is_array( $args ) ? $args : [],
@@ -76,6 +82,11 @@ class CheckoutFieldRequirements {
     }
 
     public function enqueue_script(): void {
+        // Account address pages enqueue wc-address-i18n as well.
+        if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+            return;
+        }
+
         if ( ! wp_script_is( 'wc-address-i18n', 'enqueued' ) ) {
             return;
         }
@@ -86,7 +97,7 @@ class CheckoutFieldRequirements {
             return;
         }
 
-        $json = wp_json_encode( Requirements::required_map( $layout_fields ) );
+        $json = wp_json_encode( CheckoutFieldRequirements::required_map( $layout_fields ) );
 
         if ( ! is_string( $json ) || '' === $json ) {
             return;

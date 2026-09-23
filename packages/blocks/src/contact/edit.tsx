@@ -1,6 +1,5 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
-import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { FieldPreview } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
@@ -24,12 +23,6 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label, placeholder, required, requiredMark = '' } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-contact' } );
 	const canvasLabel = label || __( 'Email address', 'yaycheckout' );
-
-	useEffect( () => {
-		if ( ! required ) {
-			setAttributes( { required: true } );
-		}
-	}, [ required, setAttributes ] );
 
 	return (
 		<>
