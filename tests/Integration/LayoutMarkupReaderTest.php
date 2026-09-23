@@ -89,18 +89,9 @@ class LayoutMarkupReaderTest extends WP_UnitTestCase {
             'placeholder' => '',
             'required'    => true,
             'options'     => [
-                [
-                    'label' => 'Yes',
-                    'value' => 'yes',
-                ],
-                [
-                    'label' => 'No',
-                    'value' => 'no',
-                ],
-                [
-                    'label' => 'maybe',
-                    'value' => 'maybe',
-                ],
+                'yes'   => 'Yes',
+                'no'    => 'No',
+                'maybe' => 'maybe',
             ],
         ],
         'vat'  => [
@@ -147,5 +138,12 @@ class LayoutMarkupReaderTest extends WP_UnitTestCase {
 
     public function test_slot_named_zero_is_kept(): void {
         $this->assertSame( [ '0' ], LayoutMarkupReader::slots( '<!-- wp:yaycheckout/slot {"slotName":"0"} /-->' ) );
+    }
+
+    /** A Key outside letters, digits and underscores (or with a leading underscore) is treated as no Key. */
+    public function test_malformed_extra_field_keys_are_skipped(): void {
+        $markup = '<!-- wp:yaycheckout/extra-field {"fieldKey":"_billing_email"} /--><!-- wp:yaycheckout/extra-field {"fieldKey":"vat number"} /--><!-- wp:yaycheckout/extra-field {"fieldKey":"vat_no"} /-->';
+
+        $this->assertSame( [ 'vat_no' ], array_keys( LayoutMarkupReader::extra_fields( $markup ) ) );
     }
 }

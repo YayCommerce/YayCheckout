@@ -5,7 +5,7 @@ import { useEffect } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { store as noticesStore } from '@wordpress/notices';
 import { registerPlugin } from '@wordpress/plugins';
-import { duplicateKeys, extraFieldKeys } from '../shared/extra-field-keys';
+import { duplicateKeys, EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
 
 const LAYOUT_POST_TYPE = 'yay_checkout_layout';
 const CHECKOUT_BLOCK = 'yaycheckout/checkout';
@@ -13,8 +13,8 @@ const LOCK_KEY = 'yaycheckout-layout-invalid';
 
 /**
  * Locks saving while the layout cannot take an order: no Checkout block (the
- * form, at any depth), or an extra field whose Key is empty or shared, since
- * the Key is the posted name the order meta is read back by. Core has no
+ * form, at any depth), or an extra field whose Key is empty, malformed or
+ * shared, since the Key is the posted name the order meta is read back by. Core has no
  * publish-only lock, so drafts are held too. Mirrors LayoutRepository::publish().
  */
 function LayoutPublishGuard() {
@@ -33,6 +33,16 @@ function LayoutPublishGuard() {
 
 		if ( keys.includes( '' ) ) {
 			return __( 'Every extra field needs a Key before this layout can be saved.', 'yaycheckout' );
+		}
+
+		const malformed = [ ...new Set( keys.filter( ( key ) => ! EXTRA_FIELD_KEY_PATTERN.test( key ) ) ) ];
+
+		if ( malformed.length > 0 ) {
+			return sprintf(
+				/* translators: %s: comma-separated extra field keys. */
+				__( 'Extra field Keys may use only letters, numbers and underscores, and must not start with an underscore: %s.', 'yaycheckout' ),
+				malformed.join( ', ' )
+			);
 		}
 
 		const duplicates = duplicateKeys( keys );

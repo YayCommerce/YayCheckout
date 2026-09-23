@@ -19,6 +19,14 @@ class LayoutMarkupReader {
     private const EXTRA_FIELD = 'yaycheckout/extra-field';
     private const SLOT        = 'yaycheckout/slot';
 
+    /**
+     * A Key is a posted field name and an order meta key. PHP rewrites spaces
+     * and dots in posted names, so those values never arrive; a leading
+     * underscore reaches WooCommerce's internal order keys, where
+     * WC_Data::update_meta_data() calls the matching setter instead.
+     */
+    public const EXTRA_FIELD_KEY_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9_]*$/';
+
     /** Section block => slot name it occupies. */
     private const SECTION_SLOTS = [
         self::CONTACT                  => 'contact',
@@ -99,8 +107,8 @@ class LayoutMarkupReader {
     }
 
     /**
-     * Merchant extra fields by Key. A block without a Key renders nothing, so
-     * it is skipped.
+     * Merchant extra fields by Key. A block without a valid Key renders
+     * nothing, so it is skipped.
      *
      * @return array<string, array>
      */
@@ -150,12 +158,22 @@ class LayoutMarkupReader {
 
         foreach ( self::blocks( $markup ) as $block ) {
             if ( self::EXTRA_FIELD === $block['blockName'] ) {
-                $keys[] = self::extra_field_key( $block['attrs'] );
+                $keys[] = trim( self::text( $block['attrs'], 'fieldKey' ) );
             }
         }
 
         if ( in_array( '', $keys, true ) ) {
             return __( 'Every extra field needs a Key before this layout can be published.', 'yaycheckout' );
+        }
+
+        $malformed = array_values( array_unique( preg_grep( self::EXTRA_FIELD_KEY_PATTERN, $keys, PREG_GREP_INVERT ) ) );
+
+        if ( ! empty( $malformed ) ) {
+            return sprintf(
+                /* translators: %s: comma-separated extra field keys. */
+                __( 'Extra field Keys may use only letters, numbers and underscores, and must not start with an underscore: %s.', 'yaycheckout' ),
+                implode( ', ', $malformed )
+            );
         }
 
         $duplicates = array_unique( array_diff_assoc( $keys, array_unique( $keys ) ) );
@@ -172,12 +190,15 @@ class LayoutMarkupReader {
     }
 
     /**
-     * An extra field's Key: its posted name and order meta key, trimmed.
+     * An extra field's Key: its posted name and order meta key, trimmed; ''
+     * when missing or not a valid Key, so the field renders and stores nothing.
      *
      * @param mixed $attrs Block attributes.
      */
     public static function extra_field_key( $attrs ): string {
-        return is_array( $attrs ) ? trim( self::text( $attrs, 'fieldKey' ) ) : '';
+        $key = is_array( $attrs ) ? trim( self::text( $attrs, 'fieldKey' ) ) : '';
+
+        return 1 === preg_match( self::EXTRA_FIELD_KEY_PATTERN, $key ) ? $key : '';
     }
 
     /**
@@ -217,13 +238,14 @@ class LayoutMarkupReader {
     }
 
     /**
-     * Choice options with fully blank rows dropped; a missing label shows the value.
+     * An extra field's choices as value => label. Fully blank rows are dropped,
+     * a blank value becomes its label's slug, a blank label shows the value.
      *
-     * @param  mixed $options
-     * @return array<int, array{label: string, value: string}>
+     * @param  mixed $options The block's options attribute.
+     * @return array<string, string>
      */
-    private static function options( $options ): array {
-        $clean = [];
+    public static function options( $options ): array {
+        $map = [];
 
         foreach ( is_array( $options ) ? $options : [] as $option ) {
             if ( ! is_array( $option ) ) {
@@ -231,16 +253,16 @@ class LayoutMarkupReader {
             }
 
             $value = isset( $option['value'] ) ? (string) $option['value'] : '';
-            $label = isset( $option['label'] ) ? (string) $option['label'] : $value;
+            $label = isset( $option['label'] ) ? (string) $option['label'] : '';
 
-            if ( '' !== $value || '' !== $label ) {
-                $clean[] = [
-                    'label' => $label,
-                    'value' => $value,
-                ];
+            if ( '' === $value && '' === $label ) {
+                continue;
             }
+
+            $value         = '' === $value ? sanitize_title( $label ) : $value;
+            $map[ $value ] = '' === $label ? $value : $label;
         }
 
-        return $clean;
+        return $map;
     }
 }

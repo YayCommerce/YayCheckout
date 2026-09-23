@@ -1,14 +1,15 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Services\ExtraFieldSubmission;
 use YayCheckout\Services\LayoutMarkupReader;
-use YayCheckout\Services\ExtraFieldPostedCollector;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Persists extra fields onto the WooCommerce order they were posted with.
+ * Validates the served layout's extra fields at checkout, stores them on the
+ * order, and prints them on the admin and customer order screens.
  *
  * Reads the layout CheckoutPage serves, so a preview checkout validates and
  * saves the previewed layout's fields.
@@ -21,151 +22,75 @@ class CheckoutExtraFields {
 
     protected function __construct() {
         add_action( 'woocommerce_after_checkout_validation', [ $this, 'validate' ], 10, 2 );
-        add_action( 'woocommerce_checkout_create_order', [ $this, 'persist' ], 10, 2 );
-        add_action( 'woocommerce_checkout_update_order_meta', [ $this, 'persist_saved' ], 10, 2 );
+        // Fires before WooCommerce saves the new order, so meta set here is saved with it.
+        add_action( 'woocommerce_checkout_create_order', [ $this, 'persist' ] );
         add_action( 'woocommerce_admin_order_data_after_billing_address', [ $this, 'print_admin' ] );
         add_action( 'woocommerce_order_details_after_order_table', [ $this, 'print_customer' ] );
     }
 
     /**
-     * @param array     $data
+     * @param array     $data   WooCommerce's posted checkout data; unused.
      * @param \WP_Error $errors
      */
-    public function validate( $data, $errors ) {
-        unset( $data );
-
-        if ( ! $errors instanceof \WP_Error ) {
-            return;
-        }
-
-        $fields = $this->fields();
-
-        if ( [] === $fields ) {
-            return;
-        }
-
-        $result = ExtraFieldPostedCollector::collect( $fields, $this->posted() );
-
-        foreach ( $result['errors'] as $error ) {
-            $key   = isset( $error['key'] ) ? (string) $error['key'] : '';
-            $code  = isset( $error['code'] ) ? (string) $error['code'] : 'invalid';
-            $label = isset( $fields[ $key ]['label'] ) && is_string( $fields[ $key ]['label'] ) && '' !== $fields[ $key ]['label']
-                ? $fields[ $key ]['label']
-                : $key;
-
-            if ( 'required' === $code ) {
-                $message = sprintf(
-                    /* translators: %s: extra field label. */
-                    __( '%s is a required field.', 'yaycheckout' ),
-                    $label
-                );
-            } else {
-                $message = sprintf(
-                    /* translators: %s: extra field label. */
-                    __( '%s is not a valid selection.', 'yaycheckout' ),
-                    $label
-                );
-            }
-
+    public function validate( $data, \WP_Error $errors ): void {
+        foreach ( $this->submission()['errors'] as $key => $message ) {
             $errors->add( 'yaycheckout_extra_' . $key, $message );
         }
     }
 
     /**
-     * @param \WC_Order $order
-     * @param array     $data
+     * One meta per field plus a snapshot of the rows, so order screens keep the
+     * label and display text after the layout changes.
+     *
+     * WooCommerce reuses a pending or failed order when the shopper retries
+     * with the same cart, so the previous attempt's values are removed first;
+     * otherwise a field cleared on retry would keep its old value.
      */
-    public function persist( $order, $data ) {
-        unset( $data );
+    public function persist( \WC_Order $order ): void {
+        $submission = $this->submission();
 
-        if ( ! $order instanceof \WC_Order ) {
+        if ( [] !== $submission['errors'] ) {
             return;
         }
 
-        $fields = $this->fields();
+        $previous = $order->get_meta( self::META_SNAPSHOT );
 
-        if ( [] === $fields ) {
+        foreach ( is_array( $previous ) ? $previous : [] as $row ) {
+            $order->delete_meta_data( (string) ( $row['key'] ?? '' ) );
+        }
+
+        $order->delete_meta_data( self::META_SNAPSHOT );
+
+        if ( [] === $submission['rows'] ) {
             return;
         }
 
-        $result = ExtraFieldPostedCollector::collect( $fields, $this->posted() );
-
-        if ( [] !== $result['errors'] || [] === $result['rows'] ) {
-            return;
-        }
-
-        foreach ( $result['rows'] as $row ) {
+        foreach ( $submission['rows'] as $row ) {
             $order->update_meta_data( $row['key'], $row['value'] );
         }
 
-        $order->update_meta_data( self::META_SNAPSHOT, $result['rows'] );
+        $order->update_meta_data( self::META_SNAPSHOT, $submission['rows'] );
     }
 
-    /**
-     * Woo's documented hook for custom order meta, after the order exists in the DB.
-     *
-     * @param int   $order_id
-     * @param array $data
-     */
-    public function persist_saved( $order_id, $data ) {
-        $order = function_exists( 'wc_get_order' ) ? wc_get_order( $order_id ) : null;
-
-        if ( ! $order instanceof \WC_Order ) {
-            return;
-        }
-
-        $this->persist( $order, $data );
-        $order->save_meta_data();
-    }
-
-    /**
-     * @param \WC_Order $order
-     */
-    public function print_admin( $order ) {
-        $order = $this->as_order( $order );
-
-        if ( ! $order instanceof \WC_Order ) {
-            return;
-        }
-
+    public function print_admin( \WC_Order $order ): void {
         $this->print_rows( $order, true );
     }
 
-    /**
-     * @param \WC_Order $order
-     */
-    public function print_customer( $order ) {
-        $order = $this->as_order( $order );
-
-        if ( ! $order instanceof \WC_Order ) {
-            return;
-        }
-
+    public function print_customer( \WC_Order $order ): void {
         $this->print_rows( $order, false );
     }
 
     /**
-     * @param mixed $order
-     * @return \WC_Order|null
+     * @return array{rows: array, errors: array<string, string>}
      */
-    private function as_order( $order ): ?\WC_Order {
-        if ( $order instanceof \WC_Order ) {
-            return $order;
-        }
+    private function submission(): array {
+        $layout = CheckoutPage::get_instance()->layout();
+        $fields = null === $layout ? [] : LayoutMarkupReader::extra_fields( $layout->content );
 
-        if ( function_exists( 'wc_get_order' ) && ( is_numeric( $order ) || $order instanceof \WP_Post ) ) {
-            $found = wc_get_order( $order );
-
-            return $found instanceof \WC_Order ? $found : null;
-        }
-
-        return null;
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Woo verifies the checkout nonce before these hooks; only Keys in $fields are read and ExtraFieldSubmission sanitizes them.
+        return ExtraFieldSubmission::collect( $fields, wp_unslash( $_POST ) );
     }
 
-    /**
-     * @param \WC_Order $order
-     * @param bool      $admin
-     */
     private function print_rows( \WC_Order $order, bool $admin ): void {
         $rows = $order->get_meta( self::META_SNAPSHOT );
 
@@ -180,16 +105,8 @@ class CheckoutExtraFields {
         }
 
         foreach ( $rows as $row ) {
-            if ( ! is_array( $row ) ) {
-                continue;
-            }
-
-            $label   = isset( $row['label'] ) ? (string) $row['label'] : '';
-            $display = isset( $row['display'] ) ? (string) $row['display'] : '';
-
-            if ( '' === $display && isset( $row['value'] ) ) {
-                $display = is_array( $row['value'] ) ? implode( ', ', array_map( 'strval', $row['value'] ) ) : (string) $row['value'];
-            }
+            $label   = (string) ( $row['label'] ?? '' );
+            $display = (string) ( $row['display'] ?? '' );
 
             if ( '' === $label && '' === $display ) {
                 continue;
@@ -199,27 +116,5 @@ class CheckoutExtraFields {
         }
 
         echo '</div>';
-    }
-
-    /**
-     * @return array
-     */
-    private function fields(): array {
-        $layout = CheckoutPage::get_instance()->layout();
-
-        return null === $layout ? [] : LayoutMarkupReader::extra_fields( $layout->content );
-    }
-
-    /**
-     * @return array
-     */
-    private function posted(): array {
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Woo verifies the checkout nonce before these hooks.
-        if ( ! isset( $_POST ) || ! is_array( $_POST ) ) {
-            return [];
-        }
-
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Keys are limited to the extra_fields map; ExtraFieldPostedCollector sanitizes values.
-        return wp_unslash( $_POST );
     }
 }

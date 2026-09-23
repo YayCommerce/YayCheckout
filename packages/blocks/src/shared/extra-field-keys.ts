@@ -1,5 +1,8 @@
 export const EXTRA_FIELD_BLOCK = 'yaycheckout/extra-field';
 
+/** Same rule as LayoutMarkupReader::EXTRA_FIELD_KEY_PATTERN. */
+export const EXTRA_FIELD_KEY_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_]*$/;
+
 interface BlockEditorSelectors {
 	getClientIdsWithDescendants: () => string[];
 	getBlockName: ( clientId: string ) => string | null;

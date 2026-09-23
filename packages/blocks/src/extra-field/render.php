@@ -19,27 +19,7 @@ $yaycheckout_key         = \YayCheckout\Services\LayoutMarkupReader::extra_field
 $yaycheckout_type        = isset( $attributes['type'] ) && is_string( $attributes['type'] ) && '' !== $attributes['type'] ? $attributes['type'] : 'text';
 $yaycheckout_placeholder = isset( $attributes['placeholder'] ) && is_string( $attributes['placeholder'] ) ? $attributes['placeholder'] : '';
 $yaycheckout_required    = ! empty( $attributes['required'] );
-$yaycheckout_raw_options = isset( $attributes['options'] ) && is_array( $attributes['options'] ) ? $attributes['options'] : [];
-$yaycheckout_options     = [];
-
-foreach ( $yaycheckout_raw_options as $yaycheckout_option ) {
-    if ( ! is_array( $yaycheckout_option ) ) {
-        continue;
-    }
-
-    $yaycheckout_option_value = isset( $yaycheckout_option['value'] ) ? (string) $yaycheckout_option['value'] : '';
-    $yaycheckout_option_label = isset( $yaycheckout_option['label'] ) ? (string) $yaycheckout_option['label'] : $yaycheckout_option_value;
-
-    if ( '' === $yaycheckout_option_value && '' === $yaycheckout_option_label ) {
-        continue;
-    }
-
-    if ( '' === $yaycheckout_option_value ) {
-        $yaycheckout_option_value = sanitize_title( $yaycheckout_option_label );
-    }
-
-    $yaycheckout_options[ $yaycheckout_option_value ] = $yaycheckout_option_label;
-}
+$yaycheckout_options     = \YayCheckout\Services\LayoutMarkupReader::options( $attributes['options'] ?? [] );
 
 // Without a Key there is no posted name to persist; the editor blocks saving until one is set.
 if ( '' === $yaycheckout_key ) {

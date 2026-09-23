@@ -44,8 +44,11 @@ class LayoutRepositoryPublishTest extends WP_UnitTestCase {
 
     public function bad_extra_field_keys(): array {
         return [
-            'empty key'     => [ '<!-- wp:yaycheckout/extra-field {"fieldKey":"vat"} /--><!-- wp:yaycheckout/extra-field {"fieldKey":"  "} /-->', 'needs a Key' ],
-            'duplicate key' => [ '<!-- wp:yaycheckout/extra-field {"fieldKey":"vat"} /--><!-- wp:yaycheckout/extra-field {"fieldKey":" vat"} /-->', 'Used more than once: vat.' ],
+            'empty key'        => [ '<!-- wp:yaycheckout/extra-field {"fieldKey":"vat"} /--><!-- wp:yaycheckout/extra-field {"fieldKey":"  "} /-->', 'needs a Key' ],
+            'space in key'     => [ '<!-- wp:yaycheckout/extra-field {"fieldKey":"vat number"} /-->', 'may use only letters, numbers and underscores' ],
+            'dot in key'       => [ '<!-- wp:yaycheckout/extra-field {"fieldKey":"vat.no"} /-->', 'may use only letters, numbers and underscores' ],
+            'woo internal key' => [ '<!-- wp:yaycheckout/extra-field {"fieldKey":"_billing_email"} /-->', 'must not start with an underscore: _billing_email.' ],
+            'duplicate key'    => [ '<!-- wp:yaycheckout/extra-field {"fieldKey":"vat"} /--><!-- wp:yaycheckout/extra-field {"fieldKey":" vat"} /-->', 'Used more than once: vat.' ],
         ];
     }
 }

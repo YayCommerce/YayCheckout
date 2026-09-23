@@ -2,7 +2,7 @@ import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wo
 import { Button, Notice, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { extraFieldKeys } from '../shared/extra-field-keys';
+import { EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
 import { FieldPreview, type FieldOption } from '../shared/field-preview';
 
 const TYPE_OPTIONS = [
@@ -49,6 +49,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 
 	if ( trimmedKey === '' ) {
 		keyError = __( 'Key is required.', 'yaycheckout' );
+	} else if ( ! EXTRA_FIELD_KEY_PATTERN.test( trimmedKey ) ) {
+		keyError = __( 'Use only letters, numbers and underscores, not starting with an underscore.', 'yaycheckout' );
 	} else if ( isDuplicate ) {
 		keyError = __( 'Another extra field already uses this Key.', 'yaycheckout' );
 	}

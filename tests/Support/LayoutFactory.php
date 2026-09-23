@@ -37,6 +37,25 @@ final class LayoutFactory {
         return (int) $id;
     }
 
+    /**
+     * Makes $markup the layout the checkout serves: published, active, and
+     * CheckoutPage's per-request memo cleared so the next read resolves it.
+     */
+    public static function serve( string $markup ): int {
+        $id = self::create_draft( [ 'post_content' => $markup ] );
+        ( new \YayCheckout\Repositories\LayoutRepository() )->activate( $id );
+        self::forget_served_layout();
+
+        return $id;
+    }
+
+    /** Clears CheckoutPage's memoised layout; the singleton outlives a test. */
+    public static function forget_served_layout(): void {
+        $memo = new \ReflectionProperty( \YayCheckout\Renderer\CheckoutPage::class, 'layout' );
+        $memo->setAccessible( true );
+        $memo->setValue( \YayCheckout\Renderer\CheckoutPage::get_instance(), false );
+    }
+
     /** A shop manager (WooCommerce's manage_woocommerce role), made current. */
     public static function as_shop_manager(): int {
         $user_id = wp_insert_user(
