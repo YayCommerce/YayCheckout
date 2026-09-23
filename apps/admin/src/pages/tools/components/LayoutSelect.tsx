@@ -39,8 +39,16 @@ export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
   const id = useId();
 
   useEffect(() => {
-    if (value !== null || layouts.length === 0) return;
-    onChange(layouts.find((layout) => layout.isActive) ?? layouts[0]);
+    if (layouts.length === 0) return;
+
+    if (value === null) {
+      onChange(layouts.find((layout) => layout.isActive) ?? layouts[0]);
+      return;
+    }
+
+    // The card keeps its own copy of the row; swap in the refetched one so a reset or rename shows up.
+    const fresh = layouts.find((layout) => layout.id === value.id);
+    if (fresh && fresh !== value) onChange(fresh);
   }, [value, layouts, onChange]);
 
   return (

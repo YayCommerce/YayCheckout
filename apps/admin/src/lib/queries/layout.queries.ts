@@ -192,15 +192,15 @@ export function useDuplicateLayoutMutation() {
   });
 }
 
-/** Only the markup changes, so list rows and counts stay valid; refresh the detail. */
+/** Rows carry blocks and size, which reset changes; counts stay valid. */
 export function useResetLayoutMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationKey: ['layouts', 'reset'],
     mutationFn: resetLayout,
-    onSuccess: (layout) => {
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.detail(layout.id) });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
     },
   });
 }
