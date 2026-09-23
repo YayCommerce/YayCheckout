@@ -51,8 +51,8 @@ class LayoutMarkupReader {
         foreach ( self::blocks( $markup ) as $block ) {
             if ( isset( self::SECTION_SLOTS[ $block['blockName'] ] ) ) {
                 $slots[] = self::SECTION_SLOTS[ $block['blockName'] ];
-            } elseif ( self::SLOT === $block['blockName'] && isset( $block['attrs']['slotName'] ) ) {
-                $slots[] = sanitize_key( (string) $block['attrs']['slotName'] );
+            } elseif ( self::SLOT === $block['blockName'] ) {
+                $slots[] = sanitize_key( self::text( $block['attrs'], 'slotName' ) );
             }
         }
 
@@ -238,8 +238,12 @@ class LayoutMarkupReader {
     }
 
     /**
-     * An extra field's choices as value => label. Fully blank rows are dropped,
-     * a blank value becomes its label's slug, a blank label shows the value.
+     * An extra field's choices as value => label. A blank value becomes its
+     * label's slug, a blank label shows the value, a row left without a value
+     * is dropped.
+     *
+     * Values are cleaned the way a posted value is, so every rendered choice
+     * posts back as a valid selection.
      *
      * @param  mixed $options The block's options attribute.
      * @return array<string, string>
@@ -255,11 +259,12 @@ class LayoutMarkupReader {
             $value = isset( $option['value'] ) ? (string) $option['value'] : '';
             $label = isset( $option['label'] ) ? (string) $option['label'] : '';
 
-            if ( '' === $value && '' === $label ) {
+            $value = sanitize_text_field( '' !== $value ? $value : sanitize_title( $label ) );
+
+            if ( '' === $value ) {
                 continue;
             }
 
-            $value         = '' === $value ? sanitize_title( $label ) : $value;
             $map[ $value ] = '' === $label ? $value : $label;
         }
 

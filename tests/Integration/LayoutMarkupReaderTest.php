@@ -140,6 +140,10 @@ class LayoutMarkupReaderTest extends WP_UnitTestCase {
         $this->assertSame( [ '0' ], LayoutMarkupReader::slots( '<!-- wp:yaycheckout/slot {"slotName":"0"} /-->' ) );
     }
 
+    public function test_non_string_slot_name_is_ignored(): void {
+        $this->assertSame( [], LayoutMarkupReader::slots( '<!-- wp:yaycheckout/slot {"slotName":["x"]} /-->' ) );
+    }
+
     /** A Key outside letters, digits and underscores (or with a leading underscore) is treated as no Key. */
     public function test_malformed_extra_field_keys_are_skipped(): void {
         $markup = '<!-- wp:yaycheckout/extra-field {"fieldKey":"_billing_email"} /--><!-- wp:yaycheckout/extra-field {"fieldKey":"vat number"} /--><!-- wp:yaycheckout/extra-field {"fieldKey":"vat_no"} /-->';

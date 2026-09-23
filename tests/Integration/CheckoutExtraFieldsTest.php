@@ -125,6 +125,19 @@ class CheckoutExtraFieldsTest extends WP_UnitTestCase {
         $this->assertSame( array_keys( \YayCheckout\Services\LayoutMarkupReader::options( json_decode( $options, true ) ) ), $rendered[1] );
     }
 
+    /** Posting back any rendered option is accepted, even one sanitizing would change. */
+    public function test_every_rendered_option_posts_back_valid(): void {
+        $block  = '<!-- wp:yaycheckout/extra-field {"fieldKey":"size","type":"select","options":[{"label":"Red","value":"red "},{"label":"A or B","value":"a<b"},{"label":"Small","value":"s"}]} /-->';
+        $fields = \YayCheckout\Services\LayoutMarkupReader::extra_fields( $block );
+
+        preg_match_all( '/<option value="([^"]*)"/', do_blocks( $block ), $rendered );
+
+        foreach ( $rendered[1] as $value ) {
+            $posted = [ 'size' => html_entity_decode( $value ) ];
+            $this->assertSame( [], \YayCheckout\Services\ExtraFieldSubmission::collect( $fields, $posted )['errors'], $value );
+        }
+    }
+
     /** A retried order drops the previous attempt's values before storing the new ones. */
     public function test_retry_replaces_previous_values(): void {
         $order = new \WC_Order();
