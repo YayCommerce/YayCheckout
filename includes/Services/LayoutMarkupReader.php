@@ -1,0 +1,246 @@
+<?php
+namespace YayCheckout\Services;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Answers questions about a layout's block markup: which sections it renders,
+ * which fields it holds, and whether it may be published.
+ *
+ * Pure: a function of the markup, no storage. Every method walks the same flat,
+ * document-ordered block list, so nesting (groups, columns) never matters.
+ * Reads never throw; publish_error() is where a layout is refused.
+ */
+class LayoutMarkupReader {
+
+    private const CHECKOUT    = 'yaycheckout/checkout';
+    private const CONTACT     = 'yaycheckout/contact';
+    private const FIELD       = 'yaycheckout/field';
+    private const EXTRA_FIELD = 'yaycheckout/extra-field';
+    private const SLOT        = 'yaycheckout/slot';
+
+    /** Section block => slot name it occupies. */
+    private const SECTION_SLOTS = [
+        self::CONTACT                  => 'contact',
+        'yaycheckout/billing'          => 'billing',
+        'yaycheckout/shipping'         => 'shipping',
+        'yaycheckout/order-review'     => 'order_review',
+        'yaycheckout/shipping-methods' => 'shipping_methods',
+        'yaycheckout/express-pay'      => 'express_pay',
+        'yaycheckout/payment'          => 'payment',
+        'yaycheckout/order-summary'    => 'order_summary',
+        'yaycheckout/place-order'      => 'place_order',
+    ];
+
+    /**
+     * Section slots plus each named slot block, in document order, unique.
+     *
+     * @return string[]
+     */
+    public static function slots( string $markup ): array {
+        $slots = [];
+
+        foreach ( self::blocks( $markup ) as $block ) {
+            if ( isset( self::SECTION_SLOTS[ $block['blockName'] ] ) ) {
+                $slots[] = self::SECTION_SLOTS[ $block['blockName'] ];
+            } elseif ( self::SLOT === $block['blockName'] && isset( $block['attrs']['slotName'] ) ) {
+                $slots[] = sanitize_key( (string) $block['attrs']['slotName'] );
+            }
+        }
+
+        return array_values( array_unique( array_filter( $slots, 'strlen' ) ) );
+    }
+
+    /**
+     * WooCommerce address fields by Key: Contact is billing_email, each Field
+     * block with a Key is its own. A later block with the same Key wins.
+     *
+     * @return array<string, array>
+     */
+    public static function fields( string $markup ): array {
+        $fields = [];
+
+        foreach ( self::blocks( $markup ) as $block ) {
+            $attrs = $block['attrs'];
+
+            if ( self::CONTACT === $block['blockName'] ) {
+                $attrs = [
+                    'fieldKey'    => 'billing_email',
+                    'type'        => 'email',
+                    'label'       => self::text( $attrs, 'label' ),
+                    'placeholder' => self::text( $attrs, 'placeholder' ),
+                    'required'    => ! isset( $attrs['required'] ) || (bool) $attrs['required'],
+                ];
+            } elseif ( self::FIELD !== $block['blockName'] ) {
+                continue;
+            }
+
+            $key = trim( self::text( $attrs, 'fieldKey' ) );
+
+            if ( '' === $key ) {
+                continue;
+            }
+
+            $fields[ $key ] = [
+                'fieldKey'     => $key,
+                'type'         => self::text( $attrs, 'type', 'text' ),
+                'label'        => self::text( $attrs, 'label' ),
+                'placeholder'  => self::text( $attrs, 'placeholder' ),
+                'description'  => self::text( $attrs, 'description' ),
+                'required'     => ! empty( $attrs['required'] ),
+                'enabled'      => true,
+                'autocomplete' => self::text( $attrs, 'autocomplete' ),
+                'validate'     => isset( $attrs['validate'] ) && is_array( $attrs['validate'] ) ? array_values( array_map( 'strval', $attrs['validate'] ) ) : [],
+                'width'        => self::text( $attrs, 'width', 'full' ),
+            ];
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Merchant extra fields by Key. A block without a Key renders nothing, so
+     * it is skipped.
+     *
+     * @return array<string, array>
+     */
+    public static function extra_fields( string $markup ): array {
+        $fields = [];
+
+        foreach ( self::blocks( $markup ) as $block ) {
+            $key = self::EXTRA_FIELD === $block['blockName'] ? self::extra_field_key( $block['attrs'] ) : '';
+
+            if ( '' === $key ) {
+                continue;
+            }
+
+            $attrs          = $block['attrs'];
+            $fields[ $key ] = [
+                'fieldKey'    => $key,
+                'type'        => self::text( $attrs, 'type', 'text' ),
+                'label'       => self::text( $attrs, 'label' ),
+                'placeholder' => self::text( $attrs, 'placeholder' ),
+                'required'    => ! empty( $attrs['required'] ),
+                'options'     => self::options( $attrs['options'] ?? [] ),
+            ];
+        }
+
+        return $fields;
+    }
+
+    /**
+     * No block declares an order mode yet; kept so the layout's shape is complete.
+     *
+     * @return string[]
+     */
+    public static function order_modes( string $markup ): array {
+        unset( $markup );
+        return [];
+    }
+
+    /**
+     * Why the layout cannot be published, or '' when it can.
+     */
+    public static function publish_error( string $markup ): string {
+        if ( ! has_block( self::CHECKOUT, $markup ) ) {
+            return __( 'Add a Checkout block to this layout before publishing it.', 'yaycheckout' );
+        }
+
+        $keys = [];
+
+        foreach ( self::blocks( $markup ) as $block ) {
+            if ( self::EXTRA_FIELD === $block['blockName'] ) {
+                $keys[] = self::extra_field_key( $block['attrs'] );
+            }
+        }
+
+        if ( in_array( '', $keys, true ) ) {
+            return __( 'Every extra field needs a Key before this layout can be published.', 'yaycheckout' );
+        }
+
+        $duplicates = array_unique( array_diff_assoc( $keys, array_unique( $keys ) ) );
+
+        if ( ! empty( $duplicates ) ) {
+            return sprintf(
+                /* translators: %s: comma-separated extra field keys. */
+                __( 'Extra field Keys must be unique. Used more than once: %s.', 'yaycheckout' ),
+                implode( ', ', $duplicates )
+            );
+        }
+
+        return '';
+    }
+
+    /**
+     * An extra field's Key: its posted name and order meta key, trimmed.
+     *
+     * @param mixed $attrs Block attributes.
+     */
+    public static function extra_field_key( $attrs ): string {
+        return is_array( $attrs ) ? trim( self::text( $attrs, 'fieldKey' ) ) : '';
+    }
+
+    /**
+     * Every block in the markup, parents before children, in document order.
+     * Loose HTML between blocks (null blockName) is dropped.
+     *
+     * @return array[]
+     */
+    private static function blocks( string $markup ): array {
+        return self::flatten( parse_blocks( $markup ) );
+    }
+
+    /**
+     * @param  array[] $blocks
+     * @return array[]
+     */
+    private static function flatten( array $blocks ): array {
+        $flat = [];
+
+        foreach ( $blocks as $block ) {
+            if ( empty( $block['blockName'] ) ) {
+                continue;
+            }
+
+            // Malformed attribute JSON parses to null; reads must still not throw.
+            $block['attrs'] = is_array( $block['attrs'] ) ? $block['attrs'] : [];
+            $flat[]         = $block;
+            $flat           = array_merge( $flat, self::flatten( $block['innerBlocks'] ) );
+        }
+
+        return $flat;
+    }
+
+    /** A string attribute, or $fallback when missing, not a string, or empty. */
+    private static function text( array $attrs, string $name, string $fallback = '' ): string {
+        return isset( $attrs[ $name ] ) && is_string( $attrs[ $name ] ) && '' !== $attrs[ $name ] ? $attrs[ $name ] : $fallback;
+    }
+
+    /**
+     * Choice options with fully blank rows dropped; a missing label shows the value.
+     *
+     * @param  mixed $options
+     * @return array<int, array{label: string, value: string}>
+     */
+    private static function options( $options ): array {
+        $clean = [];
+
+        foreach ( is_array( $options ) ? $options : [] as $option ) {
+            if ( ! is_array( $option ) ) {
+                continue;
+            }
+
+            $value = isset( $option['value'] ) ? (string) $option['value'] : '';
+            $label = isset( $option['label'] ) ? (string) $option['label'] : $value;
+
+            if ( '' !== $value || '' !== $label ) {
+                $clean[] = [
+                    'label' => $label,
+                    'value' => $value,
+                ];
+            }
+        }
+
+        return $clean;
+    }
+}

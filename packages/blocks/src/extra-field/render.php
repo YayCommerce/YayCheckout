@@ -15,7 +15,7 @@
 defined( 'ABSPATH' ) || exit;
 
 $yaycheckout_label       = isset( $attributes['label'] ) && is_string( $attributes['label'] ) ? $attributes['label'] : '';
-$yaycheckout_key         = \YayCheckout\Services\LayoutBlockIndex::extra_field_key( $attributes );
+$yaycheckout_key         = \YayCheckout\Services\LayoutMarkupReader::extra_field_key( $attributes );
 $yaycheckout_type        = isset( $attributes['type'] ) && is_string( $attributes['type'] ) && '' !== $attributes['type'] ? $attributes['type'] : 'text';
 $yaycheckout_placeholder = isset( $attributes['placeholder'] ) && is_string( $attributes['placeholder'] ) ? $attributes['placeholder'] : '';
 $yaycheckout_required    = ! empty( $attributes['required'] );

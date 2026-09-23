@@ -1,7 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
-use YayCheckout\Services\LayoutBlockIndex;
+use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -147,18 +147,6 @@ class CheckoutFragments {
     private function slots(): array {
         $layout = CheckoutPage::get_instance()->layout();
 
-        if ( null === $layout || '' === trim( $layout->content ) ) {
-            return [];
-        }
-
-        try {
-            $index = LayoutBlockIndex::from_markup( $layout->content );
-        } catch ( \InvalidArgumentException $ex ) {
-            return [];
-        }
-
-        $slots = $index['slots'] ?? [];
-
-        return is_array( $slots ) ? $slots : [];
+        return null === $layout ? [] : LayoutMarkupReader::slots( $layout->content );
     }
 }

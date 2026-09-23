@@ -31,7 +31,7 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `Models/` | `Layout`, `LayoutQuery`, `Settings`, `Design` | dumb entities; **every storage key constant lives here**; zero WP calls. `Settings` and `Design` own `schema()` (the single description of settings/tokens), `from_option()` (read projection through the schema), and `sanitize()` (strict validation, unknown keys stripped). `LayoutQuery` is immutable value object for filtered/paginated queries. |
 | `Repositories/` | `LayoutRepository`, `SettingsRepository`, `DesignRepository`, `CompatibilityCatalogueRepository` | all storage access: layouts (publish sequence, active-set), settings (get/save/reviewed), design (tokens, presets, CSS), catalogue (transient → remote JSON → fallback) |
 | `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue`, `DesignRestController`, `CompatibilityRestController` | routing, validation, permissions; all require `manage_woocommerce` |
-| `Services/` | `LayoutBlockIndex`, `ExtraFieldPostedCollector` | pure: no storage. `LayoutBlockIndex` reduces layout markup to `{ fields, extra_fields, slots, order_modes }`; blocks contribute through the `yaycheckout_block_contributors` filter. `ExtraFieldPostedCollector` validates and normalizes posted extra-field values against the index. |
+| `Services/` | `LayoutMarkupReader`, `ExtraFieldPostedCollector` | pure: no storage. `LayoutMarkupReader` flattens a layout's blocks and answers `slots()`, `fields()`, `extra_fields()`, `order_modes()` (always `[]` for now) and `publish_error()`. `ExtraFieldPostedCollector` validates and normalizes posted extra-field values against `extra_fields()`. |
 | `Blocks/` | `BlockRegistry` | registers built block directories |
 | `Support/` | `Plan`, `CompatibilityCatalogue` | Free/Pro flag derived from provider boot; owns the layout limit and its message. Compatibility catalogue: status vocabulary, bundled list, `normalize()` for the remote JSON, transient key and TTLs — pure |
 | `Pro/` | `ProServiceProvider`, `Controllers/DesignPresetRestController` | **absent from the Free build**; preset management REST routes |
@@ -63,7 +63,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
 | `yaycheckout/v1/layouts/{id}` | DELETE | permanent delete with revisions and meta; archived, non-active layouts only (400 otherwise) |
-| `yaycheckout/v1/layouts/{id}/publish` | POST | status → `publish`; a layout dated in the future goes live now, its date moved to now; refused when `LayoutBlockIndex::publish_error()` objects (no `checkout` block, or an `extra-field` Key empty or duplicated), as is `/activate` on an unpublished layout |
+| `yaycheckout/v1/layouts/{id}/publish` | POST | status → `publish`; a layout dated in the future goes live now, its date moved to now; refused when `LayoutMarkupReader::publish_error()` objects (no `checkout` block, or an `extra-field` Key empty or duplicated), as is `/activate` on an unpublished layout |
 | `yaycheckout/v1/layouts/{id}/activate` | POST | publish first unless `post_status` is already `publish`, then add to the active set |
 | `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; status untouched |
 | `yaycheckout/v1/layouts/{id}/archive` | POST | move to the archive (trash), deactivating it first if it was active |
@@ -160,7 +160,7 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 - Adding a design token → `Models/Design::schema()`, then `design.schema.ts`, then a component in `pages/design/components/`
 - Adding an endpoint → `LayoutRestController`, then the `lib/` triplet
 - Compatibility statuses → the bundled list in `Support/CompatibilityCatalogue`, or the remote JSON at `YAYCHECKOUT_COMPATIBILITY_CATALOGUE_URL`; new checkout hooks → `CheckoutHookScanHelper::HOOKS`
-- Adding a block → `packages/blocks/src/`, then `BlockRegistry`, then contribute to `LayoutBlockIndex` via the filter
+- Adding a block → `packages/blocks/src/`, then `BlockRegistry`; a section block also goes in `LayoutMarkupReader::SECTION_SLOTS`
 - Free/Pro → `includes/Support/Plan.php` and `scripts/check-pro-boundary.sh`
 
 ## Not yet built

@@ -5,7 +5,7 @@ use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Helpers\BlockMarkup;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
-use YayCheckout\Services\LayoutBlockIndex;
+use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
@@ -152,7 +152,7 @@ class LayoutRepository {
     /**
      * Publishes a layout: a post_status change, as the editor's own button does.
      *
-     * @throws \InvalidArgumentException When the layout is missing, archived, or fails LayoutBlockIndex::publish_error().
+     * @throws \InvalidArgumentException When the layout is missing, archived, or fails LayoutMarkupReader::publish_error().
      */
     public function publish( int $id ): Layout {
         $post = get_post( $id );
@@ -168,7 +168,7 @@ class LayoutRepository {
             );
         }
 
-        $error = LayoutBlockIndex::publish_error( $post->post_content );
+        $error = LayoutMarkupReader::publish_error( $post->post_content );
 
         if ( '' !== $error ) {
             throw new \InvalidArgumentException( $error );

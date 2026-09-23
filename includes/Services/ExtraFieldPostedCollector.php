@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 class ExtraFieldPostedCollector {
 
     /**
-     * @param  array $fields extra_fields map from LayoutBlockIndex::from_markup().
+     * @param  array $fields extra_fields map from LayoutMarkupReader::extra_fields().
      * @param  array $posted Request payload (typically unslashed $_POST).
      * @return array{rows: array<int, array>, errors: array<int, array{key: string, code: string}>}
      */

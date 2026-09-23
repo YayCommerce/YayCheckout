@@ -1,19 +1,17 @@
 <?php
 namespace YayCheckout\Renderer;
 
-use YayCheckout\Models\Layout;
-use YayCheckout\Repositories\LayoutRepository;
-use YayCheckout\Services\LayoutBlockIndex;
+use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Services\ExtraFieldPostedCollector;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Persists published extra fields onto the WooCommerce order they were posted with.
+ * Persists extra fields onto the WooCommerce order they were posted with.
  *
- * Reads the active layout from storage, not the storefront renderer, so this
- * class can ship with the extra-field block before CheckoutPage exists.
+ * Reads the layout CheckoutPage serves, so a preview checkout validates and
+ * saves the previewed layout's fields.
  */
 class CheckoutExtraFields {
 
@@ -21,11 +19,7 @@ class CheckoutExtraFields {
 
     public const META_SNAPSHOT = '_yaycheckout_extra_fields';
 
-    private LayoutRepository $layouts;
-
     protected function __construct() {
-        $this->layouts = new LayoutRepository();
-
         add_action( 'woocommerce_after_checkout_validation', [ $this, 'validate' ], 10, 2 );
         add_action( 'woocommerce_checkout_create_order', [ $this, 'persist' ], 10, 2 );
         add_action( 'woocommerce_checkout_update_order_meta', [ $this, 'persist_saved' ], 10, 2 );
@@ -211,21 +205,9 @@ class CheckoutExtraFields {
      * @return array
      */
     private function fields(): array {
-        $layout = $this->layouts->resolve_for_request();
+        $layout = CheckoutPage::get_instance()->layout();
 
-        if ( ! $layout instanceof Layout || ! $layout->is_published() || '' === trim( $layout->content ) ) {
-            return [];
-        }
-
-        try {
-            $index = LayoutBlockIndex::from_markup( $layout->content );
-        } catch ( \InvalidArgumentException $ex ) {
-            return [];
-        }
-
-        $fields = $index['extra_fields'] ?? [];
-
-        return is_array( $fields ) ? $fields : [];
+        return null === $layout ? [] : LayoutMarkupReader::extra_fields( $layout->content );
     }
 
     /**
