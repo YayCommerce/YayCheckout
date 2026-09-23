@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { exportLayout, importLayout, validateImport } from '@/lib/api/tools.api';
+import { exportLayout, importLayout } from '@/lib/api/tools.api';
 import { LAYOUT_KEYS } from '@/lib/queries/layout.queries';
 import { LISTED_LAYOUT_STATUSES } from '@/lib/schema/layout.schema';
 
@@ -12,21 +12,14 @@ export function useExportLayoutMutation() {
   });
 }
 
-export function useValidateImportMutation() {
-  return useMutation({
-    mutationKey: ['tools', 'import', 'validate'],
-    mutationFn: validateImport,
-    // The Import card renders the refusal in its own result box.
-    meta: { skipGlobalError: true },
-  });
-}
-
 export function useImportLayoutMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationKey: ['tools', 'import'],
     mutationFn: importLayout,
+    // The Source step renders the refusal next to the button that caused it.
+    meta: { skipGlobalError: true },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });

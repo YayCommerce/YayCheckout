@@ -69,8 +69,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/{id}/reset` | POST | replace `post_content` with `LayoutRepository::default_markup()`; title, status, active flag and meta stay, the old markup becomes a revision; 404 when missing |
 | `yaycheckout/v1/layouts/{id}/preview-link` | POST | `{ url, expires_at }`: the checkout URL with a fresh token, lifetime from `advanced.preview_link_lifetime`; any status, nothing stored |
 | `yaycheckout/v1/layouts/{id}/export` | GET | **Pro.** `{ format, plugin_version, exported_at, layouts: [{ title, content }] }`: the portable envelope the Tools page downloads as .json; status, active flag and dates stay behind |
-| `yaycheckout/v1/layouts/import/validate` | POST | **Pro.** body `{ file: <export envelope> }` → `{ title, blocks }`; nothing written; 400 for a foreign or multi-layout file, a non-checkout root, or a block this site has not registered |
-| `yaycheckout/v1/layouts/import` | POST | **Pro.** same body → 201 with the new draft (`Layout::to_array()`); re-runs the same review first |
+| `yaycheckout/v1/layouts/import` | POST | **Pro.** body `{ file: <export envelope> }` → 201 with the new draft (`Layout::to_array()`); 400 for a foreign or multi-layout file, a non-checkout root, or a block this site has not registered |
 | `yaycheckout/v1/compatibility` | GET | `{ store, gateways, plugins, catalogue: { source, fetched_at } }`; arg `refresh` (bool) drops the cached catalogue first |
 | `yaycheckout/v1/settings` | GET/POST | envelope `{ settings, updated_at }`; POST merges over stored settings, strips unknown keys, rejects wrong types/enum values with 400 |
 | `yaycheckout/v1/mark-reviewed` | POST | review prompt dismissed |

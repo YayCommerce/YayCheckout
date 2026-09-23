@@ -1,18 +1,13 @@
 import { DragEvent, useRef, useState } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { parseExportFile } from '@/lib/api/tools.api';
+import { parseExportFile, reviewExportFile } from '@/lib/api/tools.api';
 import { getErrorMsg } from '@/lib/helpers/response.helper';
-import { useValidateImportMutation } from '@/lib/queries/tools.queries';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ImportModal, type ImportSession } from '../import-modal/ImportModal';
 
-type ImportResult =
-  | { status: 'idle' }
-  | { status: 'checking' }
-  | { status: 'ready'; message: string }
-  | { status: 'error'; message: string };
+type ImportResult = { status: 'idle' } | { status: 'ready'; message: string } | { status: 'error'; message: string };
 
 export function ImportCard() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -20,7 +15,6 @@ export function ImportCard() {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<ImportResult>({ status: 'idle' });
   const [session, setSession] = useState<ImportSession | null>(null);
-  const validate = useValidateImportMutation();
 
   const pick = async (picked: File | undefined) => {
     if (!picked) return;
@@ -31,10 +25,9 @@ export function ImportCard() {
       return;
     }
 
-    setResult({ status: 'checking' });
     try {
       const envelope = parseExportFile(await picked.text());
-      const review = await validate.mutateAsync(envelope);
+      const review = reviewExportFile(envelope);
       setResult({
         status: 'ready',
         message: sprintf(
@@ -105,14 +98,12 @@ export function ImportCard() {
         <div
           className={cn(
             'rounded-md border px-4 py-3 text-xs',
-            (result.status === 'idle' || result.status === 'checking') && 'bg-muted/30 text-muted-foreground',
+            result.status === 'idle' && 'bg-muted/30 text-muted-foreground',
             result.status === 'ready' && 'border-success/30 bg-success/6 text-success',
             result.status === 'error' && 'border-destructive/30 bg-destructive/5 text-destructive',
           )}
         >
-          {result.status === 'idle' && __('validation result appears here', 'yaycheckout')}
-          {result.status === 'checking' && __('Checking file…', 'yaycheckout')}
-          {(result.status === 'ready' || result.status === 'error') && result.message}
+          {result.status === 'idle' ? __('validation result appears here', 'yaycheckout') : result.message}
         </div>
       </CardContent>
       <ImportModal

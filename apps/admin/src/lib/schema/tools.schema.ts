@@ -33,8 +33,8 @@ export interface LayoutExportFile {
 /** The parsed export file. Sent back to PHP verbatim, so it keeps its wire spelling. */
 export type LayoutExportEnvelope = LayoutExportWire;
 
-// Wire schema: the PHP shape of POST /layouts/import/validate, exactly. Same spelling on both sides, so no projection.
-
-export const importReviewSchema = z.object({ title: z.string(), blocks: z.number() }).strict();
-
-export type ImportReview = z.infer<typeof importReviewSchema>;
+/** What the Source step shows about a picked file. Read from the envelope itself: only the import call reaches PHP. */
+export interface ImportReview {
+  title: string;
+  blocks: number;
+}

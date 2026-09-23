@@ -42,7 +42,7 @@ function ImportFlow({ session, onClose }: { session: ImportSession; onClose: () 
   const [created, setCreated] = useState<Layout | null>(null);
   const importMutation = useImportLayoutMutation();
 
-  // A failed import is toasted by the global MutationCache; the flow stays on Source so the merchant can retry or cancel.
+  // The flow stays on Source when PHP refuses the file, so the reason sits next to the button that asked for it.
   const createDraft = () =>
     importMutation.mutate(session.envelope, {
       onSuccess: (layout) => {
@@ -78,6 +78,7 @@ function ImportFlow({ session, onClose }: { session: ImportSession; onClose: () 
         <SourceStep
           review={session.review}
           isPending={importMutation.isPending}
+          error={importMutation.error}
           onCancel={onClose}
           onImport={createDraft}
         />

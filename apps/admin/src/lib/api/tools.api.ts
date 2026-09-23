@@ -4,7 +4,6 @@ import { api } from '@/lib/api/api';
 import { parseLayout } from '@/lib/api/layout.api';
 import type { Layout } from '@/lib/schema/layout.schema';
 import {
-  importReviewSchema,
   layoutExportWireSchema,
   type ImportReview,
   type LayoutExportEnvelope,
@@ -28,6 +27,17 @@ export async function exportLayout(id: number): Promise<LayoutExportFile> {
   };
 }
 
+/**
+ * What the Source step shows. PHP owns the real refusals (unknown block, missing checkout root)
+ * and runs them on import; this is only what can be read from the file itself.
+ */
+export function reviewExportFile(envelope: LayoutExportEnvelope): ImportReview {
+  const layout = envelope.layouts[0];
+
+  // Mirrors Layout::blocks() in PHP: one `<!-- wp:` comment opens each serialized block.
+  return { title: layout.title, blocks: layout.content.split('<!-- wp:').length - 1 };
+}
+
 /** Client-side gate before any request: not JSON, or JSON that is not an export envelope, never reaches PHP. */
 export function parseExportFile(text: string): LayoutExportEnvelope {
   let json: unknown;
@@ -43,10 +53,6 @@ export function parseExportFile(text: string): LayoutExportEnvelope {
   }
 
   return parsed.data;
-}
-
-export async function validateImport(file: LayoutExportEnvelope): Promise<ImportReview> {
-  return importReviewSchema.parse(await api.post('layouts/import/validate', { json: { file } }).json());
 }
 
 export async function importLayout(file: LayoutExportEnvelope): Promise<Layout> {
