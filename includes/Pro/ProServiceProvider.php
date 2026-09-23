@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Pro;
 
+use YayCheckout\Pro\Controllers\DesignPresetRestController;
 use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Pro\Controllers\LayoutImportRestController;
 use YayCheckout\Support\Plan;
@@ -21,7 +22,9 @@ class ProServiceProvider {
         add_action( 'rest_api_init', [ $this, 'rest_endpoints' ] );
     }
 
+    /** Every Pro REST controller, so the Free build simply has no such route. */
     public function rest_endpoints(): void {
+        DesignPresetRestController::get_instance();
         LayoutExportRestController::get_instance();
         LayoutImportRestController::get_instance();
     }

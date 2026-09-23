@@ -2,6 +2,7 @@
 namespace YayCheckout\Helpers;
 
 use YayCheckout\Controllers\BaseRestController;
+use YayCheckout\Repositories\DesignRepository;
 use YayCheckout\Repositories\SettingsRepository;
 
 defined( 'ABSPATH' ) || exit;
@@ -17,6 +18,7 @@ class LocalizeHelper {
     public static function get_admin_data() {
         $admin_data = [
             'settings'     => ( new SettingsRepository() )->get()->to_array(),
+            'design'       => ( new DesignRepository() )->get()->to_array(),
             'integrations' => IntegrationsHelper::get_integrations(),
         ];
 

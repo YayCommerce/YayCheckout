@@ -2,17 +2,10 @@ import { useFormContext } from 'react-hook-form';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { formatDateTime } from '@/lib/helpers/date.helper';
+import { countDirtyLeaves } from '@/lib/helpers/form.helper';
 import type { Settings } from '@/lib/schema/settings.schema';
 import { LoadingButton } from '@/components/ui/button';
 import type { SettingsSubMenu } from '../settings-sub-menus';
-
-function countDirtyLeaves(value: unknown): number {
-  if (value === true) return 1;
-  if (value && typeof value === 'object') {
-    return Object.values(value).reduce<number>((total, child) => total + countDirtyLeaves(child), 0);
-  }
-  return 0;
-}
 
 export function SettingsFooter({
   activeTab,

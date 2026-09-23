@@ -41,94 +41,59 @@ class LayoutTemplateCatalogue {
     private static function catalogue(): array {
         return [
             [
-                'slug'     => 'minimal',
-                'name'     => 'Minimal',
-                'category' => 'One column',
-            ],
-            [
-                'slug'     => 'two-column',
-                'name'     => 'Two-column',
+                'slug'     => 'classic-two-column',
+                'name'     => 'Classic two-column',
                 'category' => 'Two column',
             ],
             [
-                'slug'     => 'trust',
-                'name'     => 'Trust',
-                'category' => 'One column',
+                'slug'     => 'split-express',
+                'name'     => 'Split express',
+                'category' => 'Two column',
             ],
             [
-                'slug'     => 'three-step',
-                'name'     => 'Three-step',
+                'slug'     => 'editorial-fashion',
+                'name'     => 'Editorial fashion',
+                'category' => 'Two column',
+            ],
+            [
+                'slug'     => 'multi-step-wizard',
+                'name'     => 'Multi-step wizard',
                 'category' => 'Multi-step',
             ],
             [
-                'slug'     => 'digital-only',
-                'name'     => 'Digital only',
+                'slug'     => 'accordion-one-page',
+                'name'     => 'Accordion one-page',
+                'category' => 'One column',
+            ],
+            [
+                'slug'     => 'upsell-cross-sell',
+                'name'     => 'Upsell & cross-sell',
+                'category' => 'Two column',
+            ],
+            [
+                'slug'     => 'minimal-steps',
+                'name'     => 'Minimal steps',
+                'category' => 'Multi-step',
+            ],
+            [
+                'slug'     => 'live-receipt',
+                'name'     => 'Live receipt',
+                'category' => 'Two column',
+            ],
+            [
+                'slug'     => 'soft-steps',
+                'name'     => 'Soft steps',
+                'category' => 'Multi-step',
+            ],
+            [
+                'slug'     => 'material-stepper',
+                'name'     => 'Material stepper',
+                'category' => 'Two column',
+            ],
+            [
+                'slug'     => 'digital-product',
+                'name'     => 'Digital product',
                 'category' => 'Digital goods',
-            ],
-            [
-                'slug'     => 'b2b-vat',
-                'name'     => 'B2B / VAT',
-                'category' => 'B2B',
-            ],
-            [
-                'slug'     => 'summary-left',
-                'name'     => 'Summary-left',
-                'category' => 'Two column',
-            ],
-            [
-                'slug'     => 'express-first',
-                'name'     => 'Express first',
-                'category' => 'One column',
-            ],
-            [
-                'slug'     => 'compact-pairs',
-                'name'     => 'Compact pairs',
-                'category' => 'Two column',
-            ],
-            [
-                'slug'     => 'long-form',
-                'name'     => 'Long form',
-                'category' => 'One column',
-            ],
-            [
-                'slug'     => 'guest-fast-track',
-                'name'     => 'Guest fast-track',
-                'category' => 'One column',
-            ],
-            [
-                'slug'     => 'split-payment',
-                'name'     => 'Split payment',
-                'category' => 'Multi-step',
-            ],
-            [
-                'slug'     => 'address-first',
-                'name'     => 'Address-first',
-                'category' => 'One column',
-            ],
-            [
-                'slug'     => 'coupon-forward',
-                'name'     => 'Coupon-forward',
-                'category' => 'Two column',
-            ],
-            [
-                'slug'     => 'subscription',
-                'name'     => 'Subscription',
-                'category' => 'Multi-step',
-            ],
-            [
-                'slug'     => 'wholesale-bulk',
-                'name'     => 'Wholesale bulk',
-                'category' => 'B2B',
-            ],
-            [
-                'slug'     => 'mobile-first',
-                'name'     => 'Mobile-first',
-                'category' => 'One column',
-            ],
-            [
-                'slug'     => 'international-tax',
-                'name'     => 'International tax',
-                'category' => 'B2B',
             ],
         ];
     }
