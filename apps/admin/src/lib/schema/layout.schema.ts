@@ -14,6 +14,8 @@ const layoutSummaryWireFields = {
   title: z.string(),
   status: layoutStatusSchema,
   is_active: z.boolean(),
+  blocks: z.number(),
+  size: z.number(),
   /** ISO 8601 UTC while status is 'publish'; null otherwise. */
   published_at: z.string().nullable(),
   /** ISO 8601 UTC while status is 'future'; null otherwise. */
@@ -79,6 +81,8 @@ export type LayoutSummary = {
   title: string;
   status: LayoutStatus;
   isActive: boolean;
+  blocks: number;
+  size: number;
   /** ISO 8601 UTC while status is 'publish'; null otherwise. Format with lib/helpers/date.helper. */
   publishedAt: string | null;
   /** ISO 8601 UTC while status is 'future'; null otherwise. */

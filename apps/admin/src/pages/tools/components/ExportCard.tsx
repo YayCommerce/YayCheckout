@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { useLayoutQuery } from '@/lib/queries/layout.queries';
 import { useExportLayoutMutation } from '@/lib/queries/tools.queries';
 import type { LayoutSummary } from '@/lib/schema/layout.schema';
 import type { LayoutExportFile } from '@/lib/schema/tools.schema';
@@ -10,8 +9,19 @@ import { LoadingButton } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutSelect } from './LayoutSelect';
 
-/** Bytes the envelope adds around the markup; only for the size hint, so a rough constant is enough. */
+/** Bytes the JSON envelope adds around the markup; the hint is a hint, so one constant is enough. */
 const ENVELOPE_OVERHEAD_BYTES = 250;
+
+/** Reads as bytes below 1 KB, so a small layout does not round up to a meaningless "1 KB". */
+function fileSize(bytes: number): string {
+  if (bytes < 1024) {
+    /* translators: %d: file size in bytes */
+    return sprintf(__('%d B', 'yaycheckout'), bytes);
+  }
+
+  /* translators: %s: file size in kilobytes */
+  return sprintf(__('%s KB', 'yaycheckout'), (bytes / 1024).toFixed(1));
+}
 
 function saveFile({ filename, json }: LayoutExportFile) {
   const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
@@ -60,25 +70,10 @@ export function ExportCard() {
         >
           {__('Download .json', 'yaycheckout')}
         </LoadingButton>
-        {layout && <SizeHint id={layout.id} />}
+        {layout && (
+          <span className="text-muted-foreground text-xs">{fileSize(layout.size + ENVELOPE_OVERHEAD_BYTES)}</span>
+        )}
       </CardFooter>
     </Card>
-  );
-}
-
-function SizeHint({ id }: { id: number }) {
-  const detail = useLayoutQuery(id);
-  if (!detail.data) return null;
-
-  const kb = Math.max(1, Math.round((detail.data.content.length + ENVELOPE_OVERHEAD_BYTES) / 1024));
-
-  return (
-    <span className="text-muted-foreground text-xs">
-      {sprintf(
-        /* translators: %d: approximate file size in kilobytes */
-        __('~%d KB', 'yaycheckout'),
-        kb,
-      )}
-    </span>
   );
 }

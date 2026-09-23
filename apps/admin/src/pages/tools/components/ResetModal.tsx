@@ -3,7 +3,7 @@ import { TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { useLayoutQuery, useResetLayoutMutation } from '@/lib/queries/layout.queries';
+import { useResetLayoutMutation } from '@/lib/queries/layout.queries';
 import type { LayoutSummary } from '@/lib/schema/layout.schema';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button, LoadingButton } from '@/components/ui/button';
@@ -12,11 +12,6 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
 const CONFIRM_PHRASE = 'RESET';
-
-/** Serialized markup opens every block with `<!-- wp:name`, one per block; closers start with `/wp:`. */
-function countBlocks(content: string) {
-  return content.match(/<!-- wp:yaycheckout\//g)?.length ?? 0;
-}
 
 /** Confirms wiping a layout back to the blank starting layout; gated by a typed phrase like DeleteModal. */
 export function ResetModal({
@@ -28,12 +23,10 @@ export function ResetModal({
 }) {
   const [typed, setTyped] = useState('');
   const reset = useResetLayoutMutation();
-  const detail = useLayoutQuery(layout?.id ?? 0);
 
   useEffect(() => setTyped(''), [layout?.id]);
 
   const canReset = typed.trim().toUpperCase() === CONFIRM_PHRASE;
-  const blocks = detail.data ? countBlocks(detail.data.content) : null;
 
   return (
     <Dialog open={null !== layout} onOpenChange={onOpenChange}>
@@ -79,13 +72,11 @@ export function ResetModal({
               <div className="flex gap-2">
                 <dt className="text-muted-foreground">{__('Removes:', 'yaycheckout')}</dt>
                 <dd>
-                  {blocks === null
-                    ? '…'
-                    : sprintf(
-                        /* translators: %d: number of blocks */
-                        _n('%d block', '%d blocks', blocks, 'yaycheckout'),
-                        blocks,
-                      )}
+                  {sprintf(
+                    /* translators: %d: number of blocks */
+                    _n('%d block', '%d blocks', layout.blocks, 'yaycheckout'),
+                    layout.blocks,
+                  )}
                 </dd>
               </div>
               <div className="flex gap-2">

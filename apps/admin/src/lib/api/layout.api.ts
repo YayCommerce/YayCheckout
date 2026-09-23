@@ -21,6 +21,8 @@ function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
     title: wire.title,
     status: wire.status,
     isActive: wire.is_active,
+    blocks: wire.blocks,
+    size: wire.size,
     publishedAt: wire.published_at,
     scheduledAt: wire.scheduled_at,
   };
