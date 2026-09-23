@@ -66,7 +66,13 @@ class LayoutExportRestController extends BaseRestController {
                 'format'         => Layout::EXPORT_FORMAT,
                 'plugin_version' => YAYCHECKOUT_VERSION,
                 'exported_at'    => $exported_at,
-                'layouts'        => [ $layout->to_export_array() ],
+                // Title and markup only: status, active flag and dates are site state and stay behind.
+                'layouts'        => [
+                    [
+                        'title'   => $layout->title,
+                        'content' => $layout->content,
+                    ],
+                ],
             ]
         );
         $response->header( 'Content-Disposition', 'attachment; filename="' . self::filename( $layout, $exported_at ) . '"' );
