@@ -63,7 +63,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
 | `yaycheckout/v1/layouts/{id}` | DELETE | permanent delete with revisions and meta; archived, non-active layouts only (400 otherwise) |
-| `yaycheckout/v1/layouts/{id}/publish` | POST | status → `publish`; a layout dated in the future goes live now, its date moved to now |
+| `yaycheckout/v1/layouts/{id}/publish` | POST | status → `publish`; a layout dated in the future goes live now, its date moved to now; refused without a `checkout` block (any depth), as is `/activate` on an unpublished layout |
 | `yaycheckout/v1/layouts/{id}/activate` | POST | publish first unless `post_status` is already `publish`, then add to the active set |
 | `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; status untouched |
 | `yaycheckout/v1/layouts/{id}/archive` | POST | move to the archive (trash), deactivating it first if it was active |
@@ -137,7 +137,7 @@ Query errors surface centrally — background refetch failures toast, first-load
 
 ## Blocks (`packages/blocks/`)
 
-Thirteen blocks: `checkout` (root, `multiple: false`), `contact`, `billing`, `shipping`, `field`, `order-review`, `extra-field`, `shipping-methods`, `express-pay`, `payment`, `order-summary`, `place-order`, `slot`. All dynamic (`save()` returns `null`), rendered by `render.php`. Built by `@wordpress/scripts`, which emits `index.asset.php` so `wp-*` dependencies are extracted. The insert guard enforces: YayCheckout blocks only on the layout CPT; leaves (`contact`, `billing`, `shipping`, `order-review`, `shipping-methods`, `express-pay`, `payment`, `order-summary`, `place-order`) directly under `checkout`; `field` under address sections only; `extra-field` and `slot` anywhere under `checkout`.
+Thirteen blocks: `checkout` (root, `multiple: false`), `contact`, `billing`, `shipping`, `field`, `order-review`, `extra-field`, `shipping-methods`, `express-pay`, `payment`, `order-summary`, `place-order`, `slot`. All dynamic (`save()` returns `null`), rendered by `render.php`. Built by `@wordpress/scripts`, which emits `index.asset.php` so `wp-*` dependencies are extracted. The insert guard enforces: YayCheckout blocks only on the layout CPT; `checkout` at any depth (a layout may wrap it in core blocks) but never inside itself; leaves (`contact`, `billing`, `shipping`, `order-review`, `shipping-methods`, `express-pay`, `payment`, `order-summary`, `place-order`) directly under `checkout`; `field` under address sections only; `extra-field` and `slot` anywhere under `checkout`.
 
 ## Tooling
 

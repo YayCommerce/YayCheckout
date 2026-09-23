@@ -6,7 +6,7 @@ use YayCheckout\Models\Layout;
 /** Fixtures the layout suites share. */
 final class LayoutFactory {
 
-    /** The smallest markup DerivedCacheBuilder accepts: the root block alone, in the self-closing form core stores. */
+    /** The smallest publishable markup: the root block alone, in the self-closing form core stores. */
     public static function checkout_markup(): string {
         return '<!-- wp:yaycheckout/checkout /-->';
     }

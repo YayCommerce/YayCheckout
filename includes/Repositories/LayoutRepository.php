@@ -151,7 +151,7 @@ class LayoutRepository {
     /**
      * Publishes a layout: a post_status change, as the editor's own button does.
      *
-     * @throws \InvalidArgumentException When the layout is missing or archived.
+     * @throws \InvalidArgumentException When the layout is missing, archived, or has no Checkout block.
      */
     public function publish( int $id ): Layout {
         $post = get_post( $id );
@@ -167,9 +167,16 @@ class LayoutRepository {
             );
         }
 
+        // Same rule as the editor's save lock: the Checkout block is the form, at any depth.
+        if ( ! has_block( 'yaycheckout/checkout', $post->post_content ) ) {
+            throw new \InvalidArgumentException(
+                __( 'Add a Checkout block to this layout before publishing it.', 'yaycheckout' )
+            );
+        }
+
         wp_publish_post( $id );
 
-        return Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $id ) ), $this->is_active( $id ) );
+        return $this->find( $id );
     }
 
     /**

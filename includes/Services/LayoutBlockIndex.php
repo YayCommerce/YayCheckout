@@ -41,12 +41,9 @@ class LayoutBlockIndex {
             throw new \InvalidArgumentException( 'Layout markup contains no blocks.' );
         }
 
-        $root = $blocks[0];
-
-        if ( 'yaycheckout/checkout' !== $root['blockName'] ) {
-            throw new \InvalidArgumentException(
-                sprintf( 'Layout root must be yaycheckout/checkout, found %s.', $root['blockName'] )
-            );
+        // The Checkout block is the form, so it may sit at any depth but must exist.
+        if ( ! has_block( 'yaycheckout/checkout', $markup ) ) {
+            throw new \InvalidArgumentException( 'Layout must contain a yaycheckout/checkout block.' );
         }
 
         $index = self::EMPTY;
@@ -341,7 +338,7 @@ class LayoutBlockIndex {
 
     /**
      * Drops the entries parse_blocks() emits with a null blockName for the
-     * whitespace between blocks, so callers can treat index 0 as the root.
+     * whitespace between blocks.
      *
      * @param  array $blocks
      * @return array

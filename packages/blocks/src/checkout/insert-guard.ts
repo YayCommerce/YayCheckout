@@ -50,9 +50,10 @@ function chainHas( chain: string[], names: string[] ): boolean {
 }
 
 /**
- * YayCheckout blocks insert only on the layout CPT. Nested leaves only go
- * inside Checkout; Field is Billing/Shipping only. Woo Checkout stays out.
- * Checkout is `multiple: false` — hidden after the first copy, back if deleted.
+ * YayCheckout blocks insert only on the layout CPT. Checkout may sit at any
+ * depth but never inside itself; nested leaves only go inside Checkout; Field
+ * is Billing/Shipping only. Woo Checkout stays out. Checkout is
+ * `multiple: false` — hidden after the first copy, back if deleted.
  */
 addFilter(
 	'blocks.canInsertBlockType',
@@ -95,7 +96,7 @@ addFilter(
 		const parentName = chain[ chain.length - 1 ];
 
 		if ( name === CHECKOUT_BLOCK ) {
-			return false;
+			return ! chain.includes( CHECKOUT_BLOCK );
 		}
 
 		if ( name === FIELD_BLOCK ) {
