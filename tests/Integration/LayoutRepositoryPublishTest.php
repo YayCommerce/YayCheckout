@@ -2,6 +2,7 @@
 namespace YayCheckout\Tests\Integration;
 
 use WP_UnitTestCase;
+use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Tests\Support\LayoutFactory;
 
@@ -40,6 +41,95 @@ class LayoutRepositoryPublishTest extends WP_UnitTestCase {
         $this->expectExceptionMessage( $message );
 
         ( new LayoutRepository() )->publish( $id );
+    }
+
+    /** A layout published some other way still cannot go live without passing the same rules. */
+    public function test_activate_refuses_an_already_published_layout_without_checkout(): void {
+        $id = LayoutFactory::create_draft(
+            [
+                'post_status'  => 'publish',
+                'post_content' => '<!-- wp:paragraph --><p>Hi</p><!-- /wp:paragraph -->',
+            ]
+        );
+
+        try {
+            ( new LayoutRepository() )->activate( $id );
+            $this->fail( 'activate should throw.' );
+        } catch ( \InvalidArgumentException $ex ) {
+            $this->assertNotContains( $id, (array) get_option( Layout::OPTION_ACTIVE, [] ) );
+        }
+    }
+
+    /** @dataProvider core_rest_saves */
+    public function test_core_rest_refuses_publishing_an_unpublishable_layout( string $status, string $stored, array $body, int $expected ): void {
+        LayoutFactory::as_shop_manager();
+        $id      = LayoutFactory::create_draft(
+            [
+                'post_status'  => $status,
+                'post_content' => $stored,
+            ]
+        );
+        $request = new \WP_REST_Request( 'POST', '/wp/v2/' . Layout::POST_TYPE . '/' . $id );
+        $request->set_body_params( $body );
+
+        $response = rest_do_request( $request );
+
+        $this->assertSame( $expected, $response->get_status() );
+
+        if ( 400 === $expected ) {
+            $this->assertSame( 'yaycheckout_layout_unpublishable', $response->get_data()['code'] );
+            $this->assertSame( $stored, get_post( $id )->post_content );
+        }
+    }
+
+    public function core_rest_saves(): array {
+        $no_checkout = '<!-- wp:paragraph --><p>Hi</p><!-- /wp:paragraph -->';
+        $bad_key     = LayoutFactory::checkout_markup() . '<!-- wp:yaycheckout/extra-field {"fieldKey":"_billing_email"} /-->';
+        $valid       = LayoutFactory::checkout_markup();
+
+        return [
+            'publish without checkout'        => [
+                'draft',
+                $valid,
+                [
+                    'status'  => 'publish',
+                    'content' => $no_checkout,
+                ],
+                400,
+            ],
+            'schedule without checkout'       => [
+                'draft',
+                $valid,
+                [
+                    'status'  => 'future',
+                    'date'    => '2099-01-01T00:00:00',
+                    'content' => $no_checkout,
+                ],
+                400,
+            ],
+            'publish with a bad key'          => [
+                'draft',
+                $valid,
+                [
+                    'status'  => 'publish',
+                    'content' => $bad_key,
+                ],
+                400,
+            ],
+            'publish a stored bad draft'      => [ 'draft', $no_checkout, [ 'status' => 'publish' ], 400 ],
+            'edit live layout to no checkout' => [ 'publish', $valid, [ 'content' => $no_checkout ], 400 ],
+            'draft without checkout saves'    => [ 'draft', $valid, [ 'content' => $no_checkout ], 200 ],
+            'publish a valid layout'          => [ 'draft', $valid, [ 'status' => 'publish' ], 200 ],
+            'fix a stored bad draft'          => [
+                'draft',
+                $no_checkout,
+                [
+                    'status'  => 'publish',
+                    'content' => $valid,
+                ],
+                200,
+            ],
+        ];
     }
 
     public function bad_extra_field_keys(): array {

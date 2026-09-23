@@ -63,7 +63,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
 | `yaycheckout/v1/layouts/{id}` | DELETE | permanent delete with revisions and meta; archived, non-active layouts only (400 otherwise) |
-| `yaycheckout/v1/layouts/{id}/publish` | POST | status → `publish`; a layout dated in the future goes live now, its date moved to now; refused when `LayoutMarkupReader::publish_error()` objects (no `checkout` block, or an `extra-field` Key empty or duplicated), as is `/activate` on an unpublished layout |
+| `yaycheckout/v1/layouts/{id}/publish` | POST | status → `publish`; a layout dated in the future goes live now, its date moved to now; refused when `LayoutMarkupReader::publish_error()` objects (no `checkout` block, or an `extra-field` Key empty or duplicated), as is `/activate` on any layout, published or not; core's `wp/v2` save is refused the same way (400 `yaycheckout_layout_unpublishable`) when it would leave the layout published or scheduled |
 | `yaycheckout/v1/layouts/{id}/activate` | POST | publish first unless `post_status` is already `publish`, then add to the active set |
 | `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; status untouched |
 | `yaycheckout/v1/layouts/{id}/archive` | POST | move to the archive (trash), deactivating it first if it was active |
