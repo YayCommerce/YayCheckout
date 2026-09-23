@@ -14,6 +14,7 @@ packages/blocks/         checkout blocks (@wordpress/scripts) → assets/dist/bl
 templates/               checkout page template (the root Checkout block is the form)
 assets/dist/             build output, gitignored
 scripts/run.sh           dev / build / release
+tests/                   PHPUnit integration tests (wp-phpunit, WooCommerce booted)
 docs/                    project documentation
 ```
 
@@ -45,6 +46,7 @@ That switches asset registration from `RegisterProd` (built files) to `RegisterD
 
 composer lint              # phpcs
 composer lint:fix          # phpcbf
+composer test              # PHPUnit integration suite (wp-phpunit + WooCommerce; DB setup in phpunit.xml.dist)
 pnpm makepot               # regenerate languages/yaycheckout.pot
 ```
 

@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/r
 
 import { getSettings, integrationFromWire, postSettings, settingsResponseFromWire } from '@/lib/api/settings.api';
 import { logger } from '@/lib/logger';
+import { COMPATIBILITY_QUERIES } from '@/lib/queries/compatibility.queries';
 import {
   integrationWireSchema,
   settingsResponseWireSchema,
@@ -34,6 +35,8 @@ export function useSaveSettingsMutation() {
     meta: { skipGlobalError: true },
     onSuccess: (response) => {
       queryClient.setQueryData(SETTINGS_QUERIES.main.queryKey, response);
+      // The Compatibility report's Rendering row reads safe mode.
+      void queryClient.invalidateQueries({ queryKey: COMPATIBILITY_QUERIES.report.queryKey });
     },
   });
 }

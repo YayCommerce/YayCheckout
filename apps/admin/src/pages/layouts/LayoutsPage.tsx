@@ -10,6 +10,7 @@ import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
   useArchiveLayoutMutation,
+  useCreatePreviewLinkMutation,
   useDeactivateLayoutMutation,
   useDeleteLayoutMutation,
   useDuplicateLayoutMutation,
@@ -22,6 +23,7 @@ import {
   type LayoutCounts,
   type LayoutListResponse,
   type LayoutSummary,
+  type PreviewLink,
 } from '@/lib/schema/layout.schema';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +46,7 @@ import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { DeleteModal } from '@/pages/layouts/DeleteModal';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
+import { PreviewLinkModal } from '@/pages/layouts/PreviewLinkModal';
 import { SetActiveModal } from '@/pages/layouts/SetActiveModal';
 import PageLayout from '@/pages/PageLayout';
 
@@ -166,6 +169,7 @@ function LayoutsPageBody({
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
   const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
   const [deletingLayout, setDeletingLayout] = useState<LayoutSummary | null>(null);
+  const [previewing, setPreviewing] = useState<{ layout: LayoutSummary; link: PreviewLink } | null>(null);
 
   const activateMutation = useActivateLayoutMutation();
   const deactivateMutation = useDeactivateLayoutMutation();
@@ -173,6 +177,7 @@ function LayoutsPageBody({
   const restoreMutation = useRestoreLayoutMutation();
   const deleteMutation = useDeleteLayoutMutation();
   const duplicateMutation = useDuplicateLayoutMutation();
+  const previewLinkMutation = useCreatePreviewLinkMutation();
 
   // Invalidate rather than patch: on Free, activating one row deactivates another.
   function onActivate(layout: LayoutSummary) {
@@ -238,6 +243,12 @@ function LayoutsPageBody({
     });
   }
 
+  function onPreview(layout: LayoutSummary) {
+    previewLinkMutation.mutate(layout.id, {
+      onSuccess: (link) => setPreviewing({ layout, link }),
+    });
+  }
+
   const editorUrl = useMemo(() => {
     if (!editingLayoutId) {
       return '';
@@ -290,6 +301,11 @@ function LayoutsPageBody({
         onOpenChange={(open) => !open && setDeletingLayout(null)}
         onConfirm={onDelete}
         isPending={deleteMutation.isPending}
+      />
+      <PreviewLinkModal
+        layout={previewing?.layout ?? null}
+        link={previewing?.link ?? null}
+        onOpenChange={(open) => !open && setPreviewing(null)}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
@@ -393,6 +409,8 @@ function LayoutsPageBody({
                       onRestore={onRestore}
                       onDelete={setDeletingLayout}
                       onDuplicate={onDuplicate}
+                      onPreview={onPreview}
+                      previewPending={previewLinkMutation.isPending}
                     />
                   </div>
                   {showListControls && (
@@ -476,6 +494,8 @@ function LayoutsTable({
   onRestore,
   onDelete,
   onDuplicate,
+  onPreview,
+  previewPending,
 }: {
   items: LayoutSummary[];
   view: View;
@@ -486,6 +506,9 @@ function LayoutsTable({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onPreview: (layout: LayoutSummary) => void;
+  /** One link mints at a time; every Preview button waits. */
+  previewPending: boolean;
 }) {
   return (
     <Table>
@@ -512,6 +535,8 @@ function LayoutsTable({
             onRestore={onRestore}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
+            onPreview={onPreview}
+            previewPending={previewPending}
           />
         ))}
       </TableBody>
@@ -559,6 +584,8 @@ function LayoutTableRow({
   onRestore,
   onDelete,
   onDuplicate,
+  onPreview,
+  previewPending,
 }: {
   layout: LayoutSummary;
   view: View;
@@ -569,6 +596,9 @@ function LayoutTableRow({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onPreview: (layout: LayoutSummary) => void;
+  /** One link mints at a time; every Preview button waits. */
+  previewPending: boolean;
 }) {
   return (
     <TableRow>
@@ -593,13 +623,15 @@ function LayoutTableRow({
           onRestore={onRestore}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
+          onPreview={onPreview}
+          previewPending={previewPending}
         />
       </TableCell>
     </TableRow>
   );
 }
 
-/** Per-row actions: Edit, Set active, Delete for good and the "⋯" menu (Duplicate, Deactivate, Archive). Archive is disabled on the active row (LayoutActiveGuard refuses it server-side). Preview has no onClick yet; publishing is the editor's job. */
+/** Per-row actions: Edit, Preview, Set active, Delete for good and the "⋯" menu (Duplicate, Deactivate, Archive). Archive is disabled on the active row: deactivating must be an explicit choice. Publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,
@@ -610,6 +642,8 @@ function LayoutRowActions({
   onRestore,
   onDelete,
   onDuplicate,
+  onPreview,
+  previewPending,
 }: {
   layout: LayoutSummary;
   view: View;
@@ -620,11 +654,14 @@ function LayoutRowActions({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onPreview: (layout: LayoutSummary) => void;
+  /** One link mints at a time; every Preview button waits. */
+  previewPending: boolean;
 }) {
   if (view === 'archived') {
     return (
       <div className="flex items-center gap-2">
-        <Button size="sm" variant="outline">
+        <Button size="sm" variant="outline" disabled={previewPending} onClick={() => onPreview(layout)}>
           {__('Preview', 'yaycheckout')}
         </Button>
         <Button size="sm" variant="outline" onClick={() => onRestore(layout)}>
@@ -642,7 +679,7 @@ function LayoutRowActions({
       <Button size="sm" variant="outline" onClick={() => onEditLayout(layout.id)}>
         {__('Edit', 'yaycheckout')}
       </Button>
-      <Button size="sm" variant="outline">
+      <Button size="sm" variant="outline" disabled={previewPending} onClick={() => onPreview(layout)}>
         {__('Preview', 'yaycheckout')}
       </Button>
       {/* Disabled rather than hidden so the action column keeps its shape. */}

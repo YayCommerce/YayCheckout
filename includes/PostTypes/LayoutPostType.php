@@ -63,8 +63,8 @@ class LayoutPostType {
 
                 /*
                  * Seed a Checkout root on new layouts. Inserting another one
-                 * after delete is allowed (no template_lock); JS/PHP still
-                 * permit only one Checkout at the document root.
+                 * after delete is allowed (no template_lock); `multiple: false`
+                 * still permits only one Checkout, at any depth.
                  */
                 'template'              => [
                     [ 'yaycheckout/checkout' ],

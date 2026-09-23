@@ -2,6 +2,7 @@ import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wo
 import { PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
+import type { CSSProperties } from 'react';
 import { billingAddressFields, shippingAddressFields, type AddressFieldDef } from '../shared/address-fields';
 import { FieldPreview } from '../shared/field-preview';
 
@@ -98,6 +99,10 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	];
 	const blockProps = useBlockProps( { className: 'yaycheckout-field' } );
 	const canvasLabel = label || fieldKey || __( 'Field', 'yaycheckout' );
+	const labelStyle = {
+		fontSize: 'inherit',
+		fontWeight: 'inherit',
+	} as CSSProperties;
 
 	return (
 		<>
@@ -141,6 +146,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					type={ type }
 					required={ required }
 					placeholder={ placeholder }
+					labelStyle={ labelStyle }
 				/>
 			</div>
 		</>

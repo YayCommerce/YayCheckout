@@ -3,6 +3,8 @@
 vendor-prefixed/
 node_modules/
 composer.lock
+/phpunit.xml
+.phpunit.result.cache
 pnpm-lock.yaml
 **/pnpm-lock.yaml
 yarn.lock

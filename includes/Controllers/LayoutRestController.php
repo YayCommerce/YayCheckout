@@ -2,9 +2,12 @@
 namespace YayCheckout\Controllers;
 
 use YayCheckout\Enums\LayoutStatus;
+use YayCheckout\Helpers\DateHelper;
+use YayCheckout\Helpers\PreviewToken;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Repositories\LayoutRepository;
+use YayCheckout\Repositories\SettingsRepository;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -192,6 +195,20 @@ class LayoutRestController extends BaseRestController {
 
         register_rest_route(
             self::REST_NAMESPACE,
+            '/layouts/(?P<id>\d+)/preview-link',
+            [
+                [
+                    // POST because a link is minted with a fresh expiry; nothing is stored.
+                    'methods'             => \WP_REST_Server::CREATABLE,
+                    'callback'            => fn( $request ) => $this->exec_read( [ $this, 'create_preview_link' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $this->id_args(),
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
             '/layouts/(?P<id>\d+)/duplicate',
             [
                 [
@@ -268,7 +285,7 @@ class LayoutRestController extends BaseRestController {
     /**
      * Creates a layout draft from the New layout modal.
      * 'library' only checks the template exists; both sources create the same
-     * seeded default draft until a real catalogue exists. Titles may repeat, as Pages do.
+     * seeded default draft until real template markup exists. Titles may repeat, as Pages do.
      *
      * @return array|\WP_Error
      */
@@ -402,6 +419,28 @@ class LayoutRestController extends BaseRestController {
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
+    }
+
+    /**
+     * Mints an expiring preview URL for any layout, archived included. The lifetime
+     * is read now, so changing the setting later leaves issued links as they were.
+     *
+     * @return array|\WP_Error
+     */
+    public function create_preview_link( \WP_REST_Request $request ) {
+        $id = (int) $request->get_param( 'id' );
+
+        if ( null === $this->layouts->find( $id ) ) {
+            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+        }
+
+        $lifetime = (int) ( new SettingsRepository() )->get()->advanced['preview_link_lifetime'];
+        $minted   = PreviewToken::mint( $id, $lifetime );
+
+        return [
+            'url'        => PreviewToken::checkout_url( $minted['token'] ),
+            'expires_at' => DateHelper::to_iso8601( gmdate( 'Y-m-d H:i:s', $minted['expires_at'] ) ),
+        ];
     }
 
     /**

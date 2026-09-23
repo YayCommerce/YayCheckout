@@ -11,11 +11,11 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Makes the active layout the checkout page: our template in place of the
  * theme's, the theme's header and footer around the layout's blocks (the
- * root block is the form). Every request for the checkout page is taken over, endpoints
- * included; WooCommerce's own validation is untouched.
+ * root block is the form). WooCommerce's own validation is untouched.
  *
  * Stands down entirely, leaving WooCommerce untouched, when safe mode is on
- * or no layout resolves. Full rules in docs/system-architecture.md, § Storefront.
+ * or no layout resolves; a preview link (PreviewRequest) renders its layout
+ * regardless. Full rules in docs/system-architecture.md, § Storefront.
  */
 class CheckoutPage {
     use SingletonTrait;
@@ -61,6 +61,13 @@ class CheckoutPage {
     }
 
     private function resolve(): ?Layout {
+        $preview_id = PreviewRequest::get_instance()->layout_id();
+
+        // Before the safe-mode check: safe mode protects shoppers, a preview is the merchant looking.
+        if ( null !== $preview_id ) {
+            return ( new LayoutRepository() )->resolve_for_request( $preview_id );
+        }
+
         if ( ! empty( ( new SettingsRepository() )->get()->general['safe_mode'] ) ) {
             return null;
         }
@@ -68,8 +75,18 @@ class CheckoutPage {
         return ( new LayoutRepository() )->resolve_for_request();
     }
 
-    /** Not is_checkout(): WooCommerce memoises it per process. */
+    /**
+     * True when this request is the checkout form, not a checkout-page endpoint.
+     *
+     * Not is_checkout(): WooCommerce memoises it per process. Order-received
+     * and order-pay share the checkout page; taking them over reprints the
+     * form instead of Woo's thank-you / pay templates.
+     */
     private function on_checkout_page(): bool {
-        return is_page( wc_get_page_id( 'checkout' ) );
+        if ( ! is_page( wc_get_page_id( 'checkout' ) ) ) {
+            return false;
+        }
+
+        return ! is_order_received_page() && ! is_checkout_pay_page();
     }
 }

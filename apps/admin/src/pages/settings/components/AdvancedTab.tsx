@@ -43,7 +43,10 @@ export function AdvancedTab() {
         render={({ field }) => (
           <SettingRow
             title={__('Preview link lifetime', 'yaycheckout')}
-            description={__('How long a shared preview URL keeps working.', 'yaycheckout')}
+            description={__(
+              'How long a shared preview URL keeps working. Applies to links created from now on.',
+              'yaycheckout',
+            )}
           >
             <Select value={String(field.value)} onValueChange={(value) => field.onChange(Number(value))}>
               <SelectTrigger size="sm" className="w-36">
