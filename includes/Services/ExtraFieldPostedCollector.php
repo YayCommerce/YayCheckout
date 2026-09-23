@@ -232,10 +232,6 @@ class ExtraFieldPostedCollector {
     }
 
     private static function sanitize_text( string $value ): string {
-        if ( function_exists( 'wp_unslash' ) ) {
-            $value = wp_unslash( $value );
-        }
-
         if ( function_exists( 'sanitize_text_field' ) ) {
             return sanitize_text_field( $value );
         }
