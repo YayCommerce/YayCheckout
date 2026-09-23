@@ -52,6 +52,10 @@ export function parseExportFile(text: string): LayoutExportEnvelope {
     throw new Error(__('This file is not a YayCheckout layout export.', 'yaycheckout'));
   }
 
+  if (parsed.data.layouts.length !== 1) {
+    throw new Error(__('The file must contain exactly one layout.', 'yaycheckout'));
+  }
+
   return parsed.data;
 }
 
