@@ -1,4 +1,11 @@
-import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  queryOptions,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import {
   activateLayout,
@@ -48,6 +55,16 @@ export const LAYOUT_QUERIES = {
 
 export function useLayoutsQuery(params: LayoutListParams = {}) {
   return useQuery(LAYOUT_QUERIES.list(params));
+}
+
+/** The picker's list: pages pile up as it is scrolled, so every layout is reachable without page controls. */
+export function useInfiniteLayoutsQuery(params: LayoutListParams = {}) {
+  return useInfiniteQuery({
+    queryKey: [...LAYOUT_KEYS.list(params), 'infinite'],
+    queryFn: ({ pageParam }) => getLayouts({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
+  });
 }
 
 export function useLayoutCountsQuery() {
