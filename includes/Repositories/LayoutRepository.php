@@ -5,6 +5,7 @@ use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Helpers\BlockMarkup;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
+use YayCheckout\Services\LayoutBlockIndex;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
@@ -151,7 +152,7 @@ class LayoutRepository {
     /**
      * Publishes a layout: a post_status change, as the editor's own button does.
      *
-     * @throws \InvalidArgumentException When the layout is missing, archived, or has no Checkout block.
+     * @throws \InvalidArgumentException When the layout is missing, archived, or fails LayoutBlockIndex::publish_error().
      */
     public function publish( int $id ): Layout {
         $post = get_post( $id );
@@ -167,11 +168,10 @@ class LayoutRepository {
             );
         }
 
-        // Same rule as the editor's save lock: the Checkout block is the form, at any depth.
-        if ( ! has_block( 'yaycheckout/checkout', $post->post_content ) ) {
-            throw new \InvalidArgumentException(
-                __( 'Add a Checkout block to this layout before publishing it.', 'yaycheckout' )
-            );
+        $error = LayoutBlockIndex::publish_error( $post->post_content );
+
+        if ( '' !== $error ) {
+            throw new \InvalidArgumentException( $error );
         }
 
         wp_publish_post( $id );

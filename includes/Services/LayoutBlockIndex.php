@@ -1,8 +1,6 @@
 <?php
 namespace YayCheckout\Services;
 
-use YayCheckout\Helpers\ExtraFieldKeyHelper;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -47,10 +45,69 @@ class LayoutBlockIndex {
         }
 
         $index = self::EMPTY;
-        ExtraFieldKeyHelper::reset();
         self::walk( $blocks, self::contributors(), $index );
 
         return $index;
+    }
+
+    /**
+     * Why a layout cannot be published, or '' when it can. The Checkout block is
+     * the form (any depth); an extra field's Key is its posted name and the
+     * order meta key, so it must be set and unique. The editor's save lock
+     * applies the same rules.
+     */
+    public static function publish_error( string $markup ): string {
+        if ( ! has_block( 'yaycheckout/checkout', $markup ) ) {
+            return __( 'Add a Checkout block to this layout before publishing it.', 'yaycheckout' );
+        }
+
+        $keys = self::extra_field_keys( self::real_blocks( parse_blocks( $markup ) ) );
+
+        if ( in_array( '', $keys, true ) ) {
+            return __( 'Every extra field needs a Key before this layout can be published.', 'yaycheckout' );
+        }
+
+        $duplicates = array_unique( array_diff_assoc( $keys, array_unique( $keys ) ) );
+
+        if ( ! empty( $duplicates ) ) {
+            return sprintf(
+                /* translators: %s: comma-separated extra field keys. */
+                __( 'Extra field Keys must be unique. Used more than once: %s.', 'yaycheckout' ),
+                implode( ', ', $duplicates )
+            );
+        }
+
+        return '';
+    }
+
+    /**
+     * Trimmed Key of every extra-field block, in document order, empty ones included.
+     *
+     * @param  array $blocks
+     * @return string[]
+     */
+    private static function extra_field_keys( array $blocks ): array {
+        $keys = [];
+
+        foreach ( $blocks as $block ) {
+            if ( 'yaycheckout/extra-field' === $block['blockName'] ) {
+                $keys[] = self::extra_field_key( $block['attrs'] ?? [] );
+            }
+
+            if ( ! empty( $block['innerBlocks'] ) ) {
+                $keys = array_merge( $keys, self::extra_field_keys( self::real_blocks( $block['innerBlocks'] ) ) );
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * @param  mixed $attrs Block attributes.
+     * @return string
+     */
+    public static function extra_field_key( $attrs ): string {
+        return is_array( $attrs ) && isset( $attrs['fieldKey'] ) && is_string( $attrs['fieldKey'] ) ? trim( $attrs['fieldKey'] ) : '';
     }
 
     /**
@@ -183,15 +240,19 @@ class LayoutBlockIndex {
     }
 
     /**
-     * Custom merchant fields. Empty fieldKey uses the same fallback name
-     * render.php posts (yaycheckout_extra_N), so persist can find the value.
+     * Custom merchant fields. A block without a Key renders nothing and posts
+     * nothing, so it is skipped here too.
      *
      * @param  array $block
      * @return array
      */
     public static function contribute_extra_field( array $block ): array {
         $attrs = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : [];
-        $key   = ExtraFieldKeyHelper::from_attributes( $attrs );
+        $key   = self::extra_field_key( $attrs );
+
+        if ( '' === $key ) {
+            return [];
+        }
 
         $type    = isset( $attrs['type'] ) && is_string( $attrs['type'] ) && '' !== $attrs['type'] ? $attrs['type'] : 'text';
         $options = [];

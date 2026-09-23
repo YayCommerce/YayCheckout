@@ -23,4 +23,12 @@ class LayoutBlockIndexTest extends WP_UnitTestCase {
 
         LayoutBlockIndex::from_markup( '<!-- wp:group --><div class="wp-block-group"><!-- wp:yaycheckout/slot {"name":"promo"} /--></div><!-- /wp:group -->' );
     }
+
+    public function test_extra_field_without_key_is_not_indexed(): void {
+        $index = LayoutBlockIndex::from_markup(
+            '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/extra-field /--><!-- wp:yaycheckout/extra-field {"fieldKey":"vat"} /--><!-- /wp:yaycheckout/checkout -->'
+        );
+
+        $this->assertSame( [ 'vat' ], array_keys( $index['extra_fields'] ) );
+    }
 }

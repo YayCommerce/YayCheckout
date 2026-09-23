@@ -35,7 +35,7 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `Blocks/` | `BlockRegistry` | registers built block directories |
 | `Support/` | `Plan`, `CompatibilityCatalogue` | Free/Pro flag derived from provider boot; owns the layout limit and its message. Compatibility catalogue: status vocabulary, bundled list, `normalize()` for the remote JSON, transient key and TTLs — pure |
 | `Pro/` | `ProServiceProvider`, `Controllers/DesignPresetRestController` | **absent from the Free build**; preset management REST routes |
-| `Helpers/` | `BlockMarkup`, `IntegrationsHelper`, `LocalizeHelper`, `Logger`, `PreviewToken`, `StoreEnvironmentHelper`, `GatewayCompatibilityHelper`, `CheckoutHookScanHelper`, `PluginHeaderHelper`, `ExtraFieldKeyHelper` | stateless: preview tokens, server-side block markup (seeds, templates), integration detection, SPA bootstrap payload, logging, compatibility detection, hook scans, extra-field key fallback naming |
+| `Helpers/` | `BlockMarkup`, `IntegrationsHelper`, `LocalizeHelper`, `Logger`, `PreviewToken`, `StoreEnvironmentHelper`, `GatewayCompatibilityHelper`, `CheckoutHookScanHelper`, `PluginHeaderHelper` | stateless: preview tokens, server-side block markup (seeds, templates), integration detection, SPA bootstrap payload, logging, compatibility detection, hook scans |
 | `Renderer/` | `CheckoutScripts`, `CheckoutPage`, `PreviewRequest`, `CheckoutFragments`, `CheckoutExtraFields` | Storefront takeover and AJAX; `CheckoutFragments` swaps payment/shipping fragments on `update_order_review` when the layout renders those blocks. `CheckoutExtraFields` validates and persists custom extra fields to order meta via hooks on checkout create/update. |
 | `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin/` (Settings, LayoutEditorEmbed), `Register/` (RegisterFacade, RegisterDev, RegisterProd, ScriptName) | wiring, asset registration, the layout cap, trashed layouts kept out of WP's purge, active-set integrity, embedded-editor chrome and REST tagging, dev/prod asset registration |
 | `Utils/` | `SingletonTrait` | |
@@ -63,7 +63,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
 | `yaycheckout/v1/layouts/{id}` | DELETE | permanent delete with revisions and meta; archived, non-active layouts only (400 otherwise) |
-| `yaycheckout/v1/layouts/{id}/publish` | POST | status → `publish`; a layout dated in the future goes live now, its date moved to now; refused without a `checkout` block (any depth), as is `/activate` on an unpublished layout |
+| `yaycheckout/v1/layouts/{id}/publish` | POST | status → `publish`; a layout dated in the future goes live now, its date moved to now; refused when `LayoutBlockIndex::publish_error()` objects (no `checkout` block, or an `extra-field` Key empty or duplicated), as is `/activate` on an unpublished layout |
 | `yaycheckout/v1/layouts/{id}/activate` | POST | publish first unless `post_status` is already `publish`, then add to the active set |
 | `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; status untouched |
 | `yaycheckout/v1/layouts/{id}/archive` | POST | move to the archive (trash), deactivating it first if it was active |

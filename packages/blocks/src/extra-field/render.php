@@ -15,7 +15,7 @@
 defined( 'ABSPATH' ) || exit;
 
 $yaycheckout_label       = isset( $attributes['label'] ) && is_string( $attributes['label'] ) ? $attributes['label'] : '';
-$yaycheckout_key         = \YayCheckout\Helpers\ExtraFieldKeyHelper::from_attributes( is_array( $attributes ) ? $attributes : [] );
+$yaycheckout_key         = \YayCheckout\Services\LayoutBlockIndex::extra_field_key( $attributes );
 $yaycheckout_type        = isset( $attributes['type'] ) && is_string( $attributes['type'] ) && '' !== $attributes['type'] ? $attributes['type'] : 'text';
 $yaycheckout_placeholder = isset( $attributes['placeholder'] ) && is_string( $attributes['placeholder'] ) ? $attributes['placeholder'] : '';
 $yaycheckout_required    = ! empty( $attributes['required'] );
@@ -39,6 +39,11 @@ foreach ( $yaycheckout_raw_options as $yaycheckout_option ) {
     }
 
     $yaycheckout_options[ $yaycheckout_option_value ] = $yaycheckout_option_label;
+}
+
+// Without a Key there is no posted name to persist; the editor blocks saving until one is set.
+if ( '' === $yaycheckout_key ) {
+    return;
 }
 
 if ( '' === $yaycheckout_label ) {
