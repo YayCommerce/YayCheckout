@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react';
-import { __, sprintf } from '@wordpress/i18n';
+import { toast } from 'sonner';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { logger } from '@/lib/logger';
+import { useLayoutQuery, useResetLayoutMutation } from '@/lib/queries/layout.queries';
 import type { LayoutSummary } from '@/lib/schema/layout.schema';
-import { Button } from '@/components/ui/button';
+import { Button, LoadingButton } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
 const CONFIRM_PHRASE = 'RESET';
+
+/** Serialized markup opens every block with `<!-- wp:name`, one per block; closers start with `/wp:`. */
+function countBlocks(content: string) {
+  return content.match(/<!-- wp:yaycheckout\//g)?.length ?? 0;
+}
 
 /** Confirms wiping a layout back to the blank starting layout; gated by a typed phrase like DeleteModal. */
 export function ResetModal({
@@ -19,10 +25,13 @@ export function ResetModal({
   onOpenChange: (open: boolean) => void;
 }) {
   const [typed, setTyped] = useState('');
+  const reset = useResetLayoutMutation();
+  const detail = useLayoutQuery(layout?.id ?? 0);
 
   useEffect(() => setTyped(''), [layout?.id]);
 
   const canReset = typed.trim().toUpperCase() === CONFIRM_PHRASE;
+  const blocks = detail.data ? countBlocks(detail.data.content) : null;
 
   return (
     <Dialog open={null !== layout} onOpenChange={onOpenChange}>
@@ -33,8 +42,18 @@ export function ResetModal({
             onSubmit={(event) => {
               event.preventDefault();
               if (!canReset) return;
-              logger.info('reset layout', layout.id);
-              onOpenChange(false);
+              reset.mutate(layout.id, {
+                onSuccess: (updated) => {
+                  toast.success(
+                    sprintf(
+                      /* translators: %s: layout title */
+                      __('Layout "%s" reset.', 'yaycheckout'),
+                      updated.title,
+                    ),
+                  );
+                  onOpenChange(false);
+                },
+              });
             }}
           >
             <DialogHeader>
@@ -57,11 +76,19 @@ export function ResetModal({
             <dl className="bg-muted/30 space-y-1 rounded-md border px-4 py-3 text-sm">
               <div className="flex gap-2">
                 <dt className="text-muted-foreground">{__('Removes:', 'yaycheckout')}</dt>
-                <dd>22 blocks · 3 extra fields · 1 slot</dd>
+                <dd>
+                  {blocks === null
+                    ? '…'
+                    : sprintf(
+                        /* translators: %d: number of blocks */
+                        _n('%d block', '%d blocks', blocks, 'yaycheckout'),
+                        blocks,
+                      )}
+                </dd>
               </div>
               <div className="flex gap-2">
                 <dt className="text-muted-foreground">{__('Keeps:', 'yaycheckout')}</dt>
-                <dd>14 revisions · global design tokens · layout name</dd>
+                <dd>{__('Layout name · status · revisions', 'yaycheckout')}</dd>
               </div>
             </dl>
 
@@ -79,12 +106,12 @@ export function ResetModal({
             </Field>
 
             <DialogFooter className="border-t pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" disabled={reset.isPending} onClick={() => onOpenChange(false)}>
                 {__('Cancel', 'yaycheckout')}
               </Button>
-              <Button type="submit" variant="destructive" disabled={!canReset}>
+              <LoadingButton type="submit" variant="destructive" disabled={!canReset} loading={reset.isPending}>
                 {__('Reset layout', 'yaycheckout')}
-              </Button>
+              </LoadingButton>
             </DialogFooter>
           </form>
         )}

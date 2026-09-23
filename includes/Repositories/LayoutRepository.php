@@ -335,6 +335,35 @@ class LayoutRepository {
     }
 
     /**
+     * Puts a layout's blocks back to the blank starting layout. Title, status, meta and the
+     * active flag stay; WordPress stores the old markup as a revision, so the editor can undo it.
+     *
+     * @throws \InvalidArgumentException When the layout is missing or the update fails.
+     */
+    public function reset( int $id ): Layout {
+        if ( null === $this->find( $id ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        // wp_update_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
+        $result = wp_update_post(
+            wp_slash(
+                [
+                    'ID'           => $id,
+                    'post_content' => self::default_markup(),
+                ]
+            ),
+            true
+        );
+
+        if ( is_wp_error( $result ) ) {
+            throw new \InvalidArgumentException( $result->get_error_message() );
+        }
+
+        return $this->find( $id );
+    }
+
+    /**
      * The one insert path for a new draft; every way of making a layout funnels through it so the cap and slashing cannot drift.
      *
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.

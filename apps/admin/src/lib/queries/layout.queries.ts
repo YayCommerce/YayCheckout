@@ -13,6 +13,7 @@ import {
   getLayouts,
   LayoutListParams,
   publishLayout,
+  resetLayout,
   restoreLayout,
 } from '@/lib/api/layout.api';
 import { LISTED_LAYOUT_STATUSES } from '@/lib/schema/layout.schema';
@@ -168,6 +169,19 @@ export function useDuplicateLayoutMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+    },
+  });
+}
+
+/** Only the markup changes, so list rows and counts stay valid; refresh the detail. */
+export function useResetLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'reset'],
+    mutationFn: resetLayout,
+    onSuccess: (layout) => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.detail(layout.id) });
     },
   });
 }

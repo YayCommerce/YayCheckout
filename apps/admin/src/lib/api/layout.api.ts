@@ -93,6 +93,10 @@ export async function duplicateLayout(id: number): Promise<Layout> {
   return parseLayout(await api.post(`layouts/${id}/duplicate`).json());
 }
 
+export async function resetLayout(id: number): Promise<Layout> {
+  return parseLayout(await api.post(`layouts/${id}/reset`).json());
+}
+
 export async function createPreviewLink(id: number): Promise<PreviewLink> {
   const wire = previewLinkWireSchema.parse(await api.post(`layouts/${id}/preview-link`).json());
 

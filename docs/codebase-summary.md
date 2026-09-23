@@ -66,6 +66,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/{id}/activate` | POST | publish first unless `post_status` is already `publish`, then add to the active set |
 | `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; status untouched |
 | `yaycheckout/v1/layouts/{id}/archive` | POST | move to the archive (trash), deactivating it first if it was active |
+| `yaycheckout/v1/layouts/{id}/reset` | POST | replace `post_content` with `LayoutRepository::default_markup()`; title, status, active flag and meta stay, the old markup becomes a revision; 404 when missing |
 | `yaycheckout/v1/layouts/{id}/preview-link` | POST | `{ url, expires_at }`: the checkout URL with a fresh token, lifetime from `advanced.preview_link_lifetime`; any status, nothing stored |
 | `yaycheckout/v1/layouts/{id}/export` | GET | **Pro.** `{ format, plugin_version, exported_at, layouts: [{ title, content }] }`: the portable envelope the Tools page downloads as .json; status, active flag and dates stay behind |
 | `yaycheckout/v1/layouts/import/validate` | POST | **Pro.** body `{ file: <export envelope> }` → `{ title, blocks }`; nothing written; 400 for a foreign or multi-layout file, a non-checkout root, or a block this site has not registered |
