@@ -34,7 +34,7 @@ export async function exportLayout(id: number): Promise<LayoutExportFile> {
 export function reviewExportFile(envelope: LayoutExportEnvelope): ImportReview {
   const layout = envelope.layouts[0];
 
-  // Mirrors Layout::blocks() in PHP: one `<!-- wp:` comment opens each serialized block.
+  // Same count as the `blocks` field of Layout::to_summary_array(): one `<!-- wp:` opens each serialized block.
   return { title: layout.title, blocks: layout.content.split('<!-- wp:').length - 1 };
 }
 

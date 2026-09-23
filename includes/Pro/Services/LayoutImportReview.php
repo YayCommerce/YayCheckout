@@ -8,16 +8,16 @@ use YayCheckout\Services\LayoutBlockIndex;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Judges an export envelope before anything is written: what it contains, or why it cannot be imported.
+ * Judges an export envelope before anything is written: the layout inside it, or why it cannot be imported.
  *
- * Pure: a function of the envelope. The same checks run for the preview and again
- * for the write, so the SPA can never import what it was not shown.
+ * Pure: a function of the envelope. The SPA only reads the file, so these are the checks that
+ * know which blocks this site registers.
  */
 class LayoutImportReview {
 
     /**
      * @param  array $envelope Decoded export file.
-     * @return array { title, content, blocks }
+     * @return array { title, content }
      * @throws \InvalidArgumentException When the file is not an export, has no checkout root, or uses a block this site lacks.
      */
     public static function from_envelope( array $envelope ): array {
@@ -29,11 +29,9 @@ class LayoutImportReview {
             throw new \InvalidArgumentException( __( 'The file does not contain a checkout layout.', 'yaycheckout' ) );
         }
 
-        return [
-            'title'   => $layout['title'],
-            'content' => $layout['content'],
-            'blocks'  => self::count_known( $blocks ),
-        ];
+        self::assert_known( $blocks );
+
+        return $layout;
     }
 
     /**
@@ -58,13 +56,11 @@ class LayoutImportReview {
     }
 
     /**
-     * Counts every block in the tree, refusing the first one this site has not registered.
+     * Refuses the first block in the tree this site has not registered.
      *
      * @throws \InvalidArgumentException
      */
-    private static function count_known( array $blocks ): int {
-        $count = 0;
-
+    private static function assert_known( array $blocks ): void {
         foreach ( $blocks as $block ) {
             if ( ! in_array( $block['blockName'], BlockRegistry::block_names(), true ) ) {
                 throw new \InvalidArgumentException(
@@ -76,9 +72,7 @@ class LayoutImportReview {
                 );
             }
 
-            $count += 1 + self::count_known( LayoutBlockIndex::real_blocks( $block['innerBlocks'] ?? [] ) );
+            self::assert_known( LayoutBlockIndex::real_blocks( $block['innerBlocks'] ?? [] ) );
         }
-
-        return $count;
     }
 }

@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
 import { Check, TriangleAlert } from 'lucide-react';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { getErrorMsg } from '@/lib/helpers/response.helper';
 import type { ImportReview } from '@/lib/schema/tools.schema';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button, LoadingButton } from '@/components/ui/button';
@@ -18,28 +16,11 @@ export function SourceStep({
 }: {
   review: ImportReview;
   isPending: boolean;
-  /** PHP's refusal: only it knows which blocks this site registers. */
-  error: unknown;
+  /** PHP's refusal, empty when there is none: only PHP knows which blocks this site registers. */
+  error: string;
   onCancel: () => void;
   onImport: () => void;
 }) {
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    if (!error) {
-      setMessage('');
-      return;
-    }
-
-    let current = true;
-    // getErrorMsg reads the response body, so the message arrives a tick late.
-    void getErrorMsg(error).then((next) => current && setMessage(next));
-
-    return () => {
-      current = false;
-    };
-  }, [error]);
-
   return (
     <>
       <div className="flex gap-3">
@@ -74,10 +55,10 @@ export function SourceStep({
         ]}
       />
 
-      {message !== '' && (
+      {error !== '' && (
         <Alert variant="outline" destructive className="border-destructive/30 bg-destructive/5">
           <TriangleAlert />
-          <AlertDescription>{message}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 

@@ -2,18 +2,15 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
 
+import { reviewExportFile } from '@/lib/api/tools.api';
+import { getErrorMsg } from '@/lib/helpers/response.helper';
 import { useImportLayoutMutation } from '@/lib/queries/tools.queries';
 import type { Layout } from '@/lib/schema/layout.schema';
-import type { ImportReview, LayoutExportEnvelope } from '@/lib/schema/tools.schema';
+import type { LayoutExportEnvelope } from '@/lib/schema/tools.schema';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DraftStep } from './DraftStep';
 import { SourceStep } from './SourceStep';
 import { IMPORT_STEPS, StepStrip, type ImportStep } from './StepStrip';
-
-export interface ImportSession {
-  envelope: LayoutExportEnvelope;
-  review: ImportReview;
-}
 
 /**
  * The two-step import flow: Source → Draft.
@@ -22,29 +19,32 @@ export interface ImportSession {
  * the close animation, so each open starts at Source without a reset effect.
  */
 export function ImportModal({
-  session,
+  envelope,
   onOpenChange,
 }: {
-  session: ImportSession | null;
+  envelope: LayoutExportEnvelope | null;
   onOpenChange: (open: boolean) => void;
 }) {
   return (
-    <Dialog open={session !== null} onOpenChange={onOpenChange}>
+    <Dialog open={envelope !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] sm:max-w-3xl">
-        {session && <ImportFlow session={session} onClose={() => onOpenChange(false)} />}
+        {envelope && <ImportFlow envelope={envelope} onClose={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>
   );
 }
 
-function ImportFlow({ session, onClose }: { session: ImportSession; onClose: () => void }) {
+function ImportFlow({ envelope, onClose }: { envelope: LayoutExportEnvelope; onClose: () => void }) {
   const [step, setStep] = useState<ImportStep>('source');
   const [created, setCreated] = useState<Layout | null>(null);
+  const [error, setError] = useState('');
   const importMutation = useImportLayoutMutation();
 
   // The flow stays on Source when PHP refuses the file, so the reason sits next to the button that asked for it.
-  const createDraft = () =>
-    importMutation.mutate(session.envelope, {
+  const createDraft = () => {
+    setError('');
+    importMutation.mutate(envelope, {
+      onError: async (reason) => setError(await getErrorMsg(reason)),
       onSuccess: (layout) => {
         setCreated(layout);
         setStep('draft');
@@ -57,6 +57,7 @@ function ImportFlow({ session, onClose }: { session: ImportSession; onClose: () 
         );
       },
     });
+  };
 
   return (
     <>
@@ -76,9 +77,9 @@ function ImportFlow({ session, onClose }: { session: ImportSession; onClose: () 
 
       {step === 'source' && (
         <SourceStep
-          review={session.review}
+          review={reviewExportFile(envelope)}
           isPending={importMutation.isPending}
-          error={importMutation.error}
+          error={error}
           onCancel={onClose}
           onImport={createDraft}
         />

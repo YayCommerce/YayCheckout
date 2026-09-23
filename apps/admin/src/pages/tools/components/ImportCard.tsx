@@ -3,9 +3,10 @@ import { __, sprintf } from '@wordpress/i18n';
 
 import { parseExportFile, reviewExportFile } from '@/lib/api/tools.api';
 import { getErrorMsg } from '@/lib/helpers/response.helper';
+import type { LayoutExportEnvelope } from '@/lib/schema/tools.schema';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ImportModal, type ImportSession } from '../import-modal/ImportModal';
+import { ImportModal } from '../import-modal/ImportModal';
 
 type ImportResult = { status: 'idle' } | { status: 'ready'; message: string } | { status: 'error'; message: string };
 
@@ -14,7 +15,7 @@ export function ImportCard() {
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<ImportResult>({ status: 'idle' });
-  const [session, setSession] = useState<ImportSession | null>(null);
+  const [envelope, setEnvelope] = useState<LayoutExportEnvelope | null>(null);
 
   const pick = async (picked: File | undefined) => {
     if (!picked) return;
@@ -26,8 +27,8 @@ export function ImportCard() {
     }
 
     try {
-      const envelope = parseExportFile(await picked.text());
-      const review = reviewExportFile(envelope);
+      const parsed = parseExportFile(await picked.text());
+      const review = reviewExportFile(parsed);
       setResult({
         status: 'ready',
         message: sprintf(
@@ -37,7 +38,7 @@ export function ImportCard() {
           review.blocks,
         ),
       });
-      setSession({ envelope, review });
+      setEnvelope(parsed);
     } catch (error) {
       setResult({ status: 'error', message: await getErrorMsg(error) });
     }
@@ -107,11 +108,11 @@ export function ImportCard() {
         </div>
       </CardContent>
       <ImportModal
-        session={session}
+        envelope={envelope}
         onOpenChange={(open) => {
           if (open) return;
-          // The card's file and result belong to that session; leaving them would show a ready file with no way to import it.
-          setSession(null);
+          // The card's file and result belong to that envelope; leaving them would show a ready file with no way to import it.
+          setEnvelope(null);
           setFile(null);
           setResult({ status: 'idle' });
         }}

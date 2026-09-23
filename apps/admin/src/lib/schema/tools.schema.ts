@@ -3,7 +3,7 @@ import { z } from 'zod';
 // Wire schema: the PHP shape of GET /layouts/{id}/export, exactly. Only lib/api/tools.api.ts reads it.
 
 /** Mirrors Layout::EXPORT_FORMAT in PHP. */
-export const LAYOUT_EXPORT_FORMAT = 'yaycheckout-layout';
+const LAYOUT_EXPORT_FORMAT = 'yaycheckout-layout';
 
 export const layoutExportWireSchema = z
   .object({
@@ -21,8 +21,6 @@ export const layoutExportWireSchema = z
   })
   .strict();
 
-export type LayoutExportWire = z.infer<typeof layoutExportWireSchema>;
-
 /** A downloadable export: the envelope as the merchant receives it, plus the name the browser saves it under. */
 export interface LayoutExportFile {
   filename: string;
@@ -31,7 +29,7 @@ export interface LayoutExportFile {
 }
 
 /** The parsed export file. Sent back to PHP verbatim, so it keeps its wire spelling. */
-export type LayoutExportEnvelope = LayoutExportWire;
+export type LayoutExportEnvelope = z.infer<typeof layoutExportWireSchema>;
 
 /** What the Source step shows about a picked file. Read from the envelope itself: only the import call reaches PHP. */
 export interface ImportReview {

@@ -68,16 +68,12 @@ class Layout {
             'title'        => $this->title,
             'status'       => $this->post_status,
             'is_active'    => $this->is_active,
-            'blocks'       => $this->blocks(),
+            // One `<!-- wp:` opens each serialized block; closers read `<!-- /wp:`.
+            'blocks'       => substr_count( $this->content, '<!-- wp:' ),
             'size'         => strlen( $this->content ),
             'published_at' => DateHelper::to_iso8601( $this->published_at ),
             'scheduled_at' => DateHelper::to_iso8601( $this->scheduled_at ),
         ];
-    }
-
-    /** Blocks in the markup: each serialized block opens with one `<!-- wp:` comment, while closers read `<!-- /wp:`. */
-    public function blocks(): int {
-        return substr_count( $this->content, '<!-- wp:' );
     }
 
     /** Serialized shape for REST. Mirrored exactly by the SPA's strict wire schema. */
