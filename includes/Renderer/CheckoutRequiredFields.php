@@ -3,7 +3,7 @@ namespace YayCheckout\Renderer;
 
 use YayCheckout\Models\Layout;
 use YayCheckout\Services\CheckoutFieldRequirements;
-use YayCheckout\Services\LayoutBlockIndex;
+use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -168,11 +168,10 @@ class CheckoutRequiredFields {
             return null;
         }
 
-        try {
-            $this->index = LayoutBlockIndex::from_markup( $layout->content );
-        } catch ( \InvalidArgumentException $ex ) {
-            $this->index = null;
-        }
+        $this->index = [
+            'fields'       => LayoutMarkupReader::fields( $layout->content ),
+            'extra_fields' => LayoutMarkupReader::extra_fields( $layout->content ),
+        ];
 
         return $this->index;
     }

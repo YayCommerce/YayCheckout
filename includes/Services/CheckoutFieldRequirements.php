@@ -15,7 +15,7 @@ class CheckoutFieldRequirements {
 
     /**
      * @param  array $fields        WooCommerce checkout fields.
-     * @param  array $layout_fields LayoutBlockIndex `fields` map.
+     * @param  array $layout_fields LayoutMarkupReader::fields() map.
      * @return array
      */
     public static function apply( array $fields, array $layout_fields ): array {

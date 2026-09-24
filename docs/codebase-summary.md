@@ -31,11 +31,11 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `Models/` | `Layout`, `LayoutQuery`, `Settings`, `Design` | dumb entities; **every storage key constant lives here**; zero WP calls. `Settings` and `Design` own `schema()` (the single description of settings/tokens), `from_option()` (read projection through the schema), and `sanitize()` (strict validation, unknown keys stripped). `LayoutQuery` is immutable value object for filtered/paginated queries. |
 | `Repositories/` | `LayoutRepository`, `SettingsRepository`, `DesignRepository`, `CompatibilityCatalogueRepository` | all storage access: layouts (publish sequence, active-set), settings (get/save/reviewed), design (tokens, presets, CSS), catalogue (transient → remote JSON → fallback) |
 | `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue`, `DesignRestController`, `CompatibilityRestController` | routing, validation, permissions; all require `manage_woocommerce` |
-| `Services/` | `LayoutBlockIndex`, `ExtraFieldPostedCollector` | pure: no storage. `LayoutBlockIndex` reduces layout markup to `{ fields, extra_fields, slots, order_modes }`; blocks contribute through the `yaycheckout_block_contributors` filter. `ExtraFieldPostedCollector` validates and normalizes posted extra-field values against the index. |
-| `Blocks/` | `BlockRegistry` | registers built block directories |
+| `Services/` | `LayoutMarkupReader`, `ExtraFieldSubmission` | pure: no storage. `LayoutMarkupReader` flattens a layout's blocks and answers `slots()`, `fields()`, `extra_fields()`, `order_modes()` (always `[]` for now) and `publish_error()`. `ExtraFieldSubmission::collect()` turns a checkout POST into order rows and per-field error messages, reading only Keys from `extra_fields()` and accepting only values from `LayoutMarkupReader::options()`. |
+| `Blocks/` | `BlockRegistry` | registers every built block directory (inserter order from `ORDER`); `allowed_blocks()` on `allowed_block_types_all` keeps `yaycheckout/*` blocks in the layout editor only and `woocommerce/checkout` out of it |
 | `Support/` | `Plan`, `CompatibilityCatalogue` | Free/Pro flag derived from provider boot; owns the layout limit and its message. Compatibility catalogue: status vocabulary, bundled list, `normalize()` for the remote JSON, transient key and TTLs — pure |
 | `Pro/` | `ProServiceProvider`, `Controllers/DesignPresetRestController` | **absent from the Free build**; preset management REST routes |
-| `Helpers/` | `BlockMarkup`, `IntegrationsHelper`, `LocalizeHelper`, `Logger`, `PreviewToken`, `StoreEnvironmentHelper`, `GatewayCompatibilityHelper`, `CheckoutHookScanHelper`, `PluginHeaderHelper`, `ExtraFieldKeyHelper` | stateless: preview tokens, server-side block markup (seeds, templates), integration detection, SPA bootstrap payload, logging, compatibility detection, hook scans, extra-field key fallback naming |
+| `Helpers/` | `BlockMarkup`, `IntegrationsHelper`, `LocalizeHelper`, `Logger`, `PreviewToken`, `StoreEnvironmentHelper`, `GatewayCompatibilityHelper`, `CheckoutHookScanHelper`, `PluginHeaderHelper` | stateless: preview tokens, server-side block markup (seeds, templates), integration detection, SPA bootstrap payload, logging, compatibility detection, hook scans |
 | `Renderer/` | `CheckoutScripts`, `CheckoutPage`, `PreviewRequest`, `CheckoutFragments`, `CheckoutExtraFields` | Storefront takeover and AJAX; `CheckoutFragments` swaps payment/shipping fragments on `update_order_review` when the layout renders those blocks. `CheckoutExtraFields` validates and persists custom extra fields to order meta via hooks on checkout create/update. |
 | `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin/` (Settings, LayoutEditorEmbed), `Register/` (RegisterFacade, RegisterDev, RegisterProd, ScriptName) | wiring, asset registration, the layout cap, trashed layouts kept out of WP's purge, active-set integrity, embedded-editor chrome and REST tagging, dev/prod asset registration |
 | `Utils/` | `SingletonTrait` | |
@@ -63,7 +63,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
 | `yaycheckout/v1/layouts/{id}` | DELETE | permanent delete with revisions and meta; archived, non-active layouts only (400 otherwise) |
-| `yaycheckout/v1/layouts/{id}/publish` | POST | status → `publish`; a layout dated in the future goes live now, its date moved to now |
+| `yaycheckout/v1/layouts/{id}/publish` | POST | status → `publish`; a layout dated in the future goes live now, its date moved to now; refused when `LayoutMarkupReader::publish_error()` objects (no `checkout` block, or an `extra-field` Key empty or duplicated), as is `/activate` on any layout, published or not; core's `wp/v2` save is refused the same way (400 `yaycheckout_layout_unpublishable`) when it would leave the layout published or scheduled |
 | `yaycheckout/v1/layouts/{id}/activate` | POST | publish first unless `post_status` is already `publish`, then add to the active set |
 | `yaycheckout/v1/layouts/{id}/deactivate` | POST | remove from the active set; status untouched |
 | `yaycheckout/v1/layouts/{id}/archive` | POST | move to the archive (trash), deactivating it first if it was active |
@@ -137,7 +137,7 @@ Query errors surface centrally — background refetch failures toast, first-load
 
 ## Blocks (`packages/blocks/`)
 
-Thirteen blocks: `checkout` (root, `multiple: false`), `contact`, `billing`, `shipping`, `field`, `order-review`, `extra-field`, `shipping-methods`, `express-pay`, `payment`, `order-summary`, `place-order`, `slot`. All dynamic (`save()` returns `null`), rendered by `render.php`. Built by `@wordpress/scripts`, which emits `index.asset.php` so `wp-*` dependencies are extracted. The insert guard enforces: YayCheckout blocks only on the layout CPT; leaves (`contact`, `billing`, `shipping`, `order-review`, `shipping-methods`, `express-pay`, `payment`, `order-summary`, `place-order`) directly under `checkout`; `field` under address sections only; `extra-field` and `slot` anywhere under `checkout`.
+Thirteen blocks: `checkout` (root, `multiple: false`), `contact`, `billing`, `shipping`, `field`, `order-review`, `extra-field`, `shipping-methods`, `express-pay`, `payment`, `order-summary`, `place-order`, `slot`. All dynamic, rendered by `render.php`: leaves save `null`; `checkout`, `billing` and `shipping` save only their `InnerBlocks` so children persist. Every block registers through `shared/register-dynamic-block.tsx`, which also sets its inserter icon from `shared/block-icons.tsx` (custom 24px SVGs keyed by block name). Built by `@wordpress/scripts`, which emits `index.asset.php` so `wp-*` dependencies are extracted. Placement comes from each `block.json` (`parent`/`ancestor`/`multiple`) and which editor offers the blocks from `BlockRegistry::allowed_blocks()`; see `system-architecture.md`.
 
 ## Tooling
 
@@ -160,7 +160,7 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 - Adding a design token → `Models/Design::schema()`, then `design.schema.ts`, then a component in `pages/design/components/`
 - Adding an endpoint → `LayoutRestController`, then the `lib/` triplet
 - Compatibility statuses → the bundled list in `Support/CompatibilityCatalogue`, or the remote JSON at `YAYCHECKOUT_COMPATIBILITY_CATALOGUE_URL`; new checkout hooks → `CheckoutHookScanHelper::HOOKS`
-- Adding a block → `packages/blocks/src/`, then `BlockRegistry`, then contribute to `LayoutBlockIndex` via the filter
+- Adding a block → `packages/blocks/src/` (registered automatically once built; add it to `BlockRegistry::ORDER` for its inserter position, and give it an icon in `shared/block-icons.tsx`); a section block also goes in `LayoutMarkupReader::SECTION_SLOTS`
 - Free/Pro → `includes/Support/Plan.php` and `scripts/check-pro-boundary.sh`
 
 ## Not yet built
