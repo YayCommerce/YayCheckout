@@ -362,6 +362,10 @@ class LayoutRepository {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
 
+        // Core revisions the post after the update, so a layout never saved in the editor has no revision
+        // holding the old markup. No-op when the latest revision already matches.
+        wp_save_post_revision( $id );
+
         // wp_update_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
         $result = wp_update_post(
             wp_slash(
