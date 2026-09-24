@@ -83,7 +83,7 @@ All require `manage_woocommerce`.
 
 ## Admin SPA (`apps/admin/`)
 
-React 18 + TypeScript, Vite, hash router, TanStack Query, zod, Tailwind 4, shadcn/ui, ky. (~3,700 lines excluding `components/ui`).
+React 18 + TypeScript, Vite, hash router, TanStack Query, zod, Tailwind 4, shadcn/ui, ky. (~7,400 lines excluding `components/ui`).
 
 Routes: `/` → `/layouts`, `/layouts`, `/design`, `/tools`, `/settings/{general|integrations|advanced}`, `/compatibility`, `*` (404).
 
@@ -102,6 +102,7 @@ src/
       DeactivateModal.tsx   Deactivate modal (real)
       ArchiveModal.tsx      Archive modal (real)
       DeleteModal.tsx       Delete-for-good modal: typed DELETE gate (real)
+      LayoutStatusBadge.tsx status + active badge; shared with the Tools layout picker
       new-layout/       NewLayoutModal, SourceStep, LibraryStep, NameField, TemplateThumbnail + template-thumbnail-sketches (SVG sketch per catalogue slug)
     design/             Design tokens page (real)
       DesignPage.tsx    form with token groups, preset picker, custom CSS, Save/Reset actions
@@ -110,7 +111,9 @@ src/
     compatibility/      CompatibilityPage: warning banner, Store / Payment gateways / Plugins touching checkout, Re-scan, catalogue footnote
       compatibility-warnings.ts   report → { blockOnly, unverifiedPlugins }
       components/       WarningBanner, StoreSection, GatewaysSection (block-only "Why?" expander + vendor request), PluginsSection, StatusBadge
-    tools/              placeholder route component
+    tools/              ToolsPage: Export + Import (Pro) or the ExportImportCard teaser (Free), and Reset (both builds)
+      components/       ExportCard (download .json), ImportCard (drop/pick a .json, client-side parse + review), ExportImportCard (Free upsell), ResetCard + ResetModal (typed-phrase gate, warns on an active layout), LayoutSelect (searchable, infinite-scroll picker, starts empty)
+      import-modal/     ImportModal with StepStrip, SourceStep, DraftStep: creates the draft from the parsed export envelope
   components/
     ui/                 shadcn primitives (kebab-case, CLI-generated)
     shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip; used by multiple pages
