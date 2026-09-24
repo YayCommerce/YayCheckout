@@ -2,15 +2,16 @@
 namespace YayCheckout\Renderer;
 
 use YayCheckout\Models\Layout;
-use YayCheckout\Services\CheckoutFieldRequirements;
 use YayCheckout\Services\LayoutMarkupReader;
+use YayCheckout\Services\RequiredFieldOverlay;
+use YayCheckout\Services\RequiredIndicator;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Makes WooCommerce required flags follow the layout, then undoes address-i18n.js
- * when it restores locale defaults on country change.
+ * Makes WooCommerce's required flags and label suffixes follow the served layout,
+ * including after address-i18n.js resets them on country change.
  *
  * Stands down when CheckoutPage has no layout, so stock WooCommerce checkout
  * keeps its own required set. See docs/system-architecture.md, Validation.
@@ -27,8 +28,8 @@ class CheckoutRequiredFields {
 
     private const SCRIPT_HANDLE = 'yaycheckout-field-requirements';
 
-    /** @var array|null|false false until first resolved. */
-    private $index = false;
+    /** @var array{address: array, all: array}|null|false False until first read; null when standing down. */
+    private $fields = false;
 
     protected function __construct() {
         // Checkout POST validates at wp_loaded, before is_page() exists. Gating this filter on the page would drop layout required flags on submit.
@@ -46,13 +47,13 @@ class CheckoutRequiredFields {
             return $fields;
         }
 
-        $layout_fields = $this->layout_fields();
+        $layout_fields = $this->fields();
 
         if ( null === $layout_fields ) {
             return $fields;
         }
 
-        return CheckoutFieldRequirements::apply( $fields, $layout_fields );
+        return RequiredFieldOverlay::apply( $fields, $layout_fields['address'] );
     }
 
     /**
@@ -67,17 +68,17 @@ class CheckoutRequiredFields {
             return $field;
         }
 
-        $layout_fields = $this->indicator_fields();
+        $layout_fields = $this->fields();
 
         if ( null === $layout_fields ) {
             return $field;
         }
 
-        return CheckoutFieldRequirements::replace_form_field(
+        return RequiredIndicator::swap_in(
             $field,
             is_string( $key ) ? $key : '',
             is_array( $args ) ? $args : [],
-            $layout_fields
+            $layout_fields['all']
         );
     }
 
@@ -91,13 +92,13 @@ class CheckoutRequiredFields {
             return;
         }
 
-        $layout_fields = $this->indicator_fields();
+        $layout_fields = $this->fields();
 
         if ( null === $layout_fields ) {
             return;
         }
 
-        $json = wp_json_encode( CheckoutFieldRequirements::required_map( $layout_fields ) );
+        $json = wp_json_encode( RequiredIndicator::script_payload( $layout_fields['all'] ) );
 
         if ( ! is_string( $json ) || '' === $json ) {
             return;
@@ -119,60 +120,30 @@ class CheckoutRequiredFields {
     }
 
     /**
-     * @return array|null Null when the renderer stands down.
-     */
-    private function layout_fields(): ?array {
-        $index = $this->layout_index();
-
-        if ( null === $index ) {
-            return null;
-        }
-
-        $fields = $index['fields'] ?? [];
-
-        return is_array( $fields ) ? $fields : [];
-    }
-
-    /**
-     * Address fields plus extra fields, so form_field and the storefront script
-     * share one lookup.
+     * The served layout's address fields, and those plus its extra fields.
      *
-     * @return array|null Null when the renderer stands down.
+     * @return array{address: array, all: array}|null Null when no layout is served, so WooCommerce keeps its own rules.
      */
-    private function indicator_fields(): ?array {
-        $index = $this->layout_index();
-
-        if ( null === $index ) {
-            return null;
-        }
-
-        $fields = isset( $index['fields'] ) && is_array( $index['fields'] ) ? $index['fields'] : [];
-        $extra  = isset( $index['extra_fields'] ) && is_array( $index['extra_fields'] ) ? $index['extra_fields'] : [];
-
-        return array_merge( $fields, $extra );
-    }
-
-    /**
-     * @return array|null Null when the renderer stands down.
-     */
-    private function layout_index(): ?array {
-        if ( false !== $this->index ) {
-            return $this->index;
+    private function fields(): ?array {
+        if ( false !== $this->fields ) {
+            return $this->fields;
         }
 
         $layout = CheckoutPage::get_instance()->layout();
 
         if ( ! $layout instanceof Layout || '' === trim( $layout->content ) ) {
-            $this->index = null;
+            $this->fields = null;
 
             return null;
         }
 
-        $this->index = [
-            'fields'       => LayoutMarkupReader::fields( $layout->content ),
-            'extra_fields' => LayoutMarkupReader::extra_fields( $layout->content ),
+        $address      = LayoutMarkupReader::fields( $layout->content );
+        $this->fields = [
+            'address' => $address,
+            // Not array_merge(): an all-digit extra field Key is an integer key, which array_merge() renumbers.
+            'all'     => array_replace( $address, LayoutMarkupReader::extra_fields( $layout->content ) ),
         ];
 
-        return $this->index;
+        return $this->fields;
     }
 }

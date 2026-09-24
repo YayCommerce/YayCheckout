@@ -1,7 +1,7 @@
 /**
- * Re-applies layout required flags after address-i18n.js restores locale defaults
- * on country change. Map is window.yayCheckoutRequired, inlined by
- * Renderer\CheckoutFieldRequirements.
+ * Re-applies the layout's required flags and label suffixes after
+ * address-i18n.js resets them on country change. Map is
+ * window.yayCheckoutRequired, inlined from RequiredIndicator::script_payload().
  */
 jQuery(function ($) {
     var map = window.yayCheckoutRequired || {};
@@ -10,28 +10,12 @@ jQuery(function ($) {
             ? wc_address_i18n_params.i18n_optional_text
             : 'optional';
 
-    function configFor(entry) {
-        if (entry && typeof entry === 'object') {
-            return {
-                required: !!entry.required,
-                requiredMark: entry.requiredMark || '',
-                optionalText: entry.optionalText || '',
-            };
-        }
-        return {
-            required: !!entry,
-            requiredMark: '',
-            optionalText: '',
-        };
-    }
-
     function applyRequired() {
-        $.each(map, function (key, entry) {
+        $.each(map, function (key, config) {
             var field = $('#' + key + '_field');
             if (!field.length) {
                 return;
             }
-            var config = configFor(entry);
             if (config.required) {
                 field.find('label .optional').remove();
                 field.addClass('validate-required');

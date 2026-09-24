@@ -43,7 +43,7 @@ if ( function_exists( 'woocommerce_form_field' ) ) {
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <label for="<?php echo esc_attr( $yaycheckout_key ); ?>">
         <?php echo esc_html( $yaycheckout_label ); ?>
-        <?php echo \YayCheckout\Services\CheckoutFieldRequirements::indicator_html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- indicator_html escapes. ?>
+        <?php echo \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- html() escapes. ?>
     </label>
     <input
         type="email"
