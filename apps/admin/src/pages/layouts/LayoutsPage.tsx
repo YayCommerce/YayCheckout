@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Search } from 'lucide-react';
+import { Loader2, Plus, Search } from 'lucide-react';
 import { useDebounceFn } from 'rooks';
 import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
@@ -456,17 +456,30 @@ function LayoutsPageBody({
             <DialogTitle className="text-base">{__('Edit layout', 'yaycheckout')}</DialogTitle>
           </DialogHeader>
 
-          {editorUrl && (
-            <div className="min-h-0 flex-1 overflow-hidden">
-              <iframe
-                title={__('Layout editor', 'yaycheckout')}
-                src={editorUrl}
-                className="block h-full w-full border-0"
-              />
-            </div>
-          )}
+          {editorUrl && <LayoutEditorFrame key={editorUrl} src={editorUrl} />}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/** Block-editor iframe with a spinner over it until the editor page finishes loading. Keyed by URL so each open starts in the loading state. */
+function LayoutEditorFrame({ src }: { src: string }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className="relative min-h-0 flex-1 overflow-hidden">
+      <iframe
+        title={__('Layout editor', 'yaycheckout')}
+        src={src}
+        onLoad={() => setLoaded(true)}
+        className={cn('block size-full border-0', !loaded && 'invisible')}
+      />
+      {!loaded && (
+        <div className="bg-background absolute inset-0 flex items-center justify-center">
+          <Loader2 className="text-muted-foreground size-6 animate-spin" aria-label={__('Loading editor…', 'yaycheckout')} />
+        </div>
+      )}
     </div>
   );
 }
