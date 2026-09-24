@@ -82,7 +82,7 @@ Two places that decide the same thing leave the reader unable to tell which one 
 
 | Rule | Owner | Allowed mirrors |
 |---|---|---|
-| Meta keys, option names | Model constants (`Layout::OPTION_ACTIVE`, `Layout::META_RULES`, …) | `uninstall.php` literals (no autoloader) |
+| Meta keys, option names | Constants on the owning class (`Layout::OPTION_ACTIVE`, `Layout::META_RULES`, …) | `uninstall.php` literals (no autoloader) |
 | Settings keys, types, defaults | `Models\Settings::schema()` | `apps/admin/src/lib/schema/settings.schema.ts` |
 | Design tokens, presets, radius/base-size bounds | `Models\Design::schema()`, `Design::presets()` | `RADIUS_RANGE`, `BASE_SIZE_RANGE` in `apps/admin/src/lib/schema/design.schema.ts` |
 | Token diff count, active preset | `apps/admin/src/lib/helpers/design.helper.ts` (`countTokenDiffs`, `activePresetIdFor`) | — |
