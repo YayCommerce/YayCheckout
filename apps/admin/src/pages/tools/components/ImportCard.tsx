@@ -95,17 +95,6 @@ export function ImportCard() {
             }}
           />
         </div>
-
-        <div
-          className={cn(
-            'rounded-md border px-4 py-3 text-xs',
-            result.status === 'idle' && 'bg-muted/30 text-muted-foreground',
-            result.status === 'ready' && 'border-success/30 bg-success/6 text-success',
-            result.status === 'error' && 'border-destructive/30 bg-destructive/5 text-destructive',
-          )}
-        >
-          {result.status === 'idle' ? __('validation result appears here', 'yaycheckout') : result.message}
-        </div>
       </CardContent>
       <ImportModal
         envelope={envelope}
