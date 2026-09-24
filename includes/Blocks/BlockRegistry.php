@@ -62,10 +62,16 @@ class BlockRegistry {
             register_block_type( $dir );
         }
 
-        // One blocks bundle serves both editions, so the plan has to reach it at runtime.
+        // One blocks bundle serves both editions, so the plan has to reach it at runtime; the rest keeps PHP the only owner.
+        $editor_data = [
+            'isPro'      => Plan::is_pro(),
+            'postType'   => Layout::POST_TYPE,
+            'upgradeUrl' => YAYCHECKOUT_UPGRADE_URL,
+        ];
+
         wp_add_inline_script(
             generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
-            'window.yayCheckoutBlocks = ' . wp_json_encode( [ 'isPro' => Plan::is_pro() ] ) . ';',
+            'window.yayCheckoutBlocks = ' . wp_json_encode( $editor_data ) . ';',
             'before'
         );
     }

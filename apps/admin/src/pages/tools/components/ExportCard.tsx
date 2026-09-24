@@ -1,10 +1,10 @@
 import { useState } from 'react';
+import { saveFile } from '@blocks-shared/export-file';
 import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { useExportLayoutMutation } from '@/lib/queries/tools.queries';
 import type { LayoutSummary } from '@/lib/schema/layout.schema';
-import type { LayoutExportFile } from '@/lib/schema/tools.schema';
 import { LoadingButton } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutSelect } from './LayoutSelect';
@@ -21,16 +21,6 @@ function fileSize(bytes: number): string {
 
   /* translators: %s: file size in kilobytes */
   return sprintf(__('%s KB', 'yaycheckout'), (bytes / 1024).toFixed(1));
-}
-
-function saveFile({ filename, json }: LayoutExportFile) {
-  const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  // Deferred: Safari can drop the download if the URL is revoked in the same tick as the click.
-  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 export function ExportCard() {
@@ -56,7 +46,7 @@ export function ExportCard() {
             if (!layout) return;
             exportMutation.mutate(layout.id, {
               onSuccess: (file) => {
-                saveFile(file);
+                saveFile(file.filename, file.json);
                 toast.success(
                   sprintf(
                     /* translators: %s: layout title */

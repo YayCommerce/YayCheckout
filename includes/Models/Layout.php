@@ -61,6 +61,11 @@ class Layout {
         return $layout;
     }
 
+    /** How many of our blocks the markup holds. Each opens with one `<!-- wp:yaycheckout/`; closers read `<!-- /wp:`. */
+    public static function block_count( string $markup ): int {
+        return substr_count( $markup, '<!-- wp:yaycheckout/' );
+    }
+
     /** List row: no markup, so a large store does not ship every draft. Timestamps as ISO 8601. */
     public function to_summary_array(): array {
         return [
@@ -68,8 +73,7 @@ class Layout {
             'title'        => $this->title,
             'status'       => $this->post_status,
             'is_active'    => $this->is_active,
-            // Our blocks only: each opens with one `<!-- wp:yaycheckout/`; closers read `<!-- /wp:`.
-            'blocks'       => substr_count( $this->content, '<!-- wp:yaycheckout/' ),
+            'blocks'       => self::block_count( $this->content ),
             'size'         => strlen( $this->content ),
             'published_at' => DateHelper::to_iso8601( $this->published_at ),
             'scheduled_at' => DateHelper::to_iso8601( $this->scheduled_at ),

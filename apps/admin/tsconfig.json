@@ -20,7 +20,8 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@blocks-shared/*": ["../../packages/blocks/src/shared/*"]
     }
   },
   "include": ["src", "types"],
