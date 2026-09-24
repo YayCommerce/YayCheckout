@@ -1,5 +1,6 @@
 import { InnerBlocks } from '@wordpress/block-editor';
 import { registerBlockType } from '@wordpress/blocks';
+import { blockIcons } from './block-icons';
 
 type BlockSettings = NonNullable< Parameters< typeof registerBlockType >[ 1 ] >;
 
@@ -26,6 +27,7 @@ export function registerDynamicBlock(
 	settings: Omit< BlockSettings, 'edit' | 'save' > = {}
 ): void {
 	registerBlockType( name, {
+		icon: blockIcons[ name ],
 		...settings,
 		edit,
 		save,

@@ -10,7 +10,8 @@ const ADDRESS_SECTIONS = [ 'yaycheckout/billing', 'yaycheckout/shipping' ];
 
 /**
  * Header inserter follows the selection: Billing/Shipping when those
- * canvases are selected (so Field appears), otherwise the Checkout root.
+ * canvases are selected (so Field appears), otherwise the Checkout block,
+ * wherever it sits in the document.
  * Contact and the document never list Field.
  */
 function LayoutInserterRoot() {
@@ -21,11 +22,13 @@ function LayoutInserterRoot() {
 			return null;
 		}
 
-		const { getBlock, getBlockCount, getBlocksByName, getSelectedBlock } = select( blockEditorStore );
-		// Checkout may follow other blocks or sit inside one, e.g. a Group.
-		const root = getBlock( getBlocksByName( CHECKOUT_BLOCK )[ 0 ] ?? '' );
+		const { getBlockCount, getBlockName, getClientIdsWithDescendants, getSelectedBlock } =
+			select( blockEditorStore );
+		const rootClientId = getClientIdsWithDescendants().find(
+			( id: string ) => getBlockName( id ) === CHECKOUT_BLOCK
+		);
 
-		if ( ! root ) {
+		if ( ! rootClientId ) {
 			return null;
 		}
 
@@ -39,8 +42,8 @@ function LayoutInserterRoot() {
 		}
 
 		return {
-			rootClientId: root.clientId,
-			insertionIndex: getBlockCount( root.clientId ),
+			rootClientId,
+			insertionIndex: getBlockCount( rootClientId ),
 		};
 	}, [ postType ] );
 	const { setIsInserterOpened } = useDispatch( editorStore );

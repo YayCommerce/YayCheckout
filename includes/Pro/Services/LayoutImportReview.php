@@ -21,7 +21,7 @@ class LayoutImportReview {
     public static function from_envelope( array $envelope ): array {
         $layout = self::layout( $envelope );
 
-        // Same rule the renderer enforces in LayoutBlockIndex::from_markup().
+        // First of LayoutMarkupReader::publish_error()'s rules; the rest wait for publish, as for any draft.
         if ( ! has_block( 'yaycheckout/checkout', $layout['content'] ) ) {
             throw new \InvalidArgumentException( __( 'The file does not contain a checkout layout.', 'yaycheckout' ) );
         }

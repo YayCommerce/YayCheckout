@@ -5,6 +5,7 @@ use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Helpers\BlockMarkup;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
+use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
@@ -151,7 +152,7 @@ class LayoutRepository {
     /**
      * Publishes a layout: a post_status change, as the editor's own button does.
      *
-     * @throws \InvalidArgumentException When the layout is missing or archived.
+     * @throws \InvalidArgumentException When the layout is missing, archived, or fails LayoutMarkupReader::publish_error().
      */
     public function publish( int $id ): Layout {
         $post = get_post( $id );
@@ -167,16 +168,18 @@ class LayoutRepository {
             );
         }
 
+        self::refuse_unpublishable( $post->post_content );
+
         wp_publish_post( $id );
 
-        return Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $id ) ), $this->is_active( $id ) );
+        return $this->find( $id );
     }
 
     /**
      * Publishes the layout unless it already is, then makes it active, so an
      * active layout is always one shoppers may see.
      *
-     * @throws \InvalidArgumentException When the layout is missing or archived.
+     * @throws \InvalidArgumentException When the layout is missing, archived or not publishable.
      */
     public function activate( int $id ): Layout {
         $layout = $this->find( $id );
@@ -192,6 +195,9 @@ class LayoutRepository {
             );
         }
 
+        // Also when already published: Quick Edit and layouts saved before these rules skip the check.
+        self::refuse_unpublishable( $layout->content );
+
         // Scheduled and pending count too: activating overrides the schedule or review.
         if ( ! $layout->is_published() ) {
             $this->publish( $id );
@@ -200,6 +206,17 @@ class LayoutRepository {
         $this->set_active( $id );
 
         return $this->find( $id );
+    }
+
+    /**
+     * @throws \InvalidArgumentException With LayoutMarkupReader::publish_error() when the markup may not go live.
+     */
+    private static function refuse_unpublishable( string $markup ): void {
+        $error = LayoutMarkupReader::publish_error( $markup );
+
+        if ( '' !== $error ) {
+            throw new \InvalidArgumentException( $error );
+        }
     }
 
     /**

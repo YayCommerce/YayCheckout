@@ -33,6 +33,14 @@
       "type": "boolean",
       "default": false
     },
+    "requiredMark": {
+      "type": "string",
+      "default": ""
+    },
+    "optionalText": {
+      "type": "string",
+      "default": ""
+    },
     "autocomplete": {
       "type": "string",
       "default": ""
