@@ -150,7 +150,7 @@ Thirteen blocks: `checkout` (root, `multiple: false`), `contact`, `billing`, `sh
 
 | Command | Does |
 |---|---|
-| `./scripts/run.sh dev` | admin shell update + Vite dev server on :3040 |
+| `./scripts/run.sh dev` | admin shell update + Vite dev server on :3040 + blocks watcher (`wp-scripts start`) |
 | `./scripts/run.sh build` | typecheck + build SPA and blocks |
 | `./scripts/run.sh release --plan=free\|pro` | versioned zip, then verifies the artifact matches the plan |
 | `composer lint` | Pro boundary guard, then phpcs |

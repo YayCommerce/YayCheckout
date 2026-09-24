@@ -37,7 +37,7 @@ That switches asset registration from `RegisterProd` (built files) to `RegisterD
 ## Commands
 
 ```bash
-./scripts/run.sh dev       # update admin shell + Vite dev server on :3040
+./scripts/run.sh dev       # update admin shell + Vite dev server on :3040 + blocks watcher
 ./scripts/run.sh build     # typecheck + build admin dashboard
 ./scripts/run.sh release                 # Free ZIP in release/ (default)
 ./scripts/run.sh release --plan=pro      # Pro ZIP
