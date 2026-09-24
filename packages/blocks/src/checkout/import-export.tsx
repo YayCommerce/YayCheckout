@@ -1,10 +1,9 @@
 import apiFetch from '@wordpress/api-fetch';
-import { store as blockEditorStore } from '@wordpress/block-editor';
 import { parse } from '@wordpress/blocks';
 import { Button, Dashicon, DropZone, ExternalLink, Flex, FormFileUpload, Modal, Notice } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { PluginDocumentSettingPanel, store as editorStore } from '@wordpress/editor';
-import { useState } from '@wordpress/element';
+import { useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { store as noticesStore } from '@wordpress/notices';
 import { registerPlugin } from '@wordpress/plugins';
@@ -13,28 +12,29 @@ const LAYOUT_POST_TYPE = 'yay_checkout_layout';
 
 declare global {
 	interface Window {
-		/** Printed by BlockRegistry::register_blocks(). */
+		/** Edition flag the server prints before this script runs. */
 		yayCheckoutBlocks?: { isPro: boolean };
 	}
 }
 
-/** Import / Export is a Pro feature, as on the Tools page; Free shows it locked. Cosmetic gate: Free's PHP has no export route. */
+/** Locks Import / Export outside Pro. Cosmetic only: it hides UI, it guards no data. */
 const IS_PRO = window.yayCheckoutBlocks?.isPro ?? false;
 
-/** Same page as UPGRADE_URL in apps/admin ProGate.tsx. */
 const UPGRADE_URL = 'https://yaycommerce.com/yaycheckout-for-woocommerce/';
 
-/** Mirrors Layout::EXPORT_FORMAT in PHP. */
+/** Must equal Layout::EXPORT_FORMAT, or every exported file is refused here. */
 const LAYOUT_EXPORT_FORMAT = 'yaycheckout-layout';
 
-type ImportReview = { title: string; content: string; blocks: number };
+/** The file is read inside the editor tab, so a huge one would freeze it; real exports are a few KB. */
+const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+
+type ImportReview = { fileName: string; fileSize: number; title: string; content: string; blocks: number };
 
 /**
- * Reads the one layout out of an export file, or throws why it cannot be imported.
- * Same checks and messages as parseExportFile() + reviewExportFile() in apps/admin tools.api.ts (which this build cannot import),
- * plus LayoutImportReview's Checkout-block rule: this import never reaches PHP, so it is the only gate before the blocks land.
+ * The one layout in an export file, or an Error whose message says why it cannot be imported.
+ * Nothing re-checks the file after this, so the Checkout-block rule is enforced here.
  */
-function reviewExportFile( text: string ): ImportReview {
+function reviewExportFile( text: string ): Pick< ImportReview, 'title' | 'content' | 'blocks' > {
 	let envelope;
 	try {
 		envelope = JSON.parse( text );
@@ -55,7 +55,6 @@ function reviewExportFile( text: string ): ImportReview {
 		throw new Error( __( 'The file does not contain a checkout layout.', 'yaycheckout' ) );
 	}
 
-	// Same count as the `blocks` field of Layout::to_summary_array(): our blocks only, one `<!-- wp:yaycheckout/` each.
 	return {
 		title: layout.title,
 		content: layout.content,
@@ -63,7 +62,7 @@ function reviewExportFile( text: string ): ImportReview {
 	};
 }
 
-/** PHP names the file in Content-Disposition; same fallback as filenameFromHeaders() in apps/admin tools.api.ts. */
+/** Download name from Content-Disposition, with a generic name when the header is missing or malformed. */
 function filenameFromHeaders( headers: Headers ): string {
 	return /filename="([^"]+)"/.exec( headers.get( 'content-disposition' ) ?? '' )?.[ 1 ] ?? 'yaycheckout-layout.json';
 }
@@ -78,13 +77,19 @@ function saveFile( filename: string, json: string ) {
 	setTimeout( () => URL.revokeObjectURL( url ), 0 );
 }
 
-/** apiFetch rejects with the raw Response when `parse: false`, and with a `{ message }` object otherwise. */
+/** A message for an apiFetch rejection: the raw Response when `parse: false`, else `{ message }`. Never empty. */
 async function errorMessage( error: unknown ): Promise< string > {
+	let message: string | undefined;
 	if ( error instanceof Response ) {
-		const body = await error.json().catch( () => null );
-		return body?.message ?? error.statusText;
+		message = ( await error.json().catch( () => null ) )?.message;
+	} else {
+		message = ( error as { message?: string } )?.message;
 	}
-	return ( error as { message?: string } )?.message ?? '';
+	return message || __( 'The layout could not be exported.', 'yaycheckout' );
+}
+
+function formatFileSize( bytes: number ): string {
+	return bytes < 1024 ? `${ bytes } B` : `${ ( bytes / 1024 ).toFixed( 1 ) } KB`;
 }
 
 const SUMMARY_LABEL_STYLE = { display: 'block', color: '#757575', marginBottom: 4 } as const;
@@ -92,17 +97,16 @@ const SUMMARY_LABEL_STYLE = { display: 'block', color: '#757575', marginBottom: 
 /** Import / Export panel in the layout's document sidebar tab. */
 function LayoutImportExport() {
 	const [ isImportOpen, setImportOpen ] = useState( false );
-	const [ importFile, setImportFile ] = useState< File | null >( null );
 	const [ importReview, setImportReview ] = useState< ImportReview | null >( null );
 	const [ importError, setImportError ] = useState( '' );
 	const [ isExporting, setExporting ] = useState( false );
-	const { postType, postId, title, hasUnsavedChanges, maxUploadFileSize } = useSelect(
+	const latestPick = useRef( 0 );
+	const { postType, postId, title, hasUnsavedChanges } = useSelect(
 		( select ) => ( {
 			postType: select( editorStore ).getCurrentPostType(),
 			postId: select( editorStore ).getCurrentPostId(),
 			title: select( editorStore ).getEditedPostAttribute( 'title' ),
 			hasUnsavedChanges: select( editorStore ).isEditedPostDirty() || select( editorStore ).isEditedPostNew(),
-			maxUploadFileSize: select( blockEditorStore ).getSettings().maxUploadFileSize,
 		} ),
 		[]
 	);
@@ -118,23 +122,39 @@ function LayoutImportExport() {
 		if ( ! file ) {
 			return;
 		}
-		setImportFile( null );
+		// Only the latest pick may set state: a slower read of an earlier file would otherwise overwrite it.
+		const pick = ++latestPick.current;
 		setImportReview( null );
 		// DropZone ignores `accept`, and some OSes report an empty MIME type for .json, so check the extension.
 		if ( ! file.name.toLowerCase().endsWith( '.json' ) ) {
 			setImportError( __( 'Only .json files can be imported.', 'yaycheckout' ) );
 			return;
 		}
+		if ( file.size > MAX_IMPORT_BYTES ) {
+			setImportError( __( 'This file is too large to be a layout export.', 'yaycheckout' ) );
+			return;
+		}
 		try {
-			setImportReview( reviewExportFile( await file.text() ) );
-			setImportFile( file );
-			setImportError( '' );
+			const review = reviewExportFile( await file.text() );
+			if ( pick === latestPick.current ) {
+				setImportReview( { fileName: file.name, fileSize: file.size, ...review } );
+				setImportError( '' );
+			}
 		} catch ( error ) {
-			setImportError( ( error as Error ).message );
+			if ( pick === latestPick.current ) {
+				setImportError( ( error as Error ).message );
+			}
 		}
 	};
 
-	// Unlike Tools → Import (a new draft), this swaps the open layout's blocks as an unsaved, undoable edit; saving is the merchant's call.
+	const closeImport = () => {
+		latestPick.current++;
+		setImportOpen( false );
+		setImportReview( null );
+		setImportError( '' );
+	};
+
+	// Unsaved and undoable on purpose: saving stays the merchant's call.
 	const applyImport = () => {
 		if ( ! importReview ) {
 			return;
@@ -170,13 +190,6 @@ function LayoutImportExport() {
 		}
 	};
 
-	const closeImport = () => {
-		setImportOpen( false );
-		setImportFile( null );
-		setImportReview( null );
-		setImportError( '' );
-	};
-
 	return (
 		<PluginDocumentSettingPanel
 			name="yaycheckout-layout-import-export"
@@ -185,7 +198,6 @@ function LayoutImportExport() {
 			<Flex direction="column" align="stretch" gap={ 4 }>
 				{ ! IS_PRO && (
 					<p style={ { margin: 0, color: '#757575' } }>
-						{ /* Admin's ProBadge colours (theme.css --warning). */ }
 						<span
 							style={ {
 								marginRight: 6,
@@ -231,7 +243,7 @@ function LayoutImportExport() {
 						__next40pxDefaultSize
 						className="editor-post-featured-image__toggle"
 						isBusy={ isExporting }
-						// The route exports the saved layout, so unsaved edits would silently be left out of the file.
+						// The file holds the saved layout, so unsaved edits would silently be missing from it.
 						disabled={ ! IS_PRO || isExporting || hasUnsavedChanges }
 						accessibleWhenDisabled
 						onClick={ exportLayout }
@@ -265,29 +277,18 @@ function LayoutImportExport() {
 							variant="secondary"
 							accept=".json,application/json"
 							onChange={ ( event ) => {
-									void handleFiles( event.currentTarget.files ?? [] );
-									// Cleared so choosing the same file again still fires change.
-									event.currentTarget.value = '';
-								} }
+								void handleFiles( event.currentTarget.files ?? [] );
+								// Cleared so choosing the same file again still fires change.
+								event.currentTarget.value = '';
+							} }
 						>
 							{ __( 'Select Files', 'yaycheckout' ) }
 						</FormFileUpload>
-						{ importFile && (
+						{ importReview && (
 							<p style={ { marginTop: 24 } }>
-								<strong>{ importFile.name }</strong>
+								<strong>{ importReview.fileName }</strong>
 								<br />
-								{ importFile.size < 1024
-									? `${ importFile.size } B`
-									: `${ ( importFile.size / 1024 ).toFixed( 1 ) } KB` }
-							</p>
-						) }
-						{ maxUploadFileSize > 0 && (
-							<p style={ { marginTop: 24 } }>
-								{ sprintf(
-									/* translators: %s: max upload size, e.g. "512 MB". */
-									__( 'Maximum upload file size: %s.', 'yaycheckout' ),
-									`${ Math.round( maxUploadFileSize / 1024 / 1024 ) } MB`
-								) }
+								{ formatFileSize( importReview.fileSize ) }
 							</p>
 						) }
 					</div>
@@ -311,8 +312,8 @@ function LayoutImportExport() {
 								</span>
 								<h3 style={ { margin: 0 } }>
 									{ sprintf(
-										/* translators: %s: layout title */
-										__( 'Ready to import "%s"', 'yaycheckout' ),
+										/* translators: %s: layout title stored in the export file */
+										__( 'Ready to import the blocks of "%s"', 'yaycheckout' ),
 										importReview.title
 									) }
 								</h3>
@@ -323,7 +324,7 @@ function LayoutImportExport() {
 								style={ { padding: '10px 16px', border: '1px solid #e0e0e0', borderRadius: 4, background: '#f9f9f9' } }
 							>
 								<div>
-									<span style={ SUMMARY_LABEL_STYLE }>{ __( 'Layout', 'yaycheckout' ) }</span>
+									<span style={ SUMMARY_LABEL_STYLE }>{ __( 'From layout', 'yaycheckout' ) }</span>
 									<strong>{ importReview.title }</strong>
 								</div>
 								<div>
@@ -333,7 +334,7 @@ function LayoutImportExport() {
 							</Flex>
 							<Notice status="warning" isDismissible={ false }>
 								{ __(
-									'Import replaces all the content of this layout with the file’s content. Nothing is saved until you click Save, and you can undo it.',
+									'Import replaces all the content of this layout with the file’s content. The layout title stays the same. Nothing is saved until you click Save, and you can undo it.',
 									'yaycheckout'
 								) }
 							</Notice>
