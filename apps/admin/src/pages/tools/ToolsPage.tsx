@@ -1,7 +1,12 @@
 import { __ } from '@wordpress/i18n';
 
-import { Card } from '@/components/ui/card';
+import { isPro } from '@/lib/plan';
+import { cn } from '@/lib/utils';
 import PageLayout from '@/pages/PageLayout';
+import { ExportCard } from './components/ExportCard';
+import { ExportImportCard } from './components/ExportImportCard';
+import { ImportCard } from './components/ImportCard';
+import { ResetCard } from './components/ResetCard';
 
 export default function ToolsPage() {
   return (
@@ -9,9 +14,17 @@ export default function ToolsPage() {
       heading={__('Tools', 'yaycheckout')}
       description={__('Import, export and maintenance utilities for your checkout.', 'yaycheckout')}
     >
-      <Card>
-        <p className="text-muted-foreground text-sm">{__('This section is not implemented yet.', 'yaycheckout')}</p>
-      </Card>
+      <div className={cn('bg-card grid gap-6 rounded-md border p-6 md:grid-cols-2', isPro && 'xl:grid-cols-3')}>
+        {isPro ? (
+          <>
+            <ExportCard />
+            <ImportCard />
+          </>
+        ) : (
+          <ExportImportCard />
+        )}
+        <ResetCard />
+      </div>
     </PageLayout>
   );
 }

@@ -22,6 +22,9 @@ class Layout {
 
     public const OPTION_ACTIVE = 'yaycheckout_active_layout';
 
+    /** Export envelope identity; `plugin_version` carries compatibility, so there is no separate format version. */
+    public const EXPORT_FORMAT = 'yaycheckout-layout';
+
     public int $id       = 0;
     public string $title = '';
 
@@ -65,6 +68,9 @@ class Layout {
             'title'        => $this->title,
             'status'       => $this->post_status,
             'is_active'    => $this->is_active,
+            // Our blocks only: each opens with one `<!-- wp:yaycheckout/`; closers read `<!-- /wp:`.
+            'blocks'       => substr_count( $this->content, '<!-- wp:yaycheckout/' ),
+            'size'         => strlen( $this->content ),
             'published_at' => DateHelper::to_iso8601( $this->published_at ),
             'scheduled_at' => DateHelper::to_iso8601( $this->scheduled_at ),
         ];

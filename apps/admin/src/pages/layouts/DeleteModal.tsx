@@ -26,7 +26,7 @@ export function DeleteModal({
 
   useEffect(() => setTyped(''), [layout?.id]);
 
-  const canDelete = typed.trim().toUpperCase() === CONFIRM_PHRASE && !isPending;
+  const canDelete = typed.trim() === CONFIRM_PHRASE && !isPending;
 
   return (
     <Dialog open={null !== layout} onOpenChange={(open) => !isPending && onOpenChange(open)}>

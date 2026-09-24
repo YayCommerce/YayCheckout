@@ -21,6 +21,8 @@ function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
     title: wire.title,
     status: wire.status,
     isActive: wire.is_active,
+    blocks: wire.blocks,
+    size: wire.size,
     publishedAt: wire.published_at,
     scheduledAt: wire.scheduled_at,
   };
@@ -33,7 +35,7 @@ function layoutFromWire(wire: LayoutWire): Layout {
   };
 }
 
-function parseLayout(payload: unknown): Layout {
+export function parseLayout(payload: unknown): Layout {
   return layoutFromWire(layoutWireSchema.parse(payload));
 }
 
@@ -91,6 +93,10 @@ export async function restoreLayout(id: number): Promise<Layout> {
 
 export async function duplicateLayout(id: number): Promise<Layout> {
   return parseLayout(await api.post(`layouts/${id}/duplicate`).json());
+}
+
+export async function resetLayout(id: number): Promise<Layout> {
+  return parseLayout(await api.post(`layouts/${id}/reset`).json());
 }
 
 export async function createPreviewLink(id: number): Promise<PreviewLink> {
