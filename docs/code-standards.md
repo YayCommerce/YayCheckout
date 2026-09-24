@@ -74,6 +74,27 @@ The one exception is `uninstall.php`: WordPress runs it without the plugin's aut
 
 `Models\Settings::schema()` is the only description of a setting — section, key, type, default, allowed values. `Settings::from_option()`, `Settings::sanitize()` and defaulting all walk it, so a key cannot be accepted without a default or defaulted without validation, and a stale or hand-edited stored value reads back as its default. Adding a setting is one schema entry, the matching wire/app zod entries in `settings.schema.ts`, and a form field. No separate defaults array, no per-key sanitize function.
 
+## Single source of truth
+
+**Every rule has one owner; everything else calls it or mirrors it from the table below.**
+
+Two places that decide the same thing leave the reader unable to tell which one wins, and they drift: one gets fixed, the other keeps shipping the old rule. The two sections above are this rule applied to storage keys and settings.
+
+| Rule | Owner | Allowed mirrors |
+|---|---|---|
+| Meta keys, option names | Model constants (`Layout::OPTION_ACTIVE`, `Layout::META_RULES`, …) | `uninstall.php` literals (no autoloader) |
+| Settings keys, types, defaults | `Models\Settings::schema()` | `apps/admin/src/lib/schema/settings.schema.ts` |
+| Design tokens, presets, radius/base-size bounds | `Models\Design::schema()`, `Design::presets()` | `RADIUS_RANGE`, `BASE_SIZE_RANGE` in `apps/admin/src/lib/schema/design.schema.ts` |
+| Token diff count, active preset | `apps/admin/src/lib/helpers/design.helper.ts` (`countTokenDiffs`, `activePresetIdFor`) | — |
+| Extra-field Keys, accepted options | `Services\LayoutMarkupReader` (`EXTRA_FIELD_KEY_PATTERN`, `extra_fields()`, `options()`) | `packages/blocks/src/shared/extra-field-keys.ts` |
+| Publish rules | `LayoutMarkupReader::publish_error()` — called, never re-checked | `packages/blocks/src/checkout/publish-guard.ts` |
+| Required/optional field rules | `Services\RequiredFieldOverlay` | `assets/js/checkout-field-requirements.js` (payload from `RequiredIndicator::script_payload()`) |
+| Block list, inserter order | `Blocks\BlockRegistry::ORDER` | — |
+| REST wire shapes | PHP `to_array()` | `*WireSchema` in `apps/admin/src/lib/schema/` |
+| Cross-cutting rationale | `docs/system-architecture.md` | a code comment of one or two lines plus a pointer |
+
+A mirror exists only where the language boundary forces one; it names its owner in a comment and must agree with it. Adding a mirror means adding it to this table with the reason. `/source-of-truth-check` reads this table to flag copies in a diff.
+
 ## REST controllers
 
 Extend `BaseRestController`. Register routes in the constructor, use `SingletonTrait`, and instantiate from `Engine\RestAPI::checkout_endpoints()` on `rest_api_init`.
@@ -183,6 +204,15 @@ The single permitted reference is the guarded bootstrap in `YayCheckout::boot_pr
 `composer lint` runs `scripts/check-pro-boundary.sh`, which fails on a second reference. This is not a style preference: without it, one `use` statement makes the Free build impossible, and nothing else would reveal that until a customer installed the artifact.
 
 Plan is derived, not declared. `Plan::is_pro()` reports whether the provider actually booted, so it cannot claim Pro while the files are missing. It describes **plan**, not license — an expired Pro license is still the Pro plan.
+
+## Readable code
+
+Body-level rules for new and touched code; the caps are soft and existing code is not refactored to meet them.
+
+- **Return early; nest at most two levels.** Each level is one more condition the reader holds in their head to know when a line runs.
+- **One job per function.** If its purpose line needs "and", split it; past ~40 lines, check whether it has. A function doing two jobs can't be reused for either.
+- **Names carry kind and unit.** Booleans read `is_`/`has_`/`can_`, quantities name their unit (`_seconds`, `_bytes`), no abbreviations beyond `id` and `url`. A bare `timeout` or `flag` sends the reader to the call site to find out.
+- **Boring over clever.** No nested ternaries, at most two chained `map`/`filter`/`reduce`, a string function over a regex when it is enough. Clever code is read many more times than it is written.
 
 ## Comments
 
