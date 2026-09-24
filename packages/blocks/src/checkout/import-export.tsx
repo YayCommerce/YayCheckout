@@ -1,6 +1,7 @@
+import apiFetch from '@wordpress/api-fetch';
 import { store as blockEditorStore } from '@wordpress/block-editor';
 import { parse } from '@wordpress/blocks';
-import { Button, Dashicon, DropZone, Flex, FormFileUpload, Modal, Notice } from '@wordpress/components';
+import { Button, Dashicon, DropZone, ExternalLink, Flex, FormFileUpload, Modal, Notice } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { PluginDocumentSettingPanel, store as editorStore } from '@wordpress/editor';
 import { useState } from '@wordpress/element';
@@ -9,6 +10,19 @@ import { store as noticesStore } from '@wordpress/notices';
 import { registerPlugin } from '@wordpress/plugins';
 
 const LAYOUT_POST_TYPE = 'yay_checkout_layout';
+
+declare global {
+	interface Window {
+		/** Printed by BlockRegistry::register_blocks(). */
+		yayCheckoutBlocks?: { isPro: boolean };
+	}
+}
+
+/** Import / Export is a Pro feature, as on the Tools page; Free shows it locked. Cosmetic gate: Free's PHP has no export route. */
+const IS_PRO = window.yayCheckoutBlocks?.isPro ?? false;
+
+/** Same page as UPGRADE_URL in apps/admin ProGate.tsx. */
+const UPGRADE_URL = 'https://yaycommerce.com/yaycheckout-for-woocommerce/';
 
 /** Mirrors Layout::EXPORT_FORMAT in PHP. */
 const LAYOUT_EXPORT_FORMAT = 'yaycheckout-layout';
@@ -49,6 +63,30 @@ function reviewExportFile( text: string ): ImportReview {
 	};
 }
 
+/** PHP names the file in Content-Disposition; same fallback as filenameFromHeaders() in apps/admin tools.api.ts. */
+function filenameFromHeaders( headers: Headers ): string {
+	return /filename="([^"]+)"/.exec( headers.get( 'content-disposition' ) ?? '' )?.[ 1 ] ?? 'yaycheckout-layout.json';
+}
+
+function saveFile( filename: string, json: string ) {
+	const url = URL.createObjectURL( new Blob( [ json ], { type: 'application/json' } ) );
+	const anchor = document.createElement( 'a' );
+	anchor.href = url;
+	anchor.download = filename;
+	anchor.click();
+	// Deferred: Safari can drop the download if the URL is revoked in the same tick as the click.
+	setTimeout( () => URL.revokeObjectURL( url ), 0 );
+}
+
+/** apiFetch rejects with the raw Response when `parse: false`, and with a `{ message }` object otherwise. */
+async function errorMessage( error: unknown ): Promise< string > {
+	if ( error instanceof Response ) {
+		const body = await error.json().catch( () => null );
+		return body?.message ?? error.statusText;
+	}
+	return ( error as { message?: string } )?.message ?? '';
+}
+
 const SUMMARY_LABEL_STYLE = { display: 'block', color: '#757575', marginBottom: 4 } as const;
 
 /** Import / Export panel in the layout's document sidebar tab. */
@@ -57,15 +95,19 @@ function LayoutImportExport() {
 	const [ importFile, setImportFile ] = useState< File | null >( null );
 	const [ importReview, setImportReview ] = useState< ImportReview | null >( null );
 	const [ importError, setImportError ] = useState( '' );
-	const { postType, maxUploadFileSize } = useSelect(
+	const [ isExporting, setExporting ] = useState( false );
+	const { postType, postId, title, hasUnsavedChanges, maxUploadFileSize } = useSelect(
 		( select ) => ( {
 			postType: select( editorStore ).getCurrentPostType(),
+			postId: select( editorStore ).getCurrentPostId(),
+			title: select( editorStore ).getEditedPostAttribute( 'title' ),
+			hasUnsavedChanges: select( editorStore ).isEditedPostDirty() || select( editorStore ).isEditedPostNew(),
 			maxUploadFileSize: select( blockEditorStore ).getSettings().maxUploadFileSize,
 		} ),
 		[]
 	);
 	const { resetEditorBlocks } = useDispatch( editorStore );
-	const { createSuccessNotice } = useDispatch( noticesStore );
+	const { createSuccessNotice, createErrorNotice } = useDispatch( noticesStore );
 
 	if ( postType !== LAYOUT_POST_TYPE ) {
 		return null;
@@ -105,6 +147,29 @@ function LayoutImportExport() {
 		closeImport();
 	};
 
+	const exportLayout = async () => {
+		setExporting( true );
+		try {
+			const response = ( await apiFetch( {
+				path: `/yaycheckout/v1/layouts/${ postId }/export`,
+				parse: false,
+			} ) ) as Response;
+			saveFile( filenameFromHeaders( response.headers ), JSON.stringify( await response.json(), null, 2 ) );
+			createSuccessNotice(
+				sprintf(
+					/* translators: %s: layout title */
+					__( '"%s" exported.', 'yaycheckout' ),
+					title
+				),
+				{ type: 'snackbar' }
+			);
+		} catch ( error ) {
+			createErrorNotice( await errorMessage( error ), { type: 'snackbar' } );
+		} finally {
+			setExporting( false );
+		}
+	};
+
 	const closeImport = () => {
 		setImportOpen( false );
 		setImportFile( null );
@@ -118,6 +183,26 @@ function LayoutImportExport() {
 			title={ __( 'Import / Export', 'yaycheckout' ) }
 		>
 			<Flex direction="column" align="stretch" gap={ 4 }>
+				{ ! IS_PRO && (
+					<p style={ { margin: 0, color: '#757575' } }>
+						{ /* Admin's ProBadge colours (theme.css --warning). */ }
+						<span
+							style={ {
+								marginRight: 6,
+								padding: '1px 6px',
+								borderRadius: 2,
+								background: '#f9bd09',
+								color: '#fff',
+								fontSize: 11,
+								fontWeight: 600,
+							} }
+						>
+							{ __( 'Pro', 'yaycheckout' ) }
+						</span>
+						{ __( 'Upgrade to PRO to unlock this feature now.', 'yaycheckout' ) }{ ' ' }
+						<ExternalLink href={ UPGRADE_URL }>{ __( 'Upgrade', 'yaycheckout' ) }</ExternalLink>
+					</p>
+				) }
 				<Flex direction="column" align="stretch" gap={ 2 }>
 					<h3 style={ { margin: 0 } }>
 						{ __( 'Import', 'yaycheckout' ) }
@@ -128,6 +213,8 @@ function LayoutImportExport() {
 					<Button
 						__next40pxDefaultSize
 						className="editor-post-featured-image__toggle"
+						disabled={ ! IS_PRO }
+						accessibleWhenDisabled
 						onClick={ () => setImportOpen( true ) }
 					>
 						{ __( 'Import', 'yaycheckout' ) }
@@ -140,9 +227,22 @@ function LayoutImportExport() {
 					<p style={ { margin: 0, color: '#757575' } }>
 						{ __( 'Downloads one layout with its tokens and slots.', 'yaycheckout' ) }
 					</p>
-					<Button __next40pxDefaultSize className="editor-post-featured-image__toggle">
+					<Button
+						__next40pxDefaultSize
+						className="editor-post-featured-image__toggle"
+						isBusy={ isExporting }
+						// The route exports the saved layout, so unsaved edits would silently be left out of the file.
+						disabled={ ! IS_PRO || isExporting || hasUnsavedChanges }
+						accessibleWhenDisabled
+						onClick={ exportLayout }
+					>
 						{ __( 'Export', 'yaycheckout' ) }
 					</Button>
+					{ IS_PRO && hasUnsavedChanges && (
+						<p style={ { margin: 0, color: '#757575' } }>
+							{ __( 'Save your changes to include them in the export.', 'yaycheckout' ) }
+						</p>
+					) }
 				</Flex>
 			</Flex>
 			{ isImportOpen && (

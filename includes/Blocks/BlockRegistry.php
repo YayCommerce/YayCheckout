@@ -2,6 +2,7 @@
 namespace YayCheckout\Blocks;
 
 use YayCheckout\Models\Layout;
+use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -60,6 +61,13 @@ class BlockRegistry {
         foreach ( array_merge( array_intersect_key( array_flip( self::ORDER ), $built ), $built ) as $dir ) {
             register_block_type( $dir );
         }
+
+        // One blocks bundle serves both editions, so the plan travels at runtime; the editor's Import / Export is Pro-only.
+        wp_add_inline_script(
+            generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
+            'window.yayCheckoutBlocks = ' . wp_json_encode( [ 'isPro' => Plan::is_pro() ] ) . ';',
+            'before'
+        );
     }
 
     /**
