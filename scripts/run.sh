@@ -4,7 +4,7 @@
 # Usage: ./scripts/run.sh [command]
 #
 # Commands:
-#   dev                - Update admin shell + start Vite dev server (HMR on :3040)
+#   dev                - Update admin shell + start Vite dev server (HMR on :3040) + blocks watcher
 #   build              - Build admin dashboard + blocks for production
 #   release [version]  - Create release ZIP package (prompts for version)
 #   bump <version>     - Bump version number in plugin files
@@ -191,6 +191,13 @@ cmd_dev() {
     update_shell
     resolve_pnpm
     install_admin_deps
+    install_blocks_deps
+
+    # Ctrl+C reaches both processes, but if Vite exits on its own the
+    # watcher would outlive the script and keep rewriting assets/dist/blocks.
+    print_step "Starting blocks watcher (assets/dist/blocks)..."
+    (cd "$BLOCKS_DIR" && exec $PNPM start) &
+    trap 'kill $(jobs -p) 2>/dev/null' EXIT
 
     print_info "Make sure YAYCHECKOUT_IS_DEVELOPMENT as true"
     print_step "Starting Vite dev server (http://localhost:3040)..."
@@ -416,7 +423,7 @@ cmd_help() {
     echo "Usage: ./scripts/run.sh [command]"
     echo ""
     echo "Commands:"
-    echo "  dev                          Update admin shell + start Vite dev server (:3040)"
+    echo "  dev                          Update admin shell + Vite dev server (:3040) + blocks watcher"
     echo "  build                        Build admin dashboard + blocks for production"
     echo "  release [version] [--plan=free|pro] [--no-prompt]"
     echo "                               Create release ZIP in release/ (default --plan=free)"
