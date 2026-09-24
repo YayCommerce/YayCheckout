@@ -27,10 +27,10 @@ export function ResetModal({
 
   useEffect(() => setTyped(''), [layout?.id]);
 
-  const canReset = typed.trim() === CONFIRM_PHRASE;
+  const canReset = typed.trim() === CONFIRM_PHRASE && !reset.isPending;
 
   return (
-    <Dialog open={null !== layout} onOpenChange={onOpenChange}>
+    <Dialog open={null !== layout} onOpenChange={(open) => !reset.isPending && onOpenChange(open)}>
       <DialogContent className="sm:max-w-2xl">
         {layout && (
           <form

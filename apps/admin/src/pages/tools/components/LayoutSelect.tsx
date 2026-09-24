@@ -19,10 +19,12 @@ const LOAD_MORE_THRESHOLD_PX = 40;
 interface LayoutSelectProps {
   value: LayoutSummary | null;
   onChange: (layout: LayoutSummary) => void;
+  /** Pick the active layout once the list arrives. Off where the active layout is the riskiest default (Reset). */
+  preselect?: boolean;
 }
 
-/** Searchable layout picker for the Tools cards; picks the active layout once the list arrives. */
-export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
+/** Searchable layout picker for the Tools cards. */
+export function LayoutSelect({ value, onChange, preselect = true }: LayoutSelectProps) {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   // useDebounceFn has no cancel; the trailing callback checks this ref to drop a stale value.
@@ -42,14 +44,14 @@ export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
     if (layouts.length === 0) return;
 
     if (value === null) {
-      onChange(layouts.find((layout) => layout.isActive) ?? layouts[0]);
+      if (preselect) onChange(layouts.find((layout) => layout.isActive) ?? layouts[0]);
       return;
     }
 
     // The card keeps its own copy of the row; swap in the refetched one so a reset or rename shows up.
     const fresh = layouts.find((layout) => layout.id === value.id);
     if (fresh && fresh !== value) onChange(fresh);
-  }, [value, layouts, onChange]);
+  }, [value, layouts, onChange, preselect]);
 
   return (
     <Field>

@@ -12,11 +12,13 @@ export function useExportLayoutMutation() {
   });
 }
 
+export const IMPORT_LAYOUT_MUTATION_KEY = ['tools', 'import'];
+
 export function useImportLayoutMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ['tools', 'import'],
+    mutationKey: IMPORT_LAYOUT_MUTATION_KEY,
     mutationFn: importLayout,
     // The Source step renders the refusal next to the button that caused it.
     meta: { skipGlobalError: true },

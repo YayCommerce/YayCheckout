@@ -23,7 +23,7 @@ export function ResetCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 space-y-3">
-        <LayoutSelect value={layout} onChange={setLayout} />
+        <LayoutSelect value={layout} onChange={setLayout} preselect={false} />
         <p className="text-muted-foreground text-sm">
           {__('Revisions are kept, so you can roll back from the editor.', 'yaycheckout')}
         </p>

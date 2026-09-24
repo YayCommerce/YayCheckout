@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { useIsMutating } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { reviewExportFile } from '@/lib/api/tools.api';
 import { getErrorMsg } from '@/lib/helpers/response.helper';
-import { useImportLayoutMutation } from '@/lib/queries/tools.queries';
+import { IMPORT_LAYOUT_MUTATION_KEY, useImportLayoutMutation } from '@/lib/queries/tools.queries';
 import type { Layout } from '@/lib/schema/layout.schema';
 import type { LayoutExportEnvelope } from '@/lib/schema/tools.schema';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -25,8 +26,11 @@ export function ImportModal({
   envelope: LayoutExportEnvelope | null;
   onOpenChange: (open: boolean) => void;
 }) {
+  // The mutation lives in ImportFlow; the Dialog reads it by key so Escape cannot close mid-import.
+  const importing = useIsMutating({ mutationKey: IMPORT_LAYOUT_MUTATION_KEY }) > 0;
+
   return (
-    <Dialog open={envelope !== null} onOpenChange={onOpenChange}>
+    <Dialog open={envelope !== null} onOpenChange={(open) => !importing && onOpenChange(open)}>
       <DialogContent className="max-h-[90vh] sm:max-w-3xl">
         {envelope && <ImportFlow envelope={envelope} onClose={() => onOpenChange(false)} />}
       </DialogContent>
