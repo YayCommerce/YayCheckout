@@ -137,7 +137,7 @@ Query errors surface centrally — background refetch failures toast, first-load
 
 ## Blocks (`packages/blocks/`)
 
-Thirteen blocks: `checkout` (root, `multiple: false`), `contact`, `billing`, `shipping`, `field`, `order-review`, `extra-field`, `shipping-methods`, `express-pay`, `payment`, `order-summary`, `place-order`, `slot`. All dynamic (`save()` returns `null`), rendered by `render.php`. Built by `@wordpress/scripts`, which emits `index.asset.php` so `wp-*` dependencies are extracted. The insert guard enforces: YayCheckout blocks only on the layout CPT; `checkout` at any depth (a layout may wrap it in core blocks) but never inside itself; leaves (`contact`, `billing`, `shipping`, `order-review`, `shipping-methods`, `express-pay`, `payment`, `order-summary`, `place-order`) directly under `checkout`; `field` under address sections only; `extra-field` and `slot` anywhere under `checkout`.
+Thirteen blocks: `checkout` (root, `multiple: false`), `contact`, `billing`, `shipping`, `field`, `order-review`, `extra-field`, `shipping-methods`, `express-pay`, `payment`, `order-summary`, `place-order`, `slot`. All dynamic, rendered by `render.php`: leaves save `null`; `checkout`, `billing` and `shipping` save only their `InnerBlocks` so children persist. Every block registers through `shared/register-dynamic-block.tsx`, which also sets its inserter icon from `shared/block-icons.tsx` (custom 24px SVGs keyed by block name). Built by `@wordpress/scripts`, which emits `index.asset.php` so `wp-*` dependencies are extracted. Placement comes from each `block.json` (`parent`/`ancestor`/`multiple`) and which editor offers the blocks from `BlockRegistry::allowed_blocks()`; see `system-architecture.md`.
 
 ## Tooling
 
@@ -160,7 +160,7 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 - Adding a design token → `Models/Design::schema()`, then `design.schema.ts`, then a component in `pages/design/components/`
 - Adding an endpoint → `LayoutRestController`, then the `lib/` triplet
 - Compatibility statuses → the bundled list in `Support/CompatibilityCatalogue`, or the remote JSON at `YAYCHECKOUT_COMPATIBILITY_CATALOGUE_URL`; new checkout hooks → `CheckoutHookScanHelper::HOOKS`
-- Adding a block → `packages/blocks/src/` (registered automatically once built; add it to `BlockRegistry::ORDER` for its inserter position); a section block also goes in `LayoutMarkupReader::SECTION_SLOTS`
+- Adding a block → `packages/blocks/src/` (registered automatically once built; add it to `BlockRegistry::ORDER` for its inserter position, and give it an icon in `shared/block-icons.tsx`); a section block also goes in `LayoutMarkupReader::SECTION_SLOTS`
 - Free/Pro → `includes/Support/Plan.php` and `scripts/check-pro-boundary.sh`
 
 ## Not yet built
