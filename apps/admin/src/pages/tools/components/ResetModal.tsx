@@ -18,9 +18,12 @@ const CONFIRM_PHRASE = 'RESET';
 export function ResetModal({
   layout,
   onOpenChange,
+  onReset,
 }: {
   layout: LayoutSummary | null;
   onOpenChange: (open: boolean) => void;
+  /** The layout as reset, so the card's copy shows the new block count and size. */
+  onReset: (layout: LayoutSummary) => void;
 }) {
   const [typed, setTyped] = useState('');
   const reset = useResetLayoutMutation();
@@ -40,6 +43,7 @@ export function ResetModal({
               if (!canReset) return;
               reset.mutate(layout.id, {
                 onSuccess: (updated) => {
+                  onReset(updated);
                   toast.success(
                     sprintf(
                       /* translators: %s: layout title */

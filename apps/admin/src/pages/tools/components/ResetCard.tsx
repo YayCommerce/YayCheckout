@@ -23,7 +23,7 @@ export function ResetCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 space-y-3">
-        <LayoutSelect value={layout} onChange={setLayout} preselect={false} />
+        <LayoutSelect value={layout} onChange={setLayout} />
         <p className="text-muted-foreground text-sm">
           {__('Revisions are kept, so you can roll back from the editor.', 'yaycheckout')}
         </p>
@@ -33,7 +33,7 @@ export function ResetCard() {
           {__('Reset layout', 'yaycheckout')}
         </Button>
       </CardFooter>
-      <ResetModal layout={confirming ? layout : null} onOpenChange={setConfirming} />
+      <ResetModal layout={confirming ? layout : null} onOpenChange={setConfirming} onReset={setLayout} />
     </Card>
   );
 }

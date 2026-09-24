@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { CheckIcon } from 'lucide-react';
 import { useDebounceFn } from 'rooks';
 import { __ } from '@wordpress/i18n';
@@ -12,6 +12,7 @@ import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';
 
 /** Distance from the bottom of the list at which the next page is fetched. */
 const LOAD_MORE_THRESHOLD_PX = 40;
@@ -19,12 +20,13 @@ const LOAD_MORE_THRESHOLD_PX = 40;
 interface LayoutSelectProps {
   value: LayoutSummary | null;
   onChange: (layout: LayoutSummary) => void;
-  /** Pick the active layout once the list arrives. Off where the active layout is the riskiest default (Reset). */
-  preselect?: boolean;
 }
 
-/** Searchable layout picker for the Tools cards. */
-export function LayoutSelect({ value, onChange, preselect = true }: LayoutSelectProps) {
+/**
+ * Searchable layout picker for the Tools cards. Starts empty: the list's first page is the newest
+ * ten, so a default taken from it could be the wrong layout.
+ */
+export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   // useDebounceFn has no cancel; the trailing callback checks this ref to drop a stale value.
@@ -40,19 +42,6 @@ export function LayoutSelect({ value, onChange, preselect = true }: LayoutSelect
   const [open, setOpen] = useState(false);
   const id = useId();
 
-  useEffect(() => {
-    if (layouts.length === 0) return;
-
-    if (value === null) {
-      if (preselect) onChange(layouts.find((layout) => layout.isActive) ?? layouts[0]);
-      return;
-    }
-
-    // The card keeps its own copy of the row; swap in the refetched one so a reset or rename shows up.
-    const fresh = layouts.find((layout) => layout.id === value.id);
-    if (fresh && fresh !== value) onChange(fresh);
-  }, [value, layouts, onChange, preselect]);
-
   return (
     <Field>
       <FieldLabel htmlFor={id}>{__('Layout', 'yaycheckout')}</FieldLabel>
@@ -64,7 +53,10 @@ export function LayoutSelect({ value, onChange, preselect = true }: LayoutSelect
             <span className={cn('truncate', value === null && 'text-muted-foreground')}>
               {value?.title ?? __('Select a layout', 'yaycheckout')}
             </span>
-            <ComboboxIcon />
+            <span className="ml-auto flex shrink-0 items-center gap-2">
+              {value && <LayoutBadge layout={value} />}
+              <ComboboxIcon />
+            </span>
           </ComboboxTrigger>
           <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
             {/* The server filters and paginates, so cmdk must show the rows it is given, in order. */}
@@ -106,11 +98,7 @@ export function LayoutSelect({ value, onChange, preselect = true }: LayoutSelect
                           className="data-[selected=true]:text-primary size-3.5 stroke-[2.5px] text-transparent"
                         />
                         <span className="truncate">{layout.title}</span>
-                        {layout.isActive && (
-                          <Badge variant="success-soft" className="ml-auto">
-                            {__('Active', 'yaycheckout')}
-                          </Badge>
-                        )}
+                        <LayoutBadge layout={layout} className="ml-auto" />
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -122,4 +110,17 @@ export function LayoutSelect({ value, onChange, preselect = true }: LayoutSelect
       )}
     </Field>
   );
+}
+
+/** Active says more than Published for the one layout shoppers see, so it replaces the status there. */
+function LayoutBadge({ layout, className }: { layout: LayoutSummary; className?: string }) {
+  if (layout.isActive) {
+    return (
+      <Badge variant="success-soft" className={cn('shrink-0', className)}>
+        {__('Active', 'yaycheckout')}
+      </Badge>
+    );
+  }
+
+  return <LayoutStatusBadge layout={layout} className={cn('shrink-0', className)} />;
 }
