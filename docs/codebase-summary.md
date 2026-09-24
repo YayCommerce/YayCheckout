@@ -49,7 +49,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 
 - `yaycheckout.php` → `plugin_init()` on `plugins_loaded`, after a WooCommerce check; also registers `I18n::load_plugin_textdomain()` on `plugins_loaded`
 - `YayCheckout::__construct()` boots in order: `boot_pro()`, `RestAPI`, `RegisterFacade`, `Admin\Settings`, `BlockRegistry`, `LayoutPostType`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin\LayoutEditorEmbed`, `Renderer\PreviewRequest`, `Renderer\CheckoutScripts`, `Renderer\CheckoutPage`, `Renderer\CheckoutFragments`, `Renderer\CheckoutExtraFields`, `Renderer\CheckoutRequiredFields`
-- `Engine\RestAPI` instantiates controllers on `rest_api_init`; Free: `SettingsRestController`, `LayoutRestController`, `DesignRestController`, `CompatibilityRestController`; Pro adds `DesignPresetRestController`
+- `Engine\RestAPI` instantiates controllers on `rest_api_init`; Free: `SettingsRestController`, `LayoutRestController`, `DesignRestController`, `CompatibilityRestController`. Pro's controllers (`DesignPresetRestController`, `LayoutExportRestController`, `LayoutImportRestController`) are registered by `ProServiceProvider` on the same hook, so the Free build has none
 - `Engine\Admin\Settings` enqueues the SPA and localises `yayCheckoutMeta` / `yayCheckoutAdmin`, gated on the admin-shell hook suffix
 - `Engine\Register\RegisterFacade` branches to RegisterDev or RegisterProd on `init`, conditionally based on `YAYCHECKOUT_IS_DEVELOPMENT`
 
