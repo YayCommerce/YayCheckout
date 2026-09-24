@@ -91,10 +91,10 @@ export function ProTag({ className }: { className?: string }) {
   );
 }
 
-/** Plain "Upgrade" CTA. No default onClick: not every Upgrade button goes to the same place. */
-export function UpgradeButton(props: Omit<ComponentProps<typeof Button>, 'children'>) {
+/** Plain "Upgrade" CTA. Opens the upgrade page; pass onClick only for a button that goes somewhere else. */
+export function UpgradeButton({ onClick, ...props }: Omit<ComponentProps<typeof Button>, 'children'>) {
   return (
-    <Button size="sm" variant="primary-outline" {...props}>
+    <Button size="sm" variant="primary-outline" onClick={onClick ?? (() => window.open(UPGRADE_URL))} {...props}>
       {__('Upgrade', 'yaycheckout')}
     </Button>
   );

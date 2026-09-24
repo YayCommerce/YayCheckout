@@ -1,4 +1,11 @@
-import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  queryOptions,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import {
   activateLayout,
@@ -13,6 +20,7 @@ import {
   getLayouts,
   LayoutListParams,
   publishLayout,
+  resetLayout,
   restoreLayout,
 } from '@/lib/api/layout.api';
 import { LISTED_LAYOUT_STATUSES } from '@/lib/schema/layout.schema';
@@ -47,6 +55,18 @@ export const LAYOUT_QUERIES = {
 
 export function useLayoutsQuery(params: LayoutListParams = {}) {
   return useQuery(LAYOUT_QUERIES.list(params));
+}
+
+/** The picker's list: pages pile up as it is scrolled, so every layout is reachable without page controls. */
+export function useInfiniteLayoutsQuery(params: LayoutListParams = {}) {
+  return useInfiniteQuery({
+    queryKey: [...LAYOUT_KEYS.list(params), 'infinite'],
+    queryFn: ({ pageParam }) => getLayouts({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
+    // A new search is a new key; without this the open list empties while it loads.
+    placeholderData: keepPreviousData,
+  });
 }
 
 export function useLayoutCountsQuery() {
@@ -168,6 +188,19 @@ export function useDuplicateLayoutMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+    },
+  });
+}
+
+/** Rows carry blocks and size, which reset changes; counts stay valid. */
+export function useResetLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'reset'],
+    mutationFn: resetLayout,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
     },
   });
 }

@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Search } from 'lucide-react';
+import { useSearchParams } from 'react-router';
 import { useDebounceFn } from 'rooks';
 import { toast } from 'sonner';
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 
 import { formatDateTime } from '@/lib/helpers/date.helper';
 import {
@@ -45,6 +46,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { DeleteModal } from '@/pages/layouts/DeleteModal';
+import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import { PreviewLinkModal } from '@/pages/layouts/PreviewLinkModal';
 import { SetActiveModal } from '@/pages/layouts/SetActiveModal';
@@ -163,8 +165,10 @@ function LayoutsPageBody({
   onPageIndexChange: (pageIndex: number) => void;
 }) {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
-  const [editingLayoutId, setEditingLayoutId] = useState<number | null>(null);
+  // `?edit=ID` lets another screen (Tools → Import) land straight in the embedded editor.
+  const [editingLayoutId, setEditingLayoutId] = useState<number | null>(() => Number(searchParams.get('edit')) || null);
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
   const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
@@ -264,6 +268,7 @@ function LayoutsPageBody({
   const onEditorOpenChange = (open: boolean) => {
     if (!open) {
       setEditingLayoutId(null);
+      if (searchParams.has('edit')) setSearchParams({}, { replace: true });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
     }
   };
@@ -544,36 +549,6 @@ function LayoutsTable({
   );
 }
 
-function statusBadge(layout: LayoutSummary) {
-  if (layout.status === 'trash') {
-    return <Badge variant="destructive-soft">{__('Archived', 'yaycheckout')}</Badge>;
-  }
-
-  if (layout.status === 'publish') {
-    return <Badge variant="success">{__('Published', 'yaycheckout')}</Badge>;
-  }
-
-  if (layout.status === 'future') {
-    return (
-      <Badge variant="outline">
-        {layout.scheduledAt
-          ? sprintf(
-              /* translators: %s: scheduled publish date */
-              __('Scheduled · %s', 'yaycheckout'),
-              formatDateTime(layout.scheduledAt),
-            )
-          : __('Scheduled', 'yaycheckout')}
-      </Badge>
-    );
-  }
-
-  if (layout.status === 'pending') {
-    return <Badge variant="outline">{__('Pending review', 'yaycheckout')}</Badge>;
-  }
-
-  return <Badge variant="outline">{__('Draft', 'yaycheckout')}</Badge>;
-}
-
 function LayoutTableRow({
   layout,
   view,
@@ -605,7 +580,9 @@ function LayoutTableRow({
       <TableCell className="max-w-[320px] truncate font-medium" title={layout.title}>
         {layout.title}
       </TableCell>
-      <TableCell>{statusBadge(layout)}</TableCell>
+      <TableCell>
+        <LayoutStatusBadge layout={layout} />
+      </TableCell>
       <TableCell className="font-mono text-xs">
         {layout.isActive ? <Badge variant="success">{__('Active', 'yaycheckout')}</Badge> : '—'}
       </TableCell>
