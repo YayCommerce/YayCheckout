@@ -38,6 +38,9 @@ class BlockRegistry {
         'order-summary',
         'place-order',
         'slot',
+        'before-checkout-form',
+        'after-checkout-form',
+        'hook',
     ];
 
     protected function __construct() {

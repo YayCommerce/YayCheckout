@@ -12,7 +12,8 @@ const ADDRESS_SECTIONS = [ 'yaycheckout/billing', 'yaycheckout/shipping' ];
  * Header inserter follows the selection: Billing/Shipping when those
  * canvases are selected (so Field appears), otherwise the Checkout block,
  * wherever it sits in the document.
- * Contact and the document never list Field.
+ * A document-root insertion point stays put so Before/After checkout form
+ * remain in the list. Contact never lists Field.
  */
 function LayoutInserterRoot() {
 	const postType = useSelect( ( select ) => select( editorStore ).getCurrentPostType(), [] );
@@ -22,8 +23,14 @@ function LayoutInserterRoot() {
 			return null;
 		}
 
-		const { getBlockCount, getBlockName, getClientIdsWithDescendants, getSelectedBlock } =
+		const { getBlockCount, getBlockInsertionPoint, getBlockName, getClientIdsWithDescendants, getSelectedBlock } =
 			select( blockEditorStore );
+
+		// Before/After checkout form are root siblings. Retargeting this point into Checkout hides them.
+		if ( ! getBlockInsertionPoint().rootClientId ) {
+			return null;
+		}
+
 		const rootClientId = getClientIdsWithDescendants().find(
 			( id: string ) => getBlockName( id ) === CHECKOUT_BLOCK
 		);

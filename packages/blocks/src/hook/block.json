@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/hook",
+  "title": "Hook",
+  "category": "yaycheckout",
+  "description": "Runs a WooCommerce checkout hook where this block sits inside the form.",
+  "textdomain": "yaycheckout",
+  "parent": [ "yaycheckout/checkout" ],
+  "attributes": {
+    "hook": {
+      "type": "string",
+      "default": "woocommerce_checkout_before_customer_details"
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}
