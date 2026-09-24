@@ -57,9 +57,7 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <label for="<?php echo esc_attr( $yaycheckout_key ); ?>">
         <?php echo esc_html( $yaycheckout_label ); ?>
-        <?php if ( $yaycheckout_required ) : ?>
-            <abbr class="required" title="<?php echo esc_attr__( 'required', 'yaycheckout' ); ?>">*</abbr>
-        <?php endif; ?>
+        <?php echo \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- html() escapes. ?>
     </label>
     <?php if ( 'select' === $yaycheckout_type ) : ?>
         <select class="input-text" name="<?php echo esc_attr( $yaycheckout_key ); ?>" id="<?php echo esc_attr( $yaycheckout_key ); ?>" <?php echo $yaycheckout_required ? 'required' : ''; ?>>

@@ -21,6 +21,8 @@ interface FieldPreviewProps {
 	label: string;
 	type: string;
 	required?: boolean;
+	requiredMark?: string;
+	optionalText?: string;
 	placeholder?: string;
 	options?: FieldOption[];
 	labelStyle?: CSSProperties;
@@ -44,6 +46,8 @@ export function FieldPreview( {
 	label,
 	type,
 	required = false,
+	requiredMark = '',
+	optionalText = '',
 	placeholder = '',
 	options = [],
 	labelStyle,
@@ -54,7 +58,13 @@ export function FieldPreview( {
 		<div style={ { marginBottom: '12px' } }>
 			<label style={ { display: 'block', fontSize: '13px', fontWeight: 600, ...labelStyle } }>
 				{ label }
-				{ required && <span style={ { color: '#cc1818', marginLeft: '4px' } }>*</span> }
+				{ required ? (
+					<span style={ { color: '#cc1818', marginLeft: '4px' } }>{ requiredMark || '*' }</span>
+				) : (
+					<span style={ { color: '#646970', fontWeight: 400, marginLeft: '4px' } }>
+						({ optionalText || 'optional' })
+					</span>
+				) }
 			</label>
 			{ type === 'textarea' ? (
 				<textarea readOnly rows={ 3 } placeholder={ placeholder } style={ inputStyle } />

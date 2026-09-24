@@ -73,11 +73,13 @@ class LayoutMarkupReader {
 
             if ( self::CONTACT === $block['blockName'] ) {
                 $attrs = [
-                    'fieldKey'    => 'billing_email',
-                    'type'        => 'email',
-                    'label'       => self::text( $attrs, 'label' ),
-                    'placeholder' => self::text( $attrs, 'placeholder' ),
-                    'required'    => ! isset( $attrs['required'] ) || (bool) $attrs['required'],
+                    'fieldKey'     => 'billing_email',
+                    'type'         => 'email',
+                    'label'        => self::text( $attrs, 'label' ),
+                    'placeholder'  => self::text( $attrs, 'placeholder' ),
+                    'required'     => true, // Email is the only way to reach the customer.
+                    'requiredMark' => self::text( $attrs, 'requiredMark' ),
+                    'optionalText' => self::text( $attrs, 'optionalText' ),
                 ];
             } elseif ( self::FIELD !== $block['blockName'] ) {
                 continue;
@@ -96,6 +98,8 @@ class LayoutMarkupReader {
                 'placeholder'  => self::text( $attrs, 'placeholder' ),
                 'description'  => self::text( $attrs, 'description' ),
                 'required'     => ! empty( $attrs['required'] ),
+                'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
+                'optionalText' => trim( self::text( $attrs, 'optionalText' ) ),
                 'enabled'      => true,
                 'autocomplete' => self::text( $attrs, 'autocomplete' ),
                 'validate'     => isset( $attrs['validate'] ) && is_array( $attrs['validate'] ) ? array_values( array_map( 'strval', $attrs['validate'] ) ) : [],
@@ -124,12 +128,14 @@ class LayoutMarkupReader {
 
             $attrs          = $block['attrs'];
             $fields[ $key ] = [
-                'fieldKey'    => $key,
-                'type'        => self::text( $attrs, 'type', 'text' ),
-                'label'       => self::text( $attrs, 'label' ),
-                'placeholder' => self::text( $attrs, 'placeholder' ),
-                'required'    => ! empty( $attrs['required'] ),
-                'options'     => self::options( $attrs['options'] ?? [] ),
+                'fieldKey'     => $key,
+                'type'         => self::text( $attrs, 'type', 'text' ),
+                'label'        => self::text( $attrs, 'label' ),
+                'placeholder'  => self::text( $attrs, 'placeholder' ),
+                'required'     => ! empty( $attrs['required'] ),
+                'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
+                'optionalText' => trim( self::text( $attrs, 'optionalText' ) ),
+                'options'      => self::options( $attrs['options'] ?? [] ),
             ];
         }
 

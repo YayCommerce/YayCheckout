@@ -13,9 +13,9 @@ class LayoutMarkupReaderTest extends WP_UnitTestCase {
     private const FIXTURE = "\n<p>loose html</p>\n"
         . '<!-- wp:group --><div class="wp-block-group">'
         . '<!-- wp:yaycheckout/checkout -->'
-        . '<!-- wp:yaycheckout/contact {"label":"Email address"} /-->'
+        . '<!-- wp:yaycheckout/contact {"label":"Email address","required":false,"requiredMark":"!"} /-->'
         . '<!-- wp:yaycheckout/billing -->'
-        . '<!-- wp:yaycheckout/field {"fieldKey":"billing_first_name","label":"First name","required":true,"autocomplete":"given-name","validate":["name"],"width":"half"} /-->'
+        . '<!-- wp:yaycheckout/field {"fieldKey":"billing_first_name","label":"First name","required":true,"requiredMark":" ** ","autocomplete":"given-name","validate":["name"],"width":"half"} /-->'
         . '<!-- wp:yaycheckout/field {"fieldKey":"","label":"No key"} /-->'
         . '<!-- /wp:yaycheckout/billing -->'
         . '<!-- wp:yaycheckout/shipping /-->'
@@ -23,7 +23,7 @@ class LayoutMarkupReaderTest extends WP_UnitTestCase {
         . '<!-- wp:yaycheckout/extra-field {"fieldKey":"gift","label":"Gift wrap","type":"select","required":true,"options":[{"label":"Yes","value":"yes"},{"label":"","value":""},{"label":"No","value":"no"},{"value":"maybe"}]} /-->'
         . '<!-- wp:yaycheckout/extra-field {"fieldKey":"  ","label":"Empty key"} /-->'
         . '<!-- wp:yaycheckout/extra-field {"fieldKey":"vat","label":"VAT","placeholder":"EU VAT"} /-->'
-        . '<!-- wp:yaycheckout/extra-field {"fieldKey":"vat","label":"Tax ID","required":true} /-->'
+        . '<!-- wp:yaycheckout/extra-field {"fieldKey":"vat","label":"Tax ID","required":true,"optionalText":" if any "} /-->'
         . '<!-- wp:yaycheckout/slot {"slotName":"Promo Box"} /-->'
         . '<!-- wp:yaycheckout/slot {"slotName":""} /-->'
         . '<!-- wp:yaycheckout/order-review /-->'
@@ -49,7 +49,7 @@ class LayoutMarkupReaderTest extends WP_UnitTestCase {
         'place_order',
     ];
 
-    /** Contact contributes billing_email, required unless turned off; a field without a Key is skipped. */
+    /** Contact contributes billing_email, always required; indicators are trimmed; a field without a Key is skipped. */
     private const FIELDS = [
         'billing_email'      => [
             'fieldKey'     => 'billing_email',
@@ -58,6 +58,8 @@ class LayoutMarkupReaderTest extends WP_UnitTestCase {
             'placeholder'  => '',
             'description'  => '',
             'required'     => true,
+            'requiredMark' => '!',
+            'optionalText' => '',
             'enabled'      => true,
             'autocomplete' => '',
             'validate'     => [],
@@ -70,6 +72,8 @@ class LayoutMarkupReaderTest extends WP_UnitTestCase {
             'placeholder'  => '',
             'description'  => '',
             'required'     => true,
+            'requiredMark' => '**',
+            'optionalText' => '',
             'enabled'      => true,
             'autocomplete' => 'given-name',
             'validate'     => [ 'name' ],
@@ -83,24 +87,28 @@ class LayoutMarkupReaderTest extends WP_UnitTestCase {
      */
     private const EXTRA_FIELDS = [
         'gift' => [
-            'fieldKey'    => 'gift',
-            'type'        => 'select',
-            'label'       => 'Gift wrap',
-            'placeholder' => '',
-            'required'    => true,
-            'options'     => [
+            'fieldKey'     => 'gift',
+            'type'         => 'select',
+            'label'        => 'Gift wrap',
+            'placeholder'  => '',
+            'required'     => true,
+            'requiredMark' => '',
+            'optionalText' => '',
+            'options'      => [
                 'yes'   => 'Yes',
                 'no'    => 'No',
                 'maybe' => 'maybe',
             ],
         ],
         'vat'  => [
-            'fieldKey'    => 'vat',
-            'type'        => 'text',
-            'label'       => 'Tax ID',
-            'placeholder' => '',
-            'required'    => true,
-            'options'     => [],
+            'fieldKey'     => 'vat',
+            'type'         => 'text',
+            'label'        => 'Tax ID',
+            'placeholder'  => '',
+            'required'     => true,
+            'requiredMark' => '',
+            'optionalText' => 'if any',
+            'options'      => [],
         ],
     ];
 

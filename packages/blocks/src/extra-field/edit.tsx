@@ -1,9 +1,10 @@
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { Button, Notice, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
+import { Button, Notice, PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import { EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
 import { FieldPreview, type FieldOption } from '../shared/field-preview';
+import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
 
 const TYPE_OPTIONS = [
 	{ label: __( 'Text', 'yaycheckout' ), value: 'text' },
@@ -20,6 +21,8 @@ interface ExtraFieldAttributes {
 	label: string;
 	placeholder: string;
 	required: boolean;
+	requiredMark: string;
+	optionalText: string;
 	type: string;
 	options: FieldOption[];
 }
@@ -34,7 +37,7 @@ function emptyOption(): FieldOption {
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { fieldKey, label, placeholder, required, type, options } = attributes;
+	const { fieldKey, label, placeholder, required, requiredMark = '', optionalText = '', type, options } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-extra-field' } );
 	const canvasLabel = label || fieldKey || __( 'Extra field', 'yaycheckout' );
 	const showOptions = CHOICE_TYPES.includes( type );
@@ -85,10 +88,13 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						value={ placeholder }
 						onChange={ ( value ) => setAttributes( { placeholder: value } ) }
 					/>
-					<ToggleControl
-						label={ __( 'Required', 'yaycheckout' ) }
-						checked={ required }
-						onChange={ ( value ) => setAttributes( { required: value } ) }
+					<RequiredIndicatorControls
+						required={ required }
+						requiredMark={ requiredMark }
+						optionalText={ optionalText }
+						onRequiredChange={ ( value ) => setAttributes( { required: value } ) }
+						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
+						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
 					/>
 					<SelectControl
 						label={ __( 'Type', 'yaycheckout' ) }
@@ -142,6 +148,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					label={ canvasLabel }
 					type={ type }
 					required={ required }
+					requiredMark={ requiredMark }
+					optionalText={ optionalText }
 					placeholder={ placeholder }
 					options={ options }
 				/>

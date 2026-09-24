@@ -1,10 +1,12 @@
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
-import { useSelect } from '@wordpress/data';
+import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import { useDispatch, useSelect } from '@wordpress/data';
+import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { CSSProperties } from 'react';
 import { billingAddressFields, shippingAddressFields, type AddressFieldDef } from '../shared/address-fields';
 import { FieldPreview } from '../shared/field-preview';
+import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
 
 const ADDRESS_PARENTS = {
 	'yaycheckout/billing': 'billing',
@@ -49,6 +51,8 @@ interface FieldAttributes {
 	placeholder: string;
 	description: string;
 	required: boolean;
+	requiredMark: string;
+	optionalText: string;
 	autocomplete: string;
 	validate: string[];
 	width: string;
@@ -63,9 +67,12 @@ interface EditProps {
 /**
  * In billing/shipping the Woo key is chosen from a dropdown. Keys are unique
  * across the whole section, including fields nested in Rows/Columns.
+ *
+ * A field always has a key: without one it renders under a made-up name that
+ * WooCommerce never validates or saves, so a keyless field takes the first free one.
  */
 export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
-	const { fieldKey, type, label, placeholder, required } = attributes;
+	const { fieldKey, type, label, placeholder, required, requiredMark = '', optionalText = '' } = attributes;
 	const { addressSection, usedKeys } = useSelect(
 		( select ) => {
 			const { getBlockParents, getBlockName, getBlocks } = select( blockEditorStore );
@@ -91,12 +98,25 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		[ clientId ]
 	);
 	const catalog = addressSection ? catalogFor( addressSection ) : [];
-	const keyOptions = [
-		{ label: __( 'Select a field', 'yaycheckout' ), value: '' },
-		...catalog
-			.filter( ( field ) => field.key === fieldKey || ! usedKeys.includes( field.key ) )
-			.map( ( field ) => ( { label: `${ field.label } (${ field.key })`, value: field.key } ) ),
-	];
+	const isEmail = type === 'email' || fieldKey === 'billing_email';
+	const available = catalog.filter( ( field ) => field.key === fieldKey || ! usedKeys.includes( field.key ) );
+	const { __unstableMarkNextChangeAsNotPersistent: markNotPersistent } = useDispatch( blockEditorStore );
+
+	const pickField = ( def: AddressFieldDef ) =>
+		setAttributes( { fieldKey: def.key, type: def.type, label: def.label, required: def.required } );
+
+	useEffect( () => {
+		if ( fieldKey === '' && available.length > 0 ) {
+			// Part of inserting the block, not an edit the author should undo back to keyless.
+			markNotPersistent();
+			pickField( available[ 0 ] );
+		}
+	}, [ fieldKey, available[ 0 ]?.key ] );
+
+	const keyOptions =
+		available.length > 0
+			? available.map( ( field ) => ( { label: `${ field.label } (${ field.key })`, value: field.key } ) )
+			: [ { label: __( 'Every field in this section is already used', 'yaycheckout' ), value: '' } ];
 	const blockProps = useBlockProps( { className: 'yaycheckout-field' } );
 	const canvasLabel = label || fieldKey || __( 'Field', 'yaycheckout' );
 	const labelStyle = {
@@ -115,16 +135,9 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 							options={ keyOptions }
 							onChange={ ( value ) => {
 								const def = catalog.find( ( field ) => field.key === value );
-								setAttributes(
-									def
-										? {
-												fieldKey: def.key,
-												type: def.type,
-												label: def.label,
-												required: def.required,
-										  }
-										: { fieldKey: value }
-								);
+								if ( def ) {
+									pickField( def );
+								}
 							} }
 						/>
 					) }
@@ -133,10 +146,19 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						value={ label }
 						onChange={ ( value ) => setAttributes( { label: value } ) }
 					/>
-					<ToggleControl
-						label={ __( 'Required', 'yaycheckout' ) }
-						checked={ required }
-						onChange={ ( value ) => setAttributes( { required: value } ) }
+					<RequiredIndicatorControls
+						required={ isEmail || required }
+						requiredMark={ requiredMark }
+						optionalText={ optionalText }
+						requiredLocked={ isEmail }
+						requiredHelp={
+							isEmail
+								? __( 'Email is always required.', 'yaycheckout' )
+								: undefined
+						}
+						onRequiredChange={ ( value ) => setAttributes( { required: value } ) }
+						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
+						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
 					/>
 				</PanelBody>
 			</InspectorControls>
@@ -144,7 +166,9 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 				<FieldPreview
 					label={ canvasLabel }
 					type={ type }
-					required={ required }
+					required={ isEmail || required }
+					requiredMark={ requiredMark }
+					optionalText={ optionalText }
 					placeholder={ placeholder }
 					labelStyle={ labelStyle }
 				/>
