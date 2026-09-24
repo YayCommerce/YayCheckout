@@ -65,6 +65,13 @@ class BlockRegistryAllowedBlocksTest extends WP_UnitTestCase {
         $this->assertSame( [ 'core/paragraph', self::WOO_CHECKOUT ], $this->allowed( self::NARROWED, $context ) );
     }
 
+    /** Any block in the yaycheckout/ namespace, not only the ones built here, stays out of other editors. */
+    public function test_other_editors_drop_any_yaycheckout_namespaced_block(): void {
+        $context = new \WP_Block_Editor_Context( [ 'name' => 'core/edit-site' ] );
+
+        $this->assertSame( [ 'core/paragraph' ], $this->allowed( [ 'core/paragraph', 'yaycheckout/pro-thing' ], $context ) );
+    }
+
     /** The context is unknown early in the layout editor too; stripping there would hide Checkout. */
     public function test_unknown_editor_is_left_alone(): void {
         $context = new \WP_Block_Editor_Context();
@@ -78,7 +85,7 @@ class BlockRegistryAllowedBlocksTest extends WP_UnitTestCase {
      * @return bool|string[]
      */
     private function allowed( $allowed, \WP_Block_Editor_Context $context ) {
-        return BlockRegistry::get_instance()->restrict_to_layout_editor( $allowed, $context );
+        return BlockRegistry::get_instance()->allowed_blocks( $allowed, $context );
     }
 
     private function layout_editor(): \WP_Block_Editor_Context {

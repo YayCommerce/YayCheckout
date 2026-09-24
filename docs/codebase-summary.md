@@ -32,7 +32,7 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `Repositories/` | `LayoutRepository`, `SettingsRepository`, `DesignRepository`, `CompatibilityCatalogueRepository` | all storage access: layouts (publish sequence, active-set), settings (get/save/reviewed), design (tokens, presets, CSS), catalogue (transient → remote JSON → fallback) |
 | `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue`, `DesignRestController`, `CompatibilityRestController` | routing, validation, permissions; all require `manage_woocommerce` |
 | `Services/` | `LayoutMarkupReader`, `ExtraFieldSubmission` | pure: no storage. `LayoutMarkupReader` flattens a layout's blocks and answers `slots()`, `fields()`, `extra_fields()`, `order_modes()` (always `[]` for now) and `publish_error()`. `ExtraFieldSubmission::collect()` turns a checkout POST into order rows and per-field error messages, reading only Keys from `extra_fields()` and accepting only values from `LayoutMarkupReader::options()`. |
-| `Blocks/` | `BlockRegistry` | registers built block directories; `allowed_block_types_all` keeps YayCheckout blocks in the layout editor only and `woocommerce/checkout` out of it |
+| `Blocks/` | `BlockRegistry` | registers every built block directory (inserter order from `ORDER`); `allowed_blocks()` on `allowed_block_types_all` keeps `yaycheckout/*` blocks in the layout editor only and `woocommerce/checkout` out of it |
 | `Support/` | `Plan`, `CompatibilityCatalogue` | Free/Pro flag derived from provider boot; owns the layout limit and its message. Compatibility catalogue: status vocabulary, bundled list, `normalize()` for the remote JSON, transient key and TTLs — pure |
 | `Pro/` | `ProServiceProvider`, `Controllers/DesignPresetRestController` | **absent from the Free build**; preset management REST routes |
 | `Helpers/` | `BlockMarkup`, `IntegrationsHelper`, `LocalizeHelper`, `Logger`, `PreviewToken`, `StoreEnvironmentHelper`, `GatewayCompatibilityHelper`, `CheckoutHookScanHelper`, `PluginHeaderHelper` | stateless: preview tokens, server-side block markup (seeds, templates), integration detection, SPA bootstrap payload, logging, compatibility detection, hook scans |
@@ -160,7 +160,7 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 - Adding a design token → `Models/Design::schema()`, then `design.schema.ts`, then a component in `pages/design/components/`
 - Adding an endpoint → `LayoutRestController`, then the `lib/` triplet
 - Compatibility statuses → the bundled list in `Support/CompatibilityCatalogue`, or the remote JSON at `YAYCHECKOUT_COMPATIBILITY_CATALOGUE_URL`; new checkout hooks → `CheckoutHookScanHelper::HOOKS`
-- Adding a block → `packages/blocks/src/`, then `BlockRegistry`; a section block also goes in `LayoutMarkupReader::SECTION_SLOTS`
+- Adding a block → `packages/blocks/src/` (registered automatically once built; add it to `BlockRegistry::ORDER` for its inserter position); a section block also goes in `LayoutMarkupReader::SECTION_SLOTS`
 - Free/Pro → `includes/Support/Plan.php` and `scripts/check-pro-boundary.sh`
 
 ## Not yet built
