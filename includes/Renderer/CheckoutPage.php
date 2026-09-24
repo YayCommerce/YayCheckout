@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Makes the active layout the checkout page: our template in place of the
  * theme's, the theme's header and footer around the layout's blocks (the
- * root block is the form). WooCommerce's own validation is untouched.
+ * root block is the form).
  *
  * Stands down entirely, leaving WooCommerce untouched, when safe mode is on
  * or no layout resolves; a preview link (PreviewRequest) renders its layout

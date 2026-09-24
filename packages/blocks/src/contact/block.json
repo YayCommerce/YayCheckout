@@ -19,6 +19,10 @@
     "required": {
       "type": "boolean",
       "default": true
+    },
+    "requiredMark": {
+      "type": "string",
+      "default": ""
     }
   },
   "supports": {

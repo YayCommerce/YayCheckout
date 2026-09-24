@@ -17,23 +17,13 @@ $yaycheckout_layout   = \YayCheckout\Renderer\CheckoutPage::get_instance()->layo
 $yaycheckout_preview  = \YayCheckout\Renderer\PreviewRequest::get_instance();
 $yaycheckout_is_block = wp_is_block_theme();
 
-if ( $yaycheckout_is_block ) :
-    ?>
-    <!doctype html>
-    <html <?php language_attributes(); ?>>
-    <head>
-        <meta charset="<?php bloginfo( 'charset' ); ?>">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <?php wp_head(); ?>
-    </head>
-    <body <?php body_class( 'yaycheckout-page' ); ?>>
-    <?php
-    wp_body_open();
-    echo '<div class="wp-site-blocks">';
-    block_header_area();
-else :
-    get_header();
-endif;
+/*
+ * Rendered before wp_head(), as core's template-canvas.php does: blocks enqueue
+ * script modules and styles while rendering, and on block themes the import
+ * map is printed in the head. Rendered after it, a module's imports go unmapped
+ * and the browser refuses to load it.
+ */
+ob_start();
 ?>
 <div class="woocommerce yaycheckout-page">
     <?php
@@ -50,11 +40,38 @@ endif;
     ?>
 </div>
 <?php
-if ( $yaycheckout_is_block ) {
-    block_footer_area();
-    echo '</div>';
-    wp_footer();
-    echo '</body></html>';
-} else {
+$yaycheckout_main = (string) ob_get_clean();
+
+if ( ! $yaycheckout_is_block ) {
+    get_header();
+    echo $yaycheckout_main; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered above.
     get_footer();
+    return;
 }
+
+ob_start();
+block_header_area();
+$yaycheckout_header = (string) ob_get_clean();
+
+ob_start();
+block_footer_area();
+$yaycheckout_footer = (string) ob_get_clean();
+?>
+<!doctype html>
+<html <?php language_attributes(); ?>>
+<head>
+    <meta charset="<?php bloginfo( 'charset' ); ?>">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <?php wp_head(); ?>
+</head>
+<body <?php body_class( 'yaycheckout-page' ); ?>>
+<?php wp_body_open(); ?>
+<div class="wp-site-blocks">
+<?php
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered above by core and the layout's blocks.
+echo $yaycheckout_header . $yaycheckout_main . $yaycheckout_footer;
+?>
+</div>
+<?php wp_footer(); ?>
+</body>
+</html>

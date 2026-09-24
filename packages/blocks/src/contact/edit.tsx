@@ -1,12 +1,14 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
+import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { FieldPreview } from '../shared/field-preview';
+import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
 
 interface ContactAttributes {
 	label: string;
 	placeholder: string;
 	required: boolean;
+	requiredMark: string;
 }
 
 interface EditProps {
@@ -18,7 +20,7 @@ interface EditProps {
  * Contact is a leaf: billing_email lives on this block, not an inner Field.
  */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { label, placeholder, required } = attributes;
+	const { label, placeholder, required, requiredMark = '' } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-contact' } );
 	const canvasLabel = label || __( 'Email address', 'yaycheckout' );
 
@@ -36,10 +38,13 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						value={ placeholder }
 						onChange={ ( value ) => setAttributes( { placeholder: value } ) }
 					/>
-					<ToggleControl
-						label={ __( 'Required', 'yaycheckout' ) }
-						checked={ required }
-						onChange={ ( value ) => setAttributes( { required: value } ) }
+					<RequiredIndicatorControls
+						required
+						requiredMark={ requiredMark }
+						optionalText=""
+						requiredLocked
+						requiredHelp={ __( 'Email is always required.', 'yaycheckout' ) }
+						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
 					/>
 				</PanelBody>
 			</InspectorControls>
@@ -47,7 +52,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				<FieldPreview
 					label={ canvasLabel }
 					type="email"
-					required={ required }
+					required
+					requiredMark={ requiredMark }
 					placeholder={ placeholder }
 				/>
 			</div>

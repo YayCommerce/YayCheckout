@@ -1,7 +1,10 @@
-import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { Button, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
+import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
+import { Button, Notice, PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
+import { EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
 import { FieldPreview, type FieldOption } from '../shared/field-preview';
+import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
 
 const TYPE_OPTIONS = [
 	{ label: __( 'Text', 'yaycheckout' ), value: 'text' },
@@ -18,6 +21,8 @@ interface ExtraFieldAttributes {
 	label: string;
 	placeholder: string;
 	required: boolean;
+	requiredMark: string;
+	optionalText: string;
 	type: string;
 	options: FieldOption[];
 }
@@ -32,10 +37,26 @@ function emptyOption(): FieldOption {
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { fieldKey, label, placeholder, required, type, options } = attributes;
+	const { fieldKey, label, placeholder, required, requiredMark = '', optionalText = '', type, options } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-extra-field' } );
 	const canvasLabel = label || fieldKey || __( 'Extra field', 'yaycheckout' );
 	const showOptions = CHOICE_TYPES.includes( type );
+	const trimmedKey = fieldKey.trim();
+	const isDuplicate = useSelect(
+		( select ) =>
+			trimmedKey !== '' &&
+			extraFieldKeys( select( blockEditorStore ) ).filter( ( key ) => key === trimmedKey ).length > 1,
+		[ trimmedKey ]
+	);
+	let keyError = '';
+
+	if ( trimmedKey === '' ) {
+		keyError = __( 'Key is required.', 'yaycheckout' );
+	} else if ( ! EXTRA_FIELD_KEY_PATTERN.test( trimmedKey ) ) {
+		keyError = __( 'Use only letters, numbers and underscores, not starting with an underscore.', 'yaycheckout' );
+	} else if ( isDuplicate ) {
+		keyError = __( 'Another extra field already uses this Key.', 'yaycheckout' );
+	}
 
 	const updateOption = ( index: number, patch: Partial< FieldOption > ) => {
 		const next = options.map( ( option, i ) => ( i === index ? { ...option, ...patch } : option ) );
@@ -52,6 +73,11 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						onChange={ ( value ) => setAttributes( { fieldKey: value } ) }
 						help={ __( 'Posted name stored on the order, e.g. vat_number.', 'yaycheckout' ) }
 					/>
+					{ keyError !== '' && (
+						<Notice status="error" isDismissible={ false }>
+							{ keyError }
+						</Notice>
+					) }
 					<TextControl
 						label={ __( 'Label', 'yaycheckout' ) }
 						value={ label }
@@ -62,10 +88,13 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						value={ placeholder }
 						onChange={ ( value ) => setAttributes( { placeholder: value } ) }
 					/>
-					<ToggleControl
-						label={ __( 'Required', 'yaycheckout' ) }
-						checked={ required }
-						onChange={ ( value ) => setAttributes( { required: value } ) }
+					<RequiredIndicatorControls
+						required={ required }
+						requiredMark={ requiredMark }
+						optionalText={ optionalText }
+						onRequiredChange={ ( value ) => setAttributes( { required: value } ) }
+						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
+						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
 					/>
 					<SelectControl
 						label={ __( 'Type', 'yaycheckout' ) }
@@ -119,6 +148,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					label={ canvasLabel }
 					type={ type }
 					required={ required }
+					requiredMark={ requiredMark }
+					optionalText={ optionalText }
 					placeholder={ placeholder }
 					options={ options }
 				/>

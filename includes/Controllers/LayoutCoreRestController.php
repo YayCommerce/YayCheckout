@@ -2,11 +2,14 @@
 namespace YayCheckout\Controllers;
 
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
+use YayCheckout\Services\LayoutMarkupReader;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Core's wp/v2 controller for layouts, with reads gated like everything else.
+ * Core's wp/v2 controller for layouts, with reads gated like everything else
+ * and publishing held to the same layout rules.
+ *
  * WP_REST_Posts_Controller serves any 'publish' post to anyone before it
  * consults the post type's capabilities, so the editor-facing endpoint would
  * otherwise hand a logged-out request the layout markup.
@@ -50,5 +53,37 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
         }
 
         return parent::delete_item_permissions_check( $request );
+    }
+
+    /**
+     * Refuses a save that would leave the layout published or scheduled while
+     * LayoutMarkupReader::publish_error() objects, so the editor's Publish
+     * button follows the same rules as LayoutRepository::publish(). Drafts
+     * still save.
+     *
+     * @return \stdClass|\WP_Error
+     */
+    protected function prepare_item_for_database( $request ) {
+        $prepared = parent::prepare_item_for_database( $request );
+
+        if ( is_wp_error( $prepared ) ) {
+            return $prepared;
+        }
+
+        $stored  = isset( $prepared->ID ) ? get_post( $prepared->ID ) : null;
+        $status  = $prepared->post_status ?? ( $stored ? $stored->post_status : '' );
+        $content = $prepared->post_content ?? ( $stored ? $stored->post_content : '' );
+
+        if ( ! in_array( $status, [ 'publish', 'future' ], true ) ) {
+            return $prepared;
+        }
+
+        $error = LayoutMarkupReader::publish_error( $content );
+
+        if ( '' !== $error ) {
+            return new \WP_Error( 'yaycheckout_layout_unpublishable', $error, [ 'status' => 400 ] );
+        }
+
+        return $prepared;
     }
 }

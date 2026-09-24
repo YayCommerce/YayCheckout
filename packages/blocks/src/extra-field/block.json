@@ -24,6 +24,14 @@
       "type": "boolean",
       "default": false
     },
+    "requiredMark": {
+      "type": "string",
+      "default": ""
+    },
+    "optionalText": {
+      "type": "string",
+      "default": ""
+    },
     "type": {
       "type": "string",
       "enum": [ "text", "select", "radio", "checkbox", "datetime" ],

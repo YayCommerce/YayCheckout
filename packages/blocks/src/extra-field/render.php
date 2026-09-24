@@ -15,30 +15,15 @@
 defined( 'ABSPATH' ) || exit;
 
 $yaycheckout_label       = isset( $attributes['label'] ) && is_string( $attributes['label'] ) ? $attributes['label'] : '';
-$yaycheckout_key         = \YayCheckout\Helpers\ExtraFieldKeyHelper::from_attributes( is_array( $attributes ) ? $attributes : [] );
+$yaycheckout_key         = \YayCheckout\Services\LayoutMarkupReader::extra_field_key( $attributes );
 $yaycheckout_type        = isset( $attributes['type'] ) && is_string( $attributes['type'] ) && '' !== $attributes['type'] ? $attributes['type'] : 'text';
 $yaycheckout_placeholder = isset( $attributes['placeholder'] ) && is_string( $attributes['placeholder'] ) ? $attributes['placeholder'] : '';
 $yaycheckout_required    = ! empty( $attributes['required'] );
-$yaycheckout_raw_options = isset( $attributes['options'] ) && is_array( $attributes['options'] ) ? $attributes['options'] : [];
-$yaycheckout_options     = [];
+$yaycheckout_options     = \YayCheckout\Services\LayoutMarkupReader::options( $attributes['options'] ?? [] );
 
-foreach ( $yaycheckout_raw_options as $yaycheckout_option ) {
-    if ( ! is_array( $yaycheckout_option ) ) {
-        continue;
-    }
-
-    $yaycheckout_option_value = isset( $yaycheckout_option['value'] ) ? (string) $yaycheckout_option['value'] : '';
-    $yaycheckout_option_label = isset( $yaycheckout_option['label'] ) ? (string) $yaycheckout_option['label'] : $yaycheckout_option_value;
-
-    if ( '' === $yaycheckout_option_value && '' === $yaycheckout_option_label ) {
-        continue;
-    }
-
-    if ( '' === $yaycheckout_option_value ) {
-        $yaycheckout_option_value = sanitize_title( $yaycheckout_option_label );
-    }
-
-    $yaycheckout_options[ $yaycheckout_option_value ] = $yaycheckout_option_label;
+// Without a valid Key there is no posted name to persist; the editor blocks saving until one is set.
+if ( '' === $yaycheckout_key ) {
+    return;
 }
 
 if ( '' === $yaycheckout_label ) {
@@ -72,9 +57,7 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <label for="<?php echo esc_attr( $yaycheckout_key ); ?>">
         <?php echo esc_html( $yaycheckout_label ); ?>
-        <?php if ( $yaycheckout_required ) : ?>
-            <abbr class="required" title="<?php echo esc_attr__( 'required', 'yaycheckout' ); ?>">*</abbr>
-        <?php endif; ?>
+        <?php echo \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- html() escapes. ?>
     </label>
     <?php if ( 'select' === $yaycheckout_type ) : ?>
         <select class="input-text" name="<?php echo esc_attr( $yaycheckout_key ); ?>" id="<?php echo esc_attr( $yaycheckout_key ); ?>" <?php echo $yaycheckout_required ? 'required' : ''; ?>>

@@ -1,7 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
-use YayCheckout\Services\LayoutBlockIndex;
+use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -17,6 +17,12 @@ class CheckoutFragments {
 
     public const SHIPPING_RATES_CLASS = 'yaycheckout-shipping-methods__rates';
 
+    /** Layout slot => [ selector WooCommerce's checkout.js replaces, method building its HTML ]. */
+    private const FRAGMENTS = [
+        'payment'          => [ '.woocommerce-checkout-payment', 'payment_methods_html' ],
+        'shipping_methods' => [ '.' . self::SHIPPING_RATES_CLASS, 'shipping_rates_html' ],
+    ];
+
     protected function __construct() {
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's AJAX fragment filter.
         add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'fragments' ], 20 );
@@ -29,26 +35,19 @@ class CheckoutFragments {
      * @return array
      */
     public function fragments( $fragments ) {
-        if ( ! is_array( $fragments ) || null === CheckoutPage::get_instance()->layout() ) {
+        $layout = CheckoutPage::get_instance()->layout();
+
+        if ( ! is_array( $fragments ) || null === $layout ) {
             return $fragments;
         }
 
-        $slots = $this->slots();
+        $rendered = array_flip( LayoutMarkupReader::slots( $layout->content ) );
 
-        if ( in_array( 'payment', $slots, true ) ) {
-            $payment = self::payment_methods_html();
+        foreach ( array_intersect_key( self::FRAGMENTS, $rendered ) as [ $selector, $build ] ) {
+            $html = self::$build();
 
-            if ( '' !== $payment ) {
-                $fragments['.woocommerce-checkout-payment'] = $payment;
-            }
-        }
-
-        if ( in_array( 'shipping_methods', $slots, true ) ) {
-            $shipping = self::shipping_rates_html();
-
-            if ( '' !== $shipping ) {
-                $selector               = '.' . self::SHIPPING_RATES_CLASS;
-                $fragments[ $selector ] = $shipping;
+            if ( '' !== $html ) {
+                $fragments[ $selector ] = $html;
             }
         }
 
@@ -67,7 +66,7 @@ class CheckoutFragments {
 
     /** Rates wrapper so AJAX can replace an empty first paint. */
     public static function shipping_rates_html(): string {
-        if ( ! function_exists( 'WC' ) || ! WC()->cart instanceof \WC_Cart ) {
+        if ( ! WC()->cart instanceof \WC_Cart ) {
             return '';
         }
 
@@ -88,7 +87,7 @@ class CheckoutFragments {
 
     /** Gateway radios only; Place order is a separate block. */
     public static function payment_methods_html(): string {
-        if ( ! function_exists( 'WC' ) || ! WC()->cart instanceof \WC_Cart ) {
+        if ( ! WC()->cart instanceof \WC_Cart ) {
             return '';
         }
 
@@ -139,26 +138,5 @@ class CheckoutFragments {
         }
 
         return (string) ob_get_clean();
-    }
-
-    /**
-     * @return string[]
-     */
-    private function slots(): array {
-        $layout = CheckoutPage::get_instance()->layout();
-
-        if ( null === $layout || '' === trim( $layout->content ) ) {
-            return [];
-        }
-
-        try {
-            $index = LayoutBlockIndex::from_markup( $layout->content );
-        } catch ( \InvalidArgumentException $ex ) {
-            return [];
-        }
-
-        $slots = $index['slots'] ?? [];
-
-        return is_array( $slots ) ? $slots : [];
     }
 }

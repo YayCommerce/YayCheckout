@@ -27,6 +27,7 @@ class YayCheckout {
         \YayCheckout\Renderer\CheckoutPage::get_instance();
         \YayCheckout\Renderer\CheckoutFragments::get_instance();
         \YayCheckout\Renderer\CheckoutExtraFields::get_instance();
+        \YayCheckout\Renderer\CheckoutRequiredFields::get_instance();
     }
 
     public static function initialize() {

@@ -58,9 +58,7 @@ $yaycheckout_input_type = in_array( $yaycheckout_type, [ 'email', 'tel', 'passwo
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <label for="<?php echo esc_attr( $yaycheckout_key ); ?>">
         <?php echo esc_html( $yaycheckout_label ); ?>
-        <?php if ( $yaycheckout_required ) : ?>
-            <abbr class="required" title="<?php echo esc_attr__( 'required', 'yaycheckout' ); ?>">*</abbr>
-        <?php endif; ?>
+        <?php echo \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- html() escapes. ?>
     </label>
     <?php if ( 'textarea' === $yaycheckout_type ) : ?>
         <textarea class="input-text" name="<?php echo esc_attr( $yaycheckout_key ); ?>" id="<?php echo esc_attr( $yaycheckout_key ); ?>" placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>" <?php echo $yaycheckout_required ? 'required' : ''; ?>></textarea>
