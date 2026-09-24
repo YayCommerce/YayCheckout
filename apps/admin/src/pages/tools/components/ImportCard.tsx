@@ -1,4 +1,5 @@
 import { DragEvent, useRef, useState } from 'react';
+import { isJsonFileName } from '@blocks-shared/export-file';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { parseExportFile, reviewExportFile } from '@/lib/api/tools.api';
@@ -21,7 +22,7 @@ export function ImportCard() {
     if (!picked) return;
     setFile(picked);
 
-    if (!picked.name.toLowerCase().endsWith('.json')) {
+    if (!isJsonFileName(picked.name)) {
       setResult({ status: 'error', message: __('Only .json files can be imported.', 'yaycheckout') });
       return;
     }

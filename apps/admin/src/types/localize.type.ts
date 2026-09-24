@@ -18,6 +18,7 @@ export type Meta = {
 
     version: string;
     docsUrl: string;
+    upgradeUrl: string;
     reviewed: boolean;
   };
 };

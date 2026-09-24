@@ -38,11 +38,12 @@ class LocalizeHelper {
                 'isBlockTheme' => wp_is_block_theme(),
             ],
             'checkoutMeta' => [
-                'pluginUrl' => YAYCHECKOUT_PLUGIN_URL,
-                'assetsUrl' => YAYCHECKOUT_PLUGIN_URL . 'assets',
-                'version'   => YAYCHECKOUT_VERSION,
-                'docsUrl'   => YAYCHECKOUT_DOCS_URL,
-                'reviewed'  => ( new SettingsRepository() )->is_reviewed(),
+                'pluginUrl'  => YAYCHECKOUT_PLUGIN_URL,
+                'assetsUrl'  => YAYCHECKOUT_PLUGIN_URL . 'assets',
+                'version'    => YAYCHECKOUT_VERSION,
+                'docsUrl'    => YAYCHECKOUT_DOCS_URL,
+                'upgradeUrl' => YAYCHECKOUT_UPGRADE_URL,
+                'reviewed'   => ( new SettingsRepository() )->is_reviewed(),
             ],
         ];
 
