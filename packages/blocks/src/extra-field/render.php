@@ -21,7 +21,7 @@ $yaycheckout_placeholder = isset( $attributes['placeholder'] ) && is_string( $at
 $yaycheckout_required    = ! empty( $attributes['required'] );
 $yaycheckout_options     = \YayCheckout\Services\LayoutMarkupReader::options( $attributes['options'] ?? [] );
 
-// Without a Key there is no posted name to persist; the editor blocks saving until one is set.
+// Without a valid Key there is no posted name to persist; the editor blocks saving until one is set.
 if ( '' === $yaycheckout_key ) {
     return;
 }
