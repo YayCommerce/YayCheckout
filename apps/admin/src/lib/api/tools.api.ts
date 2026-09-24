@@ -28,8 +28,8 @@ export async function exportLayout(id: number): Promise<LayoutExportFile> {
 }
 
 /**
- * What the Source step shows. PHP owns the real refusals (unknown block, missing checkout root)
- * and runs them on import; this is only what can be read from the file itself.
+ * What the Source step shows. PHP makes the final call on import (a missing Checkout block);
+ * this is only what can be read from the file itself.
  */
 export function reviewExportFile(envelope: LayoutExportEnvelope): ImportReview {
   const layout = envelope.layouts[0];

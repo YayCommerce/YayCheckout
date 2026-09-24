@@ -49,7 +49,7 @@ class LayoutImportRestController extends BaseRestController {
 
     /**
      * Reviews the file, then inserts the draft. The SPA only reads the envelope, so this is
-     * where a block the site does not have, or a missing checkout root, is refused.
+     * where a file without a Checkout block is refused; blocks the site lacks pass.
      *
      * @return \WP_REST_Response|\WP_Error
      */

@@ -16,7 +16,7 @@ export function SourceStep({
 }: {
   review: ImportReview;
   isPending: boolean;
-  /** PHP's refusal, empty when there is none: only PHP knows which blocks this site registers. */
+  /** PHP's refusal, empty when there is none. */
   error: string;
   onCancel: () => void;
   onImport: () => void;
