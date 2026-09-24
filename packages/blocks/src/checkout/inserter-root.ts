@@ -3,8 +3,8 @@ import { useDispatch, useSelect } from '@wordpress/data';
 import { store as editorStore } from '@wordpress/editor';
 import { useEffect, useRef } from '@wordpress/element';
 import { registerPlugin } from '@wordpress/plugins';
+import { editorData } from '../shared/editor-data';
 
-const LAYOUT_POST_TYPE = 'yay_checkout_layout';
 const CHECKOUT_BLOCK = 'yaycheckout/checkout';
 const ADDRESS_SECTIONS = [ 'yaycheckout/billing', 'yaycheckout/shipping' ];
 
@@ -18,7 +18,7 @@ function LayoutInserterRoot() {
 	const postType = useSelect( ( select ) => select( editorStore ).getCurrentPostType(), [] );
 	const isInserterOpened = useSelect( ( select ) => select( editorStore ).isInserterOpened(), [] );
 	const destination = useSelect( ( select ) => {
-		if ( postType !== LAYOUT_POST_TYPE ) {
+		if ( postType !== editorData.postType ) {
 			return null;
 		}
 

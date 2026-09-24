@@ -36,6 +36,8 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        // Helpers the SPA and the blocks bundle share; see packages/blocks/src/shared/export-file.ts.
+        '@blocks-shared': path.resolve(__dirname, '../../packages/blocks/src/shared'),
       },
     },
     build: {

@@ -6,8 +6,8 @@ import { __, sprintf } from '@wordpress/i18n';
 import { store as noticesStore } from '@wordpress/notices';
 import { registerPlugin } from '@wordpress/plugins';
 import { duplicateKeys, EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
+import { editorData } from '../shared/editor-data';
 
-const LAYOUT_POST_TYPE = 'yay_checkout_layout';
 const CHECKOUT_BLOCK = 'yaycheckout/checkout';
 const LOCK_KEY = 'yaycheckout-layout-invalid';
 
@@ -19,7 +19,7 @@ const LOCK_KEY = 'yaycheckout-layout-invalid';
  */
 function LayoutPublishGuard() {
 	const message = useSelect( ( select ) => {
-		if ( select( editorStore ).getCurrentPostType() !== LAYOUT_POST_TYPE ) {
+		if ( select( editorStore ).getCurrentPostType() !== editorData.postType ) {
 			return '';
 		}
 

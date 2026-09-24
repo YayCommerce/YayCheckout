@@ -2,6 +2,7 @@
 namespace YayCheckout\Pro\Controllers;
 
 use YayCheckout\Controllers\BaseRestController;
+use YayCheckout\Models\Layout;
 use YayCheckout\Pro\Services\LayoutImportReview;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Utils\SingletonTrait;
@@ -9,7 +10,7 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Turns an export file into a draft.
+ * Turns an export file into a draft, or reviews one for the editor's Import.
  * Pro-only: the Free build has no route, which is what makes the SPA's ProGate honest.
  */
 class LayoutImportRestController extends BaseRestController {
@@ -21,6 +22,16 @@ class LayoutImportRestController extends BaseRestController {
     protected function __construct() {
         $this->layouts = new LayoutRepository();
 
+        $file_arg = [
+            'file' => [
+                'required'          => true,
+                'type'              => 'object',
+                'validate_callback' => static function ( $value ) {
+                    return is_array( $value );
+                },
+            ],
+        ];
+
         register_rest_route(
             self::REST_NAMESPACE,
             '/layouts/import',
@@ -29,15 +40,20 @@ class LayoutImportRestController extends BaseRestController {
                     'methods'             => \WP_REST_Server::CREATABLE,
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'import_layout' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
-                    'args'                => [
-                        'file' => [
-                            'required'          => true,
-                            'type'              => 'object',
-                            'validate_callback' => static function ( $value ) {
-                                return is_array( $value );
-                            },
-                        ],
-                    ],
+                    'args'                => $file_arg,
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
+            '/layouts/import/review',
+            [
+                [
+                    'methods'             => \WP_REST_Server::CREATABLE,
+                    'callback'            => fn( $request ) => $this->exec_read( [ $this, 'review_layout' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $file_arg,
                 ],
             ]
         );
@@ -45,6 +61,26 @@ class LayoutImportRestController extends BaseRestController {
 
     public function permission_callback(): bool {
         return current_user_can( 'manage_woocommerce' );
+    }
+
+    /**
+     * The layout an export file holds, without storing it: the editor's Import
+     * replaces its own blocks, so it asks here instead of checking the file itself.
+     *
+     * @return array|\WP_Error { title, content, blocks }
+     */
+    public function review_layout( \WP_REST_Request $request ) {
+        try {
+            $layout = LayoutImportReview::from_envelope( (array) $request->get_param( 'file' ) );
+        } catch ( \InvalidArgumentException $e ) {
+            return $this->error_invalid_arguments( $e->getMessage() );
+        }
+
+        return [
+            'title'   => $layout['title'],
+            'content' => $layout['content'],
+            'blocks'  => Layout::block_count( $layout['content'] ),
+        ];
     }
 
     /**
