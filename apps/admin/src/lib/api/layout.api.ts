@@ -4,6 +4,7 @@ import {
   layoutCountsResponseSchema,
   LayoutListResponse,
   layoutListResponseWireSchema,
+  layoutRulesWireSchema,
   LayoutStatus,
   LayoutSummary,
   LayoutSummaryWire,
@@ -11,6 +12,8 @@ import {
   layoutWireSchema,
   PreviewLink,
   previewLinkWireSchema,
+  type LayoutRulesResponse,
+  type LayoutRulesWire,
 } from '@/lib/schema/layout.schema';
 
 // The only place wire snake_case meets app camelCase.
@@ -119,4 +122,19 @@ export async function createLayoutDraft(payload: CreateLayoutDraftPayload): Prom
       : { name: payload.name, source: payload.source };
 
   return parseLayout(await api.post('layouts', { json }).json());
+}
+
+export async function getLayoutRules(id: number): Promise<LayoutRulesResponse> {
+  return layoutRulesWireSchema.parse(await api.get(`layouts/${id}/rules`).json());
+}
+
+/** Replaces the rules; resolves to them as stored (ids as ints, list values de-duplicated). */
+export async function saveLayoutRules({
+  id,
+  rules,
+}: {
+  id: number;
+  rules: LayoutRulesWire;
+}): Promise<LayoutRulesResponse> {
+  return layoutRulesWireSchema.parse(await api.put(`layouts/${id}/rules`, { json: { rules } }).json());
 }

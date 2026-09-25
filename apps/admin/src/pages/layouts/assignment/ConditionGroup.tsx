@@ -53,11 +53,13 @@ export function ConditionGroup({
   group,
   onChange,
   onRemove,
+  productNames,
 }: {
   index: number;
   group: Group;
   onChange: (group: Group) => void;
   onRemove: () => void;
+  productNames: Record<string, string>;
 }) {
   return (
     <div className="rounded-lg border">
@@ -85,6 +87,7 @@ export function ConditionGroup({
             condition={condition}
             onChange={(next) => onChange(group.map((c, i) => (i === conditionIndex ? next : c)))}
             onRemove={() => onChange(group.filter((_, i) => i !== conditionIndex))}
+            productNames={productNames}
           />
         ))}
 
@@ -98,10 +101,12 @@ function ConditionRow({
   condition,
   onChange,
   onRemove,
+  productNames,
 }: {
   condition: Condition;
   onChange: (condition: Condition) => void;
   onRemove: () => void;
+  productNames: Record<string, string>;
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -141,6 +146,7 @@ function ConditionRow({
       ) : condition.type === 'product_in_cart' ? (
         <ProductMultiSelect
           className="flex-1"
+          savedNames={productNames}
           value={condition.value as string[]}
           onChange={(value) => onChange({ ...condition, value })}
         />

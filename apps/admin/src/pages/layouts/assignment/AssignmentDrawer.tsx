@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
+import { useLayoutRulesQuery, useSaveLayoutRulesMutation } from '@/lib/queries/layout.queries';
 import type { LayoutSummary } from '@/lib/schema/layout.schema';
-import { Button } from '@/components/ui/button';
+import { Button, LoadingButton } from '@/components/ui/button';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import {
   Sheet,
@@ -13,11 +15,17 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { newCondition, type Group } from '@/pages/layouts/assignment/condition-types';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  groupsFromWire,
+  isConditionComplete,
+  newCondition,
+  type Group,
+} from '@/pages/layouts/assignment/condition-types';
 import { AddConditionMenu, ConditionGroup, OrDivider } from '@/pages/layouts/assignment/ConditionGroup';
 import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';
 
-/** Right-hand drawer where a layout's assignment rules are edited. Opened from the row's "⋯" menu. */
+/** Right-hand drawer where a layout's assignment rules are edited. Opened from the row's "⋯" menu; Pro only. */
 export function AssignmentDrawer({
   layout,
   onOpenChange,
@@ -30,23 +38,14 @@ export function AssignmentDrawer({
       {/* Wider than the default sheet: the value column grows into selects and multi-selects per condition type. */}
       <SheetContent className="sm:max-w-3xl">
         {/* Keyed so each opened layout starts from a fresh form. */}
-        {layout && <AssignmentForm key={layout.id} layout={layout} />}
+        {layout && <AssignmentForm key={layout.id} layout={layout} onSaved={() => onOpenChange(false)} />}
       </SheetContent>
     </Sheet>
   );
 }
 
-function AssignmentForm({ layout }: { layout: LayoutSummary }) {
-  const [groups, setGroups] = useState<Group[]>([]);
-
-  function updateGroup(groupIndex: number, group: Group) {
-    // A group emptied of its last condition goes with it.
-    setGroups(
-      group.length > 0
-        ? groups.map((g, i) => (i === groupIndex ? group : g))
-        : groups.filter((_, i) => i !== groupIndex),
-    );
-  }
+function AssignmentForm({ layout, onSaved }: { layout: LayoutSummary; onSaved: () => void }) {
+  const rules = useLayoutRulesQuery(layout.id);
 
   return (
     <>
@@ -61,6 +60,72 @@ function AssignmentForm({ layout }: { layout: LayoutSummary }) {
         </div>
       </SheetHeader>
 
+      {rules.data ? (
+        <RulesEditor
+          layoutId={layout.id}
+          saved={groupsFromWire(rules.data.rules)}
+          productNames={rules.data.labels.products}
+          onSaved={onSaved}
+        />
+      ) : (
+        <div className="flex-1 space-y-3 p-5">
+          {rules.isError ? (
+            <p className="text-destructive text-sm">{__('The rules could not be loaded.', 'yaycheckout')}</p>
+          ) : (
+            <>
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-28 w-full" />
+            </>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
+/** Mounted once the stored rules are in, so they seed the form exactly once and stay the "unchanged" baseline. */
+function RulesEditor({
+  layoutId,
+  saved,
+  productNames,
+  onSaved,
+}: {
+  layoutId: number;
+  saved: Group[];
+  /** Names of the products in the saved rules, from the rules reply. */
+  productNames: Record<string, string>;
+  onSaved: () => void;
+}) {
+  const [groups, setGroups] = useState<Group[]>(saved);
+  const save = useSaveLayoutRulesMutation();
+
+  const dirty = JSON.stringify(groups) !== JSON.stringify(saved);
+  // Every condition filled: a half-filled one would save a rule that tests nothing. No groups is valid: it clears the rules.
+  const canSave = dirty && groups.every((group) => group.every(isConditionComplete));
+
+  function updateGroup(groupIndex: number, group: Group) {
+    // A group emptied of its last condition goes with it.
+    setGroups(
+      group.length > 0
+        ? groups.map((g, i) => (i === groupIndex ? group : g))
+        : groups.filter((_, i) => i !== groupIndex),
+    );
+  }
+
+  function onSave() {
+    save.mutate(
+      { id: layoutId, rules: groups },
+      {
+        onSuccess: () => {
+          toast.success(__('Rules saved.', 'yaycheckout'));
+          onSaved();
+        },
+      },
+    );
+  }
+
+  return (
+    <>
       <div className="flex-1 space-y-3 overflow-y-auto p-5">
         <h3 className="text-muted-foreground mb-4 text-xs font-medium tracking-wider uppercase">
           {__('Conditions', 'yaycheckout')}
@@ -90,6 +155,7 @@ function AssignmentForm({ layout }: { layout: LayoutSummary }) {
                 group={group}
                 onChange={(next) => updateGroup(groupIndex, next)}
                 onRemove={() => setGroups(groups.filter((_, i) => i !== groupIndex))}
+                productNames={productNames}
               />
             </div>
           ))
@@ -108,7 +174,9 @@ function AssignmentForm({ layout }: { layout: LayoutSummary }) {
         <SheetClose asChild>
           <Button variant="outline">{__('Cancel', 'yaycheckout')}</Button>
         </SheetClose>
-        <Button disabled>{__('Save rules', 'yaycheckout')}</Button>
+        <LoadingButton loading={save.isPending} disabled={!canSave || save.isPending} onClick={onSave}>
+          {__('Save rules', 'yaycheckout')}
+        </LoadingButton>
       </SheetFooter>
     </>
   );

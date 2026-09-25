@@ -14,10 +14,13 @@ const LOAD_MORE_THRESHOLD_PX = 40;
 
 /** Searchable multi-select over published products, ten at a time as the list scrolls. Value is product ids. */
 export function ProductMultiSelect({
+  savedNames,
   value,
   onChange,
   className,
 }: {
+  /** Names of already-saved picks: they may never appear in a search page. */
+  savedNames: Record<string, string>;
   value: string[];
   onChange: (value: string[]) => void;
   className?: string;
@@ -34,8 +37,8 @@ export function ProductMultiSelect({
   }, 300);
 
   // Names of picked products, kept across searches: a pick scrolled out of the current page still needs its badge.
-  // ponytail: in-memory only; saved rules reopened later will need their names fetched by id.
-  const [names, setNames] = useState<Record<string, string>>({});
+  // Seeded with the saved picks' names from the rules reply; a deleted product has none and stays "#id".
+  const [names, setNames] = useState<Record<string, string>>(savedNames);
 
   // Not fetched until the popover first opens: a closed picker costs no request.
   const list = useInfiniteProductsQuery(search, open);

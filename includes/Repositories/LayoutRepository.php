@@ -385,6 +385,30 @@ class LayoutRepository {
     }
 
     /**
+     * Replaces a layout's assignment rules; [] clears them. Writes meta only, so the layout's
+     * content, status and modified date stay as they are: rules save separately from the design.
+     *
+     * @param mixed $rules Raw rules; see Layout::sanitize_rules().
+     * @return array The rules as stored.
+     * @throws \InvalidArgumentException When the layout is missing or the rules are invalid.
+     */
+    public function set_rules( int $id, $rules ): array {
+        if ( null === $this->find( $id ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        $clean = Layout::sanitize_rules( $rules );
+
+        if ( [] === $clean ) {
+            delete_post_meta( $id, Layout::META_RULES );
+        } else {
+            update_post_meta( $id, Layout::META_RULES, $clean );
+        }
+
+        return $clean;
+    }
+
+    /**
      * The one insert path for a new draft; every way of making a layout funnels through it so the cap and slashing cannot drift.
      *
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.

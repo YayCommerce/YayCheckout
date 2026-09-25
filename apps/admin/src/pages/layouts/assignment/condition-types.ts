@@ -1,5 +1,7 @@
 import { __ } from '@wordpress/i18n';
 
+import type { LayoutRulesWire } from '@/lib/schema/layout.schema';
+
 export type ConditionType =
   'country' | 'product_in_cart' | 'customer_role' | 'device' | 'payment_method' | 'cart_total';
 
@@ -53,4 +55,22 @@ export function newCondition(type: ConditionType): Condition {
     operator: CONDITION_TYPES[type].operators[0].value,
     value: MULTI_VALUE_TYPES.includes(type) ? [] : type === 'cart_total' ? 0 : '',
   };
+}
+
+/** Whether the condition has a value to test. A cart total of 0 counts: "is over 0" is a real rule. */
+export function isConditionComplete(condition: Condition): boolean {
+  if (Array.isArray(condition.value)) return condition.value.length > 0;
+  if (typeof condition.value === 'number') return true;
+  return condition.value !== '';
+}
+
+/** Stored rules to form state: list values become strings, as the pickers key their options by string. */
+export function groupsFromWire(rules: LayoutRulesWire): Group[] {
+  return rules.map((group) =>
+    group.map((condition) => ({
+      type: condition.type as ConditionType,
+      operator: condition.operator,
+      value: Array.isArray(condition.value) ? condition.value.map(String) : condition.value,
+    })),
+  );
 }

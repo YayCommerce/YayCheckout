@@ -119,3 +119,24 @@ export const newLayoutFormSchema = z
   });
 
 export type NewLayoutFormValues = z.infer<typeof newLayoutFormSchema>;
+
+/**
+ * Assignment rules as LayoutRulesRestController sends them: groups ORed, conditions ANDed.
+ * Loose on type and operator: the server validated them on save, and the drawer owns their vocabulary.
+ */
+export const layoutRulesWireSchema = z.object({
+  rules: z.array(
+    z.array(
+      z.object({
+        type: z.string(),
+        operator: z.string(),
+        value: z.union([z.array(z.union([z.string(), z.number()])), z.string(), z.number()]),
+      }),
+    ),
+  ),
+  /** Names of the products the rules name, by id; a deleted product has no entry. */
+  labels: z.object({ products: z.record(z.string(), z.string()) }),
+});
+
+export type LayoutRulesResponse = z.infer<typeof layoutRulesWireSchema>;
+export type LayoutRulesWire = LayoutRulesResponse['rules'];

@@ -17,11 +17,13 @@ import {
   duplicateLayout,
   getLayout,
   getLayoutCounts,
+  getLayoutRules,
   getLayouts,
   LayoutListParams,
   publishLayout,
   resetLayout,
   restoreLayout,
+  saveLayoutRules,
 } from '@/lib/api/layout.api';
 import { LISTED_LAYOUT_STATUSES } from '@/lib/schema/layout.schema';
 
@@ -30,6 +32,7 @@ export const LAYOUT_KEYS = {
   list: (params: LayoutListParams = {}) => ['layouts', 'list', params] as const,
   counts: ['layouts', 'counts'] as const,
   detail: (id: number) => ['layouts', 'detail', id] as const,
+  rules: (id: number) => ['layouts', 'rules', id] as const,
 };
 
 export const LAYOUT_QUERIES = {
@@ -210,5 +213,26 @@ export function useCreatePreviewLinkMutation() {
   return useMutation({
     mutationKey: ['layouts', 'preview-link'],
     mutationFn: createPreviewLink,
+  });
+}
+
+/** Pro only: the Free build has no rules route. */
+export function useLayoutRulesQuery(id: number) {
+  return useQuery({
+    queryKey: LAYOUT_KEYS.rules(id),
+    queryFn: () => getLayoutRules(id),
+  });
+}
+
+/** The reply is the stored rules, so it becomes the cached copy without a refetch. */
+export function useSaveLayoutRulesMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'save-rules'],
+    mutationFn: saveLayoutRules,
+    onSuccess: (reply, { id }) => {
+      queryClient.setQueryData(LAYOUT_KEYS.rules(id), reply);
+    },
   });
 }
