@@ -21,7 +21,7 @@ import {
   type ConditionType,
   type Group,
 } from '@/pages/layouts/assignment/condition-types';
-import { CountryMultiSelect } from '@/pages/layouts/assignment/CountryMultiSelect';
+import { OptionsMultiSelect } from '@/pages/layouts/assignment/OptionsMultiSelect';
 import { ProductMultiSelect } from '@/pages/layouts/assignment/ProductMultiSelect';
 
 export function ConditionGroup({
@@ -102,8 +102,22 @@ function ConditionRow({
       </Select>
 
       {condition.type === 'country' ? (
-        <CountryMultiSelect
+        <OptionsMultiSelect
           className="flex-1"
+          options={window.yayCheckoutAdmin.countries}
+          placeholder={__('Select countries', 'yaycheckout')}
+          searchPlaceholder={__('Search countries', 'yaycheckout')}
+          emptyText={__('No countries found.', 'yaycheckout')}
+          value={condition.value as string[]}
+          onChange={(value) => onChange({ ...condition, value })}
+        />
+      ) : condition.type === 'customer_role' ? (
+        <OptionsMultiSelect
+          className="flex-1"
+          options={window.yayCheckoutAdmin.roles}
+          placeholder={__('Select roles', 'yaycheckout')}
+          searchPlaceholder={__('Search roles', 'yaycheckout')}
+          emptyText={__('No roles found.', 'yaycheckout')}
           value={condition.value as string[]}
           onChange={(value) => onChange({ ...condition, value })}
         />

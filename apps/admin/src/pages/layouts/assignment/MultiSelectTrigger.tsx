@@ -1,9 +1,7 @@
 import { cn } from '@/lib/utils';
 import { ComboboxBadge, ComboboxIcon, ComboboxRemove, ComboboxTrigger } from '@/components/ui/combobox';
 
-const MAX_BADGES = 3;
-
-/** Popover trigger for the condition value pickers: one removable badge per pick, then "+N". */
+/** Popover trigger for the condition value pickers: one removable badge per pick, wrapping onto more lines. */
 export function MultiSelectTrigger({
   selected,
   placeholder,
@@ -21,17 +19,12 @@ export function MultiSelectTrigger({
         {selected.length === 0 ? (
           <span className="text-muted-foreground">{placeholder}</span>
         ) : (
-          <>
-            {selected.slice(0, MAX_BADGES).map((item) => (
-              <ComboboxBadge key={item.value}>
-                {item.label}
-                <ComboboxRemove onRemove={() => onRemove(item.value)} />
-              </ComboboxBadge>
-            ))}
-            {selected.length > MAX_BADGES && (
-              <ComboboxBadge className="px-1">+{selected.length - MAX_BADGES}</ComboboxBadge>
-            )}
-          </>
+          selected.map((item) => (
+            <ComboboxBadge key={item.value}>
+              {item.label}
+              <ComboboxRemove onRemove={() => onRemove(item.value)} />
+            </ComboboxBadge>
+          ))
         )}
       </div>
       <ComboboxIcon />

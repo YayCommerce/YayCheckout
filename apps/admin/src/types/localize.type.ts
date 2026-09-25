@@ -30,4 +30,6 @@ export type AdminData = {
   design: DesignResponseWire;
   /** ISO 3166-1 alpha-2 code => name, in Woo's display order. */
   countries: Record<string, string>;
+  /** Role slug => translated name, every registered role. */
+  roles: Record<string, string>;
 };

@@ -28,6 +28,8 @@ class LocalizeHelper {
                 },
                 WC()->countries->get_countries()
             ),
+            // Slug => translated name; every registered role, Woo's and other plugins' included.
+            'roles'        => array_map( 'translate_user_role', wp_roles()->get_names() ),
         ];
 
         return apply_filters( 'yaycheckout_localize_admin_data', $admin_data );
