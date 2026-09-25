@@ -20,6 +20,12 @@ const LIST_OPERATORS = [
   { value: 'not_in', label: __('not in list', 'yaycheckout') },
 ];
 
+export const DEVICE_OPTIONS = [
+  { value: 'all', label: __('All', 'yaycheckout') },
+  { value: 'desktop', label: __('Desktop', 'yaycheckout') },
+  { value: 'mobile', label: __('Mobile', 'yaycheckout') },
+];
+
 export const CONDITION_TYPES: Record<ConditionType, { label: string; operators: { value: string; label: string }[] }> =
   {
     country: { label: __('Country', 'yaycheckout'), operators: LIST_OPERATORS },

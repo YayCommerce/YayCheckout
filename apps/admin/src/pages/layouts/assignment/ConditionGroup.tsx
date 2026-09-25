@@ -16,6 +16,7 @@ import { TrashButton } from '@/components/shared/TrashButton';
 import {
   CONDITION_TYPE_KEYS,
   CONDITION_TYPES,
+  DEVICE_OPTIONS,
   newCondition,
   type Condition,
   type ConditionType,
@@ -127,6 +128,19 @@ function ConditionRow({
           value={condition.value as string[]}
           onChange={(value) => onChange({ ...condition, value })}
         />
+      ) : condition.type === 'device' ? (
+        <Select value={condition.value as string} onValueChange={(value) => onChange({ ...condition, value })}>
+          <SelectTrigger className="min-w-0 flex-1">
+            <SelectValue placeholder={__('Select device', 'yaycheckout')} />
+          </SelectTrigger>
+          <SelectContent>
+            {DEVICE_OPTIONS.map((device) => (
+              <SelectItem key={device.value} value={device.value}>
+                {device.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       ) : (
         // ponytail: free text for the remaining types; their pickers (roles, products, …) come type by type.
         <Input
