@@ -342,13 +342,14 @@ class LayoutRepository {
     }
 
     /**
-     * Creates a draft from an export file's title and markup, verbatim.
+     * Creates a draft from an export file's title, markup and assignment rules, verbatim.
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
+     * @param array $rules Already sanitized (Layout::sanitize_rules()); [] for none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    public function import( string $title, string $content ): Layout {
-        return $this->insert_draft( $title, $content );
+    public function import( string $title, string $content, array $rules = [] ): Layout {
+        return $this->insert_draft( $title, $content, $rules );
     }
 
     /**
@@ -411,9 +412,10 @@ class LayoutRepository {
     /**
      * The one insert path for a new draft; every way of making a layout funnels through it so the cap and slashing cannot drift.
      *
+     * @param array $rules Already sanitized; written with the post, so the draft never exists without them.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content ): Layout {
+    private function insert_draft( string $title, string $content, array $rules = [] ): Layout {
         // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.
         if ( Plan::layout_limit_reached( $this->count() ) ) {
             throw new \InvalidArgumentException( Plan::layout_limit_message() );
@@ -427,6 +429,7 @@ class LayoutRepository {
                     'post_status'  => LayoutStatus::DRAFT,
                     'post_title'   => $title,
                     'post_content' => $content,
+                    'meta_input'   => [] === $rules ? [] : [ Layout::META_RULES => $rules ],
                 ]
             ),
             true

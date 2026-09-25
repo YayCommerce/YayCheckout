@@ -55,7 +55,7 @@ export function ProductMultiSelect({
       <MultiSelectTrigger
         className={className}
         placeholder={__('Select products', 'yaycheckout')}
-        selected={value.map((id) => ({ value: id, label: names[id] ?? `#${id}` }))}
+        selected={value.map((id) => ({ value: id, label: names[id] ?? `#${id}`, missing: !(id in names) }))}
         onRemove={(id) => toggle(id)}
       />
       <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">

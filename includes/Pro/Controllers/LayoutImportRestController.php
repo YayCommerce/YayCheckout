@@ -84,16 +84,25 @@ class LayoutImportRestController extends BaseRestController {
     }
 
     /**
-     * Reviews the file, then inserts the draft. The SPA only reads the envelope, so this is
-     * where a file without a Checkout block is refused; blocks the site lacks pass.
+     * Reviews the file, then inserts the draft with the file's rules. The SPA only reads the envelope, so this is
+     * where a file without a Checkout block is refused; blocks the site lacks pass. Rules never refuse a file:
+     * unreadable ones are dropped; the rest are kept as the file holds them.
      *
-     * @return \WP_REST_Response|\WP_Error
+     * @return \WP_REST_Response|\WP_Error The new draft (Layout::to_array()) plus `rules_import` { status }.
      */
     public function import_layout( \WP_REST_Request $request ) {
         try {
             $layout = LayoutImportReview::from_envelope( (array) $request->get_param( 'file' ) );
+            $rules  = LayoutImportReview::rules_from_file( $layout['rules'] );
+            $draft  = $this->layouts->import( $layout['title'], $layout['content'], $rules['rules'] );
 
-            return new \WP_REST_Response( $this->layouts->import( $layout['title'], $layout['content'] )->to_array(), 201 );
+            return new \WP_REST_Response(
+                array_merge(
+                    $draft->to_array(),
+                    [ 'rules_import' => [ 'status' => $rules['status'] ] ]
+                ),
+                201
+            );
         } catch ( \InvalidArgumentException $e ) {
             return $this->error_invalid_arguments( $e->getMessage() );
         }

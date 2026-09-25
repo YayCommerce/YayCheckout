@@ -95,6 +95,71 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
         $this->assertSame( self::MARKUP, get_post( $created['id'] )->post_content );
     }
 
+    /** Stored as the file holds them, even values this store lacks: the merchant edits those in Assignment. */
+    public function test_import_keeps_the_rules_an_export_carries(): void {
+        $id    = LayoutFactory::create_draft( [ 'post_content' => self::MARKUP ] );
+        $rules = [
+            [
+                [
+                    'type'     => 'country',
+                    'operator' => 'in',
+                    'value'    => [ 'DE' ],
+                ],
+                [
+                    'type'     => 'product_in_cart',
+                    'operator' => 'in',
+                    'value'    => [ 999999 ],
+                ],
+            ],
+        ];
+        update_post_meta( $id, Layout::META_RULES, $rules );
+
+        $created = $this->import( $this->export( $id )->get_data() )->get_data();
+
+        $this->assertSame( $rules, get_post_meta( $created['id'], Layout::META_RULES, true ) );
+        $this->assertSame( 'imported', $created['rules_import']['status'] );
+    }
+
+    public function test_import_drops_rules_it_cannot_read_but_still_creates_the_draft(): void {
+        $file = $this->envelope(
+            [
+                [
+                    'title'   => 'Newer plugin',
+                    'content' => self::MARKUP,
+                    'rules'   => [
+                        [
+                            [
+                                'type'     => 'weather',
+                                'operator' => 'is',
+                                'value'    => 'sunny',
+                            ],
+                        ],
+                    ],
+                ],
+            ]
+        );
+
+        $response = $this->import( $file );
+        $created  = $response->get_data();
+
+        $this->assertSame( 201, $response->get_status() );
+        $this->assertSame( 'dropped', $created['rules_import']['status'] );
+        $this->assertFalse( metadata_exists( 'post', $created['id'], Layout::META_RULES ) );
+    }
+
+    public function test_import_of_a_file_without_rules_reports_none(): void {
+        $file = $this->envelope(
+            [
+                [
+                    'title'   => 'Old export',
+                    'content' => self::MARKUP,
+                ],
+            ]
+        );
+
+        $this->assertSame( 'none', $this->import( $file )->get_data()['rules_import']['status'] );
+    }
+
     /** @dataProvider refused_files */
     public function test_import_refuses( array $file ): void {
         $before = wp_count_posts( Layout::POST_TYPE )->draft;

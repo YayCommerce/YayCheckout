@@ -15,7 +15,7 @@ class LayoutImportReview {
 
     /**
      * @param  array $envelope Decoded export file.
-     * @return array { title, content }
+     * @return array { title, content, rules } rules as the file holds them, unchecked; see rules_from_file().
      * @throws \InvalidArgumentException When the file is not an export or has no Checkout block.
      */
     public static function from_envelope( array $envelope ): array {
@@ -30,9 +30,38 @@ class LayoutImportReview {
     }
 
     /**
+     * The file's assignment rules, if they can be kept. Rules this version cannot read (a type from a newer
+     * plugin, a hand-edited file) are dropped whole, not per condition: dropping one condition of a group
+     * would widen it, and the layout would then serve shoppers the file never meant it to.
+     *
+     * @param  mixed $rules The layout's `rules` from the file; absent in files exported before rules travelled.
+     * @return array{rules: array, status: string} status: 'imported', 'dropped', or 'none' when the file has none.
+     */
+    public static function rules_from_file( $rules ): array {
+        if ( null === $rules || [] === $rules ) {
+            return [
+                'rules'  => [],
+                'status' => 'none',
+            ];
+        }
+
+        try {
+            return [
+                'rules'  => Layout::sanitize_rules( $rules ),
+                'status' => 'imported',
+            ];
+        } catch ( \InvalidArgumentException $e ) {
+            return [
+                'rules'  => [],
+                'status' => 'dropped',
+            ];
+        }
+    }
+
+    /**
      * The one layout inside a valid envelope.
      *
-     * @return array { title, content }
+     * @return array { title, content, rules }
      * @throws \InvalidArgumentException When the envelope is not a YayCheckout export.
      */
     private static function layout( array $envelope ): array {
@@ -47,6 +76,10 @@ class LayoutImportReview {
             throw new \InvalidArgumentException( __( 'The file must contain exactly one layout.', 'yaycheckout' ) );
         }
 
-        return $layout;
+        return [
+            'title'   => $layout['title'],
+            'content' => $layout['content'],
+            'rules'   => $layout['rules'] ?? null,
+        ];
     }
 }

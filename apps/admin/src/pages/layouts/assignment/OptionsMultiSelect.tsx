@@ -44,7 +44,11 @@ export function OptionsMultiSelect({
       <MultiSelectTrigger
         className={className}
         placeholder={placeholder}
-        selected={value.map((key) => ({ value: key, label: options[key] ?? key }))}
+        selected={value.map((key) => ({
+          value: key,
+          label: options[key] ?? key,
+          missing: !Object.hasOwn(options, key),
+        }))}
         onRemove={toggle}
       />
       <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
