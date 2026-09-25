@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ConfirmPopover } from '@/components/shared/ConfirmPopover';
 import { TrashButton } from '@/components/shared/TrashButton';
 import { AmountInput } from '@/pages/layouts/assignment/AmountInput';
 import {
@@ -68,7 +69,13 @@ export function ConditionGroup({
             index + 1,
           )}
         </span>
-        <TrashButton aria-label={__('Remove group', 'yaycheckout')} onClick={onRemove} />
+        {/* A group can hold several conditions, so removing it asks first; a single condition row does not. */}
+        <ConfirmPopover
+          trigger={<TrashButton aria-label={__('Remove group', 'yaycheckout')} />}
+          message={__('Remove this group and all its conditions?', 'yaycheckout')}
+          confirmLabel={__('Remove', 'yaycheckout')}
+          onConfirm={onRemove}
+        />
       </div>
 
       <div className="space-y-3 p-4">
