@@ -3,8 +3,8 @@ import { __ } from '@wordpress/i18n';
 export type ConditionType =
   'country' | 'product_in_cart' | 'customer_role' | 'device' | 'payment_method' | 'cart_total';
 
-/** Value is a list for multi-select types (country codes, product ids, role slugs, gateway ids), text otherwise. */
-export type Condition = { type: ConditionType; operator: string; value: string | string[] };
+/** Value is a list for multi-select types (country codes, product ids, role slugs, gateway ids), an amount for cart total, a key otherwise. */
+export type Condition = { type: ConditionType; operator: string; value: string | string[] | number };
 
 /** Conditions inside a group are ANDed; groups are ORed. */
 export type Group = Condition[];
@@ -51,6 +51,6 @@ export function newCondition(type: ConditionType): Condition {
   return {
     type,
     operator: CONDITION_TYPES[type].operators[0].value,
-    value: MULTI_VALUE_TYPES.includes(type) ? [] : '',
+    value: MULTI_VALUE_TYPES.includes(type) ? [] : type === 'cart_total' ? 0 : '',
   };
 }

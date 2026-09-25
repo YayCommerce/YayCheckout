@@ -10,9 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TrashButton } from '@/components/shared/TrashButton';
+import { AmountInput } from '@/pages/layouts/assignment/AmountInput';
 import {
   CONDITION_TYPE_KEYS,
   CONDITION_TYPES,
@@ -151,13 +151,7 @@ function ConditionRow({
           </SelectContent>
         </Select>
       ) : (
-        // ponytail: free text for the remaining types; their pickers (roles, products, …) come type by type.
-        <Input
-          className="min-w-0 flex-1"
-          type={condition.type === 'cart_total' ? 'number' : 'text'}
-          value={condition.value as string}
-          onChange={(event) => onChange({ ...condition, value: event.target.value })}
-        />
+        <AmountInput value={condition.value as number} onChange={(value) => onChange({ ...condition, value })} />
       )}
 
       <TrashButton aria-label={__('Remove condition', 'yaycheckout')} onClick={onRemove} />

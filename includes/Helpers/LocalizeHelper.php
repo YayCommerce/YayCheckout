@@ -37,6 +37,14 @@ class LocalizeHelper {
                 },
                 WC()->payment_gateways()->payment_gateways()
             ),
+            // Store currency format, so amounts are typed the way Woo prints prices.
+            'currency'     => [
+                'symbol'             => html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8' ),
+                'position'           => get_option( 'woocommerce_currency_pos', 'left' ),
+                'decimals'           => wc_get_price_decimals(),
+                'decimal_separator'  => wc_get_price_decimal_separator(),
+                'thousand_separator' => wc_get_price_thousand_separator(),
+            ],
         ];
 
         return apply_filters( 'yaycheckout_localize_admin_data', $admin_data );

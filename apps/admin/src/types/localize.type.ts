@@ -34,4 +34,12 @@ export type AdminData = {
   roles: Record<string, string>;
   /** Payment gateway id => admin name, every classic gateway, enabled or not. */
   gateways: Record<string, string>;
+  /** Woo's price format settings. */
+  currency: {
+    symbol: string;
+    position: 'left' | 'right' | 'left_space' | 'right_space';
+    decimals: number;
+    decimal_separator: string;
+    thousand_separator: string;
+  };
 };
