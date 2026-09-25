@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { layoutRulesWireSchema } from '@/lib/schema/layout.schema';
+
 // Wire schema: the PHP shape of GET /layouts/{id}/export, exactly. Only lib/api/tools.api.ts reads it.
 
 /** Mirrors Layout::EXPORT_FORMAT in PHP. */
@@ -15,6 +17,7 @@ export const layoutExportWireSchema = z
         .object({
           title: z.string(),
           content: z.string(),
+          rules: layoutRulesWireSchema.shape.rules.optional(),
         })
         .strict(),
     ),

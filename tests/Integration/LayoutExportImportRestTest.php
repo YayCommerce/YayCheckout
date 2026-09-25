@@ -6,7 +6,7 @@ use WP_UnitTestCase;
 use YayCheckout\Models\Layout;
 use YayCheckout\Tests\Support\LayoutFactory;
 
-/** Pins the export file's shape and name, that it re-imports as a draft, and which files import refuses. */
+/** Pins the export file's shape (rules included) and name, that it re-imports as a draft, and which files import refuses. */
 class LayoutExportImportRestTest extends WP_UnitTestCase {
 
     private const MARKUP = '<!-- wp:group --><div class="wp-block-group"><!-- wp:yaycheckout/checkout /--></div><!-- /wp:group -->';
@@ -45,14 +45,16 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
         ];
     }
 
-    public function test_export_carries_title_and_markup_only_and_names_the_file(): void {
-        $id = LayoutFactory::create_draft(
+    public function test_export_carries_title_markup_and_rules_and_names_the_file(): void {
+        $id    = LayoutFactory::create_draft(
             [
                 'post_title'   => 'B2B Checkout ✨',
                 'post_status'  => 'publish',
                 'post_content' => self::MARKUP,
             ]
         );
+        $rules = [ [ [ 'type' => 'customer_role', 'operator' => 'in', 'value' => [ 'wholesale' ] ] ] ];
+        update_post_meta( $id, Layout::META_RULES, $rules );
 
         $response = $this->export( $id );
         $data     = $response->get_data();
@@ -64,6 +66,7 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
                 [
                     'title'   => 'B2B Checkout ✨',
                     'content' => self::MARKUP,
+                    'rules'   => $rules,
                 ],
             ],
             $data['layouts']
