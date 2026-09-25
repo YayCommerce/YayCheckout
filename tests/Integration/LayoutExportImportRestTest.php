@@ -28,6 +28,14 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
         return rest_do_request( $request );
     }
 
+    private function review( array $file ) {
+        $request = new WP_REST_Request( 'POST', '/yaycheckout/v1/layouts/import/review' );
+        $request->set_header( 'Content-Type', 'application/json' );
+        $request->set_body( wp_json_encode( [ 'file' => $file ] ) );
+
+        return rest_do_request( $request );
+    }
+
     private function envelope( array $layouts ): array {
         return [
             'format'         => Layout::EXPORT_FORMAT,
@@ -92,6 +100,38 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
 
         $this->assertSame( 400, $response->get_status() );
         $this->assertSame( $before, wp_count_posts( Layout::POST_TYPE )->draft );
+    }
+
+    /** The editor's Import reads the layout from here, so nothing is stored and the refusals match import. */
+    public function test_review_returns_the_layout_without_storing_it(): void {
+        $before = wp_count_posts( Layout::POST_TYPE )->draft;
+
+        $response = $this->review(
+            $this->envelope(
+                [
+                    [
+                        'title'   => 'Imported',
+                        'content' => self::MARKUP,
+                    ],
+                ]
+            )
+        );
+
+        $this->assertSame( 200, $response->get_status() );
+        $this->assertSame(
+            [
+                'title'   => 'Imported',
+                'content' => self::MARKUP,
+                'blocks'  => 1,
+            ],
+            $response->get_data()
+        );
+        $this->assertSame( $before, wp_count_posts( Layout::POST_TYPE )->draft );
+    }
+
+    /** @dataProvider refused_files */
+    public function test_review_refuses( array $file ): void {
+        $this->assertSame( 400, $this->review( $file )->get_status() );
     }
 
     public function refused_files(): array {

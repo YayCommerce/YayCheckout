@@ -1,3 +1,4 @@
+import { filenameFromHeaders } from '@blocks-shared/export-file';
 import { __ } from '@wordpress/i18n';
 
 import { api } from '@/lib/api/api';
@@ -11,11 +12,6 @@ import {
 } from '@/lib/schema/tools.schema';
 
 // Export writes the wire envelope verbatim, so there is no camelCase projection: the file must re-import as-is.
-
-/** PHP names the file in Content-Disposition; a missing or malformed header falls back to a generic name rather than failing the download. */
-function filenameFromHeaders(headers: Headers): string {
-  return /filename="([^"]+)"/.exec(headers.get('content-disposition') ?? '')?.[1] ?? 'yaycheckout-layout.json';
-}
 
 export async function exportLayout(id: number): Promise<LayoutExportFile> {
   const response = await api.get(`layouts/${id}/export`);
@@ -34,11 +30,11 @@ export async function exportLayout(id: number): Promise<LayoutExportFile> {
 export function reviewExportFile(envelope: LayoutExportEnvelope): ImportReview {
   const layout = envelope.layouts[0];
 
-  // Same count as the `blocks` field of Layout::to_summary_array(): our blocks only, one `<!-- wp:yaycheckout/` each.
+  // Mirrors Layout::block_count(): our blocks only, one `<!-- wp:yaycheckout/` each.
   return { title: layout.title, blocks: layout.content.split('<!-- wp:yaycheckout/').length - 1 };
 }
 
-/** Client-side gate before any request: not JSON, or JSON that is not an export envelope, never reaches PHP. */
+/** Client-side gate before any request, mirroring LayoutImportReview::from_envelope(): not JSON, or JSON that is not an export envelope, never reaches PHP. */
 export function parseExportFile(text: string): LayoutExportEnvelope {
   let json: unknown;
   try {
