@@ -2,7 +2,7 @@ import { NumberInput } from '@/components/ui/number-input';
 
 /** An amount in the store's currency, typed the way Woo prints prices: symbol, position, decimals, separators. */
 export function AmountInput({ value, onChange }: { value: number; onChange: (value: number) => void }) {
-  const { symbol, position, decimals, decimal_separator, thousand_separator } = window.yayCheckoutAdmin.currency;
+  const { symbol, position, decimals, decimal_separator, thousand_separator } = window.yayCheckoutAdmin.store.currency;
   const space = position.endsWith('_space') ? ' ' : '';
 
   return (

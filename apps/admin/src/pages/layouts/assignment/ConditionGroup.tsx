@@ -28,19 +28,19 @@ import { ProductMultiSelect } from '@/pages/layouts/assignment/ProductMultiSelec
 /** Types whose value comes from a list the page already holds. Functions, so window is read at render, not import. */
 const OPTION_PICKERS = {
   country: () => ({
-    options: window.yayCheckoutAdmin.countries,
+    options: window.yayCheckoutAdmin.store.countries,
     placeholder: __('Select countries', 'yaycheckout'),
     searchPlaceholder: __('Search countries', 'yaycheckout'),
     emptyText: __('No countries found.', 'yaycheckout'),
   }),
   customer_role: () => ({
-    options: window.yayCheckoutAdmin.roles,
+    options: window.yayCheckoutAdmin.store.roles,
     placeholder: __('Select roles', 'yaycheckout'),
     searchPlaceholder: __('Search roles', 'yaycheckout'),
     emptyText: __('No roles found.', 'yaycheckout'),
   }),
   payment_method: () => ({
-    options: window.yayCheckoutAdmin.gateways,
+    options: window.yayCheckoutAdmin.store.gateways,
     placeholder: __('Select payment methods', 'yaycheckout'),
     searchPlaceholder: __('Search payment methods', 'yaycheckout'),
     emptyText: __('No payment methods found.', 'yaycheckout'),
