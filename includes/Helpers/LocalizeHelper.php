@@ -20,6 +20,14 @@ class LocalizeHelper {
             'settings'     => ( new SettingsRepository() )->get()->to_array(),
             'design'       => ( new DesignRepository() )->get()->to_array(),
             'integrations' => IntegrationsHelper::get_integrations(),
+            // Code => name, locale-sorted: the list Woo's own country selects show. Some names
+            // arrive as HTML entities (S&atilde;o Tom&eacute;); React prints those literally.
+            'countries'    => array_map(
+                static function ( $name ) {
+                    return html_entity_decode( $name, ENT_QUOTES, 'UTF-8' );
+                },
+                WC()->countries->get_countries()
+            ),
         ];
 
         return apply_filters( 'yaycheckout_localize_admin_data', $admin_data );

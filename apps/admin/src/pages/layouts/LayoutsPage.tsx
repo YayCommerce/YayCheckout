@@ -44,7 +44,7 @@ import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
-import { AssignmentDrawer } from '@/pages/layouts/AssignmentDrawer';
+import { AssignmentDrawer } from '@/pages/layouts/assignment/AssignmentDrawer';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { DeleteModal } from '@/pages/layouts/DeleteModal';
 import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';

@@ -28,4 +28,6 @@ export type AdminData = {
   settings: SettingsResponseWire;
   integrations: IntegrationWire[];
   design: DesignResponseWire;
+  /** ISO 3166-1 alpha-2 code => name, in Woo's display order. */
+  countries: Record<string, string>;
 };
