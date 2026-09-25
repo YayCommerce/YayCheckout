@@ -44,6 +44,7 @@ import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
+import { AssignmentDrawer } from '@/pages/layouts/AssignmentDrawer';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { DeleteModal } from '@/pages/layouts/DeleteModal';
 import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';
@@ -173,6 +174,7 @@ function LayoutsPageBody({
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
   const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
   const [deletingLayout, setDeletingLayout] = useState<LayoutSummary | null>(null);
+  const [assigningLayout, setAssigningLayout] = useState<LayoutSummary | null>(null);
   const [previewing, setPreviewing] = useState<{ layout: LayoutSummary; link: PreviewLink } | null>(null);
 
   const activateMutation = useActivateLayoutMutation();
@@ -307,6 +309,7 @@ function LayoutsPageBody({
         onConfirm={onDelete}
         isPending={deleteMutation.isPending}
       />
+      <AssignmentDrawer layout={assigningLayout} onOpenChange={(open) => !open && setAssigningLayout(null)} />
       <PreviewLinkModal
         layout={previewing?.layout ?? null}
         link={previewing?.link ?? null}
@@ -414,6 +417,7 @@ function LayoutsPageBody({
                       onRestore={onRestore}
                       onDelete={setDeletingLayout}
                       onDuplicate={onDuplicate}
+                      onAssign={setAssigningLayout}
                       onPreview={onPreview}
                       previewPending={previewLinkMutation.isPending}
                     />
@@ -512,6 +516,7 @@ function LayoutsTable({
   onRestore,
   onDelete,
   onDuplicate,
+  onAssign,
   onPreview,
   previewPending,
 }: {
@@ -524,6 +529,7 @@ function LayoutsTable({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
   /** One link mints at a time; every Preview button waits. */
   previewPending: boolean;
@@ -553,6 +559,7 @@ function LayoutsTable({
             onRestore={onRestore}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
+            onAssign={onAssign}
             onPreview={onPreview}
             previewPending={previewPending}
           />
@@ -572,6 +579,7 @@ function LayoutTableRow({
   onRestore,
   onDelete,
   onDuplicate,
+  onAssign,
   onPreview,
   previewPending,
 }: {
@@ -584,6 +592,7 @@ function LayoutTableRow({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
   /** One link mints at a time; every Preview button waits. */
   previewPending: boolean;
@@ -613,6 +622,7 @@ function LayoutTableRow({
           onRestore={onRestore}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
+          onAssign={onAssign}
           onPreview={onPreview}
           previewPending={previewPending}
         />
@@ -621,7 +631,7 @@ function LayoutTableRow({
   );
 }
 
-/** Per-row actions: Edit, Preview, Set active, Delete for good and the "⋯" menu (Duplicate, Deactivate, Archive). Archive is disabled on the active row: deactivating must be an explicit choice. Publishing is the editor's job. */
+/** Per-row actions: Edit, Preview, Set active, Delete for good and the "⋯" menu (Assignment, Duplicate, Deactivate, Archive). Archive is disabled on the active row: deactivating must be an explicit choice. Publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,
@@ -632,6 +642,7 @@ function LayoutRowActions({
   onRestore,
   onDelete,
   onDuplicate,
+  onAssign,
   onPreview,
   previewPending,
 }: {
@@ -644,6 +655,7 @@ function LayoutRowActions({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
   /** One link mints at a time; every Preview button waits. */
   previewPending: boolean;
@@ -683,6 +695,7 @@ function LayoutRowActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => onAssign(layout)}>{__('Assignment', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
             {__('Deactivate', 'yaycheckout')}
