@@ -66,7 +66,7 @@ class LayoutImportRestController extends BaseRestController {
     /**
      * The layout an export file holds, without storing it: the editor's Import
      * replaces its own blocks, so it asks here instead of checking the file itself. Rules are not returned:
-     * the editor imports content only, and `has_rules` lets it say so.
+     * the editor imports content only, and `has_rules` says the file holds rules Tools → Import would keep.
      *
      * @return array|\WP_Error { title, content, blocks, has_rules }
      */
@@ -81,7 +81,8 @@ class LayoutImportRestController extends BaseRestController {
             'title'     => $layout['title'],
             'content'   => $layout['content'],
             'blocks'    => Layout::block_count( $layout['content'] ),
-            'has_rules' => ! empty( $layout['rules'] ),
+            // The import's own test: true only for rules an import of this file would keep.
+            'has_rules' => 'imported' === LayoutImportReview::rules_from_file( $layout['rules'] )['status'],
         ];
     }
 

@@ -6,8 +6,8 @@ import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from '@/compone
 
 /**
  * Small "are you sure?" popover anchored to its trigger, for removals that are cheap to redo but annoying to lose.
- * The trigger must forward its ref (a Radix `asChild` child). Both buttons close the popover before `onConfirm`
- * runs, so a list that re-keys after the removal does not hand the open state to the next row.
+ * The trigger must forward its ref (a Radix `asChild` child). Confirm closes the popover in the same click as
+ * `onConfirm`, so a list that re-keys after the removal does not hand the open state to the next row.
  */
 export function ConfirmPopover({
   trigger,

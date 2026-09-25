@@ -5,6 +5,7 @@ use YayCheckout\Pro\Controllers\DesignPresetRestController;
 use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Pro\Controllers\LayoutImportRestController;
 use YayCheckout\Pro\Controllers\LayoutRulesRestController;
+use YayCheckout\Pro\Services\AssignmentStoreData;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
@@ -21,6 +22,14 @@ class ProServiceProvider {
         Plan::mark_pro();
 
         add_action( 'rest_api_init', [ $this, 'rest_endpoints' ] );
+        add_filter( 'yaycheckout_localize_admin_data', [ $this, 'admin_data' ] );
+    }
+
+    /** Adds `store` for the Assignment drawer: building every gateway is a cost Free, with no drawer, need not pay. */
+    public function admin_data( array $data ): array {
+        $data['store'] = AssignmentStoreData::get();
+
+        return $data;
     }
 
     /** Every Pro REST controller, so the Free build simply has no such route. */

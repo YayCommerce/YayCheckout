@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { useDebounceFn } from 'rooks';
+import { useState } from 'react';
+import { useDebouncedValue } from 'rooks';
 import { __ } from '@wordpress/i18n';
 
 import { useInfiniteProductsQuery } from '@/lib/queries/product.queries';
@@ -27,14 +27,7 @@ export function ProductMultiSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  // useDebounceFn has no cancel; the trailing callback checks this ref to drop a stale value.
-  const searchInputRef = useRef('');
-  const [applySearch] = useDebounceFn((next: string) => {
-    if (next !== searchInputRef.current) return;
-
-    setSearch(next);
-  }, 300);
+  const [search] = useDebouncedValue(searchInput, 300);
 
   // Names of picked products, kept across searches: a pick scrolled out of the current page still needs its badge.
   // Seeded with the saved picks' names from the rules reply; a deleted product has none and stays "#id".
@@ -64,11 +57,7 @@ export function ProductMultiSelect({
           <CommandInput
             placeholder={__('Search products', 'yaycheckout')}
             value={searchInput}
-            onValueChange={(next) => {
-              searchInputRef.current = next;
-              setSearchInput(next);
-              applySearch(next);
-            }}
+            onValueChange={setSearchInput}
           />
           <CommandList
             className={cn('transition-opacity', list.isPlaceholderData && 'opacity-60')}

@@ -96,7 +96,7 @@ class Layout {
 
     /**
      * Validates and normalizes assignment rules: ids to int, amounts to float, list values de-duplicated.
-     * Strict, not forgiving: the SPA only sends complete conditions, so anything else is a bug to surface.
+     * Strict, not forgiving: an incomplete condition is refused, never stored half-filled.
      *
      * @param mixed $input Decoded request body `rules`.
      * @return array Clean rules, same shape as $rules.
@@ -107,8 +107,7 @@ class Layout {
             throw new \InvalidArgumentException( 'Rules must be a list of groups.' );
         }
 
-        $definitions = ConditionType::definitions();
-        $clean       = [];
+        $clean = [];
 
         foreach ( $input as $g => $group ) {
             if ( ! is_array( $group ) || [] === $group || array_values( $group ) !== $group ) {
@@ -116,32 +115,42 @@ class Layout {
             }
 
             foreach ( $group as $c => $condition ) {
-                $where = sprintf( 'group %d, condition %d', $g + 1, $c + 1 );
-                $type  = $condition['type'] ?? null;
-
-                if ( ! is_string( $type ) || ! isset( $definitions[ $type ] ) ) {
-                    throw new \InvalidArgumentException( "Unknown condition type in $where." );
-                }
-
-                if ( ! in_array( $condition['operator'] ?? null, $definitions[ $type ]['operators'], true ) ) {
-                    throw new \InvalidArgumentException( "Invalid operator in $where." );
-                }
-
-                $value = self::sanitize_rule_value( $condition['value'] ?? null, $definitions[ $type ]['value'] );
-
-                if ( null === $value ) {
-                    throw new \InvalidArgumentException( "Invalid value in $where." );
-                }
-
-                $clean[ $g ][ $c ] = [
-                    'type'     => $type,
-                    'operator' => $condition['operator'],
-                    'value'    => $value,
-                ];
+                $clean[ $g ][ $c ] = self::sanitize_condition( $condition, sprintf( 'group %d, condition %d', $g + 1, $c + 1 ) );
             }
         }
 
         return $clean;
+    }
+
+    /**
+     * @param mixed  $condition
+     * @param string $where Position for the error message.
+     * @return array{type: string, operator: string, value: mixed}
+     * @throws \InvalidArgumentException When the type, operator or value is invalid.
+     */
+    private static function sanitize_condition( $condition, string $where ): array {
+        $definitions = ConditionType::definitions();
+        $type        = $condition['type'] ?? null;
+
+        if ( ! is_string( $type ) || ! isset( $definitions[ $type ] ) ) {
+            throw new \InvalidArgumentException( "Unknown condition type in $where." );
+        }
+
+        if ( ! in_array( $condition['operator'] ?? null, $definitions[ $type ]['operators'], true ) ) {
+            throw new \InvalidArgumentException( "Invalid operator in $where." );
+        }
+
+        $value = self::sanitize_rule_value( $condition['value'] ?? null, $definitions[ $type ]['value'] );
+
+        if ( null === $value ) {
+            throw new \InvalidArgumentException( "Invalid value in $where." );
+        }
+
+        return [
+            'type'     => $type,
+            'operator' => $condition['operator'],
+            'value'    => $value,
+        ];
     }
 
     /**
@@ -150,34 +159,26 @@ class Layout {
      * @return mixed Normalized value, or null when invalid.
      */
     private static function sanitize_rule_value( $value, string $kind ) {
+        $list = is_array( $value ) ? $value : [];
+
         switch ( $kind ) {
             case ConditionType::VALUE_KEYS:
                 // Country codes, role slugs, gateway ids: plain identifiers, so a strict pattern replaces escaping.
-                $keys = is_array( $value ) ? array_values( array_unique( $value, SORT_REGULAR ) ) : [];
-                foreach ( $keys as $key ) {
-                    if ( ! is_string( $key ) || ! preg_match( '/^[A-Za-z0-9_.-]{1,100}$/', $key ) ) {
-                        return null;
-                    }
-                }
-                return [] === $keys ? null : $keys;
+                $invalid = array_filter( $list, static fn( $key ) => ! is_string( $key ) || ! preg_match( '/^[A-Za-z0-9_.-]{1,100}$/', $key ) );
+                // Unique only once all are strings: array_unique then compares as strings, so '10' and '1e1' stay two keys.
+                return [] === $list || [] !== $invalid ? null : array_values( array_unique( $list ) );
 
             case ConditionType::VALUE_IDS:
-                // The SPA holds ids as strings (select values); accept digit strings, store ints.
-                $ids = [];
-                foreach ( is_array( $value ) ? $value : [] as $id ) {
-                    if ( ! ( is_int( $id ) || ( is_string( $id ) && ctype_digit( $id ) ) ) || (int) $id <= 0 ) {
-                        return null;
-                    }
-                    $ids[] = (int) $id;
-                }
-                $ids = array_values( array_unique( $ids ) );
-                return [] === $ids ? null : $ids;
+                // Digit strings accepted, stored as int: select values arrive as strings.
+                $invalid = array_filter( $list, static fn( $id ) => ! ( is_int( $id ) || ( is_string( $id ) && ctype_digit( $id ) ) ) || (int) $id <= 0 );
+                return [] === $list || [] !== $invalid ? null : array_values( array_unique( array_map( 'intval', $list ) ) );
 
             case ConditionType::VALUE_DEVICE:
                 return in_array( $value, ConditionType::DEVICES, true ) ? $value : null;
 
             case ConditionType::VALUE_AMOUNT:
-                return ( is_int( $value ) || is_float( $value ) ) && $value >= 0 ? (float) $value : null;
+                // is_finite: json_decode turns 1e400 into INF, which json_encode then refuses, breaking every read of the rules.
+                return ( is_int( $value ) || ( is_float( $value ) && is_finite( $value ) ) ) && $value >= 0 ? (float) $value : null;
         }
 
         return null;

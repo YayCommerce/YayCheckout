@@ -326,7 +326,7 @@ class LayoutRepository {
     }
 
     /**
-     * Copies a layout's content into a new draft layout.
+     * Copies a layout's content and assignment rules into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -338,7 +338,7 @@ class LayoutRepository {
         }
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules );
     }
 
     /**

@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * The assignment rule vocabulary: condition types, the operators each accepts and the shape of its value.
- * The SPA's condition-types.ts mirrors it. Constants, not a native enum: PHP 7.4 support.
+ * Constants, not a native enum: PHP 7.4 support.
  */
 final class ConditionType {
 

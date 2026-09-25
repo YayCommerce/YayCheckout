@@ -18,8 +18,10 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   groupsFromWire,
+  groupsToWire,
   isConditionComplete,
   newCondition,
+  newId,
   type Group,
 } from '@/pages/layouts/assignment/condition-types';
 import { AddConditionMenu, ConditionGroup, OrDivider } from '@/pages/layouts/assignment/ConditionGroup';
@@ -99,22 +101,23 @@ function RulesEditor({
   const [groups, setGroups] = useState<Group[]>(saved);
   const save = useSaveLayoutRulesMutation();
 
-  const dirty = JSON.stringify(groups) !== JSON.stringify(saved);
+  // Compared as wire rules: form ids differ on every seed.
+  const dirty = JSON.stringify(groupsToWire(groups)) !== JSON.stringify(groupsToWire(saved));
   // Every condition filled: a half-filled one would save a rule that tests nothing. No groups is valid: it clears the rules.
-  const canSave = dirty && groups.every((group) => group.every(isConditionComplete));
+  const canSave = dirty && groups.every((group) => group.conditions.every(isConditionComplete));
 
-  function updateGroup(groupIndex: number, group: Group) {
+  function updateGroup(group: Group) {
     // A group emptied of its last condition goes with it.
     setGroups(
-      group.length > 0
-        ? groups.map((g, i) => (i === groupIndex ? group : g))
-        : groups.filter((_, i) => i !== groupIndex),
+      group.conditions.length > 0
+        ? groups.map((g) => (g.id === group.id ? group : g))
+        : groups.filter((g) => g.id !== group.id),
     );
   }
 
   function onSave() {
     save.mutate(
-      { id: layoutId, rules: groups },
+      { id: layoutId, rules: groupsToWire(groups) },
       {
         onSuccess: () => {
           toast.success(__('Rules saved.', 'yaycheckout'));
@@ -136,25 +139,22 @@ function RulesEditor({
             <EmptyHeader className="items-start">
               <EmptyTitle>{__('No rules yet', 'yaycheckout')}</EmptyTitle>
               <EmptyDescription>
-                {__(
-                  'Without a rule this layout is never served, even once published. Add a condition to decide who sees it.',
-                  'yaycheckout',
-                )}
+                {__('Add a condition to decide which shoppers see this layout.', 'yaycheckout')}
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent className="items-start">
-              <AddConditionMenu onAdd={(type) => setGroups([[newCondition(type)]])} />
+              <AddConditionMenu onAdd={(type) => setGroups([{ id: newId(), conditions: [newCondition(type)] }])} />
             </EmptyContent>
           </Empty>
         ) : (
           groups.map((group, groupIndex) => (
-            <div key={groupIndex} className="space-y-3">
+            <div key={group.id} className="space-y-3">
               {groupIndex > 0 && <OrDivider />}
               <ConditionGroup
                 index={groupIndex}
                 group={group}
-                onChange={(next) => updateGroup(groupIndex, next)}
-                onRemove={() => setGroups(groups.filter((_, i) => i !== groupIndex))}
+                onChange={updateGroup}
+                onRemove={() => setGroups(groups.filter((g) => g.id !== group.id))}
                 productNames={productNames}
               />
             </div>
@@ -163,7 +163,7 @@ function RulesEditor({
 
         {groups.length > 0 && (
           <div className="flex justify-center">
-            <Button onClick={() => setGroups([...groups, [newCondition('country')]])}>
+            <Button onClick={() => setGroups([...groups, { id: newId(), conditions: [newCondition('country')] }])}>
               {__('Add group', 'yaycheckout')}
             </Button>
           </div>

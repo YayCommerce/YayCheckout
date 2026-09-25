@@ -57,7 +57,7 @@ class LayoutRulesRestController extends BaseRestController {
     }
 
     /**
-     * Body: { rules }. Replies with the rules as stored, normalized, so the SPA can take them as the new baseline.
+     * Body: { rules }. Replies with the rules as stored, normalized: the caller's new baseline.
      *
      * @return array|\WP_Error { rules, labels }
      */
@@ -81,9 +81,8 @@ class LayoutRulesRestController extends BaseRestController {
     }
 
     /**
-     * Rules plus the names the drawer shows for them. Countries, roles and gateways are already in the page's
-     * localized data; products are too many to ship, so the ones a rule names come back here, by id.
-     * A deleted product has no entry: the drawer shows it as "#id".
+     * Rules plus the names of the products they name, by id: products are too many to localize with the page,
+     * so only these come back. A deleted product has no entry.
      */
     private static function reply( array $rules ): array {
         $ids = [];

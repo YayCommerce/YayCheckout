@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { NumericFormat } from 'react-number-format';
 
+import type { StoreData } from '@/types/localize.type';
 import { InputGroupInput } from '@/components/ui/input-group';
 import { NumberInputChevrons, NumberInputRoot, useNumberInputContext } from '@/components/ui/number-input';
+import { storeData } from '@/pages/layouts/assignment/condition-types';
 
-type Currency = typeof window.yayCheckoutAdmin.store.currency;
+type Currency = StoreData['currency'];
 
 /**
  * An amount in the store's currency, typed the way Woo prints prices: symbol, position, decimals, separators.
@@ -12,9 +14,17 @@ type Currency = typeof window.yayCheckoutAdmin.store.currency;
  * the next digits land beside that 0 ("100" becomes "1" or "1.000"). Here the field may stay empty while typing.
  */
 export function AmountInput({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+  const currency = storeData().currency;
+
   return (
-    <NumberInputRoot className="min-w-0 flex-1" value={value} onValueChange={onChange} min={0}>
-      <AmountField currency={window.yayCheckoutAdmin.store.currency} />
+    <NumberInputRoot
+      className="min-w-0 flex-1"
+      value={value}
+      // A chevron step adds binary floats (19.99 + 1 = 20.989999…); the field shows 20.99, so store that.
+      onValueChange={(next) => onChange(Number(next.toFixed(currency.decimals)))}
+      min={0}
+    >
+      <AmountField currency={currency} />
       <NumberInputChevrons />
     </NumberInputRoot>
   );

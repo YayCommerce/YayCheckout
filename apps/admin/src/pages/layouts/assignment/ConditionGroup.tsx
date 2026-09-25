@@ -18,7 +18,9 @@ import {
   CONDITION_TYPE_KEYS,
   CONDITION_TYPES,
   DEVICE_OPTIONS,
+  isKnownType,
   newCondition,
+  storeData,
   type Condition,
   type ConditionType,
   type Group,
@@ -29,19 +31,19 @@ import { ProductMultiSelect } from '@/pages/layouts/assignment/ProductMultiSelec
 /** Types whose value comes from a list the page already holds. Functions, so window is read at render, not import. */
 const OPTION_PICKERS = {
   country: () => ({
-    options: window.yayCheckoutAdmin.store.countries,
+    options: storeData().countries,
     placeholder: __('Select countries', 'yaycheckout'),
     searchPlaceholder: __('Search countries', 'yaycheckout'),
     emptyText: __('No countries found.', 'yaycheckout'),
   }),
   customer_role: () => ({
-    options: window.yayCheckoutAdmin.store.roles,
+    options: storeData().roles,
     placeholder: __('Select roles', 'yaycheckout'),
     searchPlaceholder: __('Search roles', 'yaycheckout'),
     emptyText: __('No roles found.', 'yaycheckout'),
   }),
   payment_method: () => ({
-    options: window.yayCheckoutAdmin.store.gateways,
+    options: storeData().gateways,
     placeholder: __('Select payment methods', 'yaycheckout'),
     searchPlaceholder: __('Search payment methods', 'yaycheckout'),
     emptyText: __('No payment methods found.', 'yaycheckout'),
@@ -81,17 +83,21 @@ export function ConditionGroup({
       </div>
 
       <div className="space-y-3 p-4">
-        {group.map((condition, conditionIndex) => (
+        {group.conditions.map((condition) => (
           <ConditionRow
-            key={conditionIndex}
+            key={condition.id}
             condition={condition}
-            onChange={(next) => onChange(group.map((c, i) => (i === conditionIndex ? next : c)))}
-            onRemove={() => onChange(group.filter((_, i) => i !== conditionIndex))}
+            onChange={(next) =>
+              onChange({ ...group, conditions: group.conditions.map((c) => (c.id === condition.id ? next : c)) })
+            }
+            onRemove={() => onChange({ ...group, conditions: group.conditions.filter((c) => c.id !== condition.id) })}
             productNames={productNames}
           />
         ))}
 
-        <AddConditionMenu onAdd={(type) => onChange([...group, newCondition(type)])} />
+        <AddConditionMenu
+          onAdd={(type) => onChange({ ...group, conditions: [...group.conditions, newCondition(type)] })}
+        />
       </div>
     </div>
   );
@@ -108,6 +114,21 @@ function ConditionRow({
   onRemove: () => void;
   productNames: Record<string, string>;
 }) {
+  if (!isKnownType(condition.type)) {
+    return (
+      <div className="flex items-center gap-2">
+        <p className="border-warning/50 bg-warning/10 flex-1 rounded-md border px-3 py-2 text-sm">
+          {sprintf(
+            /* translators: %s: condition type key */
+            __('"%s" is not supported by this version. Remove it to save the rules.', 'yaycheckout'),
+            condition.type,
+          )}
+        </p>
+        <TrashButton aria-label={__('Remove condition', 'yaycheckout')} onClick={onRemove} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2">
       <Select value={condition.type} onValueChange={(type) => onChange(newCondition(type as ConditionType))}>
@@ -136,40 +157,67 @@ function ConditionRow({
         </SelectContent>
       </Select>
 
-      {condition.type in OPTION_PICKERS ? (
-        <OptionsMultiSelect
-          className="flex-1"
-          {...OPTION_PICKERS[condition.type as keyof typeof OPTION_PICKERS]()}
-          value={condition.value as string[]}
-          onChange={(value) => onChange({ ...condition, value })}
-        />
-      ) : condition.type === 'product_in_cart' ? (
-        <ProductMultiSelect
-          className="flex-1"
-          savedNames={productNames}
-          value={condition.value as string[]}
-          onChange={(value) => onChange({ ...condition, value })}
-        />
-      ) : condition.type === 'device' ? (
-        <Select value={condition.value as string} onValueChange={(value) => onChange({ ...condition, value })}>
-          <SelectTrigger className="min-w-0 flex-1">
-            <SelectValue placeholder={__('Select device', 'yaycheckout')} />
-          </SelectTrigger>
-          <SelectContent>
-            {DEVICE_OPTIONS.map((device) => (
-              <SelectItem key={device.value} value={device.value}>
-                {device.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ) : (
-        <AmountInput value={condition.value as number} onChange={(value) => onChange({ ...condition, value })} />
-      )}
+      <ValuePicker
+        condition={condition}
+        onChange={(value) => onChange({ ...condition, value })}
+        productNames={productNames}
+      />
 
       <TrashButton aria-label={__('Remove condition', 'yaycheckout')} onClick={onRemove} />
     </div>
   );
+}
+
+/** The third column: the picker the condition's type takes its value from. */
+function ValuePicker({
+  condition,
+  onChange,
+  productNames,
+}: {
+  condition: Condition;
+  onChange: (value: Condition['value']) => void;
+  productNames: Record<string, string>;
+}) {
+  if (condition.type in OPTION_PICKERS) {
+    return (
+      <OptionsMultiSelect
+        className="flex-1"
+        {...OPTION_PICKERS[condition.type as keyof typeof OPTION_PICKERS]()}
+        value={condition.value as string[]}
+        onChange={onChange}
+      />
+    );
+  }
+
+  if (condition.type === 'product_in_cart') {
+    return (
+      <ProductMultiSelect
+        className="flex-1"
+        savedNames={productNames}
+        value={condition.value as string[]}
+        onChange={onChange}
+      />
+    );
+  }
+
+  if (condition.type === 'device') {
+    return (
+      <Select value={condition.value as string} onValueChange={onChange}>
+        <SelectTrigger className="min-w-0 flex-1">
+          <SelectValue placeholder={__('Select device', 'yaycheckout')} />
+        </SelectTrigger>
+        <SelectContent>
+          {DEVICE_OPTIONS.map((device) => (
+            <SelectItem key={device.value} value={device.value}>
+              {device.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  return <AmountInput value={condition.value as number} onChange={onChange} />;
 }
 
 export function OrDivider() {

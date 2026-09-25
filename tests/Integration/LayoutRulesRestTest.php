@@ -4,6 +4,7 @@ namespace YayCheckout\Tests\Integration;
 use WP_REST_Request;
 use WP_UnitTestCase;
 use YayCheckout\Models\Layout;
+use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Tests\Support\LayoutFactory;
 
 /** Pins the stored rule shape, the normalization on save, and what the rules route refuses. */
@@ -254,6 +255,39 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
         ];
     }
 
+    /** Refused: json_decode turns 1e400 into INF, which json_encode rejects, so every read of the rules would break. */
+    public function test_an_infinite_amount_is_invalid(): void {
+        $this->expectException( \InvalidArgumentException::class );
+
+        Layout::sanitize_rules(
+            [
+                [
+                    [
+                        'type'     => 'cart_total',
+                        'operator' => 'gt',
+                        'value'    => INF,
+                    ],
+                ],
+            ]
+        );
+    }
+
+    public function test_keys_are_deduplicated_as_strings(): void {
+        $rules = Layout::sanitize_rules(
+            [
+                [
+                    [
+                        'type'     => 'customer_role',
+                        'operator' => 'in',
+                        'value'    => [ '10', '1e1', '10' ],
+                    ],
+                ],
+            ]
+        );
+
+        $this->assertSame( [ '10', '1e1' ], $rules[0][0]['value'] );
+    }
+
     public function test_replies_carry_the_names_of_the_products_a_rule_names(): void {
         $id      = LayoutFactory::create_draft();
         $product = new \WC_Product_Simple();
@@ -283,6 +317,25 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
 
         $this->put( $id, [] );
         $this->assertSame( '{"products":{}}', wp_json_encode( $this->get( $id )->get_data()['labels'] ) );
+    }
+
+    public function test_duplicate_copies_the_rules(): void {
+        $id    = LayoutFactory::create_draft();
+        $rules = [
+            [
+                [
+                    'type'     => 'device',
+                    'operator' => 'is',
+                    'value'    => 'mobile',
+                ],
+            ],
+        ];
+        $this->put( $id, $rules );
+
+        $copy = ( new LayoutRepository() )->duplicate( $id );
+
+        $this->assertSame( $rules, get_post_meta( $copy->id, Layout::META_RULES, true ) );
+        $this->assertSame( $rules, $copy->rules );
     }
 
     public function test_missing_layout_is_not_found(): void {

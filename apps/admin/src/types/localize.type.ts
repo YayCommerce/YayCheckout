@@ -28,10 +28,11 @@ export type AdminData = {
   settings: SettingsResponseWire;
   integrations: IntegrationWire[];
   design: DesignResponseWire;
-  store: StoreData;
+  /** Pro only (AssignmentStoreData); Free has no Assignment drawer. */
+  store?: StoreData;
 };
 
-/** Lists and formats read from Woo and WP; LocalizeHelper::get_store_data(). */
+/** Lists and formats read from Woo and WP; AssignmentStoreData::get(). */
 export type StoreData = {
   /** ISO 3166-1 alpha-2 code => name, in Woo's display order. */
   countries: Record<string, string>;

@@ -53,7 +53,15 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
                 'post_content' => self::MARKUP,
             ]
         );
-        $rules = [ [ [ 'type' => 'customer_role', 'operator' => 'in', 'value' => [ 'wholesale' ] ] ] ];
+        $rules = [
+            [
+                [
+                    'type'     => 'customer_role',
+                    'operator' => 'in',
+                    'value'    => [ 'wholesale' ],
+                ],
+            ],
+        ];
         update_post_meta( $id, Layout::META_RULES, $rules );
 
         $response = $this->export( $id );
@@ -219,6 +227,29 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
         );
 
         $this->assertTrue( $this->review( $file )->get_data()['has_rules'] );
+    }
+
+    /** Rules that import would drop do not count: has_rules sends the merchant to Tools → Import for them. */
+    public function test_review_does_not_count_rules_import_would_drop(): void {
+        $file = $this->envelope(
+            [
+                [
+                    'title'   => 'Newer plugin',
+                    'content' => self::MARKUP,
+                    'rules'   => [
+                        [
+                            [
+                                'type'     => 'weather',
+                                'operator' => 'is',
+                                'value'    => 'sunny',
+                            ],
+                        ],
+                    ],
+                ],
+            ]
+        );
+
+        $this->assertFalse( $this->review( $file )->get_data()['has_rules'] );
     }
 
     /** @dataProvider refused_files */
