@@ -65,9 +65,10 @@ class LayoutImportRestController extends BaseRestController {
 
     /**
      * The layout an export file holds, without storing it: the editor's Import
-     * replaces its own blocks, so it asks here instead of checking the file itself.
+     * replaces its own blocks, so it asks here instead of checking the file itself. Rules are not returned:
+     * the editor imports content only, and `has_rules` lets it say so.
      *
-     * @return array|\WP_Error { title, content, blocks }
+     * @return array|\WP_Error { title, content, blocks, has_rules }
      */
     public function review_layout( \WP_REST_Request $request ) {
         try {
@@ -77,9 +78,10 @@ class LayoutImportRestController extends BaseRestController {
         }
 
         return [
-            'title'   => $layout['title'],
-            'content' => $layout['content'],
-            'blocks'  => Layout::block_count( $layout['content'] ),
+            'title'     => $layout['title'],
+            'content'   => $layout['content'],
+            'blocks'    => Layout::block_count( $layout['content'] ),
+            'has_rules' => ! empty( $layout['rules'] ),
         ];
     }
 

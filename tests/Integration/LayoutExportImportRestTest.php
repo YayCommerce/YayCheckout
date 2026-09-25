@@ -188,13 +188,37 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
         $this->assertSame( 200, $response->get_status() );
         $this->assertSame(
             [
-                'title'   => 'Imported',
-                'content' => self::MARKUP,
-                'blocks'  => 1,
+                'title'     => 'Imported',
+                'content'   => self::MARKUP,
+                'blocks'    => 1,
+                'has_rules' => false,
             ],
             $response->get_data()
         );
         $this->assertSame( $before, wp_count_posts( Layout::POST_TYPE )->draft );
+    }
+
+    /** The editor imports content only; has_rules lets it tell the merchant the file's rules stay behind. */
+    public function test_review_says_when_the_file_carries_rules(): void {
+        $file = $this->envelope(
+            [
+                [
+                    'title'   => 'With rules',
+                    'content' => self::MARKUP,
+                    'rules'   => [
+                        [
+                            [
+                                'type'     => 'device',
+                                'operator' => 'is',
+                                'value'    => 'mobile',
+                            ],
+                        ],
+                    ],
+                ],
+            ]
+        );
+
+        $this->assertTrue( $this->review( $file )->get_data()['has_rules'] );
     }
 
     /** @dataProvider refused_files */
