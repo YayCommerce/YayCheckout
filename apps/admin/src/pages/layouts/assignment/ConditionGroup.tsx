@@ -22,6 +22,7 @@ import {
   type Group,
 } from '@/pages/layouts/assignment/condition-types';
 import { CountryMultiSelect } from '@/pages/layouts/assignment/CountryMultiSelect';
+import { ProductMultiSelect } from '@/pages/layouts/assignment/ProductMultiSelect';
 
 export function ConditionGroup({
   index,
@@ -88,7 +89,7 @@ function ConditionRow({
       </Select>
 
       <Select value={condition.operator} onValueChange={(operator) => onChange({ ...condition, operator })}>
-        <SelectTrigger className="w-32 shrink-0">
+        <SelectTrigger className="w-40 shrink-0">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -102,6 +103,12 @@ function ConditionRow({
 
       {condition.type === 'country' ? (
         <CountryMultiSelect
+          className="flex-1"
+          value={condition.value as string[]}
+          onChange={(value) => onChange({ ...condition, value })}
+        />
+      ) : condition.type === 'product_in_cart' ? (
+        <ProductMultiSelect
           className="flex-1"
           value={condition.value as string[]}
           onChange={(value) => onChange({ ...condition, value })}

@@ -3,7 +3,7 @@ import { __ } from '@wordpress/i18n';
 export type ConditionType =
   'country' | 'product_in_cart' | 'customer_role' | 'device' | 'payment_method' | 'cart_total';
 
-/** Value is a list for multi-select types (country codes), text otherwise. */
+/** Value is a list for multi-select types (country codes, product ids), text otherwise. */
 export type Condition = { type: ConditionType; operator: string; value: string | string[] };
 
 /** Conditions inside a group are ANDed; groups are ORed. */
@@ -14,16 +14,16 @@ const IS_OPERATORS = [
   { value: 'is_not', label: __('is not', 'yaycheckout') },
 ];
 
+/** For multi-select types: the value is a list. */
+const LIST_OPERATORS = [
+  { value: 'in', label: __('in list', 'yaycheckout') },
+  { value: 'not_in', label: __('not in list', 'yaycheckout') },
+];
+
 export const CONDITION_TYPES: Record<ConditionType, { label: string; operators: { value: string; label: string }[] }> =
   {
-    country: {
-      label: __('Country', 'yaycheckout'),
-      operators: [
-        { value: 'in', label: __('is one of', 'yaycheckout') },
-        { value: 'not_in', label: __('is not one of', 'yaycheckout') },
-      ],
-    },
-    product_in_cart: { label: __('Product in cart', 'yaycheckout'), operators: IS_OPERATORS },
+    country: { label: __('Country', 'yaycheckout'), operators: LIST_OPERATORS },
+    product_in_cart: { label: __('Product in cart', 'yaycheckout'), operators: LIST_OPERATORS },
     customer_role: { label: __('Customer role', 'yaycheckout'), operators: IS_OPERATORS },
     device: { label: __('Device', 'yaycheckout'), operators: IS_OPERATORS },
     payment_method: { label: __('Payment method', 'yaycheckout'), operators: IS_OPERATORS },
@@ -38,6 +38,13 @@ export const CONDITION_TYPES: Record<ConditionType, { label: string; operators: 
 
 export const CONDITION_TYPE_KEYS = Object.keys(CONDITION_TYPES) as ConditionType[];
 
+/** Types whose value is picked from a list, several at once. */
+const MULTI_VALUE_TYPES: ConditionType[] = ['country', 'product_in_cart'];
+
 export function newCondition(type: ConditionType): Condition {
-  return { type, operator: CONDITION_TYPES[type].operators[0].value, value: type === 'country' ? [] : '' };
+  return {
+    type,
+    operator: CONDITION_TYPES[type].operators[0].value,
+    value: MULTI_VALUE_TYPES.includes(type) ? [] : '',
+  };
 }
