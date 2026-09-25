@@ -25,6 +25,28 @@ import {
 import { OptionsMultiSelect } from '@/pages/layouts/assignment/OptionsMultiSelect';
 import { ProductMultiSelect } from '@/pages/layouts/assignment/ProductMultiSelect';
 
+/** Types whose value comes from a list the page already holds. Functions, so window is read at render, not import. */
+const OPTION_PICKERS = {
+  country: () => ({
+    options: window.yayCheckoutAdmin.countries,
+    placeholder: __('Select countries', 'yaycheckout'),
+    searchPlaceholder: __('Search countries', 'yaycheckout'),
+    emptyText: __('No countries found.', 'yaycheckout'),
+  }),
+  customer_role: () => ({
+    options: window.yayCheckoutAdmin.roles,
+    placeholder: __('Select roles', 'yaycheckout'),
+    searchPlaceholder: __('Search roles', 'yaycheckout'),
+    emptyText: __('No roles found.', 'yaycheckout'),
+  }),
+  payment_method: () => ({
+    options: window.yayCheckoutAdmin.gateways,
+    placeholder: __('Select payment methods', 'yaycheckout'),
+    searchPlaceholder: __('Search payment methods', 'yaycheckout'),
+    emptyText: __('No payment methods found.', 'yaycheckout'),
+  }),
+} satisfies Partial<Record<ConditionType, () => object>>;
+
 export function ConditionGroup({
   index,
   group,
@@ -102,23 +124,10 @@ function ConditionRow({
         </SelectContent>
       </Select>
 
-      {condition.type === 'country' ? (
+      {condition.type in OPTION_PICKERS ? (
         <OptionsMultiSelect
           className="flex-1"
-          options={window.yayCheckoutAdmin.countries}
-          placeholder={__('Select countries', 'yaycheckout')}
-          searchPlaceholder={__('Search countries', 'yaycheckout')}
-          emptyText={__('No countries found.', 'yaycheckout')}
-          value={condition.value as string[]}
-          onChange={(value) => onChange({ ...condition, value })}
-        />
-      ) : condition.type === 'customer_role' ? (
-        <OptionsMultiSelect
-          className="flex-1"
-          options={window.yayCheckoutAdmin.roles}
-          placeholder={__('Select roles', 'yaycheckout')}
-          searchPlaceholder={__('Search roles', 'yaycheckout')}
-          emptyText={__('No roles found.', 'yaycheckout')}
+          {...OPTION_PICKERS[condition.type as keyof typeof OPTION_PICKERS]()}
           value={condition.value as string[]}
           onChange={(value) => onChange({ ...condition, value })}
         />

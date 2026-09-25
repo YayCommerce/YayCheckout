@@ -30,6 +30,13 @@ class LocalizeHelper {
             ),
             // Slug => translated name; every registered role, Woo's and other plugins' included.
             'roles'        => array_map( 'translate_user_role', wp_roles()->get_names() ),
+            // Id => the name Woo's Payments settings list shows. Disabled ones too: a rule may be set up before the gateway is switched on.
+            'gateways'     => array_map(
+                static function ( $gateway ) {
+                    return $gateway->get_method_title();
+                },
+                WC()->payment_gateways()->payment_gateways()
+            ),
         ];
 
         return apply_filters( 'yaycheckout_localize_admin_data', $admin_data );
