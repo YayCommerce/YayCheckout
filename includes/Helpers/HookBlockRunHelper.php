@@ -4,10 +4,12 @@ namespace YayCheckout\Helpers;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Fires one allow-listed WooCommerce checkout hook where a hook block sits.
+ * Fires one checkout hook where a hook block sits.
  *
- * The selectable names match packages/blocks/src/hook/hooks.ts. The two
- * form-edge names belong to their own blocks and are not in that select.
+ * WooCommerce names are the fixed list in this class and receive the checkout
+ * object only, matching their original signature. Any other name runs with no
+ * arguments: checkout and cart are globals, so a callback reads them itself.
+ * The selectable WooCommerce names match packages/blocks/src/hook/hooks.ts.
  */
 class HookBlockRunHelper {
 
@@ -26,10 +28,10 @@ class HookBlockRunHelper {
     ];
 
     /**
-     * @param string $hook WooCommerce checkout action name.
+     * @param string $hook Checkout action name.
      */
     public static function fire( string $hook ): void {
-        if ( ! in_array( $hook, self::allowed(), true ) ) {
+        if ( '' === $hook ) {
             return;
         }
 
@@ -38,8 +40,14 @@ class HookBlockRunHelper {
             return;
         }
 
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- $hook is allow-listed WooCommerce checkout actions.
-        do_action( $hook, WC()->checkout() );
+        if ( in_array( $hook, self::allowed(), true ) ) {
+            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Allow-listed WooCommerce checkout action.
+            do_action( $hook, WC()->checkout() );
+            return;
+        }
+
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Merchant-chosen hook name. No arguments; callbacks read WC() themselves.
+        do_action( $hook );
     }
 
     /**
