@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
 import { formatDateTime } from '@/lib/helpers/date.helper';
-import { isPro } from '@/lib/plan';
 import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
@@ -696,10 +695,7 @@ function LayoutRowActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {/* Assignment rules are Pro only: the Free build has no rules route. */}
-          {isPro && (
-            <DropdownMenuItem onSelect={() => onAssign(layout)}>{__('Assignment', 'yaycheckout')}</DropdownMenuItem>
-          )}
+          <DropdownMenuItem onSelect={() => onAssign(layout)}>{__('Assignment', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
             {__('Deactivate', 'yaycheckout')}

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
+import { isPro } from '@/lib/plan';
 import { useLayoutRulesQuery, useSaveLayoutRulesMutation } from '@/lib/queries/layout.queries';
 import type { LayoutSummary } from '@/lib/schema/layout.schema';
+import { cn } from '@/lib/utils';
 import { Button, LoadingButton } from '@/components/ui/button';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import {
@@ -16,6 +18,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
 import {
   groupsFromWire,
   groupsToWire,
@@ -27,7 +30,10 @@ import {
 import { AddConditionMenu, ConditionGroup, OrDivider } from '@/pages/layouts/assignment/ConditionGroup';
 import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';
 
-/** Right-hand drawer where a layout's assignment rules are edited. Opened from the row's "⋯" menu; Pro only. */
+/**
+ * Right-hand drawer where a layout's assignment rules are edited, opened from the row's "⋯" menu.
+ * Lite gets the same drawer locked: a greyed sample form under an upgrade card, and no rules request (no route).
+ */
 export function AssignmentDrawer({
   layout,
   onOpenChange,
@@ -40,9 +46,32 @@ export function AssignmentDrawer({
       {/* Wider than the default sheet: the value column grows into selects and multi-selects per condition type. */}
       <SheetContent className="sm:max-w-3xl">
         {/* Keyed so each opened layout starts from a fresh form. */}
-        {layout && <AssignmentForm key={layout.id} layout={layout} onSaved={() => onOpenChange(false)} />}
+        {layout &&
+          (isPro ? (
+            <AssignmentForm key={layout.id} layout={layout} onSaved={() => onOpenChange(false)} />
+          ) : (
+            <LockedAssignment layout={layout} />
+          ))}
       </SheetContent>
     </Sheet>
+  );
+}
+
+function AssignmentHeader({ layout }: { layout: LayoutSummary }) {
+  return (
+    <SheetHeader>
+      <div className="flex items-center gap-2">
+        <SheetTitle>{__('Assignment', 'yaycheckout')}</SheetTitle>
+        {!isPro && <ProTag />}
+      </div>
+      <div className="flex items-center gap-2">
+        <SheetDescription className="truncate">{layout.title}</SheetDescription>
+        <span className="text-muted-foreground" aria-hidden>
+          ·
+        </span>
+        <LayoutStatusBadge layout={layout} />
+      </div>
+    </SheetHeader>
   );
 }
 
@@ -51,16 +80,7 @@ function AssignmentForm({ layout, onSaved }: { layout: LayoutSummary; onSaved: (
 
   return (
     <>
-      <SheetHeader>
-        <SheetTitle>{__('Assignment', 'yaycheckout')}</SheetTitle>
-        <div className="flex items-center gap-2">
-          <SheetDescription className="truncate">{layout.title}</SheetDescription>
-          <span className="text-muted-foreground" aria-hidden>
-            ·
-          </span>
-          <LayoutStatusBadge layout={layout} />
-        </div>
-      </SheetHeader>
+      <AssignmentHeader layout={layout} />
 
       {rules.data ? (
         <RulesEditor
@@ -177,6 +197,70 @@ function RulesEditor({
         <LoadingButton loading={save.isPending} disabled={!canSave || save.isPending} onClick={onSave}>
           {__('Save rules', 'yaycheckout')}
         </LoadingButton>
+      </SheetFooter>
+    </>
+  );
+}
+
+/** Lite: the form greyed and inert, so what Pro adds shows in place, under the upgrade card. */
+function LockedAssignment({ layout }: { layout: LayoutSummary }) {
+  return (
+    <>
+      <AssignmentHeader layout={layout} />
+
+      <div className="relative flex-1 p-5">
+        <div aria-hidden className="pointer-events-none space-y-3 opacity-50 select-none">
+          <h3 className="text-muted-foreground mb-4 text-xs font-medium tracking-wider uppercase">
+            {__('Conditions', 'yaycheckout')}
+          </h3>
+          <div className="rounded-lg border border-dashed">
+            <div className="text-muted-foreground border-b border-dashed px-4 py-2 text-xs">
+              {sprintf(
+                /* translators: %d: group number */
+                __('Group %d — all of these must be true', 'yaycheckout'),
+                1,
+              )}
+            </div>
+            <div className="flex gap-2 p-4">
+              {[__('Customer role', 'yaycheckout'), __('in list', 'yaycheckout'), __('Wholesale', 'yaycheckout')].map(
+                (text, i) => (
+                  <span key={text} className={cn('rounded-md border px-3 py-2 text-sm', i < 2 ? 'w-40' : 'flex-1')}>
+                    {text}
+                  </span>
+                ),
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-background absolute inset-x-5 top-40 space-y-3 rounded-lg border p-5 shadow-lg">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-base font-semibold">{__('Assignment rules', 'yaycheckout')}</h3>
+            <ProTag />
+          </div>
+          <p className="text-sm">
+            {__(
+              'Send shoppers to different layouts by role, country, cart contents, device or payment method. On Lite, one layout is active for everyone.',
+              'yaycheckout',
+            )}
+          </p>
+          <div className="flex items-center gap-2 border-t pt-3">
+            <p className="text-muted-foreground flex-1 text-xs">
+              {__('Your rules are kept if you upgrade later.', 'yaycheckout')}
+            </p>
+            <SheetClose asChild>
+              <Button variant="outline">{__('Not now', 'yaycheckout')}</Button>
+            </SheetClose>
+            <UpgradeButton size="default" variant="primary" />
+          </div>
+        </div>
+      </div>
+
+      <SheetFooter className="flex-row items-center justify-between">
+        <p className="text-muted-foreground text-sm">{__('Rules are read-only on Lite.', 'yaycheckout')}</p>
+        <SheetClose asChild>
+          <Button variant="outline">{__('Close', 'yaycheckout')}</Button>
+        </SheetClose>
       </SheetFooter>
     </>
   );
