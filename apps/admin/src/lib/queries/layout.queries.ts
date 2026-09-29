@@ -25,7 +25,7 @@ import {
   restoreLayout,
   saveLayoutRules,
 } from '@/lib/api/layout.api';
-import { LISTED_LAYOUT_STATUSES } from '@/lib/schema/layout.schema';
+import { LISTED_LAYOUT_STATUSES, type LayoutListResponse } from '@/lib/schema/layout.schema';
 
 export const LAYOUT_KEYS = {
   all: ['layouts'] as const,
@@ -224,7 +224,7 @@ export function useLayoutRulesQuery(id: number) {
   });
 }
 
-/** The reply is the stored rules, so it becomes the cached copy without a refetch. */
+/** The reply is the stored rules as the server keeps them, so they go into the cached rules and every cached list: no refetch. */
 export function useSaveLayoutRulesMutation() {
   const queryClient = useQueryClient();
 
@@ -233,6 +233,15 @@ export function useSaveLayoutRulesMutation() {
     mutationFn: saveLayoutRules,
     onSuccess: (reply, { id }) => {
       queryClient.setQueryData(LAYOUT_KEYS.rules(id), reply);
+      // The picker's infinite lists share this key prefix but hold pages, not items: no `items`, left as is.
+      queryClient.setQueriesData<LayoutListResponse>(
+        { queryKey: LAYOUT_KEYS.list() },
+        (list) =>
+          list?.items && {
+            ...list,
+            items: list.items.map((item) => (item.id === id ? { ...item, rules: reply.rules } : item)),
+          },
+      );
     },
   });
 }
