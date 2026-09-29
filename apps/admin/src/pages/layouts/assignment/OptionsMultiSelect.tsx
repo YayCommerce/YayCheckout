@@ -35,7 +35,7 @@ export function OptionsMultiSelect({
   const [open, setOpen] = useState(false);
 
   function toggle(key: string) {
-    onChange(value.includes(key) ? value.filter((k) => k !== key) : [...value, key]);
+    onChange(value.includes(key) ? value.filter((picked) => picked !== key) : [...value, key]);
   }
 
   return (

@@ -31,7 +31,11 @@ export async function exportLayout(id: number): Promise<LayoutExportFile> {
 export function reviewExportFile(envelope: LayoutExportEnvelope): ImportReview {
   const layout = envelope.layouts[0];
 
-  const rules = layout.rules ?? [];
+  // PHP decodes `{}` to [] and reads both as no rules.
+  const rules =
+    layout.rules == null || (typeof layout.rules === 'object' && Object.keys(layout.rules).length === 0)
+      ? []
+      : layout.rules;
 
   return {
     title: layout.title,

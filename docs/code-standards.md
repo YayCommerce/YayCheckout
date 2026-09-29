@@ -82,6 +82,7 @@ Two places that decide the same thing leave the reader unable to tell which one 
 
 | Rule | Owner | Allowed mirrors |
 |---|---|---|
+| Capability for layouts and every REST route | `LayoutPostType::CAPABILITY` | — |
 | Meta keys, option names, post type | Constants on the owning class (`Layout::OPTION_ACTIVE`, `Layout::POST_TYPE`, …) | `uninstall.php` literals (no autoloader); the blocks bundle reads `postType` from `window.yayCheckoutBlocks` (`BlockRegistry`) |
 | Settings keys, types, defaults | `Models\Settings::schema()` | `apps/admin/src/lib/schema/settings.schema.ts` |
 | Design tokens, presets, radius/base-size bounds | `Models\Design::schema()`, `Design::presets()` | `RADIUS_RANGE`, `BASE_SIZE_RANGE` in `apps/admin/src/lib/schema/design.schema.ts` |

@@ -2,6 +2,7 @@
 namespace YayCheckout\Controllers;
 
 use YayCheckout\Helpers\Logger;
+use YayCheckout\PostTypes\LayoutPostType;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -25,9 +26,9 @@ abstract class BaseRestController {
         return new \WP_Error( 'invalid_arguments', $message, [ 'status' => 400 ] );
     }
 
-    /** Every route: the same capability LayoutPostType maps its caps to. */
+    /** Every route requires LayoutPostType::CAPABILITY. */
     public function permission_callback(): bool {
-        return current_user_can( 'manage_woocommerce' );
+        return current_user_can( LayoutPostType::CAPABILITY );
     }
 
     /** Route args for an `(?P<id>\d+)` path segment. */

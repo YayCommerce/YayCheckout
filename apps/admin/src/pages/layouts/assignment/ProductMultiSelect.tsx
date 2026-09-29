@@ -34,10 +34,11 @@ export function ProductMultiSelect({
   // Not fetched until the popover first opens: a closed picker costs no request.
   const list = useInfiniteProductsQuery(search, open);
   const products = list.data?.pages.flatMap((page) => page.items) ?? [];
+  const emptyText = list.isFetching ? __('Searching…', 'yaycheckout') : __('No products found.', 'yaycheckout');
 
   function toggle(id: string, name?: string) {
     if (name) setNames((prev) => ({ ...prev, [id]: name }));
-    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
+    onChange(value.includes(id) ? value.filter((picked) => picked !== id) : [...value, id]);
   }
 
   return (
@@ -62,9 +63,7 @@ export function ProductMultiSelect({
             onScroll={(event) => loadMoreOnScroll(event, list)}
           >
             {products.length === 0 ? (
-              <p className="text-muted-foreground py-6 text-center text-sm">
-                {list.isFetching ? __('Searching…', 'yaycheckout') : __('No products found.', 'yaycheckout')}
-              </p>
+              <p className="text-muted-foreground py-6 text-center text-sm">{emptyText}</p>
             ) : (
               <CommandGroup>
                 {products.map((product) => {

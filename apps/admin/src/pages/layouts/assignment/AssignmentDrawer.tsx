@@ -133,11 +133,12 @@ function RulesEditor({
 
   function updateGroup(group: Group) {
     // A group emptied of its last condition goes with it.
-    setGroups(
-      group.conditions.length > 0
-        ? groups.map((g) => (g.id === group.id ? group : g))
-        : groups.filter((g) => g.id !== group.id),
-    );
+    if (group.conditions.length === 0) {
+      setGroups(groups.filter((other) => other.id !== group.id));
+      return;
+    }
+
+    setGroups(groups.map((other) => (other.id === group.id ? group : other)));
   }
 
   function onSave() {
@@ -179,7 +180,7 @@ function RulesEditor({
                 index={groupIndex}
                 group={group}
                 onChange={updateGroup}
-                onRemove={() => setGroups(groups.filter((g) => g.id !== group.id))}
+                onRemove={() => setGroups(groups.filter((other) => other.id !== group.id))}
                 productNames={productNames}
               />
             </div>

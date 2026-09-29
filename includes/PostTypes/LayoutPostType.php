@@ -15,6 +15,9 @@ class LayoutPostType {
 
     use SingletonTrait;
 
+    /** The one capability every layout action and every YayCheckout REST route requires. */
+    public const CAPABILITY = 'manage_woocommerce';
+
     protected function __construct() {
         add_action( 'init', [ $this, 'register' ] );
     }
@@ -41,25 +44,28 @@ class LayoutPostType {
                 'can_export'            => true,
                 'delete_with_user'      => false,
 
-                // Every cap → manage_woocommerce, so core's REST and our controllers check the same thing.
+                // Every cap → CAPABILITY, so core's REST and our controllers check the same thing.
                 'capability_type'       => 'post',
                 'map_meta_cap'          => false,
-                'capabilities'          => [
-                    'edit_post'              => 'manage_woocommerce',
-                    'read_post'              => 'manage_woocommerce',
-                    'delete_post'            => 'manage_woocommerce',
-                    'edit_posts'             => 'manage_woocommerce',
-                    'edit_others_posts'      => 'manage_woocommerce',
-                    'delete_posts'           => 'manage_woocommerce',
-                    'delete_others_posts'    => 'manage_woocommerce',
-                    'delete_published_posts' => 'manage_woocommerce',
-                    'delete_private_posts'   => 'manage_woocommerce',
-                    'publish_posts'          => 'manage_woocommerce',
-                    'read_private_posts'     => 'manage_woocommerce',
-                    'edit_private_posts'     => 'manage_woocommerce',
-                    'edit_published_posts'   => 'manage_woocommerce',
-                    'create_posts'           => 'manage_woocommerce',
-                ],
+                'capabilities'          => array_fill_keys(
+                    [
+                        'edit_post',
+                        'read_post',
+                        'delete_post',
+                        'edit_posts',
+                        'edit_others_posts',
+                        'delete_posts',
+                        'delete_others_posts',
+                        'delete_published_posts',
+                        'delete_private_posts',
+                        'publish_posts',
+                        'read_private_posts',
+                        'edit_private_posts',
+                        'edit_published_posts',
+                        'create_posts',
+                    ],
+                    self::CAPABILITY
+                ),
 
                 /*
                  * Seed a Checkout root on new layouts. Inserting another one

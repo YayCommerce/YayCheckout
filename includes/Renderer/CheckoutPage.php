@@ -80,9 +80,8 @@ class CheckoutPage {
     }
 
     /**
-     * The checkout page load picks and pins the pick to the session; every other request (update_order_review,
-     * the order submit) reuses the pin while its layout stays active, so the form validates against the layout
-     * the shopper saw even after a country or cart change.
+     * The layout this request serves: picked on the checkout page load, then reused from the session pin while it stays active.
+     * See docs/system-architecture.md, § Storefront "Which layout".
      */
     private function assigned_layout(): ?Layout {
         $repository   = new LayoutRepository();

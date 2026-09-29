@@ -82,9 +82,9 @@ export function ConditionGroup({
             key={condition.id}
             condition={condition}
             onChange={(next) =>
-              onChange({ ...group, conditions: group.conditions.map((c) => (c.id === condition.id ? next : c)) })
+              onChange({ ...group, conditions: group.conditions.map((other) => (other.id === condition.id ? next : other)) })
             }
-            onRemove={() => onChange({ ...group, conditions: group.conditions.filter((c) => c.id !== condition.id) })}
+            onRemove={() => onChange({ ...group, conditions: group.conditions.filter((other) => other.id !== condition.id) })}
             productNames={productNames}
           />
         ))}
