@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
 import { formatDateTime } from '@/lib/helpers/date.helper';
+import { isPro } from '@/lib/plan';
 import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
@@ -44,6 +45,7 @@ import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
+import { AssignmentChips } from '@/pages/layouts/assignment/AssignmentChips';
 import { AssignmentDrawer } from '@/pages/layouts/assignment/AssignmentDrawer';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { DeleteModal } from '@/pages/layouts/DeleteModal';
@@ -539,7 +541,7 @@ function LayoutsTable({
       <TableHeader>
         <TableRow>
           <TableHead>{__('Name', 'yaycheckout')}</TableHead>
-          {/* TODO: Assignment column (Pro) once LayoutSummary carries an `assignment` field. */}
+          {isPro && <TableHead>{__('Assignment', 'yaycheckout')}</TableHead>}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
           <TableHead>{__('Active', 'yaycheckout')}</TableHead>
           <TableHead>{__('Published', 'yaycheckout')}</TableHead>
@@ -602,6 +604,11 @@ function LayoutTableRow({
       <TableCell className="max-w-[320px] truncate font-medium" title={layout.title}>
         {layout.title}
       </TableCell>
+      {isPro && (
+        <TableCell className="max-w-70">
+          <AssignmentChips rules={layout.rules} />
+        </TableCell>
+      )}
       <TableCell>
         <LayoutStatusBadge layout={layout} />
       </TableCell>

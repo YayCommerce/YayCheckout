@@ -43,7 +43,7 @@ class Layout {
 
     /**
      * Pro assignment rules: groups ORed, conditions inside a group ANDed. Each condition is
-     * { type, operator, value } per ConditionType; [] means no rule, so the layout is never assigned.
+     * { type, operator, value } per ConditionType; [] means none.
      *
      * @var array<int, array<int, array{type: string, operator: string, value: mixed}>>
      */
@@ -83,6 +83,7 @@ class Layout {
             'size'         => strlen( $this->content ),
             'published_at' => DateHelper::to_iso8601( $this->published_at ),
             'scheduled_at' => DateHelper::to_iso8601( $this->scheduled_at ),
+            'rules'        => $this->rules,
         ];
     }
 
@@ -163,7 +164,7 @@ class Layout {
 
         switch ( $kind ) {
             case ConditionType::VALUE_KEYS:
-                // Country codes, role slugs, gateway ids: plain identifiers, so a strict pattern replaces escaping.
+                // Country codes and role slugs: plain identifiers, so a strict pattern replaces escaping.
                 $invalid = array_filter( $list, static fn( $key ) => ! is_string( $key ) || ! preg_match( '/^[A-Za-z0-9_.-]{1,100}$/', $key ) );
                 // Unique only once all are strings: array_unique then compares as strings, so '10' and '1e1' stay two keys.
                 return [] === $list || [] !== $invalid ? null : array_values( array_unique( $list ) );

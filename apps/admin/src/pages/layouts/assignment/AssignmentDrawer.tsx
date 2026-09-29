@@ -240,7 +240,7 @@ function LockedAssignment({ layout }: { layout: LayoutSummary }) {
           </div>
           <p className="text-sm">
             {__(
-              'Send shoppers to different layouts by role, country, cart contents, device or payment method. On Lite, one layout is active for everyone.',
+              'Send shoppers to different layouts by role, country, cart contents or device. On Lite, one layout is active for everyone.',
               'yaycheckout',
             )}
           </p>

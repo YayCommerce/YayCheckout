@@ -65,8 +65,8 @@ class LayoutImportRestController extends BaseRestController {
 
     /**
      * The layout an export file holds, without storing it: the editor's Import
-     * replaces its own blocks, so it asks here instead of checking the file itself. Rules are not returned:
-     * the editor imports content only, and `has_rules` says the file holds rules Tools → Import would keep.
+     * replaces its own blocks, so it asks here instead of checking the file itself. Rules are not
+     * returned; `has_rules` says whether the file holds rules an import would keep.
      *
      * @return array|\WP_Error { title, content, blocks, has_rules }
      */

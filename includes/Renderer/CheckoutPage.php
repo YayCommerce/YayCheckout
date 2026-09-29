@@ -82,7 +82,7 @@ class CheckoutPage {
      * and order-pay share the checkout page; taking them over reprints the
      * form instead of Woo's thank-you / pay templates.
      */
-    private function on_checkout_page(): bool {
+    public function on_checkout_page(): bool {
         if ( ! is_page( wc_get_page_id( 'checkout' ) ) ) {
             return false;
         }

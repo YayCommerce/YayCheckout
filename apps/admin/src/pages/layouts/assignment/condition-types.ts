@@ -4,11 +4,10 @@ import type { StoreData } from '@/types/localize.type';
 import type { LayoutRulesWire } from '@/lib/schema/layout.schema';
 
 /** Mirrors Enums\ConditionType (types, operators, devices, value kind); PHP validates on save. */
-export type ConditionType =
-  'country' | 'product_in_cart' | 'customer_role' | 'device' | 'payment_method' | 'cart_total';
+export type ConditionType = 'country' | 'product_in_cart' | 'customer_role' | 'device' | 'cart_total';
 
 /**
- * Value is a list for multi-select types (country codes, product ids, role slugs, gateway ids), an amount for cart total, a key otherwise.
+ * Value is a list for multi-select types (country codes, product ids, role slugs), an amount for cart total, a key otherwise.
  * `id` is form-only, the React key: rows keyed by position would hand a removed row's picker state to the next one.
  */
 export type Condition = { id: string; type: ConditionType; operator: string; value: string | string[] | number };
@@ -37,7 +36,6 @@ const LIST_OPERATORS = [
 ];
 
 export const DEVICE_OPTIONS = [
-  { value: 'all', label: __('All', 'yaycheckout') },
   { value: 'desktop', label: __('Desktop', 'yaycheckout') },
   { value: 'mobile', label: __('Mobile', 'yaycheckout') },
 ];
@@ -48,7 +46,6 @@ export const CONDITION_TYPES: Record<ConditionType, { label: string; operators: 
     product_in_cart: { label: __('Product in cart', 'yaycheckout'), operators: LIST_OPERATORS },
     customer_role: { label: __('Customer role', 'yaycheckout'), operators: LIST_OPERATORS },
     device: { label: __('Device', 'yaycheckout'), operators: IS_OPERATORS },
-    payment_method: { label: __('Payment method', 'yaycheckout'), operators: LIST_OPERATORS },
     cart_total: {
       label: __('Cart total', 'yaycheckout'),
       operators: [
@@ -61,7 +58,7 @@ export const CONDITION_TYPES: Record<ConditionType, { label: string; operators: 
 export const CONDITION_TYPE_KEYS = Object.keys(CONDITION_TYPES) as ConditionType[];
 
 /** Types whose value is picked from a list, several at once. */
-const MULTI_VALUE_TYPES: ConditionType[] = ['country', 'product_in_cart', 'customer_role', 'payment_method'];
+const MULTI_VALUE_TYPES: ConditionType[] = ['country', 'product_in_cart', 'customer_role'];
 
 function emptyValue(type: ConditionType): Condition['value'] {
   if (MULTI_VALUE_TYPES.includes(type)) return [];

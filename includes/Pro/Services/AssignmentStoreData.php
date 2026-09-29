@@ -7,7 +7,7 @@ defined( 'ABSPATH' ) || exit;
 class AssignmentStoreData {
 
     /**
-     * Countries, roles, gateways and price format for the Assignment pickers, read from Woo and WP so no list is re-declared.
+     * Countries, roles and price format for the Assignment pickers, read from Woo and WP so no list is re-declared.
      */
     public static function get(): array {
         return [
@@ -21,13 +21,6 @@ class AssignmentStoreData {
             ),
             // Slug => translated name; every registered role, Woo's and other plugins' included.
             'roles'     => array_map( 'translate_user_role', wp_roles()->get_names() ),
-            // Id => the name Woo's Payments settings list shows. Disabled ones too: a rule may be set up before the gateway is switched on.
-            'gateways'  => array_map(
-                static function ( $gateway ) {
-                    return $gateway->get_method_title();
-                },
-                WC()->payment_gateways()->payment_gateways()
-            ),
             // Store currency format, so amounts are typed the way Woo prints prices.
             'currency'  => [
                 'symbol'             => html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8' ),

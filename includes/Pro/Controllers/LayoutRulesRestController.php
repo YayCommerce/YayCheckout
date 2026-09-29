@@ -96,7 +96,13 @@ class LayoutRulesRestController extends BaseRestController {
 
         $products = [];
         if ( [] !== $ids ) {
-            foreach ( wc_get_products( [ 'include' => array_unique( $ids ), 'limit' => -1 ] ) as $product ) {
+            $found = wc_get_products(
+                [
+                    'include' => array_unique( $ids ),
+                    'limit'   => -1,
+                ]
+            );
+            foreach ( $found as $product ) {
                 $products[ $product->get_id() ] = $product->get_name();
             }
         }

@@ -38,8 +38,6 @@ export type StoreData = {
   countries: Record<string, string>;
   /** Role slug => translated name, every registered role. */
   roles: Record<string, string>;
-  /** Payment gateway id => admin name, every classic gateway, enabled or not. */
-  gateways: Record<string, string>;
   /** Woo's price format settings. */
   currency: {
     symbol: string;

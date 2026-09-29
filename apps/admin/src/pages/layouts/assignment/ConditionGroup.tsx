@@ -42,12 +42,6 @@ const OPTION_PICKERS = {
     searchPlaceholder: __('Search roles', 'yaycheckout'),
     emptyText: __('No roles found.', 'yaycheckout'),
   }),
-  payment_method: () => ({
-    options: storeData().gateways,
-    placeholder: __('Select payment methods', 'yaycheckout'),
-    searchPlaceholder: __('Search payment methods', 'yaycheckout'),
-    emptyText: __('No payment methods found.', 'yaycheckout'),
-  }),
 } satisfies Partial<Record<ConditionType, () => object>>;
 
 export function ConditionGroup({

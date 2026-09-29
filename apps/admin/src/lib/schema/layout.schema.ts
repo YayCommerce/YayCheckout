@@ -9,6 +9,20 @@ export const LISTED_LAYOUT_STATUSES = layoutStatusSchema.options.filter((status)
 
 // Wire schemas: the PHP shape, exactly. Only lib/api/layout.api.ts reads them.
 
+/**
+ * Assignment rules as PHP sends them: groups ORed, conditions ANDed.
+ * Loose on type and operator: the server validated them on save, and the drawer owns their vocabulary.
+ */
+const rulesWireSchema = z.array(
+  z.array(
+    z.object({
+      type: z.string(),
+      operator: z.string(),
+      value: z.union([z.array(z.union([z.string(), z.number()])), z.string(), z.number()]),
+    }),
+  ),
+);
+
 const layoutSummaryWireFields = {
   id: z.number(),
   title: z.string(),
@@ -20,6 +34,8 @@ const layoutSummaryWireFields = {
   published_at: z.string().nullable(),
   /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduled_at: z.string().nullable(),
+  /** [] when the layout has none. */
+  rules: rulesWireSchema,
 };
 
 // .strict() so a renamed PHP key fails loudly instead of parsing to undefined.
@@ -87,6 +103,8 @@ export type LayoutSummary = {
   publishedAt: string | null;
   /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduledAt: string | null;
+  /** Groups ORed, conditions ANDed; [] means the layout applies to everyone. */
+  rules: LayoutRulesWire;
 };
 
 export type Layout = LayoutSummary & {
@@ -120,20 +138,8 @@ export const newLayoutFormSchema = z
 
 export type NewLayoutFormValues = z.infer<typeof newLayoutFormSchema>;
 
-/**
- * Assignment rules as LayoutRulesRestController sends them: groups ORed, conditions ANDed.
- * Loose on type and operator: the server validated them on save, and the drawer owns their vocabulary.
- */
 export const layoutRulesWireSchema = z.object({
-  rules: z.array(
-    z.array(
-      z.object({
-        type: z.string(),
-        operator: z.string(),
-        value: z.union([z.array(z.union([z.string(), z.number()])), z.string(), z.number()]),
-      }),
-    ),
-  ),
+  rules: rulesWireSchema,
   /** Names of the products the rules name, by id; a deleted product has no entry. */
   labels: z.object({ products: z.record(z.string(), z.string()) }),
 });

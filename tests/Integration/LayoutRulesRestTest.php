@@ -123,9 +123,9 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
             [
 				[
 					[
-						'type'     => 'payment_method',
+						'type'     => 'country',
 						'operator' => 'in',
-						'value'    => [ 'cod' ],
+						'value'    => [ 'DE' ],
 					],
 				],
             ]
@@ -226,6 +226,17 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
 							'type'     => 'device',
 							'operator' => 'is',
 							'value'    => 'tablet',
+						],
+                    ],
+                ],
+            ],
+            'device all'          => [
+				[
+					[
+						[
+							'type'     => 'device',
+							'operator' => 'is',
+							'value'    => 'all',
 						],
                     ],
                 ],
@@ -336,6 +347,27 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
 
         $this->assertSame( $rules, get_post_meta( $copy->id, Layout::META_RULES, true ) );
         $this->assertSame( $rules, $copy->rules );
+    }
+
+    public function test_the_layouts_list_carries_each_layouts_rules(): void {
+        $with    = LayoutFactory::create_draft();
+        $without = LayoutFactory::create_draft();
+        $rules   = [
+            [
+                [
+                    'type'     => 'device',
+                    'operator' => 'is',
+                    'value'    => 'mobile',
+                ],
+            ],
+        ];
+        $this->put( $with, $rules );
+
+        $items = rest_do_request( new WP_REST_Request( 'GET', '/yaycheckout/v1/layouts' ) )->get_data()['items'];
+        $by_id = array_column( $items, 'rules', 'id' );
+
+        $this->assertSame( $rules, $by_id[ $with ] );
+        $this->assertSame( [], $by_id[ $without ] );
     }
 
     public function test_missing_layout_is_not_found(): void {

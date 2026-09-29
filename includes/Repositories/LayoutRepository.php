@@ -37,21 +37,36 @@ class LayoutRepository {
         return in_array( $id, $this->active_ids(), true );
     }
 
-    /** The active layout; the last activated when Pro holds several. set_active() appends, so the end is the most recent choice. */
-    public function active(): ?Layout {
-        $ids = $this->active_ids();
-        $id  = empty( $ids ) ? 0 : (int) end( $ids );
+    /**
+     * The layout that should render for the current request: the previewed one when the
+     * renderer passes an id, else the active one, which `yaycheckout_resolve_layout` may
+     * swap for another layout of the active set (Pro assignment rules).
+     */
+    public function resolve_for_request( ?int $preview_id = null ): ?Layout {
+        if ( null !== $preview_id ) {
+            return $this->find( $preview_id );
+        }
 
-        return $id > 0 ? $this->find( $id ) : null;
+        $active = $this->active_layouts();
+
+        /**
+         * Filters the layout the checkout serves.
+         *
+         * @param Layout|null $layout     The most recently activated layout; null leaves WooCommerce's checkout untouched.
+         * @param Layout[]    $candidates The active set, most recently activated first.
+         */
+        $layout = apply_filters( 'yaycheckout_resolve_layout', $active[0] ?? null, $active );
+
+        return $layout instanceof Layout ? $layout : null;
     }
 
     /**
-     * The layout that should render for the current request: the previewed one when the
-     * renderer passes an id, else the active one. Pro assignment rules (Layout::META_RULES)
-     * will be evaluated here before falling back to active().
+     * The active set as layouts, most recently activated first; ids whose post is gone are skipped.
+     *
+     * @return Layout[]
      */
-    public function resolve_for_request( ?int $preview_id = null ): ?Layout {
-        return null !== $preview_id ? $this->find( $preview_id ) : $this->active();
+    public function active_layouts(): array {
+        return array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
     }
 
     /**
@@ -305,7 +320,7 @@ class LayoutRepository {
         return Layout::from_post( $restored, $this->hydrate_meta( get_post_meta( $id ) ), false );
     }
 
-    /** Free replaces the set; Pro moves the id to the end so active() serves it. */
+    /** Free replaces the set; Pro moves the id to the end, the most recent choice. */
     public function set_active( int $id ): void {
         $ids = Plan::is_pro()
             ? array_merge( array_diff( $this->active_ids(), [ $id ] ), [ $id ] )

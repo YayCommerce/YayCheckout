@@ -28,6 +28,7 @@ function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
     size: wire.size,
     publishedAt: wire.published_at,
     scheduledAt: wire.scheduled_at,
+    rules: wire.rules,
   };
 }
 
