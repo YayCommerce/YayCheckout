@@ -7,16 +7,6 @@ import { CONDITION_TYPES, DEVICE_OPTIONS, isKnownType, storeData } from '@/pages
 
 type WireCondition = LayoutRulesWire[number][number];
 
-/** One word for the operator, as a chip reads it: "Country is DE", "Cart total over 50". */
-const OPERATOR_WORDS: Record<string, string> = {
-  in: __('is', 'yaycheckout'),
-  is: __('is', 'yaycheckout'),
-  not_in: __('is not', 'yaycheckout'),
-  is_not: __('is not', 'yaycheckout'),
-  gt: __('over', 'yaycheckout'),
-  lt: __('under', 'yaycheckout'),
-};
-
 function valueText({ type, value }: WireCondition): string {
   if (!Array.isArray(value)) {
     return DEVICE_OPTIONS.find((device) => device.value === value)?.label ?? String(value);
@@ -35,9 +25,10 @@ function valueText({ type, value }: WireCondition): string {
 
 function chipText(condition: WireCondition): string {
   // A type this version has no picker for still shows, raw: hiding it would hide why the layout is not served.
-  const label = isKnownType(condition.type) ? CONDITION_TYPES[condition.type].label : condition.type;
+  const known = isKnownType(condition.type) ? CONDITION_TYPES[condition.type] : null;
+  const operator = known?.operators.find((option) => option.value === condition.operator)?.label ?? condition.operator;
 
-  return `${label} ${OPERATOR_WORDS[condition.operator] ?? condition.operator} ${valueText(condition)}`;
+  return `${known?.label ?? condition.type} ${operator} ${valueText(condition)}`;
 }
 
 /** A layout's rules as one line of chips for the Layouts table, groups separated by "or". No rules applies to everyone. */

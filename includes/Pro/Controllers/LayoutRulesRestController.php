@@ -86,11 +86,9 @@ class LayoutRulesRestController extends BaseRestController {
      */
     private static function reply( array $rules ): array {
         $ids = [];
-        foreach ( $rules as $group ) {
-            foreach ( $group as $condition ) {
-                if ( ConditionType::PRODUCT_IN_CART === $condition['type'] ) {
-                    $ids = array_merge( $ids, $condition['value'] );
-                }
+        foreach ( array_merge( [], ...$rules ) as $condition ) {
+            if ( ConditionType::PRODUCT_IN_CART === $condition['type'] ) {
+                $ids = array_merge( $ids, $condition['value'] );
             }
         }
 

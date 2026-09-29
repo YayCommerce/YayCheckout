@@ -98,7 +98,7 @@ class LayoutAssignment {
             'product_ids' => null !== $cart ? self::cart_product_ids( $cart ) : [],
             'cart_total'  => null !== $cart ? self::cart_total( $cart ) : 0.0,
             // ponytail: wp_is_mobile() counts tablets as mobile; a tablet value needs its own detection.
-            'device'      => wp_is_mobile() ? 'mobile' : 'desktop',
+            'device'      => wp_is_mobile() ? ConditionType::MOBILE : ConditionType::DESKTOP,
         ];
     }
 

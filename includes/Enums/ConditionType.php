@@ -24,7 +24,9 @@ final class ConditionType {
     /** Value is a non-negative amount in the store currency. */
     public const VALUE_AMOUNT = 'amount';
 
-    public const DEVICES = [ 'desktop', 'mobile' ];
+    public const DESKTOP = 'desktop';
+    public const MOBILE  = 'mobile';
+    public const DEVICES = [ self::DESKTOP, self::MOBILE ];
 
     public const IN     = 'in';
     public const NOT_IN = 'not_in';
