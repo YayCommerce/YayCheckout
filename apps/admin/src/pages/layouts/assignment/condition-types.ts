@@ -4,13 +4,13 @@ import type { StoreData } from '@/types/localize.type';
 import type { LayoutRulesWire } from '@/lib/schema/layout.schema';
 
 /** Mirrors Enums\ConditionType (types, operators, devices, value kind); PHP validates on save. */
-export type ConditionType = 'country' | 'product_in_cart' | 'customer_role' | 'device' | 'cart_total';
+export type ConditionType = 'country' | 'product_in_cart' | 'customer_role' | 'device';
 
 /**
- * Value is a list for multi-select types (country codes, product ids, role slugs), an amount for cart total, a key otherwise.
+ * Value is a list for multi-select types (country codes, product ids, role slugs), a key otherwise.
  * `id` is form-only, the React key: rows keyed by position would hand a removed row's picker state to the next one.
  */
-export type Condition = { id: string; type: ConditionType; operator: string; value: string | string[] | number };
+export type Condition = { id: string; type: ConditionType; operator: string; value: string | string[] };
 
 /** Conditions inside a group are ANDed; groups are ORed. `id` is form-only, as on Condition. */
 export type Group = { id: string; conditions: Condition[] };
@@ -46,13 +46,6 @@ export const CONDITION_TYPES: Record<ConditionType, { label: string; operators: 
     product_in_cart: { label: __('Product in cart', 'yaycheckout'), operators: LIST_OPERATORS },
     customer_role: { label: __('Customer role', 'yaycheckout'), operators: LIST_OPERATORS },
     device: { label: __('Device', 'yaycheckout'), operators: IS_OPERATORS },
-    cart_total: {
-      label: __('Cart total', 'yaycheckout'),
-      operators: [
-        { value: 'gt', label: __('is over', 'yaycheckout') },
-        { value: 'lt', label: __('is under', 'yaycheckout') },
-      ],
-    },
   };
 
 export const CONDITION_TYPE_KEYS = Object.keys(CONDITION_TYPES) as ConditionType[];
@@ -61,10 +54,7 @@ export const CONDITION_TYPE_KEYS = Object.keys(CONDITION_TYPES) as ConditionType
 const MULTI_VALUE_TYPES: ConditionType[] = ['country', 'product_in_cart', 'customer_role'];
 
 function emptyValue(type: ConditionType): Condition['value'] {
-  if (MULTI_VALUE_TYPES.includes(type)) return [];
-  if (type === 'cart_total') return 0;
-
-  return '';
+  return MULTI_VALUE_TYPES.includes(type) ? [] : '';
 }
 
 export function newCondition(type: ConditionType): Condition {
@@ -76,15 +66,14 @@ export function isKnownType(type: string): type is ConditionType {
   return Object.hasOwn(CONDITION_TYPES, type);
 }
 
-/** Whether the condition has a value to test. A cart total of 0 counts: "is over 0" is a real rule. An unknown type never is. */
+/** Whether the condition has a value to test. An unknown type never is. */
 export function isConditionComplete(condition: Condition): boolean {
   if (!isKnownType(condition.type)) return false;
   if (Array.isArray(condition.value)) return condition.value.length > 0;
-  if (typeof condition.value === 'number') return true;
   return condition.value !== '';
 }
 
-/** Stored rules to form state: list values become strings, as the pickers key their options by string. */
+/** Stored rules to form state: values become strings, as the pickers key their options by string. */
 export function groupsFromWire(rules: LayoutRulesWire): Group[] {
   return rules.map((group) => ({
     id: newId(),
@@ -93,7 +82,7 @@ export function groupsFromWire(rules: LayoutRulesWire): Group[] {
       // Unknown types are kept, not dropped: the row says so, and saving waits until the merchant removes it.
       type: condition.type as ConditionType,
       operator: condition.operator,
-      value: Array.isArray(condition.value) ? condition.value.map(String) : condition.value,
+      value: Array.isArray(condition.value) ? condition.value.map(String) : String(condition.value),
     })),
   }));
 }
@@ -103,7 +92,7 @@ export function groupsToWire(groups: Group[]): LayoutRulesWire {
   return groups.map((group) => group.conditions.map(({ type, operator, value }) => ({ type, operator, value })));
 }
 
-/** The page's store lists and price format. Only the Pro page carries them, and only Pro renders the drawer. */
+/** The page's store lists. Only the Pro page carries them, and only Pro renders the drawer. */
 export function storeData(): StoreData {
   const store = window.yayCheckoutAdmin.store;
   if (!store) throw new Error('window.yayCheckoutAdmin.store is missing: the Assignment drawer is Pro only.');

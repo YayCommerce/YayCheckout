@@ -40,11 +40,6 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
 						'value'    => [ 'DE', 'AT', 'DE' ],
 					],
                     [
-						'type'     => 'cart_total',
-						'operator' => 'gt',
-						'value'    => 150,
-                    ],
-                    [
 						'type'     => 'device',
 						'operator' => 'is',
 						'value'    => 'desktop',
@@ -67,11 +62,6 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
 					'operator' => 'in',
 					'value'    => [ 'DE', 'AT' ],
 				],
-                [
-					'type'     => 'cart_total',
-					'operator' => 'gt',
-					'value'    => 150.0,
-                ],
                 [
 					'type'     => 'device',
 					'operator' => 'is',
@@ -241,46 +231,18 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
                     ],
                 ],
             ],
-            'negative amount'     => [
+            'removed cart total'  => [
 				[
 					[
 						[
 							'type'     => 'cart_total',
 							'operator' => 'gt',
-							'value'    => -1,
-						],
-                    ],
-                ],
-            ],
-            'amount as string'    => [
-				[
-					[
-						[
-							'type'     => 'cart_total',
-							'operator' => 'gt',
-							'value'    => '150',
+							'value'    => 150,
 						],
                     ],
                 ],
             ],
         ];
-    }
-
-    /** Refused: json_decode turns 1e400 into INF, which json_encode rejects, so every read of the rules would break. */
-    public function test_an_infinite_amount_is_invalid(): void {
-        $this->expectException( \InvalidArgumentException::class );
-
-        Layout::sanitize_rules(
-            [
-                [
-                    [
-                        'type'     => 'cart_total',
-                        'operator' => 'gt',
-                        'value'    => INF,
-                    ],
-                ],
-            ]
-        );
     }
 
     public function test_keys_are_deduplicated_as_strings(): void {

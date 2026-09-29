@@ -16,7 +16,6 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         'country'     => 'DE',
         'roles'       => [ 'customer' ],
         'product_ids' => [ 10, 11 ],
-        'cart_total'  => 100.0,
         'device'      => 'mobile',
     ];
 
@@ -64,8 +63,6 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
             'product not in cart'        => [ self::rule( 'product_in_cart', 'not_in', [ 99 ] ), true ],
             'device is'                  => [ self::rule( 'device', 'is', 'mobile' ), true ],
             'device is not'              => [ self::rule( 'device', 'is_not', 'mobile' ), false ],
-            'cart over'                  => [ self::rule( 'cart_total', 'gt', 99.99 ), true ],
-            'cart under'                 => [ self::rule( 'cart_total', 'lt', 100.0 ), false ],
             'unknown type, any operator' => [ self::rule( 'weather', 'not_in', [ 'rain' ] ), false ],
         ];
     }
@@ -78,7 +75,7 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
     }
 
     public function test_groups_or_and_conditions_and(): void {
-        $de_and_big_cart = [
+        $de_and_wholesale = [
             [
                 [
                     'type'     => 'country',
@@ -86,15 +83,15 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
                     'value'    => [ 'DE' ],
                 ],
                 [
-                    'type'     => 'cart_total',
-                    'operator' => 'gt',
-                    'value'    => 500.0,
+                    'type'     => 'customer_role',
+                    'operator' => 'in',
+                    'value'    => [ 'wholesale' ],
                 ],
             ],
         ];
-        $or_mobile       = array_merge( $de_and_big_cart, self::rule( 'device', 'is', 'mobile' ) );
+        $or_mobile        = array_merge( $de_and_wholesale, self::rule( 'device', 'is', 'mobile' ) );
 
-        $this->assertFalse( LayoutAssignment::matches( $de_and_big_cart, self::CONTEXT ) );
+        $this->assertFalse( LayoutAssignment::matches( $de_and_wholesale, self::CONTEXT ) );
         $this->assertTrue( LayoutAssignment::matches( $or_mobile, self::CONTEXT ) );
     }
 
@@ -212,9 +209,6 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
     }
 
     public function test_context_reads_the_cart(): void {
-        $simple = new \WC_Product_Simple();
-        $simple->set_regular_price( '30' );
-        $simple->save();
         $parent = new \WC_Product_Variable();
         $parent->save();
         $variation = new \WC_Product_Variation();
@@ -223,23 +217,19 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         $variation->save();
 
         WC()->cart->empty_cart();
-        WC()->cart->add_to_cart( $simple->get_id(), 2 );
         WC()->cart->add_to_cart( $parent->get_id(), 1, $variation->get_id() );
-        WC()->cart->calculate_totals();
 
         $condition = static fn( string $type, string $operator, $value ): array => [
             'type'     => $type,
             'operator' => $operator,
             'value'    => $value,
         ];
-        // Parent and variation both count, and 2 x 30 + 20 is 80.
+        // Parent and variation both count.
         $cart_layout = self::active_layout(
             [
                 [
                     $condition( 'product_in_cart', 'in', [ $parent->get_id() ] ),
                     $condition( 'product_in_cart', 'in', [ $variation->get_id() ] ),
-                    $condition( 'cart_total', 'gt', 79.0 ),
-                    $condition( 'cart_total', 'lt', 81.0 ),
                 ],
             ]
         );

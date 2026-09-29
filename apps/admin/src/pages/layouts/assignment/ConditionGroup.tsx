@@ -13,7 +13,6 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ConfirmPopover } from '@/components/shared/ConfirmPopover';
 import { TrashButton } from '@/components/shared/TrashButton';
-import { AmountInput } from '@/pages/layouts/assignment/AmountInput';
 import {
   CONDITION_TYPE_KEYS,
   CONDITION_TYPES,
@@ -194,24 +193,20 @@ function ValuePicker({
     );
   }
 
-  if (condition.type === 'device') {
-    return (
-      <Select value={condition.value as string} onValueChange={onChange}>
-        <SelectTrigger className="min-w-0 flex-1">
-          <SelectValue placeholder={__('Select device', 'yaycheckout')} />
-        </SelectTrigger>
-        <SelectContent>
-          {DEVICE_OPTIONS.map((device) => (
-            <SelectItem key={device.value} value={device.value}>
-              {device.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    );
-  }
-
-  return <AmountInput value={condition.value as number} onChange={onChange} />;
+  return (
+    <Select value={condition.value as string} onValueChange={onChange}>
+      <SelectTrigger className="min-w-0 flex-1">
+        <SelectValue placeholder={__('Select device', 'yaycheckout')} />
+      </SelectTrigger>
+      <SelectContent>
+        {DEVICE_OPTIONS.map((device) => (
+          <SelectItem key={device.value} value={device.value}>
+            {device.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 export function OrDivider() {

@@ -7,7 +7,7 @@ defined( 'ABSPATH' ) || exit;
 class AssignmentStoreData {
 
     /**
-     * Countries, roles and price format for the Assignment pickers, read from Woo and WP so no list is re-declared.
+     * Countries and roles for the Assignment pickers, read from Woo and WP so no list is re-declared.
      */
     public static function get(): array {
         return [
@@ -21,14 +21,6 @@ class AssignmentStoreData {
             ),
             // Slug => translated name; every registered role, Woo's and other plugins' included.
             'roles'     => array_map( 'translate_user_role', wp_roles()->get_names() ),
-            // Store currency format, so amounts are typed the way Woo prints prices.
-            'currency'  => [
-                'symbol'             => html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8' ),
-                'position'           => get_option( 'woocommerce_currency_pos', 'left' ),
-                'decimals'           => wc_get_price_decimals(),
-                'decimal_separator'  => wc_get_price_decimal_separator(),
-                'thousand_separator' => wc_get_price_thousand_separator(),
-            ],
         ];
     }
 }

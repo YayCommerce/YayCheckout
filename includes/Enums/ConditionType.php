@@ -13,7 +13,6 @@ final class ConditionType {
     public const PRODUCT_IN_CART = 'product_in_cart';
     public const CUSTOMER_ROLE   = 'customer_role';
     public const DEVICE          = 'device';
-    public const CART_TOTAL      = 'cart_total';
 
     /** Value is a list of string keys (country codes, role slugs). */
     public const VALUE_KEYS = 'keys';
@@ -21,8 +20,6 @@ final class ConditionType {
     public const VALUE_IDS = 'ids';
     /** Value is one of self::DEVICES. */
     public const VALUE_DEVICE = 'device';
-    /** Value is a non-negative amount in the store currency. */
-    public const VALUE_AMOUNT = 'amount';
 
     public const DESKTOP = 'desktop';
     public const MOBILE  = 'mobile';
@@ -32,8 +29,6 @@ final class ConditionType {
     public const NOT_IN = 'not_in';
     public const IS     = 'is';
     public const IS_NOT = 'is_not';
-    public const GT     = 'gt';
-    public const LT     = 'lt';
 
     /** Operators whose condition holds when its test does; not_in and is_not invert it. */
     public const AFFIRMATIVE_OPERATORS = [ self::IN, self::IS ];
@@ -60,10 +55,6 @@ final class ConditionType {
             self::DEVICE          => [
                 'operators' => [ self::IS, self::IS_NOT ],
                 'value'     => self::VALUE_DEVICE,
-            ],
-            self::CART_TOTAL      => [
-                'operators' => [ self::GT, self::LT ],
-                'value'     => self::VALUE_AMOUNT,
             ],
         ];
     }

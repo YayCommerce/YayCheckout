@@ -111,7 +111,7 @@ class CheckoutPage {
     /**
      * What assignment conditions test, read once for this request.
      *
-     * @return array{country: string, roles: string[], product_ids: int[], cart_total: float, device: string}
+     * @return array{country: string, roles: string[], product_ids: int[], device: string}
      */
     private function shopper_context(): array {
         $customer = WC()->customer;
@@ -121,7 +121,6 @@ class CheckoutPage {
             'country'     => null !== $customer ? $customer->get_billing_country() : '',
             'roles'       => array_values( wp_get_current_user()->roles ),
             'product_ids' => null !== $cart ? self::cart_product_ids( $cart ) : [],
-            'cart_total'  => null !== $cart ? self::cart_total( $cart ) : 0.0,
             // ponytail: wp_is_mobile() counts tablets as mobile; a tablet value needs its own detection.
             'device'      => wp_is_mobile() ? ConditionType::MOBILE : ConditionType::DESKTOP,
         ];
@@ -140,13 +139,6 @@ class CheckoutPage {
         }
 
         return array_values( array_unique( array_filter( $ids ) ) );
-    }
-
-    /** Items after discounts, before shipping and fees, as the store displays prices. */
-    private static function cart_total( \WC_Cart $cart ): float {
-        $discount = (float) $cart->get_discount_total() + ( $cart->display_prices_including_tax() ? (float) $cart->get_discount_tax() : 0.0 );
-
-        return (float) $cart->get_displayed_subtotal() - $discount;
     }
 
     /**

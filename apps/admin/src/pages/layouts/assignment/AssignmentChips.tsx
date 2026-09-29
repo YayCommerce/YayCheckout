@@ -3,16 +3,11 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 
 import type { LayoutRulesWire } from '@/lib/schema/layout.schema';
 import { Badge } from '@/components/ui/badge';
-import { formatAmount } from '@/pages/layouts/assignment/AmountInput';
 import { CONDITION_TYPES, DEVICE_OPTIONS, isKnownType, storeData } from '@/pages/layouts/assignment/condition-types';
 
 type WireCondition = LayoutRulesWire[number][number];
 
 function valueText({ type, value }: WireCondition): string {
-  if (type === 'cart_total' && typeof value === 'number') {
-    return formatAmount(value);
-  }
-
   if (!Array.isArray(value)) {
     return DEVICE_OPTIONS.find((device) => device.value === value)?.label ?? String(value);
   }

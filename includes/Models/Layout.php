@@ -96,7 +96,7 @@ class Layout {
     }
 
     /**
-     * Validates and normalizes assignment rules: ids to int, amounts to float, list values de-duplicated.
+     * Validates and normalizes assignment rules: ids to int, list values de-duplicated.
      * Strict, not forgiving: an incomplete condition is refused, never stored half-filled.
      *
      * @param mixed $input Decoded request body `rules`.
@@ -176,10 +176,6 @@ class Layout {
 
             case ConditionType::VALUE_DEVICE:
                 return in_array( $value, ConditionType::DEVICES, true ) ? $value : null;
-
-            case ConditionType::VALUE_AMOUNT:
-                // is_finite: json_decode turns 1e400 into INF, which json_encode then refuses, breaking every read of the rules.
-                return ( is_int( $value ) || ( is_float( $value ) && is_finite( $value ) ) ) && $value >= 0 ? (float) $value : null;
         }
 
         return null;

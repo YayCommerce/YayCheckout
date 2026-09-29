@@ -32,18 +32,10 @@ export type AdminData = {
   store?: StoreData;
 };
 
-/** Lists and formats read from Woo and WP; AssignmentStoreData::get(). */
+/** Lists read from Woo and WP; AssignmentStoreData::get(). */
 export type StoreData = {
   /** ISO 3166-1 alpha-2 code => name, in Woo's display order. */
   countries: Record<string, string>;
   /** Role slug => translated name, every registered role. */
   roles: Record<string, string>;
-  /** Woo's price format settings. */
-  currency: {
-    symbol: string;
-    position: 'left' | 'right' | 'left_space' | 'right_space';
-    decimals: number;
-    decimal_separator: string;
-    thousand_separator: string;
-  };
 };

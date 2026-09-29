@@ -25,7 +25,7 @@ class ProServiceProvider {
         add_filter( 'yaycheckout_localize_admin_data', [ $this, 'admin_data' ] );
     }
 
-    /** Adds `store`: the assignment pickers' countries, roles and price format. */
+    /** Adds `store`: the assignment pickers' countries and roles. */
     public function admin_data( array $data ): array {
         $data['store'] = AssignmentStoreData::get();
 
