@@ -3,11 +3,16 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 
 import type { LayoutRulesWire } from '@/lib/schema/layout.schema';
 import { Badge } from '@/components/ui/badge';
+import { formatAmount } from '@/pages/layouts/assignment/AmountInput';
 import { CONDITION_TYPES, DEVICE_OPTIONS, isKnownType, storeData } from '@/pages/layouts/assignment/condition-types';
 
 type WireCondition = LayoutRulesWire[number][number];
 
 function valueText({ type, value }: WireCondition): string {
+  if (type === 'cart_total' && typeof value === 'number') {
+    return formatAmount(value);
+  }
+
   if (!Array.isArray(value)) {
     return DEVICE_OPTIONS.find((device) => device.value === value)?.label ?? String(value);
   }
@@ -31,7 +36,7 @@ function chipText(condition: WireCondition): string {
   return `${known?.label ?? condition.type} ${operator} ${valueText(condition)}`;
 }
 
-/** A layout's rules as one line of chips for the Layouts table, groups separated by "or". No rules applies to everyone. */
+/** A layout's rules as chips for the Layouts table, wrapping onto more lines, groups separated by "or". No rules applies to everyone. */
 export function AssignmentChips({ rules }: { rules: LayoutRulesWire }) {
   if (rules.length === 0) {
     return <span className="text-muted-foreground">{__('Everyone', 'yaycheckout')}</span>;
@@ -40,10 +45,7 @@ export function AssignmentChips({ rules }: { rules: LayoutRulesWire }) {
   const groups = rules.map((group) => group.map(chipText));
 
   return (
-    <div
-      className="py-2 flex items-center gap-1 overflow-hidden whitespace-nowrap flex-wrap"
-      title={groups.map((chips) => chips.join(' + ')).join(` ${__('or', 'yaycheckout')} `)}
-    >
+    <div className="flex flex-wrap items-center gap-1 py-2">
       {groups.map((chips, groupIndex) => (
         <Fragment key={groupIndex}>
           {groupIndex > 0 && <span className="text-muted-foreground text-xs">{__('or', 'yaycheckout')}</span>}

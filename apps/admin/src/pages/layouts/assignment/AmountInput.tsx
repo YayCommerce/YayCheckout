@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NumericFormat } from 'react-number-format';
+import { NumericFormat, numericFormatter } from 'react-number-format';
 
 import type { StoreData } from '@/types/localize.type';
 import { InputGroupInput } from '@/components/ui/input-group';
@@ -8,8 +8,27 @@ import { storeData } from '@/pages/layouts/assignment/condition-types';
 
 type Currency = StoreData['currency'];
 
+/** NumericFormat options that print an amount the way Woo prints prices: symbol, position, decimals, separators. */
+function priceFormat({ symbol, position, decimals, decimal_separator, thousand_separator }: Currency) {
+  const space = position.endsWith('_space') ? ' ' : '';
+
+  return {
+    decimalScale: decimals,
+    fixedDecimalScale: true,
+    decimalSeparator: decimal_separator,
+    thousandSeparator: thousand_separator,
+    prefix: position.startsWith('left') ? symbol + space : undefined,
+    suffix: position.startsWith('right') ? space + symbol : undefined,
+  };
+}
+
+/** An amount as the store prints prices, e.g. "1.500.000 ₫". */
+export function formatAmount(amount: number): string {
+  return numericFormatter(String(amount), priceFormat(storeData().currency));
+}
+
 /**
- * An amount in the store's currency, typed the way Woo prints prices: symbol, position, decimals, separators.
+ * An amount in the store's currency, typed the way Woo prints prices (priceFormat()).
  * NumberInput's root and chevrons, but its own field: NumberInputInput snaps an emptied field back to "0", so
  * the next digits land beside that 0 ("100" becomes "1" or "1.000"). Here the field may stay empty while typing.
  */
@@ -32,8 +51,6 @@ export function AmountInput({ value, onChange }: { value: number; onChange: (val
 
 function AmountField({ currency }: { currency: Currency }) {
   const { value, setValue, handleIncrement, handleDecrement } = useNumberInputContext();
-  const { symbol, position, decimals, decimal_separator, thousand_separator } = currency;
-  const space = position.endsWith('_space') ? ' ' : '';
   // Emptied while typing; counts as 0. A chevron step moves value off 0, which shows it again.
   const [isEmpty, setIsEmpty] = useState(false);
 
@@ -53,12 +70,7 @@ function AmountField({ currency }: { currency: Currency }) {
       // Left empty: show the 0 it counts as.
       onBlur={() => setIsEmpty(false)}
       allowNegative={false}
-      decimalScale={decimals}
-      fixedDecimalScale
-      decimalSeparator={decimal_separator}
-      thousandSeparator={thousand_separator}
-      prefix={position.startsWith('left') ? symbol + space : undefined}
-      suffix={position.startsWith('right') ? space + symbol : undefined}
+      {...priceFormat(currency)}
     />
   );
 }
