@@ -96,7 +96,7 @@ class Layout {
     }
 
     /**
-     * Validates and normalizes assignment rules: ids to int, list values de-duplicated.
+     * Validates and normalizes assignment rules: list values de-duplicated.
      * Strict, not forgiving: an incomplete condition is refused, never stored half-filled.
      *
      * @param mixed $input Decoded request body `rules`.
@@ -141,7 +141,7 @@ class Layout {
             throw new \InvalidArgumentException( "Invalid operator in $where." );
         }
 
-        $value = self::sanitize_rule_value( $condition['value'] ?? null, $definitions[ $type ]['value'] );
+        $value = self::sanitize_rule_value( $condition['value'] ?? null, $definitions[ $type ] );
 
         if ( null === $value ) {
             throw new \InvalidArgumentException( "Invalid value in $where." );
@@ -155,27 +155,21 @@ class Layout {
     }
 
     /**
-     * @param mixed  $value
-     * @param string $kind ConditionType::VALUE_*.
+     * @param mixed $value
+     * @param array $definition One entry of ConditionType::definitions().
      * @return mixed Normalized value, or null when invalid.
      */
-    private static function sanitize_rule_value( $value, string $kind ) {
-        $list = is_array( $value ) ? $value : [];
-
-        switch ( $kind ) {
+    private static function sanitize_rule_value( $value, array $definition ) {
+        switch ( $definition['value'] ) {
             case ConditionType::VALUE_KEYS:
-                // Country codes and role slugs: plain identifiers, so a strict pattern replaces escaping.
+                $list = is_array( $value ) ? $value : [];
+                // Role slugs: plain identifiers, so a strict pattern replaces escaping.
                 $invalid = array_filter( $list, static fn( $key ) => ! is_string( $key ) || ! preg_match( '/^[A-Za-z0-9_.-]{1,100}$/', $key ) );
                 // Unique only once all are strings: array_unique then compares as strings, so '10' and '1e1' stay two keys.
                 return [] === $list || [] !== $invalid ? null : array_values( array_unique( $list ) );
 
-            case ConditionType::VALUE_IDS:
-                // Digit strings accepted, stored as int: select values arrive as strings.
-                $invalid = array_filter( $list, static fn( $id ) => ! ( is_int( $id ) || ( is_string( $id ) && ctype_digit( $id ) ) ) || (int) $id <= 0 );
-                return [] === $list || [] !== $invalid ? null : array_values( array_unique( array_map( 'intval', $list ) ) );
-
-            case ConditionType::VALUE_DEVICE:
-                return in_array( $value, ConditionType::DEVICES, true ) ? $value : null;
+            case ConditionType::VALUE_CHOICE:
+                return in_array( $value, $definition['choices'], true ) ? $value : null;
         }
 
         return null;

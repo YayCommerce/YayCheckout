@@ -129,7 +129,7 @@ export async function getLayoutRules(id: number): Promise<LayoutRulesResponse> {
   return layoutRulesWireSchema.parse(await api.get(`layouts/${id}/rules`).json());
 }
 
-/** Replaces the rules; resolves to them as stored (ids as ints, list values de-duplicated). */
+/** Replaces the rules; resolves to them as stored (list values de-duplicated). */
 export async function saveLayoutRules({
   id,
   rules,

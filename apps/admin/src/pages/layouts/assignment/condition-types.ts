@@ -3,11 +3,11 @@ import { __ } from '@wordpress/i18n';
 import type { StoreData } from '@/types/localize.type';
 import type { LayoutRulesWire } from '@/lib/schema/layout.schema';
 
-/** Mirrors Enums\ConditionType (types, operators, devices, value kind); PHP validates on save. */
-export type ConditionType = 'country' | 'product_in_cart' | 'customer_role' | 'device';
+/** Mirrors Enums\ConditionType (types, operators, value kind, choices); PHP validates on save. */
+export type ConditionType = 'customer_role' | 'login_status' | 'device';
 
 /**
- * Value is a list for multi-select types (country codes, product ids, role slugs), a key otherwise.
+ * Value is a list for multi-select types (role slugs), one of the type's `choices` otherwise.
  * `id` is form-only, the React key: rows keyed by position would hand a removed row's picker state to the next one.
  */
 export type Condition = { id: string; type: ConditionType; operator: string; value: string | string[] };
@@ -35,26 +35,33 @@ const LIST_OPERATORS = [
   { value: 'not_in', label: __('not in list', 'yaycheckout') },
 ];
 
-export const DEVICE_OPTIONS = [
-  { value: 'desktop', label: __('Desktop', 'yaycheckout') },
-  { value: 'mobile', label: __('Mobile', 'yaycheckout') },
-];
+type Option = { value: string; label: string };
 
-export const CONDITION_TYPES: Record<ConditionType, { label: string; operators: { value: string; label: string }[] }> =
-  {
-    country: { label: __('Country', 'yaycheckout'), operators: LIST_OPERATORS },
-    product_in_cart: { label: __('Product in cart', 'yaycheckout'), operators: LIST_OPERATORS },
-    customer_role: { label: __('Customer role', 'yaycheckout'), operators: LIST_OPERATORS },
-    device: { label: __('Device', 'yaycheckout'), operators: IS_OPERATORS },
-  };
+/** `choices`: the values a single-choice type takes; types without it pick several from a list. */
+export const CONDITION_TYPES: Record<ConditionType, { label: string; operators: Option[]; choices?: Option[] }> = {
+  customer_role: { label: __('Customer role', 'yaycheckout'), operators: LIST_OPERATORS },
+  login_status: {
+    label: __('Login status', 'yaycheckout'),
+    operators: IS_OPERATORS,
+    choices: [
+      { value: 'logged_in', label: __('Logged in', 'yaycheckout') },
+      { value: 'guest', label: __('Guest', 'yaycheckout') },
+    ],
+  },
+  device: {
+    label: __('Device', 'yaycheckout'),
+    operators: IS_OPERATORS,
+    choices: [
+      { value: 'desktop', label: __('Desktop', 'yaycheckout') },
+      { value: 'mobile', label: __('Mobile', 'yaycheckout') },
+    ],
+  },
+};
 
 export const CONDITION_TYPE_KEYS = Object.keys(CONDITION_TYPES) as ConditionType[];
 
-/** Types whose value is picked from a list, several at once. */
-const MULTI_VALUE_TYPES: ConditionType[] = ['country', 'product_in_cart', 'customer_role'];
-
 function emptyValue(type: ConditionType): Condition['value'] {
-  return MULTI_VALUE_TYPES.includes(type) ? [] : '';
+  return CONDITION_TYPES[type].choices ? '' : [];
 }
 
 export function newCondition(type: ConditionType): Condition {

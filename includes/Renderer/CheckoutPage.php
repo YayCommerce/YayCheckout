@@ -24,9 +24,6 @@ class CheckoutPage {
     /** After WC_Frontend_Scripts registers its handles at priority 10. */
     private const SCRIPTS_PRIORITY = 20;
 
-    /** WC session key: the layout id the last checkout page load served; 0 when it served WooCommerce's own. */
-    public const SESSION_PINNED = 'yaycheckout_layout_id';
-
     /** @var Layout|null|false false until first resolved. */
     private $layout = false;
 
@@ -76,69 +73,23 @@ class CheckoutPage {
             return null;
         }
 
-        return $this->assigned_layout();
+        // Picked afresh by every request, AJAX and order submit too; why no pin: docs/system-architecture.md, § Storefront "Which layout".
+        return ( new LayoutRepository() )->active( $this->shopper_context() );
     }
 
     /**
-     * The layout this request serves: picked on the checkout page load, then reused from the session pin while it stays active.
-     * See docs/system-architecture.md, § Storefront "Which layout".
-     */
-    private function assigned_layout(): ?Layout {
-        $repository   = new LayoutRepository();
-        $session      = WC()->session;
-        $pin          = null !== $session ? $session->get( self::SESSION_PINNED ) : null;
-        $is_page_load = $this->on_checkout_page() && ! wp_doing_ajax() && 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Compared to a literal only.
-
-        if ( ! $is_page_load && null !== $pin ) {
-            if ( 0 === (int) $pin ) {
-                return null;
-            }
-
-            if ( $repository->is_active( (int) $pin ) ) {
-                return $repository->find( (int) $pin );
-            }
-        }
-
-        $layout = $repository->active( $this->shopper_context() );
-
-        if ( $is_page_load && null !== $session ) {
-            $session->set( self::SESSION_PINNED, null !== $layout ? $layout->id : 0 );
-        }
-
-        return $layout;
-    }
-
-    /**
-     * What assignment conditions test, read once for this request.
+     * What assignment conditions test, read once for this request. Keyed by ConditionType.
      *
-     * @return array{country: string, roles: string[], product_ids: int[], device: string}
+     * @return array{customer_role: string[], login_status: string, device: string}
      */
     private function shopper_context(): array {
-        $customer = WC()->customer;
-        $cart     = WC()->cart;
-
         return [
-            'country'     => null !== $customer ? $customer->get_billing_country() : '',
-            'roles'       => array_values( wp_get_current_user()->roles ),
-            'product_ids' => null !== $cart ? self::cart_product_ids( $cart ) : [],
+            ConditionType::CUSTOMER_ROLE => array_values( wp_get_current_user()->roles ),
+            // Not "no roles": a user of another site in the network is logged in with none here.
+            ConditionType::LOGIN_STATUS  => is_user_logged_in() ? ConditionType::LOGGED_IN : ConditionType::GUEST,
             // ponytail: wp_is_mobile() counts tablets as mobile; a tablet value needs its own detection.
-            'device'      => wp_is_mobile() ? ConditionType::MOBILE : ConditionType::DESKTOP,
+            ConditionType::DEVICE        => wp_is_mobile() ? ConditionType::MOBILE : ConditionType::DESKTOP,
         ];
-    }
-
-    /**
-     * Product and variation ids in the cart: a rule naming a variable product matches any of its variations.
-     *
-     * @return int[]
-     */
-    private static function cart_product_ids( \WC_Cart $cart ): array {
-        $ids = [];
-        foreach ( $cart->get_cart() as $item ) {
-            $ids[] = (int) $item['product_id'];
-            $ids[] = (int) ( $item['variation_id'] ?? 0 );
-        }
-
-        return array_values( array_unique( array_filter( $ids ) ) );
     }
 
     /**

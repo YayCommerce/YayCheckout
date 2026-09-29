@@ -32,7 +32,7 @@ class LayoutAssignment {
      * Groups are ORed, conditions inside a group ANDed.
      *
      * @param array $rules   Stored rules (Layout::sanitize_rules() shape).
-     * @param array $context array{country: string, roles: string[], product_ids: int[], device: string}
+     * @param array $context array{customer_role: string[], login_status: string, device: string}, keyed by ConditionType.
      */
     public static function matches( array $rules, array $context ): bool {
         foreach ( $rules as $group ) {
@@ -59,17 +59,12 @@ class LayoutAssignment {
         $value = $condition['value'];
 
         switch ( $condition['type'] ) {
-            case ConditionType::COUNTRY:
-                $is_match = in_array( $context['country'], $value, true );
-                break;
             case ConditionType::CUSTOMER_ROLE:
-                $is_match = [] !== array_intersect( $context['roles'], $value );
+                $is_match = [] !== array_intersect( $context[ ConditionType::CUSTOMER_ROLE ], $value );
                 break;
-            case ConditionType::PRODUCT_IN_CART:
-                $is_match = [] !== array_intersect( $context['product_ids'], $value );
-                break;
+            case ConditionType::LOGIN_STATUS:
             case ConditionType::DEVICE:
-                $is_match = $context['device'] === $value;
+                $is_match = $context[ $condition['type'] ] === $value;
                 break;
             default:
                 return false;

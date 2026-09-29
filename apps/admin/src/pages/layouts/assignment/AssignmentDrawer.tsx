@@ -20,6 +20,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
 import {
+  CONDITION_TYPE_KEYS,
   groupsFromWire,
   groupsToWire,
   isConditionComplete,
@@ -83,12 +84,7 @@ function AssignmentForm({ layout, onSaved }: { layout: LayoutSummary; onSaved: (
       <AssignmentHeader layout={layout} />
 
       {rules.data ? (
-        <RulesEditor
-          layoutId={layout.id}
-          saved={groupsFromWire(rules.data.rules)}
-          productNames={rules.data.labels.products}
-          onSaved={onSaved}
-        />
+        <RulesEditor layoutId={layout.id} saved={groupsFromWire(rules.data.rules)} onSaved={onSaved} />
       ) : (
         <RulesPlaceholder isError={rules.isError} />
       )}
@@ -111,18 +107,7 @@ function RulesPlaceholder({ isError }: { isError: boolean }) {
 }
 
 /** Mounted once the stored rules are in, so they seed the form exactly once and stay the "unchanged" baseline. */
-function RulesEditor({
-  layoutId,
-  saved,
-  productNames,
-  onSaved,
-}: {
-  layoutId: number;
-  saved: Group[];
-  /** Names of the products in the saved rules, from the rules reply. */
-  productNames: Record<string, string>;
-  onSaved: () => void;
-}) {
+function RulesEditor({ layoutId, saved, onSaved }: { layoutId: number; saved: Group[]; onSaved: () => void }) {
   const [groups, setGroups] = useState<Group[]>(saved);
   const save = useSaveLayoutRulesMutation();
 
@@ -181,7 +166,6 @@ function RulesEditor({
                 group={group}
                 onChange={updateGroup}
                 onRemove={() => setGroups(groups.filter((other) => other.id !== group.id))}
-                productNames={productNames}
               />
             </div>
           ))
@@ -189,7 +173,11 @@ function RulesEditor({
 
         {groups.length > 0 && (
           <div className="flex justify-center">
-            <Button onClick={() => setGroups([...groups, { id: newId(), conditions: [newCondition('country')] }])}>
+            <Button
+              onClick={() =>
+                setGroups([...groups, { id: newId(), conditions: [newCondition(CONDITION_TYPE_KEYS[0])] }])
+              }
+            >
               {__('Add group', 'yaycheckout')}
             </Button>
           </div>
@@ -246,7 +234,7 @@ function LockedAssignment({ layout }: { layout: LayoutSummary }) {
           </div>
           <p className="text-sm">
             {__(
-              'Send shoppers to different layouts by role, country, cart contents or device. On Lite, one layout is active for everyone.',
+              'Send shoppers to different layouts by role, login status or device. On Lite, one layout is active for everyone.',
               'yaycheckout',
             )}
           </p>

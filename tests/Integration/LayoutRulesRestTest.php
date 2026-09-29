@@ -35,9 +35,9 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
             [
                 [
                     [
-						'type'     => 'country',
+						'type'     => 'customer_role',
 						'operator' => 'in',
-						'value'    => [ 'DE', 'AT', 'DE' ],
+						'value'    => [ 'customer', 'wholesale', 'customer' ],
 					],
                     [
 						'type'     => 'device',
@@ -47,9 +47,9 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
                 ],
                 [
                     [
-						'type'     => 'product_in_cart',
-						'operator' => 'not_in',
-						'value'    => [ '289', '301' ],
+						'type'     => 'login_status',
+						'operator' => 'is_not',
+						'value'    => 'guest',
 					],
                 ],
             ]
@@ -58,9 +58,9 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
         $expected = [
             [
                 [
-					'type'     => 'country',
+					'type'     => 'customer_role',
 					'operator' => 'in',
-					'value'    => [ 'DE', 'AT' ],
+					'value'    => [ 'customer', 'wholesale' ],
 				],
                 [
 					'type'     => 'device',
@@ -70,15 +70,15 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
             ],
             [
                 [
-					'type'     => 'product_in_cart',
-					'operator' => 'not_in',
-					'value'    => [ 289, 301 ],
+					'type'     => 'login_status',
+					'operator' => 'is_not',
+					'value'    => 'guest',
 				],
             ],
         ];
 
         $this->assertSame( 200, $response->get_status() );
-        $this->assertSame( $expected, $response->get_data()['rules'] );
+        $this->assertSame( [ 'rules' => $expected ], $response->get_data() );
         $this->assertSame( $expected, get_post_meta( $id, Layout::META_RULES, true ) );
         $this->assertSame( $expected, $this->get( $id )->get_data()['rules'] );
     }
@@ -113,9 +113,9 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
             [
 				[
 					[
-						'type'     => 'country',
+						'type'     => 'customer_role',
 						'operator' => 'in',
-						'value'    => [ 'DE' ],
+						'value'    => [ 'customer' ],
 					],
 				],
             ]
@@ -169,7 +169,7 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
 				[
 					[
 						[
-							'type'     => 'country',
+							'type'     => 'customer_role',
 							'operator' => 'gt',
 							'value'    => [ 'DE' ],
 						],
@@ -180,7 +180,7 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
 				[
 					[
 						[
-							'type'     => 'country',
+							'type'     => 'customer_role',
 							'operator' => 'in',
 							'value'    => [],
 						],
@@ -198,13 +198,13 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
                     ],
                 ],
             ],
-            'non-numeric id'      => [
+            'bad login status'    => [
 				[
 					[
 						[
-							'type'     => 'product_in_cart',
-							'operator' => 'in',
-							'value'    => [ 'abc' ],
+							'type'     => 'login_status',
+							'operator' => 'is',
+							'value'    => 'member',
 						],
                     ],
                 ],
@@ -227,6 +227,17 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
 							'type'     => 'device',
 							'operator' => 'is',
 							'value'    => 'all',
+						],
+                    ],
+                ],
+            ],
+            'removed country'     => [
+				[
+					[
+						[
+							'type'     => 'country',
+							'operator' => 'in',
+							'value'    => [ 'DE' ],
 						],
                     ],
                 ],
@@ -259,37 +270,6 @@ class LayoutRulesRestTest extends WP_UnitTestCase {
         );
 
         $this->assertSame( [ '10', '1e1' ], $rules[0][0]['value'] );
-    }
-
-    public function test_replies_carry_the_names_of_the_products_a_rule_names(): void {
-        $id      = LayoutFactory::create_draft();
-        $product = new \WC_Product_Simple();
-        $product->set_name( 'Hoodie' );
-        $product->save();
-        $deleted_id = 999999;
-
-        $saved  = $this->put(
-            $id,
-            [
-				[
-					[
-						'type'     => 'product_in_cart',
-						'operator' => 'in',
-						'value'    => [ $product->get_id(), $deleted_id ],
-					],
-				],
-            ]
-        );
-        $loaded = $this->get( $id );
-
-        // Round-tripped through JSON, as the SPA sees it: a deleted product has no name, and no names is still an object.
-        foreach ( [ $saved, $loaded ] as $response ) {
-            $labels = json_decode( wp_json_encode( $response->get_data()['labels'] ), true );
-            $this->assertSame( [ 'products' => [ (string) $product->get_id() => 'Hoodie' ] ], $labels );
-        }
-
-        $this->put( $id, [] );
-        $this->assertSame( '{"products":{}}', wp_json_encode( $this->get( $id )->get_data()['labels'] ) );
     }
 
     public function test_duplicate_copies_the_rules(): void {

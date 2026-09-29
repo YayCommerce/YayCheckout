@@ -5,7 +5,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { MultiSelectTrigger } from '@/pages/layouts/assignment/MultiSelectTrigger';
 
-/** Case- and accent-folded, so "sao" finds São Tomé as Woo's own select does. */
+/** Case- and accent-folded: translated role names may carry accents the merchant does not type. */
 function fold(text: string): string {
   return text
     .normalize('NFD')
@@ -13,7 +13,7 @@ function fold(text: string): string {
     .toLowerCase();
 }
 
-/** Searchable multi-select over a list known up front (countries, roles). Value is the option keys. */
+/** Searchable multi-select over a list known up front (roles). Value is the option keys. */
 export function OptionsMultiSelect({
   options,
   value,
@@ -52,14 +52,14 @@ export function OptionsMultiSelect({
         onRemove={toggle}
       />
       <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
-        {/* Substring, not cmdk's fuzzy score: "sao" should not rank Samoa first. */}
+        {/* Substring, not cmdk's fuzzy score: a scattered-letter match should not outrank a name that contains the search. */}
         <Command filter={(itemValue, search) => (fold(itemValue).includes(fold(search)) ? 1 : 0)}>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {Object.entries(options).map(([key, label]) => (
-                // Label and key both searchable: "DE" finds Germany.
+                // Label and key both searchable: a role's slug finds it as well as its name.
                 <CommandItem key={key} value={`${label} ${key}`} onSelect={() => toggle(key)}>
                   <ComboboxCheckbox selected={value.includes(key)} />
                   {label}

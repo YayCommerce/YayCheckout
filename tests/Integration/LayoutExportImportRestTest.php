@@ -109,14 +109,14 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
         $rules = [
             [
                 [
-                    'type'     => 'country',
+                    'type'     => 'customer_role',
                     'operator' => 'in',
-                    'value'    => [ 'DE' ],
+                    'value'    => [ 'wholesale' ],
                 ],
                 [
-                    'type'     => 'product_in_cart',
-                    'operator' => 'in',
-                    'value'    => [ 999999 ],
+                    'type'     => 'login_status',
+                    'operator' => 'is',
+                    'value'    => 'logged_in',
                 ],
             ],
         ];

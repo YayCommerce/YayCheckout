@@ -140,8 +140,6 @@ export type NewLayoutFormValues = z.infer<typeof newLayoutFormSchema>;
 
 export const layoutRulesWireSchema = z.object({
   rules: rulesWireSchema,
-  /** Names of the products the rules name, by id; a deleted product has no entry. */
-  labels: z.object({ products: z.record(z.string(), z.string()) }),
 });
 
 export type LayoutRulesResponse = z.infer<typeof layoutRulesWireSchema>;

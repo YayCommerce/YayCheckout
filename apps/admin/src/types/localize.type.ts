@@ -32,10 +32,8 @@ export type AdminData = {
   store?: StoreData;
 };
 
-/** Lists read from Woo and WP; AssignmentStoreData::get(). */
+/** Lists read from WP; AssignmentStoreData::get(). */
 export type StoreData = {
-  /** ISO 3166-1 alpha-2 code => name, in Woo's display order. */
-  countries: Record<string, string>;
   /** Role slug => translated name, every registered role. */
   roles: Record<string, string>;
 };

@@ -1,19 +1,16 @@
 import { Fragment } from 'react';
-import { __, _n, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 
 import type { LayoutRulesWire } from '@/lib/schema/layout.schema';
 import { Badge } from '@/components/ui/badge';
-import { CONDITION_TYPES, DEVICE_OPTIONS, isKnownType, storeData } from '@/pages/layouts/assignment/condition-types';
+import { CONDITION_TYPES, isKnownType, storeData } from '@/pages/layouts/assignment/condition-types';
 
 type WireCondition = LayoutRulesWire[number][number];
 
 function valueText({ type, value }: WireCondition): string {
   if (!Array.isArray(value)) {
-    return DEVICE_OPTIONS.find((device) => device.value === value)?.label ?? String(value);
-  }
-
-  if (type === 'product_in_cart') {
-    return sprintf(_n('%d product', '%d products', value.length, 'yaycheckout'), value.length);
+    const choices = isKnownType(type) ? CONDITION_TYPES[type].choices : undefined;
+    return choices?.find((choice) => choice.value === value)?.label ?? String(value);
   }
 
   if (type === 'customer_role') {

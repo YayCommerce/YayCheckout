@@ -16,7 +16,6 @@ import { TrashButton } from '@/components/shared/TrashButton';
 import {
   CONDITION_TYPE_KEYS,
   CONDITION_TYPES,
-  DEVICE_OPTIONS,
   isKnownType,
   newCondition,
   storeData,
@@ -25,16 +24,9 @@ import {
   type Group,
 } from '@/pages/layouts/assignment/condition-types';
 import { OptionsMultiSelect } from '@/pages/layouts/assignment/OptionsMultiSelect';
-import { ProductMultiSelect } from '@/pages/layouts/assignment/ProductMultiSelect';
 
 /** Types whose value comes from a list the page already holds. Functions, so window is read at render, not import. */
 const OPTION_PICKERS = {
-  country: () => ({
-    options: storeData().countries,
-    placeholder: __('Select countries', 'yaycheckout'),
-    searchPlaceholder: __('Search countries', 'yaycheckout'),
-    emptyText: __('No countries found.', 'yaycheckout'),
-  }),
   customer_role: () => ({
     options: storeData().roles,
     placeholder: __('Select roles', 'yaycheckout'),
@@ -48,13 +40,11 @@ export function ConditionGroup({
   group,
   onChange,
   onRemove,
-  productNames,
 }: {
   index: number;
   group: Group;
   onChange: (group: Group) => void;
   onRemove: () => void;
-  productNames: Record<string, string>;
 }) {
   return (
     <div className="rounded-lg border">
@@ -81,10 +71,14 @@ export function ConditionGroup({
             key={condition.id}
             condition={condition}
             onChange={(next) =>
-              onChange({ ...group, conditions: group.conditions.map((other) => (other.id === condition.id ? next : other)) })
+              onChange({
+                ...group,
+                conditions: group.conditions.map((other) => (other.id === condition.id ? next : other)),
+              })
             }
-            onRemove={() => onChange({ ...group, conditions: group.conditions.filter((other) => other.id !== condition.id) })}
-            productNames={productNames}
+            onRemove={() =>
+              onChange({ ...group, conditions: group.conditions.filter((other) => other.id !== condition.id) })
+            }
           />
         ))}
 
@@ -100,12 +94,10 @@ function ConditionRow({
   condition,
   onChange,
   onRemove,
-  productNames,
 }: {
   condition: Condition;
   onChange: (condition: Condition) => void;
   onRemove: () => void;
-  productNames: Record<string, string>;
 }) {
   if (!isKnownType(condition.type)) {
     return (
@@ -150,11 +142,7 @@ function ConditionRow({
         </SelectContent>
       </Select>
 
-      <ValuePicker
-        condition={condition}
-        onChange={(value) => onChange({ ...condition, value })}
-        productNames={productNames}
-      />
+      <ValuePicker condition={condition} onChange={(value) => onChange({ ...condition, value })} />
 
       <TrashButton aria-label={__('Remove condition', 'yaycheckout')} onClick={onRemove} />
     </div>
@@ -162,15 +150,7 @@ function ConditionRow({
 }
 
 /** The third column: the picker the condition's type takes its value from. */
-function ValuePicker({
-  condition,
-  onChange,
-  productNames,
-}: {
-  condition: Condition;
-  onChange: (value: Condition['value']) => void;
-  productNames: Record<string, string>;
-}) {
+function ValuePicker({ condition, onChange }: { condition: Condition; onChange: (value: Condition['value']) => void }) {
   if (condition.type in OPTION_PICKERS) {
     return (
       <OptionsMultiSelect
@@ -182,26 +162,15 @@ function ValuePicker({
     );
   }
 
-  if (condition.type === 'product_in_cart') {
-    return (
-      <ProductMultiSelect
-        className="flex-1"
-        savedNames={productNames}
-        value={condition.value as string[]}
-        onChange={onChange}
-      />
-    );
-  }
-
   return (
     <Select value={condition.value as string} onValueChange={onChange}>
       <SelectTrigger className="min-w-0 flex-1">
-        <SelectValue placeholder={__('Select device', 'yaycheckout')} />
+        <SelectValue placeholder={__('Select a value', 'yaycheckout')} />
       </SelectTrigger>
       <SelectContent>
-        {DEVICE_OPTIONS.map((device) => (
-          <SelectItem key={device.value} value={device.value}>
-            {device.label}
+        {CONDITION_TYPES[condition.type].choices?.map((choice) => (
+          <SelectItem key={choice.value} value={choice.value}>
+            {choice.label}
           </SelectItem>
         ))}
       </SelectContent>
