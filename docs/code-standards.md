@@ -91,6 +91,7 @@ Two places that decide the same thing leave the reader unable to tell which one 
 | Block count of a layout | `Layout::block_count()` | `reviewExportFile()` in `apps/admin/src/lib/api/tools.api.ts` |
 | Assignment condition types, operators, devices, value kind | `Enums\ConditionType::definitions()`, `ConditionType::DEVICES` | `apps/admin/src/pages/layouts/assignment/condition-types.ts` (the drawer needs them to render pickers and to hold a save until every condition has a value) |
 | Assignment rules readable on import | `Pro\Services\LayoutImportReview::rules_from_file()` (via `Layout::sanitize_rules()`) | `reviewExportFile()` in `apps/admin/src/lib/api/tools.api.ts` (labels a file whose rules are not groups of conditions "Unreadable" before upload) |
+| Rules import status (`imported` / `dropped` / `none`) | `Pro\Services\LayoutImportReview::RULES_*` | `importResponseWireSchema` in `apps/admin/src/lib/schema/tools.schema.ts` (the wire enum) |
 | Upgrade link | `YAYCHECKOUT_UPGRADE_URL` (`yaycheckout.php`) | — (reaches the SPA via `yayCheckoutMeta`, the blocks via `window.yayCheckoutBlocks`) |
 | Export file download (name, save, `.json` check) | `packages/blocks/src/shared/export-file.ts` | — (the SPA imports it via `@blocks-shared`) |
 | Publish rules | `LayoutMarkupReader::publish_error()` — called, never re-checked | `packages/blocks/src/checkout/publish-guard.ts` |

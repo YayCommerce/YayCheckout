@@ -59,10 +59,6 @@ class LayoutImportRestController extends BaseRestController {
         );
     }
 
-    public function permission_callback(): bool {
-        return current_user_can( 'manage_woocommerce' );
-    }
-
     /**
      * The layout an export file holds, without storing it: the editor's Import
      * replaces its own blocks, so it asks here instead of checking the file itself. Rules are not
@@ -82,7 +78,7 @@ class LayoutImportRestController extends BaseRestController {
             'content'   => $layout['content'],
             'blocks'    => Layout::block_count( $layout['content'] ),
             // The import's own test: true only for rules an import of this file would keep.
-            'has_rules' => 'imported' === LayoutImportReview::rules_from_file( $layout['rules'] )['status'],
+            'has_rules' => LayoutImportReview::RULES_IMPORTED === LayoutImportReview::rules_from_file( $layout['rules'] )['status'],
         ];
     }
 

@@ -29,20 +29,16 @@ class LayoutRulesRestController extends BaseRestController {
                     'methods'             => \WP_REST_Server::READABLE,
                     'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_rules' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
-                    'args'                => [ 'id' => self::id_arg() ],
+                    'args'                => $this->id_args(),
                 ],
                 [
                     'methods'             => \WP_REST_Server::EDITABLE,
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'set_rules' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
-                    'args'                => [ 'id' => self::id_arg() ],
+                    'args'                => $this->id_args(),
                 ],
             ]
         );
-    }
-
-    public function permission_callback(): bool {
-        return current_user_can( 'manage_woocommerce' );
     }
 
     /** @return array|\WP_Error { rules, labels } */
@@ -109,17 +105,6 @@ class LayoutRulesRestController extends BaseRestController {
             'rules'  => $rules,
             // Object even when empty: an empty PHP array would encode as a JSON list.
             'labels' => [ 'products' => (object) $products ],
-        ];
-    }
-
-    private static function id_arg(): array {
-        return [
-            'required'          => true,
-            'type'              => 'integer',
-            'sanitize_callback' => 'absint',
-            'validate_callback' => static function ( $value ) {
-                return is_numeric( $value );
-            },
         ];
     }
 }

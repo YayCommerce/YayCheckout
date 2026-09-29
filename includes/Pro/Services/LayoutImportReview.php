@@ -13,6 +13,11 @@ defined( 'ABSPATH' ) || exit;
  */
 class LayoutImportReview {
 
+    /** Status rules_from_file() reports; the wire values of the import reply's `rules_import.status`. */
+    public const RULES_IMPORTED = 'imported';
+    public const RULES_DROPPED  = 'dropped';
+    public const RULES_NONE     = 'none';
+
     /**
      * @param  array $envelope Decoded export file.
      * @return array { title, content, rules } rules as the file holds them, unchecked; see rules_from_file().
@@ -35,25 +40,25 @@ class LayoutImportReview {
      * would widen it, and the layout would then serve shoppers the file never meant it to.
      *
      * @param  mixed $rules The layout's `rules` from the file; absent in files exported before rules travelled.
-     * @return array{rules: array, status: string} status: 'imported', 'dropped', or 'none' when the file has none.
+     * @return array{rules: array, status: string} status: a RULES_* constant; RULES_NONE when the file has none.
      */
     public static function rules_from_file( $rules ): array {
         if ( null === $rules || [] === $rules ) {
             return [
                 'rules'  => [],
-                'status' => 'none',
+                'status' => self::RULES_NONE,
             ];
         }
 
         try {
             return [
                 'rules'  => Layout::sanitize_rules( $rules ),
-                'status' => 'imported',
+                'status' => self::RULES_IMPORTED,
             ];
         } catch ( \InvalidArgumentException $e ) {
             return [
                 'rules'  => [],
-                'status' => 'dropped',
+                'status' => self::RULES_DROPPED,
             ];
         }
     }

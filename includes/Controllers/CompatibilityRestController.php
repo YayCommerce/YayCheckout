@@ -34,10 +34,6 @@ class CompatibilityRestController extends BaseRestController {
         );
     }
 
-    public function permission_callback(): bool {
-        return current_user_can( 'manage_woocommerce' );
-    }
-
     public function get_report( \WP_REST_Request $request ): array {
         $catalogue = ( new CompatibilityCatalogueRepository() )->get( (bool) $request['refresh'] );
 

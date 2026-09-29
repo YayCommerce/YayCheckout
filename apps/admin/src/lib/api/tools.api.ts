@@ -39,7 +39,7 @@ export function reviewExportFile(envelope: LayoutExportEnvelope): ImportReview {
     blocks: layout.content.split('<!-- wp:yaycheckout/').length - 1,
     // Shape only, mirroring LayoutImportReview::rules_from_file(): PHP makes the final call on import.
     ruleCounts:
-      Array.isArray(rules) && rules.every(Array.isArray)
+      Array.isArray(rules) && rules.every((group) => Array.isArray(group) && group.length > 0)
         ? { groups: rules.length, conditions: rules.flat().length }
         : null,
   };

@@ -41,7 +41,7 @@ export function AssignmentChips({ rules }: { rules: LayoutRulesWire }) {
 
   return (
     <div
-      className="flex items-center gap-1 overflow-hidden whitespace-nowrap"
+      className="py-2 flex items-center gap-1 overflow-hidden whitespace-nowrap flex-wrap"
       title={groups.map((chips) => chips.join(' + ')).join(` ${__('or', 'yaycheckout')} `)}
     >
       {groups.map((chips, groupIndex) => (

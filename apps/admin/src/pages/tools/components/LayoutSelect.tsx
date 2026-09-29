@@ -3,6 +3,7 @@ import { CheckIcon } from 'lucide-react';
 import { useDebounceFn } from 'rooks';
 import { __ } from '@wordpress/i18n';
 
+import { loadMoreOnScroll } from '@/lib/helpers/infinite-list.helper';
 import { useInfiniteLayoutsQuery } from '@/lib/queries/layout.queries';
 import { LISTED_LAYOUT_STATUSES, type LayoutSummary } from '@/lib/schema/layout.schema';
 import { cn } from '@/lib/utils';
@@ -13,9 +14,6 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';
-
-/** Distance from the bottom of the list at which the next page is fetched. */
-const LOAD_MORE_THRESHOLD_PX = 40;
 
 interface LayoutSelectProps {
   value: LayoutSummary | null;
@@ -72,11 +70,7 @@ export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
               />
               <CommandList
                 className={cn('transition-opacity', list.isPlaceholderData && 'opacity-60')}
-                onScroll={(event) => {
-                  const el = event.currentTarget;
-                  if (!list.hasNextPage || list.isFetchingNextPage) return;
-                  if (el.scrollHeight - el.scrollTop - el.clientHeight < LOAD_MORE_THRESHOLD_PX) list.fetchNextPage();
-                }}
+                onScroll={(event) => loadMoreOnScroll(event, list)}
               >
                 {layouts.length === 0 ? (
                   <p className="text-muted-foreground py-6 text-center text-sm">

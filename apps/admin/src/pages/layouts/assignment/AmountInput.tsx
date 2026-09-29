@@ -35,15 +35,15 @@ function AmountField({ currency }: { currency: Currency }) {
   const { symbol, position, decimals, decimal_separator, thousand_separator } = currency;
   const space = position.endsWith('_space') ? ' ' : '';
   // Emptied while typing; counts as 0. A chevron step moves value off 0, which shows it again.
-  const [empty, setEmpty] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(false);
 
   return (
     <NumericFormat
       customInput={InputGroupInput}
       className="peer/number-input-input"
-      value={empty && value === 0 ? '' : value}
+      value={isEmpty && value === 0 ? '' : value}
       onValueChange={({ floatValue }) => {
-        setEmpty(floatValue === undefined);
+        setIsEmpty(floatValue === undefined);
         setValue(floatValue ?? 0);
       }}
       onKeyDown={(event) => {
@@ -51,7 +51,7 @@ function AmountField({ currency }: { currency: Currency }) {
         if (event.key === 'ArrowDown') handleDecrement();
       }}
       // Left empty: show the 0 it counts as.
-      onBlur={() => setEmpty(false)}
+      onBlur={() => setIsEmpty(false)}
       allowNegative={false}
       decimalScale={decimals}
       fixedDecimalScale

@@ -14,7 +14,7 @@ export function MultiSelectTrigger({
   onRemove,
   className,
 }: {
-  selected: { value: string; label: string; missing?: boolean }[];
+  selected: { value: string; label: string; isMissing?: boolean }[];
   placeholder: string;
   onRemove: (value: string) => void;
   className?: string;
@@ -26,8 +26,8 @@ export function MultiSelectTrigger({
           <span className="text-muted-foreground">{placeholder}</span>
         ) : (
           selected.map((item) => (
-            <ComboboxBadge key={item.value} className={cn(item.missing && 'border-warning/50 bg-warning/10')}>
-              {item.missing ? (
+            <ComboboxBadge key={item.value} className={cn(item.isMissing && 'border-warning/50 bg-warning/10')}>
+              {item.isMissing ? (
                 <span className="flex items-center gap-1" title={__('Not found on this store', 'yaycheckout')}>
                   <TriangleAlert className="text-warning size-3" />
                   {item.label}

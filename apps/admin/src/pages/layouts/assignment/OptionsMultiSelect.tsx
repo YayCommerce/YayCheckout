@@ -47,7 +47,7 @@ export function OptionsMultiSelect({
         selected={value.map((key) => ({
           value: key,
           label: options[key] ?? key,
-          missing: !Object.hasOwn(options, key),
+          isMissing: !Object.hasOwn(options, key),
         }))}
         onRemove={toggle}
       />

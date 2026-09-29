@@ -2,15 +2,13 @@ import { useState } from 'react';
 import { useDebouncedValue } from 'rooks';
 import { __ } from '@wordpress/i18n';
 
+import { loadMoreOnScroll } from '@/lib/helpers/infinite-list.helper';
 import { useInfiniteProductsQuery } from '@/lib/queries/product.queries';
 import { cn } from '@/lib/utils';
 import { ComboboxCheckbox } from '@/components/ui/combobox';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { MultiSelectTrigger } from '@/pages/layouts/assignment/MultiSelectTrigger';
-
-/** Distance from the bottom of the list at which the next page is fetched. */
-const LOAD_MORE_THRESHOLD_PX = 40;
 
 /** Searchable multi-select over published products, ten at a time as the list scrolls. Value is product ids. */
 export function ProductMultiSelect({
@@ -48,7 +46,7 @@ export function ProductMultiSelect({
       <MultiSelectTrigger
         className={className}
         placeholder={__('Select products', 'yaycheckout')}
-        selected={value.map((id) => ({ value: id, label: names[id] ?? `#${id}`, missing: !(id in names) }))}
+        selected={value.map((id) => ({ value: id, label: names[id] ?? `#${id}`, isMissing: !(id in names) }))}
         onRemove={(id) => toggle(id)}
       />
       <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
@@ -61,11 +59,7 @@ export function ProductMultiSelect({
           />
           <CommandList
             className={cn('transition-opacity', list.isPlaceholderData && 'opacity-60')}
-            onScroll={(event) => {
-              const el = event.currentTarget;
-              if (!list.hasNextPage || list.isFetchingNextPage) return;
-              if (el.scrollHeight - el.scrollTop - el.clientHeight < LOAD_MORE_THRESHOLD_PX) list.fetchNextPage();
-            }}
+            onScroll={(event) => loadMoreOnScroll(event, list)}
           >
             {products.length === 0 ? (
               <p className="text-muted-foreground py-6 text-center text-sm">

@@ -90,18 +90,23 @@ function AssignmentForm({ layout, onSaved }: { layout: LayoutSummary; onSaved: (
           onSaved={onSaved}
         />
       ) : (
-        <div className="flex-1 space-y-3 p-5">
-          {rules.isError ? (
-            <p className="text-destructive text-sm">{__('The rules could not be loaded.', 'yaycheckout')}</p>
-          ) : (
-            <>
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-28 w-full" />
-            </>
-          )}
-        </div>
+        <RulesPlaceholder isError={rules.isError} />
       )}
     </>
+  );
+}
+
+/** Stands in for the editor until the stored rules arrive. */
+function RulesPlaceholder({ isError }: { isError: boolean }) {
+  if (isError) {
+    return <p className="text-destructive flex-1 p-5 text-sm">{__('The rules could not be loaded.', 'yaycheckout')}</p>;
+  }
+
+  return (
+    <div className="flex-1 space-y-3 p-5">
+      <Skeleton className="h-4 w-24" />
+      <Skeleton className="h-28 w-full" />
+    </div>
   );
 }
 
@@ -122,9 +127,9 @@ function RulesEditor({
   const save = useSaveLayoutRulesMutation();
 
   // Compared as wire rules: form ids differ on every seed.
-  const dirty = JSON.stringify(groupsToWire(groups)) !== JSON.stringify(groupsToWire(saved));
+  const isDirty = JSON.stringify(groupsToWire(groups)) !== JSON.stringify(groupsToWire(saved));
   // Every condition filled: a half-filled one would save a rule that tests nothing. No groups is valid: it clears the rules.
-  const canSave = dirty && groups.every((group) => group.conditions.every(isConditionComplete));
+  const canSave = isDirty && groups.every((group) => group.conditions.every(isConditionComplete));
 
   function updateGroup(group: Group) {
     // A group emptied of its last condition goes with it.

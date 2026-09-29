@@ -25,6 +25,26 @@ abstract class BaseRestController {
         return new \WP_Error( 'invalid_arguments', $message, [ 'status' => 400 ] );
     }
 
+    /** Every route: the same capability LayoutPostType maps its caps to. */
+    public function permission_callback(): bool {
+        return current_user_can( 'manage_woocommerce' );
+    }
+
+    /** Route args for an `(?P<id>\d+)` path segment. */
+    protected function id_args(): array {
+        return [
+            'id' => [
+                'required'          => true,
+                'type'              => 'integer',
+                'sanitize_callback' => 'absint',
+                // Not bare 'is_numeric': REST passes three args and an internal function throws.
+                'validate_callback' => static function ( $value ) {
+                    return is_numeric( $value );
+                },
+            ],
+        ];
+    }
+
     /**
      * Runs a route that does not write.
      *

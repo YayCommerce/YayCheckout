@@ -110,13 +110,13 @@ class Layout {
 
         $clean = [];
 
-        foreach ( $input as $g => $group ) {
+        foreach ( $input as $group_index => $group ) {
             if ( ! is_array( $group ) || [] === $group || array_values( $group ) !== $group ) {
-                throw new \InvalidArgumentException( sprintf( 'Group %d must be a non-empty list of conditions.', $g + 1 ) );
+                throw new \InvalidArgumentException( sprintf( 'Group %d must be a non-empty list of conditions.', $group_index + 1 ) );
             }
 
-            foreach ( $group as $c => $condition ) {
-                $clean[ $g ][ $c ] = self::sanitize_condition( $condition, sprintf( 'group %d, condition %d', $g + 1, $c + 1 ) );
+            foreach ( $group as $condition_index => $condition ) {
+                $clean[ $group_index ][ $condition_index ] = self::sanitize_condition( $condition, sprintf( 'group %d, condition %d', $group_index + 1, $condition_index + 1 ) );
             }
         }
 

@@ -23,10 +23,10 @@ class LayoutAssignment {
      * @param Layout[]    $candidates The active set, most recently activated first.
      */
     public static function resolve( $latest, array $candidates ): ?Layout {
-        $session   = WC()->session;
-        $page_load = CheckoutPage::get_instance()->on_checkout_page() && ! wp_doing_ajax() && 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Compared to a literal only.
+        $session      = WC()->session;
+        $is_page_load = CheckoutPage::get_instance()->on_checkout_page() && ! wp_doing_ajax() && 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Compared to a literal only.
 
-        if ( ! $page_load && null !== $session ) {
+        if ( ! $is_page_load && null !== $session ) {
             $pinned = self::pinned( $candidates, $session->get( self::SESSION_PINNED ) );
 
             if ( false !== $pinned ) {
@@ -36,7 +36,7 @@ class LayoutAssignment {
 
         $picked = self::pick( $candidates );
 
-        if ( $page_load && null !== $session ) {
+        if ( $is_page_load && null !== $session ) {
             $session->set( self::SESSION_PINNED, null !== $picked ? $picked->id : 0 );
         }
 
@@ -144,16 +144,16 @@ class LayoutAssignment {
 
         switch ( $condition['type'] ) {
             case ConditionType::COUNTRY:
-                $hit = in_array( $context['country'], $value, true );
+                $is_match = in_array( $context['country'], $value, true );
                 break;
             case ConditionType::CUSTOMER_ROLE:
-                $hit = [] !== array_intersect( $context['roles'], $value );
+                $is_match = [] !== array_intersect( $context['roles'], $value );
                 break;
             case ConditionType::PRODUCT_IN_CART:
-                $hit = [] !== array_intersect( $context['product_ids'], $value );
+                $is_match = [] !== array_intersect( $context['product_ids'], $value );
                 break;
             case ConditionType::DEVICE:
-                $hit = $context['device'] === $value;
+                $is_match = $context['device'] === $value;
                 break;
             case ConditionType::CART_TOTAL:
                 return ConditionType::GT === $condition['operator'] ? $context['cart_total'] > $value : $context['cart_total'] < $value;
@@ -161,7 +161,7 @@ class LayoutAssignment {
                 return false;
         }
 
-        return in_array( $condition['operator'], ConditionType::AFFIRMATIVE_OPERATORS, true ) ? $hit : ! $hit;
+        return in_array( $condition['operator'], ConditionType::AFFIRMATIVE_OPERATORS, true ) ? $is_match : ! $is_match;
     }
 
     /**

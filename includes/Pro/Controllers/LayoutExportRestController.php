@@ -27,23 +27,10 @@ class LayoutExportRestController extends BaseRestController {
                     'methods'             => \WP_REST_Server::READABLE,
                     'callback'            => fn( $request ) => $this->exec_read( [ $this, 'export_layout' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
-                    'args'                => [
-                        'id' => [
-                            'required'          => true,
-                            'type'              => 'integer',
-                            'sanitize_callback' => 'absint',
-                            'validate_callback' => static function ( $value ) {
-                                return is_numeric( $value );
-                            },
-                        ],
-                    ],
+                    'args'                => $this->id_args(),
                 ],
             ]
         );
-    }
-
-    public function permission_callback(): bool {
-        return current_user_can( 'manage_woocommerce' );
     }
 
     /**
