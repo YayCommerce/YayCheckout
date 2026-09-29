@@ -27,15 +27,15 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 
 | Directory | Holds | Notes |
 |---|---|---|
-| `Enums/` | `LayoutStatus` | constants class (no native enums on PHP 7.4); the WP `post_status` values, which are also the wire vocabulary |
+| `Enums/` | `LayoutStatus`, `ConditionType` | constants classes (no native enums on PHP 7.4); `LayoutStatus` holds the WP `post_status` values; `ConditionType` defines the assignment rule vocabulary — condition types, their operators and value kinds |
 | `PostTypes/` | `LayoutPostType` | registration only: caps, template, revision policy |
 | `Models/` | `Layout`, `LayoutQuery`, `Settings`, `Design` | dumb entities; **every storage key constant lives here**; zero WP calls. `Settings` and `Design` own `schema()` (the single description of settings/tokens), `from_option()` (read projection through the schema), and `sanitize()` (strict validation, unknown keys stripped). `LayoutQuery` is immutable value object for filtered/paginated queries. |
 | `Repositories/` | `LayoutRepository`, `SettingsRepository`, `DesignRepository`, `CompatibilityCatalogueRepository` | all storage access: layouts (publish sequence, active-set), settings (get/save/reviewed), design (tokens, presets, CSS), catalogue (transient → remote JSON → fallback) |
-| `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue`, `DesignRestController`, `CompatibilityRestController` | routing, validation, permissions; all require `manage_woocommerce` |
+| `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue`, `DesignRestController`, `CompatibilityRestController` | routing, validation, permissions; `BaseRestController` owns `permission_callback()` (checks `LayoutPostType::CAPABILITY` = `manage_woocommerce`) and `id_args()`; every controller inherits them |
 | `Services/` | `LayoutMarkupReader`, `ExtraFieldSubmission`, `RequiredFieldOverlay`, `RequiredIndicator`, `LayoutAssignment` | pure: no storage. `LayoutMarkupReader` flattens a layout's blocks and answers `slots()`, `fields()`, `extra_fields()`, `order_modes()` (always `[]` for now) and `publish_error()`. `ExtraFieldSubmission::collect()` turns a checkout POST into order rows and per-field error messages, reading only Keys from `extra_fields()` and accepting only values from `LayoutMarkupReader::options()`. `RequiredFieldOverlay::apply()` rewrites WooCommerce's billing/shipping fieldsets so the layout's Field blocks decide what is required; `RequiredIndicator` prints the required/optional label suffixes and the payload for `assets/js/checkout-field-requirements.js`. `LayoutAssignment::pick()` returns the first active layout whose assignment rules match the shopper facts it is given; `LayoutRepository::active()` calls it on Pro only. |
 | `Blocks/` | `BlockRegistry` | registers every built block directory (inserter order from `ORDER`); `allowed_blocks()` on `allowed_block_types_all` keeps `yaycheckout/*` blocks in the layout editor only and `woocommerce/checkout` out of it |
 | `Support/` | `Plan`, `CompatibilityCatalogue` | Free/Pro flag derived from provider boot; owns the layout limit and its message. Compatibility catalogue: status vocabulary, bundled list, `normalize()` for the remote JSON, transient key and TTLs — pure |
-| `Pro/` | `ProServiceProvider`, `Controllers/LayoutExportRestController`, `Controllers/LayoutImportRestController`, `Controllers/DesignPresetRestController`, `Services/LayoutImportReview`, `Services/AssignmentStoreData` | **absent from the Free build**; the provider registers Pro REST controllers on `rest_api_init`, adds the Assignment pickers' `store` data through `yaycheckout_localize_admin_data`, so a Free build has no route behind the editor's layout Import/Export panel, the admin SPA's Export card, or the Design page's preset actions |
+| `Pro/` | `ProServiceProvider`, `Controllers/LayoutExportRestController`, `Controllers/LayoutImportRestController`, `Controllers/LayoutRulesRestController`, `Controllers/DesignPresetRestController`, `Services/LayoutImportReview`, `Services/AssignmentStoreData` | **absent from the Free build**; the provider registers Pro REST controllers on `rest_api_init`, adds the Assignment pickers' `store` data through `yaycheckout_localize_admin_data`, so a Free build has no route behind the editor's layout Import/Export panel, the admin SPA's Export card, the Layouts page's Assignment column drawer, or the Design page's preset actions |
 | `Helpers/` | `BlockMarkup`, `DateHelper`, `IntegrationsHelper`, `LocalizeHelper`, `Logger`, `PreviewToken`, `StoreEnvironmentHelper`, `GatewayCompatibilityHelper`, `CheckoutHookScanHelper`, `PluginHeaderHelper` | stateless: GMT storage → ISO 8601 wire timestamps, preview tokens, server-side block markup (seeds, templates), integration detection, SPA bootstrap payload, logging, compatibility detection, hook scans |
 | `Renderer/` | `CheckoutScripts`, `CheckoutPage`, `PreviewRequest`, `CheckoutFragments`, `CheckoutExtraFields`, `CheckoutRequiredFields` | Storefront takeover and AJAX; `CheckoutFragments` swaps payment/shipping fragments on `update_order_review` when the layout renders those blocks. `CheckoutExtraFields` validates the served layout's extra fields, stores them as order meta on `woocommerce_checkout_create_order`, and prints them on the order screens. `CheckoutRequiredFields` hands `woocommerce_checkout_fields` to `RequiredFieldOverlay` when a layout is served. |
 | `Engine/` | `RestAPI`, `ActDeact`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin/` (Settings, LayoutEditorEmbed), `Register/` (RegisterFacade, RegisterDev, RegisterProd, ScriptName) | wiring, asset registration, the layout cap, trashed layouts kept out of WP's purge, active-set integrity, embedded-editor chrome and REST tagging, dev/prod asset registration |
@@ -81,11 +81,11 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/settings` | GET/POST | envelope `{ settings, updated_at }`; POST merges over stored settings, strips unknown keys, rejects wrong types/enum values with 400 |
 | `yaycheckout/v1/mark-reviewed` | POST | review prompt dismissed |
 
-All require `manage_woocommerce`.
+All require `LayoutPostType::CAPABILITY` (`manage_woocommerce`).
 
 ## Admin SPA (`apps/admin/`)
 
-React 18 + TypeScript, Vite, hash router, TanStack Query, zod, Tailwind 4, shadcn/ui, ky. (~7,400 lines excluding `components/ui`).
+React 18 + TypeScript, Vite, hash router, TanStack Query, zod, Tailwind 4, shadcn/ui, ky. (~8,400 lines excluding `components/ui`).
 
 Routes: `/` → `/layouts`, `/layouts`, `/design`, `/tools`, `/settings/{general|integrations|advanced}`, `/compatibility`, `*` (404).
 
@@ -97,8 +97,9 @@ src/
   PageLayout.tsx        common layout wrapper for pages
   pages/
     404.tsx  500.tsx    error pages
-    layouts/            LayoutsPage (queries, filters, modals)
+    layouts/            LayoutsPage (queries, filters, modals); assignment drawer and condition builder
       LayoutsPage.tsx   list with pagination, search, status tabs, Pro-only Assignment column (`assignment/AssignmentChips`, chips from each layout's `rules` wrapping onto more lines, "Everyone" when none); Edit/Preview/Publish/Set active/Deactivate/Archive/Restore/Delete for good real; Health placeholder DOM
+      assignment/       AssignmentDrawer (Pro, `/layouts/{id}/rules`), ConditionGroup, AssignmentChips, OptionsMultiSelect, MultiSelectTrigger, condition-types.ts (vocabulary mirror and form shape)
       PreviewLinkModal.tsx  minted preview URL with Copy (select-text fallback on http) and Open
       SetActiveModal.tsx    Set active modal (real)
       DeactivateModal.tsx   Deactivate modal (real)
@@ -118,7 +119,7 @@ src/
       import-modal/     ImportModal with StepStrip, SourceStep, DraftStep: creates the draft from the parsed export envelope
   components/
     ui/                 shadcn primitives (kebab-case, CLI-generated)
-    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip; used by multiple pages
+    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton; used by multiple pages
     layout/             Header, Footer, HeaderMenu (chrome)
     pro/                ProGate, upsell surfaces
     icons/
@@ -130,7 +131,7 @@ src/
     api/                ky calls per feature
     queries/            queryOptions + hooks per feature
     schema/             zod schemas mirroring PHP to_array()
-    helpers/            error unwrapping, date formatting, clipboard with select-text fallback, form utilities
+    helpers/            error unwrapping, date formatting, clipboard with select-text fallback, form utilities, `infinite-list` (`loadMoreOnScroll()` for paged pickers)
     logger.ts           namespaced console; error/warn kept in production
     plan.ts             Free/Pro, from the build-time constant
     query-client.ts     QueryClient + global error toasts
