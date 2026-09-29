@@ -6,7 +6,6 @@ use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Pro\Controllers\LayoutImportRestController;
 use YayCheckout\Pro\Controllers\LayoutRulesRestController;
 use YayCheckout\Pro\Services\AssignmentStoreData;
-use YayCheckout\Pro\Services\LayoutAssignment;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
@@ -24,7 +23,6 @@ class ProServiceProvider {
 
         add_action( 'rest_api_init', [ $this, 'rest_endpoints' ] );
         add_filter( 'yaycheckout_localize_admin_data', [ $this, 'admin_data' ] );
-        add_filter( 'yaycheckout_resolve_layout', [ LayoutAssignment::class, 'resolve' ], 10, 2 );
     }
 
     /** Adds `store`: the assignment pickers' countries, roles and price format. */

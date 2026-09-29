@@ -3,8 +3,10 @@ namespace YayCheckout\Tests\Integration;
 
 use WP_UnitTestCase;
 use YayCheckout\Models\Layout;
-use YayCheckout\Pro\Services\LayoutAssignment;
+use YayCheckout\Renderer\CheckoutPage;
 use YayCheckout\Repositories\LayoutRepository;
+use YayCheckout\Services\LayoutAssignment;
+use YayCheckout\Support\Plan;
 use YayCheckout\Tests\Support\LayoutFactory;
 
 /** Pins which layout the checkout serves once rules are set, and that the pick stays put for AJAX. */
@@ -107,7 +109,8 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
     }
 
     private static function served(): ?int {
-        $layout = ( new LayoutRepository() )->resolve_for_request();
+        LayoutFactory::forget_served_layout();
+        $layout = CheckoutPage::get_instance()->layout();
 
         return null === $layout ? null : $layout->id;
     }
@@ -224,10 +227,24 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         WC()->cart->add_to_cart( $parent->get_id(), 1, $variation->get_id() );
         WC()->cart->calculate_totals();
 
-        $context = LayoutAssignment::context();
+        $condition = static fn( string $type, string $operator, $value ): array => [
+            'type'     => $type,
+            'operator' => $operator,
+            'value'    => $value,
+        ];
+        // Parent and variation both count, and 2 x 30 + 20 is 80.
+        $cart_layout = self::active_layout(
+            [
+                [
+                    $condition( 'product_in_cart', 'in', [ $parent->get_id() ] ),
+                    $condition( 'product_in_cart', 'in', [ $variation->get_id() ] ),
+                    $condition( 'cart_total', 'gt', 79.0 ),
+                    $condition( 'cart_total', 'lt', 81.0 ),
+                ],
+            ]
+        );
 
-        $this->assertEqualsCanonicalizing( [ $simple->get_id(), $parent->get_id(), $variation->get_id() ], $context['product_ids'] );
-        $this->assertSame( 80.0, $context['cart_total'] );
+        $this->assertSame( $cart_layout, self::served() );
     }
 
     public function test_a_pin_to_a_layout_no_longer_active_is_ignored(): void {
@@ -269,12 +286,19 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         $this->assertSame( $germany, self::served() );
     }
 
-    public function test_without_the_pro_filter_the_active_layout_is_served(): void {
+    public function test_free_serves_its_active_layout_whatever_its_rules(): void {
         self::active_layout( self::rule( 'country', 'in', [ 'DE' ] ) );
         $latest = self::active_layout( self::rule( 'country', 'in', [ 'FR' ] ) );
         WC()->customer->set_billing_country( 'DE' );
-        remove_all_filters( 'yaycheckout_resolve_layout' );
 
-        $this->assertSame( $latest, self::served() );
+        $pro = new \ReflectionProperty( Plan::class, 'pro' );
+        $pro->setAccessible( true );
+        $pro->setValue( null, false );
+
+        try {
+            $this->assertSame( $latest, self::served() );
+        } finally {
+            $pro->setValue( null, true );
+        }
     }
 }

@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Enums\ConditionType;
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
@@ -22,6 +23,9 @@ class CheckoutPage {
 
     /** After WC_Frontend_Scripts registers its handles at priority 10. */
     private const SCRIPTS_PRIORITY = 20;
+
+    /** WC session key: the layout id the last checkout page load served; 0 when it served WooCommerce's own. */
+    private const SESSION_PINNED = 'yaycheckout_layout_id';
 
     /** @var Layout|null|false false until first resolved. */
     private $layout = false;
@@ -65,14 +69,85 @@ class CheckoutPage {
 
         // Before the safe-mode check: safe mode protects shoppers, a preview is the merchant looking.
         if ( null !== $preview_id ) {
-            return ( new LayoutRepository() )->resolve_for_request( $preview_id );
+            return ( new LayoutRepository() )->find( $preview_id );
         }
 
         if ( ! empty( ( new SettingsRepository() )->get()->general['safe_mode'] ) ) {
             return null;
         }
 
-        return ( new LayoutRepository() )->resolve_for_request();
+        return $this->assigned_layout();
+    }
+
+    /**
+     * The checkout page load picks and pins the pick to the session; every other request (update_order_review,
+     * the order submit) reuses the pin while its layout stays active, so the form validates against the layout
+     * the shopper saw even after a country or cart change.
+     */
+    private function assigned_layout(): ?Layout {
+        $repository   = new LayoutRepository();
+        $session      = WC()->session;
+        $pin          = null !== $session ? $session->get( self::SESSION_PINNED ) : null;
+        $is_page_load = $this->on_checkout_page() && ! wp_doing_ajax() && 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Compared to a literal only.
+
+        if ( ! $is_page_load && null !== $pin ) {
+            if ( 0 === (int) $pin ) {
+                return null;
+            }
+
+            if ( $repository->is_active( (int) $pin ) ) {
+                return $repository->find( (int) $pin );
+            }
+        }
+
+        $layout = $repository->active( $this->shopper_context() );
+
+        if ( $is_page_load && null !== $session ) {
+            $session->set( self::SESSION_PINNED, null !== $layout ? $layout->id : 0 );
+        }
+
+        return $layout;
+    }
+
+    /**
+     * What assignment conditions test, read once for this request.
+     *
+     * @return array{country: string, roles: string[], product_ids: int[], cart_total: float, device: string}
+     */
+    private function shopper_context(): array {
+        $customer = WC()->customer;
+        $cart     = WC()->cart;
+
+        return [
+            'country'     => null !== $customer ? $customer->get_billing_country() : '',
+            'roles'       => array_values( wp_get_current_user()->roles ),
+            'product_ids' => null !== $cart ? self::cart_product_ids( $cart ) : [],
+            'cart_total'  => null !== $cart ? self::cart_total( $cart ) : 0.0,
+            // ponytail: wp_is_mobile() counts tablets as mobile; a tablet value needs its own detection.
+            'device'      => wp_is_mobile() ? ConditionType::MOBILE : ConditionType::DESKTOP,
+        ];
+    }
+
+    /**
+     * Product and variation ids in the cart: a rule naming a variable product matches any of its variations.
+     *
+     * @return int[]
+     */
+    private static function cart_product_ids( \WC_Cart $cart ): array {
+        $ids = [];
+        foreach ( $cart->get_cart() as $item ) {
+            $ids[] = (int) $item['product_id'];
+            $ids[] = (int) ( $item['variation_id'] ?? 0 );
+        }
+
+        return array_values( array_unique( array_filter( $ids ) ) );
+    }
+
+    /** Items after discounts, before shipping and fees, as the store displays prices. */
+    private static function cart_total( \WC_Cart $cart ): float {
+        $discount = (float) $cart->get_discount_total() + ( $cart->display_prices_including_tax() ? (float) $cart->get_discount_tax() : 0.0 );
+
+        return (float) $cart->get_displayed_subtotal() - $discount;
     }
 
     /**
@@ -82,7 +157,7 @@ class CheckoutPage {
      * and order-pay share the checkout page; taking them over reprints the
      * form instead of Woo's thank-you / pay templates.
      */
-    public function on_checkout_page(): bool {
+    private function on_checkout_page(): bool {
         if ( ! is_page( wc_get_page_id( 'checkout' ) ) ) {
             return false;
         }

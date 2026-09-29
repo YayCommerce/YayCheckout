@@ -5,6 +5,7 @@ use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Helpers\BlockMarkup;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
+use YayCheckout\Services\LayoutAssignment;
 use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Support\Plan;
 
@@ -38,35 +39,15 @@ class LayoutRepository {
     }
 
     /**
-     * The layout that should render for the current request: the previewed one when the
-     * renderer passes an id, else the active one, which `yaycheckout_resolve_layout` may
-     * swap for another layout of the active set (Pro assignment rules).
-     */
-    public function resolve_for_request( ?int $preview_id = null ): ?Layout {
-        if ( null !== $preview_id ) {
-            return $this->find( $preview_id );
-        }
-
-        $active = $this->active_layouts();
-
-        /**
-         * Filters the layout the checkout serves.
-         *
-         * @param Layout|null $layout     The most recently activated layout; null leaves WooCommerce's checkout untouched.
-         * @param Layout[]    $candidates The active set, most recently activated first.
-         */
-        $layout = apply_filters( 'yaycheckout_resolve_layout', $active[0] ?? null, $active );
-
-        return $layout instanceof Layout ? $layout : null;
-    }
-
-    /**
-     * The active set as layouts, most recently activated first; ids whose post is gone are skipped.
+     * The active layout for this shopper: the most recently activated whose assignment rules match $context.
+     * Free has no assignment, so its one active layout serves everyone.
      *
-     * @return Layout[]
+     * @param array $context Shopper facts; see LayoutAssignment::matches().
      */
-    public function active_layouts(): array {
-        return array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
+    public function active( array $context ): ?Layout {
+        $layouts = array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
+
+        return Plan::is_pro() ? LayoutAssignment::pick( $layouts, $context ) : ( $layouts[0] ?? null );
     }
 
     /**
