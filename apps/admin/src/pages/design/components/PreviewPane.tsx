@@ -17,7 +17,8 @@ const VIEWPORT_WIDTH: Record<Viewport, string> = {
 
 const SECTION_LABEL_STYLE: CSSProperties = { fontSize: 11, letterSpacing: '0.08em', opacity: 0.6 };
 
-// What "Theme default" renders as here, since the preview has no theme to inherit from.
+// What "Theme default" renders as here, since the preview has no theme to inherit from; also
+// the fallback behind a picked font. Mirrors DesignStyles::FONT_FALLBACK (PHP), which the storefront prints.
 const DEFAULT_FONT_STACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
 /**
@@ -50,6 +51,7 @@ export function PreviewPane() {
     borderStyle: 'solid',
     borderColor: colours.border,
     backgroundColor: colours.background,
+    // Mirrors DesignStyles::INPUT_HEIGHTS (PHP), which the storefront prints.
     height: 'small' === inputs.size ? 32 : 'large' === inputs.size ? 48 : 40,
   };
 

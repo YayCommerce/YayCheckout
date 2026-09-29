@@ -53,11 +53,13 @@ class CheckoutPage {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php';
     }
 
-    /** Woo only enqueues these on is_checkout(); our template needs them regardless of theme. */
+    /** Woo's checkout scripts and the Design page's tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
     public function enqueue_scripts(): void {
         wp_enqueue_script( 'wc-checkout' );
         wp_enqueue_script( 'wc-country-select' );
         wp_enqueue_script( 'wc-address-i18n' );
+
+        ( new DesignStyles() )->enqueue();
     }
 
     private function resolve(): ?Layout {
