@@ -27,23 +27,10 @@ class LayoutExportRestController extends BaseRestController {
                     'methods'             => \WP_REST_Server::READABLE,
                     'callback'            => fn( $request ) => $this->exec_read( [ $this, 'export_layout' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
-                    'args'                => [
-                        'id' => [
-                            'required'          => true,
-                            'type'              => 'integer',
-                            'sanitize_callback' => 'absint',
-                            'validate_callback' => static function ( $value ) {
-                                return is_numeric( $value );
-                            },
-                        ],
-                    ],
+                    'args'                => $this->id_args(),
                 ],
             ]
         );
-    }
-
-    public function permission_callback(): bool {
-        return current_user_can( 'manage_woocommerce' );
     }
 
     /**
@@ -66,11 +53,13 @@ class LayoutExportRestController extends BaseRestController {
                 'format'         => Layout::EXPORT_FORMAT,
                 'plugin_version' => YAYCHECKOUT_VERSION,
                 'exported_at'    => $exported_at,
-                // Title and markup only: status, active flag and dates are site state and stay behind.
+                // Title, markup and assignment rules; status, active flag and dates are site state and stay behind.
+                // Rules name roles by slug: another store may not have them, and such a condition never matches there.
                 'layouts'        => [
                     [
                         'title'   => $layout->title,
                         'content' => $layout->content,
+                        'rules'   => $layout->rules,
                     ],
                 ],
             ]

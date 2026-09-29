@@ -46,7 +46,7 @@ class LayoutActiveGuard {
 
     /**
      * @param array    $allcaps The user's capabilities for this check.
-     * @param string[] $caps    Primitive caps delete_post maps to (manage_woocommerce).
+     * @param string[] $caps    Primitive caps delete_post maps to (LayoutPostType::CAPABILITY).
      * @param array    $args    [ meta cap, user id, post id ].
      */
     public function deny_deleting_active_layout( array $allcaps, array $caps, array $args ): array {

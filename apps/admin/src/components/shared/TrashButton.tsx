@@ -1,0 +1,16 @@
+import { forwardRef } from 'react';
+import { Trash2 } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+import { Button, type ButtonProps } from '@/components/ui/button';
+
+/**
+ * Red trash icon button for removing a row, as in the UI kits' repeatable-row pattern. Pass an aria-label: it has no text.
+ * Forwards its ref so it can be a Radix `asChild` trigger (a confirm popover).
+ */
+export const TrashButton = forwardRef<HTMLButtonElement, ButtonProps>(({ className, ...props }, ref) => (
+  <Button ref={ref} variant="ghost" size="icon-sm" className={cn('text-destructive', className)} {...props}>
+    <Trash2 className="size-3.5" />
+  </Button>
+));
+TrashButton.displayName = 'TrashButton';

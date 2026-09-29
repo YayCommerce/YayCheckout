@@ -17,7 +17,15 @@ const IS_PRO = editorData.isPro;
 const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
 
 /** Server-reviewed layout from the file (LayoutImportReview), plus what the picker knows about the file. */
-type ImportReview = { fileName: string; fileSize: number; title: string; content: string; blocks: number };
+type ImportReview = {
+	fileName: string;
+	fileSize: number;
+	title: string;
+	content: string;
+	blocks: number;
+	/** The file carries assignment rules; this import leaves them behind. */
+	has_rules: boolean;
+};
 
 /** A message for an apiFetch rejection: the raw Response when `parse: false`, else `{ message }`. Never empty. */
 async function errorMessage( error: unknown, fallback: string ): Promise< string > {
@@ -44,7 +52,7 @@ function formatFileSize( bytes: number ): string {
 const SUMMARY_LABEL_STYLE = { display: 'block', color: '#757575', marginBottom: 4 } as const;
 
 /** The file's layout as LayoutImportReview accepts it; rejects with the server's reason. Only JSON is checked here, since it cannot be sent otherwise. */
-async function reviewFile( text: string ): Promise< Pick< ImportReview, 'title' | 'content' | 'blocks' > > {
+async function reviewFile( text: string ): Promise< Pick< ImportReview, 'title' | 'content' | 'blocks' | 'has_rules' > > {
 	let file: unknown;
 	try {
 		file = JSON.parse( text );
@@ -172,6 +180,14 @@ function ImportModal( { onClose, onImport }: { onClose: () => void; onImport: ( 
 							'yaycheckout'
 						) }
 					</Notice>
+					{ importReview.has_rules && (
+						<Notice status="info" isDismissible={ false }>
+							{ __(
+								'The file also carries assignment rules. They are not imported here: this layout keeps its own. To bring them over, use Tools → Import, which creates a new draft.',
+								'yaycheckout'
+							) }
+						</Notice>
+					) }
 				</Flex>
 			) }
 			<Flex justify="flex-end" gap={ 2 } style={ { marginTop: 24 } }>

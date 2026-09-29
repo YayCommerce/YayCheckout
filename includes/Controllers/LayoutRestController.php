@@ -234,10 +234,6 @@ class LayoutRestController extends BaseRestController {
         );
     }
 
-    public function permission_callback(): bool {
-        return current_user_can( 'manage_woocommerce' );
-    }
-
     /**
      * The collection: filtered, searched, paginated summaries.
      *
@@ -531,20 +527,6 @@ class LayoutRestController extends BaseRestController {
                 'sanitize_callback' => 'absint',
                 'validate_callback' => static function ( $value ) {
                     return is_numeric( $value ) && (int) $value >= 1;
-                },
-            ],
-        ];
-    }
-
-    private function id_args(): array {
-        return [
-            'id' => [
-                'required'          => true,
-                'type'              => 'integer',
-                'sanitize_callback' => 'absint',
-                // Not bare 'is_numeric': REST passes three args and an internal function throws.
-                'validate_callback' => static function ( $value ) {
-                    return is_numeric( $value );
                 },
             ],
         ];

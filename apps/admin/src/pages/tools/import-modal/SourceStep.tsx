@@ -1,5 +1,5 @@
 import { Check, TriangleAlert } from 'lucide-react';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
 import type { ImportReview } from '@/lib/schema/tools.schema';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -45,6 +45,7 @@ export function SourceStep({
         items={[
           [__('Layout', 'yaycheckout'), review.title],
           [__('Checkout blocks', 'yaycheckout'), String(review.blocks)],
+          [__('Assignment rules', 'yaycheckout'), ruleCountsLabel(review.ruleCounts)],
         ]}
       />
 
@@ -65,4 +66,23 @@ export function SourceStep({
       </DialogFooter>
     </>
   );
+}
+
+function ruleCountsLabel(counts: ImportReview['ruleCounts']): string {
+  // PHP makes the final call; this only flags what is plainly not rules. Readable-looking ones may still be dropped.
+  if (counts === null) return __('Unreadable', 'yaycheckout');
+  if (counts.groups === 0) return __('None', 'yaycheckout');
+
+  return [
+    sprintf(
+      /* translators: %d: number of rule groups */
+      _n('%d group', '%d groups', counts.groups, 'yaycheckout'),
+      counts.groups,
+    ),
+    sprintf(
+      /* translators: %d: number of conditions */
+      _n('%d condition', '%d conditions', counts.conditions, 'yaycheckout'),
+      counts.conditions,
+    ),
+  ].join(' · ');
 }
