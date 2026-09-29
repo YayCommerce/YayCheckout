@@ -4,6 +4,7 @@ namespace YayCheckout\Pro\Controllers;
 use YayCheckout\Controllers\BaseRestController;
 use YayCheckout\Enums\ConditionType;
 use YayCheckout\Repositories\LayoutRepository;
+use YayCheckout\Repositories\ProductRepository;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -18,8 +19,11 @@ class LayoutRulesRestController extends BaseRestController {
 
     private LayoutRepository $layouts;
 
+    private ProductRepository $products;
+
     protected function __construct() {
-        $this->layouts = new LayoutRepository();
+        $this->layouts  = new LayoutRepository();
+        $this->products = new ProductRepository();
 
         register_rest_route(
             self::REST_NAMESPACE,
@@ -33,7 +37,7 @@ class LayoutRulesRestController extends BaseRestController {
                 ],
                 [
                     'methods'             => \WP_REST_Server::EDITABLE,
-                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'set_rules' ], $request ),
+                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'save_rules' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => $this->id_args(),
                 ],
@@ -49,7 +53,7 @@ class LayoutRulesRestController extends BaseRestController {
             return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
         }
 
-        return self::reply( $layout->rules );
+        return $this->rules_response( $layout->rules );
     }
 
     /**
@@ -57,7 +61,7 @@ class LayoutRulesRestController extends BaseRestController {
      *
      * @return array|\WP_Error { rules, labels }
      */
-    public function set_rules( \WP_REST_Request $request ) {
+    public function save_rules( \WP_REST_Request $request ) {
         $id    = (int) $request->get_param( 'id' );
         $input = $request->get_json_params();
 
@@ -70,7 +74,7 @@ class LayoutRulesRestController extends BaseRestController {
         }
 
         try {
-            return self::reply( $this->layouts->set_rules( $id, $input['rules'] ) );
+            return $this->rules_response( $this->layouts->set_rules( $id, $input['rules'] ) );
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
@@ -80,31 +84,18 @@ class LayoutRulesRestController extends BaseRestController {
      * Rules plus the names of the products they name, by id: products are too many to localize with the page,
      * so only these come back. A deleted product has no entry.
      */
-    private static function reply( array $rules ): array {
-        $ids = [];
+    private function rules_response( array $rules ): array {
+        $product_ids = [];
         foreach ( array_merge( [], ...$rules ) as $condition ) {
             if ( ConditionType::PRODUCT_IN_CART === $condition['type'] ) {
-                $ids = array_merge( $ids, $condition['value'] );
-            }
-        }
-
-        $products = [];
-        if ( [] !== $ids ) {
-            $found = wc_get_products(
-                [
-                    'include' => array_unique( $ids ),
-                    'limit'   => -1,
-                ]
-            );
-            foreach ( $found as $product ) {
-                $products[ $product->get_id() ] = $product->get_name();
+                $product_ids = array_merge( $product_ids, $condition['value'] );
             }
         }
 
         return [
             'rules'  => $rules,
             // Object even when empty: an empty PHP array would encode as a JSON list.
-            'labels' => [ 'products' => (object) $products ],
+            'labels' => [ 'products' => (object) $this->products->names( $product_ids ) ],
         ];
     }
 }
