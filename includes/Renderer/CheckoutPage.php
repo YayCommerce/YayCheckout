@@ -25,7 +25,7 @@ class CheckoutPage {
     private const SCRIPTS_PRIORITY = 20;
 
     /** WC session key: the layout id the last checkout page load served; 0 when it served WooCommerce's own. */
-    private const SESSION_PINNED = 'yaycheckout_layout_id';
+    public const SESSION_PINNED = 'yaycheckout_layout_id';
 
     /** @var Layout|null|false false until first resolved. */
     private $layout = false;

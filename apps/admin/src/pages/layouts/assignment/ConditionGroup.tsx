@@ -229,8 +229,7 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: ConditionType) => vo
           {__('Add condition', 'yaycheckout')}
         </Button>
       </DropdownMenuTrigger>
-      {/* Above the Sheet (z-99999); SelectContent uses the same layer. */}
-      <DropdownMenuContent align="start" className="z-100005 w-56">
+      <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuLabel className="text-muted-foreground text-xs tracking-wider uppercase">
           {__('Condition type', 'yaycheckout')}
         </DropdownMenuLabel>

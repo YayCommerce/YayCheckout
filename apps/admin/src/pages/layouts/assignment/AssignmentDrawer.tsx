@@ -229,8 +229,8 @@ function LockedAssignment({ layout }: { layout: LayoutSummary }) {
             </div>
             <div className="flex gap-2 p-4">
               {[__('Customer role', 'yaycheckout'), __('in list', 'yaycheckout'), __('Wholesale', 'yaycheckout')].map(
-                (text, i) => (
-                  <span key={text} className={cn('rounded-md border px-3 py-2 text-sm', i < 2 ? 'w-40' : 'flex-1')}>
+                (text, index) => (
+                  <span key={text} className={cn('rounded-md border px-3 py-2 text-sm', index < 2 ? 'w-40' : 'flex-1')}>
                     {text}
                   </span>
                 ),

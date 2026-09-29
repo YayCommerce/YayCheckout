@@ -10,7 +10,7 @@ import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { MultiSelectTrigger } from '@/pages/layouts/assignment/MultiSelectTrigger';
 
-/** Searchable multi-select over published products, ten at a time as the list scrolls. Value is product ids. */
+/** Searchable multi-select over published products, a page at a time as the list scrolls. Value is product ids. */
 export function ProductMultiSelect({
   savedNames,
   value,
@@ -37,7 +37,7 @@ export function ProductMultiSelect({
   const emptyText = list.isFetching ? __('Searching…', 'yaycheckout') : __('No products found.', 'yaycheckout');
 
   function toggle(id: string, name?: string) {
-    if (name) setNames((prev) => ({ ...prev, [id]: name }));
+    if (name) setNames((previousNames) => ({ ...previousNames, [id]: name }));
     onChange(value.includes(id) ? value.filter((picked) => picked !== id) : [...value, id]);
   }
 

@@ -22,7 +22,7 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
     public function set_up(): void {
         parent::set_up();
         wc_load_cart();
-        WC()->session->set( 'yaycheckout_layout_id', null );
+        WC()->session->set( CheckoutPage::SESSION_PINNED, null );
 
         // Only a load of the checkout page pins.
         $page = self::factory()->post->create( [ 'post_type' => 'page' ] );
