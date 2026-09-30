@@ -6,7 +6,6 @@ import { accordionStepSections } from './sections';
 
 interface AccordionStepAttributes {
 	title: string;
-	continueLabel: string;
 }
 
 interface EditProps {
@@ -16,7 +15,7 @@ interface EditProps {
 }
 
 export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
-	const { title, continueLabel } = attributes;
+	const { title } = attributes;
 	const index = useSelect( ( select ) => select( blockEditorStore ).getBlockIndex( clientId ), [ clientId ] );
 	const position = typeof index === 'number' && index >= 0 ? index + 1 : 1;
 	const blockProps = useBlockProps( { className: 'yaycheckout-accordion-step' } );
@@ -30,11 +29,6 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						value={ title }
 						onChange={ ( value ) => setAttributes( { title: value } ) }
 					/>
-					<TextControl
-						label={ __( 'Continue label', 'yaycheckout' ) }
-						value={ continueLabel }
-						onChange={ ( value ) => setAttributes( { continueLabel: value } ) }
-					/>
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
@@ -43,10 +37,11 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					<span className="yaycheckout-accordion-step__title">{ title || __( 'Step', 'yaycheckout' ) }</span>
 				</div>
 				<div className="yaycheckout-accordion-step__body">
-					<InnerBlocks allowedBlocks={ accordionStepSections } templateLock={ false } />
-					<button type="button" className="yaycheckout-accordion-step__continue" onClick={ ( event ) => event.preventDefault() }>
-						{ continueLabel || __( 'Continue', 'yaycheckout' ) }
-					</button>
+					<InnerBlocks
+						allowedBlocks={ accordionStepSections }
+						template={ [ [ 'yaycheckout/step-button' ] ] }
+						templateLock={ false }
+					/>
 				</div>
 			</div>
 		</>

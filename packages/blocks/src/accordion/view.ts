@@ -19,6 +19,7 @@ function boot(): void {
 
 	document.documentElement.setAttribute( 'data-yaycheckout-accordion-bound', '' );
 	document.addEventListener( 'click', onClick );
+	syncStepButtons();
 }
 
 function onClick( event: MouseEvent ): void {
@@ -28,11 +29,11 @@ function onClick( event: MouseEvent ): void {
 		return;
 	}
 
-	const continueButton = target.closest< HTMLButtonElement >( '.yaycheckout-accordion-step__continue' );
+	const stepButton = target.closest< HTMLButtonElement >( '.yaycheckout-step-button' );
 
-	if ( continueButton ) {
+	if ( stepButton ) {
 		event.preventDefault();
-		const step = continueButton.closest< HTMLElement >( STEP );
+		const step = stepForButton( stepButton );
 
 		if ( step && step.dataset.state === CURRENT ) {
 			advance( step );
@@ -116,6 +117,41 @@ function setState( step: HTMLElement, state: StepState ): void {
 	if ( edit ) {
 		edit.hidden = ! done;
 	}
+
+	syncStepButtons();
+}
+
+function stepForButton( button: HTMLElement ): HTMLElement | null {
+	const inside = button.closest< HTMLElement >( STEP );
+
+	if ( inside ) {
+		return inside;
+	}
+
+	return button.closest( 'form.checkout' )?.querySelector< HTMLElement >( `${ STEP }[data-state="${ CURRENT }"]` ) ?? null;
+}
+
+function canAdvance( step: HTMLElement ): boolean {
+	// The Place order block's wrapper is always there. The submit id appears only with a cart.
+	if ( step.querySelector( '#place_order, .yaycheckout-place-order' ) ) {
+		return false;
+	}
+
+	let sibling = nextStep( step );
+
+	while ( sibling && sibling.dataset.state === COMPLETE ) {
+		sibling = nextStep( sibling );
+	}
+
+	return sibling !== null;
+}
+
+function syncStepButtons(): void {
+	document.querySelectorAll< HTMLButtonElement >( '.yaycheckout-step-button' ).forEach( ( button ) => {
+		const step = stepForButton( button );
+
+		button.hidden = ! step || ! canAdvance( step );
+	} );
 }
 
 function writeSummary( step: HTMLElement, line: string ): void {

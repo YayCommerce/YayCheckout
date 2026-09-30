@@ -116,28 +116,3 @@
 .yaycheckout-accordion-step[data-state="complete"] .yaycheckout-accordion-step__body {
 	display: none;
 }
-
-.yaycheckout-accordion .yaycheckout-accordion-step__continue {
-	align-self: flex-end;
-	appearance: none;
-	box-sizing: border-box;
-	display: inline-block;
-	width: auto;
-	min-height: 0;
-	height: auto;
-	margin: 16px 0 0;
-	border: 0;
-	border-radius: 6px;
-	box-shadow: none;
-	background: var(--yaycheckout-primary);
-	color: #fff;
-	padding: 10px 18px;
-	font-family: inherit;
-	font-size: 16px;
-	font-weight: 600;
-	line-height: 1.2;
-	letter-spacing: normal;
-	text-transform: none;
-	text-decoration: none;
-	cursor: pointer;
-}

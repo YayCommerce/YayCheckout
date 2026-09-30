@@ -29,6 +29,7 @@ class BlockRegistry {
         'checkout',
         'accordion',
         'accordion-step',
+        'step-button',
         'contact',
         'billing',
         'shipping',

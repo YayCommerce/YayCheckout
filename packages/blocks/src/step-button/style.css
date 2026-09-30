@@ -1,0 +1,42 @@
+.yaycheckout-checkout .yaycheckout-step-button {
+	appearance: none;
+	box-sizing: border-box;
+	display: block;
+	width: fit-content;
+	min-height: 0;
+	height: auto;
+	margin: 16px 0 0 auto;
+	border: 0;
+	border-radius: 6px;
+	box-shadow: none;
+	background: var(--yaycheckout-primary);
+	color: #fff;
+	padding: 10px 18px;
+	font-family: inherit;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.2;
+	letter-spacing: normal;
+	text-transform: none;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.yaycheckout-checkout .yaycheckout-step-button.alignleft {
+	margin-left: 0;
+	margin-right: auto;
+}
+
+.yaycheckout-checkout .yaycheckout-step-button.aligncenter {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.yaycheckout-checkout .yaycheckout-step-button.alignright {
+	margin-left: auto;
+	margin-right: 0;
+}
+
+.yaycheckout-checkout .yaycheckout-step-button[hidden] {
+	display: none;
+}

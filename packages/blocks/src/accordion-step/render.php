@@ -37,23 +37,11 @@ if ( ! function_exists( 'yaycheckout_accordion_step_index' ) ) {
     }
 }
 
-$yaycheckout_index    = yaycheckout_accordion_step_index();
-$yaycheckout_state    = 1 === $yaycheckout_index ? 'current' : 'locked';
-$yaycheckout_title    = isset( $attributes['title'] ) && is_string( $attributes['title'] ) && '' !== $attributes['title']
+$yaycheckout_index = yaycheckout_accordion_step_index();
+$yaycheckout_state = 1 === $yaycheckout_index ? 'current' : 'locked';
+$yaycheckout_title = isset( $attributes['title'] ) && is_string( $attributes['title'] ) && '' !== $attributes['title']
     ? $attributes['title']
     : __( 'Step', 'yaycheckout' );
-$yaycheckout_continue = isset( $attributes['continueLabel'] ) && is_string( $attributes['continueLabel'] ) && '' !== $attributes['continueLabel']
-    ? $attributes['continueLabel']
-    : __( 'Continue', 'yaycheckout' );
-
-$yaycheckout_has_place_order = false;
-
-foreach ( $block->inner_blocks as $yaycheckout_inner ) {
-    if ( 'yaycheckout/place-order' === $yaycheckout_inner->name ) {
-        $yaycheckout_has_place_order = true;
-        break;
-    }
-}
 
 $yaycheckout_wrapper = get_block_wrapper_attributes(
     [
@@ -73,8 +61,5 @@ $yaycheckout_wrapper = get_block_wrapper_attributes(
     </div>
     <div class="yaycheckout-accordion-step__body">
         <?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner block markup, already rendered and escaped by core. ?>
-        <?php if ( ! $yaycheckout_has_place_order ) : ?>
-            <button type="button" class="yaycheckout-accordion-step__continue"><?php echo esc_html( $yaycheckout_continue ); ?></button>
-        <?php endif; ?>
     </div>
 </div>

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/step-button",
+  "title": "Step Button",
+  "category": "yaycheckout",
+  "description": "Validates the open checkout step and opens the next one. Place it anywhere inside Checkout.",
+  "textdomain": "yaycheckout",
+  "ancestor": [ "yaycheckout/checkout" ],
+  "attributes": {
+    "buttonText": {
+      "type": "string",
+      "default": ""
+    },
+    "align": {
+      "type": "string",
+      "default": "right"
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false,
+    "align": [ "left", "center", "right" ]
+  },
+  "editorScript": "file:./index.js",
+  "style": "file:./style-index.css",
+  "render": "file:./render.php"
+}

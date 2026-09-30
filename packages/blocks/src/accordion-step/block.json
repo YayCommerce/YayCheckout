@@ -4,17 +4,13 @@
   "name": "yaycheckout/accordion-step",
   "title": "Accordion Step",
   "category": "yaycheckout",
-  "description": "One checkout step. Holds sections, and a Continue button until the step contains Place order.",
+  "description": "One checkout step. Holds the sections of that step.",
   "textdomain": "yaycheckout",
   "parent": [ "yaycheckout/accordion" ],
   "attributes": {
     "title": {
       "type": "string",
       "default": ""
-    },
-    "continueLabel": {
-      "type": "string",
-      "default": "Continue"
     }
   },
   "supports": {

@@ -18,6 +18,9 @@ export const blockIcons: Record< string, JSX.Element > = {
 	'yaycheckout/accordion-step': icon(
 		'M6 8.2a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4ZM10.2 9.4h8v2h-8v-2Z'
 	),
+	'yaycheckout/step-button': icon(
+		'M4 9h11v6H4V9Zm12.2 3-2.7-2.7v5.4L16.2 12Z'
+	),
 	'yaycheckout/checkout': icon(
 		'M8 7V6a4 4 0 0 1 8 0v1h3v13H5V7h3Zm1.5 0h5V6a2.5 2.5 0 0 0-5 0v1ZM6.5 8.5v10h11v-10h-11Z',
 		'M15.44 11.44 16.5 12.5l-4.97 4.97-3.03-3.03 1.06-1.06 1.97 1.97 3.91-3.91Z'

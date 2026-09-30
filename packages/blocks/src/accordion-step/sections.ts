@@ -1,13 +1,14 @@
 /**
  * Block names an Accordion Step may contain.
  *
- * parent on each block.json decides this. InnerBlocks cannot read those
- * files, so the editor list is derived here.
+ * parent and ancestor on each block.json decide this. InnerBlocks cannot
+ * read those files, so the editor list is derived here.
  */
 
 interface BlockMeta {
 	name: string;
 	parent?: string[];
+	ancestor?: string[];
 }
 
 interface RequireContext {
@@ -20,6 +21,7 @@ declare const require: {
 };
 
 const STEP = 'yaycheckout/accordion-step';
+const CHECKOUT = 'yaycheckout/checkout';
 const blocks = require.context( '..', true, /\/block\.json$/ );
 
 export const accordionStepSections: string[] = blocks
@@ -29,5 +31,10 @@ export const accordionStepSections: string[] = blocks
 
 		return 'default' in loaded ? loaded.default : loaded;
 	} )
-	.filter( ( block ) => ( block.parent ?? [] ).includes( STEP ) )
+	.filter( ( block ) => {
+		const parents = block.parent ?? [];
+		const ancestors = block.ancestor ?? [];
+
+		return parents.includes( STEP ) || ancestors.includes( STEP ) || ancestors.includes( CHECKOUT );
+	} )
 	.map( ( block ) => block.name );

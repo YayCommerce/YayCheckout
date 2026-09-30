@@ -10,9 +10,9 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Prints the applied primary colour for checkout blocks.
  *
- * The accordion stylesheet reads --yaycheckout-primary. The value comes from
- * Design; this file only places it on the block style so the layout editor
- * and the checkout page share it.
+ * Checkout blocks read --yaycheckout-primary. The value comes from Design;
+ * this file places it on the checkout wrapper so the layout editor and the
+ * checkout page share it, including a Step Button outside the accordion.
  */
 class CheckoutColour {
 
@@ -37,9 +37,10 @@ class CheckoutColour {
             return;
         }
 
-        wp_add_inline_style(
-            'yaycheckout-accordion-style',
-            '.yaycheckout-accordion{--yaycheckout-primary:' . $primary . ';}'
-        );
+        $css = '.yaycheckout-checkout{--yaycheckout-primary:' . $primary . ';}';
+
+        foreach ( [ 'yaycheckout/accordion', 'yaycheckout/step-button' ] as $block ) {
+            wp_add_inline_style( generate_block_asset_handle( $block, 'style' ), $css );
+        }
     }
 }
