@@ -6,7 +6,7 @@
   "category": "yaycheckout",
   "description": "Order summary, payment methods and the Place order button. WooCommerce renders these; the block only places them.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
+  "parent": [ "yaycheckout/checkout", "yaycheckout/accordion-step" ],
   "supports": {
     "html": false,
     "multiple": false,

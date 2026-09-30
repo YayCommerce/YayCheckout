@@ -6,7 +6,7 @@
   "category": "yaycheckout",
   "description": "A custom checkout field that is not part of the WooCommerce address catalog.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
+  "parent": [ "yaycheckout/checkout", "yaycheckout/accordion-step" ],
   "attributes": {
     "fieldKey": {
       "type": "string",

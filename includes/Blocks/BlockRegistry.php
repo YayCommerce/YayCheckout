@@ -27,6 +27,8 @@ class BlockRegistry {
      */
     private const ORDER = [
         'checkout',
+        'accordion',
+        'accordion-step',
         'contact',
         'billing',
         'shipping',

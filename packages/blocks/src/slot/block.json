@@ -6,7 +6,7 @@
   "category": "yaycheckout",
   "description": "Named empty place for other plugins or Pro to inject content.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
+  "parent": [ "yaycheckout/checkout", "yaycheckout/accordion-step" ],
   "attributes": {
     "slotName": {
       "type": "string",

@@ -6,7 +6,7 @@
   "category": "yaycheckout",
   "description": "Billing address canvas. Fields, layout and text blocks can sit inside it.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
+  "parent": [ "yaycheckout/checkout", "yaycheckout/accordion-step" ],
   "attributes": {
     "title": {
       "type": "string",

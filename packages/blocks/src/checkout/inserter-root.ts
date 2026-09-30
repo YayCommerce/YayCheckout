@@ -6,14 +6,37 @@ import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
 
 const CHECKOUT_BLOCK = 'yaycheckout/checkout';
+const ACCORDION = 'yaycheckout/accordion';
+const STEP = 'yaycheckout/accordion-step';
 const ADDRESS_SECTIONS = [ 'yaycheckout/billing', 'yaycheckout/shipping' ];
 
 /**
- * Header inserter follows the selection: Billing/Shipping when those
- * canvases are selected (so Field appears), otherwise the Checkout block,
- * wherever it sits in the document.
+ * Header inserter follows the selection: Billing/Shipping so Field appears,
+ * an Accordion Step so sections land in that step, an Accordion so another
+ * step can be added, otherwise the Checkout block.
  * Contact and the document never list Field.
  */
+
+function accordionInsertion(
+	clientId: string,
+	getBlockName: ( id: string ) => string | undefined,
+	getBlockParents: ( id: string ) => string[],
+	getBlockCount: ( id: string ) => number
+): { rootClientId: string; insertionIndex: number } | null {
+	const chain = [ clientId, ...getBlockParents( clientId ) ];
+	const stepId = chain.find( ( id ) => getBlockName( id ) === STEP );
+	const containerId = stepId ?? chain.find( ( id ) => getBlockName( id ) === ACCORDION );
+
+	if ( ! containerId ) {
+		return null;
+	}
+
+	return {
+		rootClientId: containerId,
+		insertionIndex: getBlockCount( containerId ),
+	};
+}
+
 function LayoutInserterRoot() {
 	const postType = useSelect( ( select ) => select( editorStore ).getCurrentPostType(), [] );
 	const isInserterOpened = useSelect( ( select ) => select( editorStore ).isInserterOpened(), [] );
@@ -22,7 +45,7 @@ function LayoutInserterRoot() {
 			return null;
 		}
 
-		const { getBlockCount, getBlockName, getClientIdsWithDescendants, getSelectedBlock } =
+		const { getBlockCount, getBlockName, getBlockParents, getClientIdsWithDescendants, getSelectedBlock } =
 			select( blockEditorStore );
 		const rootClientId = getClientIdsWithDescendants().find(
 			( id: string ) => getBlockName( id ) === CHECKOUT_BLOCK
@@ -39,6 +62,14 @@ function LayoutInserterRoot() {
 				rootClientId: selected.clientId,
 				insertionIndex: getBlockCount( selected.clientId ),
 			};
+		}
+
+		if ( selected ) {
+			const nested = accordionInsertion( selected.clientId, getBlockName, getBlockParents, getBlockCount );
+
+			if ( nested ) {
+				return nested;
+			}
 		}
 
 		return {
