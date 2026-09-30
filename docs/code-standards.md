@@ -102,7 +102,7 @@ Two places that decide the same thing leave the reader unable to tell which one 
 | REST wire shapes | PHP `to_array()` | `*WireSchema` in `apps/admin/src/lib/schema/` |
 | Cross-cutting rationale | `docs/system-architecture.md` | a code comment of one or two lines plus a pointer |
 
-A mirror exists only where the language boundary forces one; it names its owner in a comment and must agree with it. Adding a mirror means adding it to this table with the reason. `/source-of-truth-check` reads this table to flag copies in a diff.
+A mirror exists only where the language boundary forces one; it names its owner in a comment and must agree with it. Adding a mirror means adding it to this table with the reason. `/yay:code-corrector` reads this table to flag copies in a diff.
 
 ## REST controllers
 
