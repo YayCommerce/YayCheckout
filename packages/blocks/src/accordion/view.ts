@@ -277,18 +277,21 @@ function message( step: HTMLElement, key: 'requiredMessage' | 'selectMessage' ):
 }
 
 function summaryText( step: HTMLElement ): string {
-	const chosen = [ ...step.querySelectorAll< HTMLInputElement >( 'input[type="radio"]:checked' ) ]
-		.map( ( radio ) => labelFor( radio ) )
-		.filter( ( value ) => value !== '' );
+	const values: string[] = [];
 
-	if ( chosen.length > 0 ) {
-		return chosen.join( ' · ' );
+	for ( const control of visibleControls( step ) ) {
+		if ( control instanceof HTMLInputElement && ( control.type === 'radio' || control.type === 'checkbox' ) && ! control.checked ) {
+			continue;
+		}
+
+		const value = textOf( control );
+
+		if ( value !== '' ) {
+			values.push( value );
+		}
 	}
 
-	return visibleControls( step )
-		.map( ( control ) => textOf( control ) )
-		.filter( ( value ) => value !== '' )
-		.join( ', ' );
+	return values.join( ', ' );
 }
 
 function textOf( control: Control ): string {
@@ -297,17 +300,40 @@ function textOf( control: Control ): string {
 	}
 
 	if ( control instanceof HTMLInputElement && ( control.type === 'radio' || control.type === 'checkbox' ) ) {
-		return '';
+		return labelFor( control );
 	}
 
 	return control.value.trim();
 }
 
-function labelFor( radio: HTMLInputElement ): string {
-	const label = radio.closest( 'label' ) ?? ( radio.id ? document.querySelector( `label[for="${ CSS.escape( radio.id ) }"]` ) : null );
-	const text = label?.textContent ?? radio.value;
+function labelFor( control: HTMLInputElement ): string {
+	const label = optionLabel( control );
 
-	return text.replace( /\s+/g, ' ' ).trim();
+	if ( ! label ) {
+		return control.value.trim();
+	}
+
+	// Woo puts the required * and "(optional)" inside the option label.
+	const copy = label.cloneNode( true ) as HTMLElement;
+	copy.querySelectorAll( '.required, .optional, abbr, input' ).forEach( ( mark ) => mark.remove() );
+
+	return ( copy.textContent ?? '' ).replace( /\s+/g, ' ' ).trim();
+}
+
+function optionLabel( control: HTMLInputElement ): Element | null {
+	const wrapping = control.closest( 'label' );
+
+	if ( wrapping ) {
+		return wrapping;
+	}
+
+	if ( control.id === '' ) {
+		return null;
+	}
+
+	const labels = [ ...document.querySelectorAll< HTMLLabelElement >( `label[for="${ CSS.escape( control.id ) }"]` ) ];
+
+	return labels.find( ( label ) => label.classList.contains( 'radio' ) || label.classList.contains( 'checkbox' ) ) ?? labels[ 0 ] ?? null;
 }
 
 if ( document.readyState === 'loading' ) {
