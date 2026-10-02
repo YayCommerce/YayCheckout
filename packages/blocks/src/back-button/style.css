@@ -36,3 +36,9 @@
 	margin-left: auto;
 	margin-right: 0;
 }
+
+/* Auto margins pin a lone button. In a Grid or Row they take the rest of the line. */
+.yaycheckout-checkout :is(.is-layout-flex, .is-layout-grid) > .yaycheckout-back-button {
+	margin-left: 0;
+	margin-right: 0;
+}

@@ -37,6 +37,12 @@
 	margin-right: 0;
 }
 
+/* Auto margins pin a lone button. In a Grid or Row they take the rest of the line. */
+.yaycheckout-checkout :is(.is-layout-flex, .is-layout-grid) > .yaycheckout-step-button {
+	margin-left: 0;
+	margin-right: 0;
+}
+
 .yaycheckout-checkout .yaycheckout-step-button[hidden] {
 	display: none;
 }

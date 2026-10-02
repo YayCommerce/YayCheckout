@@ -5,8 +5,8 @@
 	gap: var(--yaycheckout-accordion-gap);
 }
 
-/* Steps sit inside InnerBlocks here, so the accordion gap above never separates them. */
-.yaycheckout-accordion .block-editor-block-list__layout {
+/* Column is the step list. A nested Grid or Row keeps the layout Gutenberg gave it. */
+.yaycheckout-accordion .block-editor-block-list__layout:not(.is-layout-flex):not(.is-layout-grid) {
 	display: flex;
 	flex-direction: column;
 	gap: var(--yaycheckout-accordion-gap);
