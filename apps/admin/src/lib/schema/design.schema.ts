@@ -66,7 +66,7 @@ export const designTokensWireSchema = z
         base_size: baseSizeSchema,
       })
       .strict(),
-    spacing: z.object({ enabled: z.boolean(), scale: spacingScaleSchema, radius: radiusSchema }).strict(),
+    spacing: z.object({ enabled: z.boolean(), scale: spacingScaleSchema }).strict(),
     buttons: z.object({ enabled: z.boolean(), style: buttonStyleSchema, radius: radiusSchema }).strict(),
     inputs: z
       .object({ enabled: z.boolean(), style: inputStyleSchema, size: inputSizeSchema, radius: radiusSchema })

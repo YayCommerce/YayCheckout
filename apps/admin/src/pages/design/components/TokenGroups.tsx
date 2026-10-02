@@ -2,32 +2,36 @@ import { useState, type ReactNode } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { countTokenDiffs, isGroupOn } from '@/lib/helpers/design.helper';
-import { useDesignQuery } from '@/lib/queries/design.queries';
+import { isGroupOn } from '@/lib/helpers/design.helper';
 import { FONT_FAMILIES, type DesignForm, type DesignTokens, type TokenSection } from '@/lib/schema/design.schema';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
 import { FormField } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { BUTTON_STYLE_LABELS, ButtonsGroup } from './ButtonsGroup';
-import { ColoursGroup } from './ColoursGroup';
+import { COLOUR_KEYS, ColoursGroup } from './ColoursGroup';
 import { CustomCssGroup } from './CustomCssGroup';
 import { INPUT_SIZE_LABELS, INPUT_STYLE_LABELS, InputsGroup } from './InputsGroup';
 import { SpacingGroup } from './SpacingGroup';
 import { TypographyGroup } from './TypographyGroup';
 
-/** Each group header restates its current values so a collapsed list still reads as a design. */
+/** Each group header restates its current values so a collapsed list still reads as a design; colours as swatches. */
 export const GROUPS: {
   id: TokenSection | 'customCss';
   label: string;
   body: () => ReactNode;
-  summary: (tokens: DesignTokens, customCss: string) => string;
+  summary: (tokens: DesignTokens, customCss: string) => ReactNode;
 }[] = [
   {
     id: 'colours',
     label: __('Colours', 'yaycheckout'),
     body: ColoursGroup,
-    summary: ({ colours }) => `${colours.primary} · ${colours.text}`,
+    summary: ({ colours }) => (
+      <span className="flex gap-1">
+        {COLOUR_KEYS.map((colour) => (
+          <span key={colour} className="size-3 rounded-full border" style={{ background: colours[colour] }} />
+        ))}
+      </span>
+    ),
   },
   {
     id: 'typography',
@@ -38,9 +42,9 @@ export const GROUPS: {
   },
   {
     id: 'spacing',
-    label: __('Spacing & radius', 'yaycheckout'),
+    label: __('Spacing', 'yaycheckout'),
     body: SpacingGroup,
-    summary: ({ spacing }) => `${spacing.scale.toFixed(1)}× · ${spacing.radius}px`,
+    summary: ({ spacing }) => `${spacing.scale.toFixed(1)}×`,
   },
   {
     id: 'buttons',
@@ -70,15 +74,11 @@ export const GROUPS: {
 /**
  * The token editor: one collapsible group per section. The switch turns a group
  * on (opening it) or off (closing it, header locked); the header only folds an
- * on group away and back. Custom CSS has no switch and starts closed. Each
- * header restates the group's values, or "Theme default" while off, and while
- * on counts how it differs from the theme default (the Default preset), being
- * on included, saved or not — the badges add up to "Reset to theme"'s count;
- * the row tags mark unsaved edits.
+ * on group away and back. Custom CSS has no switch and starts closed. A header
+ * says "Theme default" while off; unsaved edits show only on their rows.
  */
 export function TokenGroups() {
   const { control } = useFormContext<DesignForm>();
-  const { data } = useDesignQuery();
   const tokens = useWatch({ control, name: 'tokens' });
   const customCss = useWatch({ control, name: 'customCss' });
   // Groups folded by hand; every other on group is open, so a group a preset turns on opens too.
@@ -94,56 +94,43 @@ export function TokenGroups() {
       }
       className="flex flex-col gap-3"
     >
-      {GROUPS.map(({ id, label, body: Body, summary }) => {
-        const changed = 'customCss' === id ? 0 : countTokenDiffs(tokens, data.defaultTokens, id);
-
-        return (
-          <AccordionItem key={id} value={id} disabled={!isGroupOn(tokens, id)}>
-            {/* The switch sits beside the trigger, not in it: a button inside a button is invalid HTML. */}
-            <div className="flex items-center [&>h3]:flex-1">
-              <AccordionTrigger className="disabled:cursor-default disabled:opacity-100 [&>svg]:hidden">
-                <span className="flex-1">{label}</span>
-                <span className="text-muted-foreground text-xs font-normal">
-                  {isGroupOn(tokens, id) ? summary(tokens, customCss) : __('Theme default', 'yaycheckout')}
-                </span>
-                {changed > 0 ? (
-                  <Badge variant="outline" className="text-xs">
-                    {sprintf(
-                      /* translators: %d: number of tokens in this group that differ from the theme default */
-                      __('%d changed', 'yaycheckout'),
-                      changed,
+      {GROUPS.map(({ id, label, body: Body, summary }) => (
+        <AccordionItem key={id} value={id} disabled={!isGroupOn(tokens, id)}>
+          {/* The switch sits beside the trigger, not in it: a button inside a button is invalid HTML. */}
+          <div className="flex items-center [&>h3]:flex-1">
+            <AccordionTrigger className="disabled:cursor-default disabled:opacity-100 [&>svg]:hidden">
+              <span className="flex-1">{label}</span>
+              <span className="text-muted-foreground text-xs font-normal">
+                {isGroupOn(tokens, id) ? summary(tokens, customCss) : __('Theme default', 'yaycheckout')}
+              </span>
+            </AccordionTrigger>
+            {'customCss' !== id ? (
+              <FormField
+                control={control}
+                name={`tokens.${id}.enabled`}
+                render={({ field }) => (
+                  <Switch
+                    className="mr-4"
+                    checked={field.value}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                      setFolded(folded.filter((foldedId) => foldedId !== id));
+                    }}
+                    aria-label={sprintf(
+                      /* translators: %s: design group name, e.g. Colours */
+                      __('Customize %s', 'yaycheckout'),
+                      label,
                     )}
-                  </Badge>
-                ) : null}
-              </AccordionTrigger>
-              {'customCss' !== id ? (
-                <FormField
-                  control={control}
-                  name={`tokens.${id}.enabled`}
-                  render={({ field }) => (
-                    <Switch
-                      className="mr-4"
-                      checked={field.value}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked);
-                        setFolded(folded.filter((foldedId) => foldedId !== id));
-                      }}
-                      aria-label={sprintf(
-                        /* translators: %s: design group name, e.g. Colours */
-                        __('Customize %s', 'yaycheckout'),
-                        label,
-                      )}
-                    />
-                  )}
-                />
-              ) : null}
-            </div>
-            <AccordionContent>
-              <Body />
-            </AccordionContent>
-          </AccordionItem>
-        );
-      })}
+                  />
+                )}
+              />
+            ) : null}
+          </div>
+          <AccordionContent>
+            <Body />
+          </AccordionContent>
+        </AccordionItem>
+      ))}
     </Accordion>
   );
 }

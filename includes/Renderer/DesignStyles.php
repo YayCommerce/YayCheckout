@@ -81,11 +81,8 @@ class DesignStyles {
         }
 
         if ( $tokens['spacing']['enabled'] ) {
-            $vars += [
-                // %F, not a (string) cast: PHP 7 casts floats per LC_NUMERIC, so a de_DE host would print 1,5.
-                'spacing-scale' => rtrim( rtrim( sprintf( '%.1F', $tokens['spacing']['scale'] ), '0' ), '.' ),
-                'radius'        => $tokens['spacing']['radius'] . 'px',
-            ];
+            // %F, not a (string) cast: PHP 7 casts floats per LC_NUMERIC, so a de_DE host would print 1,5.
+            $vars['spacing-scale'] = rtrim( rtrim( sprintf( '%.1F', $tokens['spacing']['scale'] ), '0' ), '.' );
         }
 
         if ( $tokens['buttons']['enabled'] ) {

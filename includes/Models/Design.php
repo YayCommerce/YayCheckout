@@ -64,8 +64,6 @@ class Design {
      * Shape: section => key => [ 'type' => 'bool'|'int'|'enum'|'hex_color', 'default' => mixed,
      *   'enum' => array (enum only), 'min'/'max' => int (int only) ]
      *
-     * The layout-wide corner radius is spacing.radius; buttons.radius and
-     * inputs.radius are stored on their own so each can still differ from it.
      * Both spacing.scale and inputs.size are abstract steps; what they mean in
      * px is decided where they are rendered.
      *
@@ -121,12 +119,6 @@ class Design {
                     'type'    => 'enum',
                     'default' => 1.0,
                     'enum'    => self::SPACING_SCALES,
-                ],
-                'radius'  => [
-                    'type'    => 'int',
-                    'default' => 10,
-                    'min'     => 0,
-                    'max'     => 24,
                 ],
             ],
             'buttons'    => [
@@ -236,10 +228,7 @@ class Design {
                             'enabled'   => true,
                             'base_size' => 15,
                         ],
-                        'spacing'    => [
-                            'enabled' => true,
-                            'radius'  => 2,
-                        ],
+                        'spacing'    => [ 'enabled' => true ],
                         'buttons'    => [
                             'enabled' => true,
                             'style'   => 'outline',

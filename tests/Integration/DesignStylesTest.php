@@ -79,7 +79,6 @@ class DesignStylesTest extends WP_UnitTestCase {
         );
 
         $this->assertStringContainsString( '--yaycheckout-spacing-scale: 1.5;', $css );
-        $this->assertStringContainsString( '--yaycheckout-radius: 10px;', $css );
     }
 
     public function test_custom_css_follows_the_variables(): void {
