@@ -6,18 +6,18 @@ import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
 
 const CHECKOUT_BLOCK = 'yaycheckout/checkout';
-const ACCORDION = 'yaycheckout/accordion';
-const STEP = 'yaycheckout/accordion-step';
+const STEPS = 'yaycheckout/steps';
+const STEP = 'yaycheckout/step';
 const ADDRESS_SECTIONS = [ 'yaycheckout/billing', 'yaycheckout/shipping' ];
 
 /**
  * Header inserter follows the selection: Billing/Shipping so Field appears,
- * an Accordion Step so sections land in that step, an Accordion so another
+ * a Step so sections land in that step, Steps so another
  * step can be added, otherwise the Checkout block.
  * Contact and the document never list Field.
  */
 
-function accordionInsertion(
+function stepsInsertion(
 	clientId: string,
 	getBlockName: ( id: string ) => string | undefined,
 	getBlockParents: ( id: string ) => string[],
@@ -25,7 +25,7 @@ function accordionInsertion(
 ): { rootClientId: string; insertionIndex: number } | null {
 	const chain = [ clientId, ...getBlockParents( clientId ) ];
 	const stepId = chain.find( ( id ) => getBlockName( id ) === STEP );
-	const containerId = stepId ?? chain.find( ( id ) => getBlockName( id ) === ACCORDION );
+	const containerId = stepId ?? chain.find( ( id ) => getBlockName( id ) === STEPS );
 
 	if ( ! containerId ) {
 		return null;
@@ -65,7 +65,7 @@ function LayoutInserterRoot() {
 		}
 
 		if ( selected ) {
-			const nested = accordionInsertion( selected.clientId, getBlockName, getBlockParents, getBlockCount );
+			const nested = stepsInsertion( selected.clientId, getBlockName, getBlockParents, getBlockCount );
 
 			if ( nested ) {
 				return nested;

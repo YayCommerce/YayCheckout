@@ -2,7 +2,7 @@
 /**
  * Server render for yaycheckout/back-button.
  *
- * The accordion script opens the previous step. An empty label stays
+ * The steps script opens the previous step. An empty label stays
  * translatable; a saved label is the merchant's text.
  *
  * @var array    $attributes Block attributes.

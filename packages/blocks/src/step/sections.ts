@@ -1,5 +1,5 @@
 /**
- * Block names an Accordion Step may contain.
+ * Block names a Step may contain.
  *
  * parent and ancestor on each block.json decide this. InnerBlocks cannot
  * read those files, so the editor list is derived here.
@@ -20,11 +20,11 @@ declare const require: {
 	context( path: string, deep?: boolean, filter?: RegExp ): RequireContext;
 };
 
-const STEP = 'yaycheckout/accordion-step';
+const STEP = 'yaycheckout/step';
 const CHECKOUT = 'yaycheckout/checkout';
 const blocks = require.context( '..', true, /\/block\.json$/ );
 
-export const accordionStepSections: string[] = blocks
+export const stepSections: string[] = blocks
 	.keys()
 	.map( ( key ) => {
 		const loaded = blocks( key );

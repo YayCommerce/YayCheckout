@@ -1,6 +1,6 @@
 <?php
 /**
- * Server render for yaycheckout/accordion: the step list.
+ * Server render for yaycheckout/steps: the step list.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Inner blocks, already rendered by core.
@@ -11,15 +11,15 @@
 
 defined( 'ABSPATH' ) || exit;
 
-// Steps already took their numbers. Zero the counter before another accordion on this page renders.
-if ( function_exists( 'yaycheckout_accordion_step_index' ) ) {
-    yaycheckout_accordion_step_index( true );
+// Steps already took their numbers. Zero the counter before another Steps block on this page renders.
+if ( function_exists( 'yaycheckout_step_index' ) ) {
+    yaycheckout_step_index( true );
 }
 
 $yaycheckout_layout  = isset( $attributes['layout'] ) && 'single' === $attributes['layout'] ? 'single' : 'list';
 $yaycheckout_wrapper = get_block_wrapper_attributes(
     [
-        'class'                 => 'yaycheckout-accordion',
+        'class'                 => 'yaycheckout-steps',
         'data-layout'           => $yaycheckout_layout,
         'data-required-message' => __( 'Please fill out this field.', 'yaycheckout' ),
         'data-select-message'   => __( 'Please choose an option.', 'yaycheckout' ),

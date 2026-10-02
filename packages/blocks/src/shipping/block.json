@@ -6,7 +6,7 @@
   "category": "yaycheckout",
   "description": "Shipping address canvas. Fields, layout and text blocks can sit inside it.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout", "yaycheckout/accordion-step" ],
+  "parent": [ "yaycheckout/checkout", "yaycheckout/step" ],
   "attributes": {
     "title": {
       "type": "string",

@@ -2,15 +2,14 @@ import { InnerBlocks, InspectorControls, useBlockProps, store as blockEditorStor
 import { PanelBody, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { accordionStepSections } from './sections';
 
-interface AccordionStepAttributes {
+interface StepAttributes {
 	title: string;
 }
 
 interface EditProps {
-	attributes: AccordionStepAttributes;
-	setAttributes: ( attributes: Partial< AccordionStepAttributes > ) => void;
+	attributes: StepAttributes;
+	setAttributes: ( attributes: Partial< StepAttributes > ) => void;
 	clientId: string;
 }
 
@@ -18,7 +17,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	const { title } = attributes;
 	const index = useSelect( ( select ) => select( blockEditorStore ).getBlockIndex( clientId ), [ clientId ] );
 	const position = typeof index === 'number' && index >= 0 ? index + 1 : 1;
-	const blockProps = useBlockProps( { className: 'yaycheckout-accordion-step' } );
+	const blockProps = useBlockProps( { className: 'yaycheckout-step' } );
 
 	return (
 		<>
@@ -32,11 +31,11 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<div className="yaycheckout-accordion-step__header">
-					<span className="yaycheckout-accordion-step__index">{ position }</span>
-					<span className="yaycheckout-accordion-step__title">{ title || __( 'Step', 'yaycheckout' ) }</span>
+				<div className="yaycheckout-step__header">
+					<span className="yaycheckout-step__index">{ position }</span>
+					<span className="yaycheckout-step__title">{ title || __( 'Step', 'yaycheckout' ) }</span>
 				</div>
-				<div className="yaycheckout-accordion-step__body">
+				<div className="yaycheckout-step__body">
 					<InnerBlocks
 						template={ [ [ 'yaycheckout/step-button' ] ] }
 						templateLock={ false }

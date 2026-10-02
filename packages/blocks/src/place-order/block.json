@@ -6,7 +6,7 @@
   "category": "yaycheckout",
   "description": "Submit button for placing the order.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout", "yaycheckout/accordion-step" ],
+  "parent": [ "yaycheckout/checkout", "yaycheckout/step" ],
   "attributes": {
     "buttonText": {
       "type": "string",

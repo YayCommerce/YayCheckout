@@ -6,7 +6,7 @@
   "category": "yaycheckout",
   "description": "Payment method list for classic checkout.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout", "yaycheckout/accordion-step" ],
+  "parent": [ "yaycheckout/checkout", "yaycheckout/step" ],
   "attributes": {
     "label": {
       "type": "string",

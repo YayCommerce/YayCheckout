@@ -2,15 +2,15 @@ import { InnerBlocks, InspectorControls, useBlockProps } from '@wordpress/block-
 import { PanelBody, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
-const STEP = 'yaycheckout/accordion-step';
+const STEP = 'yaycheckout/step';
 
-interface AccordionAttributes {
+interface StepsAttributes {
 	layout: string;
 }
 
 interface EditProps {
-	attributes: AccordionAttributes;
-	setAttributes: ( attributes: Partial< AccordionAttributes > ) => void;
+	attributes: StepsAttributes;
+	setAttributes: ( attributes: Partial< StepsAttributes > ) => void;
 }
 
 /**
@@ -19,7 +19,7 @@ interface EditProps {
  */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { layout } = attributes;
-	const blockProps = useBlockProps( { className: 'yaycheckout-accordion' } );
+	const blockProps = useBlockProps( { className: 'yaycheckout-steps' } );
 
 	return (
 		<>

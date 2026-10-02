@@ -12,10 +12,10 @@ const icon = ( ...paths: string[] ) => (
 );
 
 export const blockIcons: Record< string, JSX.Element > = {
-	'yaycheckout/accordion': icon(
+	'yaycheckout/steps': icon(
 		'M4 4.5h16v3.2H4V4.5Zm0 5.9h16v3.2H4v-3.2Zm0 5.9h16V19.5H4V16.3Z'
 	),
-	'yaycheckout/accordion-step': icon(
+	'yaycheckout/step': icon(
 		'M6 8.2a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4ZM10.2 9.4h8v2h-8v-2Z'
 	),
 	'yaycheckout/step-button': icon(

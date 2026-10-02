@@ -1,12 +1,12 @@
 {
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
-  "name": "yaycheckout/accordion-step",
+  "name": "yaycheckout/step",
   "title": "Step",
   "category": "yaycheckout",
   "description": "One checkout step. Holds the sections of that step.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/accordion" ],
+  "parent": [ "yaycheckout/steps" ],
   "attributes": {
     "title": {
       "type": "string",

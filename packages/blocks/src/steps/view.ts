@@ -1,11 +1,11 @@
 /**
- * Storefront open/close for yaycheckout/accordion.
+ * Storefront open/close for yaycheckout/steps.
  *
  * Continue checks only the open step. The rest of the form is still empty
  * and required, so a form-wide checkValidity() would block step 1.
  */
 
-const STEP = '.yaycheckout-accordion-step';
+const STEP = '.yaycheckout-step';
 const CURRENT = 'current';
 const LOCKED = 'locked';
 const COMPLETE = 'complete';
@@ -13,11 +13,11 @@ const COMPLETE = 'complete';
 type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
 function boot(): void {
-	if ( document.documentElement.hasAttribute( 'data-yaycheckout-accordion-bound' ) ) {
+	if ( document.documentElement.hasAttribute( 'data-yaycheckout-steps-bound' ) ) {
 		return;
 	}
 
-	document.documentElement.setAttribute( 'data-yaycheckout-accordion-bound', '' );
+	document.documentElement.setAttribute( 'data-yaycheckout-steps-bound', '' );
 	document.addEventListener( 'click', onClick );
 	syncStepButtons();
 }
@@ -55,7 +55,7 @@ function onClick( event: MouseEvent ): void {
 
 	const step = target.closest< HTMLElement >( STEP );
 
-	if ( ! step || step.dataset.state !== COMPLETE || target.closest( '.yaycheckout-accordion-step__body' ) ) {
+	if ( ! step || step.dataset.state !== COMPLETE || target.closest( '.yaycheckout-step__body' ) ) {
 		return;
 	}
 
@@ -76,13 +76,13 @@ function advance( step: HTMLElement ): void {
 }
 
 function reopen( step: HTMLElement ): void {
-	const accordion = step.closest( '.yaycheckout-accordion' );
+	const steps = step.closest( '.yaycheckout-steps' );
 
-	if ( ! accordion ) {
+	if ( ! steps ) {
 		return;
 	}
 
-	const blocked = [ ...accordion.querySelectorAll< HTMLElement >( STEP ) ].some(
+	const blocked = [ ...steps.querySelectorAll< HTMLElement >( STEP ) ].some(
 		( other ) => other !== step && other.dataset.state === CURRENT && ! park( other )
 	);
 
@@ -118,13 +118,13 @@ function setState( step: HTMLElement, state: StepState ): void {
 	}
 
 	const done = state === COMPLETE;
-	const summary = step.querySelector< HTMLElement >( '.yaycheckout-accordion-step__summary' );
+	const summary = step.querySelector< HTMLElement >( '.yaycheckout-step__summary' );
 
 	if ( summary ) {
 		summary.hidden = ! done || summary.textContent === '';
 	}
 
-	const edit = step.querySelector< HTMLButtonElement >( '.yaycheckout-accordion-step__edit' );
+	const edit = step.querySelector< HTMLButtonElement >( '.yaycheckout-step__edit' );
 
 	if ( edit ) {
 		edit.hidden = ! done;
@@ -161,7 +161,7 @@ function syncStepButtons(): void {
 }
 
 function writeSummary( step: HTMLElement, line: string ): void {
-	const summary = step.querySelector< HTMLElement >( '.yaycheckout-accordion-step__summary' );
+	const summary = step.querySelector< HTMLElement >( '.yaycheckout-step__summary' );
 
 	if ( summary ) {
 		summary.textContent = line;
@@ -296,9 +296,9 @@ function isRowRequired( control: Element ): boolean {
 }
 
 function message( step: HTMLElement, key: 'requiredMessage' | 'selectMessage' ): string {
-	const accordion = step.closest< HTMLElement >( '.yaycheckout-accordion' );
+	const steps = step.closest< HTMLElement >( '.yaycheckout-steps' );
 
-	return accordion?.dataset[ key ] ?? '';
+	return steps?.dataset[ key ] ?? '';
 }
 
 function summaryText( step: HTMLElement ): string {

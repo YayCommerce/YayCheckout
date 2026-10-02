@@ -1,33 +1,33 @@
-.yaycheckout-accordion {
-	--yaycheckout-accordion-gap: 12px;
+.yaycheckout-steps {
+	--yaycheckout-steps-gap: 12px;
 	display: flex;
 	flex-direction: column;
-	gap: var(--yaycheckout-accordion-gap);
+	gap: var(--yaycheckout-steps-gap);
 }
 
 /* Column is the step list. A nested Grid or Row keeps the layout Gutenberg gave it. */
-.yaycheckout-accordion .block-editor-block-list__layout:not(.is-layout-flex):not(.is-layout-grid) {
+.yaycheckout-steps .block-editor-block-list__layout:not(.is-layout-flex):not(.is-layout-grid) {
 	display: flex;
 	flex-direction: column;
-	gap: var(--yaycheckout-accordion-gap);
+	gap: var(--yaycheckout-steps-gap);
 }
 
-.yaycheckout-accordion .block-editor-block-list__layout > .wp-block {
+.yaycheckout-steps .block-editor-block-list__layout > .wp-block {
 	margin-block: 0;
 }
 
-.yaycheckout-accordion-step {
+.yaycheckout-step {
 	border: 1px solid #e5e7eb;
 	border-radius: 12px;
 	background: #fff;
 	padding: 16px 20px;
 }
 
-.yaycheckout-accordion-step[data-state="current"] {
+.yaycheckout-step[data-state="current"] {
 	border-color: var(--yaycheckout-primary);
 }
 
-.yaycheckout-accordion-step__header {
+.yaycheckout-step__header {
 	display: grid;
 	grid-template-columns: auto 1fr auto;
 	column-gap: 12px;
@@ -35,11 +35,11 @@
 	align-items: center;
 }
 
-.yaycheckout-accordion-step[data-state="complete"] .yaycheckout-accordion-step__header {
+.yaycheckout-step[data-state="complete"] .yaycheckout-step__header {
 	cursor: pointer;
 }
 
-.yaycheckout-accordion-step__index {
+.yaycheckout-step__index {
 	grid-column: 1;
 	grid-row: 1 / span 2;
 	display: inline-flex;
@@ -55,21 +55,21 @@
 	position: relative;
 }
 
-.yaycheckout-accordion-step[data-state="locked"] .yaycheckout-accordion-step__index {
+.yaycheckout-step[data-state="locked"] .yaycheckout-step__index {
 	background: transparent;
 	color: #9ca3af;
 	box-shadow: inset 0 0 0 1.5px #d1d5db;
 }
 
-.yaycheckout-accordion-step[data-state="locked"] .yaycheckout-accordion-step__title {
+.yaycheckout-step[data-state="locked"] .yaycheckout-step__title {
 	color: #6b7280;
 }
 
-.yaycheckout-accordion-step[data-state="complete"] .yaycheckout-accordion-step__index {
+.yaycheckout-step[data-state="complete"] .yaycheckout-step__index {
 	color: transparent;
 }
 
-.yaycheckout-accordion-step[data-state="complete"] .yaycheckout-accordion-step__index::after {
+.yaycheckout-step[data-state="complete"] .yaycheckout-step__index::after {
 	content: "\2713";
 	color: #fff;
 	position: absolute;
@@ -80,13 +80,13 @@
 	font-size: 14px;
 }
 
-.yaycheckout-accordion-step__title {
+.yaycheckout-step__title {
 	grid-column: 2;
 	grid-row: 1;
 	font-weight: 700;
 }
 
-.yaycheckout-accordion-step__summary {
+.yaycheckout-step__summary {
 	grid-column: 2;
 	grid-row: 2;
 	margin: 0;
@@ -94,7 +94,7 @@
 	font-size: 14px;
 }
 
-.yaycheckout-accordion-step__edit {
+.yaycheckout-step__edit {
 	grid-column: 3;
 	grid-row: 1 / span 2;
 	margin: 0;
@@ -106,17 +106,17 @@
 	cursor: pointer;
 }
 
-.yaycheckout-accordion-step__body {
+.yaycheckout-step__body {
 	display: flex;
 	flex-direction: column;
 	margin-top: 16px;
 }
 
-.yaycheckout-accordion-step[data-state="locked"] .yaycheckout-accordion-step__body,
-.yaycheckout-accordion-step[data-state="complete"] .yaycheckout-accordion-step__body {
+.yaycheckout-step[data-state="locked"] .yaycheckout-step__body,
+.yaycheckout-step[data-state="complete"] .yaycheckout-step__body {
 	display: none;
 }
 
-.yaycheckout-accordion[data-layout="single"] .yaycheckout-accordion-step:not([data-state="current"]) {
+.yaycheckout-steps[data-layout="single"] .yaycheckout-step:not([data-state="current"]) {
 	display: none;
 }
