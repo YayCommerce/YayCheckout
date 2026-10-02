@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { ScanStep } from './ScanStep';
 
 const STEPS = [__('Scan', 'yaycheckout'), __('Start from', 'yaycheckout'), __('Brand', 'yaycheckout')];
 
@@ -79,22 +80,19 @@ export function SetupWizard() {
           )}
         </div>
 
-        {/* Step content lands here, one component per step. */}
-        <div className="min-h-80 rounded-sm border border-dashed" />
+        {/* Scan owns its footer: its left slot is progress / Re-run scan, never Back. */}
+        {step === 0 && <ScanStep onContinue={onNext} />}
+        {step > 0 && <div className="min-h-80 rounded-sm border border-dashed" />}
 
-        {finished ? (
+        {step === 0 ? null : finished ? (
           <div className="flex justify-end gap-2">
             <Button onClick={() => setOpen(false)}>{__('Go to Layouts', 'yaycheckout')}</Button>
           </div>
         ) : (
           <div className="flex justify-between gap-2">
-            {step > 0 ? (
-              <Button variant="outline" onClick={() => setStep(step - 1)}>
-                {__('Back', 'yaycheckout')}
-              </Button>
-            ) : (
-              <span />
-            )}
+            <Button variant="outline" onClick={() => setStep(step - 1)}>
+              {__('Back', 'yaycheckout')}
+            </Button>
             <Button onClick={onNext}>
               {step === STEPS.length - 1 ? __('Apply brand', 'yaycheckout') : __('Continue', 'yaycheckout')}
             </Button>
