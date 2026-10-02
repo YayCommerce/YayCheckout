@@ -149,13 +149,7 @@ function canAdvance( step: HTMLElement ): boolean {
 		return false;
 	}
 
-	let sibling = nextStep( step );
-
-	while ( sibling && sibling.dataset.state === COMPLETE ) {
-		sibling = nextStep( sibling );
-	}
-
-	return sibling !== null;
+	return nextStep( step ) !== null;
 }
 
 function syncStepButtons(): void {
@@ -175,13 +169,9 @@ function writeSummary( step: HTMLElement, line: string ): void {
 }
 
 function openNext( step: HTMLElement ): void {
-	let sibling = nextStep( step );
+	const sibling = nextStep( step );
 
-	while ( sibling && sibling.dataset.state === COMPLETE ) {
-		sibling = nextStep( sibling );
-	}
-
-	if ( sibling && sibling.dataset.state === LOCKED ) {
+	if ( sibling ) {
 		setState( sibling, CURRENT );
 	}
 }
