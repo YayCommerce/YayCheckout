@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { Box, Dot, Header, Row } from '@/pages/layouts/new-layout/TemplateThumbnailPrimitives';
+import { Box, Dot, Header, Row } from './TemplateThumbnailPrimitives';
 
 /** One 120×80 layout sketch per catalogue slug, drawn from the v1.1 template designs.
  * Brand colours (terracotta, PayPal yellow) are deliberately flattened to the accent token:

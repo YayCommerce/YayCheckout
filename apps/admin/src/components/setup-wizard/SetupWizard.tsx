@@ -4,6 +4,7 @@ import { __ } from '@wordpress/i18n';
 
 import { markSetupDone } from '@/lib/api/settings.api';
 import { logger } from '@/lib/logger';
+import { isPro } from '@/lib/plan';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,7 +14,9 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { ProTag } from '@/components/pro/ProGate';
 import { ScanStep } from './ScanStep';
+import { StartFromStep } from './StartFromStep';
 
 const STEPS = [__('Scan', 'yaycheckout'), __('Start from', 'yaycheckout'), __('Brand', 'yaycheckout')];
 
@@ -25,6 +28,7 @@ export function SetupWizard() {
   // ponytail: dev-only trigger — opens when arriving from the Plugins screen's Settings link (same URL as the menu, so referrer tells them apart). Swap to `!window.yayCheckoutMeta.checkoutMeta.setupDone` once every step ships.
   const [open, setOpen] = useState(document.referrer.includes('/wp-admin/plugins.php'));
   const [step, setStep] = useState(0);
+  const [templateSlug, setTemplateSlug] = useState<string | null>();
   const finished = step === STEPS.length;
 
   async function markDone() {
@@ -74,17 +78,27 @@ export function SetupWizard() {
               {__('Done', 'yaycheckout')}
             </span>
           ) : (
-            <Button variant="link" size="sm" onClick={onSkip}>
-              {__('Skip setup', 'yaycheckout')}
-            </Button>
+            <div className="flex items-center gap-2">
+              {isPro && <ProTag />}
+              <Button variant="link" size="sm" onClick={onSkip}>
+                {__('Skip setup', 'yaycheckout')}
+              </Button>
+            </div>
           )}
         </div>
 
-        {/* Scan owns its footer: its left slot is progress / Re-run scan, never Back. */}
         {step === 0 && <ScanStep onContinue={onNext} />}
-        {step > 0 && <div className="min-h-80 rounded-sm border border-dashed" />}
+        {step === 1 && (
+          <StartFromStep
+            templateSlug={templateSlug}
+            onTemplateChange={setTemplateSlug}
+            onBack={() => setStep(0)}
+            onContinue={onNext}
+          />
+        )}
+        {step > 1 && <div className="min-h-80 rounded-sm border border-dashed" />}
 
-        {step === 0 ? null : finished ? (
+        {step < 2 ? null : finished ? (
           <div className="flex justify-end gap-2">
             <Button onClick={() => setOpen(false)}>{__('Go to Layouts', 'yaycheckout')}</Button>
           </div>

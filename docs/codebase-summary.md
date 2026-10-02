@@ -107,20 +107,22 @@ src/
       ArchiveModal.tsx      Archive modal (real)
       DeleteModal.tsx       Delete-for-good modal: typed DELETE gate (real)
       LayoutStatusBadge.tsx status + active badge; shared with the Tools layout picker
-      new-layout/       NewLayoutModal, SourceStep, LibraryStep, NameField, TemplateThumbnail + template-thumbnail-sketches (SVG sketch per catalogue slug)
+      new-layout/       NewLayoutModal, SourceStep, LibraryStep (name + `shared/template-picker`), NameField
     design/             Design tokens page (real)
       DesignPage.tsx    form with token groups, preset picker, custom CSS, Save/Reset actions
       components/       TokenGroups (summary + accordion), TokenField, PxInput; PresetsCard (built-in + merchant); ColoursGroup, TypographyGroup, SpacingGroup, ButtonsGroup, InputsGroup, CustomCssGroup; PreviewPane, DesignActions, SavePresetModal (Pro), ResetConfirmModal
     settings/           one form across tabs, Save in the panel footer, unsaved-changes guard
     compatibility/      CompatibilityPage: warning banner, Store / Payment gateways / Plugins touching checkout, Re-scan, catalogue footnote
       compatibility-warnings.ts   report → { blockOnly, unverifiedPlugins }
-      components/       WarningBanner, StoreSection, GatewaysSection (block-only "Why?" expander + vendor request), PluginsSection, StatusBadge
+      components/       WarningBanner, StoreSection, GatewaysSection (block-only "Why?" expander + vendor request), PluginsSection
     tools/              ToolsPage: Export + Import (Pro) or the ExportImportCard teaser (Free), and Reset (both builds)
       components/       ExportCard (download .json), ImportCard (drop/pick a .json, client-side parse + review), ExportImportCard (Free upsell), ResetCard + ResetModal (typed-phrase gate, warns on an active layout), LayoutSelect (searchable, infinite-scroll picker, starts empty)
       import-modal/     ImportModal with StepStrip, SourceStep, DraftStep: creates the draft from the parsed export envelope
   components/
     ui/                 shadcn primitives (kebab-case, CLI-generated)
-    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton; used by multiple pages
+    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton, StatusBadge (gateway status); used by multiple pages
+      template-picker/  TemplatePicker (Free unlocked grid + locked strip / Pro filterable grid), TemplateThumbnail + template-thumbnail-sketches (SVG sketch per catalogue slug); New layout modal and setup wizard
+    setup-wizard/       SetupWizard popup (Scan › Start from › Brand, Skip setup marks `setup_done`), ScanStep, StartFromStep
     layout/             Header, Footer, HeaderMenu (chrome)
     pro/                ProGate, upsell surfaces
     icons/
@@ -183,6 +185,6 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 
 Telemetry is a stored setting with no consumer yet (data is not sent). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots. The Compatibility page has no self-test, report modal or header warning chip yet, and its remote catalogue URL is a placeholder, so every install runs on the bundled list until it is published. The storefront prints design tokens as `--yaycheckout-*` CSS variables, but no block reads them yet.
 
-`Controllers/LayoutTemplateCatalogue` is a fixed list of the 11 v1.1 templates (order matters: Free unlocks the first three), no database; the SPA draws each slug's layout sketch in `new-layout/template-thumbnail-sketches.tsx`, but `create_draft` still seeds the same default markup for every slug — repoint it at real template markup once that exists. The Health row action renders placeholder DOM but has no backend; Preview / Set active / Deactivate / Archive / Restore / Delete are wired to `/preview-link`, `/activate`, `/deactivate`, `/archive`, `/restore` and the delete endpoint; Edit, Publish, Search and pagination are fully functional. `restore()` deliberately does not re-check the Free-plan layout cap that `create()`/`duplicate()` enforce.
+`Controllers/LayoutTemplateCatalogue` is a fixed list of the 11 v1.1 templates (order matters: Free unlocks the first three), no database; the SPA draws each slug's layout sketch in `components/shared/template-picker/template-thumbnail-sketches.tsx`, but `create_draft` still seeds the same default markup for every slug — repoint it at real template markup once that exists. The Health row action renders placeholder DOM but has no backend; Preview / Set active / Deactivate / Archive / Restore / Delete are wired to `/preview-link`, `/activate`, `/deactivate`, `/archive`, `/restore` and the delete endpoint; Edit, Publish, Search and pagination are fully functional. `restore()` deliberately does not re-check the Free-plan layout cap that `create()`/`duplicate()` enforce.
 
 See the end of `system-architecture.md` for the full deferred list.
