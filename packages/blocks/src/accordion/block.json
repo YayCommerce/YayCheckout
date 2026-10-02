@@ -7,6 +7,13 @@
   "description": "Checkout steps on one page. The first step is open; later steps stay closed until Continue.",
   "textdomain": "yaycheckout",
   "parent": [ "yaycheckout/checkout" ],
+  "attributes": {
+    "layout": {
+      "type": "string",
+      "default": "list",
+      "enum": [ "list", "single" ]
+    }
+  },
   "supports": {
     "html": false,
     "reusable": false

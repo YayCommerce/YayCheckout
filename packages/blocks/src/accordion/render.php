@@ -16,9 +16,11 @@ if ( function_exists( 'yaycheckout_accordion_step_index' ) ) {
     yaycheckout_accordion_step_index( true );
 }
 
+$yaycheckout_layout  = isset( $attributes['layout'] ) && 'single' === $attributes['layout'] ? 'single' : 'list';
 $yaycheckout_wrapper = get_block_wrapper_attributes(
     [
         'class'                 => 'yaycheckout-accordion',
+        'data-layout'           => $yaycheckout_layout,
         'data-required-message' => __( 'Please fill out this field.', 'yaycheckout' ),
         'data-select-message'   => __( 'Please choose an option.', 'yaycheckout' ),
     ]

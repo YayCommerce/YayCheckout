@@ -116,3 +116,7 @@
 .yaycheckout-accordion-step[data-state="complete"] .yaycheckout-accordion-step__body {
 	display: none;
 }
+
+.yaycheckout-accordion[data-layout="single"] .yaycheckout-accordion-step:not([data-state="current"]) {
+	display: none;
+}
