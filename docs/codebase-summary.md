@@ -110,7 +110,7 @@ src/
       new-layout/       NewLayoutModal, SourceStep, LibraryStep (name + `shared/template-picker`), NameField
     design/             Design tokens page (real)
       DesignPage.tsx    form with token groups, preset picker, custom CSS, Save/Reset actions
-      components/       TokenGroups (summary + accordion), TokenField, PxInput; PresetsCard (built-in + merchant); ColoursGroup, TypographyGroup, SpacingGroup, ButtonsGroup, InputsGroup, CustomCssGroup; PreviewPane, DesignActions, SavePresetModal (Pro), ResetConfirmModal
+      components/       TokenGroups (summary + accordion), TokenField, PxInput; PresetsCard (built-in + merchant); ColoursGroup, TypographyGroup, SpacingGroup, ButtonsGroup, InputsGroup, CustomCssGroup; DesignActions, SavePresetModal (Pro), ResetConfirmModal (preview: `shared/PreviewPane`)
     settings/           one form across tabs, Save in the panel footer, unsaved-changes guard
     compatibility/      CompatibilityPage: warning banner, Store / Payment gateways / Plugins touching checkout, Re-scan, catalogue footnote
       compatibility-warnings.ts   report → { blockOnly, unverifiedPlugins }
@@ -120,9 +120,9 @@ src/
       import-modal/     ImportModal with StepStrip, SourceStep, DraftStep: creates the draft from the parsed export envelope
   components/
     ui/                 shadcn primitives (kebab-case, CLI-generated)
-    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton, StatusBadge (gateway status); used by multiple pages
+    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton, StatusBadge (gateway status), PreviewPane (live checkout mock from design tokens; `compact` for the wizard); used by multiple pages
       template-picker/  TemplatePicker (Free unlocked grid + locked strip / Pro filterable grid), TemplateThumbnail + template-thumbnail-sketches (SVG sketch per catalogue slug); New layout modal and setup wizard
-    setup-wizard/       SetupWizard popup (Scan › Start from › Brand, Skip setup marks `setup_done`), ScanStep, StartFromStep
+    setup-wizard/       SetupWizard popup (Scan › Start from › Brand, Skip setup marks `setup_done`), ScanStep, StartFromStep, BrandStep (Apply brand saves the design, then creates "Checkout — draft" from the picked template)
     layout/             Header, Footer, HeaderMenu (chrome)
     pro/                ProGate, upsell surfaces
     icons/

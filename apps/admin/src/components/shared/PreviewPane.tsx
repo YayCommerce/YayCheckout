@@ -22,11 +22,13 @@ const SECTION_LABEL_STYLE: CSSProperties = { fontSize: 11, letterSpacing: '0.08e
 const DEFAULT_FONT_STACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
 /**
- * Right column: device switch over a mock of the real checkout layout
- * (contact, shipping, payment, order summary), restyled live from the
- * form's current tokens so every token has visible surface to land on.
+ * Device switch over a mock of the real checkout layout (contact, shipping,
+ * payment, order summary), restyled live from the form's current tokens so
+ * every token has visible surface to land on.
+ *
+ * @param compact Desktop mock only: no device switch, no minimum height (the setup wizard's preview).
  */
-export function PreviewPane() {
+export function PreviewPane({ compact = false }: { compact?: boolean }) {
   const [viewport, setViewport] = useState<Viewport>('desktop');
   const { watch } = useFormContext<DesignForm>();
   const tokens = watch('tokens');
@@ -67,25 +69,28 @@ export function PreviewPane() {
   };
 
   return (
-    <div className="bg-background flex min-w-0 flex-1 flex-col gap-3 rounded-lg border p-4">
-      <div className="flex items-center gap-2">
-        <span className="flex-1 text-sm font-semibold">{__('Preview', 'yaycheckout')}</span>
-        <Segmented size="sm" shape="square" value={viewport} onValueChange={(v) => v && setViewport(v as Viewport)}>
-          <SegmentedItem value="desktop" aria-label={__('Desktop', 'yaycheckout')}>
-            <Monitor />
-          </SegmentedItem>
-          <SegmentedItem value="tablet" aria-label={__('Tablet', 'yaycheckout')}>
-            <Tablet />
-          </SegmentedItem>
-          <SegmentedItem value="mobile" aria-label={__('Mobile', 'yaycheckout')}>
-            <Smartphone />
-          </SegmentedItem>
-        </Segmented>
-      </div>
+    <div className={cn('bg-background flex min-w-0 flex-1 flex-col gap-3', !compact && 'rounded-lg border p-4')}>
+      {!compact && (
+        <div className="flex items-center gap-2">
+          <span className="flex-1 text-sm font-semibold">{__('Preview', 'yaycheckout')}</span>
+          <Segmented size="sm" shape="square" value={viewport} onValueChange={(v) => v && setViewport(v as Viewport)}>
+            <SegmentedItem value="desktop" aria-label={__('Desktop', 'yaycheckout')}>
+              <Monitor />
+            </SegmentedItem>
+            <SegmentedItem value="tablet" aria-label={__('Tablet', 'yaycheckout')}>
+              <Tablet />
+            </SegmentedItem>
+            <SegmentedItem value="mobile" aria-label={__('Mobile', 'yaycheckout')}>
+              <Smartphone />
+            </SegmentedItem>
+          </Segmented>
+        </div>
+      )}
 
       <div
         className={cn(
-          'flex min-h-160 flex-1 justify-center overflow-hidden rounded-lg border',
+          'flex flex-1 justify-center overflow-hidden rounded-lg border',
+          !compact && 'min-h-160',
           viewport !== 'desktop' && 'bg-muted p-4',
         )}
       >

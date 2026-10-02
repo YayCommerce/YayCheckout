@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { ProTag } from '@/components/pro/ProGate';
+import { BrandStep } from './BrandStep';
 import { ScanStep } from './ScanStep';
 import { StartFromStep } from './StartFromStep';
 
@@ -52,7 +53,7 @@ export function SetupWizard() {
   return (
     <Dialog open={open}>
       <DialogContent
-        className="gap-6 p-8 *:data-[slot=dialog-close]:hidden sm:max-w-220"
+        className="max-h-[calc(100dvh-2rem)] gap-6 p-8 *:data-[slot=dialog-close]:hidden sm:max-w-220"
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
         aria-describedby={undefined}
@@ -96,21 +97,16 @@ export function SetupWizard() {
             onContinue={onNext}
           />
         )}
-        {step > 1 && <div className="min-h-80 rounded-sm border border-dashed" />}
-
-        {step < 2 ? null : finished ? (
-          <div className="flex justify-end gap-2">
-            <Button onClick={() => setOpen(false)}>{__('Go to Layouts', 'yaycheckout')}</Button>
-          </div>
-        ) : (
-          <div className="flex justify-between gap-2">
-            <Button variant="outline" onClick={() => setStep(step - 1)}>
-              {__('Back', 'yaycheckout')}
-            </Button>
-            <Button onClick={onNext}>
-              {step === STEPS.length - 1 ? __('Apply brand', 'yaycheckout') : __('Continue', 'yaycheckout')}
-            </Button>
-          </div>
+        {step === 2 && templateSlug && (
+          <BrandStep templateSlug={templateSlug} onBack={() => setStep(1)} onApplied={onNext} />
+        )}
+        {finished && (
+          <>
+            <div className="min-h-80 rounded-sm border border-dashed" />
+            <div className="flex justify-end gap-2">
+              <Button onClick={() => setOpen(false)}>{__('Go to Layouts', 'yaycheckout')}</Button>
+            </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
