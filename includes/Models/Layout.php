@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Models;
 
+use YayCheckout\Enums\ConditionType;
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Helpers\DateHelper;
 
@@ -40,7 +41,12 @@ class Layout {
     /** LayoutStatus value; the wire status as-is. */
     public string $post_status = LayoutStatus::DRAFT;
 
-    /** Pro assignment rules. Unused in 1.x. */
+    /**
+     * Pro assignment rules: groups ORed, conditions inside a group ANDed. Each condition is
+     * { type, operator, value } per ConditionType; [] means none.
+     *
+     * @var array<int, array<int, array{type: string, operator: string, value: mixed}>>
+     */
     public array $rules = [];
 
     /**
@@ -77,6 +83,7 @@ class Layout {
             'size'         => strlen( $this->content ),
             'published_at' => DateHelper::to_iso8601( $this->published_at ),
             'scheduled_at' => DateHelper::to_iso8601( $this->scheduled_at ),
+            'rules'        => $this->rules,
         ];
     }
 
@@ -86,6 +93,86 @@ class Layout {
             $this->to_summary_array(),
             [ 'content' => $this->content ]
         );
+    }
+
+    /**
+     * Validates and normalizes assignment rules: list values de-duplicated.
+     * Strict, not forgiving: an incomplete condition is refused, never stored half-filled.
+     *
+     * @param mixed $input Decoded request body `rules`.
+     * @return array Clean rules, same shape as $rules.
+     * @throws \InvalidArgumentException Naming the first invalid group or condition.
+     */
+    public static function sanitize_rules( $input ): array {
+        if ( ! is_array( $input ) || array_values( $input ) !== $input ) {
+            throw new \InvalidArgumentException( 'Rules must be a list of groups.' );
+        }
+
+        $clean = [];
+
+        foreach ( $input as $group_index => $group ) {
+            if ( ! is_array( $group ) || [] === $group || array_values( $group ) !== $group ) {
+                throw new \InvalidArgumentException( sprintf( 'Group %d must be a non-empty list of conditions.', $group_index + 1 ) );
+            }
+
+            foreach ( $group as $condition_index => $condition ) {
+                $clean[ $group_index ][ $condition_index ] = self::sanitize_condition( $condition, sprintf( 'group %d, condition %d', $group_index + 1, $condition_index + 1 ) );
+            }
+        }
+
+        return $clean;
+    }
+
+    /**
+     * @param mixed  $condition
+     * @param string $where Position for the error message.
+     * @return array{type: string, operator: string, value: mixed}
+     * @throws \InvalidArgumentException When the type, operator or value is invalid.
+     */
+    private static function sanitize_condition( $condition, string $where ): array {
+        $definitions = ConditionType::definitions();
+        $type        = $condition['type'] ?? null;
+
+        if ( ! is_string( $type ) || ! isset( $definitions[ $type ] ) ) {
+            throw new \InvalidArgumentException( "Unknown condition type in $where." );
+        }
+
+        if ( ! in_array( $condition['operator'] ?? null, $definitions[ $type ]['operators'], true ) ) {
+            throw new \InvalidArgumentException( "Invalid operator in $where." );
+        }
+
+        $value = self::sanitize_rule_value( $condition['value'] ?? null, $definitions[ $type ] );
+
+        if ( null === $value ) {
+            throw new \InvalidArgumentException( "Invalid value in $where." );
+        }
+
+        return [
+            'type'     => $type,
+            'operator' => $condition['operator'],
+            'value'    => $value,
+        ];
+    }
+
+    /**
+     * @param mixed $value
+     * @param array $definition One entry of ConditionType::definitions().
+     * @return mixed Normalized value, or null when invalid.
+     */
+    private static function sanitize_rule_value( $value, array $definition ) {
+        switch ( $definition['value'] ) {
+            case ConditionType::VALUE_KEYS:
+                $list = is_array( $value ) ? $value : [];
+                // Role slugs: plain identifiers, so a strict pattern replaces escaping.
+                $invalid = array_filter( $list, static fn( $key ) => ! is_string( $key ) || ! preg_match( '/^[A-Za-z0-9_.-]{1,100}$/', $key ) );
+                // Unique only once all are strings: array_unique then compares as strings, so '10' and '1e1' stay two keys.
+                return [] === $list || [] !== $invalid ? null : array_values( array_unique( $list ) );
+
+            case ConditionType::VALUE_CHOICE:
+                return in_array( $value, $definition['choices'], true ) ? $value : null;
+        }
+
+        return null;
     }
 
     public function is_published(): bool {

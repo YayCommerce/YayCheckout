@@ -6,8 +6,8 @@ import type { DesignPreset } from '@/lib/schema/design.schema';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ProTag } from '@/components/pro/ProGate';
+import { ConfirmPopover } from '@/components/shared/ConfirmPopover';
 
 /** Preset chips (apply / delete) plus "Save current as preset". Free sees the built-ins but cannot use them: the PRO tag says why. */
 export function PresetsCard({
@@ -53,8 +53,9 @@ export function PresetsCard({
                 {preset.name}
               </button>
               {!preset.builtin && (
-                <Popover>
-                  <PopoverTrigger asChild>
+                <ConfirmPopover
+                  align="start"
+                  trigger={
                     <button
                       type="button"
                       aria-label={__('Delete preset', 'yaycheckout')}
@@ -63,36 +64,16 @@ export function PresetsCard({
                     >
                       <X className="size-3" />
                     </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="flex w-auto flex-col gap-3 p-3">
-                    <p className="text-xs">
-                      {sprintf(
-                        /* translators: %s: preset name */
-                        __('Delete preset "%s"?', 'yaycheckout'),
-                        preset.name,
-                      )}
-                    </p>
-                    <div className="flex justify-end gap-2">
-                      <PopoverClose asChild>
-                        <Button type="button" variant="outline" size="sm" className="h-7 px-2.5 text-xs">
-                          {__('Cancel', 'yaycheckout')}
-                        </Button>
-                      </PopoverClose>
-                      <PopoverClose asChild>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="h-7 px-2.5 text-xs"
-                          onClick={() => onDelete(preset.id)}
-                          disabled={deleting}
-                        >
-                          {__('Delete', 'yaycheckout')}
-                        </Button>
-                      </PopoverClose>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                  }
+                  message={sprintf(
+                    /* translators: %s: preset name */
+                    __('Delete preset "%s"?', 'yaycheckout'),
+                    preset.name,
+                  )}
+                  confirmLabel={__('Delete', 'yaycheckout')}
+                  disabled={deleting}
+                  onConfirm={() => onDelete(preset.id)}
+                />
               )}
             </span>
           ))}

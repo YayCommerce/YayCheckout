@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Enums\ConditionType;
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
@@ -67,14 +68,30 @@ class CheckoutPage {
 
         // Before the safe-mode check: safe mode protects shoppers, a preview is the merchant looking.
         if ( null !== $preview_id ) {
-            return ( new LayoutRepository() )->resolve_for_request( $preview_id );
+            return ( new LayoutRepository() )->find( $preview_id );
         }
 
         if ( ! empty( ( new SettingsRepository() )->get()->general['safe_mode'] ) ) {
             return null;
         }
 
-        return ( new LayoutRepository() )->resolve_for_request();
+        // Picked afresh by every request, AJAX and order submit too; why no pin: docs/system-architecture.md, § Storefront "Which layout".
+        return ( new LayoutRepository() )->active( $this->shopper_context() );
+    }
+
+    /**
+     * What assignment conditions test, read once for this request. Keyed by ConditionType.
+     *
+     * @return array{customer_role: string[], login_status: string, device: string}
+     */
+    private function shopper_context(): array {
+        return [
+            ConditionType::CUSTOMER_ROLE => array_values( wp_get_current_user()->roles ),
+            // Not "no roles": a user of another site in the network is logged in with none here.
+            ConditionType::LOGIN_STATUS  => is_user_logged_in() ? ConditionType::LOGGED_IN : ConditionType::GUEST,
+            // ponytail: wp_is_mobile() counts tablets as mobile; a tablet value needs its own detection.
+            ConditionType::DEVICE        => wp_is_mobile() ? ConditionType::MOBILE : ConditionType::DESKTOP,
+        ];
     }
 
     /**

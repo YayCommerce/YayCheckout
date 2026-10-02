@@ -1,13 +1,23 @@
-import { Check } from 'lucide-react';
+import { Check, TriangleAlert } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { __, sprintf } from '@wordpress/i18n';
 
 import type { Layout } from '@/lib/schema/layout.schema';
+import type { RulesImport } from '@/lib/schema/tools.schema';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { SummaryStrip } from './StepStrip';
 
-export function DraftStep({ layout, onClose }: { layout: Layout; onClose: () => void }) {
+export function DraftStep({
+  layout,
+  rulesImport,
+  onClose,
+}: {
+  layout: Layout;
+  rulesImport: RulesImport;
+  onClose: () => void;
+}) {
   const navigate = useNavigate();
 
   const go = (search = '') => {
@@ -39,8 +49,21 @@ export function DraftStep({ layout, onClose }: { layout: Layout; onClose: () => 
         items={[
           [__('Layout', 'yaycheckout'), layout.title],
           [__('Status', 'yaycheckout'), __('Draft', 'yaycheckout')],
+          [__('Assignment rules', 'yaycheckout'), RULES_STATUS_LABELS[rulesImport.status]],
         ]}
       />
+
+      {rulesImport.status === 'dropped' && (
+        <Alert variant="outline" className="border-warning/30 bg-warning/5">
+          <TriangleAlert />
+          <AlertDescription>
+            {__(
+              'The file’s assignment rules could not be read by this version, so the draft has none. Add them again in Assignment.',
+              'yaycheckout',
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <DialogFooter className="items-center border-t pt-4 sm:justify-between">
         <p className="text-muted-foreground text-sm">
@@ -57,3 +80,9 @@ export function DraftStep({ layout, onClose }: { layout: Layout; onClose: () => 
     </>
   );
 }
+
+const RULES_STATUS_LABELS: Record<RulesImport['status'], string> = {
+  imported: __('Imported', 'yaycheckout'),
+  dropped: __('Not imported', 'yaycheckout'),
+  none: __('None in the file', 'yaycheckout'),
+};

@@ -4,6 +4,8 @@ namespace YayCheckout\Pro;
 use YayCheckout\Pro\Controllers\DesignPresetRestController;
 use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Pro\Controllers\LayoutImportRestController;
+use YayCheckout\Pro\Controllers\LayoutRulesRestController;
+use YayCheckout\Pro\Services\AssignmentStoreData;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
@@ -20,6 +22,14 @@ class ProServiceProvider {
         Plan::mark_pro();
 
         add_action( 'rest_api_init', [ $this, 'rest_endpoints' ] );
+        add_filter( 'yaycheckout_localize_admin_data', [ $this, 'admin_data' ] );
+    }
+
+    /** Adds `store`: the roles the assignment picker lists. */
+    public function admin_data( array $data ): array {
+        $data['store'] = AssignmentStoreData::get();
+
+        return $data;
     }
 
     /** Every Pro REST controller, so the Free build simply has no such route. */
@@ -27,5 +37,6 @@ class ProServiceProvider {
         DesignPresetRestController::get_instance();
         LayoutExportRestController::get_instance();
         LayoutImportRestController::get_instance();
+        LayoutRulesRestController::get_instance();
     }
 }

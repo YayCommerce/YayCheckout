@@ -59,15 +59,12 @@ class LayoutImportRestController extends BaseRestController {
         );
     }
 
-    public function permission_callback(): bool {
-        return current_user_can( 'manage_woocommerce' );
-    }
-
     /**
      * The layout an export file holds, without storing it: the editor's Import
-     * replaces its own blocks, so it asks here instead of checking the file itself.
+     * replaces its own blocks, so it asks here instead of checking the file itself. Rules are not
+     * returned; `has_rules` says whether the file holds rules an import would keep.
      *
-     * @return array|\WP_Error { title, content, blocks }
+     * @return array|\WP_Error { title, content, blocks, has_rules }
      */
     public function review_layout( \WP_REST_Request $request ) {
         try {
@@ -77,23 +74,34 @@ class LayoutImportRestController extends BaseRestController {
         }
 
         return [
-            'title'   => $layout['title'],
-            'content' => $layout['content'],
-            'blocks'  => Layout::block_count( $layout['content'] ),
+            'title'     => $layout['title'],
+            'content'   => $layout['content'],
+            'blocks'    => Layout::block_count( $layout['content'] ),
+            // The import's own test: true only for rules an import of this file would keep.
+            'has_rules' => LayoutImportReview::RULES_IMPORTED === LayoutImportReview::rules_from_file( $layout['rules'] )['status'],
         ];
     }
 
     /**
-     * Reviews the file, then inserts the draft. The SPA only reads the envelope, so this is
-     * where a file without a Checkout block is refused; blocks the site lacks pass.
+     * Reviews the file, then inserts the draft with the file's rules. The SPA only reads the envelope, so this is
+     * where a file without a Checkout block is refused; blocks the site lacks pass. Rules never refuse a file:
+     * unreadable ones are dropped; the rest are kept as the file holds them.
      *
-     * @return \WP_REST_Response|\WP_Error
+     * @return \WP_REST_Response|\WP_Error The new draft (Layout::to_array()) plus `rules_import` { status }.
      */
     public function import_layout( \WP_REST_Request $request ) {
         try {
             $layout = LayoutImportReview::from_envelope( (array) $request->get_param( 'file' ) );
+            $rules  = LayoutImportReview::rules_from_file( $layout['rules'] );
+            $draft  = $this->layouts->import( $layout['title'], $layout['content'], $rules['rules'] );
 
-            return new \WP_REST_Response( $this->layouts->import( $layout['title'], $layout['content'] )->to_array(), 201 );
+            return new \WP_REST_Response(
+                array_merge(
+                    $draft->to_array(),
+                    [ 'rules_import' => [ 'status' => $rules['status'] ] ]
+                ),
+                201
+            );
         } catch ( \InvalidArgumentException $e ) {
             return $this->error_invalid_arguments( $e->getMessage() );
         }

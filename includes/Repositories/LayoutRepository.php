@@ -5,6 +5,7 @@ use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Helpers\BlockMarkup;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
+use YayCheckout\Services\LayoutAssignment;
 use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Support\Plan;
 
@@ -37,21 +38,16 @@ class LayoutRepository {
         return in_array( $id, $this->active_ids(), true );
     }
 
-    /** The active layout; the last activated when Pro holds several. set_active() appends, so the end is the most recent choice. */
-    public function active(): ?Layout {
-        $ids = $this->active_ids();
-        $id  = empty( $ids ) ? 0 : (int) end( $ids );
-
-        return $id > 0 ? $this->find( $id ) : null;
-    }
-
     /**
-     * The layout that should render for the current request: the previewed one when the
-     * renderer passes an id, else the active one. Pro assignment rules (Layout::META_RULES)
-     * will be evaluated here before falling back to active().
+     * The active layout for this shopper: the most recently activated whose assignment rules match $context.
+     * Free has no assignment, so its one active layout serves everyone.
+     *
+     * @param array $context Shopper facts; see LayoutAssignment::matches().
      */
-    public function resolve_for_request( ?int $preview_id = null ): ?Layout {
-        return null !== $preview_id ? $this->find( $preview_id ) : $this->active();
+    public function active( array $context ): ?Layout {
+        $layouts = array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
+
+        return Plan::is_pro() ? LayoutAssignment::pick( $layouts, $context ) : ( $layouts[0] ?? null );
     }
 
     /**
@@ -305,7 +301,7 @@ class LayoutRepository {
         return Layout::from_post( $restored, $this->hydrate_meta( get_post_meta( $id ) ), false );
     }
 
-    /** Free replaces the set; Pro moves the id to the end so active() serves it. */
+    /** Free replaces the set; Pro moves the id to the end, the most recent choice. */
     public function set_active( int $id ): void {
         $ids = Plan::is_pro()
             ? array_merge( array_diff( $this->active_ids(), [ $id ] ), [ $id ] )
@@ -326,7 +322,7 @@ class LayoutRepository {
     }
 
     /**
-     * Copies a layout's content into a new draft layout.
+     * Copies a layout's content and assignment rules into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -338,17 +334,18 @@ class LayoutRepository {
         }
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules );
     }
 
     /**
-     * Creates a draft from an export file's title and markup, verbatim.
+     * Creates a draft from an export file's title, markup and assignment rules, verbatim.
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
+     * @param array $rules Already sanitized (Layout::sanitize_rules()); [] for none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    public function import( string $title, string $content ): Layout {
-        return $this->insert_draft( $title, $content );
+    public function import( string $title, string $content, array $rules = [] ): Layout {
+        return $this->insert_draft( $title, $content, $rules );
     }
 
     /**
@@ -385,11 +382,36 @@ class LayoutRepository {
     }
 
     /**
+     * Replaces a layout's assignment rules; [] clears them. Writes meta only, so the layout's
+     * content, status and modified date stay as they are: rules save separately from the design.
+     *
+     * @param mixed $rules Raw rules; see Layout::sanitize_rules().
+     * @return array The rules as stored.
+     * @throws \InvalidArgumentException When the layout is missing or the rules are invalid.
+     */
+    public function set_rules( int $id, $rules ): array {
+        if ( null === $this->find( $id ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        $clean = Layout::sanitize_rules( $rules );
+
+        if ( [] === $clean ) {
+            delete_post_meta( $id, Layout::META_RULES );
+        } else {
+            update_post_meta( $id, Layout::META_RULES, $clean );
+        }
+
+        return $clean;
+    }
+
+    /**
      * The one insert path for a new draft; every way of making a layout funnels through it so the cap and slashing cannot drift.
      *
+     * @param array $rules Already sanitized; written with the post, so the draft never exists without them.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content ): Layout {
+    private function insert_draft( string $title, string $content, array $rules = [] ): Layout {
         // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.
         if ( Plan::layout_limit_reached( $this->count() ) ) {
             throw new \InvalidArgumentException( Plan::layout_limit_message() );
@@ -403,6 +425,7 @@ class LayoutRepository {
                     'post_status'  => LayoutStatus::DRAFT,
                     'post_title'   => $title,
                     'post_content' => $content,
+                    'meta_input'   => [] === $rules ? [] : [ Layout::META_RULES => $rules ],
                 ]
             ),
             true
