@@ -87,7 +87,6 @@ Two places that decide the same thing leave the reader unable to tell which one 
 | Settings keys, types, defaults | `Models\Settings::schema()` | `apps/admin/src/lib/schema/settings.schema.ts` |
 | Design tokens, presets, radius/base-size bounds | `Models\Design::schema()`, `Design::presets()` | `RADIUS_RANGE`, `BASE_SIZE_RANGE` in `apps/admin/src/lib/schema/design.schema.ts` |
 | Input size → px height, fallback behind a picked font | `Renderer\DesignStyles::INPUT_HEIGHTS`, `FONT_FALLBACK` | `PreviewPane.tsx` (the admin Preview draws what the storefront prints) |
-| Which sections are on → body classes | `Renderer\DesignStyles::classes()` | Read by `assets/css/checkout.css` (`yaycheckout-design-*`) |
 | Token diff count, active preset, which groups are on | `apps/admin/src/lib/helpers/design.helper.ts` (`countTokenDiffs`, `activePresetIdFor`, `isGroupOn`) | — |
 | Extra-field Keys, accepted options | `Services\LayoutMarkupReader` (`EXTRA_FIELD_KEY_PATTERN`, `extra_fields()`, `options()`) | `packages/blocks/src/shared/extra-field-keys.ts` |
 | Import file review (format, one layout, Checkout block) | `Pro\Services\LayoutImportReview::from_envelope()` — the editor asks `/layouts/import/review` | `parseExportFile()` in `apps/admin/src/lib/api/tools.api.ts` (early error before upload) |

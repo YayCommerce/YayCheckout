@@ -9,11 +9,10 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Prints the Design page's tokens as `--yaycheckout-*` custom properties on
- * :root, followed by the merchant's custom CSS, and names the sections that
- * are on as body classes; assets/css/checkout.css reads both.
+ * :root, followed by the merchant's custom CSS.
  *
- * A section left at theme default prints nothing and gets no class, so the
- * theme's own WooCommerce styles apply.
+ * A section left at theme default prints nothing, so the theme's own
+ * WooCommerce styles apply.
  *
  * Values are printed unescaped: Design::from_option() only lets through hex
  * colours, enum members and in-range ints. Custom CSS is checked again here,
@@ -32,32 +31,9 @@ class DesignStyles {
     ];
 
     public function enqueue(): void {
-        wp_register_style( ScriptName::STYLE_CHECKOUT, YAYCHECKOUT_PLUGIN_URL . 'assets/css/checkout.css', [], YAYCHECKOUT_VERSION );
+        wp_register_style( ScriptName::STYLE_CHECKOUT, false, [], YAYCHECKOUT_VERSION );
         wp_enqueue_style( ScriptName::STYLE_CHECKOUT );
         wp_add_inline_style( ScriptName::STYLE_CHECKOUT, $this->css( ( new DesignRepository() )->get() ) );
-    }
-
-    /**
-     * Body classes for the sections that are on, plus the style of those that
-     * have one (buttons, inputs); checkout.css scopes every rule to one.
-     *
-     * @return string[]
-     */
-    public static function classes( Design $design ): array {
-        $classes = [];
-
-        foreach ( $design->tokens as $section => $tokens ) {
-            if ( ! $tokens['enabled'] ) {
-                continue;
-            }
-
-            $classes[] = 'yaycheckout-design-' . $section;
-            if ( isset( $tokens['style'] ) ) {
-                $classes[] = 'yaycheckout-design-' . $section . '-' . $tokens['style'];
-            }
-        }
-
-        return $classes;
     }
 
     public function css( Design $design ): string {

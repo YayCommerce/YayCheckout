@@ -114,42 +114,6 @@ class DesignStylesTest extends WP_UnitTestCase {
         );
     }
 
-    public function test_classes_name_only_the_sections_that_are_on(): void {
-        $this->assertSame( [], DesignStyles::classes( Design::from_option( [] ) ) );
-
-        $design = Design::from_option(
-            [
-                'tokens' => [
-                    'colours' => [ 'enabled' => true ],
-                    'buttons' => [
-                        'enabled' => true,
-                        'style'   => 'outline',
-                    ],
-                    'inputs'  => [ 'style' => 'underline' ],
-                ],
-            ]
-        );
-
-        $this->assertSame(
-            [ 'yaycheckout-design-colours', 'yaycheckout-design-buttons', 'yaycheckout-design-buttons-outline' ],
-            DesignStyles::classes( $design )
-        );
-    }
-
-    public function test_body_gets_the_classes_of_the_sections_that_are_on(): void {
-        update_option( Design::OPTION_DESIGN, [ 'tokens' => [ 'colours' => [ 'enabled' => true ] ] ] );
-
-        $this->assertSame( [ 'theme-class', 'yaycheckout-design-colours' ], CheckoutPage::get_instance()->body_class( [ 'theme-class' ] ) );
-    }
-
-    public function test_taken_over_checkout_enqueues_the_stylesheet(): void {
-        LayoutFactory::serve( LayoutFactory::checkout_markup() );
-
-        CheckoutPage::get_instance()->enqueue_scripts();
-
-        $this->assertStringEndsWith( 'assets/css/checkout.css', wp_styles()->registered[ ScriptName::STYLE_CHECKOUT ]->src );
-    }
-
     private function css( array $tokens ): string {
         return ( new DesignStyles() )->css( Design::from_option( [ 'tokens' => $tokens ] ) );
     }
