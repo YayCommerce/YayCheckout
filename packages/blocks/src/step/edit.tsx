@@ -38,7 +38,6 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 				</div>
 				<div className="yaycheckout-accordion-step__body">
 					<InnerBlocks
-						allowedBlocks={ accordionStepSections }
 						template={ [ [ 'yaycheckout/step-button' ] ] }
 						templateLock={ false }
 					/>
