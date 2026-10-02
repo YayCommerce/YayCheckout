@@ -285,7 +285,7 @@ class Design {
                 'id'      => $preset['id'],
                 'name'    => $preset['name'],
                 'builtin' => false,
-                'tokens'  => self::project( $preset['tokens'] ?? null ),
+                'tokens'  => self::project( self::with_enabled_flags( $preset['tokens'] ?? null ) ),
             ];
         }
 
@@ -403,6 +403,29 @@ class Design {
         }
 
         return $clean;
+    }
+
+    /**
+     * Gives each section of a preset saved before `enabled` existed its flag:
+     * on, since every token applied then, except typography, which followed `inherit`.
+     *
+     * @param mixed $tokens Stored preset tokens.
+     * @return mixed
+     */
+    private static function with_enabled_flags( $tokens ) {
+        if ( ! is_array( $tokens ) ) {
+            return $tokens;
+        }
+
+        foreach ( $tokens as $section => $values ) {
+            if ( ! is_array( $values ) || array_key_exists( 'enabled', $values ) ) {
+                continue;
+            }
+
+            $tokens[ $section ]['enabled'] = 'typography' === $section ? false === ( $values['inherit'] ?? true ) : true;
+        }
+
+        return $tokens;
     }
 
     private static function is_id( $id ): bool {

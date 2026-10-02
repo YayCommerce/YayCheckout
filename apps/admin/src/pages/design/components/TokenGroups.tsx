@@ -89,7 +89,9 @@ export function TokenGroups() {
     <Accordion
       type="multiple"
       value={openIds}
-      onValueChange={(open) => setFolded(GROUPS.map(({ id }) => id).filter((id) => isGroupOn(tokens, id) && !open.includes(id)))}
+      onValueChange={(open) =>
+        setFolded(GROUPS.map(({ id }) => id).filter((id) => isGroupOn(tokens, id) && !open.includes(id)))
+      }
       className="flex flex-col gap-3"
     >
       {GROUPS.map(({ id, label, body: Body, summary }) => {
