@@ -38,8 +38,8 @@ class DesignStyles {
     }
 
     /**
-     * Body classes for the sections that are on, plus the button and input
-     * style when that section is on; checkout.css scopes every rule to one.
+     * Body classes for the sections that are on, plus the style of those that
+     * have one (buttons, inputs); checkout.css scopes every rule to one.
      *
      * @return string[]
      */
@@ -47,14 +47,13 @@ class DesignStyles {
         $classes = [];
 
         foreach ( $design->tokens as $section => $tokens ) {
-            if ( $tokens['enabled'] ) {
-                $classes[] = 'yaycheckout-design-' . $section;
+            if ( ! $tokens['enabled'] ) {
+                continue;
             }
-        }
 
-        foreach ( [ 'buttons', 'inputs' ] as $section ) {
-            if ( $design->tokens[ $section ]['enabled'] ) {
-                $classes[] = 'yaycheckout-design-' . $section . '-' . $design->tokens[ $section ]['style'];
+            $classes[] = 'yaycheckout-design-' . $section;
+            if ( isset( $tokens['style'] ) ) {
+                $classes[] = 'yaycheckout-design-' . $section . '-' . $tokens['style'];
             }
         }
 

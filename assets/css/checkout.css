@@ -16,7 +16,7 @@
 	background-color: var(--yaycheckout-color-background);
 }
 
-.yaycheckout-design-colours .yaycheckout-checkout :is(h1, h2, h3, h4, label) {
+.yaycheckout-design-colours .yaycheckout-checkout :is(h1, h2, h3, h4, label, th) {
 	color: inherit;
 }
 
@@ -31,23 +31,22 @@
 	border-color: var(--yaycheckout-color-border);
 }
 
-/* selectWoo colours its text itself (#444 / #999), so it would not follow the box above. */
-.yaycheckout-design-colours .yaycheckout-checkout .select2-selection :is(.select2-selection__rendered, .select2-selection__placeholder) {
+/* selectWoo and themes colour this text themselves (#444, Brandy's #272829 placeholder), so it would not follow the box above. */
+.yaycheckout-design-colours .yaycheckout-checkout .select2-selection .select2-selection__rendered {
 	color: inherit;
 }
 
-.yaycheckout-design-colours .yaycheckout-checkout .select2-selection .select2-selection__placeholder {
+.yaycheckout-design-colours .yaycheckout-checkout .select2-selection .select2-selection__placeholder,
+.yaycheckout-design-colours .yaycheckout-checkout .form-row :is(.input-text, textarea)::placeholder {
+	color: inherit;
 	opacity: 0.6;
 }
 
 /* Appended to <body>, outside the checkout; --default is the theme selectWoo uses, so other plugins' dropdowns are left alone. */
-.yaycheckout-design-colours .select2-container--default .select2-dropdown {
+.yaycheckout-design-colours .select2-container--default .select2-dropdown,
+.yaycheckout-design-colours .select2-container--default .select2-dropdown .select2-search--dropdown {
 	color: var(--yaycheckout-color-text);
 	background-color: var(--yaycheckout-color-background);
-	border-color: var(--yaycheckout-color-border);
-}
-
-.yaycheckout-design-colours .select2-container--default .select2-dropdown .select2-search--dropdown {
 	border-color: var(--yaycheckout-color-border);
 }
 
@@ -76,7 +75,7 @@
 	outline-color: var(--yaycheckout-color-primary);
 }
 
-.yaycheckout-design-colours .yaycheckout-checkout :is(.shop_table, .shop_table :is(th, td), #payment) {
+.yaycheckout-design-colours .yaycheckout-checkout :is(.shop_table, .shop_table :is(th, td), #payment, #payment :is(ul.payment_methods, li.wc_payment_method, div.payment_box)) {
 	border-color: var(--yaycheckout-color-border);
 }
 
@@ -99,11 +98,13 @@
 	font-size: var(--yaycheckout-font-size-base);
 }
 
-.yaycheckout-design-typography .yaycheckout-checkout :is(h1, h2, h3, h4, label, input, select, textarea, button, .select2-selection) {
+.yaycheckout-design-typography .yaycheckout-checkout :is(h1, h2, h3, h4, label, input, select, textarea, button, .select2-selection, .select2-selection__rendered) {
 	font-family: inherit;
 }
 
-.yaycheckout-design-typography .yaycheckout-checkout :is(label, input, select, textarea, button, .select2-selection, .shop_table) {
+/* .form-row outranks WooCommerce's block-theme sheet, which sets fields to the theme's small size. */
+.yaycheckout-design-typography .yaycheckout-checkout :is(label, button, .select2-selection, .shop_table),
+.yaycheckout-design-typography .yaycheckout-checkout .form-row :is(input, select, textarea, .select2-container, .select2-selection__rendered) {
 	font-size: inherit;
 }
 
@@ -144,7 +145,9 @@
 .yaycheckout-design-inputs .yaycheckout-checkout .form-row :is(input.input-text, select),
 .yaycheckout-design-inputs .yaycheckout-checkout .select2-selection--single {
 	box-sizing: border-box;
+	/* min-height too: themes floor it (Brandy's select2 at 44px), which would beat a smaller height. */
 	height: var(--yaycheckout-input-height);
+	min-height: var(--yaycheckout-input-height);
 	border-radius: var(--yaycheckout-input-radius);
 }
 
