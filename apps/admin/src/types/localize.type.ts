@@ -28,4 +28,12 @@ export type AdminData = {
   settings: SettingsResponseWire;
   integrations: IntegrationWire[];
   design: DesignResponseWire;
+  /** Pro only (AssignmentStoreData); Free has no Assignment drawer. */
+  store?: StoreData;
+};
+
+/** Lists read from WP; AssignmentStoreData::get(). */
+export type StoreData = {
+  /** Role slug => translated name, every registered role. */
+  roles: Record<string, string>;
 };

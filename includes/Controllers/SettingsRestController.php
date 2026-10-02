@@ -46,10 +46,6 @@ class SettingsRestController extends BaseRestController {
         );
     }
 
-    public function permission_callback(): bool {
-        return current_user_can( 'manage_woocommerce' );
-    }
-
     public function get_settings( \WP_REST_Request $request ) {
         return $this->settings->get()->to_array();
     }

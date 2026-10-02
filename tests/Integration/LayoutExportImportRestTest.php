@@ -6,7 +6,7 @@ use WP_UnitTestCase;
 use YayCheckout\Models\Layout;
 use YayCheckout\Tests\Support\LayoutFactory;
 
-/** Pins the export file's shape and name, that it re-imports as a draft, and which files import refuses. */
+/** Pins the export file's shape (rules included) and name, that it re-imports as a draft, and which files import refuses. */
 class LayoutExportImportRestTest extends WP_UnitTestCase {
 
     private const MARKUP = '<!-- wp:group --><div class="wp-block-group"><!-- wp:yaycheckout/checkout /--></div><!-- /wp:group -->';
@@ -45,14 +45,24 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
         ];
     }
 
-    public function test_export_carries_title_and_markup_only_and_names_the_file(): void {
-        $id = LayoutFactory::create_draft(
+    public function test_export_carries_title_markup_and_rules_and_names_the_file(): void {
+        $id    = LayoutFactory::create_draft(
             [
                 'post_title'   => 'B2B Checkout ✨',
                 'post_status'  => 'publish',
                 'post_content' => self::MARKUP,
             ]
         );
+        $rules = [
+            [
+                [
+                    'type'     => 'customer_role',
+                    'operator' => 'in',
+                    'value'    => [ 'wholesale' ],
+                ],
+            ],
+        ];
+        update_post_meta( $id, Layout::META_RULES, $rules );
 
         $response = $this->export( $id );
         $data     = $response->get_data();
@@ -64,6 +74,7 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
                 [
                     'title'   => 'B2B Checkout ✨',
                     'content' => self::MARKUP,
+                    'rules'   => $rules,
                 ],
             ],
             $data['layouts']
@@ -90,6 +101,71 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
         $this->assertNotSame( $id, $created['id'] );
         $this->assertSame( 'draft', $created['status'] );
         $this->assertSame( self::MARKUP, get_post( $created['id'] )->post_content );
+    }
+
+    /** Stored as the file holds them, even values this store lacks: the merchant edits those in Assignment. */
+    public function test_import_keeps_the_rules_an_export_carries(): void {
+        $id    = LayoutFactory::create_draft( [ 'post_content' => self::MARKUP ] );
+        $rules = [
+            [
+                [
+                    'type'     => 'customer_role',
+                    'operator' => 'in',
+                    'value'    => [ 'wholesale' ],
+                ],
+                [
+                    'type'     => 'login_status',
+                    'operator' => 'is',
+                    'value'    => 'logged_in',
+                ],
+            ],
+        ];
+        update_post_meta( $id, Layout::META_RULES, $rules );
+
+        $created = $this->import( $this->export( $id )->get_data() )->get_data();
+
+        $this->assertSame( $rules, get_post_meta( $created['id'], Layout::META_RULES, true ) );
+        $this->assertSame( 'imported', $created['rules_import']['status'] );
+    }
+
+    public function test_import_drops_rules_it_cannot_read_but_still_creates_the_draft(): void {
+        $file = $this->envelope(
+            [
+                [
+                    'title'   => 'Newer plugin',
+                    'content' => self::MARKUP,
+                    'rules'   => [
+                        [
+                            [
+                                'type'     => 'weather',
+                                'operator' => 'is',
+                                'value'    => 'sunny',
+                            ],
+                        ],
+                    ],
+                ],
+            ]
+        );
+
+        $response = $this->import( $file );
+        $created  = $response->get_data();
+
+        $this->assertSame( 201, $response->get_status() );
+        $this->assertSame( 'dropped', $created['rules_import']['status'] );
+        $this->assertFalse( metadata_exists( 'post', $created['id'], Layout::META_RULES ) );
+    }
+
+    public function test_import_of_a_file_without_rules_reports_none(): void {
+        $file = $this->envelope(
+            [
+                [
+                    'title'   => 'Old export',
+                    'content' => self::MARKUP,
+                ],
+            ]
+        );
+
+        $this->assertSame( 'none', $this->import( $file )->get_data()['rules_import']['status'] );
     }
 
     /** @dataProvider refused_files */
@@ -120,13 +196,60 @@ class LayoutExportImportRestTest extends WP_UnitTestCase {
         $this->assertSame( 200, $response->get_status() );
         $this->assertSame(
             [
-                'title'   => 'Imported',
-                'content' => self::MARKUP,
-                'blocks'  => 1,
+                'title'     => 'Imported',
+                'content'   => self::MARKUP,
+                'blocks'    => 1,
+                'has_rules' => false,
             ],
             $response->get_data()
         );
         $this->assertSame( $before, wp_count_posts( Layout::POST_TYPE )->draft );
+    }
+
+    /** The editor imports content only; has_rules lets it tell the merchant the file's rules stay behind. */
+    public function test_review_says_when_the_file_carries_rules(): void {
+        $file = $this->envelope(
+            [
+                [
+                    'title'   => 'With rules',
+                    'content' => self::MARKUP,
+                    'rules'   => [
+                        [
+                            [
+                                'type'     => 'device',
+                                'operator' => 'is',
+                                'value'    => 'mobile',
+                            ],
+                        ],
+                    ],
+                ],
+            ]
+        );
+
+        $this->assertTrue( $this->review( $file )->get_data()['has_rules'] );
+    }
+
+    /** Rules that import would drop do not count: has_rules sends the merchant to Tools → Import for them. */
+    public function test_review_does_not_count_rules_import_would_drop(): void {
+        $file = $this->envelope(
+            [
+                [
+                    'title'   => 'Newer plugin',
+                    'content' => self::MARKUP,
+                    'rules'   => [
+                        [
+                            [
+                                'type'     => 'weather',
+                                'operator' => 'is',
+                                'value'    => 'sunny',
+                            ],
+                        ],
+                    ],
+                ],
+            ]
+        );
+
+        $this->assertFalse( $this->review( $file )->get_data()['has_rules'] );
     }
 
     /** @dataProvider refused_files */

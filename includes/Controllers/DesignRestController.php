@@ -35,10 +35,6 @@ class DesignRestController extends BaseRestController {
         );
     }
 
-    public function permission_callback(): bool {
-        return current_user_can( 'manage_woocommerce' );
-    }
-
     public function get_design( \WP_REST_Request $request ) {
         return $this->design->get()->to_array();
     }

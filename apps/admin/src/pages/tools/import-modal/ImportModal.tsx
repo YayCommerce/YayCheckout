@@ -6,8 +6,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { reviewExportFile } from '@/lib/api/tools.api';
 import { getErrorMsg } from '@/lib/helpers/response.helper';
 import { IMPORT_LAYOUT_MUTATION_KEY, useImportLayoutMutation } from '@/lib/queries/tools.queries';
-import type { Layout } from '@/lib/schema/layout.schema';
-import type { LayoutExportEnvelope } from '@/lib/schema/tools.schema';
+import type { ImportResult, LayoutExportEnvelope } from '@/lib/schema/tools.schema';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DraftStep } from './DraftStep';
 import { SourceStep } from './SourceStep';
@@ -40,7 +39,7 @@ export function ImportModal({
 
 function ImportFlow({ envelope, onClose }: { envelope: LayoutExportEnvelope; onClose: () => void }) {
   const [step, setStep] = useState<ImportStep>('source');
-  const [created, setCreated] = useState<Layout | null>(null);
+  const [created, setCreated] = useState<ImportResult | null>(null);
   const [error, setError] = useState('');
   const importMutation = useImportLayoutMutation();
 
@@ -49,14 +48,14 @@ function ImportFlow({ envelope, onClose }: { envelope: LayoutExportEnvelope; onC
     setError('');
     importMutation.mutate(envelope, {
       onError: async (reason) => setError(await getErrorMsg(reason)),
-      onSuccess: (layout) => {
-        setCreated(layout);
+      onSuccess: (result) => {
+        setCreated(result);
         setStep('draft');
         toast.success(
           sprintf(
             /* translators: %s: layout title */
             __('Draft "%s" created.', 'yaycheckout'),
-            layout.title,
+            result.layout.title,
           ),
         );
       },
@@ -88,7 +87,9 @@ function ImportFlow({ envelope, onClose }: { envelope: LayoutExportEnvelope; onC
           onImport={createDraft}
         />
       )}
-      {step === 'draft' && created && <DraftStep layout={created} onClose={onClose} />}
+      {step === 'draft' && created && (
+        <DraftStep layout={created.layout} rulesImport={created.rulesImport} onClose={onClose} />
+      )}
     </>
   );
 }

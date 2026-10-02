@@ -41,10 +41,6 @@ class DesignPresetRestController extends BaseRestController {
         );
     }
 
-    public function permission_callback(): bool {
-        return current_user_can( 'manage_woocommerce' );
-    }
-
     /** Body: { name, tokens }. */
     public function add_preset( \WP_REST_Request $request ) {
         $input = $request->get_json_params();

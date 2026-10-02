@@ -8,7 +8,7 @@ Run `composer lint` (and `composer lint:fix` for the auto-fixable subset).
 
 ```
 includes/
-  Enums/        constants classes: status enum. Zero WP calls.
+  Enums/        constants classes: status enum, condition types for assignment rules. Zero WP calls.
   PostTypes/    register_post_type only — caps, template, labels. No logic.
   Models/       dumb entities. Typed props, from_post()/to_array(). Zero WP calls.
   Repositories/ ALL get_post/update_post_meta/get_option. Returns Models. Owns invariants.
@@ -82,6 +82,7 @@ Two places that decide the same thing leave the reader unable to tell which one 
 
 | Rule | Owner | Allowed mirrors |
 |---|---|---|
+| Capability for layouts and every REST route | `LayoutPostType::CAPABILITY` | — |
 | Meta keys, option names, post type | Constants on the owning class (`Layout::OPTION_ACTIVE`, `Layout::POST_TYPE`, …) | `uninstall.php` literals (no autoloader); the blocks bundle reads `postType` from `window.yayCheckoutBlocks` (`BlockRegistry`) |
 | Settings keys, types, defaults | `Models\Settings::schema()` | `apps/admin/src/lib/schema/settings.schema.ts` |
 | Design tokens, presets, radius/base-size bounds | `Models\Design::schema()`, `Design::presets()` | `RADIUS_RANGE`, `BASE_SIZE_RANGE` in `apps/admin/src/lib/schema/design.schema.ts` |
@@ -91,6 +92,10 @@ Two places that decide the same thing leave the reader unable to tell which one 
 | Extra-field Keys, accepted options | `Services\LayoutMarkupReader` (`EXTRA_FIELD_KEY_PATTERN`, `extra_fields()`, `options()`) | `packages/blocks/src/shared/extra-field-keys.ts` |
 | Import file review (format, one layout, Checkout block) | `Pro\Services\LayoutImportReview::from_envelope()` — the editor asks `/layouts/import/review` | `parseExportFile()` in `apps/admin/src/lib/api/tools.api.ts` (early error before upload) |
 | Block count of a layout | `Layout::block_count()` | `reviewExportFile()` in `apps/admin/src/lib/api/tools.api.ts` |
+| Assignment condition types, operators, value kind, single-choice values (devices, login statuses) | `Enums\ConditionType::definitions()` | `apps/admin/src/pages/layouts/assignment/condition-types.ts` (the drawer needs them to render pickers and to hold a save until every condition has a value) |
+| Assignment matching (which active layout serves the shopper) | `Services\LayoutAssignment::pick()`, called by `LayoutRepository::active()` | — |
+| Assignment rules readable on import | `Pro\Services\LayoutImportReview::rules_from_file()` (via `Layout::sanitize_rules()`) | `reviewExportFile()` in `apps/admin/src/lib/api/tools.api.ts` (labels a file whose rules are not groups of conditions "Unreadable" before upload) |
+| Rules import status (`imported` / `dropped` / `none`) | `Pro\Services\LayoutImportReview::RULES_*` | `importResponseWireSchema` in `apps/admin/src/lib/schema/tools.schema.ts` (the wire enum) |
 | Upgrade link | `YAYCHECKOUT_UPGRADE_URL` (`yaycheckout.php`) | — (reaches the SPA via `yayCheckoutMeta`, the blocks via `window.yayCheckoutBlocks`) |
 | Export file download (name, save, `.json` check) | `packages/blocks/src/shared/export-file.ts` | — (the SPA imports it via `@blocks-shared`) |
 | Publish rules | `LayoutMarkupReader::publish_error()` — called, never re-checked | `packages/blocks/src/checkout/publish-guard.ts` |
@@ -99,7 +104,7 @@ Two places that decide the same thing leave the reader unable to tell which one 
 | REST wire shapes | PHP `to_array()` | `*WireSchema` in `apps/admin/src/lib/schema/` |
 | Cross-cutting rationale | `docs/system-architecture.md` | a code comment of one or two lines plus a pointer |
 
-A mirror exists only where the language boundary forces one; it names its owner in a comment and must agree with it. Adding a mirror means adding it to this table with the reason. `/source-of-truth-check` reads this table to flag copies in a diff.
+A mirror exists only where the language boundary forces one; it names its owner in a comment and must agree with it. Adding a mirror means adding it to this table with the reason. `/yay:code-corrector` reads this table to flag copies in a diff.
 
 ## REST controllers
 

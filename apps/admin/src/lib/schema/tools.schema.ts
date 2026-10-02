@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { layoutWireSchema, type Layout } from '@/lib/schema/layout.schema';
+
 // Wire schema: the PHP shape of GET /layouts/{id}/export, exactly. Only lib/api/tools.api.ts reads it.
 
 /** Mirrors Layout::EXPORT_FORMAT in PHP. */
@@ -15,6 +17,8 @@ export const layoutExportWireSchema = z
         .object({
           title: z.string(),
           content: z.string(),
+          // Passed through unchecked: PHP drops rules it cannot read and still imports the layout, so they never refuse a file here.
+          rules: z.unknown().optional(),
         })
         .strict(),
     ),
@@ -35,4 +39,23 @@ export type LayoutExportEnvelope = z.infer<typeof layoutExportWireSchema>;
 export interface ImportReview {
   title: string;
   blocks: number;
+  /** The file's assignment rules; groups 0 when it has none, null when they are not groups of conditions. */
+  ruleCounts: { groups: number; conditions: number } | null;
+}
+
+/** POST /layouts/import: the new draft (Layout::to_array()) plus what became of the file's rules. */
+export const importResponseWireSchema = layoutWireSchema.extend({
+  rules_import: z
+    .object({
+      /** 'dropped': this version could not read them, so the draft has none. */
+      status: z.enum(['imported', 'dropped', 'none']),
+    })
+    .strict(),
+});
+
+export type RulesImport = z.infer<typeof importResponseWireSchema>['rules_import'];
+
+export interface ImportResult {
+  layout: Layout;
+  rulesImport: RulesImport;
 }

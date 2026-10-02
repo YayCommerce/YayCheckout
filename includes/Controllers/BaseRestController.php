@@ -2,6 +2,7 @@
 namespace YayCheckout\Controllers;
 
 use YayCheckout\Helpers\Logger;
+use YayCheckout\PostTypes\LayoutPostType;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -23,6 +24,26 @@ abstract class BaseRestController {
 
     protected function error_invalid_arguments( $message = 'Invalid Arguments.' ) {
         return new \WP_Error( 'invalid_arguments', $message, [ 'status' => 400 ] );
+    }
+
+    /** Every route requires LayoutPostType::CAPABILITY. */
+    public function permission_callback(): bool {
+        return current_user_can( LayoutPostType::CAPABILITY );
+    }
+
+    /** Route args for an `(?P<id>\d+)` path segment. */
+    protected function id_args(): array {
+        return [
+            'id' => [
+                'required'          => true,
+                'type'              => 'integer',
+                'sanitize_callback' => 'absint',
+                // Not bare 'is_numeric': REST passes three args and an internal function throws.
+                'validate_callback' => static function ( $value ) {
+                    return is_numeric( $value );
+                },
+            ],
+        ];
     }
 
     /**
