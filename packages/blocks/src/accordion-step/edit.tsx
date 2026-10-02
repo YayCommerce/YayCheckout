@@ -23,7 +23,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Accordion step', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Step', 'yaycheckout' ) }>
 					<TextControl
 						label={ __( 'Title', 'yaycheckout' ) }
 						value={ title }

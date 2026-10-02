@@ -24,7 +24,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Accordion', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Steps', 'yaycheckout' ) }>
 					<SelectControl
 						label={ __( 'Layout', 'yaycheckout' ) }
 						value={ layout || 'list' }
