@@ -41,6 +41,18 @@ function onClick( event: MouseEvent ): void {
 		return;
 	}
 
+	const backButton = target.closest< HTMLButtonElement >( '.yaycheckout-back-button' );
+
+	if ( backButton ) {
+		event.preventDefault();
+		const step = stepForButton( backButton );
+
+		if ( step && step.dataset.state === CURRENT ) {
+			retreat( step );
+		}
+		return;
+	}
+
 	const step = target.closest< HTMLElement >( STEP );
 
 	if ( ! step || step.dataset.state !== COMPLETE || target.closest( '.yaycheckout-accordion-step__body' ) ) {
@@ -174,8 +186,31 @@ function openNext( step: HTMLElement ): void {
 	}
 }
 
+function retreat( step: HTMLElement ): void {
+	const previous = previousStep( step );
+
+	if ( ! previous ) {
+		return;
+	}
+
+	// Back leaves the open step without re-checking it. Continue is what checks.
+	if ( step.dataset.completed === 'true' ) {
+		setState( step, COMPLETE );
+	} else {
+		setState( step, LOCKED );
+	}
+
+	setState( previous, CURRENT );
+}
+
 function nextStep( step: HTMLElement ): HTMLElement | null {
 	const sibling = step.nextElementSibling;
+
+	return sibling instanceof HTMLElement && sibling.matches( STEP ) ? sibling : null;
+}
+
+function previousStep( step: HTMLElement ): HTMLElement | null {
+	const sibling = step.previousElementSibling;
 
 	return sibling instanceof HTMLElement && sibling.matches( STEP ) ? sibling : null;
 }
