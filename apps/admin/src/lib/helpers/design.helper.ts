@@ -16,6 +16,11 @@ export function countTokenDiffs(a: DesignTokens, b: DesignTokens, section?: Toke
   }, 0);
 }
 
+/** Whether a Design page group is on; Custom CSS has no switch, so it always is. */
+export function isGroupOn(tokens: DesignTokens, id: TokenSection | 'customCss'): boolean {
+  return 'customCss' === id || tokens[id].enabled;
+}
+
 /** A preset counts as applied only while the tokens still match it; a hand edit silently leaves it. */
 export function activePresetIdFor(
   presets: DesignPreset[],

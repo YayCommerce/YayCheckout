@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { countTokenDiffs } from '@/lib/helpers/design.helper';
+import { countTokenDiffs, isGroupOn } from '@/lib/helpers/design.helper';
 import { useDesignQuery } from '@/lib/queries/design.queries';
 import { FONT_FAMILIES, type DesignForm, type DesignTokens, type TokenSection } from '@/lib/schema/design.schema';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -83,27 +83,26 @@ export function TokenGroups() {
   const customCss = useWatch({ control, name: 'customCss' });
   // Groups folded by hand; every other on group is open, so a group a preset turns on opens too.
   const [folded, setFolded] = useState<string[]>(['customCss']);
-  const isOn = (id: (typeof GROUPS)[number]['id']) => 'customCss' === id || tokens[id].enabled;
-  const openIds = GROUPS.map(({ id }) => id).filter((id) => isOn(id) && !folded.includes(id));
+  const openIds = GROUPS.map(({ id }) => id).filter((id) => isGroupOn(tokens, id) && !folded.includes(id));
 
   return (
     <Accordion
       type="multiple"
       value={openIds}
-      onValueChange={(open) => setFolded(GROUPS.map(({ id }) => id).filter((id) => isOn(id) && !open.includes(id)))}
+      onValueChange={(open) => setFolded(GROUPS.map(({ id }) => id).filter((id) => isGroupOn(tokens, id) && !open.includes(id)))}
       className="flex flex-col gap-3"
     >
       {GROUPS.map(({ id, label, body: Body, summary }) => {
-        const changed = 'customCss' === id || !tokens[id].enabled ? 0 : countTokenDiffs(tokens, data.defaultTokens, id);
+        const changed = 'customCss' === id ? 0 : countTokenDiffs(tokens, data.defaultTokens, id);
 
         return (
-          <AccordionItem key={id} value={id} disabled={!isOn(id)}>
+          <AccordionItem key={id} value={id} disabled={!isGroupOn(tokens, id)}>
             {/* The switch sits beside the trigger, not in it: a button inside a button is invalid HTML. */}
             <div className="flex items-center [&>h3]:flex-1">
               <AccordionTrigger className="disabled:cursor-default disabled:opacity-100 [&>svg]:hidden">
                 <span className="flex-1">{label}</span>
                 <span className="text-muted-foreground text-xs font-normal">
-                  {isOn(id) ? summary(tokens, customCss) : __('Theme default', 'yaycheckout')}
+                  {isGroupOn(tokens, id) ? summary(tokens, customCss) : __('Theme default', 'yaycheckout')}
                 </span>
                 {changed > 0 ? (
                   <Badge variant="outline" className="text-xs">

@@ -3,6 +3,7 @@ import { Monitor, Smartphone, Tablet } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { __, sprintf } from '@wordpress/i18n';
 
+import { isGroupOn } from '@/lib/helpers/design.helper';
 import { FONT_FAMILIES, type DesignForm } from '@/lib/schema/design.schema';
 import { cn } from '@/lib/utils';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
@@ -41,10 +42,10 @@ export function PreviewPane() {
   const customCss = watch('customCss');
   const { typography, spacing, buttons, inputs } = tokens;
   const colours = tokens.colours.enabled ? tokens.colours : NEUTRAL.colours;
-  const buttonFill = !buttons.enabled || 'fill' === buttons.style;
-  const inputBoxed = !inputs.enabled || 'boxed' === inputs.style;
+  const isButtonFill = !buttons.enabled || 'fill' === buttons.style;
+  const isInputBoxed = !inputs.enabled || 'boxed' === inputs.style;
   const inputRadius = inputs.enabled ? inputs.radius : NEUTRAL.radius;
-  const themeGroups = GROUPS.filter(({ id }) => 'customCss' !== id && !tokens[id].enabled).map(({ label }) => label);
+  const themeGroups = GROUPS.filter(({ id }) => !isGroupOn(tokens, id)).map(({ label }) => label);
 
   const gap = 10 * (spacing.enabled ? spacing.scale : 1);
 
@@ -59,8 +60,8 @@ export function PreviewPane() {
   };
 
   const fieldStyle: CSSProperties = {
-    borderRadius: inputBoxed ? inputRadius : 0,
-    borderWidth: inputBoxed ? 1 : '0 0 1px 0',
+    borderRadius: isInputBoxed ? inputRadius : 0,
+    borderWidth: isInputBoxed ? 1 : '0 0 1px 0',
     borderStyle: 'solid',
     borderColor: colours.border,
     backgroundColor: colours.background,
@@ -73,8 +74,8 @@ export function PreviewPane() {
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: colours.primary,
-    backgroundColor: buttonFill ? colours.primary : 'transparent',
-    color: buttonFill ? colours.background : colours.primary,
+    backgroundColor: isButtonFill ? colours.primary : 'transparent',
+    color: isButtonFill ? colours.background : colours.primary,
     padding: '10px 20px',
     fontWeight: 600,
   };

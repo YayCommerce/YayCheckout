@@ -61,7 +61,28 @@ class DesignStyles {
     }
 
     public function css( Design $design ): string {
-        $tokens     = $design->tokens;
+        $vars = $this->vars( $design->tokens );
+        $css  = '';
+
+        if ( $vars ) {
+            $css = ":root {\n";
+            foreach ( $vars as $name => $value ) {
+                $css .= "\t--yaycheckout-{$name}: {$value};\n";
+            }
+            $css .= "}\n";
+        }
+
+        $custom_css = Design::sanitize_custom_css( $design->custom_css );
+
+        if ( $custom_css instanceof \WP_Error || '' === trim( $custom_css ) ) {
+            return $css;
+        }
+
+        return $css . $custom_css . "\n";
+    }
+
+    /** Custom property values by name (without the `--yaycheckout-` prefix), for the sections that are on. */
+    private function vars( array $tokens ): array {
         $typography = $tokens['typography'];
         $vars       = [];
 
@@ -100,22 +121,6 @@ class DesignStyles {
             $vars['input-height'] = self::INPUT_HEIGHTS[ $tokens['inputs']['size'] ] . 'px';
         }
 
-        $css = '';
-
-        if ( $vars ) {
-            $css = ":root {\n";
-            foreach ( $vars as $name => $value ) {
-                $css .= "\t--yaycheckout-{$name}: {$value};\n";
-            }
-            $css .= "}\n";
-        }
-
-        $custom_css = Design::sanitize_custom_css( $design->custom_css );
-
-        if ( $custom_css instanceof \WP_Error || '' === trim( $custom_css ) ) {
-            return $css;
-        }
-
-        return $css . $custom_css . "\n";
+        return $vars;
     }
 }
