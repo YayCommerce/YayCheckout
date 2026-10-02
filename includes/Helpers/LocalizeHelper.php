@@ -44,6 +44,7 @@ class LocalizeHelper {
                 'docsUrl'    => YAYCHECKOUT_DOCS_URL,
                 'upgradeUrl' => YAYCHECKOUT_UPGRADE_URL,
                 'reviewed'   => ( new SettingsRepository() )->is_reviewed(),
+                'setupDone'  => ( new SettingsRepository() )->is_setup_done(),
             ],
         ];
 

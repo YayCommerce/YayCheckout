@@ -34,6 +34,14 @@ class SettingsRepository {
         update_option( Settings::OPTION_REVIEWED, true );
     }
 
+    public function is_setup_done(): bool {
+        return (bool) get_option( Settings::OPTION_SETUP_DONE, false );
+    }
+
+    public function mark_setup_done(): void {
+        update_option( Settings::OPTION_SETUP_DONE, true );
+    }
+
     private function updated_at(): ?string {
         $updated_at = get_option( Settings::OPTION_UPDATED_AT, '' );
 
