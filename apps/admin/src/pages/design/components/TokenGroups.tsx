@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { countDirtyLeaves } from '@/lib/helpers/form.helper';
+import { countTokenDiffs } from '@/lib/helpers/design.helper';
+import { useDesignQuery } from '@/lib/queries/design.queries';
 import { FONT_FAMILIES, type DesignForm, type DesignTokens, type TokenSection } from '@/lib/schema/design.schema';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
@@ -67,37 +68,47 @@ export const GROUPS: {
 ];
 
 /**
- * The token editor: one collapsible group per section, Colours open by default.
- * Each header restates the group's values, or "Theme default" while its switch
- * is off, and counts its edits since the last save — the same measure as the
- * "changed" row tags.
+ * The token editor: one collapsible group per section. The switch turns a group
+ * on (opening it) or off (closing it, header locked); the header only folds an
+ * on group away and back. Custom CSS has no switch and starts closed. Each
+ * header restates the group's values, or "Theme default" while off, and while
+ * on counts how it differs from the theme default (the Default preset), being
+ * on included, saved or not — the badges add up to "Reset to theme"'s count;
+ * the row tags mark unsaved edits.
  */
 export function TokenGroups() {
-  // Read during render so react-hook-form's proxy subscribes to dirtyFields.
-  const { control, formState } = useFormContext<DesignForm>();
-  const { dirtyFields } = formState;
+  const { control } = useFormContext<DesignForm>();
+  const { data } = useDesignQuery();
   const tokens = useWatch({ control, name: 'tokens' });
   const customCss = useWatch({ control, name: 'customCss' });
+  // Groups folded by hand; every other on group is open, so a group a preset turns on opens too.
+  const [folded, setFolded] = useState<string[]>(['customCss']);
+  const isOn = (id: (typeof GROUPS)[number]['id']) => 'customCss' === id || tokens[id].enabled;
+  const openIds = GROUPS.map(({ id }) => id).filter((id) => isOn(id) && !folded.includes(id));
 
   return (
-    <Accordion type="multiple" defaultValue={['colours']} className="flex flex-col gap-3">
+    <Accordion
+      type="multiple"
+      value={openIds}
+      onValueChange={(open) => setFolded(GROUPS.map(({ id }) => id).filter((id) => isOn(id) && !open.includes(id)))}
+      className="flex flex-col gap-3"
+    >
       {GROUPS.map(({ id, label, body: Body, summary }) => {
-        const changed = countDirtyLeaves('customCss' === id ? dirtyFields.customCss : dirtyFields.tokens?.[id]);
-        const off = 'customCss' !== id && !tokens[id].enabled;
+        const changed = 'customCss' === id || !tokens[id].enabled ? 0 : countTokenDiffs(tokens, data.defaultTokens, id);
 
         return (
-          <AccordionItem key={id} value={id}>
+          <AccordionItem key={id} value={id} disabled={!isOn(id)}>
             {/* The switch sits beside the trigger, not in it: a button inside a button is invalid HTML. */}
             <div className="flex items-center [&>h3]:flex-1">
-              <AccordionTrigger>
+              <AccordionTrigger className="disabled:cursor-default disabled:opacity-100 [&>svg]:hidden">
                 <span className="flex-1">{label}</span>
                 <span className="text-muted-foreground text-xs font-normal">
-                  {off ? __('Theme default', 'yaycheckout') : summary(tokens, customCss)}
+                  {isOn(id) ? summary(tokens, customCss) : __('Theme default', 'yaycheckout')}
                 </span>
                 {changed > 0 ? (
                   <Badge variant="outline" className="text-xs">
                     {sprintf(
-                      /* translators: %d: number of tokens in this group edited since the last save */
+                      /* translators: %d: number of tokens in this group that differ from the theme default */
                       __('%d changed', 'yaycheckout'),
                       changed,
                     )}
@@ -112,7 +123,10 @@ export function TokenGroups() {
                     <Switch
                       className="mr-4"
                       checked={field.value}
-                      onCheckedChange={field.onChange}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        setFolded(folded.filter((foldedId) => foldedId !== id));
+                      }}
                       aria-label={sprintf(
                         /* translators: %s: design group name, e.g. Colours */
                         __('Customize %s', 'yaycheckout'),
@@ -124,13 +138,7 @@ export function TokenGroups() {
               ) : null}
             </div>
             <AccordionContent>
-              {off ? (
-                <p className="text-muted-foreground p-4 text-sm">
-                  {__("Uses your theme's styles. Turn on to customize.", 'yaycheckout')}
-                </p>
-              ) : (
-                <Body />
-              )}
+              <Body />
             </AccordionContent>
           </AccordionItem>
         );
