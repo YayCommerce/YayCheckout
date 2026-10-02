@@ -2,12 +2,12 @@ import type { ReactNode } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { countTokenDiffs } from '@/lib/helpers/design.helper';
 import { countDirtyLeaves } from '@/lib/helpers/form.helper';
-import { useDesignQuery } from '@/lib/queries/design.queries';
 import { FONT_FAMILIES, type DesignForm, type DesignTokens, type TokenSection } from '@/lib/schema/design.schema';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
+import { FormField } from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
 import { BUTTON_STYLE_LABELS, ButtonsGroup } from './ButtonsGroup';
 import { ColoursGroup } from './ColoursGroup';
 import { CustomCssGroup } from './CustomCssGroup';
@@ -16,7 +16,7 @@ import { SpacingGroup } from './SpacingGroup';
 import { TypographyGroup } from './TypographyGroup';
 
 /** Each group header restates its current values so a collapsed list still reads as a design. */
-const GROUPS: {
+export const GROUPS: {
   id: TokenSection | 'customCss';
   label: string;
   body: () => ReactNode;
@@ -33,9 +33,7 @@ const GROUPS: {
     label: __('Typography', 'yaycheckout'),
     body: TypographyGroup,
     summary: ({ typography }) =>
-      typography.inherit
-        ? __('Inherited', 'yaycheckout')
-        : `${FONT_FAMILIES[typography.fontFamily] || __('Theme default', 'yaycheckout')} · ${typography.baseSize}px`,
+      `${FONT_FAMILIES[typography.fontFamily] || __('Theme default', 'yaycheckout')} · ${typography.baseSize}px`,
   },
   {
     id: 'spacing',
@@ -70,15 +68,14 @@ const GROUPS: {
 
 /**
  * The token editor: one collapsible group per section, Colours open by default.
- * Each header restates the group's values, tagged "(from theme)" while every
- * token in it is still the Default, and counts its edits since the last save —
- * the same measure as the "changed" row tags.
+ * Each header restates the group's values, or "Theme default" while its switch
+ * is off, and counts its edits since the last save — the same measure as the
+ * "changed" row tags.
  */
 export function TokenGroups() {
   // Read during render so react-hook-form's proxy subscribes to dirtyFields.
   const { control, formState } = useFormContext<DesignForm>();
   const { dirtyFields } = formState;
-  const { data } = useDesignQuery();
   const tokens = useWatch({ control, name: 'tokens' });
   const customCss = useWatch({ control, name: 'customCss' });
 
@@ -86,28 +83,54 @@ export function TokenGroups() {
     <Accordion type="multiple" defaultValue={['colours']} className="flex flex-col gap-3">
       {GROUPS.map(({ id, label, body: Body, summary }) => {
         const changed = countDirtyLeaves('customCss' === id ? dirtyFields.customCss : dirtyFields.tokens?.[id]);
-        const fromTheme = 'customCss' !== id && 0 === countTokenDiffs(tokens, data.defaultTokens, id);
+        const off = 'customCss' !== id && !tokens[id].enabled;
 
         return (
           <AccordionItem key={id} value={id}>
-            <AccordionTrigger>
-              <span className="flex-1">{label}</span>
-              <span className="text-muted-foreground text-xs font-normal">
-                {summary(tokens, customCss)}
-                {fromTheme ? ` ${__('(from theme)', 'yaycheckout')}` : null}
-              </span>
-              {changed > 0 ? (
-                <Badge variant="outline" className="text-xs">
-                  {sprintf(
-                    /* translators: %d: number of tokens in this group edited since the last save */
-                    __('%d changed', 'yaycheckout'),
-                    changed,
+            {/* The switch sits beside the trigger, not in it: a button inside a button is invalid HTML. */}
+            <div className="flex items-center [&>h3]:flex-1">
+              <AccordionTrigger>
+                <span className="flex-1">{label}</span>
+                <span className="text-muted-foreground text-xs font-normal">
+                  {off ? __('Theme default', 'yaycheckout') : summary(tokens, customCss)}
+                </span>
+                {changed > 0 ? (
+                  <Badge variant="outline" className="text-xs">
+                    {sprintf(
+                      /* translators: %d: number of tokens in this group edited since the last save */
+                      __('%d changed', 'yaycheckout'),
+                      changed,
+                    )}
+                  </Badge>
+                ) : null}
+              </AccordionTrigger>
+              {'customCss' !== id ? (
+                <FormField
+                  control={control}
+                  name={`tokens.${id}.enabled`}
+                  render={({ field }) => (
+                    <Switch
+                      className="mr-4"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      aria-label={sprintf(
+                        /* translators: %s: design group name, e.g. Colours */
+                        __('Customize %s', 'yaycheckout'),
+                        label,
+                      )}
+                    />
                   )}
-                </Badge>
+                />
               ) : null}
-            </AccordionTrigger>
+            </div>
             <AccordionContent>
-              <Body />
+              {off ? (
+                <p className="text-muted-foreground p-4 text-sm">
+                  {__("Uses your theme's styles. Turn on to customize.", 'yaycheckout')}
+                </p>
+              ) : (
+                <Body />
+              )}
             </AccordionContent>
           </AccordionItem>
         );

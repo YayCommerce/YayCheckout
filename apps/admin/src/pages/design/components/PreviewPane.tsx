@@ -1,11 +1,12 @@
 import { CSSProperties, useState } from 'react';
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import { FONT_FAMILIES, type DesignForm } from '@/lib/schema/design.schema';
 import { cn } from '@/lib/utils';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
+import { GROUPS } from './TokenGroups';
 
 type Viewport = 'desktop' | 'tablet' | 'mobile';
 
@@ -21,6 +22,13 @@ const SECTION_LABEL_STYLE: CSSProperties = { fontSize: 11, letterSpacing: '0.08e
 // the fallback behind a picked font. Mirrors DesignStyles::FONT_FALLBACK (PHP), which the storefront prints.
 const DEFAULT_FONT_STACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
+// What a theme-default section draws as, since the admin has no theme CSS.
+const NEUTRAL = {
+  colours: { primary: '#71717a', text: '#3f3f46', background: '#ffffff', border: '#d4d4d8' },
+  radius: 6,
+  inputHeight: 40,
+};
+
 /**
  * Right column: device switch over a mock of the real checkout layout
  * (contact, shipping, payment, order summary), restyled live from the
@@ -31,37 +39,42 @@ export function PreviewPane() {
   const { watch } = useFormContext<DesignForm>();
   const tokens = watch('tokens');
   const customCss = watch('customCss');
-  const { colours, typography, spacing, buttons, inputs } = tokens;
+  const { typography, spacing, buttons, inputs } = tokens;
+  const colours = tokens.colours.enabled ? tokens.colours : NEUTRAL.colours;
+  const buttonFill = !buttons.enabled || 'fill' === buttons.style;
+  const inputBoxed = !inputs.enabled || 'boxed' === inputs.style;
+  const inputRadius = inputs.enabled ? inputs.radius : NEUTRAL.radius;
+  const themeGroups = GROUPS.filter(({ id }) => 'customCss' !== id && !tokens[id].enabled).map(({ label }) => label);
 
-  const gap = 10 * spacing.scale;
+  const gap = 10 * (spacing.enabled ? spacing.scale : 1);
 
   const rootStyle: CSSProperties = {
     color: colours.text,
     backgroundColor: colours.background,
     fontFamily:
-      typography.inherit || '' === typography.fontFamily
+      !typography.enabled || '' === typography.fontFamily
         ? DEFAULT_FONT_STACK
         : `"${FONT_FAMILIES[typography.fontFamily]}", ${DEFAULT_FONT_STACK}`,
-    fontSize: typography.inherit ? undefined : `${typography.baseSize}px`,
+    fontSize: !typography.enabled ? undefined : `${typography.baseSize}px`,
   };
 
   const fieldStyle: CSSProperties = {
-    borderRadius: 'underline' === inputs.style ? 0 : inputs.radius,
-    borderWidth: 'underline' === inputs.style ? '0 0 1px 0' : 1,
+    borderRadius: inputBoxed ? inputRadius : 0,
+    borderWidth: inputBoxed ? 1 : '0 0 1px 0',
     borderStyle: 'solid',
     borderColor: colours.border,
     backgroundColor: colours.background,
     // Mirrors DesignStyles::INPUT_HEIGHTS (PHP), which the storefront prints.
-    height: 'small' === inputs.size ? 32 : 'large' === inputs.size ? 48 : 40,
+    height: inputs.enabled ? { small: 32, medium: 40, large: 48 }[inputs.size] : NEUTRAL.inputHeight,
   };
 
   const buttonStyle: CSSProperties = {
-    borderRadius: buttons.radius,
+    borderRadius: buttons.enabled ? buttons.radius : NEUTRAL.radius,
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: colours.primary,
-    backgroundColor: 'outline' === buttons.style ? 'transparent' : colours.primary,
-    color: 'outline' === buttons.style ? colours.primary : colours.background,
+    backgroundColor: buttonFill ? colours.primary : 'transparent',
+    color: buttonFill ? colours.background : colours.primary,
     padding: '10px 20px',
     fontWeight: 600,
   };
@@ -82,6 +95,15 @@ export function PreviewPane() {
           </SegmentedItem>
         </Segmented>
       </div>
+      {themeGroups.length ? (
+        <p className="text-muted-foreground m-0 text-xs">
+          {sprintf(
+            /* translators: %s: comma-separated design group names, e.g. Colours, Buttons */
+            __('Grey parts follow your theme on the storefront: %s.', 'yaycheckout'),
+            themeGroups.join(', '),
+          )}
+        </p>
+      ) : null}
 
       <div
         className={cn(
@@ -148,7 +170,7 @@ export function PreviewPane() {
 
             <div
               className={cn('bg-muted/40 flex flex-col', viewport === 'mobile' ? 'w-full' : 'w-64 shrink-0')}
-              style={{ gap, padding: 1.5 * gap, borderRadius: inputs.radius }}
+              style={{ gap, padding: 1.5 * gap, borderRadius: inputRadius }}
             >
               <p className="m-0" style={SECTION_LABEL_STYLE}>
                 {__('ORDER SUMMARY', 'yaycheckout')}

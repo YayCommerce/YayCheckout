@@ -2,6 +2,7 @@
 namespace YayCheckout\Renderer;
 
 use YayCheckout\Models\Layout;
+use YayCheckout\Repositories\DesignRepository;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
 use YayCheckout\Utils\SingletonTrait;
@@ -47,10 +48,16 @@ class CheckoutPage {
         // PHP_INT_MAX: must run after block themes swap in template-canvas.php.
         add_filter( 'template_include', [ $this, 'page_template' ], PHP_INT_MAX );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], self::SCRIPTS_PRIORITY );
+        add_filter( 'body_class', [ $this, 'body_class' ] );
     }
 
     public function page_template(): string {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php';
+    }
+
+    /** The Design sections that are on. On <body>, not our wrapper: selectWoo appends its dropdown there. */
+    public function body_class( array $classes ): array {
+        return array_merge( $classes, DesignStyles::classes( ( new DesignRepository() )->get() ) );
     }
 
     /** Woo's checkout scripts and the Design page's tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */

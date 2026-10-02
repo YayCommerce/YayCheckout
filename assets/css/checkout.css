@@ -1,0 +1,166 @@
+/*
+ * Design tokens applied to the checkout. Every rule is scoped to a
+ * .yaycheckout-design-{section} class, which CheckoutPage puts on <body> only
+ * while that section is on: a section left at theme default matches nothing
+ * here, so the theme's own styles apply.
+ *
+ * Selectors carry .yaycheckout-checkout and .form-row so they outrank
+ * WooCommerce's and most themes' (`.woocommerce form .form-row .input-text`)
+ * without !important, leaving the merchant's custom CSS able to override them.
+ */
+
+/* Colours */
+
+.yaycheckout-design-colours div.yaycheckout-page {
+	color: var(--yaycheckout-color-text);
+	background-color: var(--yaycheckout-color-background);
+}
+
+.yaycheckout-design-colours .yaycheckout-checkout :is(h1, h2, h3, h4, label) {
+	color: inherit;
+}
+
+.yaycheckout-design-colours .yaycheckout-checkout a {
+	color: var(--yaycheckout-color-primary);
+}
+
+.yaycheckout-design-colours .yaycheckout-checkout .form-row :is(.input-text, select),
+.yaycheckout-design-colours .yaycheckout-checkout .select2-selection {
+	color: var(--yaycheckout-color-text);
+	background-color: var(--yaycheckout-color-background);
+	border-color: var(--yaycheckout-color-border);
+}
+
+/* selectWoo colours its text itself (#444 / #999), so it would not follow the box above. */
+.yaycheckout-design-colours .yaycheckout-checkout .select2-selection :is(.select2-selection__rendered, .select2-selection__placeholder) {
+	color: inherit;
+}
+
+.yaycheckout-design-colours .yaycheckout-checkout .select2-selection .select2-selection__placeholder {
+	opacity: 0.6;
+}
+
+/* Appended to <body>, outside the checkout; --default is the theme selectWoo uses, so other plugins' dropdowns are left alone. */
+.yaycheckout-design-colours .select2-container--default .select2-dropdown {
+	color: var(--yaycheckout-color-text);
+	background-color: var(--yaycheckout-color-background);
+	border-color: var(--yaycheckout-color-border);
+}
+
+.yaycheckout-design-colours .select2-container--default .select2-dropdown .select2-search--dropdown {
+	border-color: var(--yaycheckout-color-border);
+}
+
+.yaycheckout-design-colours .select2-container--default .select2-search--dropdown .select2-search__field {
+	color: inherit;
+	background-color: transparent;
+	border-color: var(--yaycheckout-color-border);
+}
+
+.yaycheckout-design-colours .select2-container--default .select2-results .select2-results__option {
+	color: inherit;
+	background-color: transparent;
+}
+
+.yaycheckout-design-colours .select2-container--default .select2-results .select2-results__option[aria-selected="true"] {
+	background-color: var(--yaycheckout-color-border);
+}
+
+.yaycheckout-design-colours .select2-container--default .select2-results .select2-results__option--highlighted[aria-selected] {
+	color: var(--yaycheckout-color-background);
+	background-color: var(--yaycheckout-color-primary);
+}
+
+.yaycheckout-design-colours .yaycheckout-checkout .form-row :is(.input-text, select):focus {
+	border-color: var(--yaycheckout-color-primary);
+	outline-color: var(--yaycheckout-color-primary);
+}
+
+.yaycheckout-design-colours .yaycheckout-checkout :is(.shop_table, .shop_table :is(th, td), #payment) {
+	border-color: var(--yaycheckout-color-border);
+}
+
+.yaycheckout-design-colours .yaycheckout-checkout #place_order,
+.yaycheckout-design-colours .yaycheckout-checkout #place_order:hover {
+	color: var(--yaycheckout-color-background);
+	background-color: var(--yaycheckout-color-primary);
+	border-color: var(--yaycheckout-color-primary);
+}
+
+.yaycheckout-design-colours .yaycheckout-checkout #place_order:hover {
+	filter: brightness(0.92);
+}
+
+/* Typography */
+
+.yaycheckout-design-typography .yaycheckout-checkout {
+	/* Unset while the theme's font is kept; font-family inherits, so the theme's font shows through. */
+	font-family: var(--yaycheckout-font-family);
+	font-size: var(--yaycheckout-font-size-base);
+}
+
+.yaycheckout-design-typography .yaycheckout-checkout :is(h1, h2, h3, h4, label, input, select, textarea, button, .select2-selection) {
+	font-family: inherit;
+}
+
+.yaycheckout-design-typography .yaycheckout-checkout :is(label, input, select, textarea, button, .select2-selection, .shop_table) {
+	font-size: inherit;
+}
+
+/* Spacing & radius */
+
+.yaycheckout-design-spacing .yaycheckout-checkout > * + * {
+	margin-top: calc(24px * var(--yaycheckout-spacing-scale));
+}
+
+.yaycheckout-design-spacing .yaycheckout-checkout .form-row {
+	margin-bottom: calc(12px * var(--yaycheckout-spacing-scale));
+}
+
+.yaycheckout-design-spacing .yaycheckout-checkout #payment {
+	border-radius: var(--yaycheckout-radius);
+}
+
+/* Buttons */
+
+.yaycheckout-design-buttons .yaycheckout-checkout #place_order {
+	border-radius: var(--yaycheckout-button-radius);
+}
+
+.yaycheckout-design-buttons-outline .yaycheckout-checkout #place_order,
+.yaycheckout-design-buttons-outline .yaycheckout-checkout #place_order:hover {
+	color: inherit;
+	background-color: transparent;
+	border: 1px solid currentcolor;
+}
+
+.yaycheckout-design-buttons-outline.yaycheckout-design-colours .yaycheckout-checkout #place_order {
+	color: var(--yaycheckout-color-primary);
+	border-color: var(--yaycheckout-color-primary);
+}
+
+/* Inputs */
+
+.yaycheckout-design-inputs .yaycheckout-checkout .form-row :is(input.input-text, select),
+.yaycheckout-design-inputs .yaycheckout-checkout .select2-selection--single {
+	box-sizing: border-box;
+	height: var(--yaycheckout-input-height);
+	border-radius: var(--yaycheckout-input-radius);
+}
+
+.yaycheckout-design-inputs .yaycheckout-checkout .form-row textarea.input-text {
+	border-radius: var(--yaycheckout-input-radius);
+}
+
+.yaycheckout-design-inputs .yaycheckout-checkout .select2-selection--single {
+	display: flex;
+	align-items: center;
+}
+
+.yaycheckout-design-inputs-underline .yaycheckout-checkout .form-row :is(input.input-text, textarea.input-text, select),
+.yaycheckout-design-inputs-underline .yaycheckout-checkout .select2-selection {
+	border-width: 0 0 1px;
+	border-style: solid;
+	border-radius: 0;
+	background-color: transparent;
+}

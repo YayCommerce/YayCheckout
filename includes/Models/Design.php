@@ -68,10 +68,16 @@ class Design {
      * inputs.radius are stored on their own so each can still differ from it.
      * Both spacing.scale and inputs.size are abstract steps; what they mean in
      * px is decided where they are rendered.
+     *
+     * `enabled` false = theme default: the storefront prints nothing for that section (see system-architecture.md § Settings and Design).
      */
     public static function schema(): array {
         return [
             'colours'    => [
+                'enabled'    => [
+                    'type'    => 'bool',
+                    'default' => false,
+                ],
                 'primary'    => [
                     'type'    => 'hex_color',
                     'default' => '#3858e9',
@@ -90,9 +96,9 @@ class Design {
                 ],
             ],
             'typography' => [
-                'inherit'     => [
+                'enabled'     => [
                     'type'    => 'bool',
-                    'default' => true,
+                    'default' => false,
                 ],
                 'font_family' => [
                     'type'    => 'enum',
@@ -107,12 +113,16 @@ class Design {
                 ],
             ],
             'spacing'    => [
-                'scale'  => [
+                'enabled' => [
+                    'type'    => 'bool',
+                    'default' => false,
+                ],
+                'scale'   => [
                     'type'    => 'enum',
                     'default' => 1.0,
                     'enum'    => self::SPACING_SCALES,
                 ],
-                'radius' => [
+                'radius'  => [
                     'type'    => 'int',
                     'default' => 10,
                     'min'     => 0,
@@ -120,12 +130,16 @@ class Design {
                 ],
             ],
             'buttons'    => [
-                'style'  => [
+                'enabled' => [
+                    'type'    => 'bool',
+                    'default' => false,
+                ],
+                'style'   => [
                     'type'    => 'enum',
                     'default' => 'fill',
                     'enum'    => [ 'fill', 'outline' ],
                 ],
-                'radius' => [
+                'radius'  => [
                     'type'    => 'int',
                     'default' => 10,
                     'min'     => 0,
@@ -133,17 +147,21 @@ class Design {
                 ],
             ],
             'inputs'     => [
-                'style'  => [
+                'enabled' => [
+                    'type'    => 'bool',
+                    'default' => false,
+                ],
+                'style'   => [
                     'type'    => 'enum',
                     'default' => 'boxed',
                     'enum'    => [ 'boxed', 'underline' ],
                 ],
-                'size'   => [
+                'size'    => [
                     'type'    => 'enum',
                     'default' => 'medium',
                     'enum'    => [ 'small', 'medium', 'large' ],
                 ],
-                'radius' => [
+                'radius'  => [
                     'type'    => 'int',
                     'default' => 10,
                     'min'     => 0,
@@ -191,6 +209,7 @@ class Design {
                     $default,
                     [
                         'colours' => [
+                            'enabled'    => true,
                             'primary'    => '#3858e9',
                             'text'       => '#fafafa',
                             'background' => '#0a0a0a',
@@ -207,20 +226,29 @@ class Design {
                     $default,
                     [
                         'colours'    => [
+                            'enabled'    => true,
                             'primary'    => '#171719',
                             'text'       => '#171719',
                             'background' => '#f4f4f5',
                             'border'     => '#c7c7ca',
                         ],
-                        'typography' => [ 'base_size' => 15 ],
-                        'spacing'    => [ 'radius' => 2 ],
+                        'typography' => [
+                            'enabled'   => true,
+                            'base_size' => 15,
+                        ],
+                        'spacing'    => [
+                            'enabled' => true,
+                            'radius'  => 2,
+                        ],
                         'buttons'    => [
-                            'style'  => 'outline',
-                            'radius' => 2,
+                            'enabled' => true,
+                            'style'   => 'outline',
+                            'radius'  => 2,
                         ],
                         'inputs'     => [
-                            'size'   => 'small',
-                            'radius' => 2,
+                            'enabled' => true,
+                            'size'    => 'small',
+                            'radius'  => 2,
                         ],
                     ]
                 ),

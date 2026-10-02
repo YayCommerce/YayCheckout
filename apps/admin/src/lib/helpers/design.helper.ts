@@ -1,11 +1,17 @@
 import type { DesignPreset, DesignTokens, TokenSection } from '@/lib/schema/design.schema';
 
-/** Number of token leaves in `a` that differ from `b`, within one section or across all of them. */
+/**
+ * Number of token leaves in `a` that differ from `b`, within one section or across all of them.
+ * A section switched off on both sides counts as equal: its values print nothing on the storefront.
+ */
 export function countTokenDiffs(a: DesignTokens, b: DesignTokens, section?: TokenSection): number {
   const sections = section ? [section] : (Object.keys(a) as TokenSection[]);
 
   return sections.reduce((total, current) => {
     const [x, y] = [a[current], b[current]] as Record<string, unknown>[];
+    if (!x.enabled && !y.enabled) {
+      return total;
+    }
     return total + Object.keys(x).filter((key) => x[key] !== y[key]).length;
   }, 0);
 }
