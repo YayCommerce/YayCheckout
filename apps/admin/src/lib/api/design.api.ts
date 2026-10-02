@@ -17,7 +17,7 @@ export function tokensFromWire(wire: DesignTokensWire): DesignTokens {
   return {
     colours: wire.colours,
     typography: {
-      inherit: wire.typography.inherit,
+      enabled: wire.typography.enabled,
       fontFamily: wire.typography.font_family,
       baseSize: wire.typography.base_size,
     },
@@ -31,7 +31,7 @@ export function tokensToWire(tokens: DesignTokens): DesignTokensWire {
   return {
     colours: tokens.colours,
     typography: {
-      inherit: tokens.typography.inherit,
+      enabled: tokens.typography.enabled,
       font_family: tokens.typography.fontFamily,
       base_size: tokens.typography.baseSize,
     },
