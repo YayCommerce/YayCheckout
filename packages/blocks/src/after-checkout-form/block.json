@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/after-checkout-form",
+  "title": "Woo after checkout form",
+  "category": "yaycheckout",
+  "description": "Runs woocommerce_after_checkout_form where this block sits, outside the checkout form.",
+  "textdomain": "yaycheckout",
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}
