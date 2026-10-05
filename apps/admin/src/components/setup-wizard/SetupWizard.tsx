@@ -125,7 +125,6 @@ export function SetupWizard() {
         {step === 2 && templateSlug && (
           <Form {...brandForm}>
             <BrandStep
-              templateSlug={templateSlug}
               isApplying={setup.isPending}
               error={applyError}
               onBack={() => {

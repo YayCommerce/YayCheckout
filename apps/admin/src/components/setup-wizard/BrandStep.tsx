@@ -1,8 +1,7 @@
 import { useFormContext, useWatch } from 'react-hook-form';
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 
 import { isPro } from '@/lib/plan';
-import { useTemplate } from '@/lib/queries/template.queries';
 import {
   BUTTON_STYLE_LABELS,
   CUSTOM_CSS_MAX_BYTES,
@@ -34,20 +33,17 @@ const dirtyOptions = { shouldDirty: true } as const;
  * wizard's design form. Apply brand hands the values to the wizard to save.
  */
 export function BrandStep({
-  templateSlug,
   isApplying,
   error,
   onBack,
   onApply,
 }: {
-  templateSlug: string;
   isApplying: boolean;
   error: string | null;
   onBack: () => void;
   onApply: (values: DesignForm) => void;
 }) {
   const { handleSubmit } = useFormContext<DesignForm>();
-  const templateName = useTemplate(templateSlug)?.name;
 
   return (
     <div className="flex flex-col gap-6">
@@ -69,13 +65,7 @@ export function BrandStep({
 
         <div className="flex min-w-0 flex-col gap-2">
           <span className="text-muted-foreground text-xs tracking-wide uppercase">
-            {templateName
-              ? sprintf(
-                  /* translators: %s: template name */
-                  __('Live preview · 60%% scale · %s', 'yaycheckout'),
-                  templateName,
-                )
-              : __('Live preview · 60% scale', 'yaycheckout')}
+            {__('Live preview', 'yaycheckout')}
           </span>
           {/* zoom, not transform: the mock lays out at full desktop width, then shrinks to fit the column. */}
           <div style={{ zoom: 0.6 }}>
