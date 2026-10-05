@@ -29,7 +29,7 @@ Any pnpm command may [run `pnpm install`, and with it `composer install`, first]
 
 1. Never hand-edit generated output: `vendor/`, `vendor-prefixed/`, `node_modules/`, `assets/dist/`, `release/`. Change the input and rerun the command that builds it. A block's `render.php` is edited in `packages/blocks/src/<block>/`, never in `assets/dist/blocks/`.
 2. Free names Pro in exactly one place: the guarded `boot_pro()` in `includes/YayCheckout.php`. Pro attaches only through the hooks and filters that `includes/Pro/ProServiceProvider.php` adds. `scripts/check-pro-boundary.sh`, run by `composer lint`, fails any other reference to `YayCheckout\Pro` in `includes/`.
-3. Pro features are withheld by PHP: the Free build has no Pro REST routes. The SPA's `isPro` (`apps/admin/src/lib/plan.ts`) only decides what the SPA shows, and `<ProGate>` ships its children to Free, blurred. Never put real data or a real endpoint behind it.
+3. Pro features are withheld by PHP: the Free build has no Pro REST routes, and the limits and templates check `Plan::is_pro()`. The SPA's `isPro` (`apps/admin/src/lib/plan.ts`) only decides what the SPA shows and which plan the template list previews. Free's upsells (`ProTag`, `UpgradeButton`, the locked mocks, `<ProGate>`) ship to Free, so never put real data or a real endpoint behind them.
 4. Product PHP must run on PHP 7.4: no enums, `match`, `readonly`, promoted constructor properties, `?->`, named arguments or union types. phpcs checks no PHP version and the dev tooling runs on PHP 8, so only review catches it.
 
 ## Tests

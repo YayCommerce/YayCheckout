@@ -18,15 +18,15 @@
 
 ## TypeScript copies of PHP name their owner
 
-- **Rule:** a TypeScript copy of a PHP value or rule exists only where the language boundary forces one, and its comment names the PHP owner, as in `/** Mirrors Design::SPACING_SCALES in PHP. */`. Change both in the same commit. A rule the server can answer is asked, not copied: the editor's import review asks `/layouts/import/review`, and the template picker reads `locked` from each `GET /layouts/templates` row.
+- **Rule:** a TypeScript copy of a PHP value or rule exists only where the language boundary forces one, and its comment names the PHP owner, as in `/** Mirrors Design::SPACING_SCALES in PHP. */`. Change both in the same commit. A rule the server can answer is asked, not copied: the editor's import review asks `/layouts/import/review`, and the template picker reads `locked` from each `GET /layouts/templates` row. That `locked` is computed for the plan the SPA sends as `?plan=`; creating a layout checks the real plan.
 - **Why:** two places that decide the same thing drift, and only the named owner says which one is right. The owner is always PHP, because the server is what a request can't bypass.
-- **In code:** the `Mirrors …` comments in `apps/admin/src/lib/schema/`, `packages/blocks/src/shared/extra-field-keys.ts` (`LayoutMarkupReader::EXTRA_FIELD_KEY_PATTERN`), `packages/blocks/src/checkout/publish-guard.ts` (`LayoutMarkupReader::publish_error()`) and `apps/admin/src/components/shared/PreviewPane.tsx` (`DesignStyles::INPUT_HEIGHTS`). `assets/js/checkout-field-requirements.js` copies nothing: it reads its flags from `RequiredIndicator::script_payload()`.
+- **In code:** the `Mirrors …` comments in `apps/admin/src/lib/schema/`, `packages/blocks/src/shared/extra-field-keys.ts` (`LayoutMarkupReader::EXTRA_FIELD_KEY_PATTERN`), `packages/blocks/src/checkout/publish-guard.ts` (`LayoutMarkupReader::publish_error()`) and `apps/admin/src/components/shared/PreviewPane.tsx` (`DesignStyles::INPUT_HEIGHTS`). `assets/js/checkout-field-requirements.js` reads its flags from `RequiredIndicator::script_payload()`, but repeats `RequiredIndicator::span()`'s fallback marks and markup.
 
 ## Wire casing
 
-- **Rule:** everything on the wire is snake_case: query parameters, request bodies and every field PHP's `to_array()` emits. Everything in TypeScript is camelCase. They meet only in `apps/admin/src/lib/api/<resource>.api.ts`, which parses each response with a strict `*WireSchema` from `apps/admin/src/lib/schema/` and converts it (`summaryFromWire`, `tokensFromWire`), and converts request bodies on the way out.
+- **Rule:** everything on the wire is snake_case: query parameters, request bodies and every field PHP's `to_array()` emits. Everything in the SPA's TypeScript is camelCase; the blocks package calls only a few routes through `apiFetch` and reads their fields as sent. They meet only in `apps/admin/src/lib/api/<resource>.api.ts`, which parses each response with a strict `*WireSchema` from `apps/admin/src/lib/schema/` and converts it (`summaryFromWire`, `tokensFromWire`), and converts request bodies on the way out.
 - **Why:** pages and hooks never see a snake_case key, and PHP never learns how the SPA spells one. A strict wire schema makes a renamed PHP key fail loudly instead of parsing to `undefined`.
-- **In code:** `apps/admin/src/lib/api/`, `apps/admin/src/lib/schema/`. The `wp_localize_script` data (`Helpers\LocalizeHelper`, `window.yayCheckoutMeta`) is the one exception: its keys follow the YayCommerce camelCase shape.
+- **In code:** `apps/admin/src/lib/api/`, `apps/admin/src/lib/schema/`. Data printed for scripts keeps camelCase keys (`window.yayCheckoutMeta` from `Helpers\LocalizeHelper`, `window.yayCheckoutBlocks`, `window.yayCheckoutRequired`), except the `to_array()` payloads inside `window.yayCheckoutAdmin`, which stay snake_case and go through their wire schemas like any response.
 
 ## Dates on the wire
 
@@ -38,7 +38,7 @@
 
 - **Rule:**
   - PHP class files are PascalCase and match the class (`includes/Models/Layout.php` for `YayCheckout\Models\Layout`). A role suffix says what the class is: `*PostType`, `*Repository`, `*RestController`, `*Helper`.
-  - In the SPA, a component file is PascalCase and matches the component it exports (`ProGate.tsx`); other modules are kebab-case (`layout.api.ts`); `apps/admin/src/components/ui/` stays kebab-case because shadcn generates it.
+  - In the SPA, a component file is PascalCase and matches the component it exports (`ProGate.tsx`); a hook's file takes the hook's name (`useRouteLeaveGuard.ts`); other modules are kebab-case (`layout.api.ts`); `apps/admin/src/components/ui/` stays kebab-case, shadcn's naming, though no `components.json` regenerates it.
   - A component lives at the narrowest scope that covers its users: `pages/<page>/components/` for one page, `apps/admin/src/components/shared/` once a second page needs it. Our components never go in `apps/admin/src/components/ui/`.
 - **Why:** the autoloader maps names to paths, so a mismatch fails silently. `components/` stays a list of what is genuinely shared, so a component there can be changed knowing who depends on it.
 - **In code:** the loader in `yaycheckout.php`; `apps/admin/src/pages/`, `apps/admin/src/components/`.

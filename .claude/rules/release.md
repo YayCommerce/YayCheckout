@@ -23,4 +23,4 @@ What the release does is in [docs/architecture.md § Build and release](../../do
 ## Checking a change
 
 - phpcs doesn't scan `scripts/`. Run `bash -n` on each shell script you changed, and `php -l` on any PHP script.
-- Run `release` only to cut a release. It writes a new version into `yaycheckout.php` and `readme.txt`, always runs the admin-shell sync, and leaves only `--no-dev` packages behind ([docs/known-issues.md](../../docs/known-issues.md)).
+- Run `release` only to cut a release. It writes the version into `yaycheckout.php` and `readme.txt` when you pass one or type a new one at the prompt, always runs the admin-shell sync, and leaves only `--no-dev` packages behind ([docs/known-issues.md](../../docs/known-issues.md)).

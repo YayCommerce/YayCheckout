@@ -14,14 +14,14 @@ How blocks register, which editor offers them and how the embedded editor works 
 
 ## Patterns for new code
 
-- **Blocks are dynamic.** Each block is a folder `packages/blocks/src/<block>/` with `block.json`, `render.php` and its editor script; `save()` returns nothing. A renamed or added attribute needs a default in `render.php`, because stored layouts keep the old markup.
+- **Blocks are dynamic.** Each block is a folder `packages/blocks/src/<block>/` with `block.json`, `render.php` and its editor script; `save()` emits no markup of its own. Leaf blocks return null, and a block with inner blocks (Checkout, Billing, Shipping) uses `saveNestedBlocks()`, which saves only the inner blocks. A renamed or added attribute needs a default in `render.php`, because stored layouts keep the old markup.
 - **A new block** registers by itself once built. Add its name to `BlockRegistry::ORDER` (`includes/Blocks/BlockRegistry.php`) for its place in the inserter, and its icon to `packages/blocks/src/shared/block-icons.tsx`. A section block also goes in `LayoutMarkupReader::SECTION_SLOTS`, which decides the fragments `CheckoutFragments` swaps.
-- **Placement** lives in `block.json`: `parent`, `ancestor` and `supports.multiple`. No insert rule lives in JavaScript.
+- **Placement** lives in `block.json`: `parent`, `ancestor` and `supports.multiple`. No placement rule lives in JavaScript; `packages/blocks/src/checkout/inserter-root.ts` only points the header inserter at the selected address section or the Checkout block.
 - **Markup:** render WooCommerce's own markup (`woocommerce_form_field()`, its class names and ids), because WooCommerce's checkout scripts and themes target it.
 - **Editor data:** read the plan, post type and upgrade link from `packages/blocks/src/shared/editor-data.ts` (`window.yayCheckoutBlocks`, printed by `BlockRegistry`), never redeclare them.
 
 ## Couplings no check catches
 
-- `packages/blocks/src/checkout/publish-guard.ts` repeats `LayoutMarkupReader::publish_error()`, and `packages/blocks/src/shared/extra-field-keys.ts` repeats `LayoutMarkupReader::EXTRA_FIELD_KEY_PATTERN`. Change both sides in the same commit; the server's copy is the one that decides.
+- `packages/blocks/src/checkout/publish-guard.ts` repeats `LayoutMarkupReader::publish_error()`, and `packages/blocks/src/shared/extra-field-keys.ts` repeats `LayoutMarkupReader::EXTRA_FIELD_KEY_PATTERN`. Change both sides in the same commit. The server's copy decides publishing; for drafts the editor's lock is stricter, since the server accepts any draft. `packages/blocks/src/extra-field/edit.tsx` repeats the Key rules a third time.
 - `packages/blocks/src/shared/` is also the SPA's `@blocks-shared`. A change there reaches the admin bundle too: build the blocks and type-check the SPA.
-- Nothing type-checks or lints this package: `pnpm build:blocks` is the only check. Build it, then open a layout in the editor.
+- Nothing type-checks or lints the blocks' TypeScript: `pnpm build:blocks` is the only check there, while `composer lint` covers each `render.php`. Build it, then open a layout in the editor.

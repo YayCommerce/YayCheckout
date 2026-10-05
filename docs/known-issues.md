@@ -35,7 +35,7 @@
 ## The dev script and release rewrite `composer.json` and `scoper.inc.php`
 
 - **Symptom:** after `./scripts/run.sh dev`, `./scripts/run.sh release` or `composer shell-update`, `git status` can show `composer.json` (its `require-dev`) or `scoper.inc.php` changed, and the installed versions of every Composer package can move.
-- **Cause:** both commands run a full `composer update`, then admin-shell's `yaycommerce-update` or `yaycommerce-prerelease`. Those require php-scoper and thecodingmachine/safe at their latest versions and regenerate `scoper.inc.php` from a template, keeping only the prefix and the adapter's name.
+- **Cause:** `./scripts/run.sh dev` and `release` run a full `composer update`, then admin-shell's `yaycommerce-update` or `yaycommerce-prerelease`. `composer shell-update` runs `yaycommerce-update` alone, which updates only admin-shell when `composer.lock` exists and every package when it doesn't. The scripts require php-scoper and thecodingmachine/safe at their latest versions, with all their dependencies, and regenerate `scoper.inc.php` from a template, keeping only the prefix and the adapter's name.
 - **Workaround:** check `git status` before committing, and revert those two files unless you meant to change them. A lasting edit to `scoper.inc.php` belongs in admin-shell's template.
 - **Remove when:** the admin-shell sync stops writing tracked files.
 
