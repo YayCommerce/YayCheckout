@@ -6,7 +6,7 @@
 
 ## Status
 
-Proposed, 2026-10-05. Backfilled: the post type came in `1d5768b` (2026-09-09); the single status vocabulary in `d3d364b` (2026-09-17); dropping the published snapshot in `8c67dfa` (2026-09-18). A teammate confirms the reasons before it is accepted.
+Accepted, 2026-10-05, by Trace Bui, who confirmed the reasons. Backfilled: the post type came in `1d5768b` (2026-09-09); the single status vocabulary in `d3d364b` (2026-09-17); dropping the published snapshot in `8c67dfa` (2026-09-18).
 
 ## Context
 

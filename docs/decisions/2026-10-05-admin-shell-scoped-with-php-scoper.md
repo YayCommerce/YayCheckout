@@ -6,7 +6,7 @@
 
 ## Status
 
-Proposed, 2026-10-05. Backfilled: the decision was made on 2026-08-28, in `9b620fe`, the plugin's initial backbone. A teammate confirms the reasons before it is accepted.
+Accepted, 2026-10-05, by Trace Bui, who confirmed the reasons. Backfilled: the decision was made on 2026-08-28, in `9b620fe`, the plugin's initial backbone.
 
 ## Context
 

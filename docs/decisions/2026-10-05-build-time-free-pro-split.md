@@ -6,7 +6,7 @@
 
 ## Status
 
-Proposed, 2026-10-05. Backfilled: the decision was made on 2026-09-09, in `48ea118` (the removable boundary and the derived plan), `cd40a19` (the SPA's build-time plan) and `4b12c42` (the Free and Pro zips from one release script). A teammate confirms the reasons before it is accepted.
+Accepted, 2026-10-05, by Trace Bui, who confirmed the reasons. Backfilled: the decision was made on 2026-09-09, in `48ea118` (the removable boundary and the derived plan), `cd40a19` (the SPA's build-time plan) and `4b12c42` (the Free and Pro zips from one release script).
 
 ## Context
 
