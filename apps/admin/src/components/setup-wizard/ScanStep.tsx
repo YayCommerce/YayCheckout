@@ -20,7 +20,7 @@ const CHECKS = [
 ];
 
 /** Fixed height shared by the scanning, error and report views so the popup never jumps as they swap; a long report scrolls above the pinned footer. */
-const BODY = 'flex h-120 flex-col gap-6';
+const BODY_CLASS = 'flex h-120 flex-col gap-6';
 
 type CheckState = 'done' | 'checking' | 'pending';
 
@@ -52,69 +52,77 @@ export function ScanStep({ onContinue }: { onContinue: () => void }) {
 
   // The request error itself (status, REST URL) is for the console, not the merchant.
   if (query.error || rescan.error) {
-    return (
-      <div className={BODY}>
-        <p className="text-destructive text-sm">
-          {__("We couldn't scan your store. Check your connection and try again.", 'yaycheckout')}
-        </p>
-        <div className="mt-auto flex justify-between gap-2 border-t pt-4">
-          <LoadingButton variant="outline" loading={rescan.isPending} disabled={rescan.isPending} onClick={onRerun}>
-            <RefreshCw />
-            {__('Re-scan', 'yaycheckout')}
-          </LoadingButton>
-          <Button disabled>{__('Continue', 'yaycheckout')}</Button>
-        </div>
-      </div>
-    );
+    return <ScanError isRescanning={rescan.isPending} onRerun={onRerun} />;
   }
 
   if (!report || ticked < CHECKS.length) {
-    return (
-      <div className={BODY}>
-        <header className="flex items-center gap-4">
-          <LoaderCircle className="text-primary size-8 shrink-0 animate-spin" />
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold">{__('Scanning your store', 'yaycheckout')}</h2>
-            <p className="text-muted-foreground text-sm">
-              {__('Reading your setup. Nothing is changed.', 'yaycheckout')}
-            </p>
-          </div>
-        </header>
-        <ul className="divide-y rounded-sm border text-sm">
-          {CHECKS.map((label, index) => (
-            <CheckRow key={label} label={label} state={checkState(index, ticked)} />
-          ))}
-        </ul>
-        <div className="flex items-center gap-4">
-          <div
-            className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={CHECKS.length}
-            aria-valuenow={ticked}
-          >
-            <div
-              className="bg-primary h-full transition-[width] duration-300"
-              style={{ width: `${(ticked / CHECKS.length) * 100}%` }}
-            />
-          </div>
-          <span className="text-muted-foreground text-sm">
-            {sprintf(
-              /* translators: 1: finished checks, 2: total checks */
-              __('%1$d of %2$d', 'yaycheckout'),
-              ticked,
-              CHECKS.length,
-            )}
-          </span>
-        </div>
-        <div className="mt-auto flex justify-end border-t pt-4">
-          <Button disabled>{__('Continue', 'yaycheckout')}</Button>
-        </div>
-      </div>
-    );
+    return <ScanProgress ticked={ticked} />;
   }
 
   return <ScanReport report={report} onRerun={onRerun} onContinue={onContinue} />;
+}
+
+function ScanError({ isRescanning, onRerun }: { isRescanning: boolean; onRerun: () => void }) {
+  return (
+    <div className={BODY_CLASS}>
+      <p className="text-destructive text-sm">
+        {__("We couldn't scan your store. Check your connection and try again.", 'yaycheckout')}
+      </p>
+      <div className="mt-auto flex justify-between gap-2 border-t pt-4">
+        <LoadingButton variant="outline" loading={isRescanning} disabled={isRescanning} onClick={onRerun}>
+          <RefreshCw />
+          {__('Re-scan', 'yaycheckout')}
+        </LoadingButton>
+        <Button disabled>{__('Continue', 'yaycheckout')}</Button>
+      </div>
+    </div>
+  );
+}
+
+function ScanProgress({ ticked }: { ticked: number }) {
+  return (
+    <div className={BODY_CLASS}>
+      <header className="flex items-center gap-4">
+        <LoaderCircle className="text-primary size-8 shrink-0 animate-spin" />
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold">{__('Scanning your store', 'yaycheckout')}</h2>
+          <p className="text-muted-foreground text-sm">
+            {__('Reading your setup. Nothing is changed.', 'yaycheckout')}
+          </p>
+        </div>
+      </header>
+      <ul className="divide-y rounded-sm border text-sm">
+        {CHECKS.map((label, index) => (
+          <CheckRow key={label} label={label} state={checkState(index, ticked)} />
+        ))}
+      </ul>
+      <div className="flex items-center gap-4">
+        <div
+          className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={CHECKS.length}
+          aria-valuenow={ticked}
+        >
+          <div
+            className="bg-primary h-full transition-[width] duration-300"
+            style={{ width: `${(ticked / CHECKS.length) * 100}%` }}
+          />
+        </div>
+        <span className="text-muted-foreground text-sm">
+          {sprintf(
+            /* translators: 1: finished checks, 2: total checks */
+            __('%1$d of %2$d', 'yaycheckout'),
+            ticked,
+            CHECKS.length,
+          )}
+        </span>
+      </div>
+      <div className="mt-auto flex justify-end border-t pt-4">
+        <Button disabled>{__('Continue', 'yaycheckout')}</Button>
+      </div>
+    </div>
+  );
 }
 
 function checkState(index: number, ticked: number): CheckState {
@@ -203,7 +211,7 @@ function ScanReport({
   ];
 
   return (
-    <div className={BODY}>
+    <div className={BODY_CLASS}>
       <div className="min-h-0 flex-1 space-y-6 overflow-y-auto">
         <WarningBanner warnings={warnings} gatewayTotal={gateways.length} />
 

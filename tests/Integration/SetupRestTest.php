@@ -81,18 +81,70 @@ class SetupRestTest extends WP_UnitTestCase {
         $this->assert_nothing_written( 0 );
     }
 
-    public function test_free_layout_limit_writes_nothing(): void {
-        if ( Plan::is_pro() ) {
-            $this->markTestSkipped( 'Pro has no layout limit.' );
-        }
+    /** Runs $test on the Free plan; the test bootstrap boots Pro whenever includes/Pro exists. */
+    private function as_free( callable $test ): void {
+        $pro = new \ReflectionProperty( Plan::class, 'pro' );
+        $pro->setAccessible( true );
+        $was_pro = $pro->getValue();
+        $pro->setValue( null, false );
 
+        try {
+            $test();
+        } finally {
+            $pro->setValue( null, $was_pro );
+        }
+    }
+
+    public function test_free_layout_limit_writes_nothing(): void {
         for ( $i = 0; $i < LayoutRepository::FREE_LIMIT; $i++ ) {
             LayoutFactory::create_draft();
         }
 
-        $response = $this->post( $this->body( Design::defaults() ) );
+        $this->as_free(
+            function () {
+                $response = $this->post( $this->body( Design::defaults() ) );
+
+                $this->assertSame( 400, $response->get_status() );
+                $this->assert_nothing_written( LayoutRepository::FREE_LIMIT );
+            }
+        );
+    }
+
+    public function test_locked_template_on_free_writes_nothing(): void {
+        $locked                = array_values( array_filter( LayoutTemplateCatalogue::templates( false ), fn( $t ) => $t['locked'] ) );
+        $body                  = $this->body( Design::defaults() );
+        $body['template_slug'] = $locked[0]['slug'];
+
+        $this->as_free(
+            function () use ( $body ) {
+                $response = $this->post( $body );
+
+                $this->assertSame( 400, $response->get_status() );
+                $this->assert_nothing_written( 0 );
+            }
+        );
+    }
+
+    public function test_missing_template_slug_is_refused_at_the_route(): void {
+        $body                  = $this->body( Design::defaults() );
+        $body['template_slug'] = [];
+
+        $response = $this->post( $body );
 
         $this->assertSame( 400, $response->get_status() );
-        $this->assert_nothing_written( LayoutRepository::FREE_LIMIT );
+        $this->assert_nothing_written( 0 );
+    }
+
+    public function test_second_setup_is_refused_and_writes_nothing(): void {
+        $this->assertSame( 200, $this->post( $this->body( Design::defaults() ) )->get_status() );
+        $design_after_first = get_option( Design::OPTION_DESIGN );
+
+        $tokens                      = Design::defaults();
+        $tokens['buttons']['radius'] = 20;
+        $response                    = $this->post( $this->body( $tokens ) );
+
+        $this->assertSame( 409, $response->get_status() );
+        $this->assertSame( 1, ( new LayoutRepository() )->count() );
+        $this->assertSame( $design_after_first, get_option( Design::OPTION_DESIGN ) );
     }
 }

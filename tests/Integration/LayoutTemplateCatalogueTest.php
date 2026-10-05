@@ -55,9 +55,23 @@ class LayoutTemplateCatalogueTest extends WP_UnitTestCase {
         $this->assertNotContains( true, $locked );
     }
 
-    public function test_has_template_only_knows_the_current_list(): void {
-        $this->assertTrue( LayoutTemplateCatalogue::has_template( 'digital-product' ) );
-        $this->assertFalse( LayoutTemplateCatalogue::has_template( 'minimal' ) );
-        $this->assertFalse( LayoutTemplateCatalogue::has_template( '' ) );
+    /** @dataProvider unavailable_slugs */
+    public function test_assert_available_refuses_unknown_slugs( string $slug ): void {
+        $this->expectException( \InvalidArgumentException::class );
+
+        LayoutTemplateCatalogue::assert_available( $slug );
+    }
+
+    public function unavailable_slugs(): array {
+        return [
+            'retired' => [ 'minimal' ],
+            'empty'   => [ '' ],
+        ];
+    }
+
+    public function test_assert_available_accepts_a_free_template(): void {
+        LayoutTemplateCatalogue::assert_available( self::FREE_SLUGS[0] );
+
+        $this->addToAssertionCount( 1 );
     }
 }

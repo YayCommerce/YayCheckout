@@ -3,7 +3,7 @@ import { __, sprintf } from '@wordpress/i18n';
 
 import { storeTypeLabel } from '@/lib/helpers/compatibility.helper';
 import { useCompatibilityQuery } from '@/lib/queries/compatibility.queries';
-import { useTemplateLibraryQuery } from '@/lib/queries/template.queries';
+import { useTemplate } from '@/lib/queries/template.queries';
 import type { Layout } from '@/lib/schema/layout.schema';
 import { LayoutDraftActions } from '@/components/shared/LayoutDraftActions';
 import { SummaryStrip } from '@/components/shared/SummaryStrip';
@@ -18,10 +18,9 @@ export function FinishStep({
   templateSlug: string;
   onClose: () => void;
 }) {
-  const { data: library } = useTemplateLibraryQuery();
   const { data: report } = useCompatibilityQuery();
 
-  const templateName = library?.templates.find((t) => t.slug === templateSlug)?.name ?? templateSlug;
+  const templateName = useTemplate(templateSlug)?.name ?? templateSlug;
 
   return (
     <div className="flex flex-col gap-6">

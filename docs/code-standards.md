@@ -98,6 +98,8 @@ Two places that decide the same thing leave the reader unable to tell which one 
 | Upgrade link | `YAYCHECKOUT_UPGRADE_URL` (`yaycheckout.php`) | — (reaches the SPA via `yayCheckoutMeta`, the blocks via `window.yayCheckoutBlocks`) |
 | Export file download (name, save, `.json` check) | `packages/blocks/src/shared/export-file.ts` | — (the SPA imports it via `@blocks-shared`) |
 | Mutation keys another component watches (`useIsMutating`) | `*_MUTATION_KEY` constants in `apps/admin/src/lib/queries/*.queries.ts` (e.g. `IMPORT_LAYOUT_MUTATION_KEY`) | — |
+| Which templates a plan may create from (unknown, locked) | `Controllers\LayoutTemplateCatalogue::assert_available()`, called by `create_draft` and `/setup` | `locked` on each `GET /layouts/templates` row (the picker renders it, never re-derives it) |
+| Template by slug (name, category, locked) | `useTemplate()` in `apps/admin/src/lib/queries/template.queries.ts` | — |
 | Layouts `?edit=ID` deep link into the embedded editor | `apps/admin/src/lib/helpers/layout.helper.ts` (`editLayoutPath`, `editLayoutIdFrom`, `withEditLayout`) | — |
 | Publish rules | `LayoutMarkupReader::publish_error()` — called, never re-checked | `packages/blocks/src/checkout/publish-guard.ts` |
 | Required/optional field rules | `Services\RequiredFieldOverlay` | `assets/js/checkout-field-requirements.js` (payload from `RequiredIndicator::script_payload()`) |

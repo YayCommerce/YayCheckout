@@ -1,8 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { exportLayout, importLayout } from '@/lib/api/tools.api';
-import { LAYOUT_KEYS } from '@/lib/queries/layout.queries';
-import { LISTED_LAYOUT_STATUSES } from '@/lib/schema/layout.schema';
+import { invalidateListedLayouts } from '@/lib/queries/layout.queries';
 
 /** Export is a read that ends in a download, so it is a mutation: never cached, one file per click. */
 export function useExportLayoutMutation() {
@@ -23,8 +22,7 @@ export function useImportLayoutMutation() {
     // The Source step renders the refusal next to the button that caused it.
     meta: { skipGlobalError: true },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+      invalidateListedLayouts(queryClient);
     },
   });
 }

@@ -59,7 +59,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 |---|---|---|
 | `wp/v2/yay_checkout_layout` | GET/POST | core: draft save, autosave, revisions |
 | `yaycheckout/v1/layouts` | GET | list one page; args: `status` (comma list), `search` (string), `page` (int ≥1); envelope `{ items, total, page, total_pages }`. A row carries `blocks` (count of `yaycheckout/*` blocks in its markup) and `size` (bytes of markup) so the Tools cards need no detail fetch; every item (and `Layout::to_array()` anywhere) carries the layout's `rules` (`[]` when none) |
-| `yaycheckout/v1/layouts` | POST | create draft seeded with contact, billing, shipping, order-review; args: `name`, `source` (blank\|library), `template_slug` |
+| `yaycheckout/v1/layouts` | POST | create draft seeded with contact, billing, shipping, order-review; args: `name`, `source` (blank\|library), `template_slug` (400 when unknown or locked on this plan) |
 | `yaycheckout/v1/layouts/counts` | GET | per-tab totals: `listed` (everything not archived), `archived`, and store-wide `active` |
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
@@ -80,7 +80,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/compatibility` | GET | `{ store, gateways, plugins, catalogue: { source, fetched_at } }`; arg `refresh` (bool) drops the cached catalogue first |
 | `yaycheckout/v1/settings` | GET/POST | envelope `{ settings, updated_at }`; POST merges over stored settings, strips unknown keys, rejects wrong types/enum values with 400 |
 | `yaycheckout/v1/mark-reviewed` | POST | review prompt dismissed |
-| `yaycheckout/v1/setup` | POST | the setup wizard's one save: body `{ template_slug, design: { tokens, preset_id, custom_css } }` → `{ layout, design }`; validates the template and design before the first write, then creates "Checkout — draft", saves the design and marks setup done, so a 400 (unknown template, invalid design, Free layout limit) writes nothing |
+| `yaycheckout/v1/setup` | POST | the setup wizard's one save: body `{ template_slug, design: { tokens, preset_id, custom_css } }` → `{ layout, design }`; validates the template and design before the first write, then creates "Checkout — draft", saves the design and marks setup done, so a 400 (unknown or plan-locked template, invalid design, Free layout limit) writes nothing; 409 once setup is done, so a retry or a second tab cannot add another draft |
 | `yaycheckout/v1/mark-setup-done` | POST | setup wizard skipped |
 
 All require `LayoutPostType::CAPABILITY` (`manage_woocommerce`).

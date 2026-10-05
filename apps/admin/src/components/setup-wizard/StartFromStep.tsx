@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { useTemplateLibraryQuery } from '@/lib/queries/template.queries';
+import { useTemplate, useTemplateLibraryQuery } from '@/lib/queries/template.queries';
 import { Button } from '@/components/ui/button';
 import { TemplatePicker } from '@/components/shared/template-picker/TemplatePicker';
 
@@ -29,7 +29,7 @@ export function StartFromStep({
     if (templateSlug === undefined && firstUnlocked) onTemplateChange(firstUnlocked.slug);
   }, [templateSlug, firstUnlocked, onTemplateChange]);
 
-  const selected = data?.templates.find((t) => t.slug === templateSlug);
+  const selected = useTemplate(templateSlug);
 
   return (
     <div className="flex flex-col gap-6">

@@ -32,6 +32,20 @@ class SetupRestController extends BaseRestController {
                 'methods'             => \WP_REST_Server::CREATABLE,
                 'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'complete_setup' ], $request ),
                 'permission_callback' => [ $this, 'permission_callback' ],
+                'args'                => [
+                    'template_slug' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_key',
+                        'validate_callback' => static function ( $value ) {
+                            return is_string( $value ) && '' !== trim( $value );
+                        },
+                    ],
+                    'design'        => [
+                        'required' => true,
+                        'type'     => 'object',
+                    ],
+                ],
             ]
         );
     }
@@ -41,42 +55,32 @@ class SetupRestController extends BaseRestController {
      *
      * Everything is validated before the first write, so a refusal leaves no
      * draft, design or setup flag behind; the steps after the draft cannot fail
-     * validation.
+     * validation. Once setup is done it refuses with 409: a retry after a lost
+     * response, or a second tab, would otherwise add another draft.
      *
      * Body: { template_slug, design: { tokens, preset_id, custom_css } }.
      *
      * @return array|\WP_Error { layout, design }
      */
     public function complete_setup( \WP_REST_Request $request ) {
-        $input  = $request->get_json_params();
-        $design = is_array( $input ) ? ( $input['design'] ?? null ) : null;
-
-        if ( ! is_array( $design ) ) {
-            return $this->error_invalid_arguments();
-        }
-
-        if ( ! LayoutTemplateCatalogue::has_template( (string) ( $input['template_slug'] ?? '' ) ) ) {
-            return $this->error_invalid_arguments( __( 'Unknown template.', 'yaycheckout' ) );
-        }
-
-        $clean = $this->design->get()->sanitize_input( $design );
-
-        if ( $clean instanceof \WP_Error ) {
-            return $this->error_invalid_arguments( $clean->get_error_message() );
+        if ( $this->settings->is_setup_done() ) {
+            return $this->error_conflict( __( 'Setup is already complete.', 'yaycheckout' ) );
         }
 
         try {
+            LayoutTemplateCatalogue::assert_available( (string) $request->get_param( 'template_slug' ) );
+            $design = $this->design->prepare( (array) $request->get_param( 'design' ) );
             $layout = $this->layouts->create( __( 'Checkout — draft', 'yaycheckout' ) );
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
 
-        $saved = $this->design->save( $design );
+        $design = $this->design->store( $design );
         $this->settings->mark_setup_done();
 
         return [
             'layout' => $layout->to_array(),
-            'design' => $saved->to_array(),
+            'design' => $design->to_array(),
         ];
     }
 }

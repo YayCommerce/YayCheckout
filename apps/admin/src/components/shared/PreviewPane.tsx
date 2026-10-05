@@ -35,9 +35,9 @@ const NEUTRAL = {
  * payment, order summary), restyled live from the form's current tokens so
  * every token has visible surface to land on.
  *
- * @param compact Desktop mock only: no device switch, no minimum height (the setup wizard's preview).
+ * @param isCompact Desktop mock only: no device switch, no minimum height (the setup wizard's preview).
  */
-export function PreviewPane({ compact = false }: { compact?: boolean }) {
+export function PreviewPane({ isCompact = false }: { isCompact?: boolean }) {
   const [viewport, setViewport] = useState<Viewport>('desktop');
   const { control } = useFormContext<DesignForm>();
   const tokens = useWatch({ control, name: 'tokens' });
@@ -83,8 +83,8 @@ export function PreviewPane({ compact = false }: { compact?: boolean }) {
   };
 
   return (
-    <div className={cn('bg-background flex min-w-0 flex-1 flex-col gap-3', !compact && 'rounded-lg border p-4')}>
-      {!compact && (
+    <div className={cn('bg-background flex min-w-0 flex-1 flex-col gap-3', !isCompact && 'rounded-lg border p-4')}>
+      {!isCompact && (
         <div className="flex items-center gap-2">
           <span className="flex-1 text-sm font-semibold">{__('Preview', 'yaycheckout')}</span>
           <Segmented size="sm" shape="square" value={viewport} onValueChange={(v) => v && setViewport(v as Viewport)}>
@@ -113,7 +113,7 @@ export function PreviewPane({ compact = false }: { compact?: boolean }) {
       <div
         className={cn(
           'flex flex-1 justify-center overflow-hidden rounded-lg border',
-          !compact && 'min-h-160',
+          !isCompact && 'min-h-160',
           viewport !== 'desktop' && 'bg-muted p-4',
         )}
       >

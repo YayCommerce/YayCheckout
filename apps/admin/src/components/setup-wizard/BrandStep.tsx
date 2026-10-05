@@ -2,7 +2,7 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { isPro } from '@/lib/plan';
-import { useTemplateLibraryQuery } from '@/lib/queries/template.queries';
+import { useTemplate } from '@/lib/queries/template.queries';
 import {
   BUTTON_STYLE_LABELS,
   CUSTOM_CSS_MAX_BYTES,
@@ -47,8 +47,7 @@ export function BrandStep({
   onApply: (values: DesignForm) => void;
 }) {
   const { handleSubmit } = useFormContext<DesignForm>();
-  const { data: library } = useTemplateLibraryQuery();
-  const templateName = library?.templates.find((t) => t.slug === templateSlug)?.name;
+  const templateName = useTemplate(templateSlug)?.name;
 
   return (
     <div className="flex flex-col gap-6">
@@ -80,7 +79,7 @@ export function BrandStep({
           </span>
           {/* zoom, not transform: the mock lays out at full desktop width, then shrinks to fit the column. */}
           <div style={{ zoom: 0.6 }}>
-            <PreviewPane compact />
+            <PreviewPane isCompact />
           </div>
         </div>
       </div>
@@ -174,7 +173,7 @@ function CornerRadiusField() {
         <span className="font-medium">{__('Corner radius', 'yaycheckout')}</span>
         <span className="text-muted-foreground">{radius}px</span>
       </div>
-      {/* One slider sets both radii. */}
+      {/* The basics step couples button and input radius; Design splits them. */}
       <Slider
         min={RADIUS_RANGE.min}
         max={RADIUS_RANGE.max}

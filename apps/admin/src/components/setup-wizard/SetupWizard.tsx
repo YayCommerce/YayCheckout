@@ -1,13 +1,17 @@
 import { Fragment, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { HTTPError } from 'ky';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
 import { markSetupDone } from '@/lib/api/settings.api';
 import { activePresetIdFor } from '@/lib/helpers/design.helper';
 import { getErrorMsg } from '@/lib/helpers/response.helper';
 import { logger } from '@/lib/logger';
-import { useDesignQuery } from '@/lib/queries/design.queries';
+import { DESIGN_QUERIES, useDesignQuery } from '@/lib/queries/design.queries';
+import { invalidateListedLayouts } from '@/lib/queries/layout.queries';
 import { useCompleteSetupMutation } from '@/lib/queries/setup.queries';
 import { designFormSchema, type DesignForm } from '@/lib/schema/design.schema';
 import { Badge } from '@/components/ui/badge';
@@ -30,9 +34,8 @@ const STEPS = [__('Scan', 'yaycheckout'), __('Start from', 'yaycheckout'), __('B
 
 /**
  * First-run setup popup, open while `showSetupWizard` is true. Picks stay in
- * memory until Apply brand saves them all in one POST /setup, which also marks
- * setup done; a refused save writes nothing, so Back and Skip setup stay
- * honest after it. No close icon, Esc or outside click.
+ * memory until Apply brand sends them in one save; Skip setup only marks setup
+ * done. No close icon, Esc or outside click.
  */
 export function SetupWizard() {
   const [open, setOpen] = useState(window.yayCheckoutMeta.checkoutMeta.showSetupWizard);
@@ -40,6 +43,7 @@ export function SetupWizard() {
   const [templateSlug, setTemplateSlug] = useState<string | null>();
   const [applyError, setApplyError] = useState<string | null>(null);
   const { data: design } = useDesignQuery();
+  const queryClient = useQueryClient();
   const setup = useCompleteSetupMutation();
   const brandForm = useForm<DesignForm>({
     resolver: zodResolver(designFormSchema),
@@ -64,6 +68,14 @@ export function SetupWizard() {
       });
       setStep(STEPS.length);
     } catch (e) {
+      // 409: an earlier Apply whose response was lost, or another tab, already finished setup.
+      if (e instanceof HTTPError && e.response.status === 409) {
+        setOpen(false);
+        queryClient.invalidateQueries({ queryKey: DESIGN_QUERIES.main.queryKey });
+        invalidateListedLayouts(queryClient);
+        toast.info(__('Setup was already completed.', 'yaycheckout'));
+        return;
+      }
       setApplyError(await getErrorMsg(e));
     }
   }
@@ -116,7 +128,10 @@ export function SetupWizard() {
               templateSlug={templateSlug}
               isApplying={setup.isPending}
               error={applyError}
-              onBack={() => setStep(1)}
+              onBack={() => {
+                setApplyError(null);
+                setStep(1);
+              }}
               onApply={onApply}
             />
           </Form>

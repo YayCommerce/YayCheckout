@@ -293,7 +293,7 @@ class LayoutRestController extends BaseRestController {
 
     /**
      * Creates a layout draft from the New layout modal.
-     * 'library' only checks the template exists; both sources create the same
+     * 'library' only checks the template is available on this plan; both sources create the same
      * seeded default draft until real template markup exists. Titles may repeat, as Pages do.
      *
      * @return array|\WP_Error
@@ -303,11 +303,11 @@ class LayoutRestController extends BaseRestController {
         $source        = (string) $request->get_param( 'source' );
         $template_slug = (string) $request->get_param( 'template_slug' );
 
-        if ( 'library' === $source && ! LayoutTemplateCatalogue::has_template( $template_slug ) ) {
-            return $this->error_invalid_arguments( __( 'Unknown template.', 'yaycheckout' ) );
-        }
-
         try {
+            if ( 'library' === $source ) {
+                LayoutTemplateCatalogue::assert_available( $template_slug );
+            }
+
             return $this->layouts->create( $name )->to_array();
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );

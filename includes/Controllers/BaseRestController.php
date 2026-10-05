@@ -26,6 +26,10 @@ abstract class BaseRestController {
         return new \WP_Error( 'invalid_arguments', $message, [ 'status' => 400 ] );
     }
 
+    protected function error_conflict( $message = 'Conflict.' ) {
+        return new \WP_Error( 'conflict', $message, [ 'status' => 409 ] );
+    }
+
     /** Every route requires LayoutPostType::CAPABILITY. */
     public function permission_callback(): bool {
         return current_user_can( LayoutPostType::CAPABILITY );

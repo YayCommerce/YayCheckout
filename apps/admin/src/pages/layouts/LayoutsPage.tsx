@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Plus, Search } from 'lucide-react';
-import { useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useDebounceFn } from 'rooks';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
@@ -170,10 +170,15 @@ function LayoutsPageBody({
 }) {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
   // The URL is the only record of the open editor, so browser Back closes it and other screens can deep-link to it.
   const editingLayoutId = editLayoutIdFrom(searchParams);
-  const openEditor = (id: number) => setSearchParams(withEditLayout(searchParams, id));
+  // The state marks an entry this page pushed, so closing pops it instead of leaving a duplicate behind.
+  const openEditor = (id: number) =>
+    setSearchParams(withEditLayout(searchParams, id), { state: { isEditorPushed: true } });
+  const lastEditingLayoutId = useRef(editingLayoutId);
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
   const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
@@ -271,10 +276,22 @@ function LayoutsPageBody({
     return url.toString();
   }, [editingLayoutId]);
 
-  const onEditorOpenChange = (open: boolean) => {
-    if (!open) {
-      setSearchParams(withEditLayout(searchParams, null), { replace: true });
+  // On the URL, not the dialog: browser Back closes the editor without onOpenChange.
+  useEffect(() => {
+    if (lastEditingLayoutId.current !== null && editingLayoutId === null) {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+    }
+    lastEditingLayoutId.current = editingLayoutId;
+  }, [editingLayoutId, queryClient]);
+
+  const onEditorOpenChange = (open: boolean) => {
+    if (open) {
+      return;
+    }
+    if (location.state?.isEditorPushed) {
+      navigate(-1);
+    } else {
+      setSearchParams(withEditLayout(searchParams, null), { replace: true });
     }
   };
 

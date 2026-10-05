@@ -1,5 +1,5 @@
 import { api } from '@/lib/api/api';
-import { designResponseFromWire, tokensToWire } from '@/lib/api/design.api';
+import { designResponseFromWire, designToWire } from '@/lib/api/design.api';
 import { parseLayout } from '@/lib/api/layout.api';
 import type { DesignForm } from '@/lib/schema/design.schema';
 import { setupResponseWireSchema, type SetupResult } from '@/lib/schema/setup.schema';
@@ -12,14 +12,7 @@ export type CompleteSetupPayload = {
 
 export async function completeSetup({ templateSlug, form, presetId }: CompleteSetupPayload): Promise<SetupResult> {
   const { layout, design } = setupResponseWireSchema.parse(
-    await api
-      .post('setup', {
-        json: {
-          template_slug: templateSlug,
-          design: { tokens: tokensToWire(form.tokens), preset_id: presetId, custom_css: form.customCss },
-        },
-      })
-      .json(),
+    await api.post('setup', { json: { template_slug: templateSlug, design: designToWire(form, presetId) } }).json(),
   );
 
   return { layout: parseLayout(layout), design: designResponseFromWire(design) };
