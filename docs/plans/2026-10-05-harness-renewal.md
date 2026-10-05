@@ -112,10 +112,10 @@ Expected: exit 2 for each generated path, exit 0 for `includes/x.php`
 
 ### Task 7: Shared skills, `run.sh backlog`, README
 
-- [ ] **Step 1:** Copy `yaybrainstorming`, `yayplan`, `yayplancheck`, `yaytidy` and `yaybacklog` unchanged from YayCommerce/YayLoyalty `dev/edd`.
-- [ ] **Step 2:** `./scripts/run.sh backlog`, bash 3.2-safe.
-- [ ] **Step 3:** Rewrite `README.md` as the front door: requirements, onboarding, daily workflow, agent tooling, keeping the harness current.
-- [ ] **Step 4: Commit.** Message: `docs(harness): add the shared skills, the backlog command and the README`
+- [x] **Step 1:** Copy `yaybrainstorming`, `yayplan`, `yayplancheck`, `yaytidy` and `yaybacklog` unchanged from YayCommerce/YayLoyalty `dev/edd`.
+- [x] **Step 2:** `./scripts/run.sh backlog`, bash 3.2-safe.
+- [x] **Step 3:** Rewrite `README.md` as the front door: requirements, onboarding, daily workflow, agent tooling, keeping the harness current.
+- [x] **Step 4: Commit.** Message: `docs(harness): add the shared skills, the backlog command and the README`
 
 ### Task 8: Harness check and final validation
 
