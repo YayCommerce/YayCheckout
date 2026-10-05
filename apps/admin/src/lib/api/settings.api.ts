@@ -71,3 +71,7 @@ export async function postSettings(data: Settings): Promise<SettingsResponse> {
 export function markReviewed() {
   return api.post('mark-reviewed').json<boolean>();
 }
+
+export function markSetupDone() {
+  return api.post('mark-setup-done').json<boolean>();
+}

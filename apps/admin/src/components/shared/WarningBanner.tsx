@@ -1,8 +1,8 @@
 import { TriangleAlert } from 'lucide-react';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
+import type { CompatibilityWarnings } from '@/lib/helpers/compatibility.helper';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { CompatibilityWarnings } from '../compatibility-warnings';
 
 /** One muted alert per warning kind; rendered only when there is something to say. */
 export function WarningBanner({ warnings, gatewayTotal }: { warnings: CompatibilityWarnings; gatewayTotal: number }) {

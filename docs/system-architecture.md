@@ -37,6 +37,7 @@ No custom tables in 1.x.
 | `yaycheckout_settings` | option | `SettingsRepository::save()` — the sanitized settings array |
 | `yaycheckout_settings_updated_at` | option | `SettingsRepository::save()` — ISO 8601 UTC timestamp of last save |
 | `yaycheckout_reviewed` | option | `SettingsRepository::mark_reviewed()` — boolean, suppresses the review prompt |
+| `yaycheckout_setup_done` | option | `SettingsRepository::mark_setup_done()`, from `POST /setup` or Skip setup — boolean, suppresses the setup wizard |
 | `yaycheckout_design` | option | `DesignRepository::save()` — `{ tokens, preset_id, custom_css, updated_at, presets }` where built-in presets live in code, merchant presets are stored |
 
 Preview links store nothing: the token is its own record (see Preview links).

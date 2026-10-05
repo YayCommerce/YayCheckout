@@ -44,6 +44,16 @@ class SettingsRestController extends BaseRestController {
                 'permission_callback' => [ $this, 'permission_callback' ],
             ]
         );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
+            '/mark-setup-done',
+            [
+                'methods'             => \WP_REST_Server::CREATABLE,
+                'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'mark_setup_done' ], $request ),
+                'permission_callback' => [ $this, 'permission_callback' ],
+            ]
+        );
     }
 
     public function get_settings( \WP_REST_Request $request ) {
@@ -69,6 +79,11 @@ class SettingsRestController extends BaseRestController {
 
     public function mark_reviewed( \WP_REST_Request $request ) {
         $this->settings->mark_reviewed();
+        return true;
+    }
+
+    public function mark_setup_done( \WP_REST_Request $request ) {
+        $this->settings->mark_setup_done();
         return true;
     }
 }

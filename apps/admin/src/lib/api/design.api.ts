@@ -64,15 +64,14 @@ export async function getDesign(): Promise<DesignResponse> {
   return designResponseFromWire(designResponseWireSchema.parse(await api.get('design').json()));
 }
 
+/** The applied-design body POST /design and POST /setup both send. */
+export function designToWire(form: DesignForm, presetId: string | null) {
+  return { tokens: tokensToWire(form.tokens), preset_id: presetId, custom_css: form.customCss };
+}
+
 export async function postDesign(form: DesignForm, presetId: string | null): Promise<DesignResponse> {
   return designResponseFromWire(
-    designResponseWireSchema.parse(
-      await api
-        .post('design', {
-          json: { tokens: tokensToWire(form.tokens), preset_id: presetId, custom_css: form.customCss },
-        })
-        .json(),
-    ),
+    designResponseWireSchema.parse(await api.post('design', { json: designToWire(form, presetId) }).json()),
   );
 }
 

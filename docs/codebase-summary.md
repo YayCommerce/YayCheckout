@@ -31,7 +31,7 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `PostTypes/` | `LayoutPostType` | registration only: caps, template, revision policy |
 | `Models/` | `Layout`, `LayoutQuery`, `Settings`, `Design` | dumb entities; **every storage key constant lives here**; zero WP calls. `Settings` and `Design` own `schema()` (the single description of settings/tokens), `from_option()` (read projection through the schema), and `sanitize()` (strict validation, unknown keys stripped). `LayoutQuery` is immutable value object for filtered/paginated queries. |
 | `Repositories/` | `LayoutRepository`, `SettingsRepository`, `DesignRepository`, `CompatibilityCatalogueRepository` | all storage access: layouts (publish sequence, active-set), settings (get/save/reviewed), design (tokens, presets, CSS), catalogue (transient → remote JSON → fallback) |
-| `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue`, `DesignRestController`, `CompatibilityRestController` | routing, validation, permissions; `BaseRestController` owns `permission_callback()` (checks `LayoutPostType::CAPABILITY` = `manage_woocommerce`) and `id_args()`; every controller inherits them |
+| `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue`, `DesignRestController`, `CompatibilityRestController`, `SetupRestController` | routing, validation, permissions; `BaseRestController` owns `permission_callback()` (checks `LayoutPostType::CAPABILITY` = `manage_woocommerce`) and `id_args()`; every controller inherits them |
 | `Services/` | `LayoutMarkupReader`, `ExtraFieldSubmission`, `RequiredFieldOverlay`, `RequiredIndicator`, `LayoutAssignment` | pure: no storage. `LayoutMarkupReader` flattens a layout's blocks and answers `slots()`, `fields()`, `extra_fields()`, `order_modes()` (always `[]` for now) and `publish_error()`. `ExtraFieldSubmission::collect()` turns a checkout POST into order rows and per-field error messages, reading only Keys from `extra_fields()` and accepting only values from `LayoutMarkupReader::options()`. `RequiredFieldOverlay::apply()` rewrites WooCommerce's billing/shipping fieldsets so the layout's Field blocks decide what is required; `RequiredIndicator` prints the required/optional label suffixes and the payload for `assets/js/checkout-field-requirements.js`. `LayoutAssignment::pick()` returns the first active layout whose assignment rules match the shopper facts it is given; `LayoutRepository::active()` calls it on Pro only. |
 | `Blocks/` | `BlockRegistry` | registers every built block directory (inserter order from `ORDER`); `allowed_blocks()` on `allowed_block_types_all` keeps `yaycheckout/*` blocks in the layout editor only and `woocommerce/checkout` out of it |
 | `Support/` | `Plan`, `CompatibilityCatalogue` | Free/Pro flag derived from provider boot; owns the layout limit and its message. Compatibility catalogue: status vocabulary, bundled list, `normalize()` for the remote JSON, transient key and TTLs — pure |
@@ -49,7 +49,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 
 - `yaycheckout.php` → `plugin_init()` on `plugins_loaded`, after a WooCommerce check; also registers `I18n::load_plugin_textdomain()` on `plugins_loaded`
 - `YayCheckout::__construct()` boots in order: `boot_pro()`, `RestAPI`, `RegisterFacade`, `Admin\Settings`, `BlockRegistry`, `LayoutPostType`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin\LayoutEditorEmbed`, `Renderer\PreviewRequest`, `Renderer\CheckoutScripts`, `Renderer\CheckoutPage`, `Renderer\CheckoutFragments`, `Renderer\CheckoutExtraFields`, `Renderer\CheckoutRequiredFields`
-- `Engine\RestAPI` instantiates controllers on `rest_api_init`; Free: `SettingsRestController`, `LayoutRestController`, `DesignRestController`, `CompatibilityRestController`. Pro's controllers (`DesignPresetRestController`, `LayoutExportRestController`, `LayoutImportRestController`) are registered by `ProServiceProvider` on the same hook, so the Free build has none
+- `Engine\RestAPI` instantiates controllers on `rest_api_init`; Free: `SettingsRestController`, `LayoutRestController`, `DesignRestController`, `CompatibilityRestController`, `SetupRestController`. Pro's controllers (`DesignPresetRestController`, `LayoutExportRestController`, `LayoutImportRestController`) are registered by `ProServiceProvider` on the same hook, so the Free build has none
 - `Engine\Admin\Settings` enqueues the SPA and localises `yayCheckoutMeta` / `yayCheckoutAdmin`, gated on the admin-shell hook suffix
 - `Engine\Register\RegisterFacade` branches to RegisterDev or RegisterProd on `init`, conditionally based on `YAYCHECKOUT_IS_DEVELOPMENT`
 
@@ -59,7 +59,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 |---|---|---|
 | `wp/v2/yay_checkout_layout` | GET/POST | core: draft save, autosave, revisions |
 | `yaycheckout/v1/layouts` | GET | list one page; args: `status` (comma list), `search` (string), `page` (int ≥1); envelope `{ items, total, page, total_pages }`. A row carries `blocks` (count of `yaycheckout/*` blocks in its markup) and `size` (bytes of markup) so the Tools cards need no detail fetch; every item (and `Layout::to_array()` anywhere) carries the layout's `rules` (`[]` when none) |
-| `yaycheckout/v1/layouts` | POST | create draft seeded with contact, billing, shipping, order-review; args: `name`, `source` (blank\|library), `template_slug` |
+| `yaycheckout/v1/layouts` | POST | create draft seeded with contact, billing, shipping, order-review; args: `name`, `source` (blank\|library), `template_slug` (400 when unknown or locked on this plan) |
 | `yaycheckout/v1/layouts/counts` | GET | per-tab totals: `listed` (everything not archived), `archived`, and store-wide `active` |
 | `yaycheckout/v1/layouts/templates` | GET | library catalogue for "New layout → From library" |
 | `yaycheckout/v1/layouts/{id}` | GET | single layout |
@@ -80,6 +80,8 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/compatibility` | GET | `{ store, gateways, plugins, catalogue: { source, fetched_at } }`; arg `refresh` (bool) drops the cached catalogue first |
 | `yaycheckout/v1/settings` | GET/POST | envelope `{ settings, updated_at }`; POST merges over stored settings, strips unknown keys, rejects wrong types/enum values with 400 |
 | `yaycheckout/v1/mark-reviewed` | POST | review prompt dismissed |
+| `yaycheckout/v1/setup` | POST | the setup wizard's one save: body `{ template_slug, design: { tokens, preset_id, custom_css } }` → `{ layout, design }`; validates the template and design before the first write, then creates "Checkout — draft", saves the design and marks setup done, so a 400 (unknown or plan-locked template, invalid design, Free layout limit) writes nothing; 409 once setup is done, so a retry or a second tab cannot add another draft |
+| `yaycheckout/v1/mark-setup-done` | POST | setup wizard skipped |
 
 All require `LayoutPostType::CAPABILITY` (`manage_woocommerce`).
 
@@ -98,7 +100,7 @@ src/
   pages/
     404.tsx  500.tsx    error pages
     layouts/            LayoutsPage (queries, filters, modals); assignment drawer and condition builder
-      LayoutsPage.tsx   list with pagination, search, status tabs, Pro-only Assignment column (`assignment/AssignmentChips`, chips from each layout's `rules` wrapping onto more lines, "Everyone" when none); Edit/Preview/Publish/Set active/Deactivate/Archive/Restore/Delete for good real; Health placeholder DOM
+      LayoutsPage.tsx   list with pagination, search, status tabs, Pro-only Assignment column (`assignment/AssignmentChips`, chips from each layout's `rules` wrapping onto more lines, "Everyone" when none); Edit/Preview/Publish/Set active/Deactivate/Archive/Restore/Delete for good real; the open embedded editor is `?edit=ID` in the URL, so browser Back closes it; Health placeholder DOM
       assignment/       AssignmentDrawer (Pro, `/layouts/{id}/rules`), ConditionGroup, AssignmentChips, OptionsMultiSelect, MultiSelectTrigger, condition-types.ts (vocabulary mirror and form shape)
       PreviewLinkModal.tsx  minted preview URL with Copy (select-text fallback on http) and Open
       SetActiveModal.tsx    Set active modal (real)
@@ -106,20 +108,21 @@ src/
       ArchiveModal.tsx      Archive modal (real)
       DeleteModal.tsx       Delete-for-good modal: typed DELETE gate (real)
       LayoutStatusBadge.tsx status + active badge; shared with the Tools layout picker
-      new-layout/       NewLayoutModal, SourceStep, LibraryStep, NameField, TemplateThumbnail + template-thumbnail-sketches (SVG sketch per catalogue slug)
+      new-layout/       NewLayoutModal, SourceStep, LibraryStep (name + `shared/template-picker`), NameField
     design/             Design tokens page (real)
       DesignPage.tsx    form with token groups, preset picker, custom CSS, Save/Reset actions
-      components/       TokenGroups (summary + accordion), TokenField, PxInput; PresetsCard (built-in + merchant); ColoursGroup, TypographyGroup, SpacingGroup, ButtonsGroup, InputsGroup, CustomCssGroup; PreviewPane, DesignActions, SavePresetModal (Pro), ResetConfirmModal
+      components/       TokenGroups (summary + accordion), TokenField, PxInput; PresetsCard (built-in + merchant); ColoursGroup, TypographyGroup, SpacingGroup, ButtonsGroup, InputsGroup, CustomCssGroup; DesignActions, SavePresetModal (Pro), ResetConfirmModal (preview: `shared/PreviewPane`)
     settings/           one form across tabs, Save in the panel footer, unsaved-changes guard
-    compatibility/      CompatibilityPage: warning banner, Store / Payment gateways / Plugins touching checkout, Re-scan, catalogue footnote
-      compatibility-warnings.ts   report → { blockOnly, unverifiedPlugins }
-      components/       WarningBanner, StoreSection, GatewaysSection (block-only "Why?" expander + vendor request), PluginsSection, StatusBadge
+    compatibility/      CompatibilityPage (warnings via `lib/helpers/compatibility.helper` + `shared/WarningBanner`): Store / Payment gateways / Plugins touching checkout, Re-scan, catalogue footnote
+      components/       StoreSection, GatewaysSection (block-only "Why?" expander + vendor request), PluginsSection
     tools/              ToolsPage: Export + Import (Pro) or the ExportImportCard teaser (Free), and Reset (both builds)
       components/       ExportCard (download .json), ImportCard (drop/pick a .json, client-side parse + review), ExportImportCard (Free upsell), ResetCard + ResetModal (typed-phrase gate, warns on an active layout), LayoutSelect (searchable, infinite-scroll picker, starts empty)
-      import-modal/     ImportModal with StepStrip, SourceStep, DraftStep: creates the draft from the parsed export envelope
+      import-modal/     ImportModal with StepStrip, SourceStep, DraftStep (summaries via `shared/SummaryStrip`): creates the draft from the parsed export envelope
   components/
     ui/                 shadcn primitives (kebab-case, CLI-generated)
-    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton; used by multiple pages
+    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton, StatusBadge (gateway status), PreviewPane (live checkout mock from design tokens; `compact` for the wizard), SummaryStrip (label/value strip), LayoutDraftActions (Go to Layouts / Open in editor after a draft is made), FontFamilySelect (Design typography + wizard), WarningBanner (block-only / unverified-plugin alerts); used by multiple pages
+      template-picker/  TemplatePicker (Free unlocked grid + locked strip / Pro filterable grid), TemplateThumbnail + template-thumbnail-sketches (SVG sketch per catalogue slug); New layout modal and setup wizard
+    setup-wizard/       SetupWizard popup (Scan › Start from › Brand; opens while `checkoutMeta.showSetupWizard` — not set up yet and no listed layout; picks stay in memory until Apply brand sends one `POST /setup`; Skip setup only marks `setup_done` and closes), ScanStep, StartFromStep, BrandStep (the design form's fields over the compact preview), FinishStep (draft summary + `shared/LayoutDraftActions`)
     layout/             Header, Footer, HeaderMenu (chrome)
     pro/                ProGate, upsell surfaces
     icons/
@@ -131,7 +134,7 @@ src/
     api/                ky calls per feature
     queries/            queryOptions + hooks per feature
     schema/             zod schemas mirroring PHP to_array()
-    helpers/            error unwrapping, date formatting, clipboard with select-text fallback, form utilities, `infinite-list` (`loadMoreOnScroll()` for paged pickers)
+    helpers/            error unwrapping, date formatting, clipboard with select-text fallback, form utilities, `infinite-list` (`loadMoreOnScroll()` for paged pickers), `layout.helper` (the `?edit=ID` editor link)
     logger.ts           namespaced console; error/warn kept in production
     plan.ts             Free/Pro, from the build-time constant
     query-client.ts     QueryClient + global error toasts
@@ -182,6 +185,6 @@ Requires `pnpm` and PHP 8.x locally. The root `dev:*` / `build:*` scripts shell 
 
 Telemetry is a stored setting with no consumer yet (data is not sent). The Integrations tab detects YayBoost and YayLoyalty but those companions do not yet declare checkout slots. The Compatibility page has no self-test, report modal or header warning chip yet, and its remote catalogue URL is a placeholder, so every install runs on the bundled list until it is published. The storefront prints design tokens as `--yaycheckout-*` CSS variables, only for sections the merchant turns on, but no block reads them yet.
 
-`Controllers/LayoutTemplateCatalogue` is a fixed list of the 11 v1.1 templates (order matters: Free unlocks the first three), no database; the SPA draws each slug's layout sketch in `new-layout/template-thumbnail-sketches.tsx`, but `create_draft` still seeds the same default markup for every slug — repoint it at real template markup once that exists. The Health row action renders placeholder DOM but has no backend; Preview / Set active / Deactivate / Archive / Restore / Delete are wired to `/preview-link`, `/activate`, `/deactivate`, `/archive`, `/restore` and the delete endpoint; Edit, Publish, Search and pagination are fully functional. `restore()` deliberately does not re-check the Free-plan layout cap that `create()`/`duplicate()` enforce.
+`Controllers/LayoutTemplateCatalogue` is a fixed list of the 11 v1.1 templates (order matters: Free unlocks the first three), no database; the SPA draws each slug's layout sketch in `components/shared/template-picker/template-thumbnail-sketches.tsx`, but `create_draft` still seeds the same default markup for every slug — repoint it at real template markup once that exists. The Health row action renders placeholder DOM but has no backend; Preview / Set active / Deactivate / Archive / Restore / Delete are wired to `/preview-link`, `/activate`, `/deactivate`, `/archive`, `/restore` and the delete endpoint; Edit, Publish, Search and pagination are fully functional. `restore()` deliberately does not re-check the Free-plan layout cap that `create()`/`duplicate()` enforce.
 
 See the end of `system-architecture.md` for the full deferred list.
