@@ -120,3 +120,8 @@
 .yaycheckout-steps[data-layout="single"] .yaycheckout-step:not([data-state="current"]) {
 	display: none;
 }
+
+/* Continue on the last step leaves nothing current. Keep that finished step on screen. */
+.yaycheckout-steps[data-layout="single"]:not(:has(.yaycheckout-step[data-state="current"])) > .yaycheckout-step[data-state="complete"]:last-child {
+	display: block;
+}

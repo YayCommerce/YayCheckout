@@ -167,12 +167,9 @@ function stepForButton( button: HTMLElement ): HTMLElement | null {
 }
 
 function canAdvance( step: HTMLElement ): boolean {
+	// Place order replaces Continue. A step with no next step still shows the button the merchant placed.
 	// The Place order block's wrapper is always there. The submit id appears only with a cart.
-	if ( step.querySelector( '#place_order, .yaycheckout-place-order' ) ) {
-		return false;
-	}
-
-	return nextStep( step ) !== null;
+	return ! step.querySelector( '#place_order, .yaycheckout-place-order' );
 }
 
 function syncStepButtons(): void {
