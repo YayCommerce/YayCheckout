@@ -117,12 +117,12 @@ src/
       components/       WarningBanner, StoreSection, GatewaysSection (block-only "Why?" expander + vendor request), PluginsSection
     tools/              ToolsPage: Export + Import (Pro) or the ExportImportCard teaser (Free), and Reset (both builds)
       components/       ExportCard (download .json), ImportCard (drop/pick a .json, client-side parse + review), ExportImportCard (Free upsell), ResetCard + ResetModal (typed-phrase gate, warns on an active layout), LayoutSelect (searchable, infinite-scroll picker, starts empty)
-      import-modal/     ImportModal with StepStrip, SourceStep, DraftStep: creates the draft from the parsed export envelope
+      import-modal/     ImportModal with StepStrip, SourceStep, DraftStep (summaries via `shared/SummaryStrip`): creates the draft from the parsed export envelope
   components/
     ui/                 shadcn primitives (kebab-case, CLI-generated)
-    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton, StatusBadge (gateway status), PreviewPane (live checkout mock from design tokens; `compact` for the wizard); used by multiple pages
+    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton, StatusBadge (gateway status), PreviewPane (live checkout mock from design tokens; `compact` for the wizard), SummaryStrip (label/value strip); used by multiple pages
       template-picker/  TemplatePicker (Free unlocked grid + locked strip / Pro filterable grid), TemplateThumbnail + template-thumbnail-sketches (SVG sketch per catalogue slug); New layout modal and setup wizard
-    setup-wizard/       SetupWizard popup (Scan › Start from › Brand, Skip setup marks `setup_done`), ScanStep, StartFromStep, BrandStep (Apply brand saves the design, then creates "Checkout — draft" from the picked template)
+    setup-wizard/       SetupWizard popup (Scan › Start from › Brand, Skip setup marks `setup_done`), ScanStep, StartFromStep, BrandStep (Apply brand saves the design, then creates "Checkout — draft" from the picked template), FinishStep (draft summary; Open in editor → `#/layouts?edit=ID`)
     layout/             Header, Footer, HeaderMenu (chrome)
     pro/                ProGate, upsell surfaces
     icons/

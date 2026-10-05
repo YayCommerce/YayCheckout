@@ -15,6 +15,7 @@ import {
   RADIUS_RANGE,
   type DesignForm,
 } from '@/lib/schema/design.schema';
+import type { Layout } from '@/lib/schema/layout.schema';
 import { Button, LoadingButton } from '@/components/ui/button';
 import {
   ColorPicker,
@@ -47,7 +48,7 @@ export function BrandStep({
 }: {
   templateSlug: string;
   onBack: () => void;
-  onApplied: () => void;
+  onApplied: (draft: Layout) => void;
 }) {
   const { data: design } = useDesignQuery();
   const { data: library } = useTemplateLibraryQuery();
@@ -73,8 +74,9 @@ export function BrandStep({
         form: values,
         presetId: activePresetIdFor(design.presets, design.presetId, values.tokens),
       });
-      await createDraft.mutateAsync({ name: __('Checkout — draft', 'yaycheckout'), source: 'library', templateSlug });
-      onApplied();
+      onApplied(
+        await createDraft.mutateAsync({ name: __('Checkout — draft', 'yaycheckout'), source: 'library', templateSlug }),
+      );
     } catch (e) {
       setError(await getErrorMsg(e));
     }

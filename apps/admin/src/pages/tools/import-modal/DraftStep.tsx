@@ -7,7 +7,7 @@ import type { RulesImport } from '@/lib/schema/tools.schema';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
-import { SummaryStrip } from './StepStrip';
+import { SummaryStrip } from '@/components/shared/SummaryStrip';
 
 export function DraftStep({
   layout,

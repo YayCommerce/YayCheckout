@@ -1,10 +1,11 @@
 import { Fragment, useState } from 'react';
-import { CircleCheck } from 'lucide-react';
 import { __ } from '@wordpress/i18n';
 
 import { markSetupDone } from '@/lib/api/settings.api';
 import { logger } from '@/lib/logger';
 import { isPro } from '@/lib/plan';
+import type { Layout } from '@/lib/schema/layout.schema';
+import { Badge } from '@/components/ui/badge';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { ProTag } from '@/components/pro/ProGate';
 import { BrandStep } from './BrandStep';
+import { FinishStep } from './FinishStep';
 import { ScanStep } from './ScanStep';
 import { StartFromStep } from './StartFromStep';
 
@@ -30,6 +32,7 @@ export function SetupWizard() {
   const [open, setOpen] = useState(document.referrer.includes('/wp-admin/plugins.php'));
   const [step, setStep] = useState(0);
   const [templateSlug, setTemplateSlug] = useState<string | null>();
+  const [draft, setDraft] = useState<Layout | null>(null);
   const finished = step === STEPS.length;
 
   async function markDone() {
@@ -61,24 +64,22 @@ export function SetupWizard() {
         <DialogTitle className="sr-only">{__('Set up YayCheckout', 'yaycheckout')}</DialogTitle>
 
         <div className="flex items-center justify-between gap-4">
-          <Breadcrumb>
-            <BreadcrumbList>
-              {STEPS.map((label, index) => (
-                <Fragment key={label}>
-                  {index > 0 && <BreadcrumbSeparator />}
-                  <BreadcrumbItem>
-                    {index === step ? <BreadcrumbPage>{label}</BreadcrumbPage> : <span>{label}</span>}
-                  </BreadcrumbItem>
-                </Fragment>
-              ))}
-            </BreadcrumbList>
-          </Breadcrumb>
-          {finished ? (
-            <span className="text-success flex items-center gap-1 text-sm font-medium">
-              <CircleCheck className="size-4" />
-              {__('Done', 'yaycheckout')}
-            </span>
-          ) : (
+          <div className="flex items-center gap-3">
+            <Breadcrumb>
+              <BreadcrumbList>
+                {STEPS.map((label, index) => (
+                  <Fragment key={label}>
+                    {index > 0 && <BreadcrumbSeparator />}
+                    <BreadcrumbItem>
+                      {index === step ? <BreadcrumbPage>{label}</BreadcrumbPage> : <span>{label}</span>}
+                    </BreadcrumbItem>
+                  </Fragment>
+                ))}
+              </BreadcrumbList>
+            </Breadcrumb>
+            {finished && <Badge variant="success-outline">{__('Done', 'yaycheckout')}</Badge>}
+          </div>
+          {!finished && (
             <div className="flex items-center gap-2">
               {isPro && <ProTag />}
               <Button variant="link" size="sm" onClick={onSkip}>
@@ -98,15 +99,17 @@ export function SetupWizard() {
           />
         )}
         {step === 2 && templateSlug && (
-          <BrandStep templateSlug={templateSlug} onBack={() => setStep(1)} onApplied={onNext} />
+          <BrandStep
+            templateSlug={templateSlug}
+            onBack={() => setStep(1)}
+            onApplied={(created) => {
+              setDraft(created);
+              onNext();
+            }}
+          />
         )}
-        {finished && (
-          <>
-            <div className="min-h-80 rounded-sm border border-dashed" />
-            <div className="flex justify-end gap-2">
-              <Button onClick={() => setOpen(false)}>{__('Go to Layouts', 'yaycheckout')}</Button>
-            </div>
-          </>
+        {finished && draft && templateSlug && (
+          <FinishStep draft={draft} templateSlug={templateSlug} onClose={() => setOpen(false)} />
         )}
       </DialogContent>
     </Dialog>

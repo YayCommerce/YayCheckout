@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Plus, Search } from 'lucide-react';
 import { useSearchParams } from 'react-router';
@@ -170,8 +170,13 @@ function LayoutsPageBody({
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
-  // `?edit=ID` lets another screen (Tools → Import) land straight in the embedded editor.
+  // `?edit=ID` lets another screen (Tools → Import, the setup wizard) land straight in the embedded editor.
   const [editingLayoutId, setEditingLayoutId] = useState<number | null>(() => Number(searchParams.get('edit')) || null);
+  // The wizard sits over this page, so its link arrives without a remount; follow the param, not just the first render.
+  useEffect(() => {
+    const id = Number(searchParams.get('edit'));
+    if (id) setEditingLayoutId(id);
+  }, [searchParams]);
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
   const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
@@ -488,7 +493,10 @@ function LayoutEditorFrame({ src }: { src: string }) {
       />
       {!loaded && (
         <div className="bg-background absolute inset-0 flex items-center justify-center">
-          <Loader2 className="text-muted-foreground size-6 animate-spin" aria-label={__('Loading editor…', 'yaycheckout')} />
+          <Loader2
+            className="text-muted-foreground size-6 animate-spin"
+            aria-label={__('Loading editor…', 'yaycheckout')}
+          />
         </div>
       )}
     </div>
