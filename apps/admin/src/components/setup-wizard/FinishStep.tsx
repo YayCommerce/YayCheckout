@@ -2,6 +2,7 @@ import { Check } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { __, sprintf } from '@wordpress/i18n';
 
+import { storeTypeLabel } from '@/lib/helpers/compatibility.helper';
 import { useCompatibilityQuery } from '@/lib/queries/compatibility.queries';
 import { useTemplateLibraryQuery } from '@/lib/queries/template.queries';
 import type { Layout } from '@/lib/schema/layout.schema';
@@ -23,8 +24,6 @@ export function FinishStep({
   const { data: report } = useCompatibilityQuery();
 
   const templateName = library?.templates.find((t) => t.slug === templateSlug)?.name ?? templateSlug;
-  const storeType =
-    report?.store.storeType === 'block' ? __('Block checkout', 'yaycheckout') : __('Classic store', 'yaycheckout');
 
   function goTo(path: string) {
     onClose();
@@ -57,7 +56,7 @@ export function FinishStep({
         items={[
           [__('Layout', 'yaycheckout'), draft.title],
           [__('Started from', 'yaycheckout'), templateName],
-          [__('Renders on', 'yaycheckout'), storeType],
+          [__('Renders on', 'yaycheckout'), storeTypeLabel(report?.store.storeType ?? 'classic')],
           [__('Status', 'yaycheckout'), __('Draft', 'yaycheckout')],
         ]}
       />

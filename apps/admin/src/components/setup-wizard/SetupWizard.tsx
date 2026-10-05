@@ -1,9 +1,13 @@
 import { Fragment, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useIsMutating } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
 import { __ } from '@wordpress/i18n';
 
 import { markSetupDone } from '@/lib/api/settings.api';
 import { logger } from '@/lib/logger';
+import { useDesignQuery } from '@/lib/queries/design.queries';
+import { designFormSchema, type DesignForm } from '@/lib/schema/design.schema';
 import type { Layout } from '@/lib/schema/layout.schema';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -23,26 +27,28 @@ import { StartFromStep } from './StartFromStep';
 const STEPS = [__('Scan', 'yaycheckout'), __('Start from', 'yaycheckout'), __('Brand', 'yaycheckout')];
 
 /**
- * First-run setup popup, shown on every admin visit until the merchant finishes
- * or skips. Nothing the merchant picks is stored until Apply brand; Skip setup
- * leaves without saving any of it. No close icon, Esc or outside click.
+ * First-run setup popup, open while `showSetupWizard` is true. Nothing the
+ * merchant picks is stored until Apply brand; Skip setup leaves without saving
+ * any of it. No close icon, Esc or outside click.
  */
 export function SetupWizard() {
-  // ponytail: dev-only trigger — opens when arriving from the Plugins screen's Settings link (same URL as the menu, so referrer tells them apart). Swap to `!window.yayCheckoutMeta.checkoutMeta.setupDone` once every step ships.
-  const [open, setOpen] = useState(document.referrer.includes('/wp-admin/plugins.php'));
+  const [open, setOpen] = useState(window.yayCheckoutMeta.checkoutMeta.showSetupWizard);
   const [step, setStep] = useState(0);
   const [templateSlug, setTemplateSlug] = useState<string | null>();
   const [draft, setDraft] = useState<Layout | null>(null);
+  const { data: design } = useDesignQuery();
+  const brandForm = useForm<DesignForm>({
+    resolver: zodResolver(designFormSchema),
+    defaultValues: { tokens: design.tokens, customCss: design.customCss },
+  });
   // Apply brand mid-flight: skipping now would close over a half-written design and draft.
-  const busy = useIsMutating() > 0;
-  const finished = step === STEPS.length;
+  const isBusy =
+    useIsMutating({ mutationKey: ['design', 'save'] }) + useIsMutating({ mutationKey: ['layouts', 'create-draft'] }) >
+    0;
+  const isFinished = step === STEPS.length;
 
-  async function markDone() {
-    try {
-      await markSetupDone();
-    } catch (e) {
-      logger.warn('Mark setup done failed', e);
-    }
+  function markDone() {
+    markSetupDone().catch((e) => logger.warn('Mark setup done failed', e));
   }
 
   function onSkip() {
@@ -79,10 +85,10 @@ export function SetupWizard() {
                 ))}
               </BreadcrumbList>
             </Breadcrumb>
-            {finished && <Badge variant="success-outline">{__('Done', 'yaycheckout')}</Badge>}
+            {isFinished && <Badge variant="success-outline">{__('Done', 'yaycheckout')}</Badge>}
           </div>
-          {!finished && (
-            <Button variant="link" size="sm" disabled={busy} onClick={onSkip}>
+          {!isFinished && (
+            <Button variant="link" size="sm" disabled={isBusy} onClick={onSkip}>
               {__('Skip setup', 'yaycheckout')}
             </Button>
           )}
@@ -99,6 +105,7 @@ export function SetupWizard() {
         )}
         {step === 2 && templateSlug && (
           <BrandStep
+            form={brandForm}
             templateSlug={templateSlug}
             onBack={() => setStep(1)}
             onApplied={(created) => {
@@ -107,7 +114,7 @@ export function SetupWizard() {
             }}
           />
         )}
-        {finished && draft && templateSlug && (
+        {isFinished && draft && templateSlug && (
           <FinishStep draft={draft} templateSlug={templateSlug} onClose={() => setOpen(false)} />
         )}
       </DialogContent>

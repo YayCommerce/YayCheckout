@@ -112,17 +112,16 @@ src/
       DesignPage.tsx    form with token groups, preset picker, custom CSS, Save/Reset actions
       components/       TokenGroups (summary + accordion), TokenField, PxInput; PresetsCard (built-in + merchant); ColoursGroup, TypographyGroup, SpacingGroup, ButtonsGroup, InputsGroup, CustomCssGroup; DesignActions, SavePresetModal (Pro), ResetConfirmModal (preview: `shared/PreviewPane`)
     settings/           one form across tabs, Save in the panel footer, unsaved-changes guard
-    compatibility/      CompatibilityPage: warning banner, Store / Payment gateways / Plugins touching checkout, Re-scan, catalogue footnote
-      compatibility-warnings.ts   report → { blockOnly, unverifiedPlugins }
-      components/       WarningBanner, StoreSection, GatewaysSection (block-only "Why?" expander + vendor request), PluginsSection
+    compatibility/      CompatibilityPage (warnings via `lib/helpers/compatibility.helper` + `shared/WarningBanner`): Store / Payment gateways / Plugins touching checkout, Re-scan, catalogue footnote
+      components/       StoreSection, GatewaysSection (block-only "Why?" expander + vendor request), PluginsSection
     tools/              ToolsPage: Export + Import (Pro) or the ExportImportCard teaser (Free), and Reset (both builds)
       components/       ExportCard (download .json), ImportCard (drop/pick a .json, client-side parse + review), ExportImportCard (Free upsell), ResetCard + ResetModal (typed-phrase gate, warns on an active layout), LayoutSelect (searchable, infinite-scroll picker, starts empty)
       import-modal/     ImportModal with StepStrip, SourceStep, DraftStep (summaries via `shared/SummaryStrip`): creates the draft from the parsed export envelope
   components/
     ui/                 shadcn primitives (kebab-case, CLI-generated)
-    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton, StatusBadge (gateway status), PreviewPane (live checkout mock from design tokens; `compact` for the wizard), SummaryStrip (label/value strip); used by multiple pages
+    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton, StatusBadge (gateway status), PreviewPane (live checkout mock from design tokens; `compact` for the wizard), SummaryStrip (label/value strip), FontFamilySelect (Design typography + wizard), WarningBanner (block-only / unverified-plugin alerts); used by multiple pages
       template-picker/  TemplatePicker (Free unlocked grid + locked strip / Pro filterable grid), TemplateThumbnail + template-thumbnail-sketches (SVG sketch per catalogue slug); New layout modal and setup wizard
-    setup-wizard/       SetupWizard popup (Scan › Start from › Brand; nothing is saved until Apply brand; Skip setup only marks `setup_done` and closes), ScanStep, StartFromStep, BrandStep (Apply brand saves the design, then creates "Checkout — draft" from the picked template), FinishStep (draft summary; Open in editor → `#/layouts?edit=ID`)
+    setup-wizard/       SetupWizard popup (Scan › Start from › Brand; opens while `checkoutMeta.showSetupWizard` — not set up yet and no listed layout; nothing is saved until Apply brand; Skip setup only marks `setup_done` and closes), ScanStep, StartFromStep, BrandStep (Apply brand creates "Checkout — draft" from the picked template, then saves the design), FinishStep (draft summary; Open in editor → `#/layouts?edit=ID`)
     layout/             Header, Footer, HeaderMenu (chrome)
     pro/                ProGate, upsell surfaces
     icons/

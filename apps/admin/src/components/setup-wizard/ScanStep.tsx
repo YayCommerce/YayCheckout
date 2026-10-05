@@ -1,15 +1,16 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Check, Circle, LoaderCircle, RefreshCw, TriangleAlert } from 'lucide-react';
+import { Check, Circle, LoaderCircle, RefreshCw } from 'lucide-react';
 import { createInterpolateElement } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
+import { deriveWarnings, storeTypeLabel } from '@/lib/helpers/compatibility.helper';
 import { useCompatibilityQuery, useRescanMutation } from '@/lib/queries/compatibility.queries';
 import type { CompatibilityReport } from '@/lib/schema/compatibility.schema';
 import { cn } from '@/lib/utils';
-import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, LoadingButton } from '@/components/ui/button';
 import { StatusBadge } from '@/components/shared/StatusBadge';
+import { WarningBanner } from '@/components/shared/WarningBanner';
 
 const CHECKS = [
   __('Store type', 'yaycheckout'),
@@ -20,6 +21,8 @@ const CHECKS = [
 
 /** Fixed height shared by the scanning, error and report views so the popup never jumps as they swap; a long report scrolls above the pinned footer. */
 const BODY = 'flex h-120 flex-col gap-6';
+
+type CheckState = 'done' | 'checking' | 'pending';
 
 /** Pacing between ticks, so a fast scan still reads as one check after another. */
 const TICK_MS = 400;
@@ -47,16 +50,18 @@ export function ScanStep({ onContinue }: { onContinue: () => void }) {
     rescan.mutate();
   }
 
-  const error = query.error ?? rescan.error;
-  if (error) {
+  // The request error itself (status, REST URL) is for the console, not the merchant.
+  if (query.error || rescan.error) {
     return (
       <div className={BODY}>
-        <p className="text-destructive text-sm">{error.message}</p>
+        <p className="text-destructive text-sm">
+          {__("We couldn't scan your store. Check your connection and try again.", 'yaycheckout')}
+        </p>
         <div className="mt-auto flex justify-between gap-2 border-t pt-4">
-          <Button variant="outline" onClick={onRerun}>
+          <LoadingButton variant="outline" loading={rescan.isPending} disabled={rescan.isPending} onClick={onRerun}>
             <RefreshCw />
             {__('Re-scan', 'yaycheckout')}
-          </Button>
+          </LoadingButton>
           <Button disabled>{__('Continue', 'yaycheckout')}</Button>
         </div>
       </div>
@@ -77,11 +82,7 @@ export function ScanStep({ onContinue }: { onContinue: () => void }) {
         </header>
         <ul className="divide-y rounded-sm border text-sm">
           {CHECKS.map((label, index) => (
-            <CheckRow
-              key={label}
-              label={label}
-              state={index < ticked ? 'done' : index === ticked ? 'checking' : 'pending'}
-            />
+            <CheckRow key={label} label={label} state={checkState(index, ticked)} />
           ))}
         </ul>
         <div className="flex items-center gap-4">
@@ -116,7 +117,12 @@ export function ScanStep({ onContinue }: { onContinue: () => void }) {
   return <ScanReport report={report} onRerun={onRerun} onContinue={onContinue} />;
 }
 
-function CheckRow({ label, state }: { label: string; state: 'done' | 'checking' | 'pending' }) {
+function checkState(index: number, ticked: number): CheckState {
+  if (index < ticked) return 'done';
+  return index === ticked ? 'checking' : 'pending';
+}
+
+function CheckRow({ label, state }: { label: string; state: CheckState }) {
   return (
     <li
       className={cn(
@@ -155,26 +161,21 @@ function ScanReport({
   onContinue: () => void;
 }) {
   const { store, gateways } = report;
-  const blockOnly = gateways.filter((gateway) => gateway.status === 'block-only');
+  // The wizard scans gateways only; plugin warnings stay on the Compatibility page.
+  const warnings = { ...deriveWarnings(report), unverifiedPlugins: [] };
+  const { blockOnly } = warnings;
 
   const rows: [string, ReactNode][] = [
     [
       __('Store type', 'yaycheckout'),
-      store.storeType === 'block' ? (
-        <>
-          {__('Block checkout', 'yaycheckout')}{' '}
-          <span className="text-muted-foreground">
-            {__('(the Checkout block is your checkout page)', 'yaycheckout')}
-          </span>
-        </>
-      ) : (
-        <>
-          {__('Classic store', 'yaycheckout')}{' '}
-          <span className="text-muted-foreground">
-            {__('(checkout shortcode, not the Checkout block)', 'yaycheckout')}
-          </span>
-        </>
-      ),
+      <>
+        {storeTypeLabel(store.storeType)}{' '}
+        <span className="text-muted-foreground">
+          {store.storeType === 'block'
+            ? __('(the Checkout block is your checkout page)', 'yaycheckout')
+            : __('(checkout shortcode, not the Checkout block)', 'yaycheckout')}
+        </span>
+      </>,
     ],
     [
       __('WooCommerce', 'yaycheckout'),
@@ -204,23 +205,7 @@ function ScanReport({
   return (
     <div className={BODY}>
       <div className="min-h-0 flex-1 space-y-6 overflow-y-auto">
-        {blockOnly.length > 0 && (
-          <Alert variant="muted">
-            <TriangleAlert />
-            <AlertTitle>
-              {sprintf(
-                /* translators: %s: comma-separated gateway titles */
-                _n(
-                  'A block-only integration was detected: %s',
-                  'Block-only integrations were detected: %s',
-                  blockOnly.length,
-                  'yaycheckout',
-                ),
-                blockOnly.map((gateway) => gateway.title).join(', '),
-              )}
-            </AlertTitle>
-          </Alert>
-        )}
+        <WarningBanner warnings={warnings} gatewayTotal={gateways.length} />
 
         <header className="space-y-1">
           <h2 className="text-lg font-semibold">

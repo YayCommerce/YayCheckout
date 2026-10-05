@@ -20,7 +20,7 @@ export type Meta = {
     docsUrl: string;
     upgradeUrl: string;
     reviewed: boolean;
-    setupDone: boolean;
+    showSetupWizard: boolean;
   };
 };
 

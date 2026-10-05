@@ -83,9 +83,8 @@ export function TemplatePicker({
         </div>
       )}
 
-      {isLoadingTemplates ? (
-        <PickerSkeleton />
-      ) : isPro ? (
+      {isLoadingTemplates && <PickerSkeleton />}
+      {!isLoadingTemplates && isPro && (
         <div className="grid h-84 scrollbar-none grid-cols-5 content-start gap-3 overflow-y-auto pt-0.5 pl-0.5">
           {templates.map((template) => (
             <button
@@ -111,7 +110,8 @@ export function TemplatePicker({
             </button>
           ))}
         </div>
-      ) : (
+      )}
+      {!isLoadingTemplates && !isPro && (
         <>
           <div className="grid grid-cols-3 gap-3">
             {unlockedTemplates.map((template) => (
@@ -159,7 +159,10 @@ export function TemplatePicker({
   );
 }
 
-/** Same boxes as the loaded grid (Pro: fixed-height 5-col; Free: 3 cards + locked strip) so the dialog doesn't grow when templates arrive. */
+/**
+ * Same boxes as the loaded grid (Pro: fixed-height 5-col; Free: 3 cards + locked strip) so the dialog doesn't grow when templates arrive.
+ * Free's 3 and 8 are an approximation, replaced by the real counts once loaded.
+ */
 function PickerSkeleton() {
   const card = (i: number) => (
     <div key={i} className="flex flex-col gap-2 rounded-md border p-2">

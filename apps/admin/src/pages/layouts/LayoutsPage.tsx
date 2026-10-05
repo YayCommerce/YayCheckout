@@ -172,7 +172,7 @@ function LayoutsPageBody({
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
   // `?edit=ID` lets another screen (Tools → Import, the setup wizard) land straight in the embedded editor.
   const [editingLayoutId, setEditingLayoutId] = useState<number | null>(() => Number(searchParams.get('edit')) || null);
-  // The wizard sits over this page, so its link arrives without a remount; follow the param, not just the first render.
+  // Re-read on every change: a same-route navigation keeps this page mounted, so the initializer alone would miss it.
   useEffect(() => {
     const id = Number(searchParams.get('edit'));
     if (id) setEditingLayoutId(id);

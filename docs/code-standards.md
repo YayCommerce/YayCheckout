@@ -154,6 +154,7 @@ src/
     shared/                our components used by two or more pages
     layout/                app chrome: Header, Footer, HeaderMenu
     pro/                   ProGate and the upsell surfaces
+    setup-wizard/          the first-run popup mounted in AppLayout; route-less, so not under pages/
     icons/
 ```
 

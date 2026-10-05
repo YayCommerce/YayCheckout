@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { __ } from '@wordpress/i18n';
 
 /** Mirrors Design::FONT_FAMILIES in PHP: slug stored in tokens → CSS font-family name; '' is the theme's own font. */
 export const FONT_FAMILIES = {
@@ -107,6 +108,11 @@ export const designFormSchema = z.object({
 
 export type DesignTokens = z.infer<typeof designTokensSchema>;
 export type TokenSection = keyof DesignTokens;
+
+export const BUTTON_STYLE_LABELS: Record<DesignTokens['buttons']['style'], string> = {
+  fill: __('Fill', 'yaycheckout'),
+  outline: __('Outline', 'yaycheckout'),
+};
 export type DesignForm = z.infer<typeof designFormSchema>;
 
 export type DesignPreset = { id: string; name: string; builtin: boolean; tokens: DesignTokens };

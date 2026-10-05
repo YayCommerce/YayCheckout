@@ -5,10 +5,16 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { countTokenDiffs } from '@/lib/helpers/design.helper';
 import { countDirtyLeaves } from '@/lib/helpers/form.helper';
 import { useDesignQuery } from '@/lib/queries/design.queries';
-import { FONT_FAMILIES, type DesignForm, type DesignTokens, type TokenSection } from '@/lib/schema/design.schema';
+import {
+  BUTTON_STYLE_LABELS,
+  FONT_FAMILIES,
+  type DesignForm,
+  type DesignTokens,
+  type TokenSection,
+} from '@/lib/schema/design.schema';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { BUTTON_STYLE_LABELS, ButtonsGroup } from './ButtonsGroup';
+import { ButtonsGroup } from './ButtonsGroup';
 import { ColoursGroup } from './ColoursGroup';
 import { CustomCssGroup } from './CustomCssGroup';
 import { INPUT_SIZE_LABELS, INPUT_STYLE_LABELS, InputsGroup } from './InputsGroup';

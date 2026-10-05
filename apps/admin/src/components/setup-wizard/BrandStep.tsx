@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import type { UseFormReturn } from 'react-hook-form';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { activePresetIdFor } from '@/lib/helpers/design.helper';
@@ -8,13 +8,7 @@ import { isPro } from '@/lib/plan';
 import { useDesignQuery, useSaveDesignMutation } from '@/lib/queries/design.queries';
 import { useCreateLayoutDraftMutation } from '@/lib/queries/layout.queries';
 import { useTemplateLibraryQuery } from '@/lib/queries/template.queries';
-import {
-  CUSTOM_CSS_MAX_BYTES,
-  FONT_FAMILIES,
-  FONT_FAMILY_KEYS,
-  RADIUS_RANGE,
-  type DesignForm,
-} from '@/lib/schema/design.schema';
+import { BUTTON_STYLE_LABELS, CUSTOM_CSS_MAX_BYTES, RADIUS_RANGE, type DesignForm } from '@/lib/schema/design.schema';
 import type { Layout } from '@/lib/schema/layout.schema';
 import { Button, LoadingButton } from '@/components/ui/button';
 import {
@@ -26,26 +20,26 @@ import {
 } from '@/components/ui/color-picker';
 import { Form } from '@/components/ui/form';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
+import { FontFamilySelect } from '@/components/shared/FontFamilySelect';
 import { PreviewPane } from '@/components/shared/PreviewPane';
-import { BUTTON_STYLE_LABELS } from '@/pages/design/components/ButtonsGroup';
-
-// Radix Select treats value="" as "nothing selected", so the theme-default option needs a stand-in.
-const THEME_DEFAULT_FONT = '__theme_default__';
 
 /**
  * Wizard step 3: a few global design tokens over a live preview. Apply brand
- * saves the design, then creates the draft layout from the step 2 template.
+ * creates the draft layout from the step 2 template, then saves the design.
+ *
+ * @param form Owned by the wizard so Back and forth keeps the edits.
  */
 export function BrandStep({
+  form,
   templateSlug,
   onBack,
   onApplied,
 }: {
+  form: UseFormReturn<DesignForm>;
   templateSlug: string;
   onBack: () => void;
   onApplied: (draft: Layout) => void;
@@ -55,8 +49,9 @@ export function BrandStep({
   const saveDesign = useSaveDesignMutation();
   const createDraft = useCreateLayoutDraftMutation();
   const [error, setError] = useState<string | null>(null);
+  // Kept across a failed design save, so retrying Apply never makes a second draft.
+  const [draft, setDraft] = useState<Layout | null>(null);
 
-  const form = useForm<DesignForm>({ defaultValues: { tokens: design.tokens, customCss: design.customCss } });
   const { watch, setValue } = form;
   const primary = watch('tokens.colours.primary');
   const inherit = watch('tokens.typography.inherit');
@@ -70,13 +65,20 @@ export function BrandStep({
   async function onApply(values: DesignForm) {
     setError(null);
     try {
+      // Draft first: if it fails (e.g. Free at its layout limit), the saved design is still untouched.
+      const created =
+        draft ??
+        (await createDraft.mutateAsync({
+          name: __('Checkout — draft', 'yaycheckout'),
+          source: 'library',
+          templateSlug,
+        }));
+      setDraft(created);
       await saveDesign.mutateAsync({
         form: values,
         presetId: activePresetIdFor(design.presets, design.presetId, values.tokens),
       });
-      onApplied(
-        await createDraft.mutateAsync({ name: __('Checkout — draft', 'yaycheckout'), source: 'library', templateSlug }),
-      );
+      onApplied(created);
     } catch (e) {
       setError(await getErrorMsg(e));
     }
@@ -119,30 +121,11 @@ export function BrandStep({
                   />
                 </label>
               </div>
-              <Select
-                value={fontFamily || THEME_DEFAULT_FONT}
-                onValueChange={(value) =>
-                  setValue(
-                    'tokens.typography.fontFamily',
-                    value === THEME_DEFAULT_FONT ? '' : (value as typeof fontFamily),
-                    {
-                      shouldDirty: true,
-                    },
-                  )
-                }
+              <FontFamilySelect
+                value={fontFamily}
+                onChange={(font) => setValue('tokens.typography.fontFamily', font, { shouldDirty: true })}
                 disabled={inherit}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {FONT_FAMILY_KEYS.map((font) => (
-                    <SelectItem key={font} value={font || THEME_DEFAULT_FONT}>
-                      {font ? FONT_FAMILIES[font] : __('Theme default', 'yaycheckout')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
               {inherit && (
                 <p className="text-muted-foreground text-xs">
                   {__('Turn the toggle off to pick a font.', 'yaycheckout')}
