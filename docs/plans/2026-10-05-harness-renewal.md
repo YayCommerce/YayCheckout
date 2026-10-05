@@ -86,11 +86,11 @@ Expected: no output
 
 ### Task 4: Architecture, conventions, known issues, backlog
 
-- [ ] **Step 1:** `docs/architecture.md`: how the pieces fit, from the code, at most 250 lines.
-- [ ] **Step 2:** `docs/conventions.md`: rules the code can't show, each as Rule, Why and In code. The old owner table is not rebuilt: a TypeScript copy of PHP names its owner in a comment.
-- [ ] **Step 3:** `docs/known-issues.md`: each entry reproduced, as Symptom, Cause, Workaround, Remove when. The admin lint failure from the baseline is one.
-- [ ] **Step 4:** `docs/backlog/`: problems found during the audit that this plan doesn't fix, in `yaybacklog`'s item format.
-- [ ] **Step 5: Commit.** Message: `docs(harness): add architecture, conventions, known issues and backlog`
+- [x] **Step 1:** `docs/architecture.md`: how the pieces fit, from the code, at most 250 lines.
+- [x] **Step 2:** `docs/conventions.md`: rules the code can't show, each as Rule, Why and In code. The old owner table is not rebuilt: a TypeScript copy of PHP names its owner in a comment.
+- [x] **Step 3:** `docs/known-issues.md`: each entry reproduced, as Symptom, Cause, Workaround, Remove when. The admin lint failure from the baseline is one.
+- [x] **Step 4:** `docs/backlog/`: problems found during the audit that this plan doesn't fix, in `yaybacklog`'s item format.
+- [x] **Step 5: Commit.** Message: `docs(harness): add architecture, conventions, known issues and backlog`
 
 ### Task 5: Decision records
 
