@@ -122,7 +122,7 @@ src/
     ui/                 shadcn primitives (kebab-case, CLI-generated)
     shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton, StatusBadge (gateway status), PreviewPane (live checkout mock from design tokens; `compact` for the wizard), SummaryStrip (label/value strip); used by multiple pages
       template-picker/  TemplatePicker (Free unlocked grid + locked strip / Pro filterable grid), TemplateThumbnail + template-thumbnail-sketches (SVG sketch per catalogue slug); New layout modal and setup wizard
-    setup-wizard/       SetupWizard popup (Scan › Start from › Brand, Skip setup marks `setup_done`), ScanStep, StartFromStep, BrandStep (Apply brand saves the design, then creates "Checkout — draft" from the picked template), FinishStep (draft summary; Open in editor → `#/layouts?edit=ID`)
+    setup-wizard/       SetupWizard popup (Scan › Start from › Brand; nothing is saved until Apply brand; Skip setup only marks `setup_done` and closes), ScanStep, StartFromStep, BrandStep (Apply brand saves the design, then creates "Checkout — draft" from the picked template), FinishStep (draft summary; Open in editor → `#/layouts?edit=ID`)
     layout/             Header, Footer, HeaderMenu (chrome)
     pro/                ProGate, upsell surfaces
     icons/

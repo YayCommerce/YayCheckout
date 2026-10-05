@@ -1,9 +1,9 @@
 import { Fragment, useState } from 'react';
+import { useIsMutating } from '@tanstack/react-query';
 import { __ } from '@wordpress/i18n';
 
 import { markSetupDone } from '@/lib/api/settings.api';
 import { logger } from '@/lib/logger';
-import { isPro } from '@/lib/plan';
 import type { Layout } from '@/lib/schema/layout.schema';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { ProTag } from '@/components/pro/ProGate';
 import { BrandStep } from './BrandStep';
 import { FinishStep } from './FinishStep';
 import { ScanStep } from './ScanStep';
@@ -24,8 +23,9 @@ import { StartFromStep } from './StartFromStep';
 const STEPS = [__('Scan', 'yaycheckout'), __('Start from', 'yaycheckout'), __('Brand', 'yaycheckout')];
 
 /**
- * First-run setup popup, shown on every admin visit until the merchant reaches
- * Finish or skips. Skip setup is the only way out: no close icon, Esc or outside click.
+ * First-run setup popup, shown on every admin visit until the merchant finishes
+ * or skips. Nothing the merchant picks is stored until Apply brand; Skip setup
+ * leaves without saving any of it. No close icon, Esc or outside click.
  */
 export function SetupWizard() {
   // ponytail: dev-only trigger — opens when arriving from the Plugins screen's Settings link (same URL as the menu, so referrer tells them apart). Swap to `!window.yayCheckoutMeta.checkoutMeta.setupDone` once every step ships.
@@ -33,6 +33,8 @@ export function SetupWizard() {
   const [step, setStep] = useState(0);
   const [templateSlug, setTemplateSlug] = useState<string | null>();
   const [draft, setDraft] = useState<Layout | null>(null);
+  // Apply brand mid-flight: skipping now would close over a half-written design and draft.
+  const busy = useIsMutating() > 0;
   const finished = step === STEPS.length;
 
   async function markDone() {
@@ -80,12 +82,9 @@ export function SetupWizard() {
             {finished && <Badge variant="success-outline">{__('Done', 'yaycheckout')}</Badge>}
           </div>
           {!finished && (
-            <div className="flex items-center gap-2">
-              {isPro && <ProTag />}
-              <Button variant="link" size="sm" onClick={onSkip}>
-                {__('Skip setup', 'yaycheckout')}
-              </Button>
-            </div>
+            <Button variant="link" size="sm" disabled={busy} onClick={onSkip}>
+              {__('Skip setup', 'yaycheckout')}
+            </Button>
           )}
         </div>
 
