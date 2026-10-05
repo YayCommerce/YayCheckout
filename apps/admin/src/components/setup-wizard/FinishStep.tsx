@@ -1,13 +1,11 @@
 import { Check } from 'lucide-react';
-import { useNavigate } from 'react-router';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { storeTypeLabel } from '@/lib/helpers/compatibility.helper';
-import { editLayoutPath } from '@/lib/helpers/layout.helper';
 import { useCompatibilityQuery } from '@/lib/queries/compatibility.queries';
 import { useTemplateLibraryQuery } from '@/lib/queries/template.queries';
 import type { Layout } from '@/lib/schema/layout.schema';
-import { Button } from '@/components/ui/button';
+import { LayoutDraftActions } from '@/components/shared/LayoutDraftActions';
 import { SummaryStrip } from '@/components/shared/SummaryStrip';
 
 /** Wizard confirmation: the draft Apply brand created, and where to take it next. Nothing is live yet. */
@@ -20,16 +18,10 @@ export function FinishStep({
   templateSlug: string;
   onClose: () => void;
 }) {
-  const navigate = useNavigate();
   const { data: library } = useTemplateLibraryQuery();
   const { data: report } = useCompatibilityQuery();
 
   const templateName = library?.templates.find((t) => t.slug === templateSlug)?.name ?? templateSlug;
-
-  function goTo(path: string) {
-    onClose();
-    navigate(path);
-  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -66,12 +58,7 @@ export function FinishStep({
         <p className="text-muted-foreground text-sm">
           {__('Publish from the editor when you are happy.', 'yaycheckout')}
         </p>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => goTo('/layouts')}>
-            {__('Go to Layouts', 'yaycheckout')}
-          </Button>
-          <Button onClick={() => goTo(editLayoutPath(draft.id))}>{__('Open in editor', 'yaycheckout')}</Button>
-        </div>
+        <LayoutDraftActions layoutId={draft.id} onClose={onClose} />
       </div>
     </div>
   );

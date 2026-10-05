@@ -1,13 +1,11 @@
 import { Check, TriangleAlert } from 'lucide-react';
-import { useNavigate } from 'react-router';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { editLayoutPath } from '@/lib/helpers/layout.helper';
 import type { Layout } from '@/lib/schema/layout.schema';
 import type { RulesImport } from '@/lib/schema/tools.schema';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
+import { LayoutDraftActions } from '@/components/shared/LayoutDraftActions';
 import { SummaryStrip } from '@/components/shared/SummaryStrip';
 
 export function DraftStep({
@@ -19,13 +17,6 @@ export function DraftStep({
   rulesImport: RulesImport;
   onClose: () => void;
 }) {
-  const navigate = useNavigate();
-
-  const go = (path: string) => {
-    onClose();
-    navigate(path);
-  };
-
   return (
     <>
       <div className="flex gap-3">
@@ -70,13 +61,7 @@ export function DraftStep({
         <p className="text-muted-foreground text-sm">
           {__('Publish and set active when you are happy with it.', 'yaycheckout')}
         </p>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => go('/layouts')}>
-            {__('Go to Layouts', 'yaycheckout')}
-          </Button>
-          {/* Same embedded editor the Edit action uses. */}
-          <Button onClick={() => go(editLayoutPath(layout.id))}>{__('Open in editor', 'yaycheckout')}</Button>
-        </div>
+        <LayoutDraftActions layoutId={layout.id} onClose={onClose} />
       </DialogFooter>
     </>
   );

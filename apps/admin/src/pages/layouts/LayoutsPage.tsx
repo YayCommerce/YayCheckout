@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Plus, Search } from 'lucide-react';
 import { useSearchParams } from 'react-router';
@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
 import { formatDateTime } from '@/lib/helpers/date.helper';
-import { EDIT_LAYOUT_PARAM, editLayoutIdFrom } from '@/lib/helpers/layout.helper';
+import { editLayoutIdFrom, withEditLayout } from '@/lib/helpers/layout.helper';
 import { isPro } from '@/lib/plan';
 import {
   LAYOUT_KEYS,
@@ -171,13 +171,9 @@ function LayoutsPageBody({
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
-  // `?edit=ID` lets another screen (Tools → Import, the setup wizard) land straight in the embedded editor.
-  const [editingLayoutId, setEditingLayoutId] = useState<number | null>(() => editLayoutIdFrom(searchParams));
-  // Re-read on every change: a same-route navigation keeps this page mounted, so the initializer alone would miss it.
-  useEffect(() => {
-    const id = editLayoutIdFrom(searchParams);
-    if (id) setEditingLayoutId(id);
-  }, [searchParams]);
+  // The URL is the only record of the open editor, so browser Back closes it and other screens can deep-link to it.
+  const editingLayoutId = editLayoutIdFrom(searchParams);
+  const openEditor = (id: number) => setSearchParams(withEditLayout(searchParams, id));
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
   const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
@@ -277,8 +273,7 @@ function LayoutsPageBody({
 
   const onEditorOpenChange = (open: boolean) => {
     if (!open) {
-      setEditingLayoutId(null);
-      if (searchParams.has(EDIT_LAYOUT_PARAM)) setSearchParams({}, { replace: true });
+      setSearchParams(withEditLayout(searchParams, null), { replace: true });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
     }
   };
@@ -418,7 +413,7 @@ function LayoutsPageBody({
                     <LayoutsTable
                       items={listData.items}
                       view={view}
-                      onEditLayout={setEditingLayoutId}
+                      onEditLayout={openEditor}
                       onSetActive={setActivatingLayout}
                       onDeactivate={setDeactivatingLayout}
                       onArchive={setArchivingLayout}
