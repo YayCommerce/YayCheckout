@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. There is no spec: the requirements below are the brief.
 
-**Status:** active
+**Status:** done 2026-10-05
 **Goal:** replace YayCheckout's old agent and developer harness with the structure YayLoyalty uses, and leave no code comment or link pointing at the old one.
 **Spec:** none, planned from the request
 **Architecture:** YayLoyalty already replaced the same old harness (ClaudeKit-era docs, `code-corrector` and its owner table) between 2026-10-01 and 2026-10-05. This plan takes its shape and its checks, and writes each doc from a fresh read of this repo's code instead of porting the old text, which restated the code and drifted.
@@ -119,13 +119,13 @@ Expected: exit 2 for each generated path, exit 0 for `includes/x.php`
 
 ### Task 8: Harness check and final validation
 
-- [ ] **Step 1:** `scripts/check-harness.sh`, adapted from YayLoyalty's.
-- [ ] **Step 2: Verify**
+- [x] **Step 1:** `scripts/check-harness.sh`, adapted from YayLoyalty's.
+- [x] **Step 2: Verify**
 
 Run: `./scripts/check-harness.sh`
 Expected: `Harness checks passed.`, exit 0
 Run: the baseline again
 Expected: identical counts and exit codes
 
-- [ ] **Step 3:** Set this plan's Status to `done` with the date.
-- [ ] **Step 4: Commit.** Message: `docs(harness): add the harness check`
+- [x] **Step 3:** Set this plan's Status to `done` with the date.
+- [x] **Step 4: Commit.** Message: `docs(harness): add the harness check`

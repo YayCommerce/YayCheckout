@@ -27,7 +27,7 @@
 
 ## The admin lint fails on `dev/edd`
 
-- **Symptom:** `pnpm --filter @yaycheckout/admin-page lint` exits 1. eslint reports 4 warnings and exits 0: three `better-tailwindcss/enforce-canonical-classes` (in `src/components/ui/dialog.tsx` and `src/pages/layouts/LayoutsPage.tsx`) and an unused `result` in `src/pages/tools/components/ImportCard.tsx`. Prettier then fails on `src/lib/utils.ts`, `src/styles/custom-header.css` and `tsconfig.node.json`, and warns that it ignores five `importOrder*` options.
+- **Symptom:** `pnpm --filter @yaycheckout/admin-page lint` exits 1. eslint reports 4 warnings and exits 0: three from Tailwind's `enforce-canonical-classes` rule (in `apps/admin/src/components/ui/dialog.tsx` and `apps/admin/src/pages/layouts/LayoutsPage.tsx`) and an unused `result` in `apps/admin/src/pages/tools/components/ImportCard.tsx`. Prettier then fails on `apps/admin/src/lib/utils.ts`, `apps/admin/src/styles/custom-header.css` and `apps/admin/tsconfig.node.json`, and warns that it ignores five `importOrder*` options.
 - **Cause:** code that landed without the lint passing. The `importOrder*` options in `apps/admin/package.json` belong to an import-sort plugin the config doesn't load.
 - **Workaround:** check only your own files: `npx --no-install eslint <files>` and `npx --no-install prettier --check <files>` from `apps/admin`. Your change must not add a finding.
 - **Remove when:** the lint exits 0 on `dev/edd`.
@@ -69,7 +69,7 @@
 
 ## A bare `vite build` writes outside `assets/`
 
-- **Symptom:** running `vite build` in `apps/admin` without the package script writes the bundle to `apps/assets/dist/`, emptying that directory first, and wp-admin keeps loading the old bundle.
+- **Symptom:** running `vite build` in `apps/admin` without the package script writes the bundle to an `assets/dist/` folder inside `apps/`, emptying it first, and wp-admin keeps loading the old bundle.
 - **Cause:** `apps/admin/vite.config.ts` resolves `outDir` against the working directory; only the `--outDir` flag in the `build` script points it at `assets/dist/admin/`.
 - **Workaround:** build through `./scripts/run.sh build` or `pnpm build:admin`.
 - **Remove when:** `vite.config.ts` resolves `outDir` to `assets/dist/admin/` itself.
