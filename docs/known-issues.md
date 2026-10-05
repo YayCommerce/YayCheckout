@@ -80,3 +80,10 @@
 - **Cause:** `cmd_clean` in `scripts/run.sh` never touches `assets/dist/blocks/`, and its `read` reaches the end of input under `set -e`.
 - **Workaround:** delete `assets/dist/blocks/` yourself if you need it gone, and run `clean` from a terminal.
 - **Remove when:** `clean` removes both outputs and has a way around its prompt.
+
+## The generated-directory guard doesn't see the shell
+
+- **Symptom:** the guard stops Claude's file tools from editing generated output, but a shell command that writes there, such as `sed -i`, `cp` or a redirect, goes through. The generated directories are gitignored, so `git status` doesn't show the change either. Without `jq`, every edit shows a `PreToolUse` hook error and nothing is blocked.
+- **Cause:** `.claude/settings.json` runs `.claude/hooks/guard-generated-paths.sh` only for the Edit, Write, MultiEdit and NotebookEdit tools, and the script needs `jq` to read the tool's input.
+- **Workaround:** never write into `vendor/`, `vendor-prefixed/`, `node_modules/`, `assets/dist/` or `release/` from the shell; change the input and rerun its build (hard rule 1 in `CLAUDE.md`). Install `jq`.
+- **Remove when:** the guard also checks shell commands, or the generated directories are made read-only.

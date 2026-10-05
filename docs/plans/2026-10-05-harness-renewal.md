@@ -100,15 +100,15 @@ Expected: no output
 
 ### Task 6: Rules, settings, guard hook
 
-- [ ] **Step 1:** `.claude/rules/` `php-standards.md`, `react-admin.md`, `blocks.md`, `release.md`, each with quoted `paths` globs that match tracked files.
-- [ ] **Step 2:** `.claude/settings.json`: an allowlist for the routine checks, the PreToolUse guard, `includeGitInstructions: false`.
-- [ ] **Step 3:** `.claude/hooks/guard-generated-paths.sh`, blocking `vendor/`, `vendor-prefixed/`, `node_modules/`, `assets/dist/` and `release/`.
-- [ ] **Step 4: Verify**
+- [x] **Step 1:** `.claude/rules/` `php-standards.md`, `react-admin.md`, `blocks.md`, `release.md`, each with quoted `paths` globs that match tracked files.
+- [x] **Step 2:** `.claude/settings.json`: an allowlist for the routine checks, the PreToolUse guard, `includeGitInstructions: false`.
+- [x] **Step 3:** `.claude/hooks/guard-generated-paths.sh`, blocking `vendor/`, `vendor-prefixed/`, `node_modules/`, `assets/dist/` and `release/`.
+- [x] **Step 4: Verify**
 
 Run: the guard with a `file_path` in each generated directory, one spelled `includes/../vendor/x.php`, and `includes/x.php`
 Expected: exit 2 for each generated path, exit 0 for `includes/x.php`
 
-- [ ] **Step 5: Commit.** Message: `docs(harness): add rules, settings and the generated-path guard`
+- [x] **Step 5: Commit.** Message: `docs(harness): add rules, settings and the generated-path guard`
 
 ### Task 7: Shared skills, `run.sh backlog`, README
 
