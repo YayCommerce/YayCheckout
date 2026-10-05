@@ -97,6 +97,8 @@ Two places that decide the same thing leave the reader unable to tell which one 
 | Rules import status (`imported` / `dropped` / `none`) | `Pro\Services\LayoutImportReview::RULES_*` | `importResponseWireSchema` in `apps/admin/src/lib/schema/tools.schema.ts` (the wire enum) |
 | Upgrade link | `YAYCHECKOUT_UPGRADE_URL` (`yaycheckout.php`) | — (reaches the SPA via `yayCheckoutMeta`, the blocks via `window.yayCheckoutBlocks`) |
 | Export file download (name, save, `.json` check) | `packages/blocks/src/shared/export-file.ts` | — (the SPA imports it via `@blocks-shared`) |
+| Mutation keys another component watches (`useIsMutating`) | `*_MUTATION_KEY` constants in `apps/admin/src/lib/queries/*.queries.ts` | — |
+| Layouts `?edit=ID` deep link into the embedded editor | `apps/admin/src/lib/helpers/layout.helper.ts` (`editLayoutPath`, `editLayoutIdFrom`) | — |
 | Publish rules | `LayoutMarkupReader::publish_error()` — called, never re-checked | `packages/blocks/src/checkout/publish-guard.ts` |
 | Required/optional field rules | `Services\RequiredFieldOverlay` | `assets/js/checkout-field-requirements.js` (payload from `RequiredIndicator::script_payload()`) |
 | Block list, inserter order | `Blocks\BlockRegistry::ORDER` | — |

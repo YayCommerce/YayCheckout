@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { storeTypeLabel } from '@/lib/helpers/compatibility.helper';
+import { editLayoutPath } from '@/lib/helpers/layout.helper';
 import { useCompatibilityQuery } from '@/lib/queries/compatibility.queries';
 import { useTemplateLibraryQuery } from '@/lib/queries/template.queries';
 import type { Layout } from '@/lib/schema/layout.schema';
@@ -69,7 +70,7 @@ export function FinishStep({
           <Button variant="outline" onClick={() => goTo('/layouts')}>
             {__('Go to Layouts', 'yaycheckout')}
           </Button>
-          <Button onClick={() => goTo(`/layouts?edit=${draft.id}`)}>{__('Open in editor', 'yaycheckout')}</Button>
+          <Button onClick={() => goTo(editLayoutPath(draft.id))}>{__('Open in editor', 'yaycheckout')}</Button>
         </div>
       </div>
     </div>

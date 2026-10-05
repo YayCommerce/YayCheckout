@@ -6,7 +6,8 @@ import { __ } from '@wordpress/i18n';
 
 import { markSetupDone } from '@/lib/api/settings.api';
 import { logger } from '@/lib/logger';
-import { useDesignQuery } from '@/lib/queries/design.queries';
+import { SAVE_DESIGN_MUTATION_KEY, useDesignQuery } from '@/lib/queries/design.queries';
+import { CREATE_LAYOUT_DRAFT_MUTATION_KEY } from '@/lib/queries/layout.queries';
 import { designFormSchema, type DesignForm } from '@/lib/schema/design.schema';
 import type { Layout } from '@/lib/schema/layout.schema';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +44,8 @@ export function SetupWizard() {
   });
   // Apply brand mid-flight: skipping now would close over a half-written design and draft.
   const isBusy =
-    useIsMutating({ mutationKey: ['design', 'save'] }) + useIsMutating({ mutationKey: ['layouts', 'create-draft'] }) >
+    useIsMutating({ mutationKey: SAVE_DESIGN_MUTATION_KEY }) +
+      useIsMutating({ mutationKey: CREATE_LAYOUT_DRAFT_MUTATION_KEY }) >
     0;
   const isFinished = step === STEPS.length;
 

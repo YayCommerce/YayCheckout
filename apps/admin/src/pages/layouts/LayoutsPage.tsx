@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
 import { formatDateTime } from '@/lib/helpers/date.helper';
+import { EDIT_LAYOUT_PARAM, editLayoutIdFrom } from '@/lib/helpers/layout.helper';
 import { isPro } from '@/lib/plan';
 import {
   LAYOUT_KEYS,
@@ -171,10 +172,10 @@ function LayoutsPageBody({
   const [searchParams, setSearchParams] = useSearchParams();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
   // `?edit=ID` lets another screen (Tools → Import, the setup wizard) land straight in the embedded editor.
-  const [editingLayoutId, setEditingLayoutId] = useState<number | null>(() => Number(searchParams.get('edit')) || null);
+  const [editingLayoutId, setEditingLayoutId] = useState<number | null>(() => editLayoutIdFrom(searchParams));
   // Re-read on every change: a same-route navigation keeps this page mounted, so the initializer alone would miss it.
   useEffect(() => {
-    const id = Number(searchParams.get('edit'));
+    const id = editLayoutIdFrom(searchParams);
     if (id) setEditingLayoutId(id);
   }, [searchParams]);
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
@@ -277,7 +278,7 @@ function LayoutsPageBody({
   const onEditorOpenChange = (open: boolean) => {
     if (!open) {
       setEditingLayoutId(null);
-      if (searchParams.has('edit')) setSearchParams({}, { replace: true });
+      if (searchParams.has(EDIT_LAYOUT_PARAM)) setSearchParams({}, { replace: true });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
     }
   };

@@ -2,6 +2,7 @@ import { Check, TriangleAlert } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { __, sprintf } from '@wordpress/i18n';
 
+import { editLayoutPath } from '@/lib/helpers/layout.helper';
 import type { Layout } from '@/lib/schema/layout.schema';
 import type { RulesImport } from '@/lib/schema/tools.schema';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -20,9 +21,9 @@ export function DraftStep({
 }) {
   const navigate = useNavigate();
 
-  const go = (search = '') => {
+  const go = (path: string) => {
     onClose();
-    navigate({ pathname: '/layouts', search });
+    navigate(path);
   };
 
   return (
@@ -70,11 +71,11 @@ export function DraftStep({
           {__('Publish and set active when you are happy with it.', 'yaycheckout')}
         </p>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => go()}>
+          <Button variant="outline" onClick={() => go('/layouts')}>
             {__('Go to Layouts', 'yaycheckout')}
           </Button>
-          {/* LayoutsPage reads ?edit=ID and opens its embedded editor, so this is the same editor the Edit action uses. */}
-          <Button onClick={() => go(`?edit=${layout.id}`)}>{__('Open in editor', 'yaycheckout')}</Button>
+          {/* Same embedded editor the Edit action uses. */}
+          <Button onClick={() => go(editLayoutPath(layout.id))}>{__('Open in editor', 'yaycheckout')}</Button>
         </div>
       </DialogFooter>
     </>

@@ -27,6 +27,11 @@ import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
 import { FontFamilySelect } from '@/components/shared/FontFamilySelect';
 import { PreviewPane } from '@/components/shared/PreviewPane';
 
+type BrandForm = UseFormReturn<DesignForm>;
+
+// A token only reaches the storefront while its group is on, so touching one switches its group on.
+const dirtyOptions = { shouldDirty: true } as const;
+
 /**
  * Wizard step 3: a few global design tokens over a live preview. Apply brand
  * creates the draft layout from the step 2 template, then saves the design.
@@ -39,7 +44,7 @@ export function BrandStep({
   onBack,
   onApplied,
 }: {
-  form: UseFormReturn<DesignForm>;
+  form: BrandForm;
   templateSlug: string;
   onBack: () => void;
   onApplied: (draft: Layout) => void;
@@ -51,15 +56,6 @@ export function BrandStep({
   const [error, setError] = useState<string | null>(null);
   // Kept across a failed design save, so retrying Apply never makes a second draft.
   const [draft, setDraft] = useState<Layout | null>(null);
-
-  const { watch, setValue } = form;
-  // A token only reaches the storefront while its group is on, so touching one switches its group on.
-  const dirty = { shouldDirty: true } as const;
-  const primary = watch('tokens.colours.primary');
-  const isTypographyOn = watch('tokens.typography.enabled');
-  const fontFamily = watch('tokens.typography.fontFamily');
-  const radius = watch('tokens.buttons.radius');
-  const buttonStyle = watch('tokens.buttons.style');
 
   const templateName = library?.templates.find((t) => t.slug === templateSlug)?.name;
   const isApplying = saveDesign.isPending || createDraft.isPending;
@@ -98,113 +94,11 @@ export function BrandStep({
 
         <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-6">
           <div className="flex flex-col gap-5 text-sm">
-            <div className="flex flex-col gap-2">
-              <span className="font-medium">{__('Primary colour', 'yaycheckout')}</span>
-              <ColorPicker
-                value={primary}
-                onValueChange={(value) => {
-                  setValue('tokens.colours.primary', value, dirty);
-                  setValue('tokens.colours.enabled', true, dirty);
-                }}
-              >
-                <ColorPickerTrigger className="h-9 w-full" />
-                <ColorPickerContent>
-                  <ColorPickerPanel />
-                  <ColorPickerInput />
-                </ColorPickerContent>
-              </ColorPicker>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-medium">{__('Font', 'yaycheckout')}</span>
-                <label className="text-muted-foreground flex items-center gap-2 text-xs">
-                  {__('Inherit from theme', 'yaycheckout')}
-                  <Switch
-                    checked={!isTypographyOn}
-                    onCheckedChange={(inherit) => setValue('tokens.typography.enabled', !inherit, dirty)}
-                  />
-                </label>
-              </div>
-              <FontFamilySelect
-                value={fontFamily}
-                onChange={(font) => setValue('tokens.typography.fontFamily', font, dirty)}
-                disabled={!isTypographyOn}
-              />
-              {!isTypographyOn && (
-                <p className="text-muted-foreground text-xs">
-                  {__('Turn the toggle off to pick a font.', 'yaycheckout')}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{__('Corner radius', 'yaycheckout')}</span>
-                <span className="text-muted-foreground">{radius}px</span>
-              </div>
-              {/* One radius for the basics: buttons and inputs move together; Design splits them later. */}
-              <Slider
-                min={RADIUS_RANGE.min}
-                max={RADIUS_RANGE.max}
-                step={1}
-                value={[radius]}
-                onValueChange={([value]) => {
-                  setValue('tokens.buttons.radius', value, dirty);
-                  setValue('tokens.inputs.radius', value, dirty);
-                  setValue('tokens.buttons.enabled', true, dirty);
-                  setValue('tokens.inputs.enabled', true, dirty);
-                }}
-                aria-label={__('Corner radius', 'yaycheckout')}
-              />
-              <div className="text-muted-foreground flex justify-between text-xs">
-                <span>{RADIUS_RANGE.min}</span>
-                <span>{RADIUS_RANGE.max}px</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <span className="font-medium">{__('Button style', 'yaycheckout')}</span>
-              <Segmented
-                className="w-full"
-                value={buttonStyle}
-                onValueChange={(value) => {
-                  if (!value) return;
-                  setValue('tokens.buttons.style', value as typeof buttonStyle, dirty);
-                  setValue('tokens.buttons.enabled', true, dirty);
-                }}
-              >
-                {Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => (
-                  <SegmentedItem key={value} value={value} className="flex-1">
-                    {label}
-                  </SegmentedItem>
-                ))}
-              </Segmented>
-            </div>
-
-            {isPro ? (
-              <label className="flex flex-col gap-2">
-                <span className="font-medium">{__('Custom CSS', 'yaycheckout')}</span>
-                <Textarea
-                  {...form.register('customCss')}
-                  rows={4}
-                  maxLength={CUSTOM_CSS_MAX_BYTES}
-                  placeholder={__('.yaycheckout-checkout { }', 'yaycheckout')}
-                  className="text-sm"
-                />
-              </label>
-            ) : (
-              <div className="border-muted-foreground/40 bg-muted/40 flex flex-col gap-3 rounded-md border border-dashed p-3">
-                <div className="flex items-center gap-2">
-                  <ProTag />
-                  <span className="text-muted-foreground text-sm">
-                    {__('Custom CSS & token overrides', 'yaycheckout')}
-                  </span>
-                </div>
-                <div className="bg-muted h-12 rounded-sm" />
-                <UpgradeButton className="self-start" />
-              </div>
-            )}
+            <PrimaryColourField form={form} />
+            <FontField form={form} />
+            <CornerRadiusField form={form} />
+            <ButtonStyleField form={form} />
+            <CustomCssField form={form} />
           </div>
 
           <div className="flex min-w-0 flex-col gap-2">
@@ -236,5 +130,142 @@ export function BrandStep({
         </div>
       </div>
     </Form>
+  );
+}
+
+function PrimaryColourField({ form }: { form: BrandForm }) {
+  const { watch, setValue } = form;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="font-medium">{__('Primary colour', 'yaycheckout')}</span>
+      <ColorPicker
+        value={watch('tokens.colours.primary')}
+        onValueChange={(value) => {
+          setValue('tokens.colours.primary', value, dirtyOptions);
+          setValue('tokens.colours.enabled', true, dirtyOptions);
+        }}
+      >
+        <ColorPickerTrigger className="h-9 w-full" />
+        <ColorPickerContent>
+          <ColorPickerPanel />
+          <ColorPickerInput />
+        </ColorPickerContent>
+      </ColorPicker>
+    </div>
+  );
+}
+
+function FontField({ form }: { form: BrandForm }) {
+  const { watch, setValue } = form;
+  const isTypographyOn = watch('tokens.typography.enabled');
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-medium">{__('Font', 'yaycheckout')}</span>
+        <label className="text-muted-foreground flex items-center gap-2 text-xs">
+          {__('Inherit from theme', 'yaycheckout')}
+          <Switch
+            checked={!isTypographyOn}
+            onCheckedChange={(inherit) => setValue('tokens.typography.enabled', !inherit, dirtyOptions)}
+          />
+        </label>
+      </div>
+      <FontFamilySelect
+        value={watch('tokens.typography.fontFamily')}
+        onChange={(font) => setValue('tokens.typography.fontFamily', font, dirtyOptions)}
+        disabled={!isTypographyOn}
+      />
+      {!isTypographyOn && (
+        <p className="text-muted-foreground text-xs">{__('Turn the toggle off to pick a font.', 'yaycheckout')}</p>
+      )}
+    </div>
+  );
+}
+
+function CornerRadiusField({ form }: { form: BrandForm }) {
+  const { watch, setValue } = form;
+  const radius = watch('tokens.buttons.radius');
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="font-medium">{__('Corner radius', 'yaycheckout')}</span>
+        <span className="text-muted-foreground">{radius}px</span>
+      </div>
+      {/* One radius for the basics: buttons and inputs move together; Design splits them later. */}
+      <Slider
+        min={RADIUS_RANGE.min}
+        max={RADIUS_RANGE.max}
+        step={1}
+        value={[radius]}
+        onValueChange={([value]) => {
+          setValue('tokens.buttons.radius', value, dirtyOptions);
+          setValue('tokens.inputs.radius', value, dirtyOptions);
+          setValue('tokens.buttons.enabled', true, dirtyOptions);
+          setValue('tokens.inputs.enabled', true, dirtyOptions);
+        }}
+        aria-label={__('Corner radius', 'yaycheckout')}
+      />
+      <div className="text-muted-foreground flex justify-between text-xs">
+        <span>{RADIUS_RANGE.min}</span>
+        <span>{RADIUS_RANGE.max}px</span>
+      </div>
+    </div>
+  );
+}
+
+function ButtonStyleField({ form }: { form: BrandForm }) {
+  const { watch, setValue } = form;
+  const buttonStyle = watch('tokens.buttons.style');
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="font-medium">{__('Button style', 'yaycheckout')}</span>
+      <Segmented
+        className="w-full"
+        value={buttonStyle}
+        onValueChange={(value) => {
+          if (!value) return;
+          setValue('tokens.buttons.style', value as typeof buttonStyle, dirtyOptions);
+          setValue('tokens.buttons.enabled', true, dirtyOptions);
+        }}
+      >
+        {Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => (
+          <SegmentedItem key={value} value={value} className="flex-1">
+            {label}
+          </SegmentedItem>
+        ))}
+      </Segmented>
+    </div>
+  );
+}
+
+function CustomCssField({ form }: { form: BrandForm }) {
+  if (!isPro) {
+    return (
+      <div className="border-muted-foreground/40 bg-muted/40 flex flex-col gap-3 rounded-md border border-dashed p-3">
+        <div className="flex items-center gap-2">
+          <ProTag />
+          <span className="text-muted-foreground text-sm">{__('Custom CSS & token overrides', 'yaycheckout')}</span>
+        </div>
+        <div className="bg-muted h-12 rounded-sm" />
+        <UpgradeButton className="self-start" />
+      </div>
+    );
+  }
+
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="font-medium">{__('Custom CSS', 'yaycheckout')}</span>
+      <Textarea
+        {...form.register('customCss')}
+        rows={4}
+        maxLength={CUSTOM_CSS_MAX_BYTES}
+        placeholder={__('.yaycheckout-checkout { }', 'yaycheckout')}
+        className="text-sm"
+      />
+    </label>
   );
 }

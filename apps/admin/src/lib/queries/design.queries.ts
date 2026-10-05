@@ -25,10 +25,12 @@ export function useDesignQuery() {
   return useQuery(DESIGN_QUERIES.main);
 }
 
+export const SAVE_DESIGN_MUTATION_KEY = ['design', 'save'];
+
 export function useSaveDesignMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationKey: ['design', 'save'],
+    mutationKey: SAVE_DESIGN_MUTATION_KEY,
     mutationFn: ({ form, presetId }: { form: DesignForm; presetId: string | null }) => postDesign(form, presetId),
     // The page toasts the failure itself so it can keep the form dirty.
     meta: { skipGlobalError: true },
