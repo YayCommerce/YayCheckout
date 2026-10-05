@@ -1,6 +1,6 @@
 import { CSSProperties, useState } from 'react';
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { isGroupOn } from '@/lib/helpers/design.helper';
@@ -39,9 +39,9 @@ const NEUTRAL = {
  */
 export function PreviewPane({ compact = false }: { compact?: boolean }) {
   const [viewport, setViewport] = useState<Viewport>('desktop');
-  const { watch } = useFormContext<DesignForm>();
-  const tokens = watch('tokens');
-  const customCss = watch('customCss');
+  const { control } = useFormContext<DesignForm>();
+  const tokens = useWatch({ control, name: 'tokens' });
+  const customCss = useWatch({ control, name: 'customCss' });
   const { typography, spacing, buttons, inputs } = tokens;
   const colours = tokens.colours.enabled ? tokens.colours : NEUTRAL.colours;
   const isButtonFill = !buttons.enabled || 'fill' === buttons.style;

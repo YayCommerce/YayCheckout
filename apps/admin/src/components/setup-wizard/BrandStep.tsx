@@ -1,15 +1,16 @@
-import { useState } from 'react';
-import type { UseFormReturn } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { activePresetIdFor } from '@/lib/helpers/design.helper';
-import { getErrorMsg } from '@/lib/helpers/response.helper';
 import { isPro } from '@/lib/plan';
-import { useDesignQuery, useSaveDesignMutation } from '@/lib/queries/design.queries';
-import { useCreateLayoutDraftMutation } from '@/lib/queries/layout.queries';
 import { useTemplateLibraryQuery } from '@/lib/queries/template.queries';
-import { BUTTON_STYLE_LABELS, CUSTOM_CSS_MAX_BYTES, RADIUS_RANGE, type DesignForm } from '@/lib/schema/design.schema';
-import type { Layout } from '@/lib/schema/layout.schema';
+import {
+  BUTTON_STYLE_LABELS,
+  CUSTOM_CSS_MAX_BYTES,
+  RADIUS_RANGE,
+  type DesignForm,
+  type DesignTokens,
+  type TokenSection,
+} from '@/lib/schema/design.schema';
 import { Button, LoadingButton } from '@/components/ui/button';
 import {
   ColorPicker,
@@ -18,7 +19,6 @@ import {
   ColorPickerPanel,
   ColorPickerTrigger,
 } from '@/components/ui/color-picker';
-import { Form } from '@/components/ui/form';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -27,125 +27,103 @@ import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
 import { FontFamilySelect } from '@/components/shared/FontFamilySelect';
 import { PreviewPane } from '@/components/shared/PreviewPane';
 
-type BrandForm = UseFormReturn<DesignForm>;
-
-// A token only reaches the storefront while its group is on, so touching one switches its group on.
 const dirtyOptions = { shouldDirty: true } as const;
 
 /**
- * Wizard step 3: a few global design tokens over a live preview. Apply brand
- * creates the draft layout from the step 2 template, then saves the design.
- *
- * @param form Owned by the wizard so Back and forth keeps the edits.
+ * Wizard step 3: a few global design tokens over a live preview, read from the
+ * wizard's design form. Apply brand hands the values to the wizard to save.
  */
 export function BrandStep({
-  form,
   templateSlug,
+  isApplying,
+  error,
   onBack,
-  onApplied,
+  onApply,
 }: {
-  form: BrandForm;
   templateSlug: string;
+  isApplying: boolean;
+  error: string | null;
   onBack: () => void;
-  onApplied: (draft: Layout) => void;
+  onApply: (values: DesignForm) => void;
 }) {
-  const { data: design } = useDesignQuery();
+  const { handleSubmit } = useFormContext<DesignForm>();
   const { data: library } = useTemplateLibraryQuery();
-  const saveDesign = useSaveDesignMutation();
-  const createDraft = useCreateLayoutDraftMutation();
-  const [error, setError] = useState<string | null>(null);
-  // Kept across a failed design save, so retrying Apply never makes a second draft.
-  const [draft, setDraft] = useState<Layout | null>(null);
-
   const templateName = library?.templates.find((t) => t.slug === templateSlug)?.name;
-  const isApplying = saveDesign.isPending || createDraft.isPending;
-
-  async function onApply(values: DesignForm) {
-    setError(null);
-    try {
-      // Draft first: if it fails (e.g. Free at its layout limit), the saved design is still untouched.
-      const created =
-        draft ??
-        (await createDraft.mutateAsync({
-          name: __('Checkout — draft', 'yaycheckout'),
-          source: 'library',
-          templateSlug,
-        }));
-      setDraft(created);
-      await saveDesign.mutateAsync({
-        form: values,
-        presetId: activePresetIdFor(design.presets, design.presetId, values.tokens),
-      });
-      onApplied(created);
-    } catch (e) {
-      setError(await getErrorMsg(e));
-    }
-  }
 
   return (
-    <Form {...form}>
-      <div className="flex flex-col gap-6">
-        <header className="space-y-1">
-          <h2 className="text-lg font-semibold">{__('Set the basics', 'yaycheckout')}</h2>
-          <p className="text-muted-foreground text-sm">
-            {__('These become your global design tokens. You can change them later in Design.', 'yaycheckout')}
-          </p>
-        </header>
+    <div className="flex flex-col gap-6">
+      <header className="space-y-1">
+        <h2 className="text-lg font-semibold">{__('Set the basics', 'yaycheckout')}</h2>
+        <p className="text-muted-foreground text-sm">
+          {__('These become your global design tokens. You can change them later in Design.', 'yaycheckout')}
+        </p>
+      </header>
 
-        <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-6">
-          <div className="flex flex-col gap-5 text-sm">
-            <PrimaryColourField form={form} />
-            <FontField form={form} />
-            <CornerRadiusField form={form} />
-            <ButtonStyleField form={form} />
-            <CustomCssField form={form} />
-          </div>
-
-          <div className="flex min-w-0 flex-col gap-2">
-            <span className="text-muted-foreground text-xs tracking-wide uppercase">
-              {templateName
-                ? sprintf(
-                    /* translators: %s: template name */
-                    __('Live preview · 60%% scale · %s', 'yaycheckout'),
-                    templateName,
-                  )
-                : __('Live preview · 60% scale', 'yaycheckout')}
-            </span>
-            {/* zoom, not transform: the mock lays out at full desktop width, then shrinks to fit the column. */}
-            <div style={{ zoom: 0.6 }}>
-              <PreviewPane compact />
-            </div>
-          </div>
+      <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-6">
+        <div className="flex flex-col gap-5 text-sm">
+          <PrimaryColourField />
+          <FontField />
+          <CornerRadiusField />
+          <ButtonStyleField />
+          <CustomCssField />
         </div>
 
-        {error && <p className="text-destructive text-sm">{error}</p>}
-
-        <div className="flex justify-between gap-2 border-t pt-4">
-          <Button variant="outline" onClick={onBack} disabled={isApplying}>
-            {__('Back', 'yaycheckout')}
-          </Button>
-          <LoadingButton loading={isApplying} disabled={isApplying} onClick={form.handleSubmit(onApply)}>
-            {__('Apply brand', 'yaycheckout')}
-          </LoadingButton>
+        <div className="flex min-w-0 flex-col gap-2">
+          <span className="text-muted-foreground text-xs tracking-wide uppercase">
+            {templateName
+              ? sprintf(
+                  /* translators: %s: template name */
+                  __('Live preview · 60%% scale · %s', 'yaycheckout'),
+                  templateName,
+                )
+              : __('Live preview · 60% scale', 'yaycheckout')}
+          </span>
+          {/* zoom, not transform: the mock lays out at full desktop width, then shrinks to fit the column. */}
+          <div style={{ zoom: 0.6 }}>
+            <PreviewPane compact />
+          </div>
         </div>
       </div>
-    </Form>
+
+      {error && <p className="text-destructive text-sm">{error}</p>}
+
+      <div className="flex justify-between gap-2 border-t pt-4">
+        <Button variant="outline" onClick={onBack} disabled={isApplying}>
+          {__('Back', 'yaycheckout')}
+        </Button>
+        <LoadingButton loading={isApplying} disabled={isApplying} onClick={handleSubmit(onApply)}>
+          {__('Apply brand', 'yaycheckout')}
+        </LoadingButton>
+      </div>
+    </div>
   );
 }
 
-function PrimaryColourField({ form }: { form: BrandForm }) {
-  const { watch, setValue } = form;
+/** Sets one token and switches its group on: a token only reaches the storefront while its group is on. */
+function useSetToken() {
+  const { setValue } = useFormContext<DesignForm>();
+  // setValue cannot type a path built from generics; setToken's own signature keeps callers typed.
+  const setPath = setValue as (name: string, value: unknown, options: typeof dirtyOptions) => void;
+
+  return function setToken<S extends TokenSection, K extends keyof DesignTokens[S] & string>(
+    section: S,
+    key: K,
+    value: DesignTokens[S][K],
+  ) {
+    setPath(`tokens.${section}.${key}`, value, dirtyOptions);
+    setPath(`tokens.${section}.enabled`, true, dirtyOptions);
+  };
+}
+
+function PrimaryColourField() {
+  const { control } = useFormContext<DesignForm>();
+  const primary = useWatch({ control, name: 'tokens.colours.primary' });
+  const setToken = useSetToken();
 
   return (
     <div className="flex flex-col gap-2">
       <span className="font-medium">{__('Primary colour', 'yaycheckout')}</span>
-      <ColorPicker
-        value={watch('tokens.colours.primary')}
-        onValueChange={(value) => {
-          setValue('tokens.colours.primary', value, dirtyOptions);
-          setValue('tokens.colours.enabled', true, dirtyOptions);
-        }}
-      >
+      <ColorPicker value={primary} onValueChange={(value) => setToken('colours', 'primary', value)}>
         <ColorPickerTrigger className="h-9 w-full" />
         <ColorPickerContent>
           <ColorPickerPanel />
@@ -156,9 +134,10 @@ function PrimaryColourField({ form }: { form: BrandForm }) {
   );
 }
 
-function FontField({ form }: { form: BrandForm }) {
-  const { watch, setValue } = form;
-  const isTypographyOn = watch('tokens.typography.enabled');
+function FontField() {
+  const { control, setValue } = useFormContext<DesignForm>();
+  const isTypographyOn = useWatch({ control, name: 'tokens.typography.enabled' });
+  const fontFamily = useWatch({ control, name: 'tokens.typography.fontFamily' });
 
   return (
     <div className="flex flex-col gap-2">
@@ -173,7 +152,7 @@ function FontField({ form }: { form: BrandForm }) {
         </label>
       </div>
       <FontFamilySelect
-        value={watch('tokens.typography.fontFamily')}
+        value={fontFamily}
         onChange={(font) => setValue('tokens.typography.fontFamily', font, dirtyOptions)}
         disabled={!isTypographyOn}
       />
@@ -184,9 +163,10 @@ function FontField({ form }: { form: BrandForm }) {
   );
 }
 
-function CornerRadiusField({ form }: { form: BrandForm }) {
-  const { watch, setValue } = form;
-  const radius = watch('tokens.buttons.radius');
+function CornerRadiusField() {
+  const { control } = useFormContext<DesignForm>();
+  const radius = useWatch({ control, name: 'tokens.buttons.radius' });
+  const setToken = useSetToken();
 
   return (
     <div className="flex flex-col gap-2">
@@ -194,17 +174,15 @@ function CornerRadiusField({ form }: { form: BrandForm }) {
         <span className="font-medium">{__('Corner radius', 'yaycheckout')}</span>
         <span className="text-muted-foreground">{radius}px</span>
       </div>
-      {/* One radius for the basics: buttons and inputs move together; Design splits them later. */}
+      {/* One slider sets both radii. */}
       <Slider
         min={RADIUS_RANGE.min}
         max={RADIUS_RANGE.max}
         step={1}
         value={[radius]}
         onValueChange={([value]) => {
-          setValue('tokens.buttons.radius', value, dirtyOptions);
-          setValue('tokens.inputs.radius', value, dirtyOptions);
-          setValue('tokens.buttons.enabled', true, dirtyOptions);
-          setValue('tokens.inputs.enabled', true, dirtyOptions);
+          setToken('buttons', 'radius', value);
+          setToken('inputs', 'radius', value);
         }}
         aria-label={__('Corner radius', 'yaycheckout')}
       />
@@ -216,9 +194,10 @@ function CornerRadiusField({ form }: { form: BrandForm }) {
   );
 }
 
-function ButtonStyleField({ form }: { form: BrandForm }) {
-  const { watch, setValue } = form;
-  const buttonStyle = watch('tokens.buttons.style');
+function ButtonStyleField() {
+  const { control } = useFormContext<DesignForm>();
+  const buttonStyle = useWatch({ control, name: 'tokens.buttons.style' });
+  const setToken = useSetToken();
 
   return (
     <div className="flex flex-col gap-2">
@@ -226,11 +205,7 @@ function ButtonStyleField({ form }: { form: BrandForm }) {
       <Segmented
         className="w-full"
         value={buttonStyle}
-        onValueChange={(value) => {
-          if (!value) return;
-          setValue('tokens.buttons.style', value as typeof buttonStyle, dirtyOptions);
-          setValue('tokens.buttons.enabled', true, dirtyOptions);
-        }}
+        onValueChange={(value) => value && setToken('buttons', 'style', value as typeof buttonStyle)}
       >
         {Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => (
           <SegmentedItem key={value} value={value} className="flex-1">
@@ -242,7 +217,9 @@ function ButtonStyleField({ form }: { form: BrandForm }) {
   );
 }
 
-function CustomCssField({ form }: { form: BrandForm }) {
+function CustomCssField() {
+  const { register } = useFormContext<DesignForm>();
+
   if (!isPro) {
     return (
       <div className="border-muted-foreground/40 bg-muted/40 flex flex-col gap-3 rounded-md border border-dashed p-3">
@@ -260,7 +237,7 @@ function CustomCssField({ form }: { form: BrandForm }) {
     <label className="flex flex-col gap-2">
       <span className="font-medium">{__('Custom CSS', 'yaycheckout')}</span>
       <Textarea
-        {...form.register('customCss')}
+        {...register('customCss')}
         rows={4}
         maxLength={CUSTOM_CSS_MAX_BYTES}
         placeholder={__('.yaycheckout-checkout { }', 'yaycheckout')}

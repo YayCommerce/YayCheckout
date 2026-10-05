@@ -57,7 +57,7 @@ export function FinishStep({
         items={[
           [__('Layout', 'yaycheckout'), draft.title],
           [__('Started from', 'yaycheckout'), templateName],
-          [__('Renders on', 'yaycheckout'), storeTypeLabel(report?.store.storeType ?? 'classic')],
+          [__('Renders on', 'yaycheckout'), report ? storeTypeLabel(report.store.storeType) : '—'],
           [__('Status', 'yaycheckout'), __('Draft', 'yaycheckout')],
         ]}
       />

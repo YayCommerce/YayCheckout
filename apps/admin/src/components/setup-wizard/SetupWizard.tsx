@@ -1,15 +1,15 @@
 import { Fragment, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useIsMutating } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { __ } from '@wordpress/i18n';
 
 import { markSetupDone } from '@/lib/api/settings.api';
+import { activePresetIdFor } from '@/lib/helpers/design.helper';
+import { getErrorMsg } from '@/lib/helpers/response.helper';
 import { logger } from '@/lib/logger';
-import { SAVE_DESIGN_MUTATION_KEY, useDesignQuery } from '@/lib/queries/design.queries';
-import { CREATE_LAYOUT_DRAFT_MUTATION_KEY } from '@/lib/queries/layout.queries';
+import { useDesignQuery } from '@/lib/queries/design.queries';
+import { useCompleteSetupMutation } from '@/lib/queries/setup.queries';
 import { designFormSchema, type DesignForm } from '@/lib/schema/design.schema';
-import type { Layout } from '@/lib/schema/layout.schema';
 import { Badge } from '@/components/ui/badge';
 import {
   Breadcrumb,
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Form } from '@/components/ui/form';
 import { BrandStep } from './BrandStep';
 import { FinishStep } from './FinishStep';
 import { ScanStep } from './ScanStep';
@@ -28,39 +29,43 @@ import { StartFromStep } from './StartFromStep';
 const STEPS = [__('Scan', 'yaycheckout'), __('Start from', 'yaycheckout'), __('Brand', 'yaycheckout')];
 
 /**
- * First-run setup popup, open while `showSetupWizard` is true. Nothing the
- * merchant picks is stored until Apply brand; Skip setup leaves without saving
- * any of it. No close icon, Esc or outside click.
+ * First-run setup popup, open while `showSetupWizard` is true. Picks stay in
+ * memory until Apply brand saves them all in one POST /setup, which also marks
+ * setup done; a refused save writes nothing, so Back and Skip setup stay
+ * honest after it. No close icon, Esc or outside click.
  */
 export function SetupWizard() {
   const [open, setOpen] = useState(window.yayCheckoutMeta.checkoutMeta.showSetupWizard);
   const [step, setStep] = useState(0);
   const [templateSlug, setTemplateSlug] = useState<string | null>();
-  const [draft, setDraft] = useState<Layout | null>(null);
+  const [applyError, setApplyError] = useState<string | null>(null);
   const { data: design } = useDesignQuery();
+  const setup = useCompleteSetupMutation();
   const brandForm = useForm<DesignForm>({
     resolver: zodResolver(designFormSchema),
     defaultValues: { tokens: design.tokens, customCss: design.customCss },
   });
-  // Apply brand mid-flight: skipping now would close over a half-written design and draft.
-  const isBusy =
-    useIsMutating({ mutationKey: SAVE_DESIGN_MUTATION_KEY }) +
-      useIsMutating({ mutationKey: CREATE_LAYOUT_DRAFT_MUTATION_KEY }) >
-    0;
+  const draft = setup.data?.layout;
   const isFinished = step === STEPS.length;
-
-  function markDone() {
-    markSetupDone().catch((e) => logger.warn('Mark setup done failed', e));
-  }
 
   function onSkip() {
     setOpen(false);
-    markDone();
+    markSetupDone().catch((e) => logger.warn('Mark setup done failed', e));
   }
 
-  function onNext() {
-    setStep(step + 1);
-    if (step + 1 === STEPS.length) markDone();
+  async function onApply(values: DesignForm) {
+    if (!templateSlug) return;
+    setApplyError(null);
+    try {
+      await setup.mutateAsync({
+        templateSlug,
+        form: values,
+        presetId: activePresetIdFor(design.presets, design.presetId, values.tokens),
+      });
+      setStep(STEPS.length);
+    } catch (e) {
+      setApplyError(await getErrorMsg(e));
+    }
   }
 
   return (
@@ -90,31 +95,31 @@ export function SetupWizard() {
             {isFinished && <Badge variant="success-outline">{__('Done', 'yaycheckout')}</Badge>}
           </div>
           {!isFinished && (
-            <Button variant="link" size="sm" disabled={isBusy} onClick={onSkip}>
+            <Button variant="link" size="sm" disabled={setup.isPending} onClick={onSkip}>
               {__('Skip setup', 'yaycheckout')}
             </Button>
           )}
         </div>
 
-        {step === 0 && <ScanStep onContinue={onNext} />}
+        {step === 0 && <ScanStep onContinue={() => setStep(1)} />}
         {step === 1 && (
           <StartFromStep
             templateSlug={templateSlug}
             onTemplateChange={setTemplateSlug}
             onBack={() => setStep(0)}
-            onContinue={onNext}
+            onContinue={() => setStep(2)}
           />
         )}
         {step === 2 && templateSlug && (
-          <BrandStep
-            form={brandForm}
-            templateSlug={templateSlug}
-            onBack={() => setStep(1)}
-            onApplied={(created) => {
-              setDraft(created);
-              onNext();
-            }}
-          />
+          <Form {...brandForm}>
+            <BrandStep
+              templateSlug={templateSlug}
+              isApplying={setup.isPending}
+              error={applyError}
+              onBack={() => setStep(1)}
+              onApply={onApply}
+            />
+          </Form>
         )}
         {isFinished && draft && templateSlug && (
           <FinishStep draft={draft} templateSlug={templateSlug} onClose={() => setOpen(false)} />

@@ -80,13 +80,11 @@ export function useLayoutQuery(id: number) {
   return useQuery(LAYOUT_QUERIES.detail(id));
 }
 
-export const CREATE_LAYOUT_DRAFT_MUTATION_KEY = ['layouts', 'create-draft'];
-
 export function useCreateLayoutDraftMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: CREATE_LAYOUT_DRAFT_MUTATION_KEY,
+    mutationKey: ['layouts', 'create-draft'],
     mutationFn: createLayoutDraft,
     // The modal renders its own inline error.
     meta: { skipGlobalError: true },
