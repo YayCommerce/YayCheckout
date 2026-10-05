@@ -3,11 +3,17 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { isGroupOn } from '@/lib/helpers/design.helper';
-import { FONT_FAMILIES, type DesignForm, type DesignTokens, type TokenSection } from '@/lib/schema/design.schema';
+import {
+  BUTTON_STYLE_LABELS,
+  FONT_FAMILIES,
+  type DesignForm,
+  type DesignTokens,
+  type TokenSection,
+} from '@/lib/schema/design.schema';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FormField } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { BUTTON_STYLE_LABELS, ButtonsGroup } from './ButtonsGroup';
+import { ButtonsGroup } from './ButtonsGroup';
 import { COLOUR_KEYS, ColoursGroup } from './ColoursGroup';
 import { CustomCssGroup } from './CustomCssGroup';
 import { INPUT_SIZE_LABELS, INPUT_STYLE_LABELS, InputsGroup } from './InputsGroup';

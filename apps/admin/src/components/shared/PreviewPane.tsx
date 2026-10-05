@@ -1,13 +1,13 @@
 import { CSSProperties, useState } from 'react';
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { isGroupOn } from '@/lib/helpers/design.helper';
 import { FONT_FAMILIES, type DesignForm } from '@/lib/schema/design.schema';
 import { cn } from '@/lib/utils';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
-import { GROUPS } from './TokenGroups';
+import { GROUPS } from '@/pages/design/components/TokenGroups';
 
 type Viewport = 'desktop' | 'tablet' | 'mobile';
 
@@ -31,15 +31,17 @@ const NEUTRAL = {
 };
 
 /**
- * Right column: device switch over a mock of the real checkout layout
- * (contact, shipping, payment, order summary), restyled live from the
- * form's current tokens so every token has visible surface to land on.
+ * Device switch over a mock of the real checkout layout (contact, shipping,
+ * payment, order summary), restyled live from the form's current tokens so
+ * every token has visible surface to land on.
+ *
+ * @param isCompact Desktop mock only: no device switch, no minimum height (the setup wizard's preview).
  */
-export function PreviewPane() {
+export function PreviewPane({ isCompact = false }: { isCompact?: boolean }) {
   const [viewport, setViewport] = useState<Viewport>('desktop');
-  const { watch } = useFormContext<DesignForm>();
-  const tokens = watch('tokens');
-  const customCss = watch('customCss');
+  const { control } = useFormContext<DesignForm>();
+  const tokens = useWatch({ control, name: 'tokens' });
+  const customCss = useWatch({ control, name: 'customCss' });
   const { typography, spacing, buttons, inputs } = tokens;
   const colours = tokens.colours.enabled ? tokens.colours : NEUTRAL.colours;
   const isButtonFill = !buttons.enabled || 'fill' === buttons.style;
@@ -81,21 +83,23 @@ export function PreviewPane() {
   };
 
   return (
-    <div className="bg-background flex min-w-0 flex-1 flex-col gap-3 rounded-lg border p-4">
-      <div className="flex items-center gap-2">
-        <span className="flex-1 text-sm font-semibold">{__('Preview', 'yaycheckout')}</span>
-        <Segmented size="sm" shape="square" value={viewport} onValueChange={(v) => v && setViewport(v as Viewport)}>
-          <SegmentedItem value="desktop" aria-label={__('Desktop', 'yaycheckout')}>
-            <Monitor />
-          </SegmentedItem>
-          <SegmentedItem value="tablet" aria-label={__('Tablet', 'yaycheckout')}>
-            <Tablet />
-          </SegmentedItem>
-          <SegmentedItem value="mobile" aria-label={__('Mobile', 'yaycheckout')}>
-            <Smartphone />
-          </SegmentedItem>
-        </Segmented>
-      </div>
+    <div className={cn('bg-background flex min-w-0 flex-1 flex-col gap-3', !isCompact && 'rounded-lg border p-4')}>
+      {!isCompact && (
+        <div className="flex items-center gap-2">
+          <span className="flex-1 text-sm font-semibold">{__('Preview', 'yaycheckout')}</span>
+          <Segmented size="sm" shape="square" value={viewport} onValueChange={(v) => v && setViewport(v as Viewport)}>
+            <SegmentedItem value="desktop" aria-label={__('Desktop', 'yaycheckout')}>
+              <Monitor />
+            </SegmentedItem>
+            <SegmentedItem value="tablet" aria-label={__('Tablet', 'yaycheckout')}>
+              <Tablet />
+            </SegmentedItem>
+            <SegmentedItem value="mobile" aria-label={__('Mobile', 'yaycheckout')}>
+              <Smartphone />
+            </SegmentedItem>
+          </Segmented>
+        </div>
+      )}
       {themeGroups.length ? (
         <p className="text-muted-foreground m-0 text-xs">
           {sprintf(
@@ -108,7 +112,8 @@ export function PreviewPane() {
 
       <div
         className={cn(
-          'flex min-h-160 flex-1 justify-center overflow-hidden rounded-lg border',
+          'flex flex-1 justify-center overflow-hidden rounded-lg border',
+          !isCompact && 'min-h-160',
           viewport !== 'desktop' && 'bg-muted p-4',
         )}
       >

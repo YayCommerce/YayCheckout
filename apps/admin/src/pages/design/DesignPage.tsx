@@ -16,11 +16,11 @@ import {
 } from '@/lib/schema/design.schema';
 import { useRouteLeaveGuard } from '@/hooks/useRouteLeaveGuard';
 import { Form } from '@/components/ui/form';
+import { PreviewPane } from '@/components/shared/PreviewPane';
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog';
 import PageLayout from '@/pages/PageLayout';
 import { DesignActions } from './components/DesignActions';
 import { PresetsCard } from './components/PresetsCard';
-import { PreviewPane } from './components/PreviewPane';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { SavePresetModal } from './components/SavePresetModal';
 import { TokenGroups } from './components/TokenGroups';

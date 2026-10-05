@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { StatusBadge } from './StatusBadge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 
 export function GatewaysSection({ gateways }: { gateways: GatewayRow[] }) {
   const blockOnly = gateways.filter((gateway) => gateway.status === 'block-only').length;

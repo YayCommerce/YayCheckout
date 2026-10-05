@@ -5,7 +5,7 @@ import type { ImportReview } from '@/lib/schema/tools.schema';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button, LoadingButton } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
-import { SummaryStrip } from './StepStrip';
+import { SummaryStrip } from '@/components/shared/SummaryStrip';
 
 export function SourceStep({
   review,

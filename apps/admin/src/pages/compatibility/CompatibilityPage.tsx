@@ -1,17 +1,17 @@
 import { RefreshCw } from 'lucide-react';
 import { __, sprintf } from '@wordpress/i18n';
 
+import { deriveWarnings } from '@/lib/helpers/compatibility.helper';
 import { formatDateTime } from '@/lib/helpers/date.helper';
 import { useCompatibilityQuery, useRescanMutation } from '@/lib/queries/compatibility.queries';
 import { LoadingButton } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { WarningBanner } from '@/components/shared/WarningBanner';
 import PageLayout from '@/pages/PageLayout';
-import { deriveWarnings } from './compatibility-warnings';
 import { GatewaysSection } from './components/GatewaysSection';
 import { PluginsSection } from './components/PluginsSection';
 import { StoreSection } from './components/StoreSection';
-import { WarningBanner } from './components/WarningBanner';
 
 export default function CompatibilityPage() {
   const query = useCompatibilityQuery();
