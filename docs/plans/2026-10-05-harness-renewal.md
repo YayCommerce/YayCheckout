@@ -80,9 +80,9 @@ Expected: no output
 
 ### Task 3: `CLAUDE.md`, `.nvmrc`, engines
 
-- [ ] **Step 1:** Write `CLAUDE.md`, under 100 lines: what, Commands (each one run, failing ones linked to known issues), Hard rules (each traceable to code), Tests, Git, Plans and specs, Where to look. Plain links with "read when…" triggers, no `@` imports.
-- [ ] **Step 2:** `.nvmrc` with `22`; `"engines": {"node": ">=22"}` in the root `package.json`.
-- [ ] **Step 3: Commit.** Message: `docs(harness): add CLAUDE.md`
+- [x] **Step 1:** Write `CLAUDE.md`, under 100 lines: what, Commands (each one run, failing ones linked to known issues), Hard rules (each traceable to code), Tests, Git, Plans and specs, Where to look. Plain links with "read when…" triggers, no `@` imports.
+- [x] **Step 2:** `.nvmrc` with `22`; `"engines": {"node": ">=22"}` in the root `package.json`.
+- [x] **Step 3: Commit.** Message: `docs(harness): add CLAUDE.md`
 
 ### Task 4: Architecture, conventions, known issues, backlog
 
