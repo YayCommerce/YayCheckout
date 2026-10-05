@@ -19,7 +19,28 @@ function boot(): void {
 
 	document.documentElement.setAttribute( 'data-yaycheckout-steps-bound', '' );
 	document.addEventListener( 'click', onClick );
+	document.addEventListener( 'yaycheckout:step-reopen', onReopen );
 	syncStepButtons();
+}
+
+function onReopen( event: Event ): void {
+	// reopen() stays in this file. A control outside the step sends this event.
+	if ( ! ( event instanceof CustomEvent ) || ! ( event.target instanceof Element ) ) {
+		return;
+	}
+
+	const stepNumber = event.detail?.step;
+
+	if ( typeof stepNumber !== 'string' || stepNumber === '' ) {
+		return;
+	}
+
+	const checkout = event.target.closest( '.yaycheckout-checkout' );
+	const step = checkout?.querySelector< HTMLElement >( `${ STEP }[data-step="${ CSS.escape( stepNumber ) }"]` );
+
+	if ( step ) {
+		reopen( step );
+	}
 }
 
 function onClick( event: MouseEvent ): void {
@@ -131,6 +152,8 @@ function setState( step: HTMLElement, state: StepState ): void {
 	}
 
 	syncStepButtons();
+	// A dataset write has no subscribers. The event is how other scripts hear it.
+	step.dispatchEvent( new CustomEvent( 'yaycheckout:step-change', { bubbles: true } ) );
 }
 
 function stepForButton( button: HTMLElement ): HTMLElement | null {

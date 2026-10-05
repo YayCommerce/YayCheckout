@@ -25,6 +25,7 @@ class YayCheckout {
         \YayCheckout\Renderer\PreviewRequest::get_instance();
         \YayCheckout\Renderer\CheckoutScripts::get_instance();
         \YayCheckout\Renderer\CheckoutColour::get_instance();
+        \YayCheckout\Renderer\CheckoutProgress::get_instance();
         \YayCheckout\Renderer\CheckoutPage::get_instance();
         \YayCheckout\Renderer\CheckoutFragments::get_instance();
         \YayCheckout\Renderer\CheckoutExtraFields::get_instance();

@@ -12,7 +12,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * Checkout blocks read --yaycheckout-primary. The value comes from Design;
  * this file places it on the checkout wrapper so the layout editor and the
- * checkout page share it, including a Step Button or Back Button outside Steps.
+ * checkout page share it, including Progress, a Step Button, or a Back Button
+ * outside Steps.
  */
 class CheckoutColour {
 
@@ -39,7 +40,7 @@ class CheckoutColour {
 
         $css = '.yaycheckout-checkout{--yaycheckout-primary:' . $primary . ';}';
 
-        foreach ( [ 'yaycheckout/steps', 'yaycheckout/step-button', 'yaycheckout/back-button' ] as $block ) {
+        foreach ( [ 'yaycheckout/progress', 'yaycheckout/steps', 'yaycheckout/step-button', 'yaycheckout/back-button' ] as $block ) {
             wp_add_inline_style( generate_block_asset_handle( $block, 'style' ), $css );
         }
     }

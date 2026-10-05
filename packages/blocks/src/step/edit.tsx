@@ -2,6 +2,7 @@ import { InnerBlocks, InspectorControls, useBlockProps, store as blockEditorStor
 import { PanelBody, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
+import { stepTitle } from '../shared/step-title';
 
 interface StepAttributes {
 	title: string;
@@ -33,7 +34,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 			<div { ...blockProps }>
 				<div className="yaycheckout-step__header">
 					<span className="yaycheckout-step__index">{ position }</span>
-					<span className="yaycheckout-step__title">{ title || __( 'Step', 'yaycheckout' ) }</span>
+					<span className="yaycheckout-step__title">{ stepTitle( title ) }</span>
 				</div>
 				<div className="yaycheckout-step__body">
 					<InnerBlocks
