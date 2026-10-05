@@ -53,8 +53,10 @@ export function BrandStep({
   const [draft, setDraft] = useState<Layout | null>(null);
 
   const { watch, setValue } = form;
+  // A token only reaches the storefront while its group is on, so touching one switches its group on.
+  const dirty = { shouldDirty: true } as const;
   const primary = watch('tokens.colours.primary');
-  const inherit = watch('tokens.typography.inherit');
+  const isTypographyOn = watch('tokens.typography.enabled');
   const fontFamily = watch('tokens.typography.fontFamily');
   const radius = watch('tokens.buttons.radius');
   const buttonStyle = watch('tokens.buttons.style');
@@ -100,7 +102,10 @@ export function BrandStep({
               <span className="font-medium">{__('Primary colour', 'yaycheckout')}</span>
               <ColorPicker
                 value={primary}
-                onValueChange={(value) => setValue('tokens.colours.primary', value, { shouldDirty: true })}
+                onValueChange={(value) => {
+                  setValue('tokens.colours.primary', value, dirty);
+                  setValue('tokens.colours.enabled', true, dirty);
+                }}
               >
                 <ColorPickerTrigger className="h-9 w-full" />
                 <ColorPickerContent>
@@ -116,17 +121,17 @@ export function BrandStep({
                 <label className="text-muted-foreground flex items-center gap-2 text-xs">
                   {__('Inherit from theme', 'yaycheckout')}
                   <Switch
-                    checked={inherit}
-                    onCheckedChange={(value) => setValue('tokens.typography.inherit', value, { shouldDirty: true })}
+                    checked={!isTypographyOn}
+                    onCheckedChange={(inherit) => setValue('tokens.typography.enabled', !inherit, dirty)}
                   />
                 </label>
               </div>
               <FontFamilySelect
                 value={fontFamily}
-                onChange={(font) => setValue('tokens.typography.fontFamily', font, { shouldDirty: true })}
-                disabled={inherit}
+                onChange={(font) => setValue('tokens.typography.fontFamily', font, dirty)}
+                disabled={!isTypographyOn}
               />
-              {inherit && (
+              {!isTypographyOn && (
                 <p className="text-muted-foreground text-xs">
                   {__('Turn the toggle off to pick a font.', 'yaycheckout')}
                 </p>
@@ -145,8 +150,10 @@ export function BrandStep({
                 step={1}
                 value={[radius]}
                 onValueChange={([value]) => {
-                  setValue('tokens.buttons.radius', value, { shouldDirty: true });
-                  setValue('tokens.inputs.radius', value, { shouldDirty: true });
+                  setValue('tokens.buttons.radius', value, dirty);
+                  setValue('tokens.inputs.radius', value, dirty);
+                  setValue('tokens.buttons.enabled', true, dirty);
+                  setValue('tokens.inputs.enabled', true, dirty);
                 }}
                 aria-label={__('Corner radius', 'yaycheckout')}
               />
@@ -161,9 +168,11 @@ export function BrandStep({
               <Segmented
                 className="w-full"
                 value={buttonStyle}
-                onValueChange={(value) =>
-                  value && setValue('tokens.buttons.style', value as typeof buttonStyle, { shouldDirty: true })
-                }
+                onValueChange={(value) => {
+                  if (!value) return;
+                  setValue('tokens.buttons.style', value as typeof buttonStyle, dirty);
+                  setValue('tokens.buttons.enabled', true, dirty);
+                }}
               >
                 {Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => (
                   <SegmentedItem key={value} value={value} className="flex-1">

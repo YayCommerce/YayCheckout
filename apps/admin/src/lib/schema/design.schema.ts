@@ -52,18 +52,26 @@ export const CUSTOM_CSS_MAX_BYTES = 50000;
 export const designTokensWireSchema = z
   .object({
     colours: z
-      .object({ primary: hexColorSchema, text: hexColorSchema, background: hexColorSchema, border: hexColorSchema })
+      .object({
+        enabled: z.boolean(),
+        primary: hexColorSchema,
+        text: hexColorSchema,
+        background: hexColorSchema,
+        border: hexColorSchema,
+      })
       .strict(),
     typography: z
       .object({
-        inherit: z.boolean(),
+        enabled: z.boolean(),
         font_family: z.enum(FONT_FAMILY_KEYS),
         base_size: baseSizeSchema,
       })
       .strict(),
-    spacing: z.object({ scale: spacingScaleSchema, radius: radiusSchema }).strict(),
-    buttons: z.object({ style: buttonStyleSchema, radius: radiusSchema }).strict(),
-    inputs: z.object({ style: inputStyleSchema, size: inputSizeSchema, radius: radiusSchema }).strict(),
+    spacing: z.object({ enabled: z.boolean(), scale: spacingScaleSchema }).strict(),
+    buttons: z.object({ enabled: z.boolean(), style: buttonStyleSchema, radius: radiusSchema }).strict(),
+    inputs: z
+      .object({ enabled: z.boolean(), style: inputStyleSchema, size: inputSizeSchema, radius: radiusSchema })
+      .strict(),
   })
   .strict();
 
@@ -91,7 +99,7 @@ export type DesignResponseWire = z.infer<typeof designResponseWireSchema>;
 export const designTokensSchema = z.object({
   colours: designTokensWireSchema.shape.colours,
   typography: z.object({
-    inherit: z.boolean(),
+    enabled: z.boolean(),
     fontFamily: z.enum(FONT_FAMILY_KEYS),
     baseSize: baseSizeSchema,
   }),
@@ -124,6 +132,6 @@ export type DesignResponse = {
   customCss: string;
   updatedAt: string | null;
   presets: DesignPreset[];
-  /** Tokens of the built-in Default preset: what "Reset to theme" restores and "(from theme)" compares to. */
+  /** Tokens of the built-in Default preset: what "Reset to theme" restores. */
   defaultTokens: DesignTokens;
 };

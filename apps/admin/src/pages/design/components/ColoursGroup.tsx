@@ -10,17 +10,20 @@ import {
 } from '@/components/ui/color-picker';
 import { TokenField } from './TokenField';
 
-const COLOUR_LABELS: Record<keyof DesignTokens['colours'], string> = {
+const COLOUR_LABELS: Record<Exclude<keyof DesignTokens['colours'], 'enabled'>, string> = {
   primary: __('Primary', 'yaycheckout'),
   text: __('Text', 'yaycheckout'),
   background: __('Background', 'yaycheckout'),
   border: __('Border', 'yaycheckout'),
 };
 
+/** The colour tokens in display order. */
+export const COLOUR_KEYS = Object.keys(COLOUR_LABELS) as (keyof typeof COLOUR_LABELS)[];
+
 export function ColoursGroup() {
   return (
     <>
-      {(Object.keys(COLOUR_LABELS) as (keyof DesignTokens['colours'])[]).map((colour) => (
+      {COLOUR_KEYS.map((colour) => (
         <TokenField key={colour} section="colours" token={colour} label={COLOUR_LABELS[colour]}>
           {(field) => (
             <ColorPicker value={field.value} onValueChange={field.onChange}>
