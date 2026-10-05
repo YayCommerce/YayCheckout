@@ -1,6 +1,6 @@
 # Known issues
 
-**Purpose:** the checks that fail today and the gotchas that bite, each reproduced, with its cause, a workaround and the condition for deleting it. A check listed here was already failing on `dev/edd`, so judge your change by not adding to it ([CLAUDE.md](../CLAUDE.md)).
+**Purpose:** the checks that fail today and the gotchas that bite, each reproduced or traced to the code that causes it, with its cause, a workaround and the condition for deleting it. A check listed here was already failing on `dev/edd`, so judge your change by not adding to it ([CLAUDE.md](../CLAUDE.md)).
 
 **Update when:** an issue is fixed (delete its entry), a new one is reproduced (add it with all four fields), or a symptom changes.
 

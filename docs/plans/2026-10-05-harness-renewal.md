@@ -94,9 +94,9 @@ Expected: no output
 
 ### Task 5: Decision records
 
-- [ ] **Step 1:** The decision-record practice and the harness record, restated for this repo.
-- [ ] **Step 2:** Backfills, each `proposed` until the user confirms its reasons: the Free/Pro build-time split, admin-shell scoped with php-scoper, a layout as one post, ISO 8601 UTC wire timestamps.
-- [ ] **Step 3: Commit.** Message: `docs(harness): add decision records`
+- [x] **Step 1:** The decision-record practice and the harness record, restated for this repo.
+- [x] **Step 2:** Backfills, each `proposed` until the user confirms its reasons: the Free/Pro build-time split, admin-shell scoped with php-scoper, a layout as one post, ISO 8601 UTC wire timestamps.
+- [x] **Step 3: Commit.** Message: `docs(harness): add decision records`
 
 ### Task 6: Rules, settings, guard hook
 
