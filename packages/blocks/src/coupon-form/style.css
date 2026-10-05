@@ -1,0 +1,21 @@
+.yaycheckout-coupon-form .yaycheckout-coupon-form__code.has-error {
+	border-color: var(--wc-red, #cc1818);
+	/* Some themes draw the field's frame with outline, not border. */
+	outline-color: var(--wc-red, #cc1818);
+}
+
+.yaycheckout-coupon-form__error {
+	display: flex;
+	gap: 4px;
+	align-items: flex-start;
+	margin: 8px 0 0;
+	color: var(--wc-red, #cc1818);
+	font-size: 0.875em;
+}
+
+.yaycheckout-coupon-form__error svg {
+	flex: none;
+	width: 1.25em;
+	height: 1.25em;
+	fill: currentColor;
+}

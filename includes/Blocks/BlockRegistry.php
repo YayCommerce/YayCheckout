@@ -36,6 +36,7 @@ class BlockRegistry {
         'shipping-methods',
         'express-pay',
         'payment',
+        'coupon-form',
         'order-summary',
         'place-order',
         'slot',

@@ -26,7 +26,7 @@ class BlockRegistryTest extends WP_UnitTestCase {
     public function test_blocks_register_in_checkout_order(): void {
         $registered = array_values( preg_grep( '#^yaycheckout/#', array_keys( \WP_Block_Type_Registry::get_instance()->get_all_registered() ) ) );
 
-        $in_checkout_order = [ 'checkout', 'contact', 'billing', 'shipping', 'field', 'order-review', 'extra-field', 'shipping-methods', 'express-pay', 'payment', 'order-summary', 'place-order', 'slot' ];
+        $in_checkout_order = [ 'checkout', 'contact', 'billing', 'shipping', 'field', 'order-review', 'extra-field', 'shipping-methods', 'express-pay', 'payment', 'coupon-form', 'order-summary', 'place-order', 'slot' ];
 
         $this->assertSame( array_map( static fn( $slug ) => 'yaycheckout/' . $slug, $in_checkout_order ), $registered );
     }
