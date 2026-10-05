@@ -134,7 +134,7 @@ src/
     api/                ky calls per feature
     queries/            queryOptions + hooks per feature
     schema/             zod schemas mirroring PHP to_array()
-    helpers/            error unwrapping, date formatting, clipboard with select-text fallback, form utilities, `infinite-list` (`loadMoreOnScroll()` for paged pickers), `layout.helper` (Layouts route and the `?edit=ID` editor link)
+    helpers/            error unwrapping, date formatting, clipboard with select-text fallback, form utilities, `infinite-list` (`loadMoreOnScroll()` for paged pickers), `layout.helper` (the `?edit=ID` editor link)
     logger.ts           namespaced console; error/warn kept in production
     plan.ts             Free/Pro, from the build-time constant
     query-client.ts     QueryClient + global error toasts
