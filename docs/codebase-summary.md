@@ -31,7 +31,7 @@ Classes autoload `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared Ya
 | `PostTypes/` | `LayoutPostType` | registration only: caps, template, revision policy |
 | `Models/` | `Layout`, `LayoutQuery`, `Settings`, `Design` | dumb entities; **every storage key constant lives here**; zero WP calls. `Settings` and `Design` own `schema()` (the single description of settings/tokens), `from_option()` (read projection through the schema), and `sanitize()` (strict validation, unknown keys stripped). `LayoutQuery` is immutable value object for filtered/paginated queries. |
 | `Repositories/` | `LayoutRepository`, `SettingsRepository`, `DesignRepository`, `CompatibilityCatalogueRepository` | all storage access: layouts (publish sequence, active-set), settings (get/save/reviewed), design (tokens, presets, CSS), catalogue (transient → remote JSON → fallback) |
-| `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue`, `DesignRestController`, `CompatibilityRestController` | routing, validation, permissions; `BaseRestController` owns `permission_callback()` (checks `LayoutPostType::CAPABILITY` = `manage_woocommerce`) and `id_args()`; every controller inherits them |
+| `Controllers/` | `BaseRestController`, `SettingsRestController`, `LayoutRestController`, `LayoutCoreRestController`, `LayoutTemplateCatalogue`, `DesignRestController`, `CompatibilityRestController`, `SetupRestController` | routing, validation, permissions; `BaseRestController` owns `permission_callback()` (checks `LayoutPostType::CAPABILITY` = `manage_woocommerce`) and `id_args()`; every controller inherits them |
 | `Services/` | `LayoutMarkupReader`, `ExtraFieldSubmission`, `RequiredFieldOverlay`, `RequiredIndicator`, `LayoutAssignment` | pure: no storage. `LayoutMarkupReader` flattens a layout's blocks and answers `slots()`, `fields()`, `extra_fields()`, `order_modes()` (always `[]` for now) and `publish_error()`. `ExtraFieldSubmission::collect()` turns a checkout POST into order rows and per-field error messages, reading only Keys from `extra_fields()` and accepting only values from `LayoutMarkupReader::options()`. `RequiredFieldOverlay::apply()` rewrites WooCommerce's billing/shipping fieldsets so the layout's Field blocks decide what is required; `RequiredIndicator` prints the required/optional label suffixes and the payload for `assets/js/checkout-field-requirements.js`. `LayoutAssignment::pick()` returns the first active layout whose assignment rules match the shopper facts it is given; `LayoutRepository::active()` calls it on Pro only. |
 | `Blocks/` | `BlockRegistry` | registers every built block directory (inserter order from `ORDER`); `allowed_blocks()` on `allowed_block_types_all` keeps `yaycheckout/*` blocks in the layout editor only and `woocommerce/checkout` out of it |
 | `Support/` | `Plan`, `CompatibilityCatalogue` | Free/Pro flag derived from provider boot; owns the layout limit and its message. Compatibility catalogue: status vocabulary, bundled list, `normalize()` for the remote JSON, transient key and TTLs — pure |
@@ -49,7 +49,7 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 
 - `yaycheckout.php` → `plugin_init()` on `plugins_loaded`, after a WooCommerce check; also registers `I18n::load_plugin_textdomain()` on `plugins_loaded`
 - `YayCheckout::__construct()` boots in order: `boot_pro()`, `RestAPI`, `RegisterFacade`, `Admin\Settings`, `BlockRegistry`, `LayoutPostType`, `LayoutCapGuard`, `LayoutTrashSync`, `LayoutActiveGuard`, `Admin\LayoutEditorEmbed`, `Renderer\PreviewRequest`, `Renderer\CheckoutScripts`, `Renderer\CheckoutPage`, `Renderer\CheckoutFragments`, `Renderer\CheckoutExtraFields`, `Renderer\CheckoutRequiredFields`
-- `Engine\RestAPI` instantiates controllers on `rest_api_init`; Free: `SettingsRestController`, `LayoutRestController`, `DesignRestController`, `CompatibilityRestController`. Pro's controllers (`DesignPresetRestController`, `LayoutExportRestController`, `LayoutImportRestController`) are registered by `ProServiceProvider` on the same hook, so the Free build has none
+- `Engine\RestAPI` instantiates controllers on `rest_api_init`; Free: `SettingsRestController`, `LayoutRestController`, `DesignRestController`, `CompatibilityRestController`, `SetupRestController`. Pro's controllers (`DesignPresetRestController`, `LayoutExportRestController`, `LayoutImportRestController`) are registered by `ProServiceProvider` on the same hook, so the Free build has none
 - `Engine\Admin\Settings` enqueues the SPA and localises `yayCheckoutMeta` / `yayCheckoutAdmin`, gated on the admin-shell hook suffix
 - `Engine\Register\RegisterFacade` branches to RegisterDev or RegisterProd on `init`, conditionally based on `YAYCHECKOUT_IS_DEVELOPMENT`
 
@@ -80,7 +80,8 @@ Most classes use `SingletonTrait` and are constructed from `YayCheckout::__const
 | `yaycheckout/v1/compatibility` | GET | `{ store, gateways, plugins, catalogue: { source, fetched_at } }`; arg `refresh` (bool) drops the cached catalogue first |
 | `yaycheckout/v1/settings` | GET/POST | envelope `{ settings, updated_at }`; POST merges over stored settings, strips unknown keys, rejects wrong types/enum values with 400 |
 | `yaycheckout/v1/mark-reviewed` | POST | review prompt dismissed |
-| `yaycheckout/v1/mark-setup-done` | POST | setup wizard finished or skipped |
+| `yaycheckout/v1/setup` | POST | the setup wizard's one save: body `{ template_slug, design: { tokens, preset_id, custom_css } }` → `{ layout, design }`; validates the template and design before the first write, then creates "Checkout — draft", saves the design and marks setup done, so a 400 (unknown template, invalid design, Free layout limit) writes nothing |
+| `yaycheckout/v1/mark-setup-done` | POST | setup wizard skipped |
 
 All require `LayoutPostType::CAPABILITY` (`manage_woocommerce`).
 
@@ -99,7 +100,7 @@ src/
   pages/
     404.tsx  500.tsx    error pages
     layouts/            LayoutsPage (queries, filters, modals); assignment drawer and condition builder
-      LayoutsPage.tsx   list with pagination, search, status tabs, Pro-only Assignment column (`assignment/AssignmentChips`, chips from each layout's `rules` wrapping onto more lines, "Everyone" when none); Edit/Preview/Publish/Set active/Deactivate/Archive/Restore/Delete for good real; Health placeholder DOM
+      LayoutsPage.tsx   list with pagination, search, status tabs, Pro-only Assignment column (`assignment/AssignmentChips`, chips from each layout's `rules` wrapping onto more lines, "Everyone" when none); Edit/Preview/Publish/Set active/Deactivate/Archive/Restore/Delete for good real; the open embedded editor is `?edit=ID` in the URL, so browser Back closes it; Health placeholder DOM
       assignment/       AssignmentDrawer (Pro, `/layouts/{id}/rules`), ConditionGroup, AssignmentChips, OptionsMultiSelect, MultiSelectTrigger, condition-types.ts (vocabulary mirror and form shape)
       PreviewLinkModal.tsx  minted preview URL with Copy (select-text fallback on http) and Open
       SetActiveModal.tsx    Set active modal (real)
@@ -119,9 +120,9 @@ src/
       import-modal/     ImportModal with StepStrip, SourceStep, DraftStep (summaries via `shared/SummaryStrip`): creates the draft from the parsed export envelope
   components/
     ui/                 shadcn primitives (kebab-case, CLI-generated)
-    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton, StatusBadge (gateway status), PreviewPane (live checkout mock from design tokens; `compact` for the wizard), SummaryStrip (label/value strip), FontFamilySelect (Design typography + wizard), WarningBanner (block-only / unverified-plugin alerts); used by multiple pages
+    shared/             UnsavedChangesDialog, QueryDevtools, YayCheckoutToolTip, ConfirmPopover, TrashButton, StatusBadge (gateway status), PreviewPane (live checkout mock from design tokens; `compact` for the wizard), SummaryStrip (label/value strip), LayoutDraftActions (Go to Layouts / Open in editor after a draft is made), FontFamilySelect (Design typography + wizard), WarningBanner (block-only / unverified-plugin alerts); used by multiple pages
       template-picker/  TemplatePicker (Free unlocked grid + locked strip / Pro filterable grid), TemplateThumbnail + template-thumbnail-sketches (SVG sketch per catalogue slug); New layout modal and setup wizard
-    setup-wizard/       SetupWizard popup (Scan › Start from › Brand; opens while `checkoutMeta.showSetupWizard` — not set up yet and no listed layout; nothing is saved until Apply brand; Skip setup only marks `setup_done` and closes), ScanStep, StartFromStep, BrandStep (Apply brand creates "Checkout — draft" from the picked template, then saves the design), FinishStep (draft summary; Open in editor → `#/layouts?edit=ID`)
+    setup-wizard/       SetupWizard popup (Scan › Start from › Brand; opens while `checkoutMeta.showSetupWizard` — not set up yet and no listed layout; picks stay in memory until Apply brand sends one `POST /setup`; Skip setup only marks `setup_done` and closes), ScanStep, StartFromStep, BrandStep (the design form's fields over the compact preview), FinishStep (draft summary + `shared/LayoutDraftActions`)
     layout/             Header, Footer, HeaderMenu (chrome)
     pro/                ProGate, upsell surfaces
     icons/
@@ -133,7 +134,7 @@ src/
     api/                ky calls per feature
     queries/            queryOptions + hooks per feature
     schema/             zod schemas mirroring PHP to_array()
-    helpers/            error unwrapping, date formatting, clipboard with select-text fallback, form utilities, `infinite-list` (`loadMoreOnScroll()` for paged pickers)
+    helpers/            error unwrapping, date formatting, clipboard with select-text fallback, form utilities, `infinite-list` (`loadMoreOnScroll()` for paged pickers), `layout.helper` (Layouts route and the `?edit=ID` editor link)
     logger.ts           namespaced console; error/warn kept in production
     plan.ts             Free/Pro, from the build-time constant
     query-client.ts     QueryClient + global error toasts
