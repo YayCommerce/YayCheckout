@@ -11,7 +11,7 @@
     "build:admin": "pnpm --filter @yaycheckout/admin-page build",
     "dev:blocks": "pnpm --filter @yaycheckout/blocks start",
     "build:blocks": "pnpm --filter @yaycheckout/blocks build",
-    "makepot": "wp i18n make-pot . languages/yaycheckout.pot --exclude=node_modules,apps,tests,assets,release,vendor,vendor-prefixed,plans,docs --domain=yaycheckout"
+    "makepot": "wp i18n make-pot . languages/yaycheckout.pot --exclude=node_modules,apps,tests,assets,release,vendor,vendor-prefixed,docs --domain=yaycheckout"
   },
   "keywords": [],
   "author": "Yay Commerce",

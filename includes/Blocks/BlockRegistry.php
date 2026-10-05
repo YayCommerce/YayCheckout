@@ -62,7 +62,7 @@ class BlockRegistry {
             register_block_type( $dir );
         }
 
-        // One blocks bundle serves both editions, so the plan has to reach it at runtime; the rest keeps PHP the only owner.
+        // One blocks bundle serves both editions, so the plan has to reach it at runtime; the post type and upgrade link come from PHP so the bundle never redeclares them.
         $editor_data = [
             'isPro'      => Plan::is_pro(),
             'postType'   => Layout::POST_TYPE,
@@ -101,7 +101,7 @@ class BlockRegistry {
      * block out of it.
      *
      * WooCommerce's Checkout would be a second checkout form inside the
-     * layout's own. See docs/system-architecture.md, blocks.
+     * layout's own.
      * Types stay registered so checkout-page.php can still do_blocks() the layout.
      * Unknown context is left alone: stripping then hid Checkout from the layout editor.
      *

@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Stands down entirely, leaving WooCommerce untouched, when safe mode is on
  * or no layout resolves; a preview link (PreviewRequest) renders its layout
- * regardless. Full rules in docs/system-architecture.md, § Storefront.
+ * regardless.
  */
 class CheckoutPage {
     use SingletonTrait;
@@ -75,7 +75,7 @@ class CheckoutPage {
             return null;
         }
 
-        // Picked afresh by every request, AJAX and order submit too; why no pin: docs/system-architecture.md, § Storefront "Which layout".
+        // Picked afresh by every request, AJAX and order submit too, with no pin: safe because every ConditionType reads a fact that holds for the life of the form.
         return ( new LayoutRepository() )->active( $this->shopper_context() );
     }
 

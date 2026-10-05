@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
  * including after address-i18n.js resets them on country change.
  *
  * Stands down when CheckoutPage has no layout, so stock WooCommerce checkout
- * keeps its own required set. See docs/system-architecture.md, Validation.
+ * keeps its own required set.
  */
 class CheckoutRequiredFields {
 

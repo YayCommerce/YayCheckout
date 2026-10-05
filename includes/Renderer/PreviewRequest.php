@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
  * Turns a checkout-page request carrying `?yaycheckout_preview=TOKEN` into a
  * preview of that layout: sample cart, ordering disabled, no caching. Hooks
  * attach only on the checkout page or a wc-ajax call, so the same token on
- * any other URL is inert. Full rules in docs/system-architecture.md, § Preview links.
+ * any other URL is inert.
  */
 class PreviewRequest {
     use SingletonTrait;

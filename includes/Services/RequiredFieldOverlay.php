@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Makes WooCommerce's checkout field registry follow the layout's required flags.
  *
- * Pure: no storage, no hooks. See docs/system-architecture.md, Validation.
+ * Pure: no storage, no hooks.
  */
 class RequiredFieldOverlay {
 

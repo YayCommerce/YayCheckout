@@ -67,7 +67,8 @@ class Design {
      * Both spacing.scale and inputs.size are abstract steps; what they mean in
      * px is decided where they are rendered.
      *
-     * `enabled` false = theme default: the storefront prints nothing for that section (see system-architecture.md § Settings and Design).
+     * `enabled` false = theme default: the storefront prints nothing for that section, so the theme's own
+     * styles apply; the section's values are kept for when it is turned back on.
      */
     public static function schema(): array {
         return [

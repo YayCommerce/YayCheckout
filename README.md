@@ -8,7 +8,7 @@ Requires WordPress 6.5+, PHP 7.4+, WooCommerce 10.0+. HPOS compatible.
 
 ```
 yaycheckout.php          plugin bootstrap: constants, autoloader, admin shell
-includes/                plugin PHP (see docs/code-standards.md for layering)
+includes/                plugin PHP
 apps/admin/              React settings SPA (Vite) → assets/dist/admin/
 packages/blocks/         checkout blocks (@wordpress/scripts) → assets/dist/blocks/
 templates/               checkout page template (the root Checkout block is the form)
@@ -75,10 +75,3 @@ components ship in the Free bundle blurred. The Free build's PHP is what
 actually withholds the features.
 
 `release` copies a **fixed file list** — `assets/`, `includes/`, `languages/`, `vendor-prefixed/` and a few root files. Anything built outside those paths is silently absent from the ZIP. After changing the build, unzip the result and check rather than trusting the script.
-
-## Documentation
-
-- [`docs/codebase-summary.md`](docs/codebase-summary.md) — orientation map of the codebase structure
-- [`docs/system-architecture.md`](docs/system-architecture.md) — design decisions and data flow
-- [`docs/code-standards.md`](docs/code-standards.md) — layering, naming, and conventions
-- `plans/` — implementation plans (gitignored)

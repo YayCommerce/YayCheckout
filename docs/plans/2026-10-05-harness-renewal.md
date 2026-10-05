@@ -53,7 +53,7 @@
   - `pnpm build:blocks`: exit 0.
   - `bash -n` on both scripts: exit 0.
 - [x] **Step 3:** `git tag harness-v1-final cd6604a` (local; the user pushes it).
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Stage: `docs/plans/2026-10-05-harness-renewal.md` (with `git add -f`: the old `plans/` ignore rule still hides it)
 Message: `docs(harness): plan the harness renewal`
@@ -65,9 +65,9 @@ Message: `docs(harness): plan the harness renewal`
 - Modify: `CLAUDE.md` (stub until Task 3), `README.md` (doc links), `.gitignore` (AI block out, personal Claude files in), `package.json` (`makepot` excludes)
 - Modify, comments only: `includes/Blocks/BlockRegistry.php`, `includes/Enums/ConditionType.php`, `includes/Helpers/CheckoutHookScanHelper.php`, `includes/Models/Design.php`, `includes/Renderer/CheckoutPage.php`, `includes/Renderer/CheckoutRequiredFields.php`, `includes/Renderer/PreviewRequest.php`, `includes/Services/LayoutAssignment.php`, `includes/Services/RequiredFieldOverlay.php`, `apps/admin/src/components/shared/template-picker/template-thumbnail-sketches.tsx`
 
-- [ ] **Step 1:** Delete the files and edit the config.
-- [ ] **Step 2:** Rewrite each comment so it states its own why in a line or less, after checking the claim in the code. Drop a pointer outright where the comment already says why.
-- [ ] **Step 3: Verify**
+- [x] **Step 1:** Delete the files and edit the config.
+- [x] **Step 2:** Rewrite each comment so it states its own why in a line or less, after checking the claim in the code. Drop a pointer outright where the comment already says why.
+- [x] **Step 3: Verify**
 
 Run: `git grep -nE 'code-standards|system-architecture|codebase-summary|code-corrector|journals' -- . ':!docs/plans/'` and `git grep -n '§' -- includes apps packages templates`
 Expected: no output
@@ -76,7 +76,7 @@ Expected: no file reported as changed code
 Run: `git check-ignore .claude/settings.json docs/plans/x.md`
 Expected: no output
 
-- [ ] **Step 4: Commit.** Message: `chore(harness): remove the old harness and the comments that cite it`
+- [x] **Step 4: Commit.** Message: `chore(harness): remove the old harness and the comments that cite it`
 
 ### Task 3: `CLAUDE.md`, `.nvmrc`, engines
 
