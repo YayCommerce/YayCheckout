@@ -25,6 +25,7 @@
 - **Decided with the user (2026-10-06):**
   - Include all four merchant-visible changes: inline text editing, Step names in List View, Steps starting with 2 Steps, inserter previews.
   - Lock Checkout against removal (`lock: { remove: true }`), as WooCommerce does; the save lock stays as a backstop.
+    - Reversed later on 2026-10-06: core treats a move to another parent, and Group, as a removal, so the lock kept Checkout out of a Group. The default lock is gone; the save lock is the guard.
   - Fold in the uncommitted placement/appender change: Task 1's commit includes it.
   - Continue/Back stay allowed anywhere in Checkout (earlier decision, unchanged).
 
