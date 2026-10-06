@@ -9,7 +9,7 @@ use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Downloads one layout as a portable .json envelope. Pro-only: the Free build has no route, which is what makes the SPA's ProGate honest. */
+/** Downloads one layout as a portable .json envelope. The route exists only in Pro, so Free has no export endpoint. */
 class LayoutExportRestController extends BaseRestController {
 
     use SingletonTrait;
@@ -35,7 +35,7 @@ class LayoutExportRestController extends BaseRestController {
 
     /**
      * The export envelope, with the download name in Content-Disposition so the file itself stays free of transport data.
-     * `layouts` is a list even though v1 exports one, so a bundle later needs no format bump.
+     * `layouts` is a list though an export holds one, so a multi-layout bundle needs no format change.
      *
      * @return \WP_REST_Response|\WP_Error
      */

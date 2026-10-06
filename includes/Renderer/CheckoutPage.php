@@ -89,7 +89,7 @@ class CheckoutPage {
             ConditionType::CUSTOMER_ROLE => array_values( wp_get_current_user()->roles ),
             // Not "no roles": a user of another site in the network is logged in with none here.
             ConditionType::LOGIN_STATUS  => is_user_logged_in() ? ConditionType::LOGGED_IN : ConditionType::GUEST,
-            // ponytail: wp_is_mobile() counts tablets as mobile; a tablet value needs its own detection.
+            // TODO(device-detection): wp_is_mobile() counts tablets as mobile; a tablet value needs user-agent detection that core does not offer.
             ConditionType::DEVICE        => wp_is_mobile() ? ConditionType::MOBILE : ConditionType::DESKTOP,
         ];
     }

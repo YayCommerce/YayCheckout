@@ -57,12 +57,11 @@ class BlockRegistry {
             $built[ basename( dirname( $metadata ) ) ] = dirname( $metadata );
         }
 
-        // Unlisted blocks still register, after the listed ones.
         foreach ( array_merge( array_intersect_key( array_flip( self::ORDER ), $built ), $built ) as $dir ) {
             register_block_type( $dir );
         }
 
-        // One blocks bundle serves both editions, so the plan has to reach it at runtime; the post type and upgrade link come from PHP so the bundle never redeclares them.
+        // One bundle serves both editions, so the plan reaches it at runtime; PHP supplies the post type and upgrade link so the bundle never redeclares them.
         $editor_data = [
             'isPro'      => Plan::is_pro(),
             'postType'   => Layout::POST_TYPE,
@@ -76,9 +75,7 @@ class BlockRegistry {
         );
     }
 
-    /**
-     * Adds the YayCheckout inserter category in the layout editor.
-     */
+    /** Adds the YayCheckout inserter category in the layout editor. */
     public function register_category( $categories, $editor_context ) {
         if ( 'layout' !== $this->editor( $editor_context ) ) {
             return $categories;
@@ -97,13 +94,9 @@ class BlockRegistry {
     }
 
     /**
-     * Keeps YayCheckout blocks in the layout editor and WooCommerce's Checkout
-     * block out of it.
-     *
-     * WooCommerce's Checkout would be a second checkout form inside the
-     * layout's own.
-     * Types stay registered so checkout-page.php can still do_blocks() the layout.
-     * Unknown context is left alone: stripping then hid Checkout from the layout editor.
+     * Keeps YayCheckout blocks to the layout editor, and WooCommerce's Checkout block (a second
+     * checkout form inside the layout's own) out of it. Types stay registered so checkout-page.php
+     * can still do_blocks() the layout. An unknown editor is left alone: it may be the layout editor.
      *
      * @param  bool|string[] $allowed_block_types
      * @return bool|string[]
@@ -119,9 +112,7 @@ class BlockRegistry {
         }
     }
 
-    /**
-     * 'layout', 'other', or '' while Gutenberg has not said which editor this is.
-     */
+    /** 'layout', 'other', or '' while Gutenberg has not said which editor this is. */
     private function editor( $editor_context ): string {
         $post      = $editor_context->post ?? null;
         $post_type = $post instanceof \WP_Post ? $post->post_type : '';

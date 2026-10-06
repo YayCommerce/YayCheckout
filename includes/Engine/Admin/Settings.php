@@ -6,9 +6,7 @@ use YayCheckout\Helpers\LocalizeHelper;
 use YayCheckout\Engine\Register\ScriptName;
 
 defined( 'ABSPATH' ) || exit;
-/**
- * Enqueues the SPA bundle and its localized data on the YayCheckout screen.
- */
+/** Enqueues the SPA bundle and its localized data on the YayCheckout screen. */
 class Settings {
     use SingletonTrait;
 

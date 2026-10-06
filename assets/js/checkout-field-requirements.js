@@ -2,6 +2,8 @@
  * Re-applies the layout's required flags and label suffixes after
  * address-i18n.js resets them on country change. Map is
  * window.yayCheckoutRequired, inlined from RequiredIndicator::script_payload().
+ * Repeats RequiredIndicator::span()'s fallback marks and span markup (owner:
+ * RequiredIndicator::span(); change them together).
  */
 jQuery(function ($) {
     var map = window.yayCheckoutRequired || {};

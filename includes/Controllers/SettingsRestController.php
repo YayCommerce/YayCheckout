@@ -7,9 +7,7 @@ use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * GET/POST /yaycheckout/v1/settings. Both return { settings, updated_at }.
- */
+/** GET/POST /yaycheckout/v1/settings. Both return { settings, updated_at }. */
 class SettingsRestController extends BaseRestController {
     use SingletonTrait;
 

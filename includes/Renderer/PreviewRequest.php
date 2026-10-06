@@ -11,9 +11,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Turns a checkout-page request carrying `?yaycheckout_preview=TOKEN` into a
- * preview of that layout: sample cart, ordering disabled, no caching. Hooks
- * attach only on the checkout page or a wc-ajax call, so the same token on
- * any other URL is inert.
+ * preview of that layout: sample cart, ordering disabled, no caching.
+ *
+ * Off the checkout page the argument still counts: any request carrying it
+ * refuses orders, and CheckoutPage::resolve() serves a valid token's layout,
+ * to the field and fragment filters too.
  */
 class PreviewRequest {
     use SingletonTrait;

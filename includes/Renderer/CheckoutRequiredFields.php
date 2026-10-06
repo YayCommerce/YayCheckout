@@ -32,16 +32,12 @@ class CheckoutRequiredFields {
     private $fields = false;
 
     protected function __construct() {
-        // Checkout POST validates at wp_loaded, before is_page() exists. Gating this filter on the page would drop layout required flags on submit.
+        // Not gated on the page: checkout POST validates at wp_loaded, before is_page() works, and would drop the layout's required flags.
         add_filter( 'woocommerce_checkout_fields', [ $this, 'filter_fields' ], self::FILTER_PRIORITY );
         add_filter( 'woocommerce_form_field', [ $this, 'filter_form_field' ], self::FILTER_PRIORITY, 3 );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_script' ], self::SCRIPTS_PRIORITY );
     }
 
-    /**
-     * @param  mixed $fields
-     * @return mixed
-     */
     public function filter_fields( $fields ) {
         if ( ! is_array( $fields ) ) {
             return $fields;
@@ -56,12 +52,6 @@ class CheckoutRequiredFields {
         return RequiredFieldOverlay::apply( $fields, $layout_fields['address'] );
     }
 
-    /**
-     * @param  mixed $field
-     * @param  mixed $key
-     * @param  mixed $args
-     * @return mixed
-     */
     public function filter_form_field( $field, $key, $args ) {
         // Account and registration forms use this hook. is_checkout() stays true on wc-ajax; is_page() does not.
         if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {

@@ -6,17 +6,16 @@ use YayCheckout\Support\Plan;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Fixture list standing in for a real template source; repoint catalogue()
- * at real markup once it exists.
+ * The layout templates a merchant creates from, and which ones this plan unlocks.
+ *
+ * TODO(template-source): catalogue() is a fixture list with no markup; point it at real templates once they exist.
  */
 class LayoutTemplateCatalogue {
 
     /** Free picks the first N; the rest render locked. */
     private const FREE_UNLOCKED_COUNT = 3;
 
-    /**
-     * @return array{ slug: string, name: string, category: string, locked: bool }[]
-     */
+    /** @return array{ slug: string, name: string, category: string, locked: bool }[] */
     public static function templates( bool $is_pro ): array {
         $templates = self::catalogue();
 
@@ -45,9 +44,7 @@ class LayoutTemplateCatalogue {
         }
     }
 
-    /**
-     * @return array{ slug: string, name: string, category: string }[]
-     */
+    /** @return array{ slug: string, name: string, category: string }[] */
     private static function catalogue(): array {
         return [
             [

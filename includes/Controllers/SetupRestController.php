@@ -8,9 +8,7 @@ use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * POST /yaycheckout/v1/setup: the setup wizard's one save.
- */
+/** POST /yaycheckout/v1/setup: the setup wizard's one save. */
 class SetupRestController extends BaseRestController {
     use SingletonTrait;
 
@@ -54,9 +52,8 @@ class SetupRestController extends BaseRestController {
      * Creates the wizard's draft layout, saves its design and marks setup done.
      *
      * Everything is validated before the first write, so a refusal leaves no
-     * draft, design or setup flag behind; the steps after the draft cannot fail
-     * validation. Once setup is done it refuses with 409: a retry after a lost
-     * response, or a second tab, would otherwise add another draft.
+     * draft, design or setup flag behind. Once setup is done it refuses with 409:
+     * a retry after a lost response, or a second tab, would otherwise add another draft.
      *
      * Body: { template_slug, design: { tokens, preset_id, custom_css } }.
      *
