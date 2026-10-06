@@ -1,7 +1,8 @@
-import { InnerBlocks, InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { isCheckoutSection, useBlocksAllowedExcept } from './allowed-blocks';
+import { useContainerAppender } from './container-appender';
 
 export interface AddressSectionAttributes {
 	title: string;
@@ -11,12 +12,14 @@ export interface AddressSectionAttributes {
 
 interface AddressSectionEditProps {
 	section: 'billing' | 'shipping';
+	clientId: string;
 	attributes: AddressSectionAttributes;
 	setAttributes: ( attributes: Partial< AddressSectionAttributes > ) => void;
 }
 
 export function AddressSectionEdit( {
 	section,
+	clientId,
 	attributes,
 	setAttributes,
 }: AddressSectionEditProps ) {
@@ -28,7 +31,7 @@ export function AddressSectionEdit( {
 	const { children, ...innerBlocksProps } = useInnerBlocksProps( blockProps, {
 		allowedBlocks,
 		templateLock: false,
-		renderAppender: InnerBlocks.ButtonBlockAppender,
+		renderAppender: useContainerAppender( clientId ),
 	} );
 
 	return (

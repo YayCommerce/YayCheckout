@@ -1,6 +1,7 @@
-import { InnerBlocks, InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { useContainerAppender } from '../shared/container-appender';
 import stepMeta from '../step/block.json';
 
 interface StepsAttributes {
@@ -10,13 +11,14 @@ interface StepsAttributes {
 interface EditProps {
 	attributes: StepsAttributes;
 	setAttributes: ( attributes: Partial< StepsAttributes > ) => void;
+	clientId: string;
 }
 
 /**
  * Canvas for checkout steps. Every step stays open here so its sections
  * can be edited; locking and Continue run on the storefront.
  */
-export default function Edit( { attributes, setAttributes }: EditProps ) {
+export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
 	const { layout } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-steps' } );
 	const innerBlocksProps = useInnerBlocksProps( blockProps, {
@@ -24,7 +26,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		templateLock: false,
 		defaultBlock: { name: stepMeta.name },
 		directInsert: true,
-		renderAppender: InnerBlocks.ButtonBlockAppender,
+		renderAppender: useContainerAppender( clientId ),
 	} );
 
 	return (

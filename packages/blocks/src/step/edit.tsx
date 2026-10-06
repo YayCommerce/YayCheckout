@@ -1,5 +1,4 @@
 import {
-	InnerBlocks,
 	RichText,
 	useBlockProps,
 	useInnerBlocksProps,
@@ -7,6 +6,7 @@ import {
 } from '@wordpress/block-editor';
 import { useSelect } from '@wordpress/data';
 import { useBlocksAllowedExcept } from '../shared/allowed-blocks';
+import { useContainerAppender } from '../shared/container-appender';
 import { stepTitle } from '../shared/step-title';
 import stepButtonMeta from '../step-button/block.json';
 import stepsMeta from '../steps/block.json';
@@ -35,7 +35,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 			allowedBlocks,
 			template: [ [ stepButtonMeta.name ] ],
 			templateLock: false,
-			renderAppender: InnerBlocks.ButtonBlockAppender,
+			renderAppender: useContainerAppender( clientId ),
 		}
 	);
 
