@@ -101,7 +101,7 @@ class CheckoutProgress {
 
             foreach ( $block['innerBlocks'] as $child ) {
                 if ( self::STEP === ( $child['blockName'] ?? '' ) ) {
-                    $titles[] = self::step_title( LayoutMarkupReader::text( is_array( $child['attrs'] ?? null ) ? $child['attrs'] : [], 'title' ) );
+                    $titles[] = self::step_title( LayoutMarkupReader::plain_text( is_array( $child['attrs'] ?? null ) ? $child['attrs'] : [], 'title' ) );
                 }
             }
 

@@ -91,7 +91,7 @@ class LayoutMarkupReader {
             $fields[ $key ] = [
                 'fieldKey'     => $key,
                 'type'         => self::text( $attrs, 'type', 'text' ),
-                'label'        => self::text( $attrs, 'label' ),
+                'label'        => self::plain_text( $attrs, 'label' ),
                 'placeholder'  => self::text( $attrs, 'placeholder' ),
                 'description'  => self::text( $attrs, 'description' ),
                 'required'     => ! empty( $attrs['required'] ),
@@ -127,7 +127,7 @@ class LayoutMarkupReader {
             $fields[ $key ] = [
                 'fieldKey'     => $key,
                 'type'         => self::text( $attrs, 'type', 'text' ),
-                'label'        => self::text( $attrs, 'label' ),
+                'label'        => self::plain_text( $attrs, 'label' ),
                 'placeholder'  => self::text( $attrs, 'placeholder' ),
                 'required'     => ! empty( $attrs['required'] ),
                 'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
@@ -235,6 +235,16 @@ class LayoutMarkupReader {
     /** A string attribute, or $fallback when missing, not a string, or empty. */
     public static function text( array $attrs, string $name, string $fallback = '' ): string {
         return isset( $attrs[ $name ] ) && is_string( $attrs[ $name ] ) && '' !== $attrs[ $name ] ? $attrs[ $name ] : $fallback;
+    }
+
+    /**
+     * A string attribute edited on the canvas, as plain text. The editor saves rich text with
+     * HTML entities (& as &amp;), so print it through esc_html() only after this decodes them.
+     */
+    public static function plain_text( array $attrs, string $name, string $fallback = '' ): string {
+        $text = trim( html_entity_decode( wp_strip_all_tags( self::text( $attrs, $name ), true ), ENT_QUOTES, get_bloginfo( 'charset' ) ) );
+
+        return '' !== $text ? $text : $fallback;
     }
 
     /**

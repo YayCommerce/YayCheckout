@@ -10,7 +10,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_label        = isset( $attributes['label'] ) && is_string( $attributes['label'] ) ? $attributes['label'] : '';
+$yaycheckout_label        = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'label' );
 $yaycheckout_key          = isset( $attributes['fieldKey'] ) && is_string( $attributes['fieldKey'] ) ? $attributes['fieldKey'] : '';
 $yaycheckout_type         = isset( $attributes['type'] ) && is_string( $attributes['type'] ) && '' !== $attributes['type'] ? $attributes['type'] : 'text';
 $yaycheckout_placeholder  = isset( $attributes['placeholder'] ) && is_string( $attributes['placeholder'] ) ? $attributes['placeholder'] : '';

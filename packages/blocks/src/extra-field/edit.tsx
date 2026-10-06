@@ -1,3 +1,4 @@
+import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { BaseControl, Button, Flex, FlexBlock, Notice, PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
@@ -39,7 +40,7 @@ function emptyOption(): FieldOption {
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { fieldKey, label, placeholder, required, requiredMark = '', optionalText = '', type, options } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-extra-field' } );
-	const canvasLabel = label || fieldKey || __( 'Extra field', 'yaycheckout' );
+	const labelPlaceholder = fieldKey || __( 'Extra field', 'yaycheckout' );
 	const showOptions = CHOICE_TYPES.includes( type );
 	const trimmedKey = fieldKey.trim();
 	const isDuplicate = useSelect(
@@ -81,7 +82,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					) }
 					<TextControl
 						label={ __( 'Label', 'yaycheckout' ) }
-						value={ label }
+						value={ decodeEntities( label ) }
 						onChange={ ( value ) => setAttributes( { label: value } ) }
 					/>
 					<TextControl
@@ -145,7 +146,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			</InspectorControls>
 			<div { ...blockProps }>
 				<FieldPreview
-					label={ canvasLabel }
+					label={ label }
+					onLabelChange={ ( value ) => setAttributes( { label: value } ) }
+					labelPlaceholder={ labelPlaceholder }
 					type={ type }
 					required={ required }
 					requiredMark={ requiredMark }

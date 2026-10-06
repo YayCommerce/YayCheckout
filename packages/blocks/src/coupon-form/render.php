@@ -30,9 +30,7 @@ $yaycheckout_placeholder = isset( $attributes['placeholder'] ) && is_string( $at
     ? $attributes['placeholder']
     : __( 'Coupon code', 'yaycheckout' );
 
-$yaycheckout_button_text = isset( $attributes['buttonText'] ) && is_string( $attributes['buttonText'] ) && '' !== $attributes['buttonText']
-    ? $attributes['buttonText']
-    : __( 'Apply coupon', 'yaycheckout' );
+$yaycheckout_button_text = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'buttonText', __( 'Apply coupon', 'yaycheckout' ) );
 
 $yaycheckout_button_class = \YayCheckout\Helpers\ButtonClassHelper::classes( 'button' );
 

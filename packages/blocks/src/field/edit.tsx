@@ -1,3 +1,4 @@
+import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
@@ -116,7 +117,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 			? available.map( ( field ) => ( { label: `${ field.label } (${ field.key })`, value: field.key } ) )
 			: [ { label: __( 'Every field in this section is already used', 'yaycheckout' ), value: '' } ];
 	const blockProps = useBlockProps( { className: 'yaycheckout-field' } );
-	const canvasLabel = label || fieldKey || __( 'Field', 'yaycheckout' );
+	const labelPlaceholder = fieldKey || __( 'Field', 'yaycheckout' );
 
 	return (
 		<>
@@ -137,7 +138,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					) }
 					<TextControl
 						label={ __( 'Label', 'yaycheckout' ) }
-						value={ label }
+						value={ decodeEntities( label ) }
 						onChange={ ( value ) => setAttributes( { label: value } ) }
 					/>
 					<RequiredIndicatorControls
@@ -158,7 +159,9 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 			</InspectorControls>
 			<div { ...blockProps }>
 				<FieldPreview
-					label={ canvasLabel }
+					label={ label }
+					onLabelChange={ ( value ) => setAttributes( { label: value } ) }
+					labelPlaceholder={ labelPlaceholder }
 					type={ type }
 					required={ isEmail || required }
 					requiredMark={ requiredMark }

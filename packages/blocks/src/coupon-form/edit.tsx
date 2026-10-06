@@ -1,4 +1,5 @@
-import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
+import { decodeEntities } from '@wordpress/html-entities';
+import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import './editor.css';
@@ -29,7 +30,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					/>
 					<TextControl
 						label={ __( 'Button text', 'yaycheckout' ) }
-						value={ buttonText }
+						value={ decodeEntities( buttonText ) }
 						onChange={ ( value ) => setAttributes( { buttonText: value } ) }
 					/>
 				</PanelBody>
@@ -42,9 +43,16 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						className="yaycheckout-coupon-form__code"
 						placeholder={ placeholder || __( 'Coupon code', 'yaycheckout' ) }
 					/>
-					<button type="button" disabled className="yaycheckout-coupon-form__apply">
-						{ buttonText || __( 'Apply coupon', 'yaycheckout' ) }
-					</button>
+					{ /* A div, not a button: typing Space inside a button would click it. */ }
+					<RichText
+						tagName="div"
+						className="yaycheckout-coupon-form__apply"
+						value={ buttonText }
+						onChange={ ( value: string ) => setAttributes( { buttonText: value } ) }
+						placeholder={ __( 'Apply coupon', 'yaycheckout' ) }
+						allowedFormats={ [] }
+						withoutInteractiveFormatting
+					/>
 				</div>
 			</div>
 		</>
