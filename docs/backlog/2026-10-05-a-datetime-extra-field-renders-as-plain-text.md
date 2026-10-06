@@ -22,6 +22,6 @@ Pass `datetime-local` to `woocommerce_form_field()` for a `datetime` field. In `
 
 ## Done when
 
-- [ ] `packages/blocks/src/extra-field/render.php` passes type `datetime-local` to `woocommerce_form_field()` for a `datetime` field.
-- [ ] `ExtraFieldSubmission::value()` refuses a `datetime` value that isn't a valid date and time in `Y-m-d\TH:i` form.
-- [ ] A Date / Time extra field on the storefront checkout opens the browser's date-time picker.
+- [x] `packages/blocks/src/extra-field/render.php` passes type `datetime-local` to `woocommerce_form_field()` for a `datetime` field. — `packages/blocks/src/extra-field/render.php` `$yaycheckout_woo_type` is `datetime-local` for `datetime` and feeds `$yaycheckout_args['type']`.
+- [x] `ExtraFieldSubmission::value()` refuses a `datetime` value that isn't a valid date and time in `Y-m-d\TH:i` form. — `ExtraFieldSubmission::datetime()` through `DateHelper::parse()`; `collect()` in `wp eval` refuses `2026-02-30T10:00`, `next Tuesday`, `05/10` and `2026-10-05T25:00`.
+- [x] A Date / Time extra field on the storefront checkout opens the browser's date-time picker. — Playwright on `?page_id=8`: `<input type="datetime-local" name="delivery_time">`, `showPicker()` runs, and the screenshot shows the native date-time box with a calendar icon.
