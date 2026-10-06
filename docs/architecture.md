@@ -121,4 +121,4 @@ Commands and hard rules live in [CLAUDE.md](../CLAUDE.md). Citations give a path
 
 - `composer test` runs PHPUnit 9 with `phpunit.xml.dist`, or with a local gitignored `phpunit.xml` when there is one. It has one suite, `tests/Integration/`, which holds no tests today.
 - `tests/bootstrap.php` loads the WordPress test library from `vendor/wp-phpunit/`, then WooCommerce (the sibling `woocommerce/` plugin) and this plugin as must-use plugins. It reinstalls WooCommerce, because the test library recreates the database on every run. `tests/wp-tests-config.php` reads the database from the environment.
-- `tests/Support/` holds fakes (gateways, a layout factory). `tests/fixtures/` holds fake plugins, an mu-plugin and a theme for the hook scan, and a minimal classic theme (`tests/fixtures/template-themes/classic-shell/`) for template tests. When to add a test is in [CLAUDE.md](../CLAUDE.md).
+- `tests/Support/` holds fakes (gateways, a layout factory). `tests/fixtures/` holds fake plugins, an mu-plugin and a theme for the hook scan. When to add a test is in [CLAUDE.md](../CLAUDE.md).
