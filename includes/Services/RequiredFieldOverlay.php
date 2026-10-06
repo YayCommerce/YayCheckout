@@ -3,11 +3,7 @@ namespace YayCheckout\Services;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Makes WooCommerce's checkout field registry follow the layout's required flags.
- *
- * Pure: no storage, no hooks.
- */
+/** Makes WooCommerce's checkout field registry follow the layout's required flags. Pure: no storage, no hooks. */
 class RequiredFieldOverlay {
 
     private const ADDRESS_FIELDSETS = [ 'billing', 'shipping' ];
@@ -19,7 +15,6 @@ class RequiredFieldOverlay {
      *
      * @param  array $fields        WooCommerce checkout fields, by fieldset.
      * @param  array $layout_fields LayoutMarkupReader::fields() map.
-     * @return array
      */
     public static function apply( array $fields, array $layout_fields ): array {
         foreach ( self::ADDRESS_FIELDSETS as $fieldset ) {
@@ -44,8 +39,9 @@ class RequiredFieldOverlay {
     }
 
     /**
-     * Whether the field is required: always for billing_email or an email-type
-     * field, the only way to reach the customer; otherwise only when the layout marks it.
+     * Whether the field is required. Owns the email-always-required rule: billing_email and any
+     * email-type field always are, as email is the only way to reach the customer. Any other
+     * field is required only when the layout marks it.
      *
      * @param array|null $layout   The field's layout entry; null when the layout leaves it out.
      * @param array      $wc_field WooCommerce's definition; its type counts only when the layout has no entry.

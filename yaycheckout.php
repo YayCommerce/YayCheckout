@@ -14,8 +14,6 @@
  * Requires PHP: 7.4
  * WC requires at least: 10.0.0
  * WC tested up to: 10.7.0
- *
- * @package yaycommerce/yaycheckout
  */
 
 namespace YayCheckout;
