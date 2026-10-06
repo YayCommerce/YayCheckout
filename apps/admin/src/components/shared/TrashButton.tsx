@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Button, type ButtonProps } from '@/components/ui/button';
 
 /**
- * Red trash icon button for removing a row, as in the UI kits' repeatable-row pattern. Pass an aria-label: it has no text.
+ * Red trash icon button for removing a row. Pass an aria-label: it has no text.
  * Forwards its ref so it can be a Radix `asChild` trigger (a confirm popover).
  */
 export const TrashButton = forwardRef<HTMLButtonElement, ButtonProps>(({ className, ...props }, ref) => (

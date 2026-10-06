@@ -19,8 +19,7 @@ const VIEWPORT_WIDTH: Record<Viewport, string> = {
 
 const SECTION_LABEL_STYLE: CSSProperties = { fontSize: 11, letterSpacing: '0.08em', opacity: 0.6 };
 
-// What "Theme default" renders as here, since the preview has no theme to inherit from; also
-// the fallback behind a picked font. Mirrors DesignStyles::FONT_FALLBACK (PHP), which the storefront prints.
+// Mirrors DesignStyles::FONT_FALLBACK in PHP. Also stands in for "Theme default", since the preview has no theme.
 const DEFAULT_FONT_STACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
 // What a theme-default section draws as, since the admin has no theme CSS.
@@ -31,11 +30,9 @@ const NEUTRAL = {
 };
 
 /**
- * Device switch over a mock of the real checkout layout (contact, shipping,
- * payment, order summary), restyled live from the form's current tokens so
- * every token has visible surface to land on.
+ * Mock checkout restyled live from the form's design tokens, with a device switch.
  *
- * @param isCompact Desktop mock only: no device switch, no minimum height (the setup wizard's preview).
+ * @param isCompact Desktop only: no device switch, no minimum height.
  */
 export function PreviewPane({ isCompact = false }: { isCompact?: boolean }) {
   const [viewport, setViewport] = useState<Viewport>('desktop');

@@ -55,7 +55,7 @@ const CHECKS: { label: string; renderValue: (report: CompatibilityReport) => Rea
   },
 ];
 
-/** Fixed height shared by the error and results views so the popup never jumps as they swap; a long report scrolls above the pinned footer. */
+/** Fixed height for the error and results views, so the popup never jumps as they swap. */
 const BODY_CLASS = 'flex h-120 flex-col gap-6';
 
 type CheckState = 'done' | 'checking' | 'pending';
@@ -64,10 +64,8 @@ type CheckState = 'done' | 'checking' | 'pending';
 const TICK_MS = 400;
 
 /**
- * Wizard step 1: one GET /compatibility, shown as the results table from the
- * start. Each row's value fills in as its tick lands; ticks start only once the
- * report is in, so a slow request shows as the first row still spinning, not as
- * rows claiming a result they don't have.
+ * Wizard step 1: the compatibility report as a table whose rows fill in one tick at a time.
+ * Ticks start only once the report is in, so a slow request shows the first row still spinning.
  */
 export function ScanStep({ onContinue }: { onContinue: () => void }) {
   const query = useCompatibilityQuery();

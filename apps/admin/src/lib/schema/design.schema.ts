@@ -45,9 +45,10 @@ const buttonStyleSchema = z.enum(['fill', 'outline']);
 const inputStyleSchema = z.enum(['boxed', 'underline']);
 const inputSizeSchema = z.enum(['small', 'medium', 'large']);
 
+/** Mirrors Design::CUSTOM_CSS_MAX_BYTES in PHP. */
 export const CUSTOM_CSS_MAX_BYTES = 50000;
 
-// Wire schemas: the PHP shape, exactly. Only lib/api/design.api.ts reads them.
+// Wire schemas: the PHP shape, exactly.
 
 export const designTokensWireSchema = z
   .object({
@@ -93,8 +94,8 @@ export type DesignTokensWire = z.infer<typeof designTokensWireSchema>;
 export type DesignPresetWire = z.infer<typeof designPresetWireSchema>;
 export type DesignResponseWire = z.infer<typeof designResponseWireSchema>;
 
-// App types, camelCase. designFormSchema doubles as the react-hook-form resolver.
-// Only typography is renamed on the way in; the other sections are the wire shape as-is.
+// App types, camelCase. Only typography differs from the wire shape.
+// designFormSchema doubles as the react-hook-form resolver.
 
 export const designTokensSchema = z.object({
   colours: designTokensWireSchema.shape.colours,

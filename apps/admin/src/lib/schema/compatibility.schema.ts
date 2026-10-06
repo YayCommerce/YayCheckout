@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Wire schemas: the PHP shape of GET /compatibility, exactly. Only lib/api/compatibility.api.ts reads them.
+// Wire schemas: the PHP shape of GET /compatibility, exactly.
 
 /** Mirrors CompatibilityCatalogue::GATEWAY_STATUSES / PLUGIN_STATUSES in PHP. */
 const gatewayStatusWireSchema = z.enum(['verified', 'community', 'unverified', 'block-only']);
