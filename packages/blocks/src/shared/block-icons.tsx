@@ -68,6 +68,10 @@ export const blockIcons: Record< string, JSX.Element > = {
 		'M3 5h18v14H3V5Zm1.5 1.5v2h15v-2h-15Zm0 4.5v6.5h15V11h-15Z',
 		'M6 14h4v1.5H6V14Z'
 	),
+	'yaycheckout/coupon-form': icon(
+		'M3 6h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4V6Zm1.5 1.5v1.38a3.5 3.5 0 0 1 0 6.24v1.38h15v-1.38a3.5 3.5 0 0 1 0-6.24V7.5h-15Z',
+		'M9 9h1.5v1.5H9V9Zm0 2.25h1.5v1.5H9v-1.5Zm0 2.25h1.5V15H9v-1.5Z'
+	),
 	'yaycheckout/order-summary': icon(
 		'M5 3h14v18l-2.33-1.5L14.33 21 12 19.5 9.67 21l-2.34-1.5L5 21V3Zm1.5 1.5v13.7l.83-.53 2.34 1.5 2.33-1.5 2.33 1.5 2.34-1.5.83.53V4.5h-11Z',
 		'M8.5 8h7v1.5h-7V8Zm0 3.5h7V13h-7v-1.5Z'

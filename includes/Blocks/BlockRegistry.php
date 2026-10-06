@@ -20,6 +20,9 @@ class BlockRegistry {
 
     private const CATEGORY = 'yaycheckout';
 
+    /** Named by viewScript in packages/blocks/src/coupon-form/block.json; core enqueues it when the block renders. */
+    public const COUPON_FORM_SCRIPT = 'yaycheckout-coupon-form';
+
     /**
      * Block directories in the order a shopper meets them. The inserter lists
      * blocks in registration order; a built block missing here still
@@ -41,6 +44,7 @@ class BlockRegistry {
         'shipping-methods',
         'express-pay',
         'payment',
+        'coupon-form',
         'order-summary',
         'place-order',
         'slot',
@@ -55,6 +59,8 @@ class BlockRegistry {
 
     /** Registers every built block, in ORDER; without a build, registers none. */
     public function register_blocks(): void {
+        $this->register_view_scripts();
+
         $metadata_files = glob( YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/*/block.json' );
         $built          = [];
 
@@ -77,6 +83,20 @@ class BlockRegistry {
             generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
             'window.yayCheckoutBlocks = ' . wp_json_encode( $editor_data ) . ';',
             'before'
+        );
+    }
+
+    /**
+     * Storefront scripts that a block.json names by handle, because they depend on WooCommerce
+     * handles the blocks build can't declare. wc-checkout supplies wc_checkout_params.
+     */
+    private function register_view_scripts(): void {
+        wp_register_script(
+            self::COUPON_FORM_SCRIPT,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-coupon-form.js',
+            [ 'jquery', 'wc-checkout' ],
+            YAYCHECKOUT_VERSION,
+            true
         );
     }
 
