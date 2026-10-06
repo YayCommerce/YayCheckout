@@ -113,8 +113,17 @@ class PreviewRequest {
         return PreviewToken::with_token( $url, $this->token );
     }
 
-    public function disabled_order_button(): string {
-        return '<button type="submit" class="button alt wp-element-button" id="place_order" disabled>' . esc_html__( 'Place order', 'yaycheckout' ) . '</button>';
+    /** Disables the button WooCommerce or the Place order block printed, keeping its label and styles. */
+    public function disabled_order_button( string $html ): string {
+        $button = new \WP_HTML_Tag_Processor( $html );
+
+        if ( ! $button->next_tag( 'BUTTON' ) ) {
+            return $html;
+        }
+
+        $button->set_attribute( 'disabled', true );
+
+        return $button->get_updated_html();
     }
 
     public function refuse_order(): void {

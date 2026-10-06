@@ -9,8 +9,7 @@
   "parent": [ "yaycheckout/checkout" ],
   "attributes": {
     "buttonText": {
-      "type": "string",
-      "default": "Place order"
+      "type": "string"
     }
   },
   "supports": {
