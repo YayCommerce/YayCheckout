@@ -10,7 +10,19 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_wrapper = get_block_wrapper_attributes( [ 'class' => 'yaycheckout-checkout checkout woocommerce-checkout' ] );
+$yaycheckout_layout_id = '0';
+$yaycheckout_layout    = \YayCheckout\Renderer\CheckoutPage::get_instance()->layout();
+
+if ( null !== $yaycheckout_layout ) {
+    $yaycheckout_layout_id = (string) $yaycheckout_layout->id;
+}
+
+$yaycheckout_wrapper = get_block_wrapper_attributes(
+    [
+        'class'                   => 'yaycheckout-checkout checkout woocommerce-checkout',
+        'data-yaycheckout-layout' => $yaycheckout_layout_id,
+    ]
+);
 
 if ( ! function_exists( 'WC' ) ) {
     ?>
