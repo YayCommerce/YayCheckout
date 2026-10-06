@@ -112,10 +112,15 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		}
 	}, [ fieldKey, available[ 0 ]?.key ] );
 
-	const keyOptions =
+	const catalogOptions =
 		available.length > 0
 			? available.map( ( field ) => ( { label: `${ field.label } (${ field.key })`, value: field.key } ) )
 			: [ { label: __( 'Every field in this section is already used', 'yaycheckout' ), value: '' } ];
+	// A key saved before the catalog dropped it, such as billing_email, stays selected.
+	const keyOptions =
+		fieldKey !== '' && ! catalog.some( ( field ) => field.key === fieldKey )
+			? [ { label: `${ decodeEntities( label ) || fieldKey } (${ fieldKey })`, value: fieldKey }, ...catalogOptions ]
+			: catalogOptions;
 	const blockProps = useBlockProps( { className: 'yaycheckout-field' } );
 	const labelPlaceholder = fieldKey || __( 'Field', 'yaycheckout' );
 
