@@ -25,6 +25,32 @@ $yaycheckout_checkout = WC()->checkout();
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Verbatim from WooCommerce's form-checkout.php so its filter and translation still apply.
 if ( ! $yaycheckout_checkout->is_registration_enabled() && $yaycheckout_checkout->is_registration_required() && ! is_user_logged_in() ) {
+    if ( \YayCheckout\Renderer\CheckoutLogin::reminder_shown() ) {
+        $yaycheckout_login = null;
+
+        if ( $block instanceof WP_Block ) {
+            foreach ( $block->inner_blocks as $yaycheckout_inner ) {
+                if ( $yaycheckout_inner instanceof WP_Block && 'yaycheckout/login' === $yaycheckout_inner->name ) {
+                    $yaycheckout_login = $yaycheckout_inner;
+                    break;
+                }
+            }
+        }
+
+        if ( ! $yaycheckout_login instanceof WP_Block ) {
+            $yaycheckout_login = new WP_Block(
+                array(
+                    'blockName'   => 'yaycheckout/login',
+                    'attrs'       => array(),
+                    'innerBlocks' => array(),
+                )
+            );
+        }
+
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The login block escapes its own markup.
+        echo $yaycheckout_login->render();
+    }
+
     echo esc_html( apply_filters( 'woocommerce_checkout_must_be_logged_in_message', __( 'You must be logged in to checkout.', 'woocommerce' ) ) );
     return;
 }
