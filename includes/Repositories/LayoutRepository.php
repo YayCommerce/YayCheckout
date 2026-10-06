@@ -341,7 +341,7 @@ class LayoutRepository {
     }
 
     /**
-     * Puts a layout's blocks back to the blank starting layout. Title, status, meta and the
+     * Puts a layout's blocks back to the default layout. Title, status, meta and the
      * active flag stay; WordPress stores the old markup as a revision, so the editor can undo it.
      *
      * @throws \InvalidArgumentException When the layout is missing or the update fails.
@@ -457,22 +457,140 @@ class LayoutRepository {
         }
     }
 
-    /** Block markup for a new layout: contact, billing, shipping, order review. */
+    /**
+     * Block markup for a new layout: a header, the checkout in two columns (form; sticky order
+     * summary with coupon), a footer. Logo, footer links and labels are fixed when the layout is created.
+     */
     public static function default_markup(): string {
         return BlockMarkup::serialize(
             [
-                BlockMarkup::block(
-                    'yaycheckout/checkout',
-                    [],
+                self::header_block(),
+                self::checkout_block(),
+                self::footer_block(),
+            ]
+        );
+    }
+
+    /** Logo (or the site title when there is none) beside a "Secure checkout" note. */
+    private static function header_block(): array {
+        return BlockMarkup::wrapper(
+            'core/group',
+            [
+                'tagName'   => 'header',
+                'className' => 'yaycheckout-header',
+                'layout'    => self::row_layout(),
+            ],
+            '<header class="wp-block-group yaycheckout-header">',
+            '</header>',
+            [
+                has_custom_logo() ? BlockMarkup::block( 'core/site-logo' ) : BlockMarkup::block( 'core/site-title', [ 'level' => 0 ] ),
+                BlockMarkup::html(
+                    'core/paragraph',
+                    [ 'className' => 'yaycheckout-secure-note' ],
+                    '<p class="yaycheckout-secure-note">' . esc_html__( 'Secure checkout', 'yaycheckout' ) . '</p>'
+                ),
+            ]
+        );
+    }
+
+    /**
+     * The form in two columns. No Shipping Methods block: Order Summary's table already prints the
+     * shipping rates, and a second list would repeat them.
+     */
+    private static function checkout_block(): array {
+        $form = BlockMarkup::wrapper(
+            'core/column',
+            [ 'width' => '60%' ],
+            '<div class="wp-block-column" style="flex-basis:60%">',
+            '</div>',
+            [
+                BlockMarkup::block( 'yaycheckout/express-pay' ),
+                BlockMarkup::block( 'yaycheckout/contact' ),
+                BlockMarkup::block( 'yaycheckout/billing', [], self::address_field_blocks( 'billing' ) ),
+                BlockMarkup::block( 'yaycheckout/shipping', [], self::address_field_blocks( 'shipping' ) ),
+                BlockMarkup::block( 'yaycheckout/payment' ),
+                BlockMarkup::block( 'yaycheckout/place-order' ),
+            ]
+        );
+
+        $summary = BlockMarkup::wrapper(
+            'core/column',
+            [
+                'width'     => '40%',
+                'className' => 'yaycheckout-summary-column',
+            ],
+            '<div class="wp-block-column yaycheckout-summary-column" style="flex-basis:40%">',
+            '</div>',
+            [
+                BlockMarkup::wrapper(
+                    'core/group',
+                    [ 'className' => 'yaycheckout-summary' ],
+                    '<div class="wp-block-group yaycheckout-summary">',
+                    '</div>',
                     [
-                        BlockMarkup::block( 'yaycheckout/contact' ),
-                        BlockMarkup::block( 'yaycheckout/billing', [], self::address_field_blocks( 'billing' ) ),
-                        BlockMarkup::block( 'yaycheckout/shipping', [], self::address_field_blocks( 'shipping' ) ),
-                        BlockMarkup::block( 'yaycheckout/order-review' ),
+                        BlockMarkup::block( 'yaycheckout/order-summary' ),
+                        BlockMarkup::block( 'yaycheckout/coupon-form' ),
                     ]
                 ),
             ]
         );
+
+        return BlockMarkup::block(
+            'yaycheckout/checkout',
+            [],
+            [
+                BlockMarkup::wrapper(
+                    'core/columns',
+                    [ 'className' => 'yaycheckout-checkout-columns' ],
+                    '<div class="wp-block-columns yaycheckout-checkout-columns">',
+                    '</div>',
+                    [ $form, $summary ]
+                ),
+            ]
+        );
+    }
+
+    /** Copyright, then links to the cart and, when the store has them, the privacy and terms pages. */
+    private static function footer_block(): array {
+        $links = [ esc_html__( 'Return to cart', 'yaycheckout' ) => wc_get_cart_url() ];
+
+        if ( '' !== get_privacy_policy_url() ) {
+            $links[ esc_html__( 'Privacy policy', 'yaycheckout' ) ] = get_privacy_policy_url();
+        }
+
+        if ( wc_terms_and_conditions_page_id() > 0 ) {
+            $links[ esc_html__( 'Terms and conditions', 'yaycheckout' ) ] = (string) get_permalink( wc_terms_and_conditions_page_id() );
+        }
+
+        $anchors = [];
+
+        foreach ( $links as $label => $url ) {
+            $anchors[] = '<a href="' . esc_url( $url ) . '">' . $label . '</a>';
+        }
+
+        return BlockMarkup::wrapper(
+            'core/group',
+            [
+                'tagName'   => 'footer',
+                'className' => 'yaycheckout-footer',
+                'layout'    => self::row_layout(),
+            ],
+            '<footer class="wp-block-group yaycheckout-footer">',
+            '</footer>',
+            [
+                BlockMarkup::html( 'core/paragraph', [], '<p>&copy; ' . esc_html( get_bloginfo( 'name' ) ) . '</p>' ),
+                BlockMarkup::html( 'core/paragraph', [], '<p>' . implode( ' &middot; ', $anchors ) . '</p>' ),
+            ]
+        );
+    }
+
+    /** Header and footer: one row, ends pushed apart, wrapping on narrow screens. */
+    private static function row_layout(): array {
+        return [
+            'type'           => 'flex',
+            'justifyContent' => 'space-between',
+            'flexWrap'       => 'wrap',
+        ];
     }
 
     /**

@@ -17,7 +17,7 @@ export function ResetCard() {
         <CardTitle>{__('Reset to default layout', 'yaycheckout')}</CardTitle>
         <CardDescription>
           {__(
-            'Replaces the selected layout with the blank starting layout: root plus the required sections.',
+            "Replaces the selected layout's blocks with the default layout: a header, the checkout in two columns and a footer.",
             'yaycheckout',
           )}
         </CardDescription>
