@@ -20,6 +20,8 @@ With guest checkout off, registration at checkout on and "generate password" off
 
 As of 2026-10-05, `onyx/feat/checkout-hook-blocks` adds before/after-checkout-form blocks and a Hook block the merchant places, all opt-in per layout, and `alan/Blocks-Coupon-Form` adds a coupon-form block. Neither renders the account fields or order notes. Found by reading the code; not reproduced.
 
+As of 2026-10-06 the default layout (`LayoutRepository::default_markup()`) is a header, a two-column Checkout (Express Pay, Contact, Billing, Shipping, Payment, Place Order; Order Summary and Coupon Form) and a footer. It still has no account fields, order notes, login form or before/after-form hooks. It no longer uses Order Review, so `woocommerce_checkout_before_order_review`, `woocommerce_checkout_order_review` and `woocommerce_checkout_after_order_review` don't fire on it either.
+
 ## Why it matters
 
 **Severity:** high: it breaks a shopper's checkout or loses their data.
@@ -37,6 +39,6 @@ Decide which hooks a layout always fires and which the merchant places. Account 
 - [x] With guest checkout and registration at checkout both off and the checkout login reminder on, a logged-out visitor sees a login reminder on the checkout page.
 - [ ] `woocommerce_before_checkout_form` fires once on a checkout page that uses the default layout.
 - [ ] `woocommerce_after_checkout_form` fires once on a checkout page that uses the default layout.
-- [ ] With coupons enabled, a shopper can apply a coupon on a checkout page that uses the default layout.
+- [x] With coupons enabled, a shopper can apply a coupon on a checkout page that uses the default layout.
 - [ ] With order notes enabled, an order note a shopper enters on the default layout appears on the order in wp-admin.
 - [ ] Every hook in `CheckoutHookScanHelper::HOOKS` runs on a checkout page view or submit that uses the default layout.

@@ -1,0 +1,37 @@
+/* Sized to its text like a <button>; the editor's root is a div, so it also takes a button's border-box, or a % width adds the padding on top. */
+:where(.wp-block-yaycheckout-place-order) {
+	display: inline-block;
+	box-sizing: border-box;
+}
+
+/* The primary token until the merchant picks a colour; the colour support adds these classes when they do. */
+.wp-block-yaycheckout-place-order:not(.has-background),
+.wp-block-yaycheckout-place-order:not(.has-background):is(:hover, :focus) {
+	background: var(--yaycheckout-primary);
+}
+
+.wp-block-yaycheckout-place-order:not(.has-text-color),
+.wp-block-yaycheckout-place-order:not(.has-text-color):is(:hover, :focus) {
+	color: #fff;
+}
+
+/* The align support's classes; floats from theme .alignleft rules would wrap the terms text around the button. */
+.wp-block-yaycheckout-place-order.alignleft,
+.wp-block-yaycheckout-place-order.aligncenter,
+.wp-block-yaycheckout-place-order.alignright {
+	display: block;
+	width: fit-content;
+	float: none;
+}
+
+.wp-block-yaycheckout-place-order.alignleft {
+	margin-inline: 0 auto;
+}
+
+.wp-block-yaycheckout-place-order.aligncenter {
+	margin-inline: auto;
+}
+
+.wp-block-yaycheckout-place-order.alignright {
+	margin-inline: auto 0;
+}

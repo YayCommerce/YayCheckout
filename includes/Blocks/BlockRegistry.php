@@ -20,6 +20,9 @@ class BlockRegistry {
 
     private const CATEGORY = 'yaycheckout';
 
+    /** Named by viewScript in packages/blocks/src/coupon-form/block.json; core enqueues it when the block renders. */
+    public const COUPON_FORM_SCRIPT = 'yaycheckout-coupon-form';
+
     /**
      * Block directories in the order a shopper meets them. The inserter lists
      * blocks in registration order; a built block missing here still
@@ -28,6 +31,11 @@ class BlockRegistry {
     private const ORDER = [
         'checkout',
         'login',
+        'progress',
+        'steps',
+        'step',
+        'step-button',
+        'back-button',
         'contact',
         'billing',
         'shipping',
@@ -37,6 +45,7 @@ class BlockRegistry {
         'shipping-methods',
         'express-pay',
         'payment',
+        'coupon-form',
         'order-summary',
         'place-order',
         'slot',
@@ -47,10 +56,46 @@ class BlockRegistry {
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
+        add_filter( 'wp_theme_json_data_default', [ $this, 'place_order_width_presets' ] );
+    }
+
+    /**
+     * Core Button's old 25/50/75/100% widths as presets for Place Order's Width control
+     * (Styles > Dimensions). WordPress ships no dimension sizes, so the control has no presets
+     * without them. Scoped to the block, and in the default origin, so a theme's own presets win.
+     *
+     * @param  \WP_Theme_JSON_Data $theme_json
+     * @return \WP_Theme_JSON_Data
+     */
+    public function place_order_width_presets( $theme_json ) {
+        $sizes = [];
+
+        foreach ( [ 25, 50, 75, 100 ] as $percent ) {
+            $sizes[] = [
+                'name' => $percent . '%',
+                'slug' => (string) $percent,
+                'size' => $percent . '%',
+            ];
+        }
+
+        return $theme_json->update_with(
+            [
+                'version'  => \WP_Theme_JSON::LATEST_SCHEMA,
+                'settings' => [
+                    'blocks' => [
+                        'yaycheckout/place-order' => [
+                            'dimensions' => [ 'dimensionSizes' => $sizes ],
+                        ],
+                    ],
+                ],
+            ]
+        );
     }
 
     /** Registers every built block, in ORDER; without a build, registers none. */
     public function register_blocks(): void {
+        $this->register_view_scripts();
+
         $metadata_files = glob( YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/*/block.json' );
         $built          = [];
 
@@ -73,6 +118,20 @@ class BlockRegistry {
             generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
             'window.yayCheckoutBlocks = ' . wp_json_encode( $editor_data ) . ';',
             'before'
+        );
+    }
+
+    /**
+     * Storefront scripts that a block.json names by handle, because they depend on WooCommerce
+     * handles the blocks build can't declare. wc-checkout supplies wc_checkout_params.
+     */
+    private function register_view_scripts(): void {
+        wp_register_script(
+            self::COUPON_FORM_SCRIPT,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-coupon-form.js',
+            [ 'jquery', 'wc-checkout' ],
+            YAYCHECKOUT_VERSION,
+            true
         );
     }
 

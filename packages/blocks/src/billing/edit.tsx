@@ -7,13 +7,15 @@ interface BillingAttributes {
 
 interface EditProps {
 	attributes: BillingAttributes;
+	clientId: string;
 	setAttributes: ( attributes: Partial< BillingAttributes > ) => void;
 }
 
-export default function Edit( { attributes, setAttributes }: EditProps ) {
+export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
 	return (
 		<AddressSectionEdit
 			section="billing"
+			clientId={ clientId }
 			attributes={ attributes }
 			setAttributes={ setAttributes }
 		/>

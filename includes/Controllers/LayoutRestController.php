@@ -422,7 +422,7 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Replaces a layout's blocks with the blank starting layout.
+     * Replaces a layout's blocks with the default layout (LayoutRepository::default_markup()).
      *
      * @return array|\WP_Error
      */

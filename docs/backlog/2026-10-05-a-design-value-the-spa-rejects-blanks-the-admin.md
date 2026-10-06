@@ -26,7 +26,7 @@ Keep a design failure on the screens that use the design. Read the design in the
 
 ## Done when
 
-- [ ] `SetupWizard` calls no design query while the wizard is closed.
-- [ ] `DESIGN_QUERIES.main.initialData` uses `safeParse`, so a malformed bootstrap doesn't throw during render.
-- [ ] With a `yaycheckout_localize_admin_data` filter that sets `design.tokens.colours.primary` to `"#112233\n"`, the Layouts, Tools and Settings pages render normally.
-- [ ] A `POST /yaycheckout/v1/design` whose body is valid except that `tokens.colours.primary` is `"#112233\n"` returns 400 with "Invalid value for colours.primary."
+- [x] `SetupWizard` calls no design query while the wizard is closed.
+- [x] `DESIGN_QUERIES.main.initialData` uses `safeParse`, so a malformed bootstrap doesn't throw during render.
+- [x] With a `yaycheckout_localize_admin_data` filter that sets `design.tokens.colours.primary` to `"#112233\n"`, the Layouts, Tools and Settings pages render normally.
+- [x] A `POST /yaycheckout/v1/design` whose body is valid except that `tokens.colours.primary` is `"#112233\n"` returns 400 with "Invalid value for colours.primary."

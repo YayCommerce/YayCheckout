@@ -4,5 +4,6 @@ import { registerDynamicBlock, saveNestedBlocks } from '../shared/register-dynam
 import './import-export';
 import './inserter-root';
 import './publish-guard';
+import './style.css';
 
-registerDynamicBlock( metadata.name, Edit, saveNestedBlocks );
+registerDynamicBlock( metadata, Edit, saveNestedBlocks );

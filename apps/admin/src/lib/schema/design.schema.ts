@@ -38,6 +38,7 @@ export const BASE_SIZE_RANGE = { min: 10, max: 24 } as const;
 /** Mirrors Design::presets()[0]['id'] in PHP: the built-in preset every payload carries. */
 export const DEFAULT_PRESET_ID = 'default';
 
+/** Mirrors the hex_color rule in Design::is_valid() in PHP. */
 const hexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 const radiusSchema = z.number().int().min(RADIUS_RANGE.min).max(RADIUS_RANGE.max);
 const baseSizeSchema = z.number().int().min(BASE_SIZE_RANGE.min).max(BASE_SIZE_RANGE.max);
