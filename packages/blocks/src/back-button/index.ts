@@ -3,4 +3,4 @@ import Edit from './edit';
 import { registerDynamicBlock } from '../shared/register-dynamic-block';
 import './style.css';
 
-registerDynamicBlock( metadata.name, Edit );
+registerDynamicBlock( metadata, Edit );
