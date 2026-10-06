@@ -16,7 +16,7 @@
 - `woocommerce_checkout_billing` and `woocommerce_checkout_shipping`, which `WC_Checkout::instance()` wires to `../woocommerce/templates/checkout/form-billing.php` (the "Create an account?" box and account fields) and `../woocommerce/templates/checkout/form-shipping.php` (order notes);
 - `woocommerce_after_checkout_form`.
 
-With guest checkout off, registration at checkout on and "generate password" off, `WC_Checkout::initialize_checkout_fields()` adds a required `account_password`, and `WC_Checkout::maybe_skip_fieldset()` validates it for every guest. With guest checkout and registration both off, the Checkout block prints "You must be logged in to checkout." with no login form, even when the checkout login reminder is on. `CheckoutHookScanHelper::HOOKS` lists four of the unfired hooks, so the compatibility scan reports plugins on them as touching this checkout. No version fired them: not the renderer's first (`5a73efe`), nor the blocks' first (`6bff9db`).
+With guest checkout off, registration at checkout on and "generate password" off, `WC_Checkout::initialize_checkout_fields()` adds a required `account_password`, and `WC_Checkout::maybe_skip_fieldset()` validates it for every guest. With guest checkout and registration both off, the Checkout block prints "You must be logged in to checkout." WooCommerce's own login form still does not render; when the checkout login reminder is on, `checkout/render.php` prints the layout's `yaycheckout/login` block, or a default one, above that sentence. `CheckoutHookScanHelper::HOOKS` lists four of the unfired hooks, so the compatibility scan reports plugins on them as touching this checkout. No version fired them: not the renderer's first (`5a73efe`), nor the blocks' first (`6bff9db`).
 
 As of 2026-10-05, `onyx/feat/checkout-hook-blocks` adds before/after-checkout-form blocks and a Hook block the merchant places, all opt-in per layout, and `alan/Blocks-Coupon-Form` adds a coupon-form block. Neither renders the account fields or order notes. Found by reading the code; not reproduced.
 
@@ -34,7 +34,7 @@ Decide which hooks a layout always fires and which the merchant places. Account 
 
 - [ ] With guest checkout off, registration at checkout on and "generate password" off, a guest on the default layout can place an order after filling a "Create account password" field.
 - [ ] With guest checkout on and registration at checkout on, a guest on the default layout sees the "Create an account?" box.
-- [ ] With guest checkout and registration at checkout both off and the checkout login reminder on, a logged-out visitor sees WooCommerce's login form on the checkout page.
+- [x] With guest checkout and registration at checkout both off and the checkout login reminder on, a logged-out visitor sees a login reminder on the checkout page.
 - [ ] `woocommerce_before_checkout_form` fires once on a checkout page that uses the default layout.
 - [ ] `woocommerce_after_checkout_form` fires once on a checkout page that uses the default layout.
 - [ ] With coupons enabled, a shopper can apply a coupon on a checkout page that uses the default layout.
