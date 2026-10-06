@@ -1,6 +1,7 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import './editor.css';
 
 interface PlaceOrderAttributes {
 	buttonText: string;
@@ -28,20 +29,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<button
-					type="button"
-					disabled
-					style={ {
-						display: 'block',
-						width: '100%',
-						padding: '12px 16px',
-						border: 0,
-						borderRadius: '4px',
-						background: '#1e1e1e',
-						color: '#fff',
-						fontSize: '14px',
-					} }
-				>
+				<button type="button" className="yaycheckout-place-order__button" disabled>
 					{ label }
 				</button>
 			</div>

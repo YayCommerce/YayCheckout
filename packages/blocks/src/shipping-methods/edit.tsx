@@ -1,6 +1,7 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import './editor.css';
 
 interface ShippingMethodsAttributes {
 	label: string;
@@ -28,12 +29,12 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<h3 style={ { margin: '0 0 8px', fontSize: '16px' } }>{ heading }</h3>
-				<label style={ { display: 'block', marginBottom: '6px' } }>
+				<h3 className="yaycheckout-shipping-methods__heading">{ heading }</h3>
+				<label className="yaycheckout-shipping-methods__option">
 					<input type="radio" disabled defaultChecked />{ ' ' }
 					{ __( 'Flat rate — $5.00', 'yaycheckout' ) }
 				</label>
-				<label style={ { display: 'block' } }>
+				<label className="yaycheckout-shipping-methods__option">
 					<input type="radio" disabled />{ ' ' }
 					{ __( 'Free shipping — $0.00', 'yaycheckout' ) }
 				</label>

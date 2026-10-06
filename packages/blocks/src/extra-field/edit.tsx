@@ -1,5 +1,5 @@
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { Button, Notice, PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import { BaseControl, Button, Flex, FlexBlock, Notice, PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import { EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
@@ -105,24 +105,23 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					/>
 					{ showOptions && (
 						<>
-							<p style={ { fontWeight: 600, marginBottom: '8px' } }>
-								{ __( 'Options', 'yaycheckout' ) }
-							</p>
+							<BaseControl.VisualLabel>{ __( 'Options', 'yaycheckout' ) }</BaseControl.VisualLabel>
 							{ options.map( ( option, index ) => (
-								<div
-									key={ index }
-									style={ { display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'flex-end' } }
-								>
-									<TextControl
-										label={ index === 0 ? __( 'Label', 'yaycheckout' ) : '' }
-										value={ option.label }
-										onChange={ ( value ) => updateOption( index, { label: value } ) }
-									/>
-									<TextControl
-										label={ index === 0 ? __( 'Value', 'yaycheckout' ) : '' }
-										value={ option.value }
-										onChange={ ( value ) => updateOption( index, { value: value } ) }
-									/>
+								<Flex key={ index } align="flex-end" gap={ 2 }>
+									<FlexBlock>
+										<TextControl
+											label={ index === 0 ? __( 'Label', 'yaycheckout' ) : '' }
+											value={ option.label }
+											onChange={ ( value ) => updateOption( index, { label: value } ) }
+										/>
+									</FlexBlock>
+									<FlexBlock>
+										<TextControl
+											label={ index === 0 ? __( 'Value', 'yaycheckout' ) : '' }
+											value={ option.value }
+											onChange={ ( value ) => updateOption( index, { value: value } ) }
+										/>
+									</FlexBlock>
 									<Button
 										variant="tertiary"
 										isDestructive
@@ -132,7 +131,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 									>
 										{ __( 'Remove', 'yaycheckout' ) }
 									</Button>
-								</div>
+								</Flex>
 							) ) }
 							<Button
 								variant="secondary"

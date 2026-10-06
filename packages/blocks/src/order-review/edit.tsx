@@ -1,5 +1,6 @@
 import { useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
+import './editor.css';
 
 /**
  * Static stand-in: WooCommerce draws the real table from the cart, which the
@@ -10,15 +11,7 @@ export default function Edit() {
 
 	return (
 		<div { ...blockProps }>
-			<div
-				style={ {
-					border: '1px dashed #949494',
-					borderRadius: 4,
-					padding: '24px 16px',
-					textAlign: 'center',
-					color: '#757575',
-				} }
-			>
+			<div className="yaycheckout-order-review__placeholder">
 				{ __(
 					'Order summary, payment methods and Place order render here.',
 					'yaycheckout'
