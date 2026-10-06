@@ -1,6 +1,7 @@
-/* Sized to its text like a <button>; the editor's root is a div. */
+/* Sized to its text like a <button>; the editor's root is a div, so it also takes a button's border-box, or a % width adds the padding on top. */
 :where(.wp-block-yaycheckout-place-order) {
 	display: inline-block;
+	box-sizing: border-box;
 }
 
 /* The align support's classes; floats from theme .alignleft rules would wrap the terms text around the button. */

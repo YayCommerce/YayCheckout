@@ -14,6 +14,22 @@
       "type": "string"
     }
   },
+  "variations": [
+    {
+      "name": "place-order",
+      "title": "Place Order",
+      "description": "Submit button for placing the order.",
+      "isDefault": true,
+      "scope": [ "inserter" ],
+      "attributes": {
+        "style": {
+          "typography": {
+            "textAlign": "center"
+          }
+        }
+      }
+    }
+  ],
   "supports": {
     "html": false,
     "multiple": false,
@@ -46,13 +62,18 @@
       }
     },
     "spacing": {
+      "margin": [ "top", "bottom" ],
       "padding": [ "horizontal", "vertical" ],
       "__experimentalDefaultControls": {
+        "margin": true,
         "padding": true
       }
     },
     "dimensions": {
-      "width": true
+      "width": true,
+      "__experimentalDefaultControls": {
+        "width": true
+      }
     },
     "shadow": true,
     "__experimentalBorder": {

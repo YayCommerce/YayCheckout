@@ -67,7 +67,7 @@ defined( 'ABSPATH' ) || exit;
 
 <!-- wp:yaycheckout/payment /-->
 
-<!-- wp:yaycheckout/place-order /--></div>
+<!-- wp:yaycheckout/place-order {"style":{"typography":{"textAlign":"center"}}} /--></div>
 <!-- /wp:column -->
 
 <!-- wp:column {"width":"40%"} -->
