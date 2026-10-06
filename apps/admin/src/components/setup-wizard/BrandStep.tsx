@@ -163,7 +163,7 @@ function CornerRadiusField() {
         <span className="font-medium">{__('Corner radius', 'yaycheckout')}</span>
         <span className="text-muted-foreground">{radius}px</span>
       </div>
-      {/* The basics step couples button and input radius; Design splits them. */}
+      {/* This step couples button and input radius; the Design page splits them. */}
       <Slider
         min={RADIUS_RANGE.min}
         max={RADIUS_RANGE.max}

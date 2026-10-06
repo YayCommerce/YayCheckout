@@ -35,10 +35,8 @@ class YayCheckout {
     }
 
     /**
-     * Loads the Pro service provider when this build ships one.
-     * The only place core may name a YayCheckout\Pro class
-     * (scripts/check-pro-boundary.sh). Must run before every other component
-     * so Plan::is_pro() is settled.
+     * Boots the Pro service provider when this build ships one. The only place core
+     * names a YayCheckout\Pro class. Runs first so Plan::is_pro() is settled.
      */
     private function boot_pro(): void {
         $provider = YAYCHECKOUT_PLUGIN_DIR . 'includes/Pro/ProServiceProvider.php';

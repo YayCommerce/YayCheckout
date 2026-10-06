@@ -7,12 +7,11 @@ import pluginExternal from 'vite-plugin-external';
 // Must match RegisterDev::DEV_SERVER.
 const DEV_PORT = 3040;
 
-// https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
   const envDir = path.resolve(__dirname, 'env');
   const env = loadEnv(mode, envDir);
 
-  // Dev defaults to pro (see the full UI); builds default to free so an unflagged build cannot ship premium UI.
+  // Dev defaults to pro to show the full UI; builds default to free so an unflagged build cannot ship Pro UI.
   const plan = process.env.YAYCHECKOUT_PLAN ?? (command === 'serve' ? 'pro' : 'free');
 
   return {
@@ -36,7 +35,7 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        // Helpers the SPA and the blocks bundle share; see packages/blocks/src/shared/export-file.ts.
+        // Helpers the SPA shares with the blocks bundle.
         '@blocks-shared': path.resolve(__dirname, '../../packages/blocks/src/shared'),
       },
     },

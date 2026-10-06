@@ -42,7 +42,6 @@ export function ThemeProvider({
         root.classList.add('yay-light');
       }
 
-      // Listen for system theme changes
       const handleChange = (e: MediaQueryListEvent) => {
         root.classList.remove('yay-light', 'yay-dark');
         root.classList.add(e.matches ? 'yay-dark' : 'yay-light');

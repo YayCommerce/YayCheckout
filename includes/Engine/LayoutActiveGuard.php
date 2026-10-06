@@ -10,15 +10,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Keeps the active set pointing only at layouts shoppers may see.
- * Trash and delete are refused: the capability is denied so the editor hides
- * Move to trash and wp/v2 and wp-admin answer 403, and the pre_* filters catch
- * wp_trash_post() and wp_delete_post() called directly (WP-CLI, other
- * plugins), which check no capability. Deactivation must be the merchant's
- * decision: the SPA disables Archive on the active row, and
- * LayoutRepository::archive() deactivates before it trashes so a direct
- * caller is not refused here. Core surfaces cannot warn, so they refuse.
- * Moving an active layout back to draft or pending is a decision too, so that
- * one deactivates instead of being refused.
+ *
+ * Deactivating must be the merchant's choice and core surfaces cannot warn, so trashing or deleting the
+ * active layout is refused: the denied capability hides Move to trash and makes wp/v2 and wp-admin answer
+ * 403, and the pre_* filters catch direct wp_trash_post() and wp_delete_post() calls (WP-CLI, other plugins),
+ * which check no capability. Moving the active layout to draft or pending deactivates it instead.
  */
 class LayoutActiveGuard {
 
@@ -45,9 +41,8 @@ class LayoutActiveGuard {
     }
 
     /**
-     * @param array    $allcaps The user's capabilities for this check.
-     * @param string[] $caps    Primitive caps delete_post maps to (LayoutPostType::CAPABILITY).
-     * @param array    $args    [ meta cap, user id, post id ].
+     * @param string[] $caps Primitive caps delete_post maps to (LayoutPostType::CAPABILITY).
+     * @param array    $args [ meta cap, user id, post id ].
      */
     public function deny_deleting_active_layout( array $allcaps, array $caps, array $args ): array {
         if ( 'delete_post' !== ( $args[0] ?? '' ) || empty( $args[2] ) ) {

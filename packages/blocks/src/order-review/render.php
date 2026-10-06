@@ -1,16 +1,12 @@
 <?php
 /**
- * Server render for yaycheckout/order-review: the #order_review container
- * WooCommerce fills with the order table, payment box and Place order.
- *
- * Without a frontend cart (admin, REST, CLI) the container stays empty:
- * WooCommerce's review-order template dereferences WC()->cart.
+ * Prints the #order_review container WooCommerce fills with the order table,
+ * payment box and Place order. Without a frontend cart (admin, REST, CLI) it
+ * stays empty: WooCommerce's review-order template dereferences WC()->cart.
  *
  * @var array    $attributes Block attributes (none).
  * @var string   $content    Unused; order review is a leaf.
  * @var WP_Block $block      Block instance.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

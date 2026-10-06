@@ -3,7 +3,7 @@
  * Server render for yaycheckout/coupon-form.
  *
  * Storefront prints a coupon field and apply button, wired by assets/js/checkout-coupon-form.js.
- * Why no <form>: docs/system-architecture.md, blocks (coupon-form).
+ * Why no <form>: docs/architecture.md, Storefront (Coupon form).
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.

@@ -4,15 +4,12 @@ namespace YayCheckout\Models;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Checkout design: the applied tokens, custom CSS, the preset they were taken
- * from, and every preset (built-in plus merchant-saved). Pure entity: no WordPress calls.
+ * Checkout design: the applied tokens, custom CSS, the preset they came from, and every
+ * preset (built-in plus merchant-saved). schema() describes every token; from_option(),
+ * sanitize() and defaults() all walk it.
  *
- * The schema() is the single description of every token; from_option(), sanitize()
- * and defaults() all walk it. The Default preset is the schema defaults.
- *
- * Applying a preset copies its tokens into $tokens; $preset_id only records
- * which one. Nothing resolves the id back to tokens, so a deleted preset
- * leaves $tokens as they are.
+ * Applying a preset copies its tokens; $preset_id only records which one, so deleting
+ * a preset leaves $tokens as they are.
  */
 class Design {
 
@@ -30,10 +27,8 @@ class Design {
     public ?string $preset_id = null;
 
     /**
-     * Fonts the merchant can pick, keyed by the slug stored in tokens; '' means
-     * the theme's own font. Values are the CSS font-family names. Widely used
-     * Google fonts that WordPress's Font Library ships, so a theme is likely to
-     * have them already.
+     * Fonts the merchant can pick: token slug => CSS font-family, '' for the theme's font.
+     * Google fonts that WordPress's Font Library ships, so a theme likely has them.
      */
     public const FONT_FAMILIES = [
         ''                 => '',
@@ -64,10 +59,9 @@ class Design {
      * Shape: section => key => [ 'type' => 'bool'|'int'|'enum'|'hex_color', 'default' => mixed,
      *   'enum' => array (enum only), 'min'/'max' => int (int only) ]
      *
-     * Both spacing.scale and inputs.size are abstract steps; what they mean in
-     * px is decided where they are rendered.
-     *
-     * `enabled` false = theme default: the storefront prints nothing for that section (see system-architecture.md § Settings and Design).
+     * Both spacing.scale and inputs.size are abstract steps; the renderer decides their px.
+     * `enabled` false means theme default: the storefront prints nothing for that section,
+     * and its values are kept for when it is turned back on.
      */
     public static function schema(): array {
         return [
@@ -306,8 +300,7 @@ class Design {
     }
 
     /**
-     * Validates a { name, tokens } preset payload. Name is trimmed plain text;
-     * tokens must be a full set (see sanitize()).
+     * Validates a { name, tokens } preset payload: name is trimmed plain text, tokens go through sanitize().
      *
      * @return array|\WP_Error [ 'name', 'tokens' ] clean, or the first failure.
      */

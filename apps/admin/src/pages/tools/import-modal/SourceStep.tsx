@@ -69,7 +69,7 @@ export function SourceStep({
 }
 
 function ruleCountsLabel(counts: ImportReview['ruleCounts']): string {
-  // PHP makes the final call; this only flags what is plainly not rules. Readable-looking ones may still be dropped.
+  // A shape check only: PHP may still drop rules that read fine here.
   if (counts === null) return __('Unreadable', 'yaycheckout');
   if (counts.groups === 0) return __('None', 'yaycheckout');
 

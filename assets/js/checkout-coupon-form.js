@@ -1,6 +1,6 @@
 /**
  * Applies a coupon from the yaycheckout/coupon-form block and prints the result below it.
- * Why it does not reuse WooCommerce's handler: docs/system-architecture.md, blocks (coupon-form).
+ * Why it does not reuse WooCommerce's handler: docs/architecture.md, Storefront (Coupon form).
  */
 jQuery(function ($) {
     var ERROR_ID = 'yaycheckout-coupon-error';

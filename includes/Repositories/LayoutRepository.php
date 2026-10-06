@@ -11,9 +11,7 @@ use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * All layout storage access; publishing and the active set have one owner.
- */
+/** All layout storage access; publishing and the active set have one owner. */
 class LayoutRepository {
 
     /** Layouts the Free edition may hold. */
@@ -234,11 +232,8 @@ class LayoutRepository {
     }
 
     /**
-     * Move a layout to the trash and drop it from the active set. Blocks,
-     * meta and revisions stay; the layout can be restored later.
+     * Moves a layout to the trash and out of the active set; blocks, meta and revisions stay for a restore.
      *
-     * @param  int $id
-     * @return Layout
      * @throws \InvalidArgumentException When the layout is missing or already archived.
      * @throws \RuntimeException         When WordPress refuses or fails to trash it.
      */
@@ -269,9 +264,7 @@ class LayoutRepository {
     }
 
     /**
-     * Moves an archived layout back to draft. WP always assigns 'draft' on
-     * untrash (since 5.6) regardless of the layout's pre-archive status, which
-     * is exactly the behaviour this method wants — no extra status handling needed.
+     * Moves an archived layout back to draft: wp_untrash_post() always restores to 'draft' (WordPress 5.6+).
      *
      * @throws \InvalidArgumentException When the layout is missing or not archived.
      * @throws \RuntimeException         When WordPress refuses or fails to untrash it.
@@ -296,8 +289,7 @@ class LayoutRepository {
         // wp_untrash_post() hands back the pre-update object; only the status moved.
         $restored->post_status = LayoutStatus::DRAFT;
 
-        // Deliberately no Plan::layout_limit_reached() check: restoring an
-        // existing layout is allowed to exceed the Free cap, unlike create()/duplicate().
+        // No Plan::layout_limit_reached() check: a restore may exceed the Free cap, unlike a new layout.
         return Layout::from_post( $restored, $this->hydrate_meta( get_post_meta( $id ) ), false );
     }
 
@@ -406,7 +398,7 @@ class LayoutRepository {
     }
 
     /**
-     * The one insert path for a new draft; every way of making a layout funnels through it so the cap and slashing cannot drift.
+     * The one insert path for a new draft, so the cap and slashing cannot drift.
      *
      * @param array $rules Already sanitized; written with the post, so the draft never exists without them.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
@@ -465,12 +457,7 @@ class LayoutRepository {
         }
     }
 
-    /**
-     * Block markup for a new layout: contact, billing, shipping, order review.
-     *
-     * The address keys mirror packages/blocks/src/shared/address-fields.ts,
-     * the editor's field picker; keep the two in step.
-     */
+    /** Block markup for a new layout: contact, billing, shipping, order review. */
     public static function default_markup(): string {
         return BlockMarkup::serialize(
             [
@@ -489,7 +476,8 @@ class LayoutRepository {
     }
 
     /**
-     * @return array[] Field blocks for one address section.
+     * Field blocks for one address section: a subset of the address list owned by
+     * packages/blocks/src/shared/address-fields.ts. Keep the two in step.
      */
     private static function address_field_blocks( string $prefix ): array {
         $fields = [
@@ -545,9 +533,6 @@ class LayoutRepository {
     /**
      * Unserializes bulk post meta. Keyless get_post_meta() skips
      * maybe_unserialize, so array meta arrives as strings.
-     *
-     * @param  mixed $meta
-     * @return array
      */
     private function hydrate_meta( $meta ): array {
         if ( ! is_array( $meta ) ) {

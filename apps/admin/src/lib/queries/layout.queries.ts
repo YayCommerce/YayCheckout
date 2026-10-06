@@ -139,8 +139,7 @@ export function useDeactivateLayoutMutation() {
   });
 }
 
-/** The row leaves the listed tab and appears in the archived one, so both
- * list caches move — hence `all`, not one status filter. */
+/** The row moves from the listed tab to the archived one, so it invalidates every layout query, not one status filter. */
 export function useArchiveLayoutMutation() {
   const queryClient = useQueryClient();
 
@@ -153,8 +152,7 @@ export function useArchiveLayoutMutation() {
   });
 }
 
-/** The row leaves the archived tab and appears in the listed one, so both
- * list caches move — hence `all`, not one status filter. */
+/** The row moves from the archived tab to the listed one, so it invalidates every layout query, not one status filter. */
 export function useRestoreLayoutMutation() {
   const queryClient = useQueryClient();
 
@@ -227,7 +225,7 @@ export function useLayoutRulesQuery(id: number) {
   });
 }
 
-/** The reply is the stored rules as the server keeps them, so they go into the cached rules and every cached list: no refetch. */
+/** Writes the stored rules from the reply into the cached rules and every cached list, so nothing refetches. */
 export function useSaveLayoutRulesMutation() {
   const queryClient = useQueryClient();
 

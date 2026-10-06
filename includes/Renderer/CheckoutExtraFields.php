@@ -28,10 +28,6 @@ class CheckoutExtraFields {
         add_action( 'woocommerce_order_details_after_order_table', [ $this, 'print_customer' ] );
     }
 
-    /**
-     * @param array     $data   WooCommerce's posted checkout data; unused.
-     * @param \WP_Error $errors
-     */
     public function validate( $data, \WP_Error $errors ): void {
         foreach ( $this->submission()['errors'] as $key => $message ) {
             $errors->add( 'yaycheckout_extra_' . $key, $message );
@@ -40,11 +36,9 @@ class CheckoutExtraFields {
 
     /**
      * One meta per field plus a snapshot of the rows, so order screens keep the
-     * label and display text after the layout changes.
-     *
-     * WooCommerce reuses a pending or failed order when the shopper retries
-     * with the same cart, so the previous attempt's values are removed first;
-     * otherwise a field cleared on retry would keep its old value.
+     * label and display text after the layout changes. WooCommerce reuses a
+     * pending or failed order on retry, so the previous attempt's values are
+     * removed first; otherwise a field cleared on retry would keep its old value.
      */
     public function persist( \WC_Order $order ): void {
         $submission = $this->submission();
@@ -80,9 +74,7 @@ class CheckoutExtraFields {
         $this->print_rows( $order, false );
     }
 
-    /**
-     * @return array{rows: array, errors: array<string, string>}
-     */
+    /** @return array{rows: array, errors: array<string, string>} */
     private function submission(): array {
         $layout = CheckoutPage::get_instance()->layout();
         $fields = null === $layout ? [] : LayoutMarkupReader::extra_fields( $layout->content );

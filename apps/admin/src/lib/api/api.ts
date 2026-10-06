@@ -13,7 +13,7 @@ const _ky = ky.create({
           const body: any = await response.json();
 
           if (body?.code === 'rest_cookie_invalid_nonce') {
-            // if session expired
+            // The nonce went stale; a reload fetches a fresh one.
             location.reload();
           }
         }

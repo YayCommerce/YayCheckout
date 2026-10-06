@@ -1,17 +1,11 @@
 <?php
 /**
- * Server render for yaycheckout/order-summary.
- *
- * Storefront prints the classic review-order table (AJAX fragment target).
- *
- * Without a frontend cart (admin, REST, CLI) the heading stays and the table
- * does not: WooCommerce's review-order template dereferences WC()->cart.
+ * Prints the heading and WooCommerce's review-order table. Without a frontend
+ * cart (admin, REST, CLI) only the heading prints: the template dereferences WC()->cart.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
  * @var WP_Block $block      Block instance.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

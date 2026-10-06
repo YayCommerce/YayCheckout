@@ -11,8 +11,6 @@ import {
   DesignTokensWire,
 } from '@/lib/schema/design.schema';
 
-// The only place wire snake_case meets app camelCase.
-
 export function tokensFromWire(wire: DesignTokensWire): DesignTokens {
   return {
     colours: wire.colours,

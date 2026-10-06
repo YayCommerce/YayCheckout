@@ -4,9 +4,7 @@ namespace YayCheckout\Engine\Register;
 use YayCheckout\Utils\SingletonTrait;
 use YayCheckout\Engine\Register\ScriptName;
 
-/**
- * Loads the admin app from the Vite dev server. Stripped from release builds.
- */
+/** Loads the admin app from the Vite dev server. Stripped from release builds. */
 class RegisterDev {
     use SingletonTrait;
 

@@ -39,9 +39,7 @@ const inputStyle = {
 	background: '#fff',
 };
 
-/**
- * Read-only canvas control. Typing here must not fight Gutenberg selection.
- */
+/** Read-only so typing on the canvas does not fight block selection. */
 export function FieldPreview( {
 	label,
 	type,

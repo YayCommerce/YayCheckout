@@ -75,7 +75,7 @@ function CopyButton({
         <m.span
           key={isCopied ? 'check' : 'copy'}
           data-slot="copy-button-icon"
-          initial={{ scale: isDirty ? 0 : 1 }} // start scale animation when isDirty
+          initial={{ scale: isDirty ? 0 : 1 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0 }}
           transition={{ duration: 0.15 }}

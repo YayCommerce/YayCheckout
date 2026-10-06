@@ -4,12 +4,9 @@ namespace YayCheckout\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Answers questions about a layout's block markup: which sections it renders,
- * which fields it holds, and whether it may be published.
- *
- * Pure: a function of the markup, no storage. Every method walks the same flat,
- * document-ordered block list, so nesting (groups, columns) never matters.
- * Reads never throw; publish_error() is where a layout is refused.
+ * Answers questions about a layout's block markup: its sections, its fields, and whether it may
+ * be published. Pure: every method walks one flat, document-ordered block list, so nesting never
+ * matters. Reads never throw; publish_error() is where a layout is refused.
  */
 class LayoutMarkupReader {
 
@@ -77,7 +74,7 @@ class LayoutMarkupReader {
                     'type'         => 'email',
                     'label'        => self::text( $attrs, 'label' ),
                     'placeholder'  => self::text( $attrs, 'placeholder' ),
-                    'required'     => true, // Email is the only way to reach the customer.
+                    'required'     => true, // RequiredFieldOverlay::is_required() owns the email-always-required rule.
                     'requiredMark' => self::text( $attrs, 'requiredMark' ),
                     'optionalText' => self::text( $attrs, 'optionalText' ),
                 ];
@@ -143,7 +140,7 @@ class LayoutMarkupReader {
     }
 
     /**
-     * No block declares an order mode yet; kept so the layout's shape is complete.
+     * Always empty: no block declares an order mode. Kept so the layout's shape is complete.
      *
      * @return string[]
      */
@@ -153,7 +150,9 @@ class LayoutMarkupReader {
     }
 
     /**
-     * Why the layout cannot be published, or '' when it can.
+     * Why the layout cannot be published, or '' when it can. JavaScript copies of these rules live in
+     * packages/blocks/src/checkout/publish-guard.ts, packages/blocks/src/shared/extra-field-keys.ts
+     * and packages/blocks/src/extra-field/edit.tsx; change them together.
      */
     public static function publish_error( string $markup ): string {
         if ( ! has_block( self::CHECKOUT, $markup ) ) {
@@ -210,17 +209,11 @@ class LayoutMarkupReader {
     /**
      * Every block in the markup, parents before children, in document order.
      * Loose HTML between blocks (null blockName) is dropped.
-     *
-     * @return array[]
      */
     private static function blocks( string $markup ): array {
         return self::flatten( parse_blocks( $markup ) );
     }
 
-    /**
-     * @param  array[] $blocks
-     * @return array[]
-     */
     private static function flatten( array $blocks ): array {
         $flat = [];
 
@@ -244,12 +237,9 @@ class LayoutMarkupReader {
     }
 
     /**
-     * An extra field's choices as value => label. A blank value becomes its
-     * label's slug, a blank label shows the value, a row left without a value
-     * is dropped.
-     *
-     * Values are cleaned the way a posted value is, so every rendered choice
-     * posts back as a valid selection.
+     * An extra field's choices as value => label. A blank value becomes its label's slug, a blank
+     * label shows the value, and a row left without a value is dropped. Values are cleaned the way
+     * a posted value is, so every rendered choice posts back as a valid selection.
      *
      * @param  mixed $options The block's options attribute.
      * @return array<string, string>

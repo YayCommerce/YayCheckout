@@ -36,8 +36,7 @@ export default function DesignPage() {
   const { data } = useDesignQuery();
   const saveMutation = useSaveDesignMutation();
   const deletePresetMutation = useDeleteDesignPresetMutation();
-  // Which preset the editor's tokens were copied from. Page state, not a form field: it is
-  // bookkeeping, not an edit, so it must not make the form dirty on its own.
+  // The preset the tokens were copied from. Kept out of the form so it never makes the form dirty on its own.
   const [presetId, setPresetId] = useState(data.presetId);
   // Null while closed; the override count the modal quotes once opened.
   const [resetCount, setResetCount] = useState<number | null>(null);

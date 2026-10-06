@@ -28,12 +28,7 @@ class CheckoutFragments {
         add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'fragments' ], 20 );
     }
 
-    /**
-     * Swap Woo's payment/shipping fragments for this layout's HTML.
-     *
-     * @param  array $fragments
-     * @return array
-     */
+    /** Swaps Woo's payment and shipping fragments for this layout's HTML. */
     public function fragments( $fragments ) {
         $layout = CheckoutPage::get_instance()->layout();
 

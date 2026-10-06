@@ -1,11 +1,8 @@
 import { InnerBlocks, useBlockProps } from '@wordpress/block-editor';
 
 /**
- * Root of a checkout layout. Holds sections as inner blocks.
- *
- * templateLock is always false so merchants can insert Payment, Slot, etc.
- * Saved "insert" from older layouts is ignored — that lock hid every child
- * from the inserter.
+ * templateLock is always false, whatever the saved attribute says: an "insert"
+ * lock hides every child block from the inserter.
  */
 export default function Edit() {
 	const blockProps = useBlockProps( { className: 'yaycheckout-checkout' } );

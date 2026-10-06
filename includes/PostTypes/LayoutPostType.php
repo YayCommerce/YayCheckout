@@ -8,8 +8,8 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Registers the checkout layout post type. Registration only: show_ui stays on (the editor screen is embedded in the
- * SPA) and show_in_rest so the editor saves drafts through core's wp/v2.
+ * Registers the checkout layout post type. show_ui stays on because the SPA embeds its editor screen, and
+ * show_in_rest so the editor saves drafts through core's wp/v2.
  */
 class LayoutPostType {
 
@@ -35,7 +35,7 @@ class LayoutPostType {
                 'show_in_menu'          => false,
                 'show_in_rest'          => true,
                 'rest_base'             => Layout::POST_TYPE,
-                // Core would serve every 'publish' layout anonymously; see the controller.
+                // Core would serve every 'publish' layout anonymously.
                 'rest_controller_class' => LayoutCoreRestController::class,
                 'supports'              => [ 'title', 'editor', 'revisions', 'custom-fields', 'author', 'thumbnail', 'page-attributes' ],
                 'has_archive'           => false,

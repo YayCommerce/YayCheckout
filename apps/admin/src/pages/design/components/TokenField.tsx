@@ -12,9 +12,8 @@ type TokenPath<S extends TokenSection, K extends keyof DesignTokens[S] & string>
   FieldPath<DesignForm>;
 
 /**
- * One token row: label, the control (rendered from the form field), and a
- * trailing revert button while edited since the last save. Revert restores
- * the last save, not a preset's value (see applyPreset in DesignPage).
+ * One token row, with a revert button while the token differs from the last save.
+ * Revert restores the last save, not the value of an applied preset.
  */
 export function TokenField<S extends TokenSection, K extends keyof DesignTokens[S] & string>({
   section,

@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { DocLink } from './DocLink';
 
-// Read-only: no companion declares checkout slots yet.
 export function IntegrationsTab() {
   const integrations = useIntegrations();
   const detected = integrations.filter((integration) => integration.detected);

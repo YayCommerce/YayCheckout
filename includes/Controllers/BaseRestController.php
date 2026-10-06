@@ -70,9 +70,9 @@ abstract class BaseRestController {
 
     /**
      * Runs a route that writes through the WordPress API (posts, meta, options).
-     * No SQL transaction on purpose: a ROLLBACK would
-     * leave a persistent object cache holding the rolled-back write. Order
-     * writes inside the callback so a partial failure leaves the old state live.
+     * No SQL transaction on purpose: a ROLLBACK would leave a persistent object
+     * cache holding the rolled-back write. Order writes inside the callback so a
+     * partial failure leaves the old state live.
      *
      * @return \WP_REST_Response|\WP_Error|void
      */
@@ -92,7 +92,7 @@ abstract class BaseRestController {
     /**
      * Runs a route that writes custom tables inside a transaction, rolled back
      * on error. Custom tables only: a transaction cannot roll back the object
-     * cache. Unused until a custom table exists.
+     * cache. No route uses it yet.
      *
      * @return \WP_REST_Response|\WP_Error|void
      */

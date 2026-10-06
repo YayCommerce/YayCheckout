@@ -1,15 +1,10 @@
 <?php
 /**
- * Server render for yaycheckout/extra-field.
- *
- * Custom merchant field, not a Woo address catalog key. Attributes are read
- * with defaults so markup saved before an attribute existed still renders.
+ * Prints a merchant-defined field, posted and stored on the order under its Key.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; extra-field is a leaf.
  * @var WP_Block $block      Block instance.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

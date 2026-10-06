@@ -9,10 +9,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Prints the Design page's tokens as `--yaycheckout-*` custom properties on
- * :root, followed by the merchant's custom CSS.
- *
- * A section left at theme default prints nothing, so the theme's own
- * WooCommerce styles apply.
+ * :root, followed by the merchant's custom CSS. A section left at theme default
+ * prints nothing, so the theme's own WooCommerce styles apply.
  *
  * Values are printed unescaped: Design::from_option() only lets through hex
  * colours, enum members and in-range ints. Custom CSS is checked again here,
@@ -73,7 +71,7 @@ class DesignStyles {
 
         if ( $typography['enabled'] ) {
             if ( '' !== $typography['font_family'] ) {
-                // ponytail: serif fonts fall back to sans when not loaded; add a generic family per font once Google Fonts are enqueued.
+                // TODO(fonts): a serif font falls back to sans when not loaded; add a generic family per font once the fonts are enqueued, which nothing does yet.
                 $vars['font-family'] = '"' . Design::FONT_FAMILIES[ $typography['font_family'] ] . '", ' . self::FONT_FALLBACK;
             }
 

@@ -7,7 +7,8 @@ defined( 'ABSPATH' ) || exit;
  * The assignment rule vocabulary: condition types, the operators each accepts and the shape of its value.
  * Constants, not a native enum: PHP 7.4 support.
  *
- * Only facts that hold for the life of a checkout form: see docs/system-architecture.md, § Storefront "Which layout".
+ * Only facts that hold for the life of a checkout form: every request picks the layout afresh and checkout
+ * validates against it, so a fact the shopper can change mid-form would swap the layout under them.
  */
 final class ConditionType {
 

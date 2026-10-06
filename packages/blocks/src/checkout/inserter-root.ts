@@ -9,10 +9,8 @@ const CHECKOUT_BLOCK = 'yaycheckout/checkout';
 const ADDRESS_SECTIONS = [ 'yaycheckout/billing', 'yaycheckout/shipping' ];
 
 /**
- * Header inserter follows the selection: Billing/Shipping when those
- * canvases are selected (so Field appears), otherwise the Checkout block,
- * wherever it sits in the document.
- * Contact and the document never list Field.
+ * Points the header inserter at the selected Billing or Shipping block, so Field
+ * is offered, and otherwise at the Checkout block wherever it sits.
  */
 function LayoutInserterRoot() {
 	const postType = useSelect( ( select ) => select( editorStore ).getCurrentPostType(), [] );
