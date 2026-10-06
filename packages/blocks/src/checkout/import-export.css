@@ -1,0 +1,59 @@
+/* The Import / Export panel and modal sit outside the canvas, in the editor's own document; the root class outranks its sidebar heading margins. */
+.yaycheckout-import-export .yaycheckout-import-export__drop {
+	position: relative;
+	padding: 32px 48px;
+	text-align: center;
+}
+
+.yaycheckout-import-export .yaycheckout-import-export__drop-title {
+	font-weight: 400;
+}
+
+.yaycheckout-import-export .yaycheckout-import-export__file,
+.yaycheckout-import-export .yaycheckout-import-export__actions {
+	margin-top: 24px;
+}
+
+.yaycheckout-import-export .yaycheckout-import-export__ready-icon {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: rgba(0, 163, 42, 0.1);
+	color: #00a32a;
+}
+
+.yaycheckout-import-export .yaycheckout-import-export__heading {
+	margin: 0;
+}
+
+.yaycheckout-import-export .yaycheckout-import-export__summary {
+	padding: 10px 16px;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+	background: #f9f9f9;
+}
+
+.yaycheckout-import-export .yaycheckout-import-export__summary-label {
+	display: block;
+	margin-bottom: 4px;
+	color: #757575;
+}
+
+.yaycheckout-import-export .yaycheckout-import-export__help {
+	margin: 0;
+	color: #757575;
+}
+
+.yaycheckout-import-export .yaycheckout-import-export__pro-tag {
+	margin-right: 6px;
+	padding: 1px 6px;
+	border-radius: 2px;
+	background: #f9bd09;
+	color: #fff;
+	font-size: 11px;
+	font-weight: 600;
+}

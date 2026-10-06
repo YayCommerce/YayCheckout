@@ -6,7 +6,9 @@
   "category": "yaycheckout",
   "description": "Customer email. A single field, not a section.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
+  "keywords": [ "email", "customer" ],
+  "example": {},
+  "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "label": {
       "type": "string",
@@ -31,5 +33,6 @@
     "reusable": false
   },
   "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
   "render": "file:./render.php"
 }

@@ -1,25 +1,14 @@
 import { useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
-import { previewButtonStyle } from '../shared/preview-styles';
-
-const buttonStyle = {
-	...previewButtonStyle,
-	display: 'block',
-	width: '100%',
-	marginBottom: '8px',
-	padding: '10px 12px',
-	border: '1px solid #1e1e1e',
-	textAlign: 'center' as const,
-	fontSize: '13px',
-};
+import './editor.css';
 
 export default function Edit() {
 	const blockProps = useBlockProps( { className: 'yaycheckout-express-pay' } );
 
 	return (
 		<div { ...blockProps }>
-			<div style={ buttonStyle }>{ __( 'Apple Pay', 'yaycheckout' ) }</div>
-			<div style={ { ...buttonStyle, background: '#3858e9', borderColor: '#3858e9' } }>
+			<div className="yaycheckout-express-pay__button">{ __( 'Apple Pay', 'yaycheckout' ) }</div>
+			<div className="yaycheckout-express-pay__button yaycheckout-express-pay__button--link">
 				{ __( 'Link', 'yaycheckout' ) }
 			</div>
 		</div>

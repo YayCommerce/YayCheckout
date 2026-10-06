@@ -6,7 +6,9 @@
   "category": "yaycheckout",
   "description": "Cart line items and totals for classic checkout.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
+  "keywords": [ "cart", "totals" ],
+  "example": {},
+  "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "label": {
       "type": "string",
@@ -19,5 +21,6 @@
     "reusable": false
   },
   "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
   "render": "file:./render.php"
 }

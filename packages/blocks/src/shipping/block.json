@@ -6,7 +6,26 @@
   "category": "yaycheckout",
   "description": "Shipping address canvas. Fields, layout and text blocks can sit inside it.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
+  "keywords": [ "address", "delivery" ],
+  "example": {
+    "innerBlocks": [
+      {
+        "name": "yaycheckout/field",
+        "attributes": {
+          "fieldKey": "shipping_first_name",
+          "label": "First name"
+        }
+      },
+      {
+        "name": "yaycheckout/field",
+        "attributes": {
+          "fieldKey": "shipping_last_name",
+          "label": "Last name"
+        }
+      }
+    ]
+  },
+  "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "title": {
       "type": "string",

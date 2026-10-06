@@ -1,0 +1,13 @@
+.editor-styles-wrapper .yaycheckout-section-preview__heading {
+	margin: 0 0 8px;
+	font-size: 16px;
+}
+
+.editor-styles-wrapper .yaycheckout-section-preview__option {
+	display: block;
+	margin-bottom: 6px;
+}
+
+.editor-styles-wrapper .yaycheckout-section-preview__option:last-child {
+	margin-bottom: 0;
+}

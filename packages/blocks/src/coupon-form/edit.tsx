@@ -1,7 +1,7 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { previewButtonStyle } from '../shared/preview-styles';
+import './editor.css';
 
 interface CouponFormAttributes {
 	placeholder: string;
@@ -35,18 +35,14 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<div style={ { display: 'flex', gap: '8px' } }>
+				<div className="yaycheckout-coupon-form__row">
 					<input
 						type="text"
 						disabled
+						className="yaycheckout-coupon-form__code"
 						placeholder={ placeholder || __( 'Coupon code', 'yaycheckout' ) }
-						style={ { flex: 1, padding: '10px 12px' } }
 					/>
-					<button
-						type="button"
-						disabled
-						style={ { ...previewButtonStyle, padding: '10px 16px' } }
-					>
+					<button type="button" disabled className="yaycheckout-coupon-form__apply">
 						{ buttonText || __( 'Apply coupon', 'yaycheckout' ) }
 					</button>
 				</div>
