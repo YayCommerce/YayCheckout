@@ -6,6 +6,39 @@
   "category": "yaycheckout",
   "description": "Checkout steps on one page. The first step is open; later steps stay closed until Continue.",
   "textdomain": "yaycheckout",
+  "keywords": [ "accordion", "multi-step", "wizard" ],
+  "example": {
+    "innerBlocks": [
+      {
+        "name": "yaycheckout/step",
+        "attributes": {
+          "title": "Information"
+        },
+        "innerBlocks": [
+          {
+            "name": "yaycheckout/step-button",
+            "attributes": {
+              "buttonText": "Continue"
+            }
+          }
+        ]
+      },
+      {
+        "name": "yaycheckout/step",
+        "attributes": {
+          "title": "Payment"
+        },
+        "innerBlocks": [
+          {
+            "name": "yaycheckout/step-button",
+            "attributes": {
+              "buttonText": "Continue"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "ancestor": [ "yaycheckout/checkout" ],
   "allowedBlocks": [ "yaycheckout/step" ],
   "attributes": {

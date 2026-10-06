@@ -6,6 +6,8 @@
   "category": "yaycheckout",
   "description": "Placeholder for wallet buttons such as Apple Pay or Stripe Link.",
   "textdomain": "yaycheckout",
+  "keywords": [ "apple pay", "wallet" ],
+  "example": {},
   "ancestor": [ "yaycheckout/checkout" ],
   "supports": {
     "html": false,

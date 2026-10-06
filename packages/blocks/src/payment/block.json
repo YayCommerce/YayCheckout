@@ -6,6 +6,8 @@
   "category": "yaycheckout",
   "description": "Payment method list for classic checkout.",
   "textdomain": "yaycheckout",
+  "keywords": [ "gateway", "card" ],
+  "example": {},
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "label": {

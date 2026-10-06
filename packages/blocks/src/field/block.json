@@ -6,6 +6,13 @@
   "category": "yaycheckout",
   "description": "A checkout form field. Only insertable inside Billing or Shipping.",
   "textdomain": "yaycheckout",
+  "keywords": [ "input", "form" ],
+  "example": {
+    "attributes": {
+      "fieldKey": "billing_first_name",
+      "label": "First name"
+    }
+  },
   "ancestor": [ "yaycheckout/billing", "yaycheckout/shipping" ],
   "attributes": {
     "fieldKey": {

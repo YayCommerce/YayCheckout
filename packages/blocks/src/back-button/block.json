@@ -6,6 +6,12 @@
   "category": "yaycheckout",
   "description": "Opens the previous checkout step. Place it anywhere inside Checkout.",
   "textdomain": "yaycheckout",
+  "keywords": [ "previous", "return" ],
+  "example": {
+    "attributes": {
+      "buttonText": "Back"
+    }
+  },
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "buttonText": {

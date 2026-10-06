@@ -6,6 +6,8 @@
   "category": "yaycheckout",
   "description": "Shows which checkout step is open. Titles come from the Steps block.",
   "textdomain": "yaycheckout",
+  "keywords": [ "steps", "indicator" ],
+  "example": {},
   "ancestor": [ "yaycheckout/checkout" ],
   "usesContext": [ "yaycheckout/stepTitles" ],
   "attributes": {},

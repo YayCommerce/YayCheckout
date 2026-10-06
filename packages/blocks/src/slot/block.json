@@ -6,6 +6,12 @@
   "category": "yaycheckout",
   "description": "Named empty place for other plugins or Pro to inject content.",
   "textdomain": "yaycheckout",
+  "keywords": [ "hook", "placeholder" ],
+  "example": {
+    "attributes": {
+      "slotName": "after_contact"
+    }
+  },
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "slotName": {

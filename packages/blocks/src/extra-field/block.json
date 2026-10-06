@@ -6,6 +6,13 @@
   "category": "yaycheckout",
   "description": "A custom checkout field that is not part of the WooCommerce address catalog.",
   "textdomain": "yaycheckout",
+  "keywords": [ "custom", "input" ],
+  "example": {
+    "attributes": {
+      "fieldKey": "gift_note",
+      "label": "Gift note"
+    }
+  },
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "fieldKey": {

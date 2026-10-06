@@ -6,6 +6,25 @@
   "category": "yaycheckout",
   "description": "Billing address canvas. Fields, layout and text blocks can sit inside it.",
   "textdomain": "yaycheckout",
+  "keywords": [ "address", "invoice" ],
+  "example": {
+    "innerBlocks": [
+      {
+        "name": "yaycheckout/field",
+        "attributes": {
+          "fieldKey": "billing_first_name",
+          "label": "First name"
+        }
+      },
+      {
+        "name": "yaycheckout/field",
+        "attributes": {
+          "fieldKey": "billing_last_name",
+          "label": "Last name"
+        }
+      }
+    ]
+  },
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "title": {

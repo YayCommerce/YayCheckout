@@ -6,6 +6,12 @@
   "category": "yaycheckout",
   "description": "Validates the open checkout step and opens the next one. Place it anywhere inside Checkout.",
   "textdomain": "yaycheckout",
+  "keywords": [ "continue", "next" ],
+  "example": {
+    "attributes": {
+      "buttonText": "Continue"
+    }
+  },
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "buttonText": {

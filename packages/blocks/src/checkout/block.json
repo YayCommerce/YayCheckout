@@ -6,6 +6,39 @@
   "category": "yaycheckout",
   "description": "Root container for a YayCheckout checkout layout.",
   "textdomain": "yaycheckout",
+  "keywords": [ "woocommerce", "form" ],
+  "example": {
+    "innerBlocks": [
+      {
+        "name": "yaycheckout/contact"
+      },
+      {
+        "name": "yaycheckout/billing",
+        "innerBlocks": [
+          {
+            "name": "yaycheckout/field",
+            "attributes": {
+              "fieldKey": "billing_first_name",
+              "label": "First name"
+            }
+          },
+          {
+            "name": "yaycheckout/field",
+            "attributes": {
+              "fieldKey": "billing_last_name",
+              "label": "Last name"
+            }
+          }
+        ]
+      },
+      {
+        "name": "yaycheckout/payment"
+      },
+      {
+        "name": "yaycheckout/place-order"
+      }
+    ]
+  },
   "attributes": {
     "lock": {
       "type": "object",

@@ -6,6 +6,8 @@
   "category": "yaycheckout",
   "description": "Shipping rate list. Classic checkout radios, not the shipping address form.",
   "textdomain": "yaycheckout",
+  "keywords": [ "rates", "delivery" ],
+  "example": {},
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "label": {

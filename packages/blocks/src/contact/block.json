@@ -6,6 +6,8 @@
   "category": "yaycheckout",
   "description": "Customer email. A single field, not a section.",
   "textdomain": "yaycheckout",
+  "keywords": [ "email", "customer" ],
+  "example": {},
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "label": {

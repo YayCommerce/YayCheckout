@@ -6,6 +6,20 @@
   "category": "yaycheckout",
   "description": "One checkout step. Holds the sections of that step.",
   "textdomain": "yaycheckout",
+  "keywords": [ "accordion", "section" ],
+  "example": {
+    "attributes": {
+      "title": "Information"
+    },
+    "innerBlocks": [
+      {
+        "name": "yaycheckout/step-button",
+        "attributes": {
+          "buttonText": "Continue"
+        }
+      }
+    ]
+  },
   "parent": [ "yaycheckout/steps" ],
   "attributes": {
     "title": {
