@@ -214,7 +214,8 @@ class LayoutMarkupReader {
         return self::flatten( parse_blocks( $markup ) );
     }
 
-    private static function flatten( array $blocks ): array {
+    /** Blocks with their descendants, parents first, in document order; attrs always an array. */
+    public static function flatten( array $blocks ): array {
         $flat = [];
 
         foreach ( $blocks as $block ) {
@@ -232,7 +233,7 @@ class LayoutMarkupReader {
     }
 
     /** A string attribute, or $fallback when missing, not a string, or empty. */
-    private static function text( array $attrs, string $name, string $fallback = '' ): string {
+    public static function text( array $attrs, string $name, string $fallback = '' ): string {
         return isset( $attrs[ $name ] ) && is_string( $attrs[ $name ] ) && '' !== $attrs[ $name ] ? $attrs[ $name ] : $fallback;
     }
 

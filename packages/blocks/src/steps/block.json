@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/steps",
+  "title": "Steps",
+  "category": "yaycheckout",
+  "description": "Checkout steps on one page. The first step is open; later steps stay closed until Continue.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "accordion", "multi-step", "wizard" ],
+  "example": {
+    "innerBlocks": [
+      {
+        "name": "yaycheckout/step",
+        "attributes": {
+          "title": "Information"
+        },
+        "innerBlocks": [
+          {
+            "name": "yaycheckout/step-button",
+            "attributes": {
+              "buttonText": "Continue"
+            }
+          }
+        ]
+      },
+      {
+        "name": "yaycheckout/step",
+        "attributes": {
+          "title": "Payment"
+        },
+        "innerBlocks": [
+          {
+            "name": "yaycheckout/step-button",
+            "attributes": {
+              "buttonText": "Continue"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "ancestor": [ "yaycheckout/checkout" ],
+  "allowedBlocks": [ "yaycheckout/step" ],
+  "attributes": {
+    "layout": {
+      "type": "string",
+      "default": "list",
+      "enum": [ "list", "single" ]
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "viewScript": "file:./view.js",
+  "style": "file:./style-index.css",
+  "render": "file:./render.php"
+}

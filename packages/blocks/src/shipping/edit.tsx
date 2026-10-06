@@ -8,13 +8,15 @@ interface ShippingAttributes {
 
 interface EditProps {
 	attributes: ShippingAttributes;
+	clientId: string;
 	setAttributes: ( attributes: Partial< ShippingAttributes > ) => void;
 }
 
-export default function Edit( { attributes, setAttributes }: EditProps ) {
+export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
 	return (
 		<AddressSectionEdit
 			section="shipping"
+			clientId={ clientId }
 			attributes={ attributes }
 			setAttributes={ setAttributes }
 		/>

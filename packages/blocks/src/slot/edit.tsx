@@ -1,6 +1,7 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
+import './editor.css';
 
 interface SlotAttributes {
 	slotName: string;
@@ -34,19 +35,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					/>
 				</PanelBody>
 			</InspectorControls>
-			<div
-				{ ...blockProps }
-				style={ {
-					minHeight: '48px',
-					padding: '12px',
-					border: '1px dashed #c3c4c7',
-					color: '#646970',
-					fontSize: '13px',
-					textAlign: 'center',
-				} }
-			>
-				{ caption }
-			</div>
+			<div { ...blockProps }>{ caption }</div>
 		</>
 	);
 }

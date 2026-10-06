@@ -1,0 +1,21 @@
+.yaycheckout-back-button {
+	display: block;
+	width: fit-content;
+	margin: 16px 0 0;
+	padding: 10px 0;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--yaycheckout-primary);
+	font-family: inherit;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.2;
+	cursor: pointer;
+}
+
+/* Classic themes (Storefront) repaint button:hover. */
+.yaycheckout-back-button:is(:hover, :focus) {
+	background: transparent;
+	color: var(--yaycheckout-primary);
+}

@@ -5,4 +5,4 @@ import './import-export';
 import './inserter-root';
 import './publish-guard';
 
-registerDynamicBlock( metadata.name, Edit, saveNestedBlocks );
+registerDynamicBlock( metadata, Edit, saveNestedBlocks );

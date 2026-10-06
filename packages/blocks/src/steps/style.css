@@ -1,0 +1,115 @@
+.yaycheckout-steps {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.yaycheckout-step {
+	border: 1px solid #e5e7eb;
+	border-radius: 12px;
+	background: #fff;
+	padding: 16px 20px;
+}
+
+.yaycheckout-step[data-state="current"] {
+	border-color: var(--yaycheckout-primary);
+}
+
+.yaycheckout-step__header {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	column-gap: 12px;
+	row-gap: 2px;
+	align-items: center;
+}
+
+.yaycheckout-step[data-state="complete"] .yaycheckout-step__header {
+	cursor: pointer;
+}
+
+.yaycheckout-step__index {
+	grid-column: 1;
+	grid-row: 1 / span 2;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 999px;
+	background: var(--yaycheckout-primary);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 600;
+	position: relative;
+}
+
+.yaycheckout-step[data-state="locked"] .yaycheckout-step__index {
+	background: transparent;
+	color: #9ca3af;
+	box-shadow: inset 0 0 0 1.5px #d1d5db;
+}
+
+.yaycheckout-step[data-state="locked"] .yaycheckout-step__title {
+	color: #6b7280;
+}
+
+.yaycheckout-step[data-state="complete"] .yaycheckout-step__index {
+	color: transparent;
+}
+
+.yaycheckout-step[data-state="complete"] .yaycheckout-step__index::after {
+	content: "\2713";
+	color: #fff;
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 14px;
+}
+
+.yaycheckout-step__title {
+	grid-column: 2;
+	grid-row: 1;
+	font-weight: 700;
+}
+
+.yaycheckout-step__summary {
+	grid-column: 2;
+	grid-row: 2;
+	margin: 0;
+	color: #6b7280;
+	font-size: 14px;
+}
+
+.yaycheckout-step__edit {
+	grid-column: 3;
+	grid-row: 1 / span 2;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--yaycheckout-primary);
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.yaycheckout-step__body {
+	display: flex;
+	flex-direction: column;
+	margin-top: 16px;
+}
+
+.yaycheckout-step[data-state="locked"] .yaycheckout-step__body,
+.yaycheckout-step[data-state="complete"] .yaycheckout-step__body {
+	display: none;
+}
+
+.yaycheckout-steps[data-layout="single"] .yaycheckout-step:not([data-state="current"]) {
+	display: none;
+}
+
+/* Continue on the last step leaves nothing current. Keep that finished step on screen. */
+.yaycheckout-steps[data-layout="single"]:not(:has(.yaycheckout-step[data-state="current"])) > .yaycheckout-step[data-state="complete"]:last-child {
+	display: block;
+}
