@@ -1,3 +1,4 @@
+import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
@@ -23,7 +24,6 @@ interface EditProps {
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label, placeholder, required, requiredMark = '' } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-email' } );
-	const canvasLabel = label || __( 'Email address', 'yaycheckout' );
 
 	return (
 		<>
@@ -31,7 +31,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				<PanelBody title={ __( 'Email address', 'yaycheckout' ) }>
 					<TextControl
 						label={ __( 'Label', 'yaycheckout' ) }
-						value={ label }
+						value={ decodeEntities( label ) }
 						onChange={ ( value ) => setAttributes( { label: value } ) }
 					/>
 					<TextControl
@@ -51,7 +51,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			</InspectorControls>
 			<div { ...blockProps }>
 				<FieldPreview
-					label={ canvasLabel }
+					label={ label }
+					onLabelChange={ ( value ) => setAttributes( { label: value } ) }
+					labelPlaceholder={ __( 'Email address', 'yaycheckout' ) }
 					type="email"
 					required
 					requiredMark={ requiredMark }

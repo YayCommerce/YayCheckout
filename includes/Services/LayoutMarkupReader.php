@@ -72,7 +72,7 @@ class LayoutMarkupReader {
                 $attrs = [
                     'fieldKey'     => 'billing_email',
                     'type'         => 'email',
-                    'label'        => self::text( $attrs, 'label' ),
+                    'label'        => self::plain_text( $attrs, 'label' ),
                     'placeholder'  => self::text( $attrs, 'placeholder' ),
                     'required'     => true, // RequiredFieldOverlay::is_required() owns the email-always-required rule.
                     'requiredMark' => self::text( $attrs, 'requiredMark' ),

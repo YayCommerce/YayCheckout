@@ -10,7 +10,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_label       = isset( $attributes['label'] ) && is_string( $attributes['label'] ) && '' !== $attributes['label'] ? $attributes['label'] : __( 'Email address', 'yaycheckout' );
+$yaycheckout_label       = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'label', __( 'Email address', 'yaycheckout' ) );
 $yaycheckout_placeholder = isset( $attributes['placeholder'] ) && is_string( $attributes['placeholder'] ) ? $attributes['placeholder'] : '';
 $yaycheckout_required    = true;
 $yaycheckout_key         = 'billing_email';
