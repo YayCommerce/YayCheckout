@@ -63,11 +63,11 @@ Changed during implementation (2026-10-06): the plan moved the `margin-block: 0`
 **Files:**
 - Modify: `packages/blocks/src/progress/style.css`, `packages/blocks/src/place-order/editor.css`, `packages/blocks/src/express-pay/editor.css`
 
-- [ ] **Step 1:** `progress/style.css`: remove `gap: 0` from `ol.yaycheckout-progress` (flex `gap` is already 0). Leave `button.yaycheckout-progress__jump` and its reset unchanged: its 0,2,1 selector is what keeps theme `button:hover` off it.
-- [ ] **Step 2:** `place-order/editor.css`: the preview is a `div` (`place-order/edit.tsx`), so remove `display: block`, `width: 100%` and `border: 0`.
-- [ ] **Step 3:** `express-pay/editor.css`: both previews are `div`s, so remove `display: block` and `width: 100%` from `.yaycheckout-express-pay__button`.
-- [ ] **Step 4: Verify.** `pnpm build:blocks` succeeds. In the editor, Place order and Express pay previews look the same as a screenshot taken before; on the storefront, Progress is unchanged.
-- [ ] **Step 5: Commit.** Stage the three files. Message: `refactor(blocks): drop CSS that restates browser defaults`
+- [x] **Step 1:** `progress/style.css`: remove `gap: 0` from `ol.yaycheckout-progress` (flex `gap` is already 0). Leave `button.yaycheckout-progress__jump` and its reset unchanged: its 0,2,1 selector is what keeps theme `button:hover` off it.
+- [x] **Step 2:** `place-order/editor.css`: the preview is a `div` (`place-order/edit.tsx`), so remove `display: block`, `width: 100%` and `border: 0`.
+- [x] **Step 3:** `express-pay/editor.css`: both previews are `div`s, so remove `display: block` and `width: 100%` from `.yaycheckout-express-pay__button`.
+- [x] **Step 4: Verify.** Found during implementation: `width: 100%` without `box-sizing` made both previews overflow their parent (671 and 677px in 645px); without it they fit exactly, so they are slightly narrower than before. `pnpm build:blocks` succeeds. In the editor, Place order and Express pay previews look the same as a screenshot taken before; on the storefront, Progress is unchanged.
+- [x] **Step 5: Commit.** Stage the three files. Message: `refactor(blocks): drop CSS that restates browser defaults`
 
 The other `editor.css` files (order-review, order-summary, slot, `shared/field-preview.css`, `shared/section-preview.css`) were checked and hold no redundant declarations: each `display: block` there sits on a `label`, `input`, `select` or `textarea`.
 
