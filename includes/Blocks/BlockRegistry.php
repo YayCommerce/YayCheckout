@@ -55,6 +55,40 @@ class BlockRegistry {
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
+        add_filter( 'wp_theme_json_data_default', [ $this, 'place_order_width_presets' ] );
+    }
+
+    /**
+     * Core Button's old 25/50/75/100% widths as presets for Place Order's Width control
+     * (Styles > Dimensions). WordPress ships no dimension sizes, so the control has no presets
+     * without them. Scoped to the block, and in the default origin, so a theme's own presets win.
+     *
+     * @param  \WP_Theme_JSON_Data $theme_json
+     * @return \WP_Theme_JSON_Data
+     */
+    public function place_order_width_presets( $theme_json ) {
+        $sizes = [];
+
+        foreach ( [ 25, 50, 75, 100 ] as $percent ) {
+            $sizes[] = [
+                'name' => $percent . '%',
+                'slug' => (string) $percent,
+                'size' => $percent . '%',
+            ];
+        }
+
+        return $theme_json->update_with(
+            [
+                'version'  => \WP_Theme_JSON::LATEST_SCHEMA,
+                'settings' => [
+                    'blocks' => [
+                        'yaycheckout/place-order' => [
+                            'dimensions' => [ 'dimensionSizes' => $sizes ],
+                        ],
+                    ],
+                ],
+            ]
+        );
     }
 
     /** Registers every built block, in ORDER; without a build, registers none. */

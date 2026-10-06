@@ -11,16 +11,85 @@
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "buttonText": {
-      "type": "string",
-      "default": "Place order"
+      "type": "string"
     }
   },
+  "variations": [
+    {
+      "name": "place-order",
+      "title": "Place Order",
+      "description": "Submit button for placing the order.",
+      "isDefault": true,
+      "scope": [ "inserter" ],
+      "attributes": {
+        "style": {
+          "typography": {
+            "textAlign": "center"
+          }
+        }
+      }
+    }
+  ],
   "supports": {
     "html": false,
     "multiple": false,
-    "reusable": false
+    "reusable": false,
+    "align": [
+      "left",
+      "center",
+      "right"
+    ],
+    "color": {
+      "gradients": true,
+      "__experimentalDefaultControls": {
+        "background": true,
+        "text": true
+      }
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "textAlign": true,
+      "__experimentalFontFamily": true,
+      "__experimentalFontWeight": true,
+      "__experimentalFontStyle": true,
+      "__experimentalTextTransform": true,
+      "__experimentalTextDecoration": true,
+      "__experimentalLetterSpacing": true,
+      "__experimentalWritingMode": true,
+      "__experimentalDefaultControls": {
+        "fontSize": true
+      }
+    },
+    "spacing": {
+      "margin": [ "top", "bottom" ],
+      "padding": [ "horizontal", "vertical" ],
+      "__experimentalDefaultControls": {
+        "margin": true,
+        "padding": true
+      }
+    },
+    "dimensions": {
+      "width": true,
+      "__experimentalDefaultControls": {
+        "width": true
+      }
+    },
+    "shadow": true,
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true,
+      "__experimentalDefaultControls": {
+        "color": true,
+        "radius": true,
+        "style": true,
+        "width": true
+      }
+    }
   },
   "editorScript": "file:./index.js",
-  "editorStyle": "file:./index.css",
-  "render": "file:./render.php"
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
 }
