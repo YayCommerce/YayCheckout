@@ -6,7 +6,7 @@
   "category": "yaycheckout",
   "description": "Cart line items and totals for classic checkout.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
+  "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "label": {
       "type": "string",

@@ -1,8 +1,17 @@
-import { InnerBlocks, InspectorControls, useBlockProps, store as blockEditorStore } from '@wordpress/block-editor';
+import {
+	InnerBlocks,
+	InspectorControls,
+	useBlockProps,
+	useInnerBlocksProps,
+	store as blockEditorStore,
+} from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
+import { useBlocksAllowedExcept } from '../shared/allowed-blocks';
 import { stepTitle } from '../shared/step-title';
+
+const isSteps = ( type: { name: string } ) => type.name === 'yaycheckout/steps';
 
 interface StepAttributes {
 	title: string;
@@ -19,6 +28,16 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	const index = useSelect( ( select ) => select( blockEditorStore ).getBlockIndex( clientId ), [ clientId ] );
 	const position = typeof index === 'number' && index >= 0 ? index + 1 : 1;
 	const blockProps = useBlockProps( { className: 'yaycheckout-step' } );
+	const allowedBlocks = useBlocksAllowedExcept( isSteps );
+	const bodyProps = useInnerBlocksProps(
+		{ className: 'yaycheckout-step__body' },
+		{
+			allowedBlocks,
+			template: [ [ 'yaycheckout/step-button' ] ],
+			templateLock: false,
+			renderAppender: InnerBlocks.ButtonBlockAppender,
+		}
+	);
 
 	return (
 		<>
@@ -36,12 +55,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					<span className="yaycheckout-step__index">{ position }</span>
 					<span className="yaycheckout-step__title">{ stepTitle( title ) }</span>
 				</div>
-				<div className="yaycheckout-step__body">
-					<InnerBlocks
-						template={ [ [ 'yaycheckout/step-button' ] ] }
-						templateLock={ false }
-					/>
-				</div>
+				<div { ...bodyProps } />
 			</div>
 		</>
 	);

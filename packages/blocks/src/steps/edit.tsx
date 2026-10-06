@@ -1,8 +1,6 @@
-import { InnerBlocks, InspectorControls, useBlockProps } from '@wordpress/block-editor';
+import { InnerBlocks, InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-
-const STEP = 'yaycheckout/step';
 
 interface StepsAttributes {
 	layout: string;
@@ -20,6 +18,13 @@ interface EditProps {
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { layout } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-steps' } );
+	const innerBlocksProps = useInnerBlocksProps( blockProps, {
+		template: [ [ 'yaycheckout/step' ], [ 'yaycheckout/step' ] ],
+		templateLock: false,
+		defaultBlock: { name: 'yaycheckout/step' },
+		directInsert: true,
+		renderAppender: InnerBlocks.ButtonBlockAppender,
+	} );
 
 	return (
 		<>
@@ -36,9 +41,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					/>
 				</PanelBody>
 			</InspectorControls>
-			<div { ...blockProps }>
-				<InnerBlocks allowedBlocks={ [ STEP ] } templateLock={ false } />
-			</div>
+			<div { ...innerBlocksProps } />
 		</>
 	);
 }

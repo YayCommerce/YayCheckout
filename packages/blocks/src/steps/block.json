@@ -6,7 +6,8 @@
   "category": "yaycheckout",
   "description": "Checkout steps on one page. The first step is open; later steps stay closed until Continue.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
+  "ancestor": [ "yaycheckout/checkout" ],
+  "allowedBlocks": [ "yaycheckout/step" ],
   "attributes": {
     "layout": {
       "type": "string",

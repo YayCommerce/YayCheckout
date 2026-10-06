@@ -6,35 +6,13 @@ import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
 
 const CHECKOUT_BLOCK = 'yaycheckout/checkout';
-const STEPS = 'yaycheckout/steps';
-const STEP = 'yaycheckout/step';
-const ADDRESS_SECTIONS = [ 'yaycheckout/billing', 'yaycheckout/shipping' ];
 
 /**
- * Points the header inserter at the selected Billing or Shipping block, so Field
- * is offered, and otherwise at the Checkout block wherever it sits.
+ * With no block selected, core's header inserter targets the post root, where
+ * no YayCheckout block may go, so this points it at the end of Checkout. Once a
+ * block is selected it hands back to core, which inserts after the selection or
+ * into its closest ancestor that allows the block.
  */
-
-function stepsInsertion(
-	clientId: string,
-	getBlockName: ( id: string ) => string | undefined,
-	getBlockParents: ( id: string ) => string[],
-	getBlockCount: ( id: string ) => number
-): { rootClientId: string; insertionIndex: number } | null {
-	const chain = [ clientId, ...getBlockParents( clientId ) ];
-	const stepId = chain.find( ( id ) => getBlockName( id ) === STEP );
-	const containerId = stepId ?? chain.find( ( id ) => getBlockName( id ) === STEPS );
-
-	if ( ! containerId ) {
-		return null;
-	}
-
-	return {
-		rootClientId: containerId,
-		insertionIndex: getBlockCount( containerId ),
-	};
-}
-
 function LayoutInserterRoot() {
 	const postType = useSelect( ( select ) => select( editorStore ).getCurrentPostType(), [] );
 	const isInserterOpened = useSelect( ( select ) => select( editorStore ).isInserterOpened(), [] );
@@ -43,44 +21,34 @@ function LayoutInserterRoot() {
 			return null;
 		}
 
-		const { getBlockCount, getBlockName, getBlockParents, getClientIdsWithDescendants, getSelectedBlock } =
+		const { getBlockCount, getBlockName, getClientIdsWithDescendants, getSelectedBlockClientId } =
 			select( blockEditorStore );
+
+		if ( getSelectedBlockClientId() ) {
+			return null;
+		}
+
 		const rootClientId = getClientIdsWithDescendants().find(
 			( id: string ) => getBlockName( id ) === CHECKOUT_BLOCK
 		);
 
-		if ( ! rootClientId ) {
-			return null;
-		}
-
-		const selected = getSelectedBlock();
-
-		if ( selected && ADDRESS_SECTIONS.includes( selected.name ) ) {
-			return {
-				rootClientId: selected.clientId,
-				insertionIndex: getBlockCount( selected.clientId ),
-			};
-		}
-
-		if ( selected ) {
-			const nested = stepsInsertion( selected.clientId, getBlockName, getBlockParents, getBlockCount );
-
-			if ( nested ) {
-				return nested;
-			}
-		}
-
-		return {
-			rootClientId,
-			insertionIndex: getBlockCount( rootClientId ),
-		};
+		return rootClientId ? { rootClientId, insertionIndex: getBlockCount( rootClientId ) } : null;
 	}, [ postType ] );
 	const { setIsInserterOpened } = useDispatch( editorStore );
 	const lastKey = useRef( '' );
 
 	useEffect( () => {
-		if ( ! isInserterOpened || ! destination ) {
+		if ( ! isInserterOpened ) {
 			lastKey.current = '';
+			return;
+		}
+
+		if ( ! destination ) {
+			// The editor keeps an explicit root ahead of the selection, so drop ours.
+			if ( lastKey.current !== '' ) {
+				lastKey.current = '';
+				setIsInserterOpened( true );
+			}
 			return;
 		}
 
@@ -91,10 +59,7 @@ function LayoutInserterRoot() {
 		}
 
 		lastKey.current = key;
-		setIsInserterOpened( {
-			rootClientId: destination.rootClientId,
-			insertionIndex: destination.insertionIndex,
-		} );
+		setIsInserterOpened( destination );
 	}, [ isInserterOpened, destination, setIsInserterOpened ] );
 
 	return null;
