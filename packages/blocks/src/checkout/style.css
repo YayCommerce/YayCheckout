@@ -1,55 +1,9 @@
-/* Class names below come from LayoutRepository::default_markup(), which seeds new layouts. */
-
 /*
- * The checkout page prints no theme header or footer, so the theme's container is gone too
- * (templates/checkout-page.php). Its page wrapper takes that role for every top-level block.
+ * Classic themes (Storefront) float WooCommerce's order review into a right-hand column of
+ * their own; the layout places it. No block setting can undo a theme's float.
  */
-.wp-site-blocks > .yaycheckout-page {
-	box-sizing: border-box;
-	max-width: 1200px;
-	margin-inline: auto;
-	padding-inline: 24px;
-}
-
-.yaycheckout-header,
-.yaycheckout-footer {
-	align-items: center;
-	padding-block: 16px;
-}
-
-.yaycheckout-header {
-	margin-block-end: 32px;
-	border-block-end: 1px solid #e0e0e0;
-}
-
-.yaycheckout-footer {
-	margin-block-start: 48px;
-	border-block-start: 1px solid #e0e0e0;
-	font-size: 0.875em;
-}
-
-/* Classic themes (Storefront) float WooCommerce's order review into a right-hand column of their own; the layout places it. */
 .yaycheckout-checkout #order_review_heading,
 .yaycheckout-checkout #order_review {
 	float: none;
 	width: auto;
-}
-
-.yaycheckout-secure-note {
-	margin: 0;
-}
-
-/* 782px is where core Columns stops stacking. */
-@media (min-width: 782px) {
-	.yaycheckout-summary {
-		position: sticky;
-		top: calc(var(--wp-admin--admin-bar--height, 0px) + 24px);
-	}
-}
-
-/* Stacked, the totals come before the form so a shopper sees them before Place order. */
-@media (max-width: 781px) {
-	.yaycheckout-checkout-columns > .yaycheckout-summary-column {
-		order: -1;
-	}
 }

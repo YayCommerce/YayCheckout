@@ -2,7 +2,6 @@
 namespace YayCheckout\Repositories;
 
 use YayCheckout\Enums\LayoutStatus;
-use YayCheckout\Helpers\BlockMarkup;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Services\LayoutAssignment;
@@ -458,194 +457,14 @@ class LayoutRepository {
     }
 
     /**
-     * Block markup for a new layout: a header, the checkout in two columns (form; sticky order
-     * summary with coupon), a footer. Logo, footer links and labels are fixed when the layout is created.
-     * Its yaycheckout-* class names are read by packages/blocks/src/checkout/style.css.
+     * Block markup for a new layout, from templates/default-layout.php: a header, the checkout in two
+     * columns (form; order summary with coupon), a footer.
      */
     public static function default_markup(): string {
-        return BlockMarkup::serialize(
-            [
-                self::header_block(),
-                self::checkout_block(),
-                self::footer_block(),
-            ]
-        );
-    }
+        ob_start();
+        include YAYCHECKOUT_PLUGIN_DIR . 'templates/default-layout.php';
 
-    /** Logo (or the site title when there is none) beside a "Secure checkout" note. */
-    private static function header_block(): array {
-        $note_class = 'yaycheckout-secure-note';
-
-        return self::row_group(
-            'header',
-            [
-                has_custom_logo() ? BlockMarkup::block( 'core/site-logo' ) : BlockMarkup::block( 'core/site-title', [ 'level' => 0 ] ),
-                BlockMarkup::html(
-                    'core/paragraph',
-                    [ 'className' => $note_class ],
-                    '<p class="' . $note_class . '">' . esc_html__( 'Secure checkout', 'yaycheckout' ) . '</p>'
-                ),
-            ]
-        );
-    }
-
-    /**
-     * The form in two columns. No Shipping Methods block: Order Summary's table already prints the
-     * shipping rates, and a second list would repeat them.
-     */
-    private static function checkout_block(): array {
-        $summary_class = 'yaycheckout-summary';
-        $columns_class = 'yaycheckout-checkout-columns';
-
-        $form = self::column(
-            '60%',
-            '',
-            [
-                BlockMarkup::block( 'yaycheckout/express-pay' ),
-                BlockMarkup::block( 'yaycheckout/contact' ),
-                BlockMarkup::block( 'yaycheckout/billing', [], self::address_field_blocks( 'billing' ) ),
-                BlockMarkup::block( 'yaycheckout/shipping', [], self::address_field_blocks( 'shipping' ) ),
-                BlockMarkup::block( 'yaycheckout/payment' ),
-                BlockMarkup::block( 'yaycheckout/place-order' ),
-            ]
-        );
-
-        $summary = self::column(
-            '40%',
-            'yaycheckout-summary-column',
-            [
-                BlockMarkup::wrapper(
-                    'core/group',
-                    [ 'className' => $summary_class ],
-                    '<div class="wp-block-group ' . $summary_class . '">',
-                    '</div>',
-                    [
-                        BlockMarkup::block( 'yaycheckout/order-summary' ),
-                        BlockMarkup::block( 'yaycheckout/coupon-form' ),
-                    ]
-                ),
-            ]
-        );
-
-        return BlockMarkup::block(
-            'yaycheckout/checkout',
-            [],
-            [
-                BlockMarkup::wrapper(
-                    'core/columns',
-                    [ 'className' => $columns_class ],
-                    '<div class="wp-block-columns ' . $columns_class . '">',
-                    '</div>',
-                    [ $form, $summary ]
-                ),
-            ]
-        );
-    }
-
-    /** Copyright, then links to the cart and, when the store has them, the privacy and terms pages. */
-    private static function footer_block(): array {
-        $link    = static fn( string $url, string $label ): string => '<a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
-        $anchors = [ $link( wc_get_cart_url(), __( 'Return to cart', 'yaycheckout' ) ) ];
-
-        $privacy_url = get_privacy_policy_url();
-        if ( '' !== $privacy_url ) {
-            $anchors[] = $link( $privacy_url, __( 'Privacy policy', 'yaycheckout' ) );
-        }
-
-        // Guarded: without a terms page, wc_get_page_permalink() falls back to the home URL.
-        if ( wc_terms_and_conditions_page_id() > 0 ) {
-            $anchors[] = $link( wc_get_page_permalink( 'terms' ), __( 'Terms and conditions', 'yaycheckout' ) );
-        }
-
-        return self::row_group(
-            'footer',
-            [
-                BlockMarkup::html( 'core/paragraph', [], '<p>&copy; ' . esc_html( get_bloginfo( 'name' ) ) . '</p>' ),
-                BlockMarkup::html( 'core/paragraph', [], '<p>' . implode( ' &middot; ', $anchors ) . '</p>' ),
-            ]
-        );
-    }
-
-    /**
-     * Header or footer: a core Group printed as <header>/<footer> with class yaycheckout-<tag>, its
-     * items in one row with the ends pushed apart, wrapping on narrow screens.
-     *
-     * @param  string  $tag      'header' or 'footer'.
-     * @param  array[] $children Inner blocks.
-     */
-    private static function row_group( string $tag, array $children ): array {
-        $class = 'yaycheckout-' . $tag;
-
-        return BlockMarkup::wrapper(
-            'core/group',
-            [
-                'tagName'   => $tag,
-                'className' => $class,
-                'layout'    => [
-                    'type'           => 'flex',
-                    'justifyContent' => 'space-between',
-                    'flexWrap'       => 'wrap',
-                ],
-            ],
-            '<' . $tag . ' class="wp-block-group ' . $class . '">',
-            '</' . $tag . '>',
-            $children
-        );
-    }
-
-    /**
-     * A core Column with a fixed width and an optional extra class.
-     *
-     * @param  string  $width      CSS width, e.g. '60%'.
-     * @param  string  $class_name Extra class, or '' for none.
-     * @param  array[] $children   Inner blocks.
-     */
-    private static function column( string $width, string $class_name, array $children ): array {
-        $attrs = [ 'width' => $width ];
-
-        if ( '' !== $class_name ) {
-            $attrs['className'] = $class_name;
-        }
-
-        return BlockMarkup::wrapper(
-            'core/column',
-            $attrs,
-            '<div class="' . trim( 'wp-block-column ' . $class_name ) . '" style="flex-basis:' . $width . '">',
-            '</div>',
-            $children
-        );
-    }
-
-    /**
-     * Field blocks for one address section: a subset of the address list owned by
-     * packages/blocks/src/shared/address-fields.ts. Keep the two in step.
-     */
-    private static function address_field_blocks( string $prefix ): array {
-        $fields = [
-            'first_name' => [ 'text', __( 'First name', 'yaycheckout' ) ],
-            'last_name'  => [ 'text', __( 'Last name', 'yaycheckout' ) ],
-            'country'    => [ 'country', __( 'Country / Region', 'yaycheckout' ) ],
-            'address_1'  => [ 'text', __( 'Street address', 'yaycheckout' ) ],
-            'city'       => [ 'text', __( 'Town / City', 'yaycheckout' ) ],
-            'state'      => [ 'state', __( 'State / County', 'yaycheckout' ) ],
-            'postcode'   => [ 'text', __( 'Postcode / ZIP', 'yaycheckout' ) ],
-        ];
-
-        $blocks = [];
-
-        foreach ( $fields as $suffix => [ $type, $label ] ) {
-            $blocks[] = BlockMarkup::block(
-                'yaycheckout/field',
-                [
-                    'fieldKey' => $prefix . '_' . $suffix,
-                    'type'     => $type,
-                    'label'    => $label,
-                    'required' => true,
-                ]
-            );
-        }
-
-        return $blocks;
+        return (string) ob_get_clean();
     }
 
     /**
