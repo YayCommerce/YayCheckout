@@ -7,16 +7,15 @@
   "description": "Root container for a YayCheckout checkout layout.",
   "textdomain": "yaycheckout",
   "attributes": {
-    "templateLock": {
-      "type": [ "string", "boolean" ],
-      "default": false
+    "lock": {
+      "type": "object",
+      "default": { "remove": true }
     }
   },
   "supports": {
     "html": false,
     "multiple": false,
-    "reusable": false,
-    "lock": false
+    "reusable": false
   },
   "editorScript": "file:./index.js",
   "render": "file:./render.php"
