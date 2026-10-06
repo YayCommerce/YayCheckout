@@ -1,44 +1,21 @@
-.yaycheckout-checkout .yaycheckout-back-button {
-	appearance: none;
-	box-sizing: border-box;
+.yaycheckout-back-button {
 	display: block;
 	width: fit-content;
-	min-height: 0;
-	height: auto;
-	margin: 16px auto 0 0;
+	margin: 16px 0 0;
+	padding: 10px 0;
 	border: 0;
 	border-radius: 6px;
-	box-shadow: none;
 	background: transparent;
 	color: var(--yaycheckout-primary);
-	padding: 10px 0;
 	font-family: inherit;
 	font-size: 16px;
 	font-weight: 600;
 	line-height: 1.2;
-	letter-spacing: normal;
-	text-transform: none;
-	text-decoration: none;
 	cursor: pointer;
 }
 
-.yaycheckout-checkout .yaycheckout-back-button.alignleft {
-	margin-left: 0;
-	margin-right: auto;
-}
-
-.yaycheckout-checkout .yaycheckout-back-button.aligncenter {
-	margin-left: auto;
-	margin-right: auto;
-}
-
-.yaycheckout-checkout .yaycheckout-back-button.alignright {
-	margin-left: auto;
-	margin-right: 0;
-}
-
-/* Auto margins pin a lone button. In a Grid or Row they take the rest of the line. */
-.yaycheckout-checkout :is(.is-layout-flex, .is-layout-grid) > .yaycheckout-back-button {
-	margin-left: 0;
-	margin-right: 0;
+/* Classic themes (Storefront) repaint button:hover. */
+.yaycheckout-back-button:is(:hover, :focus) {
+	background: transparent;
+	color: var(--yaycheckout-primary);
 }

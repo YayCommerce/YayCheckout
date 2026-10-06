@@ -17,16 +17,11 @@
     "buttonText": {
       "type": "string",
       "default": ""
-    },
-    "align": {
-      "type": "string",
-      "default": "right"
     }
   },
   "supports": {
     "html": false,
-    "reusable": false,
-    "align": [ "left", "center", "right" ]
+    "reusable": false
   },
   "editorScript": "file:./index.js",
   "style": "file:./style-index.css",
