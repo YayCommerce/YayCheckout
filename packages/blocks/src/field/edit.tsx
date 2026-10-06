@@ -65,11 +65,9 @@ interface EditProps {
 }
 
 /**
- * In billing/shipping the Woo key is chosen from a dropdown. Keys are unique
- * across the whole section, including fields nested in Rows/Columns.
- *
- * A field always has a key: without one it renders under a made-up name that
- * WooCommerce never validates or saves, so a keyless field takes the first free one.
+ * The key comes from the section's catalog, unique across the section at any depth.
+ * A keyless field takes the first free key: without one it renders under a made-up
+ * name that WooCommerce never validates or saves.
  */
 export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
 	const { fieldKey, type, label, placeholder, required, requiredMark = '', optionalText = '' } = attributes;
@@ -98,6 +96,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		[ clientId ]
 	);
 	const catalog = addressSection ? catalogFor( addressSection ) : [];
+	// Email is always required; that rule lives in RequiredFieldOverlay::is_required().
 	const isEmail = type === 'email' || fieldKey === 'billing_email';
 	const available = catalog.filter( ( field ) => field.key === fieldKey || ! usedKeys.includes( field.key ) );
 	const { __unstableMarkNextChangeAsNotPersistent: markNotPersistent } = useDispatch( blockEditorStore );

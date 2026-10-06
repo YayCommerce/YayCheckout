@@ -9,10 +9,7 @@ interface BlockEditorSelectors {
 	getBlockAttributes: ( clientId: string ) => Record< string, unknown > | null;
 }
 
-/**
- * Trimmed Key of every extra-field block in the document, in order. The Key is
- * the posted name persisted to order meta, so it must be set and unique.
- */
+/** Trimmed Key of every extra-field block in the document, in order. */
 export function extraFieldKeys( blockEditor: BlockEditorSelectors ): string[] {
 	return blockEditor
 		.getClientIdsWithDescendants()
