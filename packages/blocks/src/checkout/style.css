@@ -1,0 +1,9 @@
+/*
+ * Classic themes (Storefront) float WooCommerce's order review into a right-hand column of
+ * their own; the layout places it. No block setting can undo a theme's float.
+ */
+.yaycheckout-checkout #order_review_heading,
+.yaycheckout-checkout #order_review {
+	float: none;
+	width: auto;
+}

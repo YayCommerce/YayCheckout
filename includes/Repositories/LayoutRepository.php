@@ -2,7 +2,6 @@
 namespace YayCheckout\Repositories;
 
 use YayCheckout\Enums\LayoutStatus;
-use YayCheckout\Helpers\BlockMarkup;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Services\LayoutAssignment;
@@ -341,7 +340,7 @@ class LayoutRepository {
     }
 
     /**
-     * Puts a layout's blocks back to the blank starting layout. Title, status, meta and the
+     * Puts a layout's blocks back to the default layout. Title, status, meta and the
      * active flag stay; WordPress stores the old markup as a revision, so the editor can undo it.
      *
      * @throws \InvalidArgumentException When the layout is missing or the update fails.
@@ -457,54 +456,15 @@ class LayoutRepository {
         }
     }
 
-    /** Block markup for a new layout: contact, billing, shipping, order review. */
-    public static function default_markup(): string {
-        return BlockMarkup::serialize(
-            [
-                BlockMarkup::block(
-                    'yaycheckout/checkout',
-                    [],
-                    [
-                        BlockMarkup::block( 'yaycheckout/contact' ),
-                        BlockMarkup::block( 'yaycheckout/billing', [], self::address_field_blocks( 'billing' ) ),
-                        BlockMarkup::block( 'yaycheckout/shipping', [], self::address_field_blocks( 'shipping' ) ),
-                        BlockMarkup::block( 'yaycheckout/order-review' ),
-                    ]
-                ),
-            ]
-        );
-    }
-
     /**
-     * Field blocks for one address section: a subset of the address list owned by
-     * packages/blocks/src/shared/address-fields.ts. Keep the two in step.
+     * Block markup for a new layout, from templates/default-layout.php: a header, the checkout in two
+     * columns (form; order summary with coupon), a footer.
      */
-    private static function address_field_blocks( string $prefix ): array {
-        $fields = [
-            'first_name' => [ 'text', __( 'First name', 'yaycheckout' ) ],
-            'last_name'  => [ 'text', __( 'Last name', 'yaycheckout' ) ],
-            'country'    => [ 'country', __( 'Country / Region', 'yaycheckout' ) ],
-            'address_1'  => [ 'text', __( 'Street address', 'yaycheckout' ) ],
-            'city'       => [ 'text', __( 'Town / City', 'yaycheckout' ) ],
-            'state'      => [ 'state', __( 'State / County', 'yaycheckout' ) ],
-            'postcode'   => [ 'text', __( 'Postcode / ZIP', 'yaycheckout' ) ],
-        ];
+    public static function default_markup(): string {
+        ob_start();
+        include YAYCHECKOUT_PLUGIN_DIR . 'templates/default-layout.php';
 
-        $blocks = [];
-
-        foreach ( $fields as $suffix => [ $type, $label ] ) {
-            $blocks[] = BlockMarkup::block(
-                'yaycheckout/field',
-                [
-                    'fieldKey' => $prefix . '_' . $suffix,
-                    'type'     => $type,
-                    'label'    => $label,
-                    'required' => true,
-                ]
-            );
-        }
-
-        return $blocks;
+        return (string) ob_get_clean();
     }
 
     /**

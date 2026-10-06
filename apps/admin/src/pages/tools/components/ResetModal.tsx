@@ -14,7 +14,7 @@ import { HelpTip } from '@/components/ui/tooltip';
 
 const CONFIRM_PHRASE = 'RESET';
 
-/** Confirms resetting a layout to the blank starting layout, gated by a typed phrase. */
+/** Confirms resetting a layout to the default layout, gated by a typed phrase. */
 export function ResetModal({
   layout,
   onOpenChange,
@@ -68,7 +68,7 @@ export function ResetModal({
 
             <p className="text-sm">
               {__(
-                "Every block you added is removed and replaced with root plus the required sections. Revisions are kept, so you can roll back from the editor's history.",
+                "Every block you added is removed and replaced with the default layout: a header, the checkout in two columns and a footer. Revisions are kept, so you can roll back from the editor's history.",
                 'yaycheckout',
               )}
             </p>

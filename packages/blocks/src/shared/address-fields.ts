@@ -8,7 +8,7 @@ export interface AddressFieldDef {
 }
 
 /**
- * Owns the address-field list the field picker offers. LayoutRepository::address_field_blocks()
+ * Owns the address-field list the field picker offers. templates/default-layout.php
  * seeds new layouts with a subset of it; keep the two in step.
  */
 function addressFields( prefix: 'billing' | 'shipping' ): AddressFieldDef[] {
