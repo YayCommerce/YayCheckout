@@ -23,11 +23,7 @@ $yaycheckout_label    = '' !== $yaycheckout_button_text ? $yaycheckout_button_te
         <button type="button" class="button alt" disabled><?php echo esc_html( $yaycheckout_label ); ?></button>
     <?php else : ?>
         <?php
-        $yaycheckout_button_class = 'button alt';
-
-        if ( function_exists( 'wc_wp_theme_get_element_class_name' ) && wc_wp_theme_get_element_class_name( 'button' ) ) {
-            $yaycheckout_button_class .= ' ' . wc_wp_theme_get_element_class_name( 'button' );
-        }
+        $yaycheckout_button_class = \YayCheckout\Helpers\ButtonClassHelper::classes( 'button alt' );
 
         if ( '' === $yaycheckout_button_text ) {
             // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.

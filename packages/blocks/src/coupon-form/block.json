@@ -46,6 +46,7 @@
     }
   },
   "editorScript": "file:./index.js",
+  "viewScript": "yaycheckout-coupon-form",
   "style": "file:./style-index.css",
   "render": "file:./render.php"
 }

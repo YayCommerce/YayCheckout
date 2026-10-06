@@ -1,15 +1,14 @@
 import { useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
+import { previewButtonStyle } from '../shared/preview-styles';
 
 const buttonStyle = {
+	...previewButtonStyle,
 	display: 'block',
 	width: '100%',
 	marginBottom: '8px',
 	padding: '10px 12px',
 	border: '1px solid #1e1e1e',
-	borderRadius: '4px',
-	background: '#1e1e1e',
-	color: '#fff',
 	textAlign: 'center' as const,
 	fontSize: '13px',
 };

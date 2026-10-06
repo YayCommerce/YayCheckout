@@ -62,8 +62,9 @@ jQuery(function ($) {
                     showError($block, $($.parseHTML(response)).text().trim());
                 }
 
-                $(document.body).trigger('applied_coupon_in_checkout', [code]);
-                $(document.body).trigger('update_checkout', { update_shipping_method: false });
+                $(document.body)
+                    .trigger('applied_coupon_in_checkout', [code])
+                    .trigger('update_checkout', { update_shipping_method: false });
             })
             .fail(function () {
                 showError($block);
@@ -86,10 +87,6 @@ jQuery(function ($) {
         })
         .on('input', '.yaycheckout-coupon-form__code', function () {
             clearError($(this).closest('.yaycheckout-coupon-form'));
-        })
-        // Inside the checkout form, WooCommerce's validate_field would mark the field valid and strip its error.
-        .on('input validate change focusout', '.yaycheckout-coupon-form__code', function (event) {
-            event.stopPropagation();
         });
 
     // A notice about the coupons in the cart is stale once one is removed from the order review.

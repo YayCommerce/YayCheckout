@@ -1,3 +1,13 @@
+.yaycheckout-coupon-form__row {
+	display: flex;
+	gap: 8px;
+}
+
+.yaycheckout-coupon-form__code {
+	flex: 1;
+	min-width: 0;
+}
+
 .yaycheckout-coupon-form .yaycheckout-coupon-form__code.has-error {
 	border-color: var(--wc-red, #cc1818);
 	/* Some themes draw the field's frame with outline, not border. */

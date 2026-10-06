@@ -1,6 +1,7 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { previewButtonStyle } from '../shared/preview-styles';
 
 interface CouponFormAttributes {
 	placeholder: string;
@@ -13,6 +14,7 @@ interface EditProps {
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
+	// The fallbacks mirror render.php, which owns the storefront defaults.
 	const { placeholder, buttonText } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-coupon-form' } );
 
@@ -43,14 +45,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					<button
 						type="button"
 						disabled
-						style={ {
-							padding: '10px 16px',
-							border: 0,
-							borderRadius: '4px',
-							background: '#1e1e1e',
-							color: '#fff',
-							fontSize: '14px',
-						} }
+						style={ { ...previewButtonStyle, padding: '10px 16px' } }
 					>
 						{ buttonText || __( 'Apply coupon', 'yaycheckout' ) }
 					</button>
