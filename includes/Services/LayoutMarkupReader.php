@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 class LayoutMarkupReader {
 
     private const CHECKOUT    = 'yaycheckout/checkout';
-    private const CONTACT     = 'yaycheckout/contact';
+    private const EMAIL       = 'yaycheckout/email';
     private const FIELD       = 'yaycheckout/field';
     private const EXTRA_FIELD = 'yaycheckout/extra-field';
     private const SLOT        = 'yaycheckout/slot';
@@ -26,7 +26,7 @@ class LayoutMarkupReader {
 
     /** Section block => slot name it occupies. */
     private const SECTION_SLOTS = [
-        self::CONTACT                  => 'contact',
+        self::EMAIL                    => 'email',
         'yaycheckout/billing'          => 'billing',
         'yaycheckout/shipping'         => 'shipping',
         'yaycheckout/order-review'     => 'order_review',
@@ -57,7 +57,7 @@ class LayoutMarkupReader {
     }
 
     /**
-     * WooCommerce address fields by Key: Contact is billing_email, each Field
+     * WooCommerce address fields by Key: the Email address block is billing_email, each Field
      * block with a Key is its own. A later block with the same Key wins.
      *
      * @return array<string, array>
@@ -68,7 +68,7 @@ class LayoutMarkupReader {
         foreach ( self::blocks( $markup ) as $block ) {
             $attrs = $block['attrs'];
 
-            if ( self::CONTACT === $block['blockName'] ) {
+            if ( self::EMAIL === $block['blockName'] ) {
                 $attrs = [
                     'fieldKey'     => 'billing_email',
                     'type'         => 'email',
