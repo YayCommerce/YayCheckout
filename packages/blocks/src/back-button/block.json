@@ -2,11 +2,11 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "yaycheckout/back-button",
-  "title": "Back Button",
+  "title": "Previous Step Button",
   "category": "yaycheckout",
   "description": "Opens the previous checkout step. Place it anywhere inside Checkout.",
   "textdomain": "yaycheckout",
-  "keywords": [ "previous", "return" ],
+  "keywords": [ "previous", "return", "back", "step" ],
   "example": {
     "attributes": {
       "buttonText": "Back"

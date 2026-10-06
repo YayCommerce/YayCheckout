@@ -2,11 +2,11 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "yaycheckout/step-button",
-  "title": "Step Button",
+  "title": "Next Step Button",
   "category": "yaycheckout",
   "description": "Validates the open checkout step and opens the next one. Place it anywhere inside Checkout.",
   "textdomain": "yaycheckout",
-  "keywords": [ "continue", "next" ],
+  "keywords": [ "continue", "next", "step" ],
   "example": {
     "attributes": {
       "buttonText": "Continue"
