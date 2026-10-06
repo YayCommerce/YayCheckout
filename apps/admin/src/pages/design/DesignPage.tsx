@@ -26,14 +26,26 @@ import { SavePresetModal } from './components/SavePresetModal';
 import { TokenGroups } from './components/TokenGroups';
 
 const FORM_ID = 'design-form';
+const HEADING = __('Design', 'yaycheckout');
+const DESCRIPTION = __('Customize checkout colors, typography and spacing.', 'yaycheckout');
 
 function toFormValues(design: DesignResponse): DesignForm {
   return { tokens: design.tokens, customCss: design.customCss };
 }
 
 export default function DesignPage() {
-  // initialData from the bootstrap: data is defined on first render.
-  const { data } = useDesignQuery();
+  // Defined on first render unless the bootstrap was rejected and is being refetched.
+  const { data, error } = useDesignQuery();
+  if (data) return <DesignPageBody data={data} />;
+
+  return (
+    <PageLayout heading={HEADING} description={DESCRIPTION}>
+      {error && <p className="text-destructive text-sm">{error.message}</p>}
+    </PageLayout>
+  );
+}
+
+function DesignPageBody({ data }: { data: DesignResponse }) {
   const saveMutation = useSaveDesignMutation();
   const deletePresetMutation = useDeleteDesignPresetMutation();
   // The preset the tokens were copied from. Kept out of the form so it never makes the form dirty on its own.
@@ -97,9 +109,11 @@ export default function DesignPage() {
   return (
     <Form {...form}>
       <PageLayout
-        heading={__('Design', 'yaycheckout')}
-        description={__('Customize checkout colors, typography and spacing.', 'yaycheckout')}
-        actions={<DesignActions formId={FORM_ID} isPending={saveMutation.isPending} onReset={setResetCount} />}
+        heading={HEADING}
+        description={DESCRIPTION}
+        actions={
+          <DesignActions design={data} formId={FORM_ID} isPending={saveMutation.isPending} onReset={setResetCount} />
+        }
       >
         <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-5 lg:flex-row">

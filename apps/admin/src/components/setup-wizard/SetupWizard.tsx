@@ -13,7 +13,7 @@ import { logger } from '@/lib/logger';
 import { DESIGN_QUERIES, useDesignQuery } from '@/lib/queries/design.queries';
 import { invalidateListedLayouts } from '@/lib/queries/layout.queries';
 import { useCompleteSetupMutation } from '@/lib/queries/setup.queries';
-import { designFormSchema, type DesignForm } from '@/lib/schema/design.schema';
+import { designFormSchema, type DesignForm, type DesignResponse } from '@/lib/schema/design.schema';
 import { Badge } from '@/components/ui/badge';
 import {
   Breadcrumb,
@@ -38,11 +38,20 @@ const STEPS = [__('Scan', 'yaycheckout'), __('Start from', 'yaycheckout'), __('B
  * done. No close icon, Esc or outside click.
  */
 export function SetupWizard() {
-  const [open, setOpen] = useState(window.yayCheckoutMeta.checkoutMeta.showSetupWizard);
+  // Read the design only on a first run, so one the SPA rejects can't reach screens that never use it.
+  return window.yayCheckoutMeta.checkoutMeta.showSetupWizard ? <SetupWizardWithDesign /> : null;
+}
+
+function SetupWizardWithDesign() {
+  const { data: design } = useDesignQuery();
+  return design ? <SetupWizardDialog design={design} /> : null;
+}
+
+function SetupWizardDialog({ design }: { design: DesignResponse }) {
+  const [open, setOpen] = useState(true);
   const [step, setStep] = useState(0);
   const [templateSlug, setTemplateSlug] = useState<string | null>();
   const [applyError, setApplyError] = useState<string | null>(null);
-  const { data: design } = useDesignQuery();
   const queryClient = useQueryClient();
   const setup = useCompleteSetupMutation();
   const brandForm = useForm<DesignForm>({

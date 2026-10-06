@@ -4,8 +4,7 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { formatDateTime } from '@/lib/helpers/date.helper';
 import { countTokenDiffs } from '@/lib/helpers/design.helper';
 import { countDirtyLeaves } from '@/lib/helpers/form.helper';
-import { useDesignQuery } from '@/lib/queries/design.queries';
-import type { DesignForm } from '@/lib/schema/design.schema';
+import type { DesignForm, DesignResponse } from '@/lib/schema/design.schema';
 import { Button, LoadingButton } from '@/components/ui/button';
 
 /**
@@ -13,30 +12,31 @@ import { Button, LoadingButton } from '@/components/ui/button';
  * onReset receives how many tokens differ from the theme, for the confirm copy.
  */
 export function DesignActions({
+  design,
   formId,
   isPending,
   onReset,
 }: {
+  design: DesignResponse;
   formId: string;
   isPending: boolean;
   onReset: (overrideCount: number) => void;
 }) {
   // Read during render so react-hook-form's proxy subscribes to dirtyFields.
   const { control, formState } = useFormContext<DesignForm>();
-  const { data } = useDesignQuery();
   const tokens = useWatch({ control, name: 'tokens' });
   const dirtyCount = countDirtyLeaves(formState.dirtyFields);
   const { isDirty } = formState;
   // What "Reset to theme" would clear.
-  const overrideCount = countTokenDiffs(tokens, data.defaultTokens);
+  const overrideCount = countTokenDiffs(tokens, design.defaultTokens);
 
   let status: string;
   if (isDirty) {
     /* translators: %d: number of edits not yet saved */
     status = sprintf(_n('%d change pending', '%d changes pending', dirtyCount, 'yaycheckout'), dirtyCount);
-  } else if (data.updatedAt) {
+  } else if (design.updatedAt) {
     /* translators: %s: date and time of the last save */
-    status = sprintf(__('last saved %s', 'yaycheckout'), formatDateTime(data.updatedAt));
+    status = sprintf(__('last saved %s', 'yaycheckout'), formatDateTime(design.updatedAt));
   } else {
     status = __('not saved yet', 'yaycheckout');
   }

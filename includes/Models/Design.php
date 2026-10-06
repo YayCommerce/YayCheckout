@@ -486,7 +486,7 @@ class Design {
                 return in_array( $value, $rule['enum'], true );
 
             case 'hex_color':
-                return is_string( $value ) && 1 === preg_match( '/^#[0-9A-Fa-f]{6}$/', $value );
+                return is_string( $value ) && 1 === preg_match( '/^#[0-9A-Fa-f]{6}$/D', $value );
         }
 
         return false;
