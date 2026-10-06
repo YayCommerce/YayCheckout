@@ -1,7 +1,6 @@
 <?php
 namespace YayCheckout\Renderer;
 
-use YayCheckout\Models\Design;
 use YayCheckout\Repositories\DesignRepository;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -27,16 +26,8 @@ class CheckoutColour {
     }
 
     public function print_primary(): void {
-        $stored  = ( new DesignRepository() )->get()->tokens['colours']['primary'] ?? '';
-        $primary = sanitize_hex_color( is_string( $stored ) ? $stored : '' );
-
-        if ( ! is_string( $primary ) ) {
-            $primary = sanitize_hex_color( (string) Design::schema()['colours']['primary']['default'] );
-        }
-
-        if ( ! is_string( $primary ) ) {
-            return;
-        }
+        // Design::from_option() already narrows the token to a valid hex colour or the schema default.
+        $primary = ( new DesignRepository() )->get()->tokens['colours']['primary'];
 
         $css = '.yaycheckout-checkout{--yaycheckout-primary:' . $primary . ';}';
 

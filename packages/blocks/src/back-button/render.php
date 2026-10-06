@@ -14,10 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_button_text = isset( $attributes['buttonText'] ) && is_string( $attributes['buttonText'] )
-    ? $attributes['buttonText']
-    : '';
-$yaycheckout_label       = '' !== $yaycheckout_button_text ? $yaycheckout_button_text : __( 'Back', 'yaycheckout' );
+$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'buttonText', __( 'Back', 'yaycheckout' ) );
 
 $yaycheckout_wrapper = get_block_wrapper_attributes(
     [

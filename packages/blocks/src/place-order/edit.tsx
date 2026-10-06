@@ -21,6 +21,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				className="yaycheckout-place-order__button"
 				value={ attributes.buttonText }
 				onChange={ ( value: string ) => setAttributes( { buttonText: value } ) }
+				// Mirrors the fallback label in place-order/render.php.
 				placeholder={ __( 'Place order', 'yaycheckout' ) }
 				allowedFormats={ [] }
 				withoutInteractiveFormatting

@@ -7,8 +7,9 @@ import { store as noticesStore } from '@wordpress/notices';
 import { registerPlugin } from '@wordpress/plugins';
 import { duplicateKeys, EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
 import { editorData } from '../shared/editor-data';
+import checkoutMeta from './block.json';
 
-const CHECKOUT_BLOCK = 'yaycheckout/checkout';
+const CHECKOUT_BLOCK = checkoutMeta.name;
 const LOCK_KEY = 'yaycheckout-layout-invalid';
 
 /**

@@ -1,7 +1,7 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import './editor.css';
+import '../shared/section-preview.css';
 
 interface PaymentAttributes {
 	label: string;
@@ -29,12 +29,12 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<h3 className="yaycheckout-payment__heading">{ heading }</h3>
-				<label className="yaycheckout-payment__option">
+				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>
+				<label className="yaycheckout-section-preview__option">
 					<input type="radio" disabled defaultChecked />{ ' ' }
 					{ __( 'Direct bank transfer', 'yaycheckout' ) }
 				</label>
-				<label className="yaycheckout-payment__option">
+				<label className="yaycheckout-section-preview__option">
 					<input type="radio" disabled />{ ' ' }
 					{ __( 'Cash on delivery', 'yaycheckout' ) }
 				</label>

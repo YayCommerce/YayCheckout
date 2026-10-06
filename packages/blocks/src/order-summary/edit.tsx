@@ -1,6 +1,7 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import '../shared/section-preview.css';
 import './editor.css';
 
 interface OrderSummaryAttributes {
@@ -29,7 +30,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<h3 className="yaycheckout-order-summary__heading">{ heading }</h3>
+				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>
 				<table className="yaycheckout-order-summary__table">
 					<thead>
 						<tr>

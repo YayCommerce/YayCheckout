@@ -45,7 +45,8 @@ function onClick( event: MouseEvent ): void {
 	const item = button.closest< HTMLElement >( ITEM );
 	const checkout = button.closest( CHECKOUT );
 
-	if ( ! item || ! checkout || item.dataset.state !== 'complete' || ! item.dataset.step ) {
+	// paint() keeps the button disabled unless its step is complete.
+	if ( ! item || ! checkout || ! item.dataset.step ) {
 		return;
 	}
 
@@ -59,14 +60,16 @@ function onClick( event: MouseEvent ): void {
 }
 
 function sync( checkout: Element ): void {
-	const steps = [ ...checkout.querySelectorAll< HTMLElement >( '.yaycheckout-step' ) ];
+	const states = new Map< string, string >();
 
-	checkout.querySelectorAll< HTMLElement >( '.yaycheckout-progress' ).forEach( ( progress ) => {
-		progress.querySelectorAll< HTMLElement >( ITEM ).forEach( ( item ) => {
-			const step = steps.find( ( candidate ) => candidate.dataset.step === item.dataset.step );
+	checkout.querySelectorAll< HTMLElement >( '.yaycheckout-step' ).forEach( ( step ) => {
+		if ( step.dataset.step && step.dataset.state && ! states.has( step.dataset.step ) ) {
+			states.set( step.dataset.step, step.dataset.state );
+		}
+	} );
 
-			paint( item, step?.dataset.state ?? 'locked' );
-		} );
+	checkout.querySelectorAll< HTMLElement >( ITEM ).forEach( ( item ) => {
+		paint( item, states.get( item.dataset.step ?? '' ) ?? 'locked' );
 	} );
 }
 

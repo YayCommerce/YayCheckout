@@ -4,8 +4,9 @@ import { store as editorStore } from '@wordpress/editor';
 import { useEffect, useRef } from '@wordpress/element';
 import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
+import checkoutMeta from './block.json';
 
-const CHECKOUT_BLOCK = 'yaycheckout/checkout';
+const CHECKOUT_BLOCK = checkoutMeta.name;
 
 /**
  * With no block selected, core's header inserter targets the post root, where

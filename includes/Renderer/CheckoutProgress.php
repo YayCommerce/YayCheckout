@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -17,6 +18,9 @@ class CheckoutProgress {
 
     /** Progress block.json usesContext lists this same key. */
     public const STEP_TITLES = 'yaycheckout/stepTitles';
+
+    private const STEPS = 'yaycheckout/steps';
+    private const STEP  = 'yaycheckout/step';
 
     protected function __construct() {
         add_filter( 'render_block_context', [ $this, 'provide_step_titles' ], 10, 2 );
@@ -41,9 +45,8 @@ class CheckoutProgress {
         }
 
         $inner = is_array( $parsed_block['innerBlocks'] ?? null ) ? $parsed_block['innerBlocks'] : [];
-        $found = self::titles_in( $inner );
 
-        $context[ self::STEP_TITLES ] = $found ?? [];
+        $context[ self::STEP_TITLES ] = self::titles_in( $inner );
 
         return $context;
     }
@@ -68,14 +71,13 @@ class CheckoutProgress {
         $items = '';
 
         foreach ( $titles as $position => $label ) {
-            $number  = (int) $position + 1;
-            $state   = 1 === $number ? 'current' : 'locked';
-            $current = 'current' === $state ? ' aria-current="step"' : '';
-            $items  .= '<li class="yaycheckout-progress__item" data-state="' . esc_attr( $state ) . '" data-step="' . esc_attr( (string) $number ) . '"' . $current . '>';
-            $items  .= '<button type="button" class="yaycheckout-progress__jump" disabled>';
-            $items  .= '<span class="yaycheckout-progress__marker">' . esc_html( (string) $number ) . '</span>';
-            $items  .= '<span class="yaycheckout-progress__title">' . esc_html( (string) $label ) . '</span>';
-            $items  .= '</button></li>';
+            $number = (int) $position + 1;
+            $first  = 1 === $number;
+            $items .= '<li class="yaycheckout-progress__item" data-state="' . ( $first ? 'current' : 'locked' ) . '" data-step="' . esc_attr( (string) $number ) . '"' . ( $first ? ' aria-current="step"' : '' ) . '>';
+            $items .= '<button type="button" class="yaycheckout-progress__jump" disabled>';
+            $items .= '<span class="yaycheckout-progress__marker">' . esc_html( (string) $number ) . '</span>';
+            $items .= '<span class="yaycheckout-progress__title">' . esc_html( (string) $label ) . '</span>';
+            $items .= '</button></li>';
         }
 
         $wrapper = get_block_wrapper_attributes( [ 'class' => 'yaycheckout-progress' ] );
@@ -84,48 +86,28 @@ class CheckoutProgress {
     }
 
     /**
-     * @param array[] $blocks
-     * @return string[]|null Null when this branch has no Steps block.
-     */
-    private static function titles_in( array $blocks ): ?array {
-        foreach ( $blocks as $block ) {
-            if ( ! is_array( $block ) ) {
-                continue;
-            }
-
-            if ( 'yaycheckout/steps' === ( $block['blockName'] ?? '' ) ) {
-                $inner = is_array( $block['innerBlocks'] ?? null ) ? $block['innerBlocks'] : [];
-
-                return self::child_titles( $inner );
-            }
-
-            $inner = is_array( $block['innerBlocks'] ?? null ) ? $block['innerBlocks'] : [];
-            $found = self::titles_in( $inner );
-
-            if ( null !== $found ) {
-                return $found;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param array[] $blocks Direct children of a Steps block.
+     * Titles of the first Steps block's Step children, in order; empty without one.
+     *
+     * @param array[] $blocks Checkout's inner blocks.
      * @return string[]
      */
-    private static function child_titles( array $blocks ): array {
-        $titles = [];
-
-        foreach ( $blocks as $block ) {
-            if ( ! is_array( $block ) || 'yaycheckout/step' !== ( $block['blockName'] ?? '' ) ) {
+    private static function titles_in( array $blocks ): array {
+        foreach ( LayoutMarkupReader::flatten( $blocks ) as $block ) {
+            if ( self::STEPS !== $block['blockName'] ) {
                 continue;
             }
 
-            $raw      = $block['attrs']['title'] ?? '';
-            $titles[] = self::step_title( is_string( $raw ) ? $raw : '' );
+            $titles = [];
+
+            foreach ( $block['innerBlocks'] as $child ) {
+                if ( self::STEP === ( $child['blockName'] ?? '' ) ) {
+                    $titles[] = self::step_title( LayoutMarkupReader::text( is_array( $child['attrs'] ?? null ) ? $child['attrs'] : [], 'title' ) );
+                }
+            }
+
+            return $titles;
         }
 
-        return $titles;
+        return [];
     }
 }

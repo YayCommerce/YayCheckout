@@ -10,6 +10,7 @@ const CURRENT = 'current';
 const LOCKED = 'locked';
 const COMPLETE = 'complete';
 
+type StepState = typeof CURRENT | typeof LOCKED | typeof COMPLETE;
 type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
 function boot(): void {
@@ -50,26 +51,14 @@ function onClick( event: MouseEvent ): void {
 		return;
 	}
 
-	const stepButton = target.closest< HTMLButtonElement >( '.yaycheckout-step-button' );
+	const button = target.closest< HTMLButtonElement >( '.yaycheckout-step-button, .yaycheckout-back-button' );
 
-	if ( stepButton ) {
+	if ( button ) {
 		event.preventDefault();
-		const step = stepForButton( stepButton );
+		const step = stepForButton( button );
 
 		if ( step && step.dataset.state === CURRENT ) {
-			advance( step );
-		}
-		return;
-	}
-
-	const backButton = target.closest< HTMLButtonElement >( '.yaycheckout-back-button' );
-
-	if ( backButton ) {
-		event.preventDefault();
-		const step = stepForButton( backButton );
-
-		if ( step && step.dataset.state === CURRENT ) {
-			retreat( step );
+			( button.classList.contains( 'yaycheckout-step-button' ) ? advance : retreat )( step );
 		}
 		return;
 	}
@@ -84,16 +73,29 @@ function onClick( event: MouseEvent ): void {
 	reopen( step );
 }
 
-type StepState = typeof CURRENT | typeof LOCKED | typeof COMPLETE;
-
 function advance( step: HTMLElement ): void {
-	if ( ! stepIsValid( step ) ) {
+	if ( ! complete( step ) ) {
 		return;
 	}
 
-	writeSummary( step, summaryText( step ) );
+	const next = siblingStep( step.nextElementSibling );
+
+	if ( next ) {
+		setState( next, CURRENT );
+	}
+}
+
+/** Checks the step and, when it passes, marks it complete with its summary. */
+function complete( step: HTMLElement ): boolean {
+	const controls = visibleControls( step );
+
+	if ( ! stepIsValid( step, controls ) ) {
+		return false;
+	}
+
+	writeSummary( step, summaryText( controls ) );
 	setState( step, COMPLETE );
-	openNext( step );
+	return true;
 }
 
 function reopen( step: HTMLElement ): void {
@@ -122,23 +124,17 @@ function park( step: HTMLElement ): boolean {
 	}
 
 	// Values may have changed since Continue. Leaving must re-check them.
-	if ( ! stepIsValid( step ) ) {
-		return false;
-	}
-
-	writeSummary( step, summaryText( step ) );
-	setState( step, COMPLETE );
-	return true;
+	return complete( step );
 }
 
 function setState( step: HTMLElement, state: StepState ): void {
+	const done = state === COMPLETE;
 	step.dataset.state = state;
 
-	if ( state === COMPLETE ) {
+	if ( done ) {
 		step.dataset.completed = 'true';
 	}
 
-	const done = state === COMPLETE;
 	const summary = step.querySelector< HTMLElement >( '.yaycheckout-step__summary' );
 
 	if ( summary ) {
@@ -188,47 +184,27 @@ function writeSummary( step: HTMLElement, line: string ): void {
 	}
 }
 
-function openNext( step: HTMLElement ): void {
-	const sibling = nextStep( step );
-
-	if ( sibling ) {
-		setState( sibling, CURRENT );
-	}
-}
-
 function retreat( step: HTMLElement ): void {
-	const previous = previousStep( step );
+	const previous = siblingStep( step.previousElementSibling );
 
 	if ( ! previous ) {
 		return;
 	}
 
 	// Back leaves the open step without re-checking it. Continue is what checks.
-	if ( step.dataset.completed === 'true' ) {
-		setState( step, COMPLETE );
-	} else {
-		setState( step, LOCKED );
-	}
+	setState( step, step.dataset.completed === 'true' ? COMPLETE : LOCKED );
 
 	setState( previous, CURRENT );
 }
 
-function nextStep( step: HTMLElement ): HTMLElement | null {
-	const sibling = step.nextElementSibling;
-
+function siblingStep( sibling: Element | null ): HTMLElement | null {
 	return sibling instanceof HTMLElement && sibling.matches( STEP ) ? sibling : null;
 }
 
-function previousStep( step: HTMLElement ): HTMLElement | null {
-	const sibling = step.previousElementSibling;
-
-	return sibling instanceof HTMLElement && sibling.matches( STEP ) ? sibling : null;
-}
-
-function stepIsValid( step: HTMLElement ): boolean {
+function stepIsValid( step: HTMLElement, controls: Control[] ): boolean {
 	const seenRadios = new Set< string >();
 
-	for ( const control of visibleControls( step ) ) {
+	for ( const control of controls ) {
 		if ( control instanceof HTMLInputElement && control.type === 'radio' ) {
 			if ( seenRadios.has( control.name ) ) {
 				continue;
@@ -310,9 +286,7 @@ function isShown( control: HTMLElement ): boolean {
 }
 
 function isRowRequired( control: Element ): boolean {
-	const row = control.closest( '.form-row' );
-
-	return !! row && row.classList.contains( 'validate-required' );
+	return !! control.closest( '.form-row.validate-required' );
 }
 
 function message( step: HTMLElement, key: 'requiredMessage' | 'selectMessage' ): string {
@@ -321,10 +295,10 @@ function message( step: HTMLElement, key: 'requiredMessage' | 'selectMessage' ):
 	return steps?.dataset[ key ] ?? '';
 }
 
-function summaryText( step: HTMLElement ): string {
+function summaryText( controls: Control[] ): string {
 	const values: string[] = [];
 
-	for ( const control of visibleControls( step ) ) {
+	for ( const control of controls ) {
 		if ( control instanceof HTMLInputElement && ( control.type === 'radio' || control.type === 'checkbox' ) && ! control.checked ) {
 			continue;
 		}
@@ -372,11 +346,7 @@ function optionLabel( control: HTMLInputElement ): Element | null {
 		return wrapping;
 	}
 
-	if ( control.id === '' ) {
-		return null;
-	}
-
-	const labels = [ ...document.querySelectorAll< HTMLLabelElement >( `label[for="${ CSS.escape( control.id ) }"]` ) ];
+	const labels = [ ...( control.labels ?? [] ) ];
 
 	return labels.find( ( label ) => label.classList.contains( 'radio' ) || label.classList.contains( 'checkbox' ) ) ?? labels[ 0 ] ?? null;
 }

@@ -1,5 +1,9 @@
 import { store as blocksStore } from '@wordpress/blocks';
 import { useSelect } from '@wordpress/data';
+import { useMemo } from '@wordpress/element';
+import backButtonMeta from '../back-button/block.json';
+import checkoutMeta from '../checkout/block.json';
+import stepButtonMeta from '../step-button/block.json';
 
 interface BlockTypeRules {
 	name: string;
@@ -7,10 +11,10 @@ interface BlockTypeRules {
 	ancestor?: string[];
 }
 
-const CHECKOUT = 'yaycheckout/checkout';
+const CHECKOUT = checkoutMeta.name;
 
 // The step buttons find the open step from anywhere in the form, so they stay allowed inside an address section.
-const STEP_BUTTONS = new Set( [ 'yaycheckout/step-button', 'yaycheckout/back-button' ] );
+const STEP_BUTTONS = new Set( [ stepButtonMeta.name, backButtonMeta.name ] );
 
 /** A block whose ancestor rule names Checkout, other than the step buttons. */
 export function isCheckoutSection( type: BlockTypeRules ): boolean {
@@ -28,12 +32,10 @@ export function isCheckoutSection( type: BlockTypeRules ): boolean {
  * listing one would override its parent rule.
  */
 export function useBlocksAllowedExcept( excluded: ( type: BlockTypeRules ) => boolean ): string[] {
-	return useSelect(
-		( select ) =>
-			select( blocksStore )
-				.getBlockTypes()
-				.filter( ( type: BlockTypeRules ) => ! type.parent && ! excluded( type ) )
-				.map( ( type: BlockTypeRules ) => type.name ),
-		[ excluded ]
+	const types: BlockTypeRules[] = useSelect( ( select ) => select( blocksStore ).getBlockTypes(), [] );
+
+	return useMemo(
+		() => types.filter( ( type ) => ! type.parent && ! excluded( type ) ).map( ( type ) => type.name ),
+		[ types, excluded ]
 	);
 }

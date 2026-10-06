@@ -1,28 +1,7 @@
-import { RichText, useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
+import { StepNavButtonEdit, type StepNavButtonEditProps } from '../shared/step-nav-button-edit';
 
-interface StepButtonAttributes {
-	buttonText: string;
-}
-
-interface EditProps {
-	attributes: StepButtonAttributes;
-	setAttributes: ( attributes: Partial< StepButtonAttributes > ) => void;
-}
-
-/** A div, not a button: typing Space inside a button would click it. */
-export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const blockProps = useBlockProps( { className: 'yaycheckout-step-button' } );
-
-	return (
-		<RichText
-			{ ...blockProps }
-			tagName="div"
-			value={ attributes.buttonText }
-			onChange={ ( value: string ) => setAttributes( { buttonText: value } ) }
-			placeholder={ __( 'Continue', 'yaycheckout' ) }
-			allowedFormats={ [] }
-			withoutInteractiveFormatting
-		/>
-	);
+// The placeholder mirrors the fallback label in step-button/render.php.
+export default function Edit( props: StepNavButtonEditProps ) {
+	return <StepNavButtonEdit { ...props } className="yaycheckout-step-button" placeholder={ __( 'Continue', 'yaycheckout' ) } />;
 }

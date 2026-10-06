@@ -1,6 +1,7 @@
 import { InnerBlocks, InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import stepMeta from '../step/block.json';
 
 interface StepsAttributes {
 	layout: string;
@@ -19,9 +20,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { layout } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-steps' } );
 	const innerBlocksProps = useInnerBlocksProps( blockProps, {
-		template: [ [ 'yaycheckout/step' ], [ 'yaycheckout/step' ] ],
+		template: [ [ stepMeta.name ], [ stepMeta.name ] ],
 		templateLock: false,
-		defaultBlock: { name: 'yaycheckout/step' },
+		defaultBlock: { name: stepMeta.name },
 		directInsert: true,
 		renderAppender: InnerBlocks.ButtonBlockAppender,
 	} );

@@ -8,8 +8,10 @@ import {
 import { useSelect } from '@wordpress/data';
 import { useBlocksAllowedExcept } from '../shared/allowed-blocks';
 import { stepTitle } from '../shared/step-title';
+import stepButtonMeta from '../step-button/block.json';
+import stepsMeta from '../steps/block.json';
 
-const isSteps = ( type: { name: string } ) => type.name === 'yaycheckout/steps';
+const isSteps = ( type: { name: string } ) => type.name === stepsMeta.name;
 
 interface StepAttributes {
 	title: string;
@@ -31,7 +33,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		{ className: 'yaycheckout-step__body' },
 		{
 			allowedBlocks,
-			template: [ [ 'yaycheckout/step-button' ] ],
+			template: [ [ stepButtonMeta.name ] ],
 			templateLock: false,
 			renderAppender: InnerBlocks.ButtonBlockAppender,
 		}

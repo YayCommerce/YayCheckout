@@ -10,9 +10,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_button_text = isset( $attributes['buttonText'] ) && is_string( $attributes['buttonText'] )
-    ? $attributes['buttonText']
-    : '';
+$yaycheckout_button_text = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'buttonText' );
 
 $yaycheckout_has_cart = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart;
 $yaycheckout_label    = '' !== $yaycheckout_button_text ? $yaycheckout_button_text : __( 'Place order', 'yaycheckout' );
