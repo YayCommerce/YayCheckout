@@ -1,17 +1,15 @@
 <?php
 /**
- * Checkout page: the theme's header and footer around the layout's blocks. The
- * root Checkout block is the form; everything WooCommerce needs on the page is a block.
- * Classic themes print the whole document from header.php/footer.php; block
- * themes have no such files, so the shell is ours and the header/footer are
- * the theme's template parts.
+ * Checkout page: the layout's blocks in our own document, with no theme header
+ * or footer, on every theme. The root Checkout block is the form; everything
+ * WooCommerce needs on the page is a block. The theme's styles still load
+ * through wp_head().
  */
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_layout   = \YayCheckout\Renderer\CheckoutPage::get_instance()->layout();
-$yaycheckout_preview  = \YayCheckout\Renderer\PreviewRequest::get_instance();
-$yaycheckout_is_block = wp_is_block_theme();
+$yaycheckout_layout  = \YayCheckout\Renderer\CheckoutPage::get_instance()->layout();
+$yaycheckout_preview = \YayCheckout\Renderer\PreviewRequest::get_instance();
 
 /*
  * Rendered before wp_head(), as core's template-canvas.php does: blocks enqueue
@@ -37,36 +35,24 @@ ob_start();
 </div>
 <?php
 $yaycheckout_main = (string) ob_get_clean();
-
-if ( ! $yaycheckout_is_block ) {
-    get_header();
-    echo $yaycheckout_main; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered above.
-    get_footer();
-    return;
-}
-
-ob_start();
-block_header_area();
-$yaycheckout_header = (string) ob_get_clean();
-
-ob_start();
-block_footer_area();
-$yaycheckout_footer = (string) ob_get_clean();
 ?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
 <head>
     <meta charset="<?php bloginfo( 'charset' ); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <?php
+    // Classic themes without title-tag print <title> in header.php, which no longer loads; block themes and title-tag themes get theirs from wp_head().
+    if ( ! current_theme_supports( 'title-tag' ) && false === has_action( 'wp_head', '_block_template_render_title_tag' ) ) :
+        ?>
+        <title><?php echo esc_html( wp_get_document_title() ); ?></title>
+    <?php endif; ?>
     <?php wp_head(); ?>
 </head>
 <body <?php body_class( 'yaycheckout-page' ); ?>>
 <?php wp_body_open(); ?>
 <div class="wp-site-blocks">
-<?php
-// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered above by core and the layout's blocks.
-echo $yaycheckout_header . $yaycheckout_main . $yaycheckout_footer;
-?>
+<?php echo $yaycheckout_main; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered above by the layout's blocks. ?>
 </div>
 <?php wp_footer(); ?>
 </body>
