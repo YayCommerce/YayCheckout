@@ -13,9 +13,7 @@ defined( 'ABSPATH' ) || exit;
 
 $yaycheckout_has_cart      = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart;
 $yaycheckout_default_label = __( 'Place order', 'yaycheckout' );
-$yaycheckout_label         = isset( $attributes['buttonText'] ) && is_string( $attributes['buttonText'] )
-    ? trim( html_entity_decode( wp_strip_all_tags( $attributes['buttonText'], true ), ENT_QUOTES, get_bloginfo( 'charset' ) ) )
-    : '';
+$yaycheckout_label         = trim( html_entity_decode( wp_strip_all_tags( \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'buttonText' ), true ), ENT_QUOTES, get_bloginfo( 'charset' ) ) );
 
 if ( '' === $yaycheckout_label || $yaycheckout_default_label === $yaycheckout_label ) {
     // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.

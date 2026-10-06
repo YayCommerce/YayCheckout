@@ -6,7 +6,9 @@
   "category": "yaycheckout",
   "description": "Submit button for placing the order.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
+  "keywords": [ "submit", "buy" ],
+  "example": {},
+  "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "buttonText": {
       "type": "string"

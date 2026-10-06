@@ -4,13 +4,15 @@ import { store as editorStore } from '@wordpress/editor';
 import { useEffect, useRef } from '@wordpress/element';
 import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
+import checkoutMeta from './block.json';
 
-const CHECKOUT_BLOCK = 'yaycheckout/checkout';
-const ADDRESS_SECTIONS = [ 'yaycheckout/billing', 'yaycheckout/shipping' ];
+const CHECKOUT_BLOCK = checkoutMeta.name;
 
 /**
- * Points the header inserter at the selected Billing or Shipping block, so Field
- * is offered, and otherwise at the Checkout block wherever it sits.
+ * With no block selected, core's header inserter targets the post root, where
+ * no YayCheckout block may go, so this points it at the end of Checkout. Once a
+ * block is selected it hands back to core, which inserts after the selection or
+ * into its closest ancestor that allows the block.
  */
 function LayoutInserterRoot() {
 	const postType = useSelect( ( select ) => select( editorStore ).getCurrentPostType(), [] );
@@ -20,36 +22,34 @@ function LayoutInserterRoot() {
 			return null;
 		}
 
-		const { getBlockCount, getBlockName, getClientIdsWithDescendants, getSelectedBlock } =
+		const { getBlockCount, getBlockName, getClientIdsWithDescendants, getSelectedBlockClientId } =
 			select( blockEditorStore );
+
+		if ( getSelectedBlockClientId() ) {
+			return null;
+		}
+
 		const rootClientId = getClientIdsWithDescendants().find(
 			( id: string ) => getBlockName( id ) === CHECKOUT_BLOCK
 		);
 
-		if ( ! rootClientId ) {
-			return null;
-		}
-
-		const selected = getSelectedBlock();
-
-		if ( selected && ADDRESS_SECTIONS.includes( selected.name ) ) {
-			return {
-				rootClientId: selected.clientId,
-				insertionIndex: getBlockCount( selected.clientId ),
-			};
-		}
-
-		return {
-			rootClientId,
-			insertionIndex: getBlockCount( rootClientId ),
-		};
+		return rootClientId ? { rootClientId, insertionIndex: getBlockCount( rootClientId ) } : null;
 	}, [ postType ] );
 	const { setIsInserterOpened } = useDispatch( editorStore );
 	const lastKey = useRef( '' );
 
 	useEffect( () => {
-		if ( ! isInserterOpened || ! destination ) {
+		if ( ! isInserterOpened ) {
 			lastKey.current = '';
+			return;
+		}
+
+		if ( ! destination ) {
+			// The editor keeps an explicit root ahead of the selection, so drop ours.
+			if ( lastKey.current !== '' ) {
+				lastKey.current = '';
+				setIsInserterOpened( true );
+			}
 			return;
 		}
 
@@ -60,10 +60,7 @@ function LayoutInserterRoot() {
 		}
 
 		lastKey.current = key;
-		setIsInserterOpened( {
-			rootClientId: destination.rootClientId,
-			insertionIndex: destination.insertionIndex,
-		} );
+		setIsInserterOpened( destination );
 	}, [ isInserterOpened, destination, setIsInserterOpened ] );
 
 	return null;

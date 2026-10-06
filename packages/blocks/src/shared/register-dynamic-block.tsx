@@ -3,6 +3,7 @@ import { registerBlockType } from '@wordpress/blocks';
 import { blockIcons } from './block-icons';
 
 type BlockSettings = NonNullable< Parameters< typeof registerBlockType >[ 1 ] >;
+type BlockMetadata = { name: string } & Record< string, unknown >;
 
 /**
  * Saves only the inner blocks; render.php still prints the wrapper. A parent whose
@@ -17,13 +18,13 @@ export function saveNestedBlocks() {
  * must pass saveNestedBlocks as save.
  */
 export function registerDynamicBlock(
-	name: string,
+	metadata: BlockMetadata,
 	edit: BlockSettings[ 'edit' ],
 	save: BlockSettings[ 'save' ] = () => null,
 	settings: Omit< BlockSettings, 'edit' | 'save' > = {}
 ): void {
-	registerBlockType( name, {
-		icon: blockIcons[ name ],
+	registerBlockType( metadata as Parameters< typeof registerBlockType >[ 0 ], {
+		icon: blockIcons[ metadata.name ],
 		...settings,
 		edit,
 		save,

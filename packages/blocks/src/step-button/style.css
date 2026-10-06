@@ -1,0 +1,25 @@
+.yaycheckout-step-button {
+	display: block;
+	width: fit-content;
+	margin: 16px 0 0;
+	padding: 10px 18px;
+	border: 0;
+	border-radius: 6px;
+	background: var(--yaycheckout-primary);
+	color: #fff;
+	font-family: inherit;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.2;
+	cursor: pointer;
+}
+
+/* Classic themes (Storefront) repaint button:hover. */
+.yaycheckout-step-button:is(:hover, :focus) {
+	background: var(--yaycheckout-primary);
+	color: #fff;
+}
+
+.yaycheckout-step-button[hidden] {
+	display: none;
+}

@@ -11,6 +11,22 @@ const icon = ( ...paths: string[] ) => (
 );
 
 export const blockIcons: Record< string, JSX.Element > = {
+	'yaycheckout/steps': icon(
+		'M4 4.5h16v3.2H4V4.5Zm0 5.9h16v3.2H4v-3.2Zm0 5.9h16V19.5H4V16.3Z'
+	),
+	'yaycheckout/progress': icon(
+		'M4 10.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm8 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm8 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z',
+		'M6.2 12.2h3.6v1.2H6.2v-1.2Zm8 0h3.6v1.2h-3.6v-1.2Z'
+	),
+	'yaycheckout/step': icon(
+		'M6 8.2a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4ZM10.2 9.4h8v2h-8v-2Z'
+	),
+	'yaycheckout/step-button': icon(
+		'M4 9h11v6H4V9Zm12.2 3-2.7-2.7v5.4L16.2 12Z'
+	),
+	'yaycheckout/back-button': icon(
+		'M7.8 12 10.5 9.3v5.4L7.8 12ZM9 9h11v6H9V9Z'
+	),
 	'yaycheckout/checkout': icon(
 		'M8 7V6a4 4 0 0 1 8 0v1h3v13H5V7h3Zm1.5 0h5V6a2.5 2.5 0 0 0-5 0v1ZM6.5 8.5v10h11v-10h-11Z',
 		'M15.44 11.44 16.5 12.5l-4.97 4.97-3.03-3.03 1.06-1.06 1.97 1.97 3.91-3.91Z'
@@ -51,6 +67,10 @@ export const blockIcons: Record< string, JSX.Element > = {
 	'yaycheckout/payment': icon(
 		'M3 5h18v14H3V5Zm1.5 1.5v2h15v-2h-15Zm0 4.5v6.5h15V11h-15Z',
 		'M6 14h4v1.5H6V14Z'
+	),
+	'yaycheckout/coupon-form': icon(
+		'M3 6h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4V6Zm1.5 1.5v1.38a3.5 3.5 0 0 1 0 6.24v1.38h15v-1.38a3.5 3.5 0 0 1 0-6.24V7.5h-15Z',
+		'M9 9h1.5v1.5H9V9Zm0 2.25h1.5v1.5H9v-1.5Zm0 2.25h1.5V15H9v-1.5Z'
 	),
 	'yaycheckout/order-summary': icon(
 		'M5 3h14v18l-2.33-1.5L14.33 21 12 19.5 9.67 21l-2.34-1.5L5 21V3Zm1.5 1.5v13.7l.83-.53 2.34 1.5 2.33-1.5 2.33 1.5 2.34-1.5.83.53V4.5h-11Z',

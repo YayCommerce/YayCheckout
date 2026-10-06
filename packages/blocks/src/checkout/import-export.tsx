@@ -9,6 +9,7 @@ import { store as noticesStore } from '@wordpress/notices';
 import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
 import { filenameFromHeaders, isJsonFileName, saveFile } from '../shared/export-file';
+import './import-export.css';
 
 /** Locks Import / Export outside Pro. Cosmetic only: it hides UI, it guards no data. */
 const IS_PRO = editorData.isPro;
@@ -48,8 +49,6 @@ function formatFileSize( bytes: number ): string {
 	/* translators: %s: file size in kilobytes */
 	return sprintf( __( '%s KB', 'yaycheckout' ), ( bytes / 1024 ).toFixed( 1 ) );
 }
-
-const SUMMARY_LABEL_STYLE = { display: 'block', color: '#757575', marginBottom: 4 } as const;
 
 /** The file's layout as LayoutImportReview accepts it; rejects with the server's reason. Only JSON is checked here, since it cannot be sent otherwise. */
 async function reviewFile( text: string ): Promise< Pick< ImportReview, 'title' | 'content' | 'blocks' | 'has_rules' > > {
@@ -104,15 +103,20 @@ function ImportModal( { onClose, onImport }: { onClose: () => void; onImport: ( 
 	};
 
 	return (
-		<Modal title={ __( 'Import layout', 'yaycheckout' ) } size="medium" onRequestClose={ close }>
+		<Modal
+			title={ __( 'Import layout', 'yaycheckout' ) }
+			size="medium"
+			className="yaycheckout-import-export"
+			onRequestClose={ close }
+		>
 			{ importError && (
 				<Notice status="error" isDismissible={ false }>
 					{ importError }
 				</Notice>
 			) }
-			<div style={ { position: 'relative', padding: '32px 48px', textAlign: 'center' } }>
+			<div className="yaycheckout-import-export__drop">
 				<DropZone onFilesDrop={ handleFiles } />
-				<h2 style={ { fontWeight: 400 } }>{ __( 'Drop files to upload', 'yaycheckout' ) }</h2>
+				<h2 className="yaycheckout-import-export__drop-title">{ __( 'Drop files to upload', 'yaycheckout' ) }</h2>
 				<p>{ __( 'or', 'yaycheckout' ) }</p>
 				<FormFileUpload
 					__next40pxDefaultSize
@@ -127,7 +131,7 @@ function ImportModal( { onClose, onImport }: { onClose: () => void; onImport: ( 
 					{ __( 'Select Files', 'yaycheckout' ) }
 				</FormFileUpload>
 				{ importReview && (
-					<p style={ { marginTop: 24 } }>
+					<p className="yaycheckout-import-export__file">
 						<strong>{ importReview.fileName }</strong>
 						<br />
 						{ formatFileSize( importReview.fileSize ) }
@@ -137,22 +141,10 @@ function ImportModal( { onClose, onImport }: { onClose: () => void; onImport: ( 
 			{ importReview && (
 				<Flex direction="column" align="stretch" gap={ 4 }>
 					<Flex justify="flex-start" gap={ 3 }>
-						<span
-							style={ {
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-								flexShrink: 0,
-								width: 32,
-								height: 32,
-								borderRadius: '50%',
-								background: 'rgba(0, 163, 42, 0.1)',
-								color: '#00a32a',
-							} }
-						>
+						<span className="yaycheckout-import-export__ready-icon">
 							<Dashicon icon="yes" />
 						</span>
-						<h3 style={ { margin: 0 } }>
+						<h3 className="yaycheckout-import-export__heading">
 							{ sprintf(
 								/* translators: %s: layout title stored in the export file */
 								__( 'Ready to import the blocks of "%s"', 'yaycheckout' ),
@@ -160,17 +152,13 @@ function ImportModal( { onClose, onImport }: { onClose: () => void; onImport: ( 
 							) }
 						</h3>
 					</Flex>
-					<Flex
-						justify="flex-start"
-						gap={ 8 }
-						style={ { padding: '10px 16px', border: '1px solid #e0e0e0', borderRadius: 4, background: '#f9f9f9' } }
-					>
+					<Flex justify="flex-start" gap={ 8 } className="yaycheckout-import-export__summary">
 						<div>
-							<span style={ SUMMARY_LABEL_STYLE }>{ __( 'From layout', 'yaycheckout' ) }</span>
+							<span className="yaycheckout-import-export__summary-label">{ __( 'From layout', 'yaycheckout' ) }</span>
 							<strong>{ importReview.title }</strong>
 						</div>
 						<div>
-							<span style={ SUMMARY_LABEL_STYLE }>{ __( 'Checkout blocks', 'yaycheckout' ) }</span>
+							<span className="yaycheckout-import-export__summary-label">{ __( 'Checkout blocks', 'yaycheckout' ) }</span>
 							<strong>{ importReview.blocks }</strong>
 						</div>
 					</Flex>
@@ -190,7 +178,7 @@ function ImportModal( { onClose, onImport }: { onClose: () => void; onImport: ( 
 					) }
 				</Flex>
 			) }
-			<Flex justify="flex-end" gap={ 2 } style={ { marginTop: 24 } }>
+			<Flex justify="flex-end" gap={ 2 } className="yaycheckout-import-export__actions">
 				<Button __next40pxDefaultSize variant="tertiary" onClick={ close }>
 					{ __( 'Cancel', 'yaycheckout' ) }
 				</Button>
@@ -267,20 +255,10 @@ function LayoutImportExport() {
 			name="yaycheckout-layout-import-export"
 			title={ __( 'Import / Export', 'yaycheckout' ) }
 		>
-			<Flex direction="column" align="stretch" gap={ 4 }>
+			<Flex direction="column" align="stretch" gap={ 4 } className="yaycheckout-import-export">
 				{ ! IS_PRO && (
-					<p style={ { margin: 0, color: '#757575' } }>
-						<span
-							style={ {
-								marginRight: 6,
-								padding: '1px 6px',
-								borderRadius: 2,
-								background: '#f9bd09',
-								color: '#fff',
-								fontSize: 11,
-								fontWeight: 600,
-							} }
-						>
+					<p className="yaycheckout-import-export__help">
+						<span className="yaycheckout-import-export__pro-tag">
 							{ __( 'Pro', 'yaycheckout' ) }
 						</span>
 						{ __( 'Upgrade to PRO to unlock this feature now.', 'yaycheckout' ) }{ ' ' }
@@ -288,10 +266,10 @@ function LayoutImportExport() {
 					</p>
 				) }
 				<Flex direction="column" align="stretch" gap={ 2 }>
-					<h3 style={ { margin: 0 } }>
+					<h3 className="yaycheckout-import-export__heading">
 						{ __( 'Import', 'yaycheckout' ) }
 					</h3>
-					<p style={ { margin: 0, color: '#757575' } }>
+					<p className="yaycheckout-import-export__help">
 						{ __( 'Replaces this layout’s blocks. Nothing is saved until you save.', 'yaycheckout' ) }
 					</p>
 					<Button
@@ -305,10 +283,10 @@ function LayoutImportExport() {
 					</Button>
 				</Flex>
 				<Flex direction="column" align="stretch" gap={ 2 }>
-					<h3 style={ { margin: 0 } }>
+					<h3 className="yaycheckout-import-export__heading">
 						{ __( 'Export', 'yaycheckout' ) }
 					</h3>
-					<p style={ { margin: 0, color: '#757575' } }>
+					<p className="yaycheckout-import-export__help">
 						{ __( 'Downloads one layout with its tokens and slots.', 'yaycheckout' ) }
 					</p>
 					<Button
@@ -323,7 +301,7 @@ function LayoutImportExport() {
 						{ __( 'Export', 'yaycheckout' ) }
 					</Button>
 					{ IS_PRO && hasUnsavedChanges && (
-						<p style={ { margin: 0, color: '#757575' } }>
+						<p className="yaycheckout-import-export__help">
 							{ __( 'Save your changes to include them in the export.', 'yaycheckout' ) }
 						</p>
 					) }

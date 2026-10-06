@@ -3,7 +3,6 @@ import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import type { CSSProperties } from 'react';
 import { billingAddressFields, shippingAddressFields, type AddressFieldDef } from '../shared/address-fields';
 import { FieldPreview } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
@@ -118,10 +117,6 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 			: [ { label: __( 'Every field in this section is already used', 'yaycheckout' ), value: '' } ];
 	const blockProps = useBlockProps( { className: 'yaycheckout-field' } );
 	const canvasLabel = label || fieldKey || __( 'Field', 'yaycheckout' );
-	const labelStyle = {
-		fontSize: 'inherit',
-		fontWeight: 'inherit',
-	} as CSSProperties;
 
 	return (
 		<>
@@ -169,7 +164,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					requiredMark={ requiredMark }
 					optionalText={ optionalText }
 					placeholder={ placeholder }
-					labelStyle={ labelStyle }
+					inheritLabelFont
 				/>
 			</div>
 		</>
