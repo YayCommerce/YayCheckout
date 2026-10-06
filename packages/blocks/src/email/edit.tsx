@@ -58,6 +58,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					required
 					requiredMark={ requiredMark }
 					placeholder={ placeholder }
+					inheritLabelFont
 				/>
 			</div>
 		</>

@@ -155,6 +155,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					optionalText={ optionalText }
 					placeholder={ placeholder }
 					options={ options }
+					inheritLabelFont
 				/>
 			</div>
 		</>
