@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. There is no spec; `## Requirements` below is the contract.
 
-**Status:** active
+**Status:** done 2026-10-06
 **Goal:** A new or reset layout starts as a complete two-column checkout with a header and footer made of core blocks, so activating it as-is gives shoppers a finished-looking checkout.
 **Spec:** none, planned from the request
 **Architecture:** `LayoutRepository::default_markup()` keeps building the layout in PHP through `Helpers\BlockMarkup`, which gains two builders for static core blocks (Group, Columns, Column, Paragraph). Those blocks need their saved HTML in the markup: the editor rejects them without it, and `do_blocks()` drops their wrapper elements. The alternative, a hand-written markup file, would lose the per-site choices made when the layout is created (logo or title, which footer links exist, translated labels) and would add a second way to build markup. A small stylesheet on the Checkout block adds the sticky summary, the mobile order and the header/footer spacing. Core position support can't do the sticky part: classic themes don't enable `position.sticky`.
@@ -167,8 +167,9 @@ Message: `feat(layouts): seed new layouts with a header, two columns and a foote
 Rules, at the specificity shown (keep to one class where possible, per the active simplify-block-css plan):
 - `.yaycheckout-header`: `align-items: center; padding-block: 16px; margin-block-end: 32px; border-block-end: 1px solid #e0e0e0;`
 - `.yaycheckout-footer`: `align-items: center; padding-block: 16px; margin-block-start: 48px; border-block-start: 1px solid #e0e0e0; font-size: 0.875em;`
-- `.yaycheckout-header, .yaycheckout-checkout, .yaycheckout-footer`: `box-sizing: border-box; max-width: 1200px; margin-inline: auto; padding-inline: 24px;`. Added during implementation: with no theme header or footer, classic themes lose the container their header.php opened, and the layout ran edge to edge on Storefront.
-- `.yaycheckout-summary #order_review_heading, .yaycheckout-summary #order_review`: `float: none; width: auto;`. Added during implementation: Storefront floats both right at 41% by id, which put the Coupon Form beside the summary.
+- `.wp-site-blocks > .yaycheckout-page` (the template's page wrapper): `box-sizing: border-box; max-width: 1200px; margin-inline: auto; padding-inline: 24px;`. Added during implementation: with no theme header or footer, classic themes lose the container their header.php opened, and the layout ran edge to edge on Storefront. On the wrapper, not the default layout's classes, so blocks a merchant adds at the top level are contained too. It also applies to existing layouts.
+- `.yaycheckout-checkout #order_review_heading, .yaycheckout-checkout #order_review`: `float: none; width: auto;`. Added during implementation: Storefront floats both right at 41% by id, which put the Coupon Form beside the summary. Scoped to Checkout, not the summary Group, so it holds wherever a merchant moves Order Summary or Order Review.
+- `.yaycheckout-header, .yaycheckout-footer`: `align-items: center; padding-block: 16px;`, shared, so the two rules below keep only what differs.
 - `.yaycheckout-secure-note`: `margin: 0;`
 - `@media (min-width: 782px)`, `.yaycheckout-summary`: `position: sticky; top: calc(var(--wp-admin--admin-bar--height, 0px) + 24px);`
 - `@media (max-width: 781px)`, `.yaycheckout-checkout-columns > .yaycheckout-summary-column`: `order: -1;`
