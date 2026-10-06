@@ -5,8 +5,6 @@ import {
   type CompatibilityWire,
 } from '@/lib/schema/compatibility.schema';
 
-// The only place wire snake_case meets app camelCase.
-
 export function reportFromWire(wire: CompatibilityWire): CompatibilityReport {
   return {
     store: {

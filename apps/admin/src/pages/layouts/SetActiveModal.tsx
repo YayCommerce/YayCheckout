@@ -4,7 +4,6 @@ import type { LayoutSummary } from '@/lib/schema/layout.schema';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-/** Confirms activating a layout. */
 export function SetActiveModal({
   layout,
   onOpenChange,

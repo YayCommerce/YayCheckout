@@ -196,7 +196,7 @@ function AttachmentDropzone({
   onChange,
   onUploadError,
   className,
-  maxSize = 10 * 1024 * 1024, // Max Size: 10MB
+  maxSize = 10 * 1024 * 1024,
   accept,
   disabled,
   children,

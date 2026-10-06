@@ -19,7 +19,6 @@ class LayoutImportReview {
     public const RULES_NONE     = 'none';
 
     /**
-     * @param  array $envelope Decoded export file.
      * @return array { title, content, rules } rules as the file holds them, unchecked; see rules_from_file().
      * @throws \InvalidArgumentException When the file is not an export or has no Checkout block.
      */
@@ -39,7 +38,7 @@ class LayoutImportReview {
      * plugin, a hand-edited file) are dropped whole, not per condition: dropping one condition of a group
      * would widen it, and the layout would then serve shoppers the file never meant it to.
      *
-     * @param  mixed $rules The layout's `rules` from the file; absent in files exported before rules travelled.
+     * @param  mixed $rules The layout's `rules` from the file; null when the file has none.
      * @return array{rules: array, status: string} status: a RULES_* constant; RULES_NONE when the file has none.
      */
     public static function rules_from_file( $rules ): array {
@@ -64,8 +63,6 @@ class LayoutImportReview {
     }
 
     /**
-     * The one layout inside a valid envelope.
-     *
      * @return array { title, content, rules }
      * @throws \InvalidArgumentException When the envelope is not a YayCheckout export.
      */

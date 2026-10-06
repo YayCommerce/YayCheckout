@@ -177,8 +177,8 @@ function FreeTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: Grid
 }
 
 /**
- * Same boxes as the loaded grid (Pro: fixed-height 5-col; Free: 3 cards + locked strip) so the dialog doesn't grow when templates arrive.
- * Free's 3 and 8 are an approximation, replaced by the real counts once loaded.
+ * Matches the loaded grid's boxes, so the dialog doesn't grow when templates arrive.
+ * Free's card counts are a guess.
  */
 function PickerSkeleton() {
   const card = (i: number) => (

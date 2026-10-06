@@ -8,7 +8,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Picks the checkout layout by assignment rules, from shopper facts the caller reads.
- * See docs/system-architecture.md, § Storefront "Which layout".
+ * The candidates' order stands in for a priority the merchant can't set, and overlapping
+ * rules aren't checked, so the first match wins.
  */
 class LayoutAssignment {
 

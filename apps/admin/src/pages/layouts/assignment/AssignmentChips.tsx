@@ -28,7 +28,7 @@ function chipText(condition: WireCondition): string {
   return `${known?.label ?? condition.type} ${operator} ${valueText(condition)}`;
 }
 
-/** A layout's rules as chips for the Layouts table, wrapping onto more lines, groups separated by "or". No rules applies to everyone. */
+/** A layout's rules as chips for the Layouts table, groups separated by "or". No rules means everyone. */
 export function AssignmentChips({ rules }: { rules: LayoutRulesWire }) {
   if (rules.length === 0) {
     return <span className="text-muted-foreground">{__('Everyone', 'yaycheckout')}</span>;

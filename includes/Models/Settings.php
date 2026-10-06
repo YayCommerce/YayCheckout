@@ -4,11 +4,8 @@ namespace YayCheckout\Models;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Plugin settings. Pure entity: no WordPress calls.
- *
- * The schema() is the single description of every setting; from_option() and
- * sanitize() both walk it, so nothing is accepted without a default or
- * defaulted without validation.
+ * Plugin settings. schema() describes every setting; from_option() and sanitize()
+ * both walk it, so nothing is accepted without a default or defaulted without validation.
  */
 class Settings {
 

@@ -8,10 +8,8 @@ export interface AddressFieldDef {
 }
 
 /**
- * Woo default address suffixes with billing_ / shipping_ prefixes.
- *
- * The field picker. LayoutRepository::default_markup() seeds new layouts from
- * a PHP copy of this list; keep the two in step.
+ * Owns the address-field list the field picker offers. LayoutRepository::address_field_blocks()
+ * seeds new layouts with a subset of it; keep the two in step.
  */
 function addressFields( prefix: 'billing' | 'shipping' ): AddressFieldDef[] {
 	return [

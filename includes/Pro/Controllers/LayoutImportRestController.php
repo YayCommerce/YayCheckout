@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Turns an export file into a draft, or reviews one for the editor's Import.
- * Pro-only: the Free build has no route, which is what makes the SPA's ProGate honest.
+ * The routes exist only in Pro, so Free has no import endpoint.
  */
 class LayoutImportRestController extends BaseRestController {
 
@@ -60,9 +60,8 @@ class LayoutImportRestController extends BaseRestController {
     }
 
     /**
-     * The layout an export file holds, without storing it: the editor's Import
-     * replaces its own blocks, so it asks here instead of checking the file itself. Rules are not
-     * returned; `has_rules` says whether the file holds rules an import would keep.
+     * The layout an export file holds, without storing it, so the editor's Import checks a file the same way import does.
+     * Rules are not returned; `has_rules` says whether the file holds rules an import would keep.
      *
      * @return array|\WP_Error { title, content, blocks, has_rules }
      */
@@ -77,15 +76,13 @@ class LayoutImportRestController extends BaseRestController {
             'title'     => $layout['title'],
             'content'   => $layout['content'],
             'blocks'    => Layout::block_count( $layout['content'] ),
-            // The import's own test: true only for rules an import of this file would keep.
             'has_rules' => LayoutImportReview::RULES_IMPORTED === LayoutImportReview::rules_from_file( $layout['rules'] )['status'],
         ];
     }
 
     /**
-     * Reviews the file, then inserts the draft with the file's rules. The SPA only reads the envelope, so this is
-     * where a file without a Checkout block is refused; blocks the site lacks pass. Rules never refuse a file:
-     * unreadable ones are dropped; the rest are kept as the file holds them.
+     * Reviews the file, then inserts the draft with the file's rules. A file without a Checkout block is refused here;
+     * blocks the site lacks pass. Unreadable rules are dropped, never refusing the file.
      *
      * @return \WP_REST_Response|\WP_Error The new draft (Layout::to_array()) plus `rules_import` { status }.
      */

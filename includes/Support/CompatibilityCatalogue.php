@@ -25,7 +25,7 @@ final class CompatibilityCatalogue {
     /** Transient holding the last fetched (or fallen-back) catalogue. */
     public const TRANSIENT = 'yaycheckout_compatibility_catalogue';
 
-    /** Seconds. A remote result lives half a day; a failed fetch is remembered for an hour so a dead endpoint costs one attempt per hour, not per visit. */
+    /** Seconds: half a day for a remote result, an hour for the bundled fallback after a failed fetch. */
     public const TTL_REMOTE   = 43200;
     public const TTL_FALLBACK = 3600;
 

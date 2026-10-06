@@ -21,8 +21,8 @@ interface LayoutSelectProps {
 }
 
 /**
- * Searchable layout picker for the Tools cards. Starts empty: the list's first page is the newest
- * ten, so a default taken from it could be the wrong layout.
+ * Searchable layout picker for the Tools cards. Starts empty: the first page holds only the newest
+ * layouts, so a default taken from it could be the wrong one.
  */
 export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
   const [searchInput, setSearchInput] = useState('');

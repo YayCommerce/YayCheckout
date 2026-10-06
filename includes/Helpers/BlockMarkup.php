@@ -4,22 +4,17 @@ namespace YayCheckout\Helpers;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Builds block markup in PHP: parsed-block arrays in the shape parse_blocks()
- * returns, serialized by core so attribute JSON is escaped the way the editor
- * expects. Use it wherever markup is authored server-side — seeds, library
- * templates, Pro presets — instead of string literals.
+ * Builds block markup in PHP as parse_blocks()-shaped arrays, serialized by core so attribute
+ * JSON is escaped the way the editor expects. Use it, not string literals, for server-side markup.
  */
 class BlockMarkup {
 
     /**
-     * One block, rendered by its render.php with no static inner HTML.
-     *
-     * The innerContent entries are one null per inner block: that is how core places
-     * each child when serializing, and a count mismatch drops children.
+     * One block, rendered by its render.php with no static inner HTML. innerContent holds one
+     * null per inner block: core places each child there when serializing, and a count mismatch drops children.
      *
      * @param  array   $attrs        Block attributes; [] serializes as none.
      * @param  array[] $inner_blocks Children built by this method.
-     * @return array   Parsed-block array.
      */
     public static function block( string $name, array $attrs = [], array $inner_blocks = [] ): array {
         return [

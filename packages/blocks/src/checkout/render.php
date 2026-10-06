@@ -1,17 +1,11 @@
 <?php
 /**
- * Server render for yaycheckout/checkout: the checkout form itself. The
- * wrapper is WooCommerce's <form name="checkout"> so checkout.js and
- * WC_Checkout see the stock form; every section is an inner block.
- *
- * Read every attribute with a default: markup saved before an attribute
- * existed must still render.
+ * Prints WooCommerce's <form name="checkout"> around the inner blocks, so
+ * checkout.js and WC_Checkout see the stock form.
  *
  * @var array    $attributes
  * @var string   $content    Inner blocks, already rendered by core.
  * @var WP_Block $block
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

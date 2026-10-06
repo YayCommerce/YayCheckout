@@ -9,8 +9,6 @@ import {
   SettingsWire,
 } from '@/lib/schema/settings.schema';
 
-// The only place wire snake_case meets app camelCase.
-
 export function settingsFromWire(wire: SettingsWire): Settings {
   return {
     general: {

@@ -5,9 +5,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Turns a checkout submission into the extra-field rows to store and the errors to show.
- *
- * Pure: no storage, no Woo hooks. Only Keys in $fields are read and choice
- * values must be one of the field's options.
+ * Pure: no storage, no hooks. Only Keys in $fields are read, and a choice must be one of the field's options.
  */
 class ExtraFieldSubmission {
 
@@ -51,8 +49,6 @@ class ExtraFieldSubmission {
     }
 
     /**
-     * @param  array $field
-     * @param  mixed $raw
      * @return array{value: mixed, display: string}|null|false Null = left empty, false = not an allowed value.
      */
     private static function value( array $field, $raw ) {
@@ -70,7 +66,6 @@ class ExtraFieldSubmission {
     }
 
     /**
-     * @param  mixed $raw
      * @return array{value: string, display: string}|null
      */
     private static function text( $raw ): ?array {
@@ -85,7 +80,6 @@ class ExtraFieldSubmission {
     /**
      * A lone box: ticked reads as Yes, unticked or '0' as left empty.
      *
-     * @param  mixed $raw
      * @return array{value: string, display: string}|null
      */
     private static function single_checkbox( $raw ): ?array {
@@ -102,7 +96,6 @@ class ExtraFieldSubmission {
     /**
      * Select and radio: one value, which must be an option.
      *
-     * @param  mixed                 $raw
      * @param  array<string, string> $options
      * @return array{value: string, display: string}|null|false
      */
@@ -122,7 +115,6 @@ class ExtraFieldSubmission {
     /**
      * Checkbox group: every ticked value must be an option, or the whole group is invalid.
      *
-     * @param  mixed                 $raw
      * @param  array<string, string> $options
      * @return array{value: string[], display: string}|null|false
      */

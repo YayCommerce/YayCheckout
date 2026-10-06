@@ -12,7 +12,6 @@ import { LayoutSelect } from './LayoutSelect';
 /** Bytes the JSON envelope adds around the markup; the hint is a hint, so one constant is enough. */
 const ENVELOPE_OVERHEAD_BYTES = 250;
 
-/** Reads as bytes below 1 KB, so a small layout does not round up to a meaningless "1 KB". */
 function fileSize(bytes: number): string {
   if (bytes < 1024) {
     /* translators: %d: file size in bytes */

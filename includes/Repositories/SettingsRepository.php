@@ -6,9 +6,7 @@ use YayCheckout\Models\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * All settings storage access.
- */
+/** All settings storage access. */
 class SettingsRepository {
 
     public function get(): Settings {

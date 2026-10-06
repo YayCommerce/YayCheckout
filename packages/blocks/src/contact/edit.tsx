@@ -18,6 +18,7 @@ interface EditProps {
 
 /**
  * Contact is a leaf: billing_email lives on this block, not an inner Field.
+ * It is always required; that rule lives in RequiredFieldOverlay::is_required().
  */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label, placeholder, required, requiredMark = '' } = attributes;

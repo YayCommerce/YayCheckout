@@ -10,6 +10,7 @@
 #   bump <version>     - Bump version number in plugin files
 #   info               - Show current version info
 #   clean              - Remove admin build artifacts (blocks output is left)
+#   backlog            - List docs/backlog/ items and their open boxes
 #   help               - Show this help message
 #
 
@@ -210,7 +211,6 @@ cmd_build() {
     install_admin_deps
     install_blocks_deps
 
-    # package.json build script runs `tsc --noEmit` before vite build
     print_step "Building admin dashboard (typecheck + build)..."
     (cd "$ADMIN_DIR" && $PNPM build)
     print_success "Admin build complete! Output: $PLUGIN_DIR/assets/dist/admin/"
@@ -236,21 +236,16 @@ cmd_release() {
         esac
     done
 
-    # Default free, and fail on anything unrecognised: an unflagged or
-    # mistyped release must never quietly produce an artifact containing
-    # pro code.
+    # Free by default, and anything else fails, so a mistyped release never ships Pro code.
     if [ "$plan" != "free" ] && [ "$plan" != "pro" ]; then
         print_error "Invalid plan: $plan"
         echo "Use: --plan=free or --plan=pro"
         exit 1
     fi
 
-    # Pro installs into its own directory rather than replacing the free one.
-    # If the free plugin is ever listed on wordpress.org, a wp.org update for
-    # slug 'yaycheckout' would otherwise overwrite a paid Pro install and
-    # silently remove the features the customer bought. Both being active at
-    # once is already handled: yaycheckout.php deactivates a second copy when
-    # YayCheckout\plugin_init is already defined.
+    # Pro installs under its own slug: a wordpress.org update to 'yaycheckout' would
+    # otherwise overwrite a paid Pro install. When both copies are active,
+    # yaycheckout.php deactivates the second.
     local plan_slug="$PLUGIN_SLUG"
     local plan_label="YayCheckout"
     if [ "$plan" = "pro" ]; then
@@ -297,7 +292,6 @@ cmd_release() {
 
     cmd_build
 
-    # Assemble package in a temp folder named after the plugin slug
     local temp_dir="$RELEASE_DIR/$plan_slug"
     rm -rf "$temp_dir"
     mkdir -p "$temp_dir"
@@ -320,10 +314,8 @@ cmd_release() {
     cp "$PLUGIN_DIR/vendor/autoload.php" "$temp_dir/vendor/"
     cp -r "$PLUGIN_DIR/vendor/composer" "$temp_dir/vendor/"
 
-    # The pro boundary: includes/Pro/ is the only pro PHP, and
-    # nothing outside it names a YayCheckout\Pro class, so removing it
-    # leaves a working Free build. scripts/check-pro-boundary.sh keeps
-    # that true.
+    # includes/Pro/ is the only Pro PHP and nothing else names it (scripts/check-pro-boundary.sh),
+    # so removing it leaves a working Free build.
     if [ "$plan" = "free" ]; then
         rm -rf "$temp_dir/includes/Pro"
         print_info "Free build: includes/Pro removed"
@@ -334,7 +326,6 @@ cmd_release() {
         sed_inplace "s/^ \* Plugin Name: .*/ \* Plugin Name:       $plan_label - WooCommerce Checkout Builder/" "$temp_dir/$PLUGIN_SLUG.php"
     fi
 
-    # Strip dev-only artifacts
     rm -f "$temp_dir/includes/Engine/Register/RegisterDev.php"
     rm -rf "$temp_dir/assets/dist/admin/.vite" 2>/dev/null || true
     find "$temp_dir" -name ".DS_Store" -delete 2>/dev/null || true
@@ -347,9 +338,8 @@ cmd_release() {
     zip -r -q "$zip_name" "$plan_slug"
     rm -rf "$temp_dir"
 
-    # Verify the artifact, not the intent. cmd_release copies a fixed list and
-    # drops everything else silently, so a leak is invisible in a dev tree that
-    # always contains every file. This runs against what customers receive.
+    # Check the zip customers receive: a Pro leak is invisible in a dev tree,
+    # which always contains every file.
     print_step "Verifying artifact..."
     local pro_entries
     pro_entries=$(unzip -l "$zip_name" | grep -c "includes/Pro/" || true)
@@ -417,6 +407,61 @@ cmd_clean() {
     print_success "Clean complete"
 }
 
+# Lists docs/backlog/: open items with their unticked boxes, then items whose boxes are all ticked.
+cmd_backlog() {
+    local dir="$PLUGIN_DIR/docs/backlog"
+    local files=()
+    local f
+
+    for f in "$dir"/*.md; do
+        if [ -e "$f" ]; then
+            files+=("$f")
+        fi
+    done
+
+    if [ ${#files[@]} -eq 0 ]; then
+        print_info "Backlog empty"
+        return 0
+    fi
+
+    local done_list=()
+    local summary title ticked total
+
+    for f in "${files[@]}"; do
+        # One line "ticked<TAB>total<TAB>title", then the unticked boxes under ## Done when.
+        summary=$(awk '
+            /^# / && title == "" { title = substr($0, 3) }
+            /^## / { in_done = ($0 == "## Done when") ; next }
+            in_done && /^- \[[xX]\] / { ticked++; total++ }
+            in_done && /^- \[ \] / { total++; open[total] = substr($0, 7) }
+            END {
+                printf "%d\t%d\t%s\n", ticked, total, title
+                for (i = 1; i <= total; i++) if (i in open) print open[i]
+            }
+        ' "$f")
+        ticked=$(printf '%s\n' "$summary" | head -1 | cut -f1)
+        total=$(printf '%s\n' "$summary" | head -1 | cut -f2)
+        title=$(printf '%s\n' "$summary" | head -1 | cut -f3-)
+
+        if [ "$total" -gt 0 ] && [ "$ticked" -eq "$total" ]; then
+            done_list+=("$(basename "$f")  $title")
+            continue
+        fi
+
+        print_msg "$BLUE" "$(basename "$f")  [$ticked/$total]"
+        echo "  $title"
+        printf '%s\n' "$summary" | tail -n +2 | while IFS= read -r line; do
+            if [ -n "$line" ]; then
+                echo "    - [ ] $line"
+            fi
+        done
+    done
+
+    for f in "${done_list[@]+"${done_list[@]}"}"; do
+        print_success "$f  (done, remove)"
+    done
+}
+
 cmd_help() {
     echo "YayCheckout Dev & Release Script"
     echo ""
@@ -430,6 +475,7 @@ cmd_help() {
     echo "  bump <version>               Bump version in plugin files"
     echo "  info                         Show current version info"
     echo "  clean                        Remove admin build artifacts (blocks output is left)"
+    echo "  backlog                      List docs/backlog/ items and their open boxes"
     echo "  help                         Show this help message"
     echo ""
     echo "Examples:"
@@ -453,6 +499,7 @@ main() {
         bump)    cmd_bump "$@" ;;
         info)    cmd_info "$@" ;;
         clean)   cmd_clean "$@" ;;
+        backlog) cmd_backlog "$@" ;;
         help|*)  cmd_help ;;
     esac
 }

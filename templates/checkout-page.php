@@ -1,14 +1,10 @@
 <?php
 /**
- * Checkout page: the theme's header and footer around the layout's blocks.
- * The root Checkout block is the form; everything WooCommerce needs on the
- * page is a block.
- *
+ * Checkout page: the theme's header and footer around the layout's blocks. The
+ * root Checkout block is the form; everything WooCommerce needs on the page is a block.
  * Classic themes print the whole document from header.php/footer.php; block
  * themes have no such files, so the shell is ours and the header/footer are
  * the theme's template parts.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

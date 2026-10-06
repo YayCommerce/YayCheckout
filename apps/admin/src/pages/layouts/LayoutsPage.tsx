@@ -194,7 +194,6 @@ function LayoutsPageBody({
   const duplicateMutation = useDuplicateLayoutMutation();
   const previewLinkMutation = useCreatePreviewLinkMutation();
 
-  // Invalidate rather than patch: on Free, activating one row deactivates another.
   function onActivate(layout: LayoutSummary) {
     activateMutation.mutate(layout.id, {
       onSuccess: () => {
@@ -276,7 +275,7 @@ function LayoutsPageBody({
     return url.toString();
   }, [editingLayoutId]);
 
-  // On the URL, not the dialog: browser Back closes the editor without onOpenChange.
+  // Refetch once the editor closes. Watched on the URL, not the dialog: browser Back closes it without onOpenChange.
   useEffect(() => {
     if (lastEditingLayoutId.current !== null && editingLayoutId === null) {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
@@ -554,7 +553,6 @@ function LayoutsTable({
   onDuplicate: (layout: LayoutSummary) => void;
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
-  /** One link mints at a time; every Preview button waits. */
   previewPending: boolean;
 }) {
   return (
@@ -617,7 +615,6 @@ function LayoutTableRow({
   onDuplicate: (layout: LayoutSummary) => void;
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
-  /** One link mints at a time; every Preview button waits. */
   previewPending: boolean;
 }) {
   return (
@@ -659,7 +656,7 @@ function LayoutTableRow({
   );
 }
 
-/** Per-row actions: Edit, Preview, Set active, Delete for good and the "⋯" menu (Assignment, Duplicate, Deactivate, Archive). Archive is disabled on the active row: deactivating must be an explicit choice. Publishing is the editor's job. */
+/** Per-row actions. Archive is disabled on the active row, so deactivating stays an explicit choice. Publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,

@@ -1,16 +1,11 @@
 <?php
 /**
- * Server render for yaycheckout/contact.
- *
- * Contact is a leaf billing_email control, not a section with inner Fields.
- * Attributes are read with defaults so markup saved before an attribute
- * existed still renders.
+ * Prints the billing_email control. It is always required; that rule lives in
+ * RequiredFieldOverlay::is_required().
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; contact is a leaf.
  * @var WP_Block $block      Block instance.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

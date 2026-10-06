@@ -1,17 +1,11 @@
 <?php
 /**
- * Server render for yaycheckout/field.
- *
- * Outputs a real control so the storefront is typeable. Uses
- * woocommerce_form_field() when Woo is loaded so name/id/class match classic
- * checkout; otherwise a plain input. Attributes are read with defaults so
- * markup saved before an attribute existed still renders.
+ * Prints one address field, through woocommerce_form_field() when WooCommerce
+ * is loaded so name, id and class match classic checkout.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; field is a leaf.
  * @var WP_Block $block      Block instance.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

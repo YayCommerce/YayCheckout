@@ -12,10 +12,9 @@ const CHECKOUT_BLOCK = 'yaycheckout/checkout';
 const LOCK_KEY = 'yaycheckout-layout-invalid';
 
 /**
- * Locks saving while the layout cannot take an order: no Checkout block (the
- * form, at any depth), or an extra field whose Key is empty, malformed or
- * shared, since the Key is the posted name the order meta is read back by. Core has no
- * publish-only lock, so drafts are held too. Mirrors LayoutMarkupReader::publish_error().
+ * Locks saving while the layout cannot take an order: no Checkout block at any depth,
+ * or an extra field Key that is empty, malformed or shared. Mirrors
+ * LayoutMarkupReader::publish_error(); core has no publish-only lock, so drafts are held too.
  */
 function LayoutPublishGuard() {
 	const message = useSelect( ( select ) => {

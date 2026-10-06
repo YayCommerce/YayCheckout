@@ -14,9 +14,6 @@ interface AddressSectionEditProps {
 	setAttributes: ( attributes: Partial< AddressSectionAttributes > ) => void;
 }
 
-/**
- * Billing / Shipping hold fields plus layout/text blocks. Contact is separate.
- */
 export function AddressSectionEdit( {
 	section,
 	attributes,

@@ -21,10 +21,8 @@ const DEFAULT_VALUES: NewLayoutFormValues = {
 };
 
 /**
- * The two-step "New layout" flow: Blank vs From library, then name.
- *
- * State lives in NewLayoutForm inside DialogContent: Radix unmounts it after
- * the close animation, so each open starts fresh without a reset effect.
+ * The "New layout" flow: name and source, then a template when the source is the library. State lives
+ * in NewLayoutForm inside DialogContent: Radix unmounts it on close, so each open starts fresh.
  */
 export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
