@@ -1,13 +1,11 @@
 import {
 	InnerBlocks,
-	InspectorControls,
+	RichText,
 	useBlockProps,
 	useInnerBlocksProps,
 	store as blockEditorStore,
 } from '@wordpress/block-editor';
-import { PanelBody, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { __ } from '@wordpress/i18n';
 import { useBlocksAllowedExcept } from '../shared/allowed-blocks';
 import { stepTitle } from '../shared/step-title';
 
@@ -40,23 +38,20 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	);
 
 	return (
-		<>
-			<InspectorControls>
-				<PanelBody title={ __( 'Step', 'yaycheckout' ) }>
-					<TextControl
-						label={ __( 'Title', 'yaycheckout' ) }
-						value={ title }
-						onChange={ ( value ) => setAttributes( { title: value } ) }
-					/>
-				</PanelBody>
-			</InspectorControls>
-			<div { ...blockProps }>
-				<div className="yaycheckout-step__header">
-					<span className="yaycheckout-step__index">{ position }</span>
-					<span className="yaycheckout-step__title">{ stepTitle( title ) }</span>
-				</div>
-				<div { ...bodyProps } />
+		<div { ...blockProps }>
+			<div className="yaycheckout-step__header">
+				<span className="yaycheckout-step__index">{ position }</span>
+				<RichText
+					tagName="span"
+					className="yaycheckout-step__title"
+					value={ title }
+					onChange={ ( value: string ) => setAttributes( { title: value } ) }
+					placeholder={ stepTitle( '' ) }
+					allowedFormats={ [] }
+					withoutInteractiveFormatting
+				/>
 			</div>
-		</>
+			<div { ...bodyProps } />
+		</div>
 	);
 }

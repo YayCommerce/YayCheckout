@@ -1,5 +1,4 @@
-import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, TextControl } from '@wordpress/components';
+import { RichText, useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 import './editor.css';
 
@@ -13,26 +12,19 @@ interface EditProps {
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { buttonText } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-place-order' } );
-	const label = buttonText || __( 'Place order', 'yaycheckout' );
 
 	return (
-		<>
-			<InspectorControls>
-				<PanelBody title={ __( 'Place order', 'yaycheckout' ) }>
-					<TextControl
-						label={ __( 'Button text', 'yaycheckout' ) }
-						value={ buttonText }
-						onChange={ ( value ) => setAttributes( { buttonText: value } ) }
-					/>
-				</PanelBody>
-			</InspectorControls>
-			<div { ...blockProps }>
-				<button type="button" className="yaycheckout-place-order__button" disabled>
-					{ label }
-				</button>
-			</div>
-		</>
+		<div { ...blockProps }>
+			<RichText
+				tagName="div"
+				className="yaycheckout-place-order__button"
+				value={ attributes.buttonText }
+				onChange={ ( value: string ) => setAttributes( { buttonText: value } ) }
+				placeholder={ __( 'Place order', 'yaycheckout' ) }
+				allowedFormats={ [] }
+				withoutInteractiveFormatting
+			/>
+		</div>
 	);
 }

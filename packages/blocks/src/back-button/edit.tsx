@@ -1,5 +1,4 @@
-import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, TextControl } from '@wordpress/components';
+import { RichText, useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 
 interface BackButtonAttributes {
@@ -11,22 +10,19 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< BackButtonAttributes > ) => void;
 }
 
+/** A div, not a button: typing Space inside a button would click it. */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { buttonText } = attributes;
-	const blockProps = useBlockProps( { className: 'yaycheckout-back-button', type: 'button' } );
+	const blockProps = useBlockProps( { className: 'yaycheckout-back-button' } );
 
 	return (
-		<>
-			<InspectorControls>
-				<PanelBody title={ __( 'Back button', 'yaycheckout' ) }>
-					<TextControl
-						label={ __( 'Button text', 'yaycheckout' ) }
-						value={ buttonText }
-						onChange={ ( value ) => setAttributes( { buttonText: value } ) }
-					/>
-				</PanelBody>
-			</InspectorControls>
-			<button { ...blockProps }>{ buttonText || __( 'Back', 'yaycheckout' ) }</button>
-		</>
+		<RichText
+			{ ...blockProps }
+			tagName="div"
+			value={ attributes.buttonText }
+			onChange={ ( value: string ) => setAttributes( { buttonText: value } ) }
+			placeholder={ __( 'Back', 'yaycheckout' ) }
+			allowedFormats={ [] }
+			withoutInteractiveFormatting
+		/>
 	);
 }

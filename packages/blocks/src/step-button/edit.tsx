@@ -1,5 +1,4 @@
-import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, TextControl } from '@wordpress/components';
+import { RichText, useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 
 interface StepButtonAttributes {
@@ -11,22 +10,19 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< StepButtonAttributes > ) => void;
 }
 
+/** A div, not a button: typing Space inside a button would click it. */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { buttonText } = attributes;
-	const blockProps = useBlockProps( { className: 'yaycheckout-step-button', type: 'button' } );
+	const blockProps = useBlockProps( { className: 'yaycheckout-step-button' } );
 
 	return (
-		<>
-			<InspectorControls>
-				<PanelBody title={ __( 'Step button', 'yaycheckout' ) }>
-					<TextControl
-						label={ __( 'Button text', 'yaycheckout' ) }
-						value={ buttonText }
-						onChange={ ( value ) => setAttributes( { buttonText: value } ) }
-					/>
-				</PanelBody>
-			</InspectorControls>
-			<button { ...blockProps }>{ buttonText || __( 'Continue', 'yaycheckout' ) }</button>
-		</>
+		<RichText
+			{ ...blockProps }
+			tagName="div"
+			value={ attributes.buttonText }
+			onChange={ ( value: string ) => setAttributes( { buttonText: value } ) }
+			placeholder={ __( 'Continue', 'yaycheckout' ) }
+			allowedFormats={ [] }
+			withoutInteractiveFormatting
+		/>
 	);
 }
