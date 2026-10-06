@@ -16,8 +16,6 @@ import {
   type LayoutRulesWire,
 } from '@/lib/schema/layout.schema';
 
-// The only place wire snake_case meets app camelCase.
-
 function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
   return {
     id: wire.id,

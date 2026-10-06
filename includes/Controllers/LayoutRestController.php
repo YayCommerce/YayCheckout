@@ -37,7 +37,6 @@ class LayoutRestController extends BaseRestController {
                     'args'                => $this->list_args(),
                 ],
                 [
-                    // exec_write_wp: a SQL rollback cannot undo what the object cache holds.
                     'methods'             => \WP_REST_Server::CREATABLE,
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'create_draft' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
@@ -263,14 +262,12 @@ class LayoutRestController extends BaseRestController {
         ];
     }
 
-    /** Tab totals, independent of the status filter. Own route so the SPA can cache them independently of the filtered list. */
+    /** Tab totals, independent of the status filter, on their own route so the SPA caches them apart from the list. */
     public function get_layout_counts(): array {
         return [ 'counts' => $this->layouts->counts() ];
     }
 
-    /**
-     * @return array|\WP_Error
-     */
+    /** @return array|\WP_Error */
     public function get_layout( \WP_REST_Request $request ) {
         $layout = $this->layouts->find( (int) $request->get_param( 'id' ) );
 
@@ -292,9 +289,8 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Creates a layout draft from the New layout modal.
-     * 'library' only checks the template exists; both sources create the same
-     * seeded default draft until real template markup exists. Titles may repeat, as Pages do.
+     * Creates a layout draft from the New layout modal. Titles may repeat, as Pages do.
+     * 'library' only checks the template is available on this plan: both sources seed the same default draft.
      *
      * @return array|\WP_Error
      */
@@ -303,20 +299,18 @@ class LayoutRestController extends BaseRestController {
         $source        = (string) $request->get_param( 'source' );
         $template_slug = (string) $request->get_param( 'template_slug' );
 
-        if ( 'library' === $source && ! LayoutTemplateCatalogue::has_template( $template_slug ) ) {
-            return $this->error_invalid_arguments( __( 'Unknown template.', 'yaycheckout' ) );
-        }
-
         try {
+            if ( 'library' === $source ) {
+                LayoutTemplateCatalogue::assert_available( $template_slug );
+            }
+
             return $this->layouts->create( $name )->to_array();
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
     }
 
-    /**
-     * @return array|\WP_Error
-     */
+    /** @return array|\WP_Error */
     public function publish_layout( \WP_REST_Request $request ) {
         $id = (int) $request->get_param( 'id' );
 
@@ -340,7 +334,6 @@ class LayoutRestController extends BaseRestController {
     public function activate_layout( \WP_REST_Request $request ) {
         $id = (int) $request->get_param( 'id' );
 
-        // Post-type check, as in publish_layout().
         if ( null === $this->layouts->find( $id ) ) {
             return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
         }
@@ -374,7 +367,6 @@ class LayoutRestController extends BaseRestController {
     /**
      * Moves a layout to the archive, deactivating it if it was active.
      *
-     * @param  \WP_REST_Request $request
      * @return array|\WP_Error
      */
     public function archive_layout( \WP_REST_Request $request ) {
@@ -394,7 +386,6 @@ class LayoutRestController extends BaseRestController {
     /**
      * Moves an archived layout back to draft.
      *
-     * @param  \WP_REST_Request $request
      * @return array|\WP_Error
      */
     public function restore_layout( \WP_REST_Request $request ) {

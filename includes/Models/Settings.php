@@ -4,11 +4,8 @@ namespace YayCheckout\Models;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Plugin settings. Pure entity: no WordPress calls.
- *
- * The schema() is the single description of every setting; from_option() and
- * sanitize() both walk it, so nothing is accepted without a default or
- * defaulted without validation.
+ * Plugin settings. schema() describes every setting; from_option() and sanitize()
+ * both walk it, so nothing is accepted without a default or defaulted without validation.
  */
 class Settings {
 
@@ -16,6 +13,7 @@ class Settings {
     public const OPTION_SETTINGS   = 'yaycheckout_settings';
     public const OPTION_UPDATED_AT = 'yaycheckout_settings_updated_at';
     public const OPTION_REVIEWED   = 'yaycheckout_reviewed';
+    public const OPTION_SETUP_DONE = 'yaycheckout_setup_done';
 
     /** Minutes. Mirrored by PREVIEW_LINK_LIFETIME_OPTIONS in the SPA. */
     public const PREVIEW_LINK_LIFETIMES = [ 15, 30, 60, 120, 1440 ];

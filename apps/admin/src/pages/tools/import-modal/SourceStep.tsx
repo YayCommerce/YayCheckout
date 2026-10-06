@@ -5,7 +5,7 @@ import type { ImportReview } from '@/lib/schema/tools.schema';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button, LoadingButton } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
-import { SummaryStrip } from './StepStrip';
+import { SummaryStrip } from '@/components/shared/SummaryStrip';
 
 export function SourceStep({
   review,
@@ -69,7 +69,7 @@ export function SourceStep({
 }
 
 function ruleCountsLabel(counts: ImportReview['ruleCounts']): string {
-  // PHP makes the final call; this only flags what is plainly not rules. Readable-looking ones may still be dropped.
+  // A shape check only: PHP may still drop rules that read fine here.
   if (counts === null) return __('Unreadable', 'yaycheckout');
   if (counts.groups === 0) return __('None', 'yaycheckout');
 

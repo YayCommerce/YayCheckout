@@ -1,7 +1,6 @@
 /**
- * Inserter/list-view icon per block name; unlisted blocks keep the default.
- *
- * 24px grid, filled paths, no colour: the editor tints via currentColor.
+ * Inserter and list-view icons by block name; unlisted blocks keep the default.
+ * Paths carry no colour so the editor tints them through currentColor.
  */
 const icon = ( ...paths: string[] ) => (
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">

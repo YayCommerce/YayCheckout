@@ -12,7 +12,7 @@ import {
   type LayoutExportFile,
 } from '@/lib/schema/tools.schema';
 
-// Export writes the wire envelope verbatim, so there is no camelCase projection: the file must re-import as-is.
+// No camelCase projection: the exported file must re-import as-is.
 
 export async function exportLayout(id: number): Promise<LayoutExportFile> {
   const response = await api.get(`layouts/${id}/export`);
@@ -24,10 +24,7 @@ export async function exportLayout(id: number): Promise<LayoutExportFile> {
   };
 }
 
-/**
- * What the Source step shows. PHP makes the final call on import (a missing Checkout block);
- * this is only what can be read from the file itself.
- */
+/** What the Source step shows, read from the file alone; PHP makes the final call on import. */
 export function reviewExportFile(envelope: LayoutExportEnvelope): ImportReview {
   const layout = envelope.layouts[0];
 
@@ -41,7 +38,7 @@ export function reviewExportFile(envelope: LayoutExportEnvelope): ImportReview {
     title: layout.title,
     // Mirrors Layout::block_count(): our blocks only, one `<!-- wp:yaycheckout/` each.
     blocks: layout.content.split('<!-- wp:yaycheckout/').length - 1,
-    // Shape only, mirroring LayoutImportReview::rules_from_file(): PHP makes the final call on import.
+    // Shape only, mirroring LayoutImportReview::rules_from_file().
     ruleCounts:
       Array.isArray(rules) && rules.every((group) => Array.isArray(group) && group.length > 0)
         ? { groups: rules.length, conditions: rules.flat().length }
@@ -49,7 +46,7 @@ export function reviewExportFile(envelope: LayoutExportEnvelope): ImportReview {
   };
 }
 
-/** Client-side gate before any request, mirroring LayoutImportReview::from_envelope(): not JSON, or JSON that is not an export envelope, never reaches PHP. */
+/** Refuses a file that is not one export envelope before any request. Mirrors the envelope checks in LayoutImportReview::from_envelope(). */
 export function parseExportFile(text: string): LayoutExportEnvelope {
   let json: unknown;
   try {

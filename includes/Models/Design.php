@@ -4,15 +4,12 @@ namespace YayCheckout\Models;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Checkout design: the applied tokens, custom CSS, the preset they were taken
- * from, and every preset (built-in plus merchant-saved). Pure entity: no WordPress calls.
+ * Checkout design: the applied tokens, custom CSS, the preset they came from, and every
+ * preset (built-in plus merchant-saved). schema() describes every token; from_option(),
+ * sanitize() and defaults() all walk it.
  *
- * The schema() is the single description of every token; from_option(), sanitize()
- * and defaults() all walk it. The Default preset is the schema defaults.
- *
- * Applying a preset copies its tokens into $tokens; $preset_id only records
- * which one. Nothing resolves the id back to tokens, so a deleted preset
- * leaves $tokens as they are.
+ * Applying a preset copies its tokens; $preset_id only records which one, so deleting
+ * a preset leaves $tokens as they are.
  */
 class Design {
 
@@ -30,10 +27,8 @@ class Design {
     public ?string $preset_id = null;
 
     /**
-     * Fonts the merchant can pick, keyed by the slug stored in tokens; '' means
-     * the theme's own font. Values are the CSS font-family names. Widely used
-     * Google fonts that WordPress's Font Library ships, so a theme is likely to
-     * have them already.
+     * Fonts the merchant can pick: token slug => CSS font-family, '' for the theme's font.
+     * Google fonts that WordPress's Font Library ships, so a theme likely has them.
      */
     public const FONT_FAMILIES = [
         ''                 => '',
@@ -64,14 +59,17 @@ class Design {
      * Shape: section => key => [ 'type' => 'bool'|'int'|'enum'|'hex_color', 'default' => mixed,
      *   'enum' => array (enum only), 'min'/'max' => int (int only) ]
      *
-     * The layout-wide corner radius is spacing.radius; buttons.radius and
-     * inputs.radius are stored on their own so each can still differ from it.
-     * Both spacing.scale and inputs.size are abstract steps; what they mean in
-     * px is decided where they are rendered.
+     * Both spacing.scale and inputs.size are abstract steps; the renderer decides their px.
+     * `enabled` false means theme default: the storefront prints nothing for that section,
+     * and its values are kept for when it is turned back on.
      */
     public static function schema(): array {
         return [
             'colours'    => [
+                'enabled'    => [
+                    'type'    => 'bool',
+                    'default' => false,
+                ],
                 'primary'    => [
                     'type'    => 'hex_color',
                     'default' => '#3858e9',
@@ -90,9 +88,9 @@ class Design {
                 ],
             ],
             'typography' => [
-                'inherit'     => [
+                'enabled'     => [
                     'type'    => 'bool',
-                    'default' => true,
+                    'default' => false,
                 ],
                 'font_family' => [
                     'type'    => 'enum',
@@ -107,25 +105,27 @@ class Design {
                 ],
             ],
             'spacing'    => [
-                'scale'  => [
+                'enabled' => [
+                    'type'    => 'bool',
+                    'default' => false,
+                ],
+                'scale'   => [
                     'type'    => 'enum',
                     'default' => 1.0,
                     'enum'    => self::SPACING_SCALES,
                 ],
-                'radius' => [
-                    'type'    => 'int',
-                    'default' => 10,
-                    'min'     => 0,
-                    'max'     => 24,
-                ],
             ],
             'buttons'    => [
-                'style'  => [
+                'enabled' => [
+                    'type'    => 'bool',
+                    'default' => false,
+                ],
+                'style'   => [
                     'type'    => 'enum',
                     'default' => 'fill',
                     'enum'    => [ 'fill', 'outline' ],
                 ],
-                'radius' => [
+                'radius'  => [
                     'type'    => 'int',
                     'default' => 10,
                     'min'     => 0,
@@ -133,17 +133,21 @@ class Design {
                 ],
             ],
             'inputs'     => [
-                'style'  => [
+                'enabled' => [
+                    'type'    => 'bool',
+                    'default' => false,
+                ],
+                'style'   => [
                     'type'    => 'enum',
                     'default' => 'boxed',
                     'enum'    => [ 'boxed', 'underline' ],
                 ],
-                'size'   => [
+                'size'    => [
                     'type'    => 'enum',
                     'default' => 'medium',
                     'enum'    => [ 'small', 'medium', 'large' ],
                 ],
-                'radius' => [
+                'radius'  => [
                     'type'    => 'int',
                     'default' => 10,
                     'min'     => 0,
@@ -191,6 +195,7 @@ class Design {
                     $default,
                     [
                         'colours' => [
+                            'enabled'    => true,
                             'primary'    => '#3858e9',
                             'text'       => '#fafafa',
                             'background' => '#0a0a0a',
@@ -207,20 +212,26 @@ class Design {
                     $default,
                     [
                         'colours'    => [
+                            'enabled'    => true,
                             'primary'    => '#171719',
                             'text'       => '#171719',
                             'background' => '#f4f4f5',
                             'border'     => '#c7c7ca',
                         ],
-                        'typography' => [ 'base_size' => 15 ],
-                        'spacing'    => [ 'radius' => 2 ],
+                        'typography' => [
+                            'enabled'   => true,
+                            'base_size' => 15,
+                        ],
+                        'spacing'    => [ 'enabled' => true ],
                         'buttons'    => [
-                            'style'  => 'outline',
-                            'radius' => 2,
+                            'enabled' => true,
+                            'style'   => 'outline',
+                            'radius'  => 2,
                         ],
                         'inputs'     => [
-                            'size'   => 'small',
-                            'radius' => 2,
+                            'enabled' => true,
+                            'size'    => 'small',
+                            'radius'  => 2,
                         ],
                     ]
                 ),
@@ -289,8 +300,7 @@ class Design {
     }
 
     /**
-     * Validates a { name, tokens } preset payload. Name is trimmed plain text;
-     * tokens must be a full set (see sanitize()).
+     * Validates a { name, tokens } preset payload: name is trimmed plain text, tokens go through sanitize().
      *
      * @return array|\WP_Error [ 'name', 'tokens' ] clean, or the first failure.
      */

@@ -1,5 +1,5 @@
 .yay-ui {
-  /* if browser supports "Anchor" properties then make the header fixed else fallback to relative header */
+  /* Static header by default; with CSS anchor positioning it is fixed and sized to the content column. */
   #wpbody-content header {
     position: static;
   }

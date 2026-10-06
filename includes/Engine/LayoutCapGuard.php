@@ -21,9 +21,7 @@ class LayoutCapGuard {
         add_filter( 'rest_pre_insert_' . Layout::POST_TYPE, [ $this, 'enforce_limit' ], 10, 2 );
     }
 
-    /**
-     * @return \stdClass|\WP_Error
-     */
+    /** @return \stdClass|\WP_Error */
     public function enforce_limit( $prepared_post, $request ) {
         unset( $request );
 

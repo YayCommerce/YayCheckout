@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Stands down entirely, leaving WooCommerce untouched, when safe mode is on
  * or no layout resolves; a preview link (PreviewRequest) renders its layout
- * regardless. Full rules in docs/system-architecture.md, § Storefront.
+ * regardless.
  */
 class CheckoutPage {
     use SingletonTrait;
@@ -54,11 +54,13 @@ class CheckoutPage {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php';
     }
 
-    /** Woo only enqueues these on is_checkout(); our template needs them regardless of theme. */
+    /** Woo's checkout scripts and the Design page's tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
     public function enqueue_scripts(): void {
         wp_enqueue_script( 'wc-checkout' );
         wp_enqueue_script( 'wc-country-select' );
         wp_enqueue_script( 'wc-address-i18n' );
+
+        ( new DesignStyles() )->enqueue();
     }
 
     private function resolve(): ?Layout {
@@ -73,7 +75,7 @@ class CheckoutPage {
             return null;
         }
 
-        // Picked afresh by every request, AJAX and order submit too; why no pin: docs/system-architecture.md, § Storefront "Which layout".
+        // Picked afresh by every request, AJAX and order submit too, with no pin: safe because every ConditionType reads a fact that holds for the life of the form.
         return ( new LayoutRepository() )->active( $this->shopper_context() );
     }
 
@@ -87,7 +89,7 @@ class CheckoutPage {
             ConditionType::CUSTOMER_ROLE => array_values( wp_get_current_user()->roles ),
             // Not "no roles": a user of another site in the network is logged in with none here.
             ConditionType::LOGIN_STATUS  => is_user_logged_in() ? ConditionType::LOGGED_IN : ConditionType::GUEST,
-            // ponytail: wp_is_mobile() counts tablets as mobile; a tablet value needs its own detection.
+            // TODO(device-detection): wp_is_mobile() counts tablets as mobile; a tablet value needs user-agent detection that core does not offer.
             ConditionType::DEVICE        => wp_is_mobile() ? ConditionType::MOBILE : ConditionType::DESKTOP,
         ];
     }

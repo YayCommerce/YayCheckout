@@ -1,20 +1,21 @@
 <?php
 namespace YayCheckout\Controllers;
 
+use YayCheckout\Support\Plan;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Fixture list standing in for a real template source; repoint catalogue()
- * at real markup once it exists.
+ * The layout templates a merchant creates from, and which ones this plan unlocks.
+ *
+ * TODO(template-source): catalogue() is a fixture list with no markup; point it at real templates once they exist.
  */
 class LayoutTemplateCatalogue {
 
     /** Free picks the first N; the rest render locked. */
     private const FREE_UNLOCKED_COUNT = 3;
 
-    /**
-     * @return array{ slug: string, name: string, category: string, locked: bool }[]
-     */
+    /** @return array{ slug: string, name: string, category: string, locked: bool }[] */
     public static function templates( bool $is_pro ): array {
         $templates = self::catalogue();
 
@@ -25,19 +26,25 @@ class LayoutTemplateCatalogue {
         return $templates;
     }
 
-    public static function has_template( string $slug ): bool {
-        foreach ( self::catalogue() as $template ) {
-            if ( $template['slug'] === $slug ) {
-                return true;
-            }
+    /**
+     * Refuses a template this plan cannot build from. Shared by every route
+     * that creates from a template so the lock rule has one owner.
+     *
+     * @throws \InvalidArgumentException When $slug is unknown or locked on this plan.
+     */
+    public static function assert_available( string $slug ): void {
+        $locked = array_column( self::templates( Plan::is_pro() ), 'locked', 'slug' );
+
+        if ( ! array_key_exists( $slug, $locked ) ) {
+            throw new \InvalidArgumentException( __( 'Unknown template.', 'yaycheckout' ) );
         }
 
-        return false;
+        if ( $locked[ $slug ] ) {
+            throw new \InvalidArgumentException( __( 'This template is part of YayCheckout Pro.', 'yaycheckout' ) );
+        }
     }
 
-    /**
-     * @return array{ slug: string, name: string, category: string }[]
-     */
+    /** @return array{ slug: string, name: string, category: string }[] */
     private static function catalogue(): array {
         return [
             [

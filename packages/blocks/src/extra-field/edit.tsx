@@ -48,6 +48,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			extraFieldKeys( select( blockEditorStore ) ).filter( ( key ) => key === trimmedKey ).length > 1,
 		[ trimmedKey ]
 	);
+	// LayoutMarkupReader::publish_error() owns these Key rules; change them together.
 	let keyError = '';
 
 	if ( trimmedKey === '' ) {

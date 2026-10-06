@@ -29,7 +29,6 @@ const IS_OPERATORS = [
   { value: 'is_not', label: __('is not', 'yaycheckout') },
 ];
 
-/** For multi-select types: the value is a list. */
 const LIST_OPERATORS = [
   { value: 'in', label: __('in list', 'yaycheckout') },
   { value: 'not_in', label: __('not in list', 'yaycheckout') },
@@ -73,7 +72,7 @@ export function isKnownType(type: string): type is ConditionType {
   return Object.hasOwn(CONDITION_TYPES, type);
 }
 
-/** Whether the condition has a value to test. An unknown type never is. */
+/** Whether the condition has a value to test. One with an unknown type never does. */
 export function isConditionComplete(condition: Condition): boolean {
   if (!isKnownType(condition.type)) return false;
   if (Array.isArray(condition.value)) return condition.value.length > 0;

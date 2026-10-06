@@ -6,9 +6,7 @@ use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * GET/POST /yaycheckout/v1/design. Both return { tokens, preset_id, custom_css, updated_at, presets }.
- */
+/** GET/POST /yaycheckout/v1/design. Both return { tokens, preset_id, custom_css, updated_at, presets }. */
 class DesignRestController extends BaseRestController {
     use SingletonTrait;
 

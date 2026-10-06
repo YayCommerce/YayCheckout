@@ -208,7 +208,6 @@ function ImportModal( { onClose, onImport }: { onClose: () => void; onImport: ( 
 	);
 }
 
-/** Import / Export panel in the layout's document sidebar tab. */
 function LayoutImportExport() {
 	const [ isImportOpen, setImportOpen ] = useState( false );
 	const [ isExporting, setExporting ] = useState( false );

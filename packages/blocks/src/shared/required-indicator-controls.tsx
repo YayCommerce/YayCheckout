@@ -13,8 +13,8 @@ interface RequiredIndicatorControlsProps {
 }
 
 /**
- * Required toggle plus the mark / optional-text that follow it. One control
- * at a time so the unused string is not shown, but both values stay stored.
+ * Required toggle, then the required mark or the optional text: only the one that
+ * applies shows, but both values stay stored.
  */
 export function RequiredIndicatorControls( {
 	required,

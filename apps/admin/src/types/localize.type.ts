@@ -20,19 +20,20 @@ export type Meta = {
     docsUrl: string;
     upgradeUrl: string;
     reviewed: boolean;
+    showSetupWizard: boolean;
   };
 };
 
-/** Wire shapes; parsed by the matching *.queries.ts before use. */
+/** Wire shapes, as PHP localizes them. */
 export type AdminData = {
   settings: SettingsResponseWire;
   integrations: IntegrationWire[];
   design: DesignResponseWire;
-  /** Pro only (AssignmentStoreData); Free has no Assignment drawer. */
+  /** Pro only: Free has no Assignment drawer. */
   store?: StoreData;
 };
 
-/** Lists read from WP; AssignmentStoreData::get(). */
+/** Mirrors AssignmentStoreData::get() in PHP. */
 export type StoreData = {
   /** Role slug => translated name, every registered role. */
   roles: Record<string, string>;

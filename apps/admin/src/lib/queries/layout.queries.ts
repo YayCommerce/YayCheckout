@@ -5,6 +5,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type QueryClient,
 } from '@tanstack/react-query';
 
 import {
@@ -34,6 +35,12 @@ export const LAYOUT_KEYS = {
   detail: (id: number) => ['layouts', 'detail', id] as const,
   rules: (id: number) => ['layouts', 'rules', id] as const,
 };
+
+/** Refreshes the counts and the listed tab after a layout joins or leaves the listed set. */
+export function invalidateListedLayouts(queryClient: QueryClient) {
+  queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
+  queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+}
 
 export const LAYOUT_QUERIES = {
   // No initialData or staleTime: Infinity — layouts also change from the editor.
@@ -89,8 +96,7 @@ export function useCreateLayoutDraftMutation() {
     // The modal renders its own inline error.
     meta: { skipGlobalError: true },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+      invalidateListedLayouts(queryClient);
     },
   });
 }
@@ -116,8 +122,7 @@ export function useActivateLayoutMutation() {
     mutationKey: ['layouts', 'activate'],
     mutationFn: activateLayout,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+      invalidateListedLayouts(queryClient);
     },
   });
 }
@@ -129,14 +134,12 @@ export function useDeactivateLayoutMutation() {
     mutationKey: ['layouts', 'deactivate'],
     mutationFn: deactivateLayout,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+      invalidateListedLayouts(queryClient);
     },
   });
 }
 
-/** The row leaves the listed tab and appears in the archived one, so both
- * list caches move — hence `all`, not one status filter. */
+/** The row moves from the listed tab to the archived one, so it invalidates every layout query, not one status filter. */
 export function useArchiveLayoutMutation() {
   const queryClient = useQueryClient();
 
@@ -149,8 +152,7 @@ export function useArchiveLayoutMutation() {
   });
 }
 
-/** The row leaves the archived tab and appears in the listed one, so both
- * list caches move — hence `all`, not one status filter. */
+/** The row moves from the archived tab to the listed one, so it invalidates every layout query, not one status filter. */
 export function useRestoreLayoutMutation() {
   const queryClient = useQueryClient();
 
@@ -189,8 +191,7 @@ export function useDuplicateLayoutMutation() {
     mutationKey: ['layouts', 'duplicate'],
     mutationFn: duplicateLayout,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+      invalidateListedLayouts(queryClient);
     },
   });
 }
@@ -224,7 +225,7 @@ export function useLayoutRulesQuery(id: number) {
   });
 }
 
-/** The reply is the stored rules as the server keeps them, so they go into the cached rules and every cached list: no refetch. */
+/** Writes the stored rules from the reply into the cached rules and every cached list, so nothing refetches. */
 export function useSaveLayoutRulesMutation() {
   const queryClient = useQueryClient();
 

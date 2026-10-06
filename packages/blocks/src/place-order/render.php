@@ -1,14 +1,11 @@
 <?php
 /**
- * Server render for yaycheckout/place-order.
- *
- * Storefront prints the classic submit button, terms, and process-checkout nonce.
+ * Prints WooCommerce's terms, Place order button and checkout nonce; without a
+ * cart, a disabled button.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
  * @var WP_Block $block      Block instance.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

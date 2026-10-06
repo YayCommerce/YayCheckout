@@ -6,9 +6,7 @@ use YayCheckout\Models\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * All settings storage access.
- */
+/** All settings storage access. */
 class SettingsRepository {
 
     public function get(): Settings {
@@ -32,6 +30,14 @@ class SettingsRepository {
 
     public function mark_reviewed(): void {
         update_option( Settings::OPTION_REVIEWED, true );
+    }
+
+    public function is_setup_done(): bool {
+        return (bool) get_option( Settings::OPTION_SETUP_DONE, false );
+    }
+
+    public function mark_setup_done(): void {
+        update_option( Settings::OPTION_SETUP_DONE, true );
     }
 
     private function updated_at(): ?string {

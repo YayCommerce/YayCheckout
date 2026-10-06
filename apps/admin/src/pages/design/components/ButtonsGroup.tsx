@@ -1,14 +1,9 @@
 import { __ } from '@wordpress/i18n';
 
-import { RADIUS_RANGE, type DesignTokens } from '@/lib/schema/design.schema';
+import { BUTTON_STYLE_LABELS, RADIUS_RANGE } from '@/lib/schema/design.schema';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { PxInput } from './PxInput';
 import { TokenField } from './TokenField';
-
-export const BUTTON_STYLE_LABELS: Record<DesignTokens['buttons']['style'], string> = {
-  fill: __('Fill', 'yaycheckout'),
-  outline: __('Outline', 'yaycheckout'),
-};
 
 export function ButtonsGroup() {
   return (

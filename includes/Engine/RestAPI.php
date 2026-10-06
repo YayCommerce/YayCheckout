@@ -5,6 +5,7 @@ use YayCheckout\Controllers\CompatibilityRestController;
 use YayCheckout\Controllers\DesignRestController;
 use YayCheckout\Controllers\LayoutRestController;
 use YayCheckout\Controllers\SettingsRestController;
+use YayCheckout\Controllers\SetupRestController;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -21,5 +22,6 @@ class RestAPI {
         LayoutRestController::get_instance();
         DesignRestController::get_instance();
         CompatibilityRestController::get_instance();
+        SetupRestController::get_instance();
     }
 }

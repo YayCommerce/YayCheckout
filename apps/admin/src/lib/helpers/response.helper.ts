@@ -5,8 +5,14 @@ export async function getErrorMsg(error: unknown, defaultMsg?: string) {
   if ('string' === typeof error) {
     messageText = error;
   } else if (error instanceof HTTPError) {
-    const errorData = await error.response.clone().json();
-    messageText = errorData.message;
+    // A proxy or WAF page (502, 504, block page) is HTML, not the REST JSON error.
+    const errorData = await error.response
+      .clone()
+      .json()
+      .catch(() => null);
+    if (typeof errorData?.message === 'string' && errorData.message) {
+      messageText = errorData.message;
+    }
   } else if (error instanceof Error) {
     messageText = error.message;
   }

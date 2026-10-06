@@ -1,84 +1,116 @@
-# YayCheckout
+<!--
+Purpose: the human front door: requirements, onboarding, the team workflow, when to use the agent tooling, and how to keep the harness current.
+Update when: a requirement or a setup step changes, the review, promotion or release practice changes, a skill is added, renamed or removed, or a harness file gains or loses a topic in the owner map.
+-->
 
-WooCommerce checkout builder — customize checkout fields, layout and design.
+# YayCheckout: WooCommerce Checkout Builder
 
-Requires WordPress 6.5+, PHP 7.4+, WooCommerce 10.0+. HPOS compatible.
+A checkout builder for WooCommerce: merchants build checkout layouts from blocks, assign them to shoppers, and style them, and the storefront renders the active layout in place of WooCommerce's checkout form. One repository ships a Free and a Pro build ([how they split](docs/architecture.md#free-and-pro)).
 
-## Layout
+## Requirements
 
-```
-yaycheckout.php          plugin bootstrap: constants, autoloader, admin shell
-includes/                plugin PHP (see docs/code-standards.md for layering)
-apps/admin/              React settings SPA (Vite) → assets/dist/admin/
-packages/blocks/         checkout blocks (@wordpress/scripts) → assets/dist/blocks/
-templates/               checkout page template (the root Checkout block is the form)
-assets/dist/             build output, gitignored
-scripts/run.sh           dev / build / release
-tests/                   PHPUnit integration tests (wp-phpunit, WooCommerce booted)
-docs/                    project documentation
-```
+- A WordPress site with WooCommerce active. The minimum WordPress, WooCommerce and PHP versions are in the plugin header of `yaycheckout.php`.
+- PHP 8.2 or later for the dev tooling. The product itself must run on PHP 7.4.
+- Composer 2.
+- Node 22, with pnpm through Corepack. `package.json` pins the pnpm version.
+- A GitHub account with read access to the private [admin-shell repository](https://github.com/YayCommerce/yaycommerce-plugin-admin-shell). Composer clones it from GitHub.
+- WP-CLI, for `pnpm makepot`.
+- `jq`, which the Claude Code guard hook needs.
+- Claude Code 2.1.283 or later.
 
-Classes autoload as `YayCheckout\Foo\Bar` → `includes/Foo/Bar.php`. The shared YayCommerce admin shell is scoped into `vendor-prefixed/` by php-scoper.
+## Onboarding
 
-## Setup
+1. Clone into the site's plugins directory:
 
-```bash
-pnpm install          # also runs composer install
-```
+   ```bash
+   cd <site>/wp-content/plugins
+   git clone https://github.com/YayCommerce/YayCheckout.git yaycheckout
+   cd yaycheckout
+   ```
 
-For the admin SPA with hot reload, add to `wp-config.php`:
+2. Switch to Node 22 and enable pnpm:
 
-```php
-define( 'YAYCHECKOUT_IS_DEVELOPMENT', true );
-```
+   ```bash
+   nvm use
+   corepack enable
+   ```
 
-That switches asset registration from `RegisterProd` (built files) to `RegisterDev` (Vite dev server on :3040). The constant defaults to `false` in `yaycheckout.php`; without the define the dev server runs but WordPress still loads the built bundle.
+3. Run the dev script, then install from a second terminal:
 
-## Commands
+   ```bash
+   ./scripts/run.sh dev
+   pnpm install
+   ```
 
-```bash
-./scripts/run.sh dev       # update admin shell + Vite dev server on :3040 + blocks watcher
-./scripts/run.sh build     # typecheck + build admin dashboard
-./scripts/run.sh release                 # Free ZIP in release/ (default)
-./scripts/run.sh release --plan=pro      # Pro ZIP
-./scripts/run.sh info      # current version
-./scripts/run.sh clean     # remove build artifacts
+   On a fresh clone, `pnpm install` fails until the dev script has created `vendor-prefixed/` ([known issue](docs/known-issues.md#a-fresh-clones-first-install-fails-on-vendor-prefixedsrc)). The dev script ends by starting Vite on port 3040 and a blocks watcher, which keep running. Run `git status` once it has started: the dev script can rewrite `composer.json` and `scoper.inc.php`.
 
-composer lint              # phpcs
-composer lint:fix          # phpcbf
-composer test              # PHPUnit integration suite (wp-phpunit + WooCommerce; DB setup in phpunit.xml.dist)
-pnpm makepot               # regenerate languages/yaycheckout.pot
-```
+4. Activate the plugin in wp-admin. `YAYCHECKOUT_IS_DEVELOPMENT` defaults to `true`, so wp-admin loads the SPA from the dev server: keep `./scripts/run.sh dev` running while you work in the admin. To load a built bundle instead, define the constant as `false` in `wp-config.php` and run `./scripts/run.sh build` ([known issue](docs/known-issues.md#the-admin-page-is-blank-without-the-dev-server)).
 
-## Editions
+5. Run the lint and test commands in [CLAUDE.md § Commands](CLAUDE.md#commands). The admin lint fails today on `dev/edd`, and `composer test` needs a test database; [docs/known-issues.md](docs/known-issues.md) gives the output to expect and the setup. Your result should match it.
 
-One codebase, two artifacts. `includes/Pro/` holds all pro PHP and is
-removed from the Free zip, so the Free build genuinely has no pro code —
-not merely disabled code. Nothing outside that directory may name a
-`YayCheckout\Pro` class; `composer lint` runs
-`scripts/check-pro-boundary.sh` to keep that true.
+6. Start Claude Code in the repo with `claude`, and accept the trust dialog. Until you do, Claude ignores the command allowlist in `.claude/settings.json`. Then:
+   - `CLAUDE.md` loads at the start of every session;
+   - a rule in `.claude/rules/` loads when Claude reads a file its `paths` match;
+   - the skills in `.claude/skills/` show up in the skill list, and each loads when you call it or your request matches its description;
+   - the guard hook in `.claude/hooks/` stops Claude's file tools from editing generated directories.
 
-| | Folder | Plugin Name |
+## Daily workflow
+
+The git rules are in [CLAUDE.md § Git](CLAUDE.md#git): branch names, Conventional Commits, PR-only into `dev/edd`, and what an agent may never do. The parts only people do:
+
+- **Review.** Every PR into `dev/edd` needs one approval from a teammate other than its author, then it is squash-merged.
+- **Promotion.** `dev/edd` reaches `main` by a PR with a merge commit, before a release.
+- **Releases.** The release commands are in [CLAUDE.md § Commands](CLAUDE.md#commands). What the release builds and checks is in [docs/architecture.md § Build and release](docs/architecture.md#build-and-release), and the rules for changing it are in [.claude/rules/release.md](.claude/rules/release.md). Release notes go in `readme.txt`.
+
+## Agent tooling
+
+The team's skills cover a change from idea to PR. Each one is called by name, and its `SKILL.md` holds the details:
+
+| Skill | Run it when | It writes |
 |---|---|---|
-| Free | `yaycheckout/` | YayCheckout |
-| Pro | `yaycheckout-pro/` | YayCheckout Pro |
+| [`/yaybrainstorming`](.claude/skills/yaybrainstorming/SKILL.md) | you want to design a feature, a behaviour change, a refactor or an integration before planning it | a design doc in `docs/specs/` |
+| [`/yayplan`](.claude/skills/yayplan/SKILL.md) | you have an accepted design doc, or a request you want planned without one | a plan in `docs/plans/` |
+| [`/yaytidy`](.claude/skills/yaytidy/SKILL.md) | before you open a PR | a report of duplicated facts and code, and the fixes you pick |
+| [`/yayplancheck`](.claude/skills/yayplancheck/SKILL.md) | after each phase of a plan, and before merging | a PASS or FAIL review against the plan, from a fresh subagent |
+| [`/yaybacklog`](.claude/skills/yaybacklog/SKILL.md) | you want to see what reviews left open, check whether an item is done, or record a finding you won't fix in this PR | ticked boxes and new items in `docs/backlog/`, and removes the items that are done |
 
-Pro installs into its own directory rather than replacing the Free one: if the
-Free plugin is ever listed on wordpress.org, an update for slug `yaycheckout`
-would otherwise overwrite a paid Pro install. Both being active at once is
-handled — the plugin deactivates a second copy of itself.
+A typical change runs `/yaybrainstorming`, then `/yayplan`, then you implement it, running `/yayplancheck` after each phase. Before the final review, `/yayplancheck` asks whether to run `/yaytidy` first. A change may also skip the design and go straight to `/yayplan`. A review finding you don't fix in the PR goes to the backlog with `/yaybacklog add`, and the PR that fixes it later ticks its boxes with `/yaybacklog check`.
 
-The SPA plan comes from `__YAYCHECKOUT_PLAN__`, resolved in `vite.config.ts`.
-The dev server defaults to `pro`; builds default to `free`; the release script
-sets `YAYCHECKOUT_PLAN` explicitly. Note the SPA gate is cosmetic — pro
-components ship in the Free bundle blurred. The Free build's PHP is what
-actually withholds the features.
+**Status lifecycle.** Specs and plans stay in the repo as history. An agent acts only on a spec whose Status is `accepted` or a plan whose Status is `active`. The Status words and when each one is set belong to the templates: [the design template](.claude/skills/yaybrainstorming/references/design-template.md) for specs, and [the plan template](.claude/skills/yayplan/references/plan-template.md) for plans.
 
-`release` copies a **fixed file list** — `assets/`, `includes/`, `languages/`, `vendor-prefixed/` and a few root files. Anything built outside those paths is silently absent from the ZIP. After changing the build, unzip the result and check rather than trusting the script.
+**Decision records.** Write one when a change makes or reverses a choice that is costly to undo and that the code can't justify by itself. [The decision-record practice](docs/decisions/2026-10-05-decision-record-practice.md) gives the examples, the file name and the four headings. The record lands in the PR that makes the change.
 
-## Documentation
+## Keeping the harness current
 
-- [`docs/codebase-summary.md`](docs/codebase-summary.md) — orientation map of the codebase structure
-- [`docs/system-architecture.md`](docs/system-architecture.md) — design decisions and data flow
-- [`docs/code-standards.md`](docs/code-standards.md) — layering, naming, and conventions
-- `plans/` — implementation plans (gitignored)
+**Owner map.** Each topic has one home. Other files only link to it.
+
+| Topic | Home |
+|---|---|
+| Daily commands, hard rules, git rules | [CLAUDE.md](CLAUDE.md) |
+| PHP, admin SPA, blocks and release-tooling rules | [.claude/rules/](.claude/rules/) |
+| How the pieces fit | [docs/architecture.md](docs/architecture.md) |
+| Conventions the code can't show | [docs/conventions.md](docs/conventions.md) |
+| Gotchas and checks that fail today | [docs/known-issues.md](docs/known-issues.md) |
+| Follow-ups that reviews left open | [docs/backlog/](docs/backlog/) |
+| Why X, not Y | [docs/decisions/](docs/decisions/) |
+| Spec and plan formats and their Status words | the `yaybrainstorming` and `yayplan` skills |
+| Reviewing work against its plan | the `yayplancheck` skill |
+| The backlog item format, and checking items against the code | the `yaybacklog` skill |
+| Duplicated facts before a PR, and the stacked-branch PR base | the `yaytidy` skill |
+| Onboarding, review, promotion and release practice, agent tooling, harness upkeep | this README |
+
+**Update-when triggers.** Every harness file opens with a Purpose line and an Update when line: in an HTML comment in `CLAUDE.md`, this README and the rules, in the first lines of each doc, decision record and backlog item, and in YAML comments in each skill's frontmatter. When your change matches a file's trigger, update that file in the same PR.
+
+**Personal overrides.** These are gitignored, and the harness must work without them:
+- `.claude/settings.local.json`: your own permissions and settings on top of `.claude/settings.json`;
+- `CLAUDE.local.md`: your own instructions on top of `CLAUDE.md`. It may drop the commit and PR trailers that `CLAUDE.md` asks for.
+
+**Shared skills.** The YayCommerce plugins share the five skills, and their canonical copy lives in [YayCommerce/YayLoyalty](https://github.com/YayCommerce/YayLoyalty/tree/dev/edd/.claude/skills). This repo copies each skill's directory whole and never edits it: a fix lands in YayLoyalty first, then the directory here is replaced. See [the harness record](docs/decisions/2026-10-05-harness-with-review-backlog.md).
+
+**Mechanical checks.** Run `./scripts/check-harness.sh` before merging a PR that changes a harness file. It checks paths, links, headers, rule globs, skill names, decision records and backlog items, prints one line per finding, and exits 1 if there is any.
+
+**Prompt audit.** Run `/doctor prompt-audit` in Claude Code after upgrading Claude Code and before merging a PR that changes `CLAUDE.md`, a rule or a skill. Every finding gets a fix, or a reason to keep the text.
+
+## License
+
+GPLv2 or later. See the plugin header in `yaycheckout.php`.

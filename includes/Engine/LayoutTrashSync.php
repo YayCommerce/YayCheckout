@@ -8,12 +8,11 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Keeps a trashed layout out of the active set and out of WP's trash purge.
+ * Deactivates a layout that reaches the trash and keeps it there for good.
  *
- * Every path into the trash — LayoutRepository::archive(), wp-admin, core's
- * wp/v2 DELETE — goes through wp_trash_post(), which stamps
- * _wp_trash_meta_time so wp_scheduled_delete erases the post after
- * EMPTY_TRASH_DAYS. Archived means kept, on every path.
+ * Every trash path (LayoutRepository::archive(), wp-admin, core's wp/v2 DELETE)
+ * runs wp_trash_post(), which stamps _wp_trash_meta_time for wp_scheduled_delete
+ * to purge after EMPTY_TRASH_DAYS; removing the stamp stops the purge.
  */
 class LayoutTrashSync {
 
@@ -23,9 +22,6 @@ class LayoutTrashSync {
         add_action( 'trashed_post', [ $this, 'keep_trashed_layout' ] );
     }
 
-    /**
-     * @param int $post_id
-     */
     public function keep_trashed_layout( $post_id ): void {
         if ( Layout::POST_TYPE !== get_post_type( $post_id ) ) {
             return;

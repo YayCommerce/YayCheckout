@@ -10,7 +10,7 @@ const previewLinkLifetimeSchema = z.custom<PreviewLinkLifetime>(
   { message: 'Not an allowed preview link lifetime' },
 );
 
-// Wire schemas: the PHP shape, exactly. Only lib/api/settings.api.ts reads them.
+// Wire schemas: the PHP shape, exactly.
 
 export const settingsWireSchema = z
   .object({

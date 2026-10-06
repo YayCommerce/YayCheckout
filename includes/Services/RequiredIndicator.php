@@ -4,10 +4,8 @@ namespace YayCheckout\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The label suffix that marks a field required or optional: the layout's
- * requiredMark / optionalText, or WooCommerce's * and (optional) when empty.
- *
- * Pure: no storage, no hooks.
+ * The label suffix that marks a field required or optional: the layout's requiredMark /
+ * optionalText, or WooCommerce's * and (optional) when empty. Pure: no storage, no hooks.
  */
 class RequiredIndicator {
 

@@ -1,20 +1,10 @@
 <?php
 /**
- * Server render for yaycheckout/shipping.
- *
- * Inner Field blocks supply the address controls. Attributes are read with
- * defaults so markup saved before an attribute existed still renders.
- *
- * Prints WooCommerce's "Ship to a different address?" checkbox and the
- * div.shipping_address wrapper so checkout.js toggles the fields and
- * WC_Checkout reads them exactly as on the stock form. Nothing renders when the
- * cart needs no shipping address or the store ships to the billing address only.
+ * Prints div.yaycheckout-shipping: an optional heading and its inner Field blocks.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Inner blocks markup, already rendered by core.
  * @var WP_Block $block      Block instance.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

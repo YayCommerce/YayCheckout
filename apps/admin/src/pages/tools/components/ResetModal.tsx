@@ -14,7 +14,7 @@ import { HelpTip } from '@/components/ui/tooltip';
 
 const CONFIRM_PHRASE = 'RESET';
 
-/** Confirms wiping a layout back to the blank starting layout; gated by a typed phrase like DeleteModal. */
+/** Confirms resetting a layout to the blank starting layout, gated by a typed phrase. */
 export function ResetModal({
   layout,
   onOpenChange,
@@ -112,7 +112,7 @@ export function ResetModal({
             </Field>
 
             {layout.isActive && (
-              // Tinted like the rest of the dialog's boxes; a bare line here read as loose text next to the footer rule.
+              // Tinted like the dialog's other boxes, so it does not read as loose text beside the footer rule.
               <Alert variant="outline" destructive className="border-destructive/30 bg-destructive/5 -mt-1">
                 <TriangleAlert />
                 <AlertDescription>

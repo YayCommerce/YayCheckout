@@ -47,9 +47,6 @@ interface AddressSectionEditProps {
 	setAttributes: ( attributes: Partial< AddressSectionAttributes > ) => void;
 }
 
-/**
- * Billing / Shipping hold fields, layout blocks, and the step buttons.
- */
 export function AddressSectionEdit( {
 	section,
 	attributes,

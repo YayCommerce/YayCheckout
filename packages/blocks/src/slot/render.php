@@ -1,14 +1,10 @@
 <?php
 /**
- * Server render for yaycheckout/slot.
- *
- * Named empty place. Plugins and Pro inject via yaycheckout_slot_{name}.
+ * Prints a named empty slot that plugins fill through the yaycheckout_slot_{name} action.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
  * @var WP_Block $block      Block instance.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

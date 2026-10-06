@@ -11,10 +11,8 @@ const STEP = 'yaycheckout/step';
 const ADDRESS_SECTIONS = [ 'yaycheckout/billing', 'yaycheckout/shipping' ];
 
 /**
- * Header inserter follows the selection: Billing/Shipping so Field appears,
- * a Step so sections land in that step, Steps so another
- * step can be added, otherwise the Checkout block.
- * Contact and the document never list Field.
+ * Points the header inserter at the selected Billing or Shipping block, so Field
+ * is offered, and otherwise at the Checkout block wherever it sits.
  */
 
 function stepsInsertion(

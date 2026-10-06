@@ -11,13 +11,11 @@ import {
   DesignTokensWire,
 } from '@/lib/schema/design.schema';
 
-// The only place wire snake_case meets app camelCase.
-
 export function tokensFromWire(wire: DesignTokensWire): DesignTokens {
   return {
     colours: wire.colours,
     typography: {
-      inherit: wire.typography.inherit,
+      enabled: wire.typography.enabled,
       fontFamily: wire.typography.font_family,
       baseSize: wire.typography.base_size,
     },
@@ -31,7 +29,7 @@ export function tokensToWire(tokens: DesignTokens): DesignTokensWire {
   return {
     colours: tokens.colours,
     typography: {
-      inherit: tokens.typography.inherit,
+      enabled: tokens.typography.enabled,
       font_family: tokens.typography.fontFamily,
       base_size: tokens.typography.baseSize,
     },
@@ -64,15 +62,14 @@ export async function getDesign(): Promise<DesignResponse> {
   return designResponseFromWire(designResponseWireSchema.parse(await api.get('design').json()));
 }
 
+/** The applied-design body POST /design and POST /setup both send. */
+export function designToWire(form: DesignForm, presetId: string | null) {
+  return { tokens: tokensToWire(form.tokens), preset_id: presetId, custom_css: form.customCss };
+}
+
 export async function postDesign(form: DesignForm, presetId: string | null): Promise<DesignResponse> {
   return designResponseFromWire(
-    designResponseWireSchema.parse(
-      await api
-        .post('design', {
-          json: { tokens: tokensToWire(form.tokens), preset_id: presetId, custom_css: form.customCss },
-        })
-        .json(),
-    ),
+    designResponseWireSchema.parse(await api.post('design', { json: designToWire(form, presetId) }).json()),
   );
 }
 

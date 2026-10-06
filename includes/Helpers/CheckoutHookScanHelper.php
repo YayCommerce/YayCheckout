@@ -9,8 +9,8 @@ defined( 'ABSPATH' ) || exit;
  * "Plugins touching checkout": resolves every callback on a fixed list of
  * checkout hooks to its file, maps the file to a plugin, mu-plugin or theme,
  * and reports what each one touches. Detection is real; the catalogue only
- * adds status and notes. Hooks registered later than REST (`wp`,
- * `template_redirect`) are invisible — see docs/system-architecture.md, Compatibility.
+ * adds status and notes. The scan runs inside a REST request, so hooks a
+ * plugin registers only on `wp` or `template_redirect` are invisible.
  */
 class CheckoutHookScanHelper {
 

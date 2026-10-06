@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { layoutWireSchema, type Layout } from '@/lib/schema/layout.schema';
 
-// Wire schema: the PHP shape of GET /layouts/{id}/export, exactly. Only lib/api/tools.api.ts reads it.
+// Wire schema: the PHP shape of GET /layouts/{id}/export, exactly.
 
 /** Mirrors Layout::EXPORT_FORMAT in PHP. */
 const LAYOUT_EXPORT_FORMAT = 'yaycheckout-layout';
@@ -17,7 +17,7 @@ export const layoutExportWireSchema = z
         .object({
           title: z.string(),
           content: z.string(),
-          // Passed through unchecked: PHP drops rules it cannot read and still imports the layout, so they never refuse a file here.
+          // Unchecked: PHP drops rules it cannot read and still imports the layout.
           rules: z.unknown().optional(),
         })
         .strict(),
@@ -25,7 +25,7 @@ export const layoutExportWireSchema = z
   })
   .strict();
 
-/** A downloadable export: the envelope as the merchant receives it, plus the name the browser saves it under. */
+/** A downloadable export and the name the browser saves it under. */
 export interface LayoutExportFile {
   filename: string;
   /** The wire envelope verbatim, so the file re-imports without a camelCase round trip. */
@@ -35,7 +35,7 @@ export interface LayoutExportFile {
 /** The parsed export file. Sent back to PHP verbatim, so it keeps its wire spelling. */
 export type LayoutExportEnvelope = z.infer<typeof layoutExportWireSchema>;
 
-/** What the Source step shows about a picked file. Read from the envelope itself: only the import call reaches PHP. */
+/** What the Source step shows about a picked file, read from the file without a request. */
 export interface ImportReview {
   title: string;
   blocks: number;

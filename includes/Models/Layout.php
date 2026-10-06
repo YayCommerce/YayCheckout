@@ -8,16 +8,13 @@ use YayCheckout\Helpers\DateHelper;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * A checkout layout. Pure entity: no WordPress calls.
- *
- * One copy of the markup, post_content; 'publish' in post_status is what
- * makes it live. Publishing is a status change, nothing else.
+ * A checkout layout: one post whose post_content is the markup and whose 'publish'
+ * status makes it live. Pure entity: no WordPress calls.
  */
 class Layout {
 
     public const POST_TYPE = 'yay_checkout_layout';
 
-    // Keys are constants so a typo is a fatal, not a silent read of nothing.
     public const META_RULES     = '_yaycheckout_rules';
     public const META_SELF_TEST = '_yaycheckout_self_test';
 
@@ -124,7 +121,6 @@ class Layout {
     }
 
     /**
-     * @param mixed  $condition
      * @param string $where Position for the error message.
      * @return array{type: string, operator: string, value: mixed}
      * @throws \InvalidArgumentException When the type, operator or value is invalid.
@@ -155,7 +151,6 @@ class Layout {
     }
 
     /**
-     * @param mixed $value
      * @param array $definition One entry of ConditionType::definitions().
      * @return mixed Normalized value, or null when invalid.
      */
