@@ -10,3 +10,30 @@ button.yaycheckout-login__trigger {
 	font: inherit;
 	cursor: pointer;
 }
+
+.yaycheckout-login__dialog {
+	border: 1px solid;
+	padding: 1.5rem;
+	max-width: 28rem;
+	width: calc(100% - 2rem);
+
+	&::backdrop {
+		background: rgb(0 0 0 / 45%);
+	}
+
+	.form-row {
+		margin: 0 0 1rem;
+	}
+}
+
+.yaycheckout-login__close {
+	float: right;
+	background: none;
+	border: 0;
+	cursor: pointer;
+	font: inherit;
+}
+
+.yaycheckout-login__error {
+	color: #b32d2e;
+}
