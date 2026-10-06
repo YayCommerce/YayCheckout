@@ -1,41 +1,27 @@
-import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
+import { RichText, useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 
 interface PlaceOrderAttributes {
-	buttonText: string;
+	buttonText?: string;
 }
 
 interface EditProps {
 	attributes: PlaceOrderAttributes;
+	setAttributes: ( attributes: Partial< PlaceOrderAttributes > ) => void;
 }
 
-/**
- * The button is a locked core/button, so its settings, inline text and pseudo
- * states come from core. buttonText only seeds layouts saved before this.
- */
-export default function Edit( { attributes }: EditProps ) {
-	const lock = { move: true, remove: true };
-	const innerBlocksProps = useInnerBlocksProps( useBlockProps( { className: 'yaycheckout-place-order' } ), {
-		template: [
-			[
-				'core/buttons',
-				{ lock },
-				[
-					[
-						'core/button',
-						{
-							tagName: 'button',
-							type: 'submit',
-							text: attributes.buttonText || __( 'Place order', 'yaycheckout' ),
-							style: { dimensions: { width: '100%' } },
-							lock,
-						},
-					],
-				],
-			],
-		],
-		templateLock: 'all',
-	} );
-
-	return <div { ...innerBlocksProps } />;
+/** The button is the block's root element, so its style supports land on it. Mirrors the class and default label render.php prints on the <button>. */
+export default function Edit( { attributes, setAttributes }: EditProps ) {
+	return (
+		<RichText
+			{ ...useBlockProps( { className: 'yaycheckout-place-order wp-element-button' } ) }
+			tagName="div"
+			value={ attributes.buttonText ?? '' }
+			onChange={ ( buttonText: string ) => setAttributes( { buttonText: buttonText.replace( /\s*\n\s*/g, ' ' ) } ) }
+			placeholder={ __( 'Place order', 'yaycheckout' ) }
+			// Plain text on one line (pasted line breaks become spaces): the label also goes into value and data-value.
+			__unstableDisableFormats
+			disableLineBreaks
+		/>
+	);
 }

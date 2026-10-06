@@ -1,5 +1,6 @@
 import metadata from './block.json';
 import Edit from './edit';
-import { registerDynamicBlock, saveNestedBlocks } from '../shared/register-dynamic-block';
+import './style.css';
+import { registerDynamicBlock } from '../shared/register-dynamic-block';
 
-registerDynamicBlock( metadata.name, Edit, saveNestedBlocks );
+registerDynamicBlock( metadata.name, Edit );
