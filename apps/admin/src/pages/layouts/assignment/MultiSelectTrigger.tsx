@@ -5,8 +5,8 @@ import { cn } from '@/lib/utils';
 import { ComboboxBadge, ComboboxIcon, ComboboxRemove, ComboboxTrigger } from '@/components/ui/combobox';
 
 /**
- * Popover trigger for the condition value pickers: one removable badge per pick, wrapping onto more lines.
- * A pick this store lacks (imported, or deleted since) is flagged, not refused: it may exist later, and it never matches meanwhile.
+ * Trigger for the condition value pickers: one removable badge per pick. A pick this store lacks
+ * (imported, or deleted since) is flagged, not refused: it may exist later, and never matches meanwhile.
  */
 export function MultiSelectTrigger({
   selected,

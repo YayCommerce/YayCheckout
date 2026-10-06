@@ -7,9 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 /**
- * Confirms moving a layout to the archive. Reversible, so the confirm button
- * is not destructive. Never opens for the active row — its Archive item is
- * disabled, matching LayoutActiveGuard.
+ * Confirms moving a layout to the archive; reversible, so the button is not destructive.
+ * Never opens for the active row: its Archive item is disabled, matching LayoutActiveGuard.
  */
 export function ArchiveModal({
   layout,

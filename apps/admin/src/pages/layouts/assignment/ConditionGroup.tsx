@@ -149,7 +149,6 @@ function ConditionRow({
   );
 }
 
-/** The third column: the picker the condition's type takes its value from. */
 function ValuePicker({ condition, onChange }: { condition: Condition; onChange: (value: Condition['value']) => void }) {
   if (condition.type in OPTION_PICKERS) {
     return (

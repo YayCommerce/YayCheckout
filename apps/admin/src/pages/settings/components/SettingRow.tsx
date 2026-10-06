@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-/** One setting: title and description on the left, its control on the right. `warning` is for the rare setting that can break a working store. */
+/** One settings row. `warning` is for the rare setting that can break a working store. */
 export function SettingRow({
   title,
   description,

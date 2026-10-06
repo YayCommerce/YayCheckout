@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 
 const CONFIRM_PHRASE = 'DELETE';
 
-/** Confirms permanently deleting an archived layout — the only destructive action in the product, so it is gated by a typed phrase. */
+/** Confirms permanently deleting an archived layout. It cannot be undone, so it is gated by a typed phrase. */
 export function DeleteModal({
   layout,
   onOpenChange,

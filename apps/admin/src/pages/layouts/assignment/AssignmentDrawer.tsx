@@ -32,8 +32,8 @@ import { AddConditionMenu, ConditionGroup, OrDivider } from '@/pages/layouts/ass
 import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';
 
 /**
- * Right-hand drawer where a layout's assignment rules are edited, opened from the row's "⋯" menu.
- * Lite gets the same drawer locked: a greyed sample form under an upgrade card, and no rules request (no route).
+ * Drawer where a layout's assignment rules are edited. Free gets it locked: a greyed sample
+ * under an upgrade card, and no rules request, since Free has no rules route.
  */
 export function AssignmentDrawer({
   layout,
@@ -92,7 +92,6 @@ function AssignmentForm({ layout, onSaved }: { layout: LayoutSummary; onSaved: (
   );
 }
 
-/** Stands in for the editor until the stored rules arrive. */
 function RulesPlaceholder({ isError }: { isError: boolean }) {
   if (isError) {
     return <p className="text-destructive flex-1 p-5 text-sm">{__('The rules could not be loaded.', 'yaycheckout')}</p>;
@@ -196,7 +195,7 @@ function RulesEditor({ layoutId, saved, onSaved }: { layoutId: number; saved: Gr
   );
 }
 
-/** Lite: the form greyed and inert, so what Pro adds shows in place, under the upgrade card. */
+/** Free: the form greyed and inert, so what Pro adds shows in place, under the upgrade card. */
 function LockedAssignment({ layout }: { layout: LayoutSummary }) {
   return (
     <>

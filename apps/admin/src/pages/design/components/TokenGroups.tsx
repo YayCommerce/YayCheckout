@@ -78,10 +78,8 @@ export const GROUPS: {
 ];
 
 /**
- * The token editor: one collapsible group per section. The switch turns a group
- * on (opening it) or off (closing it, header locked); the header only folds an
- * on group away and back. Custom CSS has no switch and starts closed. A header
- * says "Theme default" while off; unsaved edits show only on their rows.
+ * One collapsible group per token section. A group's switch turns it on (open) or off
+ * (closed and locked); Custom CSS has no switch and starts folded.
  */
 export function TokenGroups() {
   const { control } = useFormContext<DesignForm>();

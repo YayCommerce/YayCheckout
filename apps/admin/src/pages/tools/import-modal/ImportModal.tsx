@@ -13,10 +13,8 @@ import { SourceStep } from './SourceStep';
 import { IMPORT_STEPS, StepStrip, type ImportStep } from './StepStrip';
 
 /**
- * The two-step import flow: Source → Draft.
- *
- * Step state lives in ImportFlow inside DialogContent: Radix unmounts it after
- * the close animation, so each open starts at Source without a reset effect.
+ * The two-step import flow, Source then Draft. Step state lives in ImportFlow inside DialogContent:
+ * Radix unmounts it on close, so each open starts at Source without a reset effect.
  */
 export function ImportModal({
   envelope,
