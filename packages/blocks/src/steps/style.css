@@ -1,19 +1,7 @@
 .yaycheckout-steps {
-	--yaycheckout-steps-gap: 12px;
 	display: flex;
 	flex-direction: column;
-	gap: var(--yaycheckout-steps-gap);
-}
-
-/* Column is the step list. A nested Grid or Row keeps the layout Gutenberg gave it. */
-.yaycheckout-steps .block-editor-block-list__layout:not(.is-layout-flex):not(.is-layout-grid) {
-	display: flex;
-	flex-direction: column;
-	gap: var(--yaycheckout-steps-gap);
-}
-
-.yaycheckout-steps .block-editor-block-list__layout > .wp-block {
-	margin-block: 0;
+	gap: 12px;
 }
 
 .yaycheckout-step {
