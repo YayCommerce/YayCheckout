@@ -1,0 +1,12 @@
+.yaycheckout-login__trigger {
+	color: var(--wp--style--color--link, currentColor);
+	text-decoration: underline;
+}
+
+button.yaycheckout-login__trigger {
+	background: none;
+	border: 0;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
+}

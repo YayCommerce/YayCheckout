@@ -15,6 +15,9 @@ export const blockIcons: Record< string, JSX.Element > = {
 		'M8 7V6a4 4 0 0 1 8 0v1h3v13H5V7h3Zm1.5 0h5V6a2.5 2.5 0 0 0-5 0v1ZM6.5 8.5v10h11v-10h-11Z',
 		'M15.44 11.44 16.5 12.5l-4.97 4.97-3.03-3.03 1.06-1.06 1.97 1.97 3.91-3.91Z'
 	),
+	'yaycheckout/login': icon(
+		'M12 3a4 4 0 0 0-4 4v2H6v11h12V9h-2V7a4 4 0 0 0-4-4Zm-2.5 4a2.5 2.5 0 0 1 5 0v2h-5V7ZM12 13a1.5 1.5 0 0 1 .75 2.8V18h-1.5v-2.2A1.5 1.5 0 0 1 12 13Z'
+	),
 	'yaycheckout/contact': icon(
 		'M3 5h18v14H3V5Zm2.8 1.5L12 11l6.2-4.5H5.8Zm-1.3.8v10.2h15V7.3L12 12.8 4.5 7.3Z'
 	),
