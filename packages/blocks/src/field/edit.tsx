@@ -8,6 +8,9 @@ import { billingAddressFields, shippingAddressFields, type AddressFieldDef } fro
 import { FieldPreview } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
 
+// A checkbox and a hidden input show no placeholder.
+const NO_PLACEHOLDER_TYPES = [ 'checkbox', 'hidden' ];
+
 const ADDRESS_PARENTS = {
 	'yaycheckout/billing': 'billing',
 	'yaycheckout/shipping': 'shipping',
@@ -146,6 +149,13 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						value={ decodeEntities( label ) }
 						onChange={ ( value ) => setAttributes( { label: value } ) }
 					/>
+					{ ! NO_PLACEHOLDER_TYPES.includes( type ) && (
+						<TextControl
+							label={ __( 'Placeholder', 'yaycheckout' ) }
+							value={ placeholder }
+							onChange={ ( value ) => setAttributes( { placeholder: value } ) }
+						/>
+					) }
 					<RequiredIndicatorControls
 						required={ isEmail || required }
 						requiredMark={ requiredMark }
