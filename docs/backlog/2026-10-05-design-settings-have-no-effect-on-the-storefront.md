@@ -24,7 +24,7 @@ Ship a storefront stylesheet that applies each token to the markup the blocks re
 
 ## Done when
 
-- [ ] `git grep 'var(--yaycheckout-'` finds a stylesheet that the checkout page loads.
+- [x] `git grep 'var(--yaycheckout-'` finds a stylesheet that the checkout page loads. — `packages/blocks/src/place-order/style.css` reads `var(--yaycheckout-primary)`, also progress, back-button, steps and step-button
 - [ ] Every property `DesignStyles::vars()` can print is read by at least one rule that the checkout page loads.
 - [ ] Changing the primary colour on the Design page changes the Place order button's background on the storefront.
 - [ ] Changing the input size on the Design page changes the height of the checkout's text inputs on the storefront.

@@ -29,7 +29,7 @@ Give layouts no private status: in a `wp_insert_post_data` filter, turn a layout
 
 ## Done when
 
-- [ ] Choosing Private in the embedded editor's Status panel and saving leaves the layout in the Layouts tab.
-- [ ] On Free, no series of `POST /wp/v2/yay_checkout_layout` requests, `status: private` included, leaves more than `LayoutRepository::FREE_LIMIT` layouts that aren't archived.
-- [ ] On Free with three layouts in the Layouts tab, saving a new layout started at `wp-admin/post-new.php?post_type=yay_checkout_layout` is refused, and the tab still shows three.
-- [ ] On Free at the limit, `LayoutRepository::activate()` refuses a layout that `LayoutRepository::count()` doesn't include.
+- [x] Choosing Private in the embedded editor's Status panel and saving leaves the layout in the Layouts tab. — `LayoutWriteGuard::keep_layout_rules()` turns `private` into `draft` (checked in the embedded editor)
+- [x] On Free, no series of `POST /wp/v2/yay_checkout_layout` requests, `status: private` included, leaves more than `LayoutRepository::FREE_LIMIT` layouts that aren't archived. — private saves are stored as draft, so `LayoutCapGuard::enforce_limit()`'s `count()` includes them (REST create at the limit answers 403)
+- [x] On Free with three layouts in the Layouts tab, saving a new layout started at `wp-admin/post-new.php?post_type=yay_checkout_layout` is refused, and the tab still shows three. — `LayoutCapGuard::enforce_limit()` treats the first save of an `auto-draft` as an insert (403 at the limit)
+- [x] On Free at the limit, `LayoutRepository::activate()` refuses a layout that `LayoutRepository::count()` doesn't include. — `LayoutRepository::activate()` checks `Plan::layout_limit_reached()` for a status outside `LayoutStatus::listed()`

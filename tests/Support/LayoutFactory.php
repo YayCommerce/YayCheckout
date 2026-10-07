@@ -6,9 +6,9 @@ use YayCheckout\Models\Layout;
 /** Fixtures the layout suites share. */
 final class LayoutFactory {
 
-    /** The smallest publishable markup: the root block alone, in the self-closing form core stores. */
-    public static function checkout_markup(): string {
-        return '<!-- wp:yaycheckout/checkout /-->';
+    /** The smallest publishable markup: Checkout around $inner, by default a country field and Place order. */
+    public static function checkout_markup( string $inner = '<!-- wp:yaycheckout/field {"fieldKey":"billing_country","type":"country"} /--><!-- wp:yaycheckout/place-order /-->' ): string {
+        return '<!-- wp:yaycheckout/checkout -->' . $inner . '<!-- /wp:yaycheckout/checkout -->';
     }
 
     /**

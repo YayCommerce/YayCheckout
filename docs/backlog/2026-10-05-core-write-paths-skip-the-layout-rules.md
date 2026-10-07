@@ -30,7 +30,7 @@ The new filter enforces `LayoutMarkupReader::publish_error()`, so an integration
 
 ## Done when
 
-- [ ] `DELETE /wp/v2/yay_checkout_layout/<id>?force=true` on a layout that isn't archived answers a 4xx, and the layout still exists.
-- [ ] Quick Edit, setting a draft with no Checkout block to Published, leaves it unpublished.
-- [ ] Bulk Edit, setting a draft with no Checkout block to Published, leaves it unpublished.
-- [ ] Restoring, from `wp-admin/revision.php`, a revision that `LayoutMarkupReader::publish_error()` refuses onto a published layout doesn't leave it published with that markup.
+- [x] `DELETE /wp/v2/yay_checkout_layout/<id>?force=true` on a layout that isn't archived answers a 4xx, and the layout still exists. — `LayoutCoreRestController::delete_item_permissions_check()` answers 409 via `LayoutStatus::deletable()`; `LayoutWriteGuard::refuse_deleting_unarchived()` on `pre_delete_post` (checked on yaycheckout.test)
+- [x] Quick Edit, setting a draft with no Checkout block to Published, leaves it unpublished. — `LayoutWriteGuard::keep_layout_rules()` on `wp_insert_post_data` (checked in edit.php Quick Edit)
+- [x] Bulk Edit, setting a draft with no Checkout block to Published, leaves it unpublished. — `bulk_edit_posts()` → `wp_update_post()` → `LayoutWriteGuard::keep_layout_rules()`
+- [x] Restoring, from `wp-admin/revision.php`, a revision that `LayoutMarkupReader::publish_error()` refuses onto a published layout doesn't leave it published with that markup. — `wp_restore_post_revision()` → `wp_update_post()` → `LayoutWriteGuard::keep_layout_rules()` keeps the live markup (checked with WP-CLI)

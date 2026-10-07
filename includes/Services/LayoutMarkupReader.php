@@ -10,11 +10,13 @@ defined( 'ABSPATH' ) || exit;
  */
 class LayoutMarkupReader {
 
-    private const CHECKOUT    = 'yaycheckout/checkout';
-    private const EMAIL       = 'yaycheckout/email';
-    private const FIELD       = 'yaycheckout/field';
-    private const EXTRA_FIELD = 'yaycheckout/extra-field';
-    private const SLOT        = 'yaycheckout/slot';
+    private const CHECKOUT     = 'yaycheckout/checkout';
+    private const EMAIL        = 'yaycheckout/email';
+    private const FIELD        = 'yaycheckout/field';
+    private const EXTRA_FIELD  = 'yaycheckout/extra-field';
+    private const ORDER_REVIEW = 'yaycheckout/order-review';
+    private const PAYMENT      = 'yaycheckout/payment';
+    private const PLACE_ORDER  = 'yaycheckout/place-order';
 
     /**
      * A Key is a posted field name and an order meta key. PHP rewrites spaces
@@ -24,21 +26,29 @@ class LayoutMarkupReader {
      */
     public const EXTRA_FIELD_KEY_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9_]*$/';
 
+    /**
+     * Posted names WC_Checkout::get_posted_data() reads, which an extra field
+     * posted under the same name would replace: its billing, shipping and
+     * account fieldsets by prefix, and the rest by name.
+     */
+    private const WOOCOMMERCE_KEY_PATTERN = '/^(?:billing_|shipping_|account_)|^(?:terms|createaccount|payment_method|shipping_method|ship_to_different_address|woocommerce_checkout_update_totals|woocommerce_checkout_place_order|order_comments)$/';
+
     /** Section block => slot name it occupies. */
     private const SECTION_SLOTS = [
         self::EMAIL                    => 'email',
         'yaycheckout/billing'          => 'billing',
         'yaycheckout/shipping'         => 'shipping',
-        'yaycheckout/order-review'     => 'order_review',
+        self::ORDER_REVIEW             => 'order_review',
         'yaycheckout/shipping-methods' => 'shipping_methods',
         'yaycheckout/express-pay'      => 'express_pay',
-        'yaycheckout/payment'          => 'payment',
+        self::PAYMENT                  => 'payment',
         'yaycheckout/order-summary'    => 'order_summary',
-        'yaycheckout/place-order'      => 'place_order',
+        self::PLACE_ORDER              => 'place_order',
     ];
 
     /**
-     * Section slots plus each named slot block, in document order, unique.
+     * Section slots, in document order, unique. A Slot block's name is not one: it prints
+     * none of a section's markup, so CheckoutFragments must not swap a fragment for it.
      *
      * @return string[]
      */
@@ -48,12 +58,10 @@ class LayoutMarkupReader {
         foreach ( self::blocks( $markup ) as $block ) {
             if ( isset( self::SECTION_SLOTS[ $block['blockName'] ] ) ) {
                 $slots[] = self::SECTION_SLOTS[ $block['blockName'] ];
-            } elseif ( self::SLOT === $block['blockName'] ) {
-                $slots[] = sanitize_key( self::text( $block['attrs'], 'slotName' ) );
             }
         }
 
-        return array_values( array_unique( array_filter( $slots, 'strlen' ) ) );
+        return array_values( array_unique( $slots ) );
     }
 
     /**
@@ -150,21 +158,58 @@ class LayoutMarkupReader {
     }
 
     /**
-     * Why the layout cannot be published, or '' when it can. JavaScript copies of these rules live in
-     * packages/blocks/src/checkout/publish-guard.ts, packages/blocks/src/shared/extra-field-keys.ts
-     * and packages/blocks/src/extra-field/edit.tsx; change them together.
+     * Why the layout cannot take an order and so cannot be published, or '' when it can.
+     * packages/blocks/src/checkout/publish-guard.ts copies the Checkout block and extra-field Key
+     * rules, as do packages/blocks/src/shared/extra-field-keys.ts and packages/blocks/src/extra-field/edit.tsx;
+     * change them together. The editor learns every other rule from the REST refusal.
      */
     public static function publish_error( string $markup ): string {
         if ( ! has_block( self::CHECKOUT, $markup ) ) {
             return __( 'Add a Checkout block to this layout before publishing it.', 'yaycheckout' );
         }
 
-        $keys = [];
+        $blocks = self::blocks( $markup );
+        $names  = array_column( $blocks, 'blockName' );
 
-        foreach ( self::blocks( $markup ) as $block ) {
-            if ( self::EXTRA_FIELD === $block['blockName'] ) {
-                $keys[] = trim( self::text( $block['attrs'], 'fieldKey' ) );
+        // Order review prints WooCommerce's payment box, Place order included; a Payment block makes
+        // CheckoutFragments replace that box with gateways alone, and Place order is gone.
+        if ( in_array( self::ORDER_REVIEW, $names, true ) && in_array( self::PAYMENT, $names, true ) ) {
+            return __( 'Order review already shows the payment methods. Remove the Payment block, or remove Order review.', 'yaycheckout' );
+        }
+
+        if ( ! array_intersect( [ self::PLACE_ORDER, self::ORDER_REVIEW ], $names ) ) {
+            return __( 'Add a Place order block to this layout before publishing it.', 'yaycheckout' );
+        }
+
+        $field_keys = [];
+        $keys       = [];
+
+        foreach ( $blocks as $block ) {
+            $key = trim( self::text( $block['attrs'], 'fieldKey' ) );
+
+            if ( self::EMAIL === $block['blockName'] ) {
+                $field_keys[] = 'billing_email';
+            } elseif ( self::FIELD === $block['blockName'] && '' !== $key ) {
+                $field_keys[] = $key;
+            } elseif ( self::EXTRA_FIELD === $block['blockName'] ) {
+                $keys[] = $key;
             }
+        }
+
+        // Two inputs under one name post only the last, so an empty second one hides the first.
+        $repeated = array_unique( array_diff_assoc( $field_keys, array_unique( $field_keys ) ) );
+
+        if ( ! empty( $repeated ) ) {
+            return sprintf(
+                /* translators: %s: comma-separated address field keys. */
+                __( 'Each address field may appear only once, and the Email address block is billing_email. Used more than once: %s.', 'yaycheckout' ),
+                implode( ', ', $repeated )
+            );
+        }
+
+        // Without it WooCommerce refuses the address of any cart that needs shipping.
+        if ( ! in_array( 'billing_country', $field_keys, true ) ) {
+            return __( 'Add a Country / Region field to Billing before publishing this layout.', 'yaycheckout' );
         }
 
         if ( in_array( '', $keys, true ) ) {
@@ -178,6 +223,16 @@ class LayoutMarkupReader {
                 /* translators: %s: comma-separated extra field keys. */
                 __( 'Extra field Keys may use only letters, numbers and underscores, and must not start with an underscore: %s.', 'yaycheckout' ),
                 implode( ', ', $malformed )
+            );
+        }
+
+        $woocommerce = array_values( array_unique( preg_grep( self::WOOCOMMERCE_KEY_PATTERN, $keys ) ) );
+
+        if ( ! empty( $woocommerce ) ) {
+            return sprintf(
+                /* translators: %s: comma-separated extra field keys. */
+                __( 'WooCommerce already uses these names, so an extra field Key must not: %s. Keys starting with billing_, shipping_ or account_ are WooCommerce\'s too.', 'yaycheckout' ),
+                implode( ', ', $woocommerce )
             );
         }
 

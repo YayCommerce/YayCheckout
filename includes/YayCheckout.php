@@ -21,6 +21,7 @@ class YayCheckout {
         \YayCheckout\Engine\LayoutCapGuard::get_instance();
         \YayCheckout\Engine\LayoutTrashSync::get_instance();
         \YayCheckout\Engine\LayoutActiveGuard::get_instance();
+        \YayCheckout\Engine\LayoutWriteGuard::get_instance();
         \YayCheckout\Engine\Admin\LayoutEditorEmbed::get_instance();
         \YayCheckout\Renderer\PreviewRequest::get_instance();
         \YayCheckout\Renderer\CheckoutScripts::get_instance();

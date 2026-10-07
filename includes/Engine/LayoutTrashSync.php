@@ -12,7 +12,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * Every trash path (LayoutRepository::archive(), wp-admin, core's wp/v2 DELETE)
  * runs wp_trash_post(), which stamps _wp_trash_meta_time for wp_scheduled_delete
- * to purge after EMPTY_TRASH_DAYS; removing the stamp stops the purge.
+ * to purge after EMPTY_TRASH_DAYS; removing the stamp stops the purge. With the
+ * trash off, archive() trashes by hand without the stamp, and this never runs.
  */
 class LayoutTrashSync {
 

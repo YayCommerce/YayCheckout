@@ -34,6 +34,25 @@ final class LayoutStatus {
         return [ self::DRAFT, self::PENDING, self::SCHEDULED, self::PUBLISHED ];
     }
 
+    /**
+     * Statuses that serve shoppers, so LayoutMarkupReader::publish_error() must accept the markup.
+     *
+     * @return string[]
+     */
+    public static function live(): array {
+        return [ self::PUBLISHED, self::SCHEDULED ];
+    }
+
+    /** Whether a layout in this status may be deleted: archived first, or an auto-draft core cleans up. */
+    public static function deletable( string $status ): bool {
+        return in_array( $status, [ self::ARCHIVED, 'auto-draft' ], true );
+    }
+
+    /** Why a layout that isn't deletable() can't be deleted. */
+    public static function delete_refusal(): string {
+        return __( 'Archive this layout before deleting it.', 'yaycheckout' );
+    }
+
     /** Human label for a status; the raw value for anything unknown. */
     public static function label( string $status ): string {
         $labels = [

@@ -25,8 +25,9 @@ class LayoutCapGuard {
     public function enforce_limit( $prepared_post, $request ) {
         unset( $request );
 
-        // Fires for updates too; only an insert consumes a slot.
-        if ( ! empty( $prepared_post->ID ) ) {
+        // Fires for updates too; only an insert consumes a slot. The first save of an auto-draft from
+        // post-new.php is an update, but the auto-draft held no slot, so it counts as an insert.
+        if ( ! empty( $prepared_post->ID ) && 'auto-draft' !== get_post_status( $prepared_post->ID ) ) {
             return $prepared_post;
         }
 

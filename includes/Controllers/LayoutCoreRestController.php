@@ -2,6 +2,7 @@
 namespace YayCheckout\Controllers;
 
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
+use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\PostTypes\LayoutPostType;
 use YayCheckout\Services\LayoutMarkupReader;
 
@@ -37,6 +38,7 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
      * decide whether to show Move to trash. After a trash Gutenberg
      * hard-navigates to edit.php, a screen the embed cannot host. The page
      * check covers the server-side preload; the header covers live calls.
+     * Also refuses a force delete of a layout that isn't archived.
      *
      * @return true|\WP_Error
      */
@@ -46,6 +48,17 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
                 'rest_cannot_delete',
                 __( 'Archive layouts from the Layouts list, not the editor.', 'yaycheckout' ),
                 [ 'status' => 403 ]
+            );
+        }
+
+        // LayoutWriteGuard would refuse it too, but core reports that as a 500.
+        $post = get_post( (int) $request['id'] );
+
+        if ( $request['force'] && $post instanceof \WP_Post && ! LayoutStatus::deletable( $post->post_status ) ) {
+            return new \WP_Error(
+                'rest_cannot_delete',
+                LayoutStatus::delete_refusal(),
+                [ 'status' => 409 ]
             );
         }
 
@@ -71,7 +84,7 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
         $status  = $prepared->post_status ?? ( $stored ? $stored->post_status : '' );
         $content = $prepared->post_content ?? ( $stored ? $stored->post_content : '' );
 
-        if ( ! in_array( $status, [ 'publish', 'future' ], true ) ) {
+        if ( ! in_array( $status, LayoutStatus::live(), true ) ) {
             return $prepared;
         }
 

@@ -24,6 +24,6 @@ How blocks register, which editor offers them and how the embedded editor works 
 
 ## Couplings no check catches
 
-- `packages/blocks/src/checkout/publish-guard.ts` repeats `LayoutMarkupReader::publish_error()`, and `packages/blocks/src/shared/extra-field-keys.ts` repeats `LayoutMarkupReader::EXTRA_FIELD_KEY_PATTERN`. Change both sides in the same commit. The server's copy decides publishing; for drafts the editor's lock is stricter, since the server accepts any draft. `packages/blocks/src/extra-field/edit.tsx` repeats the Key rules a third time.
+- `packages/blocks/src/checkout/publish-guard.ts` repeats the Checkout block and extra-field Key rules of `LayoutMarkupReader::publish_error()`, and `packages/blocks/src/shared/extra-field-keys.ts` repeats `LayoutMarkupReader::EXTRA_FIELD_KEY_PATTERN`. Change both sides in the same commit. The server's copy decides publishing; for drafts the editor's lock is stricter, since the server accepts any draft. `packages/blocks/src/extra-field/edit.tsx` repeats the Key rules a third time. The other publish rules live only in PHP.
 - `packages/blocks/src/shared/` is also the SPA's `@blocks-shared`. A change there reaches the admin bundle too: build the blocks and type-check the SPA.
 - Nothing type-checks or lints the blocks' TypeScript: `pnpm build:blocks` is the only check there, while `composer lint` covers each `render.php`. Build it, then open a layout in the editor.

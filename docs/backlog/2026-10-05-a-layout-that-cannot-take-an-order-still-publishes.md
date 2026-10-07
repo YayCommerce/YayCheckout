@@ -31,10 +31,10 @@ Grow `publish_error()` into the one composition validator, with one message per 
 
 ## Done when
 
-- [ ] `LayoutMarkupReader::publish_error()` refuses a layout with a Payment block and no Place order block.
-- [ ] `LayoutMarkupReader::publish_error()` refuses a layout with neither a Place order block nor an Order review block.
-- [ ] `LayoutMarkupReader::publish_error()` refuses a Slot whose name, after `sanitize_key()`, is a section slot name such as `payment`.
-- [ ] `LayoutMarkupReader::publish_error()` refuses an extra-field Key that `WC_Checkout::get_posted_data()` reads, such as `payment_method`, and any Key starting `billing_`, `shipping_` or `account_`.
-- [ ] `LayoutMarkupReader::publish_error()` refuses a `billing_email` Field in a layout that has an Email address block.
-- [ ] `LayoutMarkupReader::publish_error()` refuses a layout with no `billing_country` Field.
-- [ ] `packages/blocks/src/checkout/publish-guard.ts` takes its message from `publish_error()` and holds no copy of the rules.
+- [x] `LayoutMarkupReader::publish_error()` refuses a layout with a Payment block and no Place order block. — `LayoutMarkupReader::publish_error()`: Payment alone fails the Place order / Order review rule, Payment with Order review fails the Order review + Payment rule
+- [x] `LayoutMarkupReader::publish_error()` refuses a layout with neither a Place order block nor an Order review block. — `LayoutMarkupReader::publish_error()` returns "Add a Place order block…"
+- [x] `LayoutMarkupReader::slots()` returns no Slot block's name, so a Slot named `payment` never makes `CheckoutFragments::fragments()` swap the payment fragment. — `slots()` reads only `SECTION_SLOTS` (a Slot named `payment` with Order review keeps Place order after the first refresh, checked on the storefront)
+- [x] `LayoutMarkupReader::publish_error()` refuses an extra-field Key that `WC_Checkout::get_posted_data()` reads, such as `payment_method`, and any Key starting `billing_`, `shipping_` or `account_`. — `LayoutMarkupReader::WOOCOMMERCE_KEY_PATTERN`, checked in `publish_error()`
+- [x] `LayoutMarkupReader::publish_error()` refuses a `billing_email` Field in a layout that has an Email address block. — `LayoutMarkupReader::publish_error()` counts the Email address block as `billing_email` and refuses a repeated Field Key
+- [x] `LayoutMarkupReader::publish_error()` refuses a layout with no `billing_country` Field. — `LayoutMarkupReader::publish_error()` returns "Add a Country / Region field…"
+- [x] `packages/blocks/src/checkout/publish-guard.ts` copies only the Checkout block and extra-field Key rules, and names `LayoutMarkupReader::publish_error()` as their owner; the editor learns every other rule from the REST refusal. — `LayoutPublishGuard` docblock; `LayoutCoreRestController::prepare_item_for_database()` answers 400 with `publish_error()`'s message (checked in the editor)

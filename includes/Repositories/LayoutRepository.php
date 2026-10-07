@@ -188,7 +188,12 @@ class LayoutRepository {
             );
         }
 
-        // Also when already published: Quick Edit and layouts saved before these rules skip the check.
+        // A layout count() leaves out (stored private before LayoutWriteGuard) would take a slot without one.
+        if ( ! in_array( $layout->post_status, LayoutStatus::listed(), true ) && Plan::layout_limit_reached( $this->count() ) ) {
+            throw new \InvalidArgumentException( Plan::layout_limit_message() );
+        }
+
+        // Also when already published: layouts saved before these rules skip the check.
         self::refuse_unpublishable( $layout->content );
 
         // Scheduled and pending count too: activating overrides the schedule or review.
@@ -250,13 +255,30 @@ class LayoutRepository {
         // LayoutActiveGuard refuses to trash the active layout; archiving is the merchant's explicit choice, so deactivate first.
         $this->deactivate( $id );
 
-        $trashed = wp_trash_post( $id );
+        if ( EMPTY_TRASH_DAYS ) {
+            $trashed = wp_trash_post( $id );
+        } else {
+            // With the trash off, wp_trash_post() deletes outright. Trash it by hand: the stored status
+            // lets wp_untrash_post() restore it, and without _wp_trash_meta_time nothing purges it.
+            update_post_meta( $id, '_wp_trash_meta_status', $post->post_status );
+
+            if ( ! wp_update_post(
+                [
+                    'ID'          => $id,
+                    'post_status' => LayoutStatus::ARCHIVED,
+                ]
+            ) ) {
+                throw new \RuntimeException( sprintf( 'Layout %d could not be archived.', $id ) );
+            }
+
+            $trashed = $post;
+        }
 
         if ( ! $trashed instanceof \WP_Post ) {
             throw new \RuntimeException( sprintf( 'Layout %d could not be archived.', $id ) );
         }
 
-        // wp_trash_post() hands back the pre-update object; only the status moved.
+        // Both branches hold the pre-update object; only the status moved.
         $trashed->post_status = LayoutStatus::ARCHIVED;
 
         return Layout::from_post( $trashed, $this->hydrate_meta( get_post_meta( $id ) ), false );
@@ -443,8 +465,8 @@ class LayoutRepository {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
 
-        if ( LayoutStatus::ARCHIVED !== $post->post_status ) {
-            throw new \InvalidArgumentException( __( 'Archive this layout before deleting it.', 'yaycheckout' ) );
+        if ( ! LayoutStatus::deletable( $post->post_status ) ) {
+            throw new \InvalidArgumentException( LayoutStatus::delete_refusal() );
         }
 
         if ( $this->is_active( $id ) ) {

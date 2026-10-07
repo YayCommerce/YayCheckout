@@ -43,8 +43,9 @@ function focusKeyControl( attempts = 20 ) {
 
 /**
  * Locks saving while the layout cannot take an order: no Checkout block at any depth,
- * or an extra field Key that is empty, malformed or shared. Mirrors
- * LayoutMarkupReader::publish_error(); core has no publish-only lock, so drafts are held too.
+ * or an extra field Key that is empty, malformed or shared. Copies only those rules of
+ * LayoutMarkupReader::publish_error(), which owns them; the server refuses the others on
+ * publish, and the editor shows its message. Core has no publish-only lock, so drafts are held too.
  */
 function LayoutPublishGuard() {
 	const { message, clientId } = useSelect( ( select ): LayoutProblem => {

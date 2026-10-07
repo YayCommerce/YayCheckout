@@ -28,7 +28,7 @@ Also refuse, in a `pre_delete_post` filter, to delete a layout that isn't archiv
 
 ## Done when
 
-- [ ] With `define( 'EMPTY_TRASH_DAYS', 0 );` in `wp-config.php`, archiving a layout from the Layouts page moves it to the Archived tab.
-- [ ] With the trash off, that layout restores from the Archived tab with its content and revisions.
-- [ ] With the trash off, an archived layout is still there after core's `wp_scheduled_delete` cron event runs.
+- [x] With `define( 'EMPTY_TRASH_DAYS', 0 );` in `wp-config.php`, archiving a layout from the Layouts page moves it to the Archived tab. — `LayoutRepository::archive()` trashes by hand when `EMPTY_TRASH_DAYS` is 0 (checked with WP-CLI `--require` defining it as 0)
+- [x] With the trash off, that layout restores from the Archived tab with its content and revisions. — `archive()` stores `_wp_trash_meta_status`; `restore()` → `wp_untrash_post()` gives a draft with content and revisions kept
+- [x] With the trash off, an archived layout is still there after core's `wp_scheduled_delete` cron event runs. — `archive()`'s trash-off branch writes no `_wp_trash_meta_time` (layout still there after `wp_scheduled_delete()`)
 - [x] The `LayoutStatus::ARCHIVED` docblock agrees with `LayoutTrashSync`: archived layouts are never purged. — `includes/Enums/LayoutStatus.php` `ARCHIVED` docblock
