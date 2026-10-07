@@ -53,11 +53,6 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					/>
 				</div>
 				<FieldPreview
-					label={ __( 'Account username', 'yaycheckout' ) }
-					type="text"
-					required
-				/>
-				<FieldPreview
 					label={ __( 'Create account password', 'yaycheckout' ) }
 					type="password"
 					required
