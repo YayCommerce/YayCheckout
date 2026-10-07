@@ -1,0 +1,24 @@
+/* Block-level, so a constrained layout's auto margins align it with the content. */
+.yaycheckout-return-to-cart {
+	margin-block: 16px 0;
+}
+
+/* Matches .yaycheckout-back-button's link look (back-button/style.css); change both together. */
+.yaycheckout-return-to-cart__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 10px 0;
+	color: var(--yaycheckout-primary);
+	font-family: inherit;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.2;
+	text-decoration: none;
+}
+
+/* Classic themes (Storefront) repaint a:hover. */
+.yaycheckout-return-to-cart__link:is(:hover, :focus) {
+	color: var(--yaycheckout-primary);
+	text-decoration: none;
+}
