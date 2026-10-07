@@ -25,7 +25,7 @@ if ( '' === $yaycheckout_label ) {
     $yaycheckout_label = __( 'Extra field', 'yaycheckout' );
 }
 
-$yaycheckout_woo_type         = 'datetime' === $yaycheckout_type ? 'text' : $yaycheckout_type;
+$yaycheckout_woo_type         = 'datetime' === $yaycheckout_type ? 'datetime-local' : $yaycheckout_type;
 $yaycheckout_checkbox_choices = 'checkbox' === $yaycheckout_type && ! empty( $yaycheckout_options );
 $yaycheckout_wrapper          = get_block_wrapper_attributes( [ 'class' => 'yaycheckout-extra-field form-row' ] );
 
@@ -78,7 +78,7 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
         <input type="checkbox" name="<?php echo esc_attr( $yaycheckout_key ); ?>" id="<?php echo esc_attr( $yaycheckout_key ); ?>" value="1" <?php echo $yaycheckout_required ? 'required' : ''; ?> />
     <?php else : ?>
         <input
-            type="<?php echo 'datetime' === $yaycheckout_type ? 'datetime-local' : 'text'; ?>"
+            type="<?php echo esc_attr( $yaycheckout_woo_type ); ?>"
             class="input-text"
             name="<?php echo esc_attr( $yaycheckout_key ); ?>"
             id="<?php echo esc_attr( $yaycheckout_key ); ?>"

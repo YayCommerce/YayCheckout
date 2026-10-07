@@ -87,11 +87,13 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						value={ decodeEntities( label ) }
 						onChange={ ( value ) => setAttributes( { label: value } ) }
 					/>
-					<TextControl
-						label={ __( 'Placeholder', 'yaycheckout' ) }
-						value={ placeholder }
-						onChange={ ( value ) => setAttributes( { placeholder: value } ) }
-					/>
+					{ type !== 'datetime' && (
+						<TextControl
+							label={ __( 'Placeholder', 'yaycheckout' ) }
+							value={ placeholder }
+							onChange={ ( value ) => setAttributes( { placeholder: value } ) }
+						/>
+					) }
 					<RequiredIndicatorControls
 						required={ required }
 						requiredMark={ requiredMark }
