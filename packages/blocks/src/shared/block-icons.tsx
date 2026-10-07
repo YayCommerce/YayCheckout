@@ -61,10 +61,8 @@ export const blockIcons: Record< string, JSX.Element > = {
 	'yaycheckout/checkout': icon( <path d="M12 3.5 19.5 7.75v8.5L12 20.5l-7.5-4.25v-8.5L12 3.5ZM4.5 7.75 12 12l7.5-4.25M12 12v8.5" /> ),
 	'yaycheckout/login': icon(
 		<>
-			<rect x="5" y="10" width="14" height="10.5" rx="3" />
-			<path d="M8.5 10V7a3.5 3.5 0 0 1 7 0v3" />
-			<circle cx="12" cy="14.5" r="1.25" />
-			<path d="M12 15.75v1.75" />
+			<path d="M14 4.5h3.5A2.5 2.5 0 0 1 20 7v10a2.5 2.5 0 0 1-2.5 2.5H14" />
+			<path d="m10 8 4 4-4 4M14 12H4" />
 		</>
 	),
 	'yaycheckout/email': icon(

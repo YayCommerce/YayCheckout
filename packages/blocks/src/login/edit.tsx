@@ -124,36 +124,37 @@ export default function Edit( { attributes, setAttributes, isSelected }: EditPro
 					<p>{ __( 'Logged-out shoppers see this block.', 'yaycheckout' ) }</p>
 				</PanelBody>
 			</InspectorControls>
-			{ ! loginEditorData.reminderEnabled && (
-				<Notice status="warning" isDismissible={ false }>
-					{ __(
-						'Shoppers will not see this block until Enable log-in during checkout is turned on.',
-						'yaycheckout'
-					) }{ ' ' }
-					{ loginEditorData.settingsUrl !== '' && (
-						<ExternalLink href={ loginEditorData.settingsUrl }>
-							{ __( 'Accounts & Privacy', 'yaycheckout' ) }
-						</ExternalLink>
-					) }
-				</Notice>
-			) }
-			{ isSelected ? (
-				<RichText
-					{ ...blockProps }
-					tagName="p"
-					allowedFormats={ [ TRIGGER_FORMAT ] }
-					value={ value }
-					onChange={ ( next ) => setAttributes( { text: next, linkText: '' } ) }
-				/>
-			) : parts ? (
-				<p { ...blockProps }>
-					{ parts.before }
-					<span className={ TRIGGER_CLASS }>{ parts.link }</span>
-					{ parts.after }
-				</p>
-			) : (
-				<p { ...blockProps }>{ stripTags( text ) }</p>
-			) }
+			<div { ...blockProps }>
+				{ ! loginEditorData.reminderEnabled && (
+					<Notice className="yaycheckout-login__notice" status="warning" isDismissible={ false }>
+						{ __(
+							'Shoppers will not see this block until Enable log-in during checkout is turned on.',
+							'yaycheckout'
+						) }{ ' ' }
+						{ loginEditorData.settingsUrl !== '' && (
+							<ExternalLink href={ loginEditorData.settingsUrl }>
+								{ __( 'Accounts & Privacy', 'yaycheckout' ) }
+							</ExternalLink>
+						) }
+					</Notice>
+				) }
+				{ isSelected ? (
+					<RichText
+						tagName="p"
+						allowedFormats={ [ TRIGGER_FORMAT ] }
+						value={ value }
+						onChange={ ( next ) => setAttributes( { text: next, linkText: '' } ) }
+					/>
+				) : parts ? (
+					<p>
+						{ parts.before }
+						<span className={ TRIGGER_CLASS }>{ parts.link }</span>
+						{ parts.after }
+					</p>
+				) : (
+					<p>{ stripTags( text ) }</p>
+				) }
+			</div>
 		</>
 	);
 }
