@@ -17,8 +17,21 @@ function field( prefix: string, { key, ...attrs }: FieldSeed ): TemplateArray {
 	return [ fieldMeta.name, { fieldKey: `${ prefix }_${ key }`, ...attrs } ];
 }
 
-function row( columns: [ width: string | undefined, cell: TemplateArray ][] ): TemplateArray {
-	return [ 'core/columns', {}, columns.map( ( [ width, cell ] ) => [ 'core/column', width ? { width } : {}, [ cell ] ] ) ];
+// Matches the horizontal spacing between side-by-side fields in templates/default-layout.php.
+const COLUMN_GAP = { style: { spacing: { blockGap: { left: '24px' } } } };
+
+/** Core aligns each Column, not the row, so a row's verticalAlignment is copied onto its columns as the editor does. */
+function row(
+	columns: [ width: string | undefined, cell: TemplateArray ][],
+	verticalAlignment?: 'bottom'
+): TemplateArray {
+	const align = verticalAlignment ? { verticalAlignment } : {};
+
+	return [
+		'core/columns',
+		{ ...align, ...COLUMN_GAP },
+		columns.map( ( [ width, cell ] ) => [ 'core/column', { ...align, ...( width ? { width } : {} ) }, [ cell ] ] ),
+	];
 }
 
 /**
@@ -51,7 +64,8 @@ export function addressTemplate( prefix: 'billing' | 'shipping' ): TemplateArray
 			[ '50%', field( prefix, { key: 'city', type: 'text', label: __( 'City', 'yaycheckout' ), required: true } ) ],
 			[ '25%', field( prefix, { key: 'state', type: 'state', label: __( 'State', 'yaycheckout' ), required: true } ) ],
 			[ '25%', field( prefix, { key: 'postcode', type: 'text', label: __( 'ZIP Code', 'yaycheckout' ), required: true } ) ],
-		] ),
+			// Bottom-aligned, so the inputs stay in line when a country's longer label wraps.
+		], 'bottom' ),
 		field( prefix, {
 			key: 'phone',
 			type: 'tel',

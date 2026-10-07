@@ -35,7 +35,7 @@ defined( 'ABSPATH' ) || exit;
 <!-- wp:yaycheckout/email /-->
 
 <!-- wp:yaycheckout/billing -->
-<!-- wp:columns -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"24px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"billing_first_name","type":"text","label":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -53,17 +53,17 @@ defined( 'ABSPATH' ) || exit;
 
 <!-- wp:yaycheckout/field {"fieldKey":"billing_address_2","type":"text","label":"<?php esc_html_e( 'Apartment, suite, unit, etc.', 'yaycheckout' ); ?>","required":false} /-->
 
-<!-- wp:columns -->
-<div class="wp-block-columns"><!-- wp:column {"width":"50%"} -->
-<div class="wp-block-column" style="flex-basis:50%"><!-- wp:yaycheckout/field {"fieldKey":"billing_city","type":"text","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"left":"24px"}}}} -->
+<div class="wp-block-columns are-vertically-aligned-bottom"><!-- wp:column {"verticalAlignment":"bottom","width":"50%"} -->
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:50%"><!-- wp:yaycheckout/field {"fieldKey":"billing_city","type":"text","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
-<!-- wp:column {"width":"25%"} -->
-<div class="wp-block-column" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"billing_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:column {"verticalAlignment":"bottom","width":"25%"} -->
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"billing_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
-<!-- wp:column {"width":"25%"} -->
-<div class="wp-block-column" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"billing_postcode","type":"text","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:column {"verticalAlignment":"bottom","width":"25%"} -->
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"billing_postcode","type":"text","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
@@ -71,7 +71,7 @@ defined( 'ABSPATH' ) || exit;
 <!-- /wp:yaycheckout/billing -->
 
 <!-- wp:yaycheckout/shipping -->
-<!-- wp:columns -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"24px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"shipping_first_name","type":"text","label":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -89,17 +89,17 @@ defined( 'ABSPATH' ) || exit;
 
 <!-- wp:yaycheckout/field {"fieldKey":"shipping_address_2","type":"text","label":"<?php esc_html_e( 'Apartment, suite, unit, etc.', 'yaycheckout' ); ?>","required":false} /-->
 
-<!-- wp:columns -->
-<div class="wp-block-columns"><!-- wp:column {"width":"50%"} -->
-<div class="wp-block-column" style="flex-basis:50%"><!-- wp:yaycheckout/field {"fieldKey":"shipping_city","type":"text","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"left":"24px"}}}} -->
+<div class="wp-block-columns are-vertically-aligned-bottom"><!-- wp:column {"verticalAlignment":"bottom","width":"50%"} -->
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:50%"><!-- wp:yaycheckout/field {"fieldKey":"shipping_city","type":"text","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
-<!-- wp:column {"width":"25%"} -->
-<div class="wp-block-column" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"shipping_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:column {"verticalAlignment":"bottom","width":"25%"} -->
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"shipping_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
-<!-- wp:column {"width":"25%"} -->
-<div class="wp-block-column" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"shipping_postcode","type":"text","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:column {"verticalAlignment":"bottom","width":"25%"} -->
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"shipping_postcode","type":"text","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
