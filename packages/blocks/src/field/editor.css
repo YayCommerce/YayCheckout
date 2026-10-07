@@ -1,0 +1,10 @@
+/* The collapsed apartment field: the shopper's link, then the field faded but still editable. */
+.editor-styles-wrapper .yaycheckout-field__reveal {
+	display: block;
+	margin-bottom: 0.5em;
+	color: var(--wp--style--color--link, #2271b1);
+}
+
+.editor-styles-wrapper .yaycheckout-field__collapsed-preview {
+	opacity: 0.5;
+}
