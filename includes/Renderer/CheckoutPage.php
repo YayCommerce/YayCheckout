@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Engine\Register\ScriptName;
 use YayCheckout\Enums\ConditionType;
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
@@ -54,12 +55,14 @@ class CheckoutPage {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php';
     }
 
-    /** Woo's checkout scripts and the Design page's tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
+    /** Woo's checkout scripts, the full-width stylesheet and the Design page's tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
     public function enqueue_scripts(): void {
         wp_enqueue_script( 'wc-checkout' );
         wp_enqueue_script( 'wc-country-select' );
         wp_enqueue_script( 'wc-address-i18n' );
 
+        // Before DesignStyles, so the merchant's custom CSS prints after it.
+        wp_enqueue_style( ScriptName::STYLE_CHECKOUT_PAGE, YAYCHECKOUT_PLUGIN_URL . 'assets/css/checkout-page.css', [], YAYCHECKOUT_VERSION );
         ( new DesignStyles() )->enqueue();
     }
 
