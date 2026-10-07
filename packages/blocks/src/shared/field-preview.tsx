@@ -6,6 +6,7 @@ export function previewInputType( type: string ): string {
 		return type;
 	}
 
+	// Mirrors $yaycheckout_woo_type in packages/blocks/src/extra-field/render.php.
 	if ( type === 'datetime' ) {
 		return 'datetime-local';
 	}
@@ -122,7 +123,7 @@ export function FieldPreview( {
 				<input
 					type={ previewInputType( type ) }
 					readOnly
-					placeholder={ type === 'datetime' ? placeholder || 'YYYY-MM-DD HH:mm' : placeholder }
+					placeholder={ placeholder }
 					className="yaycheckout-field-preview__input"
 				/>
 			) }

@@ -73,6 +73,23 @@ function sync( checkout: Element ): void {
 	document.querySelectorAll< HTMLElement >( ITEM ).forEach( ( item ) => {
 		paint( item, states.get( item.dataset.step ?? '' ) ?? 'locked' );
 	} );
+
+	document.querySelectorAll< HTMLElement >( '.yaycheckout-progress' ).forEach( paintSummary );
+}
+
+// The bar style's fill and "Step N of M". Other styles have no summary.
+function paintSummary( root: HTMLElement ): void {
+	const current = root.querySelector< HTMLElement >( `${ ITEM }[data-state="current"]` );
+	const label = root.querySelector( '.yaycheckout-progress__current' );
+	const total = root.querySelectorAll( ITEM ).length;
+	const step = Number( current?.dataset.step );
+
+	if ( ! label || ! current || ! step || ! total ) {
+		return;
+	}
+
+	label.textContent = String( step );
+	root.style.setProperty( '--yaycheckout-progress-value', String( step / total ) );
 }
 
 function paint( item: HTMLElement, state: string ): void {

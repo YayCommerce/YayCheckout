@@ -59,6 +59,12 @@ export const blockIcons: Record< string, JSX.Element > = {
 	),
 	// The Yay cube, from the brand logo.
 	'yaycheckout/checkout': icon( <path d="M12 3.5 19.5 7.75v8.5L12 20.5l-7.5-4.25v-8.5L12 3.5ZM4.5 7.75 12 12l7.5-4.25M12 12v8.5" /> ),
+	'yaycheckout/login': icon(
+		<>
+			<path d="M14 4.5h3.5A2.5 2.5 0 0 1 20 7v10a2.5 2.5 0 0 1-2.5 2.5H14" />
+			<path d="m10 8 4 4-4 4M14 12H4" />
+		</>
+	),
 	'yaycheckout/email': icon(
 		<>
 			<rect x="3" y="5" width="18" height="14" rx="3" />
