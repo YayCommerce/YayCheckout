@@ -3,6 +3,7 @@ import { useSelect } from '@wordpress/data';
 import { useMemo } from '@wordpress/element';
 import backButtonMeta from '../back-button/block.json';
 import checkoutMeta from '../checkout/block.json';
+import createAccountMeta from '../create-account/block.json';
 import emailMeta from '../email/block.json';
 import progressMeta from '../progress/block.json';
 import stepButtonMeta from '../step-button/block.json';
@@ -15,13 +16,19 @@ interface BlockTypeRules {
 
 const CHECKOUT = checkoutMeta.name;
 
-// The step buttons find the open step from anywhere in the layout, and Email address posts billing_email
-// from anywhere in it, so both stay allowed inside an address section.
-const ALLOWED_IN_ADDRESS_SECTIONS = new Set( [ stepButtonMeta.name, backButtonMeta.name, emailMeta.name ] );
+// The step buttons find the open step from anywhere in the layout. Email address and Create account
+// post their fields from anywhere in the form (WooCommerce prints account fields under billing), so
+// they stay allowed inside an address section.
+const ALLOWED_IN_ADDRESS_SECTIONS = new Set( [
+	stepButtonMeta.name,
+	backButtonMeta.name,
+	emailMeta.name,
+	createAccountMeta.name,
+] );
 
 /**
- * A block whose ancestor rule names Checkout, other than the step buttons and Email address,
- * or Progress, which may sit outside Checkout but stays out of address sections.
+ * A block whose ancestor rule names Checkout, other than the step buttons, Email address and
+ * Create account, or Progress, which may sit outside Checkout but stays out of address sections.
  */
 export function isCheckoutSection( type: BlockTypeRules ): boolean {
 	if ( type.name === progressMeta.name ) {
