@@ -3,7 +3,6 @@ import { billingAddressFields, shippingAddressFields, type AddressFieldDef } fro
 import billingMeta from '../billing/block.json';
 import fieldMeta from '../field/block.json';
 import emailMeta from '../email/block.json';
-import orderReviewMeta from '../order-review/block.json';
 import paymentMeta from '../payment/block.json';
 import placeOrderMeta from '../place-order/block.json';
 import shippingMeta from '../shipping/block.json';
@@ -35,7 +34,6 @@ const defaultTemplate = () => [
 	addressSection( billingMeta.name, billingAddressFields() ),
 	addressSection( shippingMeta.name, shippingAddressFields() ),
 	[ shippingMethodsMeta.name ],
-	[ orderReviewMeta.name ],
 	[ paymentMeta.name ],
 	[ placeOrderMeta.name ],
 ];
