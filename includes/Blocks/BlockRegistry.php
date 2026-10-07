@@ -37,6 +37,7 @@ class BlockRegistry {
         'step',
         'step-button',
         'back-button',
+        'return-to-cart',
         'email',
         'billing',
         'shipping',
