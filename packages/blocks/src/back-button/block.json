@@ -4,7 +4,7 @@
   "name": "yaycheckout/back-button",
   "title": "Previous Step Button",
   "category": "yaycheckout",
-  "description": "Opens the previous checkout step. Place it anywhere inside Checkout.",
+  "description": "Opens the previous checkout step. On the first step it returns to the cart or hides. Place it anywhere in the layout.",
   "textdomain": "yaycheckout",
   "keywords": [ "previous", "return", "back", "step" ],
   "example": {
@@ -12,9 +12,17 @@
       "buttonText": "Back"
     }
   },
-  "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "buttonText": {
+      "type": "string",
+      "default": ""
+    },
+    "firstStep": {
+      "type": "string",
+      "default": "cart",
+      "enum": [ "cart", "hide" ]
+    },
+    "cartText": {
       "type": "string",
       "default": ""
     }

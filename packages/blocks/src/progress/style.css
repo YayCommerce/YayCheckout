@@ -30,7 +30,7 @@ ol.yaycheckout-progress {
 	background: var(--yaycheckout-primary);
 }
 
-.yaycheckout-checkout button.yaycheckout-progress__jump {
+.yaycheckout-progress button.yaycheckout-progress__jump {
 	appearance: none;
 	display: flex;
 	flex-direction: column;
@@ -55,7 +55,7 @@ ol.yaycheckout-progress {
 	cursor: pointer;
 }
 
-.yaycheckout-checkout button.yaycheckout-progress__jump:disabled {
+.yaycheckout-progress button.yaycheckout-progress__jump:disabled {
 	opacity: 1;
 	color: inherit;
 	cursor: default;

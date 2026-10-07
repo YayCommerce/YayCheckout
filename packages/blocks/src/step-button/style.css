@@ -19,7 +19,3 @@
 	background: var(--yaycheckout-primary);
 	color: #fff;
 }
-
-.yaycheckout-step-button[hidden] {
-	display: none;
-}

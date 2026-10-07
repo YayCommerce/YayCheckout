@@ -4,7 +4,7 @@
   "name": "yaycheckout/step-button",
   "title": "Next Step Button",
   "category": "yaycheckout",
-  "description": "Validates the open checkout step and opens the next one. Place it anywhere inside Checkout.",
+  "description": "Validates the open checkout step and opens the next one. Place it anywhere in the layout.",
   "textdomain": "yaycheckout",
   "keywords": [ "continue", "next", "step" ],
   "example": {
@@ -12,7 +12,6 @@
       "buttonText": "Continue"
     }
   },
-  "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "buttonText": {
       "type": "string",

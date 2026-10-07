@@ -3,10 +3,8 @@ import { Placeholder } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import { stepTitle } from '../shared/step-title';
-import checkoutMeta from '../checkout/block.json';
 import stepsMeta from '../steps/block.json';
 
-const CHECKOUT = checkoutMeta.name;
 const STEPS = stepsMeta.name;
 
 function ProgressItem( { stepId, position }: { stepId: string; position: number } ) {
@@ -41,25 +39,18 @@ function ProgressItem( { stepId, position }: { stepId: string; position: number 
 	);
 }
 
-export default function Edit( { clientId }: { clientId: string } ) {
+export default function Edit() {
 	// The store's own order array, so typing elsewhere doesn't re-render this block.
 	const stepIds: string[] | null = useSelect(
 		( select ) => {
-			const { getBlockOrder, getBlockParentsByBlockName, getBlocksByName } = select( blockEditorStore );
-			const checkoutId = getBlockParentsByBlockName( clientId, CHECKOUT )[ 0 ];
+			const { getBlockOrder, getBlocksByName } = select( blockEditorStore );
 
-			if ( ! checkoutId ) {
-				return null;
-			}
-
-			// Mirrors CheckoutProgress::titles_in(): the first Steps block inside this Checkout.
-			const stepsId = ( getBlocksByName( STEPS ) as string[] ).find( ( id ) =>
-				getBlockParentsByBlockName( id, CHECKOUT ).includes( checkoutId )
-			);
+			// Mirrors CheckoutProgress::titles_in(): the layout's first Steps block, in document order.
+			const stepsId = ( getBlocksByName( STEPS ) as string[] )[ 0 ];
 
 			return stepsId ? getBlockOrder( stepsId ) : null;
 		},
-		[ clientId ]
+		[]
 	);
 	const blockProps = useBlockProps( { className: 'yaycheckout-progress' } );
 
