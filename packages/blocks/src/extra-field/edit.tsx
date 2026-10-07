@@ -2,9 +2,10 @@ import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wo
 import { BaseControl, Button, Flex, FlexBlock, Notice, PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
+import { EXTRA_FIELD_KEY_CONTROL_CLASS, EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
 import { FieldPreview, type FieldOption } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
+import './editor.css';
 
 const TYPE_OPTIONS = [
 	{ label: __( 'Text', 'yaycheckout' ), value: 'text' },
@@ -68,17 +69,18 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		<>
 			<InspectorControls>
 				<PanelBody title={ __( 'Extra field', 'yaycheckout' ) }>
+					{ keyError !== '' && (
+						<Notice status="error" isDismissible={ false } className="yaycheckout-extra-field__key-error">
+							{ keyError }
+						</Notice>
+					) }
 					<TextControl
+						className={ EXTRA_FIELD_KEY_CONTROL_CLASS }
 						label={ __( 'Key', 'yaycheckout' ) }
 						value={ fieldKey }
 						onChange={ ( value ) => setAttributes( { fieldKey: value } ) }
 						help={ __( 'Posted name stored on the order, e.g. vat_number.', 'yaycheckout' ) }
 					/>
-					{ keyError !== '' && (
-						<Notice status="error" isDismissible={ false }>
-							{ keyError }
-						</Notice>
-					) }
 					<TextControl
 						label={ __( 'Label', 'yaycheckout' ) }
 						value={ label }

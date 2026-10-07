@@ -1,0 +1,4 @@
+/* The Key error sits above the Key control, one control gap clear of it. */
+.yaycheckout-extra-field__key-error.components-notice {
+	margin: 0 0 16px;
+}
