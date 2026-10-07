@@ -1,6 +1,9 @@
-import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import itemsMeta from '../order-summary-items/block.json';
+import totalsMeta from '../order-summary-totals/block.json';
+import { isCheckoutSection, useBlocksAllowedExcept } from '../shared/allowed-blocks';
 import '../shared/section-preview.css';
 import './editor.css';
 
@@ -13,10 +16,23 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< OrderSummaryAttributes > ) => void;
 }
 
+const LOCKED = { lock: { move: true, remove: true } };
+// templates/default-layout.php seeds the same children; change both.
+const TEMPLATE: [ string, typeof LOCKED ][] = [
+	[ itemsMeta.name, LOCKED ],
+	[ totalsMeta.name, LOCKED ],
+];
+
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-order-summary' } );
 	const heading = label || __( 'Your order', 'yaycheckout' );
+	const allowedBlocks = useBlocksAllowedExcept( isCheckoutSection );
+	const { children, ...innerBlocksProps } = useInnerBlocksProps( blockProps, {
+		allowedBlocks,
+		template: TEMPLATE,
+		templateLock: false,
+	} );
 
 	return (
 		<>
@@ -29,26 +45,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					/>
 				</PanelBody>
 			</InspectorControls>
-			<div { ...blockProps }>
+			<div { ...innerBlocksProps }>
 				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>
-				<table className="yaycheckout-order-summary__table">
-					<thead>
-						<tr>
-							<th className="yaycheckout-order-summary__cell">{ __( 'Product', 'yaycheckout' ) }</th>
-							<th className="yaycheckout-order-summary__cell yaycheckout-order-summary__cell--end">{ __( 'Subtotal', 'yaycheckout' ) }</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td className="yaycheckout-order-summary__cell yaycheckout-order-summary__cell--muted">{ __( 'Sample product × 1', 'yaycheckout' ) }</td>
-							<td className="yaycheckout-order-summary__cell yaycheckout-order-summary__cell--end yaycheckout-order-summary__cell--muted">$20.00</td>
-						</tr>
-						<tr>
-							<td className="yaycheckout-order-summary__cell yaycheckout-order-summary__cell--total">{ __( 'Total', 'yaycheckout' ) }</td>
-							<td className="yaycheckout-order-summary__cell yaycheckout-order-summary__cell--end yaycheckout-order-summary__cell--total">$20.00</td>
-						</tr>
-					</tbody>
-				</table>
+				{ children }
 			</div>
 		</>
 	);

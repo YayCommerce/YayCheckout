@@ -4,7 +4,7 @@
   "name": "yaycheckout/order-summary",
   "title": "Order Summary",
   "category": "yaycheckout",
-  "description": "Cart line items and totals for classic checkout.",
+  "description": "Cart line items and totals for classic checkout, with room for your own blocks above and between them.",
   "textdomain": "yaycheckout",
   "keywords": [ "cart", "totals" ],
   "example": {},
