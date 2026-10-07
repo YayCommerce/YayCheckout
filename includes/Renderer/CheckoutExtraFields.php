@@ -11,7 +11,8 @@ defined( 'ABSPATH' ) || exit;
  * Validates the served layout's extra fields at checkout, stores them on the
  * order, and prints them on the admin and customer order screens. Fields with
  * Remember value on keep the shopper's entries in the WooCommerce session until
- * the order is created, so a reload prints them again.
+ * the order is created, and WC_Checkout::get_value() returns them, so a reload
+ * prints them again.
  *
  * Reads the layout CheckoutPage serves, so a preview checkout validates and
  * saves the previewed layout's fields.
@@ -25,6 +26,9 @@ class CheckoutExtraFields {
     /** WooCommerce session key: Key => cleaned value of each remembered field. */
     public const SESSION_VALUES = 'yaycheckout_extra_field_values';
 
+    /** @var array<string, array>|null The served layout's extra fields, read once per request. */
+    private $fields = null;
+
     protected function __construct() {
         add_action( 'woocommerce_after_checkout_validation', [ $this, 'validate' ], 10, 2 );
         // Fires before WooCommerce saves the new order, so meta set here is saved with it.
@@ -32,21 +36,32 @@ class CheckoutExtraFields {
         add_action( 'woocommerce_admin_order_data_after_billing_address', [ $this, 'print_admin' ] );
         add_action( 'woocommerce_order_details_after_order_table', [ $this, 'print_customer' ] );
         add_action( 'wc_ajax_yaycheckout_remember_extra_fields', [ $this, 'remember' ] );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's checkout value filter.
+        add_filter( 'woocommerce_checkout_get_value', [ $this, 'remembered_value' ], 10, 2 );
     }
 
     /**
-     * The remembered value of an extra field for this shopper, or null.
+     * WC_Checkout::get_value() for a remembered field: the session's value, or '' so that
+     * WooCommerce doesn't fall back to customer meta under the same Key.
      *
-     * @return string|string[]|null
+     * @param  mixed  $value Null unless another filter answered.
+     * @param  string $input Posted field name.
+     * @return mixed
      */
-    public static function remembered_value( string $key ) {
-        if ( ! function_exists( 'WC' ) || null === WC()->session ) {
-            return null;
+    public function remembered_value( $value, $input ) {
+        if ( null !== $value || ! is_string( $input ) || null === WC()->session ) {
+            return $value;
+        }
+
+        $fields = $this->fields();
+
+        if ( empty( $fields[ $input ]['remember'] ) ) {
+            return $value;
         }
 
         $values = WC()->session->get( self::SESSION_VALUES );
 
-        return is_array( $values ) && isset( $values[ $key ] ) ? $values[ $key ] : null;
+        return is_array( $values ) && isset( $values[ $input ] ) ? $values[ $input ] : '';
     }
 
     /**
@@ -128,11 +143,14 @@ class CheckoutExtraFields {
         return ExtraFieldSubmission::collect( $this->fields(), wp_unslash( $_POST ) );
     }
 
-    /** The served layout's extra fields, or none when the renderer stands down. */
+    /** The served layout's extra fields, or none when the renderer stands down. get_value() asks once per field, so it is memoised. */
     private function fields(): array {
-        $layout = CheckoutPage::get_instance()->layout();
+        if ( null === $this->fields ) {
+            $layout       = CheckoutPage::get_instance()->layout();
+            $this->fields = null === $layout ? [] : LayoutMarkupReader::extra_fields( $layout->content );
+        }
 
-        return null === $layout ? [] : LayoutMarkupReader::extra_fields( $layout->content );
+        return $this->fields;
     }
 
     private function print_rows( \WC_Order $order, bool $admin ): void {

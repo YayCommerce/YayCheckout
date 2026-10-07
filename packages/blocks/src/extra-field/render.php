@@ -27,8 +27,8 @@ if ( '' === $yaycheckout_label ) {
     $yaycheckout_label = __( 'Extra field', 'yaycheckout' );
 }
 
-// Remember value: the view script saves the entry on change; CheckoutExtraFields hands it back here after a reload.
-$yaycheckout_value = $yaycheckout_remember ? \YayCheckout\Renderer\CheckoutExtraFields::remembered_value( $yaycheckout_key ) : null;
+// Remember value: the view script saves the entry on change, and CheckoutExtraFields answers get_value() with it.
+$yaycheckout_value = $yaycheckout_remember ? \YayCheckout\Renderer\CheckoutFieldDefaults::value( $yaycheckout_key ) : null;
 
 $yaycheckout_wrapper_attrs = [ 'class' => 'yaycheckout-extra-field form-row' ];
 
@@ -41,8 +41,7 @@ $yaycheckout_checkbox_choices = 'checkbox' === $yaycheckout_type && ! empty( $ya
 $yaycheckout_wrapper          = get_block_wrapper_attributes( $yaycheckout_wrapper_attrs );
 $yaycheckout_describedby      = '' !== $yaycheckout_description ? ' aria-describedby="' . esc_attr( $yaycheckout_key . '-description' ) . '"' : '';
 
-// A field holding a remembered value stays open, so a reload doesn't hide it.
-$yaycheckout_collapsed = \YayCheckout\Services\RevealLink::collapsed( $attributes, $yaycheckout_key, $yaycheckout_required ) && null === $yaycheckout_value;
+$yaycheckout_collapsed = \YayCheckout\Services\RevealLink::collapsed( $attributes, $yaycheckout_key, $yaycheckout_required, $yaycheckout_value );
 
 if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choices ) {
     $yaycheckout_args = [

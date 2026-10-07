@@ -14,12 +14,14 @@ class RevealLink {
 
     /**
      * Whether the field prints collapsed. A required field never is, so checkout never fails on
-     * a field the shopper cannot see.
+     * a field the shopper cannot see, and neither is one already holding the shopper's value, so
+     * a reload doesn't hide it. The editor has no value, so reveal-link.tsx has no such rule.
      *
      * @param array $attrs Raw block attributes.
+     * @param mixed $value The value the field prints; null, '' and [] are empty.
      */
-    public static function collapsed( array $attrs, string $key, bool $required ): bool {
-        if ( $required ) {
+    public static function collapsed( array $attrs, string $key, bool $required, $value = null ): bool {
+        if ( $required || ! in_array( $value, [ null, '', [] ], true ) ) {
             return false;
         }
 
