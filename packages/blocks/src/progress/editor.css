@@ -1,0 +1,11 @@
+/* The editor's items hold the marker and title directly, with no button, so lay them out as the storefront's button does. */
+.editor-styles-wrapper .is-variant-segments .yaycheckout-progress__item {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	align-items: center;
+	column-gap: 8px;
+}
+
+.editor-styles-wrapper .is-variant-segments .yaycheckout-progress__item::before {
+	grid-column: 1 / -1;
+}
