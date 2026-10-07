@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 class LayoutMarkupReader {
 
     private const CHECKOUT    = 'yaycheckout/checkout';
-    private const CONTACT     = 'yaycheckout/contact';
+    private const EMAIL       = 'yaycheckout/email';
     private const FIELD       = 'yaycheckout/field';
     private const EXTRA_FIELD = 'yaycheckout/extra-field';
     private const SLOT        = 'yaycheckout/slot';
@@ -26,7 +26,7 @@ class LayoutMarkupReader {
 
     /** Section block => slot name it occupies. */
     private const SECTION_SLOTS = [
-        self::CONTACT                  => 'contact',
+        self::EMAIL                    => 'email',
         'yaycheckout/billing'          => 'billing',
         'yaycheckout/shipping'         => 'shipping',
         'yaycheckout/order-review'     => 'order_review',
@@ -57,7 +57,7 @@ class LayoutMarkupReader {
     }
 
     /**
-     * WooCommerce address fields by Key: Contact is billing_email, each Field
+     * WooCommerce address fields by Key: the Email address block is billing_email, each Field
      * block with a Key is its own. A later block with the same Key wins.
      *
      * @return array<string, array>
@@ -68,11 +68,11 @@ class LayoutMarkupReader {
         foreach ( self::blocks( $markup ) as $block ) {
             $attrs = $block['attrs'];
 
-            if ( self::CONTACT === $block['blockName'] ) {
+            if ( self::EMAIL === $block['blockName'] ) {
                 $attrs = [
                     'fieldKey'     => 'billing_email',
                     'type'         => 'email',
-                    'label'        => self::text( $attrs, 'label' ),
+                    'label'        => self::plain_text( $attrs, 'label' ),
                     'placeholder'  => self::text( $attrs, 'placeholder' ),
                     'required'     => true, // RequiredFieldOverlay::is_required() owns the email-always-required rule.
                     'requiredMark' => self::text( $attrs, 'requiredMark' ),
@@ -91,7 +91,7 @@ class LayoutMarkupReader {
             $fields[ $key ] = [
                 'fieldKey'     => $key,
                 'type'         => self::text( $attrs, 'type', 'text' ),
-                'label'        => self::text( $attrs, 'label' ),
+                'label'        => self::plain_text( $attrs, 'label' ),
                 'placeholder'  => self::text( $attrs, 'placeholder' ),
                 'description'  => self::text( $attrs, 'description' ),
                 'required'     => ! empty( $attrs['required'] ),
@@ -127,7 +127,7 @@ class LayoutMarkupReader {
             $fields[ $key ] = [
                 'fieldKey'     => $key,
                 'type'         => self::text( $attrs, 'type', 'text' ),
-                'label'        => self::text( $attrs, 'label' ),
+                'label'        => self::plain_text( $attrs, 'label' ),
                 'placeholder'  => self::text( $attrs, 'placeholder' ),
                 'required'     => ! empty( $attrs['required'] ),
                 'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
@@ -235,6 +235,16 @@ class LayoutMarkupReader {
     /** A string attribute, or $fallback when missing, not a string, or empty. */
     public static function text( array $attrs, string $name, string $fallback = '' ): string {
         return isset( $attrs[ $name ] ) && is_string( $attrs[ $name ] ) && '' !== $attrs[ $name ] ? $attrs[ $name ] : $fallback;
+    }
+
+    /**
+     * A string attribute edited on the canvas, as plain text. The editor saves rich text with
+     * HTML entities (& as &amp;), so print it through esc_html() only after this decodes them.
+     */
+    public static function plain_text( array $attrs, string $name, string $fallback = '' ): string {
+        $text = trim( html_entity_decode( wp_strip_all_tags( self::text( $attrs, $name ), true ), ENT_QUOTES, get_bloginfo( 'charset' ) ) );
+
+        return '' !== $text ? $text : $fallback;
     }
 
     /**

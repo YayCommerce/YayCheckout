@@ -1,12 +1,12 @@
 {
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
-  "name": "yaycheckout/contact",
-  "title": "Contact",
+  "name": "yaycheckout/email",
+  "title": "Email address",
   "category": "yaycheckout",
-  "description": "Customer email. A single field, not a section.",
+  "description": "The customer's email (billing_email). Always required; place it anywhere in the checkout.",
   "textdomain": "yaycheckout",
-  "keywords": [ "email", "customer" ],
+  "keywords": [ "email", "contact", "customer" ],
   "example": {},
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {

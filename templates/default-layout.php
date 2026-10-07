@@ -31,7 +31,7 @@ defined( 'ABSPATH' ) || exit;
 <div class="wp-block-columns"><!-- wp:column {"width":"60%"} -->
 <div class="wp-block-column" style="flex-basis:60%"><!-- wp:yaycheckout/express-pay /-->
 
-<!-- wp:yaycheckout/contact /-->
+<!-- wp:yaycheckout/email /-->
 
 <!-- wp:yaycheckout/billing -->
 <!-- wp:yaycheckout/field {"fieldKey":"billing_first_name","type":"text","label":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","required":true} /-->

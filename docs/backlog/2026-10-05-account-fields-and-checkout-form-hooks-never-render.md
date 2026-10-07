@@ -20,7 +20,7 @@ With guest checkout off, registration at checkout on and "generate password" off
 
 As of 2026-10-05, `onyx/feat/checkout-hook-blocks` adds before/after-checkout-form blocks and a Hook block the merchant places, all opt-in per layout, and `alan/Blocks-Coupon-Form` adds a coupon-form block. Neither renders the account fields or order notes. Found by reading the code; not reproduced.
 
-As of 2026-10-06 the default layout (`LayoutRepository::default_markup()`) is a header, a two-column Checkout (Express Pay, Contact, Billing, Shipping, Payment, Place Order; Order Summary and Coupon Form) and a footer. It still has no account fields, order notes, login form or before/after-form hooks. It no longer uses Order Review, so `woocommerce_checkout_before_order_review`, `woocommerce_checkout_order_review` and `woocommerce_checkout_after_order_review` don't fire on it either.
+As of 2026-10-06 the default layout (`LayoutRepository::default_markup()`) is a header, a two-column Checkout (Express Pay, Email address, Billing, Shipping, Payment, Place Order; Order Summary and Coupon Form) and a footer. It still has no account fields, order notes, login form or before/after-form hooks. It no longer uses Order Review, so `woocommerce_checkout_before_order_review`, `woocommerce_checkout_order_review` and `woocommerce_checkout_after_order_review` don't fire on it either.
 
 ## Why it matters
 

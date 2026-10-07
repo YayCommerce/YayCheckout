@@ -31,7 +31,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						label={ __( 'Slot name', 'yaycheckout' ) }
 						value={ slotName }
 						onChange={ ( value ) => setAttributes( { slotName: value } ) }
-						help={ __( 'Snake_case slug other plugins hook into, e.g. after_contact.', 'yaycheckout' ) }
+						help={ __( 'Snake_case slug other plugins hook into, e.g. after_email.', 'yaycheckout' ) }
 					/>
 				</PanelBody>
 			</InspectorControls>

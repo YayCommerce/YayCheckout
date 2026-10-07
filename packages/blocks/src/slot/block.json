@@ -9,7 +9,7 @@
   "keywords": [ "hook", "placeholder" ],
   "example": {
     "attributes": {
-      "slotName": "after_contact"
+      "slotName": "after_email"
     }
   },
   "ancestor": [ "yaycheckout/checkout" ],

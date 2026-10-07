@@ -27,7 +27,7 @@ Pick an owner for each rule, in PHP, and name it in every copy. For email, `Requ
 
 ## Done when
 
-- [x] Each of the four email copies outside `RequiredFieldOverlay::is_required()` names that method as its owner. — `LayoutMarkupReader::fields()`, `packages/blocks/src/contact/render.php`, `packages/blocks/src/field/edit.tsx` (above `isEmail`), `packages/blocks/src/contact/edit.tsx`
+- [x] Each of the four email copies outside `RequiredFieldOverlay::is_required()` names that method as its owner. — `LayoutMarkupReader::fields()`, `packages/blocks/src/email/render.php`, `packages/blocks/src/field/edit.tsx` (above `isEmail`), `packages/blocks/src/email/edit.tsx`
 - [ ] `RequiredIndicator::span()`, `assets/js/checkout-field-requirements.js`, `packages/blocks/src/shared/field-preview.tsx` and the inspector placeholder show the same translated "optional" text, taken from one PHP owner.
 - [x] `assets/js/checkout-field-requirements.js` names `RequiredIndicator::span()` as the owner of the markup it repeats. — `assets/js/checkout-field-requirements.js` header docblock
 - [x] `publish_error()`'s docblock names every JavaScript copy of its rules, including `packages/blocks/src/extra-field/edit.tsx`. — `LayoutMarkupReader::publish_error()` docblock names `publish-guard.ts`, `extra-field-keys.ts`, `extra-field/edit.tsx`

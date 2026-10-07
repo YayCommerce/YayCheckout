@@ -138,7 +138,7 @@ export function PreviewPane({ isCompact = false }: { isCompact?: boolean }) {
 
               <div className="flex flex-col" style={{ gap }}>
                 <p className="m-0" style={SECTION_LABEL_STYLE}>
-                  {__('CONTACT', 'yaycheckout')}
+                  {__('EMAIL ADDRESS', 'yaycheckout')}
                 </p>
                 <input style={fieldStyle} readOnly />
               </div>

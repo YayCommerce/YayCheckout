@@ -77,20 +77,7 @@ function addressFields( prefix: 'billing' | 'shipping' ): AddressFieldDef[] {
 }
 
 export function billingAddressFields(): AddressFieldDef[] {
-	const fields = addressFields( 'billing' );
-	const after = fields.findIndex( ( field ) => field.key === 'billing_last_name' );
-	const email: AddressFieldDef = {
-		key: 'billing_email',
-		type: 'email',
-		label: __( 'Email address', 'yaycheckout' ),
-		required: true,
-	};
-
-	if ( after === -1 ) {
-		return [ email, ...fields ];
-	}
-
-	return [ ...fields.slice( 0, after + 1 ), email, ...fields.slice( after + 1 ) ];
+	return addressFields( 'billing' );
 }
 
 export function shippingAddressFields(): AddressFieldDef[] {

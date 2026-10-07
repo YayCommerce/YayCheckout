@@ -12,7 +12,7 @@
 
 Loading is already wired: `RegisterProd` and `RegisterDev` call `wp_set_script_translations()` for the SPA, and each block's `block.json` sets `textdomain`.
 
-`languages/yaycheckout.pot` was last generated on 2026-09-16, in `a1a7da2`, and holds 22 entries. It lacks SPA strings such as "Your layouts" (`apps/admin/src/pages/layouts/LayoutsPage.tsx`) and "Import layout" (`apps/admin/src/pages/tools/import-modal/ImportModal.tsx`). It lacks editor strings such as "Email is always required." (`packages/blocks/src/field/edit.tsx`, `packages/blocks/src/contact/edit.tsx`). It is stale for PHP too: "Email address" from `packages/blocks/src/contact/render.php` is missing, and of the 13 `block.json` titles only the Checkout block's is there. Found by reading the code; not reproduced.
+`languages/yaycheckout.pot` was last generated on 2026-09-16, in `a1a7da2`, and holds 22 entries. It lacks SPA strings such as "Your layouts" (`apps/admin/src/pages/layouts/LayoutsPage.tsx`) and "Import layout" (`apps/admin/src/pages/tools/import-modal/ImportModal.tsx`). It lacks editor strings such as "Email is always required." (`packages/blocks/src/field/edit.tsx`, `packages/blocks/src/email/edit.tsx`). It is stale for PHP too: "Email address" from `packages/blocks/src/email/render.php` is missing, and of the 13 `block.json` titles only the Checkout block's is there. Found by reading the code; not reproduced.
 
 ## Why it matters
 
@@ -29,4 +29,4 @@ Build the `.pot` from code WP-CLI can parse, whose references match the scripts 
 - [ ] After `pnpm makepot`, `grep -c '^msgid "Your layouts"$' languages/yaycheckout.pot` prints 1.
 - [ ] After `pnpm makepot`, `grep -c '^msgid "Email is always required."$' languages/yaycheckout.pot` prints 1.
 - [ ] With a yaycheckout-de_DE.po in `languages/` that translates "Your layouts", the documented JSON step run, and the site language set to Deutsch, the Layouts page shows the German heading.
-- [ ] With the same setup and a translation of "Email is always required.", the Contact block's inspector in the editor shows the German text.
+- [ ] With the same setup and a translation of "Email is always required.", the Email address block's inspector in the editor shows the German text.

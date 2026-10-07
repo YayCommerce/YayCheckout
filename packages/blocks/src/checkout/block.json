@@ -10,7 +10,7 @@
   "example": {
     "innerBlocks": [
       {
-        "name": "yaycheckout/contact"
+        "name": "yaycheckout/email"
       },
       {
         "name": "yaycheckout/billing",

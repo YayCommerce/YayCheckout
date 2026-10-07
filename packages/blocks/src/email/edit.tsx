@@ -1,10 +1,11 @@
+import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { FieldPreview } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
 
-interface ContactAttributes {
+interface EmailAttributes {
 	label: string;
 	placeholder: string;
 	required: boolean;
@@ -12,26 +13,25 @@ interface ContactAttributes {
 }
 
 interface EditProps {
-	attributes: ContactAttributes;
-	setAttributes: ( attributes: Partial< ContactAttributes > ) => void;
+	attributes: EmailAttributes;
+	setAttributes: ( attributes: Partial< EmailAttributes > ) => void;
 }
 
 /**
- * Contact is a leaf: billing_email lives on this block, not an inner Field.
+ * The Email address block: billing_email lives on this block, not on a Field.
  * It is always required; that rule lives in RequiredFieldOverlay::is_required().
  */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label, placeholder, required, requiredMark = '' } = attributes;
-	const blockProps = useBlockProps( { className: 'yaycheckout-contact' } );
-	const canvasLabel = label || __( 'Email address', 'yaycheckout' );
+	const blockProps = useBlockProps( { className: 'yaycheckout-email' } );
 
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Contact', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Email address', 'yaycheckout' ) }>
 					<TextControl
 						label={ __( 'Label', 'yaycheckout' ) }
-						value={ label }
+						value={ decodeEntities( label ) }
 						onChange={ ( value ) => setAttributes( { label: value } ) }
 					/>
 					<TextControl
@@ -51,11 +51,14 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			</InspectorControls>
 			<div { ...blockProps }>
 				<FieldPreview
-					label={ canvasLabel }
+					label={ label }
+					onLabelChange={ ( value ) => setAttributes( { label: value } ) }
+					labelPlaceholder={ __( 'Email address', 'yaycheckout' ) }
 					type="email"
 					required
 					requiredMark={ requiredMark }
 					placeholder={ placeholder }
+					inheritLabelFont
 				/>
 			</div>
 		</>
