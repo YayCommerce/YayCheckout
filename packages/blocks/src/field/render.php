@@ -32,9 +32,7 @@ $yaycheckout_wrapper = get_block_wrapper_attributes( array( 'class' => 'yaycheck
 
 $yaycheckout_value = \YayCheckout\Renderer\CheckoutFieldDefaults::value( $yaycheckout_key );
 
-// A field that already holds the shopper's value stays open, so a reload doesn't hide it.
-$yaycheckout_collapsed = \YayCheckout\Services\RevealLink::collapsed( $attributes, $yaycheckout_key, $yaycheckout_required )
-    && ( null === $yaycheckout_value || '' === $yaycheckout_value );
+$yaycheckout_collapsed = \YayCheckout\Services\RevealLink::collapsed( $attributes, $yaycheckout_key, $yaycheckout_required, $yaycheckout_value );
 
 if ( function_exists( 'woocommerce_form_field' ) ) {
     echo '<div ' . $yaycheckout_wrapper . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.

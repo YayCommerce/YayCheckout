@@ -132,6 +132,7 @@ class LayoutMarkupReader {
                 'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
                 'optionalText' => trim( self::text( $attrs, 'optionalText' ) ),
                 'options'      => self::options( $attrs['options'] ?? [] ),
+                'remember'     => ! empty( $attrs['rememberValue'] ),
             ];
         }
 
