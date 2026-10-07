@@ -26,6 +26,8 @@ interface FieldPreviewProps {
 	requiredMark?: string;
 	optionalText?: string;
 	placeholder?: string;
+	/** Help text, shown under the control. */
+	description?: string;
 	options?: FieldOption[];
 	/** The block's own typography styles the label. */
 	inheritLabelFont?: boolean;
@@ -42,6 +44,7 @@ export function FieldPreview( {
 	requiredMark = '',
 	optionalText = '',
 	placeholder = '',
+	description = '',
 	options = [],
 	inheritLabelFont = false,
 	onLabelChange,
@@ -127,6 +130,7 @@ export function FieldPreview( {
 					className="yaycheckout-field-preview__input"
 				/>
 			) }
+			{ description !== '' && <p className="yaycheckout-field-preview__description">{ description }</p> }
 		</div>
 	);
 }

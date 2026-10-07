@@ -23,6 +23,7 @@ interface ExtraFieldAttributes {
 	fieldKey: string;
 	label: string;
 	placeholder: string;
+	description: string;
 	required: boolean;
 	requiredMark: string;
 	optionalText: string;
@@ -46,6 +47,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		fieldKey,
 		label,
 		placeholder,
+		description = '',
 		required,
 		requiredMark = '',
 		optionalText = '',
@@ -111,6 +113,12 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							onChange={ ( value ) => setAttributes( { placeholder: value } ) }
 						/>
 					) }
+					<TextControl
+						label={ __( 'Help text', 'yaycheckout' ) }
+						help={ __( 'Shown under the field while the shopper fills it in.', 'yaycheckout' ) }
+						value={ description }
+						onChange={ ( value ) => setAttributes( { description: value } ) }
+					/>
 					<RequiredIndicatorControls
 						required={ required }
 						requiredMark={ requiredMark }
@@ -184,6 +192,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						requiredMark={ requiredMark }
 						optionalText={ optionalText }
 						placeholder={ placeholder }
+						description={ description }
 						options={ options }
 						inheritLabelFont
 					/>

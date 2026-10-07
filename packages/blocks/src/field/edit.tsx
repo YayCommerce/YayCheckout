@@ -81,6 +81,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		type,
 		label,
 		placeholder,
+		description = '',
 		required,
 		requiredMark = '',
 		optionalText = '',
@@ -172,6 +173,14 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 							onChange={ ( value ) => setAttributes( { placeholder: value } ) }
 						/>
 					) }
+					{ type !== 'hidden' && (
+						<TextControl
+							label={ __( 'Help text', 'yaycheckout' ) }
+							help={ __( 'Shown under the field while the shopper fills it in.', 'yaycheckout' ) }
+							value={ description }
+							onChange={ ( value ) => setAttributes( { description: value } ) }
+						/>
+					) }
 					<RequiredIndicatorControls
 						required={ isEmail || required }
 						requiredMark={ requiredMark }
@@ -212,6 +221,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						requiredMark={ requiredMark }
 						optionalText={ optionalText }
 						placeholder={ placeholder }
+						description={ description }
 						inheritLabelFont
 					/>
 				</RevealLinkPreview>
