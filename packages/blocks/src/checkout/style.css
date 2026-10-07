@@ -7,3 +7,50 @@
 	float: none;
 	width: auto;
 }
+
+/* The "+ Add …" link RevealLink::open() prints in place of a collapsed Field or Extra field. */
+.yaycheckout-checkout .yaycheckout-reveal-link {
+	background: none;
+	border: 0;
+	padding: 0;
+	margin-top: 0.25em;
+	font: inherit;
+	color: var(--wp--style--color--link, currentColor);
+	cursor: pointer;
+}
+
+/* A theme's button or div display rule would otherwise beat the hidden attribute. */
+.yaycheckout-checkout .yaycheckout-reveal-link[hidden],
+.yaycheckout-checkout .yaycheckout-reveal-panel[hidden] {
+	display: none;
+}
+
+/*
+ * Help text shows inline under its field instead of as WooCommerce's focus popup. WooCommerce
+ * toggles this span with jQuery slideUp()/slideDown(), which write height, overflow, padding,
+ * margin and display inline; the !important declarations only outrank those inline styles.
+ * The selector outranks WooCommerce's .woocommerce form .form-row .woocommerce-input-wrapper
+ * .description (0,4,1) with classes the Checkout and field wrappers always carry (0,5,0).
+ */
+.yaycheckout-checkout.woocommerce-checkout :is(.yaycheckout-field, .yaycheckout-email, .yaycheckout-extra-field).form-row .description {
+	display: block !important;
+	height: auto !important;
+	overflow: visible !important;
+	padding: 0 !important;
+	margin: 0.25em 0 0 !important;
+	position: static;
+	background: none;
+	color: inherit;
+	border-radius: 0;
+	font-size: 0.875em;
+	opacity: 0.75;
+}
+
+.yaycheckout-checkout.woocommerce-checkout :is(.yaycheckout-field, .yaycheckout-email, .yaycheckout-extra-field).form-row .description::before {
+	display: none;
+}
+
+/* Columns that lay out address fields side by side keep the fields' own spacing, not core's block margin. */
+.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-columns {
+	margin-block: 0;
+}

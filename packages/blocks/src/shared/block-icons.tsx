@@ -57,6 +57,14 @@ export const blockIcons: Record< string, JSX.Element > = {
 			<path d="m11.5 10-2 2 2 2M16 12H9.5" />
 		</>
 	),
+	'yaycheckout/return-to-cart': icon(
+		<>
+			<path d="M3 4.5h2.5l2 10h11l1.75-7H6" />
+			<circle cx="9" cy="18.5" r="1.25" />
+			<circle cx="17" cy="18.5" r="1.25" />
+			<path d="m12.5 9-2 2 2 2M10.5 11h5" />
+		</>
+	),
 	// The Yay cube, from the brand logo.
 	'yaycheckout/checkout': icon( <path d="M12 3.5 19.5 7.75v8.5L12 20.5l-7.5-4.25v-8.5L12 3.5ZM4.5 7.75 12 12l7.5-4.25M12 12v8.5" /> ),
 	'yaycheckout/login': icon(
@@ -103,7 +111,6 @@ export const blockIcons: Record< string, JSX.Element > = {
 			<path d="M7.5 10v4M19 9v6M16 12h6" />
 		</>
 	),
-	'yaycheckout/order-review': icon( <path d="m4 7 1.75 1.75L9 5.5M12.5 7H20M4 16l1.75 1.75L9 14.5M12.5 16H20" /> ),
 	'yaycheckout/shipping-methods': icon(
 		<>
 			<path d="M14 16V7a1.5 1.5 0 0 0-1.5-1.5h-8A1.5 1.5 0 0 0 3 7v7.5A1.5 1.5 0 0 0 4.5 16H5" />

@@ -1,6 +1,7 @@
 import { InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { addressTemplate } from './address-template';
 import { isCheckoutSection, useBlocksAllowedExcept } from './allowed-blocks';
 
 export interface AddressSectionAttributes {
@@ -27,6 +28,8 @@ export function AddressSectionEdit( {
 	const allowedBlocks = useBlocksAllowedExcept( isCheckoutSection );
 	const { children, ...innerBlocksProps } = useInnerBlocksProps( blockProps, {
 		allowedBlocks,
+		// Only fills an empty section, so saved ones are untouched.
+		template: addressTemplate( section ),
 		templateLock: false,
 	} );
 

@@ -37,12 +37,12 @@ class BlockRegistry {
         'step',
         'step-button',
         'back-button',
+        'return-to-cart',
         'email',
         'create-account',
         'billing',
         'shipping',
         'field',
-        'order-review',
         'extra-field',
         'shipping-methods',
         'express-pay',
@@ -134,7 +134,7 @@ class BlockRegistry {
             'window.yayCheckoutLogin = ' . wp_json_encode( $login_editor_data ) . ';',
             'before'
         );
-      
+
         // The create-account editor script may not run after the checkout inline
         // script, so its option flag is printed on its own handle.
         $create_account_editor_data = [

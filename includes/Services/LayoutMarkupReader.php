@@ -29,7 +29,6 @@ class LayoutMarkupReader {
         self::EMAIL                    => 'email',
         'yaycheckout/billing'          => 'billing',
         'yaycheckout/shipping'         => 'shipping',
-        'yaycheckout/order-review'     => 'order_review',
         'yaycheckout/shipping-methods' => 'shipping_methods',
         'yaycheckout/express-pay'      => 'express_pay',
         'yaycheckout/payment'          => 'payment',
@@ -133,6 +132,7 @@ class LayoutMarkupReader {
                 'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
                 'optionalText' => trim( self::text( $attrs, 'optionalText' ) ),
                 'options'      => self::options( $attrs['options'] ?? [] ),
+                'remember'     => ! empty( $attrs['rememberValue'] ),
             ];
         }
 
