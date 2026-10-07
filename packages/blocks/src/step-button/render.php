@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'buttonText', __( 'Continue', 'yaycheckout' ) );
+$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'buttonText', __( 'Continue', 'yaycheckout' ) );
 
 $yaycheckout_wrapper = get_block_wrapper_attributes(
     [

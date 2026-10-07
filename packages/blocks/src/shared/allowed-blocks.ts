@@ -3,6 +3,7 @@ import { useSelect } from '@wordpress/data';
 import { useMemo } from '@wordpress/element';
 import backButtonMeta from '../back-button/block.json';
 import checkoutMeta from '../checkout/block.json';
+import emailMeta from '../email/block.json';
 import stepButtonMeta from '../step-button/block.json';
 
 interface BlockTypeRules {
@@ -13,12 +14,13 @@ interface BlockTypeRules {
 
 const CHECKOUT = checkoutMeta.name;
 
-// The step buttons find the open step from anywhere in the form, so they stay allowed inside an address section.
-const STEP_BUTTONS = new Set( [ stepButtonMeta.name, backButtonMeta.name ] );
+// The step buttons find the open step from anywhere in the form, and Email address posts billing_email
+// from anywhere in it, so both stay allowed inside an address section.
+const ALLOWED_IN_ADDRESS_SECTIONS = new Set( [ stepButtonMeta.name, backButtonMeta.name, emailMeta.name ] );
 
-/** A block whose ancestor rule names Checkout, other than the step buttons. */
+/** A block whose ancestor rule names Checkout, other than the step buttons and Email address. */
 export function isCheckoutSection( type: BlockTypeRules ): boolean {
-	return ( type.ancestor ?? [] ).includes( CHECKOUT ) && ! STEP_BUTTONS.has( type.name );
+	return ( type.ancestor ?? [] ).includes( CHECKOUT ) && ! ALLOWED_IN_ADDRESS_SECTIONS.has( type.name );
 }
 
 /**

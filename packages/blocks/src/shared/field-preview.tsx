@@ -1,3 +1,4 @@
+import { RichText } from '@wordpress/block-editor';
 import './field-preview.css';
 
 export function previewInputType( type: string ): string {
@@ -27,6 +28,9 @@ interface FieldPreviewProps {
 	options?: FieldOption[];
 	/** The block's own typography styles the label. */
 	inheritLabelFont?: boolean;
+	/** Makes the label editable on the canvas; labelPlaceholder shows while it is empty. */
+	onLabelChange?: ( value: string ) => void;
+	labelPlaceholder?: string;
 }
 
 /** Read-only so typing on the canvas does not fight block selection. */
@@ -39,18 +43,33 @@ export function FieldPreview( {
 	placeholder = '',
 	options = [],
 	inheritLabelFont = false,
+	onLabelChange,
+	labelPlaceholder = '',
 }: FieldPreviewProps ) {
+	const LabelTag = onLabelChange ? 'div' : 'label';
+
 	const usableOptions = options.filter( ( option ) => option.label !== '' || option.value !== '' );
 
 	return (
 		<div className="yaycheckout-field-preview">
-			<label
+			<LabelTag
 				className={
 					'yaycheckout-field-preview__label' +
 					( inheritLabelFont ? ' yaycheckout-field-preview__label--inherit' : '' )
 				}
 			>
-				{ label }
+				{ onLabelChange ? (
+					<RichText
+						tagName="span"
+						value={ label }
+						onChange={ onLabelChange }
+						placeholder={ labelPlaceholder }
+						allowedFormats={ [] }
+						withoutInteractiveFormatting
+					/>
+				) : (
+					label
+				) }
 				{ required ? (
 					<span className="yaycheckout-field-preview__required">{ requiredMark || '*' }</span>
 				) : (
@@ -58,13 +77,13 @@ export function FieldPreview( {
 						({ optionalText || 'optional' })
 					</span>
 				) }
-			</label>
+			</LabelTag>
 			{ type === 'textarea' ? (
 				<textarea readOnly rows={ 3 } placeholder={ placeholder } className="yaycheckout-field-preview__input" />
 			) : type === 'select' ? (
 				<select disabled className="yaycheckout-field-preview__input">
 					{ usableOptions.length === 0 ? (
-						<option>{ placeholder || label }</option>
+						<option>{ placeholder || label || labelPlaceholder }</option>
 					) : (
 						usableOptions.map( ( option, index ) => (
 							<option key={ index } value={ option.value }>
@@ -77,7 +96,7 @@ export function FieldPreview( {
 				<div className="yaycheckout-field-preview__choices">
 					{ usableOptions.length === 0 ? (
 						<label className="yaycheckout-field-preview__choice">
-							<input type="radio" disabled /> { placeholder || label }
+							<input type="radio" disabled /> { placeholder || label || labelPlaceholder }
 						</label>
 					) : (
 						usableOptions.map( ( option, index ) => (
@@ -98,7 +117,7 @@ export function FieldPreview( {
 			) : type === 'checkbox' ? (
 				<input type="checkbox" disabled className="yaycheckout-field-preview__check" />
 			) : type === 'hidden' ? (
-				<span className="yaycheckout-field-preview__hidden">{ label }</span>
+				<span className="yaycheckout-field-preview__hidden">{ label || labelPlaceholder }</span>
 			) : (
 				<input
 					type={ previewInputType( type ) }

@@ -1,3 +1,4 @@
+import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
@@ -6,6 +7,9 @@ import { __ } from '@wordpress/i18n';
 import { billingAddressFields, shippingAddressFields, type AddressFieldDef } from '../shared/address-fields';
 import { FieldPreview } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
+
+// A checkbox and a hidden input show no placeholder.
+const NO_PLACEHOLDER_TYPES = [ 'checkbox', 'hidden' ];
 
 const ADDRESS_PARENTS = {
 	'yaycheckout/billing': 'billing',
@@ -111,12 +115,17 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		}
 	}, [ fieldKey, available[ 0 ]?.key ] );
 
-	const keyOptions =
+	const catalogOptions =
 		available.length > 0
 			? available.map( ( field ) => ( { label: `${ field.label } (${ field.key })`, value: field.key } ) )
 			: [ { label: __( 'Every field in this section is already used', 'yaycheckout' ), value: '' } ];
+	// A key saved before the catalog dropped it, such as billing_email, stays selected.
+	const keyOptions =
+		fieldKey !== '' && ! catalog.some( ( field ) => field.key === fieldKey )
+			? [ { label: `${ decodeEntities( label ) || fieldKey } (${ fieldKey })`, value: fieldKey }, ...catalogOptions ]
+			: catalogOptions;
 	const blockProps = useBlockProps( { className: 'yaycheckout-field' } );
-	const canvasLabel = label || fieldKey || __( 'Field', 'yaycheckout' );
+	const labelPlaceholder = fieldKey || __( 'Field', 'yaycheckout' );
 
 	return (
 		<>
@@ -137,9 +146,16 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					) }
 					<TextControl
 						label={ __( 'Label', 'yaycheckout' ) }
-						value={ label }
+						value={ decodeEntities( label ) }
 						onChange={ ( value ) => setAttributes( { label: value } ) }
 					/>
+					{ ! NO_PLACEHOLDER_TYPES.includes( type ) && (
+						<TextControl
+							label={ __( 'Placeholder', 'yaycheckout' ) }
+							value={ placeholder }
+							onChange={ ( value ) => setAttributes( { placeholder: value } ) }
+						/>
+					) }
 					<RequiredIndicatorControls
 						required={ isEmail || required }
 						requiredMark={ requiredMark }
@@ -158,7 +174,9 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 			</InspectorControls>
 			<div { ...blockProps }>
 				<FieldPreview
-					label={ canvasLabel }
+					label={ label }
+					onLabelChange={ ( value ) => setAttributes( { label: value } ) }
+					labelPlaceholder={ labelPlaceholder }
 					type={ type }
 					required={ isEmail || required }
 					requiredMark={ requiredMark }

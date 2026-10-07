@@ -1,10 +1,12 @@
+import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { BaseControl, Button, Flex, FlexBlock, Notice, PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
+import { EXTRA_FIELD_KEY_CONTROL_CLASS, EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
 import { FieldPreview, type FieldOption } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
+import './editor.css';
 
 const TYPE_OPTIONS = [
 	{ label: __( 'Text', 'yaycheckout' ), value: 'text' },
@@ -39,7 +41,7 @@ function emptyOption(): FieldOption {
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { fieldKey, label, placeholder, required, requiredMark = '', optionalText = '', type, options } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-extra-field' } );
-	const canvasLabel = label || fieldKey || __( 'Extra field', 'yaycheckout' );
+	const labelPlaceholder = fieldKey || __( 'Extra field', 'yaycheckout' );
 	const showOptions = CHOICE_TYPES.includes( type );
 	const trimmedKey = fieldKey.trim();
 	const isDuplicate = useSelect(
@@ -68,20 +70,21 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		<>
 			<InspectorControls>
 				<PanelBody title={ __( 'Extra field', 'yaycheckout' ) }>
+					{ keyError !== '' && (
+						<Notice status="error" isDismissible={ false } className="yaycheckout-extra-field__key-error">
+							{ keyError }
+						</Notice>
+					) }
 					<TextControl
+						className={ EXTRA_FIELD_KEY_CONTROL_CLASS }
 						label={ __( 'Key', 'yaycheckout' ) }
 						value={ fieldKey }
 						onChange={ ( value ) => setAttributes( { fieldKey: value } ) }
 						help={ __( 'Posted name stored on the order, e.g. vat_number.', 'yaycheckout' ) }
 					/>
-					{ keyError !== '' && (
-						<Notice status="error" isDismissible={ false }>
-							{ keyError }
-						</Notice>
-					) }
 					<TextControl
 						label={ __( 'Label', 'yaycheckout' ) }
-						value={ label }
+						value={ decodeEntities( label ) }
 						onChange={ ( value ) => setAttributes( { label: value } ) }
 					/>
 					<TextControl
@@ -145,13 +148,16 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			</InspectorControls>
 			<div { ...blockProps }>
 				<FieldPreview
-					label={ canvasLabel }
+					label={ label }
+					onLabelChange={ ( value ) => setAttributes( { label: value } ) }
+					labelPlaceholder={ labelPlaceholder }
 					type={ type }
 					required={ required }
 					requiredMark={ requiredMark }
 					optionalText={ optionalText }
 					placeholder={ placeholder }
 					options={ options }
+					inheritLabelFont
 				/>
 			</div>
 		</>
