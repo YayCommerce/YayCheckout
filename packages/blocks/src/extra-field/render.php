@@ -29,6 +29,7 @@ if ( '' === $yaycheckout_label ) {
 $yaycheckout_woo_type         = 'datetime' === $yaycheckout_type ? 'datetime-local' : $yaycheckout_type;
 $yaycheckout_checkbox_choices = 'checkbox' === $yaycheckout_type && ! empty( $yaycheckout_options );
 $yaycheckout_wrapper          = get_block_wrapper_attributes( [ 'class' => 'yaycheckout-extra-field form-row' ] );
+$yaycheckout_collapsed        = \YayCheckout\Services\RevealLink::collapsed( $attributes, $yaycheckout_key, $yaycheckout_required );
 $yaycheckout_describedby      = '' !== $yaycheckout_description ? ' aria-describedby="' . esc_attr( $yaycheckout_key . '-description' ) . '"' : '';
 
 if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choices ) {
@@ -47,13 +48,23 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
     }
 
     echo '<div ' . $yaycheckout_wrapper . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
+
+    if ( $yaycheckout_collapsed ) {
+        echo \YayCheckout\Services\RevealLink::open( $yaycheckout_key, \YayCheckout\Services\RevealLink::text( $attributes, $yaycheckout_key, $yaycheckout_label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
+    }
+
     woocommerce_form_field( $yaycheckout_key, $yaycheckout_args );
-    echo '</div>';
+    echo $yaycheckout_collapsed ? \YayCheckout\Services\RevealLink::close() . '</div>' : '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup.
     return;
 }
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+    <?php
+    if ( $yaycheckout_collapsed ) {
+        echo \YayCheckout\Services\RevealLink::open( $yaycheckout_key, \YayCheckout\Services\RevealLink::text( $attributes, $yaycheckout_key, $yaycheckout_label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
+    }
+    ?>
     <label for="<?php echo esc_attr( $yaycheckout_key ); ?>">
         <?php echo esc_html( $yaycheckout_label ); ?>
         <?php echo \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- html() escapes. ?>
@@ -94,4 +105,5 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
     <?php if ( '' !== $yaycheckout_description ) : ?>
         <span class="description" id="<?php echo esc_attr( $yaycheckout_key . '-description' ); ?>"><?php echo esc_html( $yaycheckout_description ); ?></span>
     <?php endif; ?>
+    <?php echo $yaycheckout_collapsed ? \YayCheckout\Services\RevealLink::close() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
 </div>

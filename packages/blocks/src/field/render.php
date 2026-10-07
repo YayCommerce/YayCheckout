@@ -30,8 +30,15 @@ if ( '' === $yaycheckout_key ) {
 
 $yaycheckout_wrapper = get_block_wrapper_attributes( array( 'class' => 'yaycheckout-field form-row' ) );
 
+$yaycheckout_collapsed = \YayCheckout\Services\RevealLink::collapsed( $attributes, $yaycheckout_key, $yaycheckout_required );
+
 if ( function_exists( 'woocommerce_form_field' ) ) {
     echo '<div ' . $yaycheckout_wrapper . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
+
+    if ( $yaycheckout_collapsed ) {
+        echo \YayCheckout\Services\RevealLink::open( $yaycheckout_key, \YayCheckout\Services\RevealLink::text( $attributes, $yaycheckout_key, $yaycheckout_label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
+    }
+
     woocommerce_form_field(
         $yaycheckout_key,
         [
@@ -45,7 +52,7 @@ if ( function_exists( 'woocommerce_form_field' ) ) {
             'return'       => false,
         ]
     );
-    echo '</div>';
+    echo $yaycheckout_collapsed ? \YayCheckout\Services\RevealLink::close() . '</div>' : '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup.
     return;
 }
 
@@ -54,6 +61,11 @@ $yaycheckout_describedby = '' !== $yaycheckout_description ? ' aria-describedby=
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+    <?php
+    if ( $yaycheckout_collapsed ) {
+        echo \YayCheckout\Services\RevealLink::open( $yaycheckout_key, \YayCheckout\Services\RevealLink::text( $attributes, $yaycheckout_key, $yaycheckout_label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
+    }
+    ?>
     <label for="<?php echo esc_attr( $yaycheckout_key ); ?>">
         <?php echo esc_html( $yaycheckout_label ); ?>
         <?php echo \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- html() escapes. ?>
@@ -77,4 +89,5 @@ $yaycheckout_describedby = '' !== $yaycheckout_description ? ' aria-describedby=
     <?php if ( '' !== $yaycheckout_description ) : ?>
         <span class="description" id="<?php echo esc_attr( $yaycheckout_key . '-description' ); ?>"><?php echo esc_html( $yaycheckout_description ); ?></span>
     <?php endif; ?>
+    <?php echo $yaycheckout_collapsed ? \YayCheckout\Services\RevealLink::close() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
 </div>
