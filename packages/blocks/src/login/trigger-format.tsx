@@ -17,6 +17,7 @@ type FormatEditProps = {
 function Edit( { isActive, value, onChange }: FormatEditProps ) {
 	return (
 		<RichTextToolbarButton
+			name="link"
 			icon="admin-links"
 			title={ __( 'Login link', 'yaycheckout' ) }
 			isActive={ isActive }
