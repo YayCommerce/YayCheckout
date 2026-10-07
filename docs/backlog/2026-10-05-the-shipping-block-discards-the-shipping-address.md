@@ -29,11 +29,11 @@ Restore what `d617a00` removed from `packages/blocks/src/shipping/render.php`: t
 
 ## Done when
 
-- [ ] `packages/blocks/src/shipping/render.php` prints an input named `ship_to_different_address` inside `#ship-to-different-address`.
-- [ ] `packages/blocks/src/shipping/render.php` wraps the inner blocks in `div.shipping_address`.
-- [ ] The Shipping block's wrapper carries the `woocommerce-shipping-fields` class.
-- [ ] `packages/blocks/src/shipping/render.php` prints nothing when `WC()->cart->needs_shipping_address()` is false or `wc_ship_to_billing_address_only()` is true.
-- [ ] `packages/blocks/src/shipping/render.php` reads `shipToDifferent`, or the attribute and its toggle in `packages/blocks/src/shared/address-section-edit.tsx` are gone.
-- [ ] On the default layout, a guest who ticks "Ship to a different address?" and enters a shipping address in another shipping zone sees that zone's rates in Order review.
-- [ ] An order placed that way shows, in wp-admin, the shipping address the guest typed.
-- [ ] On the default layout, changing the shipping country to the United States fills `#shipping_state` with US states.
+- [x] `packages/blocks/src/shipping/render.php` prints an input named `ship_to_different_address` inside `#ship-to-different-address`. — shipping/render.php, `AddressRenderTest`
+- [x] `packages/blocks/src/shipping/render.php` wraps the inner blocks in `div.shipping_address`. — shipping/render.php, `AddressRenderTest`
+- [x] The Shipping block's wrapper carries the `woocommerce-shipping-fields` class. — shipping/render.php, `AddressRenderTest`
+- [x] `packages/blocks/src/shipping/render.php` prints nothing when `WC()->cart->needs_shipping_address()` is false or `wc_ship_to_billing_address_only()` is true. — `AddressRenderTest` virtual-cart and billing-only tests
+- [x] `packages/blocks/src/shipping/render.php` reads `shipToDifferent`, or the attribute and its toggle in `packages/blocks/src/shared/address-section-edit.tsx` are gone. — attribute and toggle deleted
+- [x] On the default layout, a guest who ticks "Ship to a different address?" and enters a shipping address in another shipping zone sees that zone's rates in Order review. — US shipping address quoted `flat_rate:3` ($50) with AE billing
+- [x] An order placed that way shows, in wp-admin, the shipping address the guest typed. — order 716: shipping 500 Market St, San Francisco CA 94105 US
+- [x] On the default layout, changing the shipping country to the United States fills `#shipping_state` with US states. — `#shipping_state` had 55 options

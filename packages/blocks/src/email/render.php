@@ -28,7 +28,9 @@ if ( function_exists( 'woocommerce_form_field' ) ) {
             'placeholder' => $yaycheckout_placeholder,
             'validate'    => [ 'email' ],
             'return'      => false,
-        ]
+        ],
+        // No cart outside the storefront (admin, REST, CLI): no checkout value to prefill.
+        function_exists( 'WC' ) && WC()->cart instanceof WC_Cart ? WC()->checkout()->get_value( $yaycheckout_key ) : null
     );
     echo '</div>';
     return;

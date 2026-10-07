@@ -3,6 +3,7 @@ namespace YayCheckout\Blocks;
 
 use YayCheckout\Models\Layout;
 use YayCheckout\Renderer\CheckoutLogin;
+use YayCheckout\Services\RequiredIndicator;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -54,6 +55,7 @@ class BlockRegistry {
 
     protected function __construct() {
         add_action( 'init', [ $this, 'register_blocks' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'print_editor_data' ] );
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
@@ -107,12 +109,17 @@ class BlockRegistry {
         foreach ( array_merge( array_intersect_key( array_flip( self::ORDER ), $built ), $built ) as $dir ) {
             register_block_type( $dir );
         }
+    }
 
+    /** Runs only where a block editor loads, so the WooCommerce field lookup stays off other requests. */
+    public function print_editor_data(): void {
         // One bundle serves both editions, so the plan reaches it at runtime; PHP supplies the post type and upgrade link so the bundle never redeclares them.
         $editor_data = [
-            'isPro'      => Plan::is_pro(),
-            'postType'   => Layout::POST_TYPE,
-            'upgradeUrl' => YAYCHECKOUT_UPGRADE_URL,
+            'isPro'                 => Plan::is_pro(),
+            'postType'              => Layout::POST_TYPE,
+            'upgradeUrl'            => YAYCHECKOUT_UPGRADE_URL,
+            'requiredByWooCommerce' => $this->required_billing_fields(),
+            'optionalText'          => RequiredIndicator::optional_text(),
         ];
 
         wp_add_inline_script(
@@ -133,6 +140,32 @@ class BlockRegistry {
             'window.yayCheckoutLogin = ' . wp_json_encode( $login_editor_data ) . ';',
             'before'
         );
+    }
+
+    /**
+     * Billing fields WooCommerce requires for the store's base country, before
+     * RequiredFieldOverlay (which filters woocommerce_checkout_fields, not these),
+     * so the Customizer's Phone setting shows through.
+     *
+     * @return array<int, array{key: string, label: string}>
+     */
+    private function required_billing_fields(): array {
+        if ( ! function_exists( 'WC' ) || ! WC()->countries ) {
+            return [];
+        }
+
+        $required = [];
+
+        foreach ( WC()->countries->get_address_fields( WC()->countries->get_base_country(), 'billing_' ) as $key => $field ) {
+            if ( is_array( $field ) && ! empty( $field['required'] ) ) {
+                $required[] = [
+                    'key'   => (string) $key,
+                    'label' => isset( $field['label'] ) && is_string( $field['label'] ) ? $field['label'] : (string) $key,
+                ];
+            }
+        }
+
+        return $required;
     }
 
     /**

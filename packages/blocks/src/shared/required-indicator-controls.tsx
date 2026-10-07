@@ -1,5 +1,6 @@
 import { TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { editorData } from './editor-data';
 
 interface RequiredIndicatorControlsProps {
 	required: boolean;
@@ -47,7 +48,8 @@ export function RequiredIndicatorControls( {
 				<TextControl
 					label={ __( 'Optional text', 'yaycheckout' ) }
 					value={ optionalText }
-					placeholder={ __( 'optional', 'yaycheckout' ) }
+					// Fallback owner: RequiredIndicator::optional_text().
+					placeholder={ editorData.optionalText }
 					help={ __(
 						'Leave empty to use the WooCommerce default. Shown in parentheses.',
 						'yaycheckout'

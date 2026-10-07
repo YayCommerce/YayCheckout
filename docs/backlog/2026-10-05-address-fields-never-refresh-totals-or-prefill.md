@@ -30,10 +30,10 @@ Render each Field from WooCommerce's own definition: take the key's entry from `
 
 ## Done when
 
-- [ ] `packages/blocks/src/field/render.php` passes `WC()->checkout()->get_value()` for its Key as the third argument of `woocommerce_form_field()`.
-- [ ] `packages/blocks/src/email/render.php` passes `WC()->checkout()->get_value( 'billing_email' )` as the third argument of `woocommerce_form_field()`.
-- [ ] A `billing_*` or `shipping_*` Field renders with `address-field` among its `.form-row` classes.
-- [ ] A country Field renders with `update_totals_on_change` among its `.form-row` classes.
-- [ ] A logged-in customer with a saved billing address opens checkout on the default layout and sees that address filled in.
-- [ ] As a guest on the default layout, the first `update_order_review` request in the browser's network tab posts a non-empty `country`.
-- [ ] As a guest on the default layout, changing the billing postcode to one in another shipping zone updates the rates in Order review without a page reload.
+- [x] `packages/blocks/src/field/render.php` passes `WC()->checkout()->get_value()` for its Key as the third argument of `woocommerce_form_field()`. — field/render.php, `AddressRenderTest::test_postcode_field_carries_woocommerces_classes_and_value`
+- [x] `packages/blocks/src/email/render.php` passes `WC()->checkout()->get_value( 'billing_email' )` as the third argument of `woocommerce_form_field()`. — email/render.php, `AddressRenderTest::test_email_block_passes_the_checkout_value`
+- [x] A `billing_*` or `shipping_*` Field renders with `address-field` among its `.form-row` classes. — `AddressRenderTest`; storefront rows carry it
+- [x] A country Field renders with `update_totals_on_change` among its `.form-row` classes. — `AddressRenderTest::test_country_field_refreshes_totals`
+- [x] A logged-in customer with a saved billing address opens checkout on the default layout and sees that address filled in. — render as `pntrung` printed the saved first name and city
+- [x] As a guest on the default layout, the first `update_order_review` request in the browser's network tab posts a non-empty `country`. — first request posted `country=VN`
+- [x] As a guest on the default layout, changing the billing postcode to one in another shipping zone updates the rates in Order review without a page reload. — typing 10001 then 94105 (postcode zone 941*) changed the rate from flat_rate:3 to flat_rate:4 with no reload

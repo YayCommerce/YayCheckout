@@ -49,7 +49,31 @@ class CheckoutRequiredFields {
             return $fields;
         }
 
-        return RequiredFieldOverlay::apply( $fields, $layout_fields['address'] );
+        return RequiredFieldOverlay::apply( $fields, $layout_fields['address'], $this->locales() );
+    }
+
+    /**
+     * Each address fieldset's country locale, for RequiredFieldOverlay::apply().
+     *
+     * @return array<string, array>
+     */
+    private function locales(): array {
+        if ( ! function_exists( 'WC' ) || ! WC()->countries || ! WC()->checkout() ) {
+            return [];
+        }
+
+        $all     = WC()->countries->get_country_locale();
+        $locales = [];
+
+        foreach ( RequiredFieldOverlay::ADDRESS_FIELDSETS as $fieldset ) {
+            $country = WC()->checkout()->get_value( $fieldset . '_country' );
+
+            if ( is_string( $country ) && isset( $all[ $country ] ) && is_array( $all[ $country ] ) ) {
+                $locales[ $fieldset ] = $all[ $country ];
+            }
+        }
+
+        return $locales;
     }
 
     public function filter_form_field( $field, $key, $args ) {

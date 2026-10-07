@@ -1,4 +1,5 @@
 import { RichText } from '@wordpress/block-editor';
+import { editorData } from './editor-data';
 import './field-preview.css';
 
 export function previewInputType( type: string ): string {
@@ -74,7 +75,8 @@ export function FieldPreview( {
 					<span className="yaycheckout-field-preview__required">{ requiredMark || '*' }</span>
 				) : (
 					<span className="yaycheckout-field-preview__optional">
-						({ optionalText || 'optional' })
+						{ /* Fallback owner: RequiredIndicator::optional_text(). */ }
+						({ optionalText || editorData.optionalText })
 					</span>
 				) }
 			</LabelTag>

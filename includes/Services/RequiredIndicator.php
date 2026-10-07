@@ -51,29 +51,39 @@ class RequiredIndicator {
      * re-applies them after WooCommerce's address-i18n.js resets labels.
      *
      * @param  array $layout_fields LayoutMarkupReader fields and extra fields, by key.
-     * @return array<string, array{required: bool, requiredMark: string, optionalText: string}>
+     * @return array<string, array{required: bool, requiredMark: string, optionalText: string}> optionalText is never empty.
      */
     public static function script_payload( array $layout_fields ): array {
         $payload = [];
 
         foreach ( $layout_fields as $key => $layout ) {
+            $optional        = self::text( $layout, 'optionalText' );
             $payload[ $key ] = [
                 'required'     => RequiredFieldOverlay::is_required( (string) $key, $layout ),
                 'requiredMark' => self::text( $layout, 'requiredMark' ),
-                'optionalText' => self::text( $layout, 'optionalText' ),
+                'optionalText' => '' !== $optional ? $optional : self::optional_text(),
             ];
         }
 
         return $payload;
     }
 
-    /** The suffix span; an empty $text falls back to WooCommerce's * or (optional). */
+    /**
+     * The fallback "optional" text, owned here for every copy: the storefront script reads it from
+     * script_payload(), the editor from BlockRegistry's editor data. WooCommerce's own string, so it
+     * reads the same as WooCommerce's fields and address-i18n.js in every language.
+     */
+    public static function optional_text(): string {
+        return __( 'optional', 'woocommerce' ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- WooCommerce's string, so its translation applies.
+    }
+
+    /** The suffix span; an empty $text falls back to WooCommerce's * or optional_text(). */
     private static function span( bool $required, string $text ): string {
         if ( $required ) {
             return '<span class="required" aria-hidden="true">' . esc_html( '' === $text ? '*' : $text ) . '</span>';
         }
 
-        return '<span class="optional">(' . esc_html( '' === $text ? 'optional' : $text ) . ')</span>';
+        return '<span class="optional">(' . esc_html( '' === $text ? self::optional_text() : $text ) . ')</span>';
     }
 
     private static function text( array $attrs, string $name ): string {

@@ -27,8 +27,8 @@ In `RequiredFieldOverlay::apply()`, never require a field that WooCommerce's loc
 
 ## Done when
 
-- [ ] `RequiredFieldOverlay::apply()` leaves `required` false on a field that `WC_Countries::get_country_locale()` marks `hidden` for the fieldset's country.
-- [ ] `assets/js/checkout-field-requirements.js` adds no `validate-required` class to a field that WooCommerce's address-i18n.js has hidden.
-- [ ] On the default layout, a guest who picks United Arab Emirates as billing country places an order without filling a postcode.
-- [ ] On the default layout, a guest who picks Singapore as billing country places an order without filling a state.
-- [ ] With Phone set to required in the Customizer's WooCommerce checkout options, the layout editor names Phone when the layout has no `billing_phone` Field.
+- [x] `RequiredFieldOverlay::apply()` leaves `required` false on a field that `WC_Countries::get_country_locale()` marks `hidden` for the fieldset's country. — `RequiredFieldOverlayTest::test_a_locale_hidden_field_stays_optional`
+- [x] `assets/js/checkout-field-requirements.js` adds no `validate-required` class to a field that WooCommerce's address-i18n.js has hidden. — checkout-field-requirements.js skips rows address-i18n.js hid; AE postcode and SG state rows had none
+- [x] On the default layout, a guest who picks United Arab Emirates as billing country places an order without filling a postcode. — order 716, billing AE with empty postcode
+- [x] On the default layout, a guest who picks Singapore as billing country places an order without filling a state. — order 717, billing SG with empty state
+- [x] With Phone set to required in the Customizer's WooCommerce checkout options, the layout editor names Phone when the layout has no `billing_phone` Field. — Billing block notice "WooCommerce requires Phone…"; gone with Phone optional

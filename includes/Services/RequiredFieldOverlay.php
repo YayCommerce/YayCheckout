@@ -6,25 +6,21 @@ defined( 'ABSPATH' ) || exit;
 /** Makes WooCommerce's checkout field registry follow the layout's required flags. Pure: no storage, no hooks. */
 class RequiredFieldOverlay {
 
-    private const ADDRESS_FIELDSETS = [ 'billing', 'shipping' ];
+    public const ADDRESS_FIELDSETS = [ 'billing', 'shipping' ];
 
     /**
-     * Address fields required exactly when the layout says so. A field the
-     * layout leaves out becomes optional; a layout field WooCommerce dropped
-     * is added back.
+     * Address fields required exactly when the layout says so, except a field
+     * the fieldset country's locale hides, which is never required: the
+     * shopper can't see it. A field the layout leaves out becomes optional; a
+     * layout field WooCommerce dropped is added back.
      *
      * @param  array $fields        WooCommerce checkout fields, by fieldset.
      * @param  array $layout_fields LayoutMarkupReader::fields() map.
+     * @param  array $locales       By fieldset, that country's WC_Countries::get_country_locale() entry, keyed by unprefixed field name.
      */
-    public static function apply( array $fields, array $layout_fields ): array {
+    public static function apply( array $fields, array $layout_fields, array $locales = [] ): array {
         foreach ( self::ADDRESS_FIELDSETS as $fieldset ) {
             $fields[ $fieldset ] = isset( $fields[ $fieldset ] ) && is_array( $fields[ $fieldset ] ) ? $fields[ $fieldset ] : [];
-
-            foreach ( $fields[ $fieldset ] as $key => $field ) {
-                if ( is_array( $field ) ) {
-                    $fields[ $fieldset ][ $key ]['required'] = self::is_required( (string) $key, $layout_fields[ $key ] ?? null, $field );
-                }
-            }
 
             foreach ( $layout_fields as $key => $layout ) {
                 $key = (string) $key;
@@ -32,6 +28,17 @@ class RequiredFieldOverlay {
                 if ( str_starts_with( $key, $fieldset . '_' ) && ! isset( $fields[ $fieldset ][ $key ] ) ) {
                     $fields[ $fieldset ][ $key ] = self::restore_missing_field( $key, $layout );
                 }
+            }
+
+            foreach ( $fields[ $fieldset ] as $key => $field ) {
+                if ( ! is_array( $field ) ) {
+                    continue;
+                }
+
+                $key    = (string) $key;
+                $hidden = ! empty( $locales[ $fieldset ][ substr( $key, strlen( $fieldset ) + 1 ) ]['hidden'] );
+
+                $fields[ $fieldset ][ $key ]['required'] = ! $hidden && self::is_required( $key, $layout_fields[ $key ] ?? null, $field );
             }
         }
 
@@ -67,7 +74,6 @@ class RequiredFieldOverlay {
         $definition = [
             'type'     => $type,
             'label'    => self::filled( $layout, 'label', $key ),
-            'required' => self::is_required( $key, $layout ),
             'validate' => ! empty( $layout['validate'] ) && is_array( $layout['validate'] ) ? $layout['validate'] : self::validate_rules( $key, $type ),
         ];
 
