@@ -32,7 +32,8 @@ if ( function_exists( 'woocommerce_form_field' ) ) {
             // WooCommerce runs only wp_kses_post() on it, so a typed tag would render.
             'description' => esc_html( $yaycheckout_description ),
             'return'      => false,
-        ]
+        ],
+        \YayCheckout\Renderer\CheckoutFieldDefaults::value( $yaycheckout_key )
     );
     echo '</div>';
     return;
