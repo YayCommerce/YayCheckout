@@ -4,16 +4,23 @@
   "name": "yaycheckout/progress",
   "title": "Progress",
   "category": "yaycheckout",
-  "description": "Shows which checkout step is open. Titles come from the Steps block.",
+  "description": "Shows which checkout step is open, in one of several styles. Titles come from the Steps block.",
   "textdomain": "yaycheckout",
   "keywords": [ "steps", "indicator" ],
   "example": {},
-  "attributes": {},
+  "attributes": {
+    "variant": {
+      "type": "string",
+      "default": "circles",
+      "enum": [ "circles", "dots", "segments", "bar", "text" ]
+    }
+  },
   "supports": {
     "html": false,
     "reusable": false
   },
   "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
   "viewScript": "file:./view.js",
   "style": "file:./style-index.css",
   "render": "file:./render.php"

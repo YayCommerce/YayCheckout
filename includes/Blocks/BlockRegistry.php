@@ -2,6 +2,7 @@
 namespace YayCheckout\Blocks;
 
 use YayCheckout\Models\Layout;
+use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -30,6 +31,7 @@ class BlockRegistry {
      */
     private const ORDER = [
         'checkout',
+        'login',
         'progress',
         'steps',
         'step',
@@ -116,6 +118,19 @@ class BlockRegistry {
         wp_add_inline_script(
             generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
             'window.yayCheckoutBlocks = ' . wp_json_encode( $editor_data ) . ';',
+            'before'
+        );
+
+        // The login block's editor script does not run after the checkout inline
+        // script, so its option flag is printed on its own handle.
+        $login_editor_data = [
+            'reminderEnabled' => 'yes' === get_option( CheckoutLogin::OPTION_REMINDER ),
+            'settingsUrl'     => admin_url( 'admin.php?page=wc-settings&tab=account#woocommerce_enable_checkout_login_reminder' ),
+        ];
+
+        wp_add_inline_script(
+            generate_block_asset_handle( 'yaycheckout/login', 'editorScript' ),
+            'window.yayCheckoutLogin = ' . wp_json_encode( $login_editor_data ) . ';',
             'before'
         );
     }

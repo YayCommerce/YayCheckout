@@ -5,7 +5,7 @@
  * WordPress includes this file on each render and prints whatever it echoes.
  * The list is built in CheckoutProgress from the layout's first Steps block.
  *
- * @var array    $attributes Block attributes. Unused; titles live on each step.
+ * @var array    $attributes Block attributes: `variant`. Titles live on each step.
  * @var string   $content    Unused; this block is a leaf.
  * @var WP_Block $block      Block instance.
  *
@@ -14,4 +14,4 @@
 
 defined( 'ABSPATH' ) || exit;
 
-echo \YayCheckout\Renderer\CheckoutProgress::markup(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in CheckoutProgress::markup().
+echo \YayCheckout\Renderer\CheckoutProgress::markup( $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in CheckoutProgress::markup().
