@@ -1,8 +1,9 @@
 import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
-import { Notice, PanelBody, TextControl } from '@wordpress/components';
+import { ExternalLink, Notice, PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { FieldPreview } from '../shared/field-preview';
+import { createAccountEditorData } from './editor-data';
 import './editor.css';
 
 interface CreateAccountAttributes {
@@ -40,6 +41,23 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
+				{ ! createAccountEditorData.signupEnabled && (
+					<Notice
+						className="yaycheckout-create-account__notice"
+						status="warning"
+						isDismissible={ false }
+					>
+						{ __(
+							'Shoppers will not see this block until account creation during checkout is turned on.',
+							'yaycheckout'
+						) }{ ' ' }
+						{ createAccountEditorData.settingsUrl !== '' && (
+							<ExternalLink href={ createAccountEditorData.settingsUrl }>
+								{ __( 'Accounts & Privacy', 'yaycheckout' ) }
+							</ExternalLink>
+						) }
+					</Notice>
+				) }
 				<div className="yaycheckout-create-account__checkbox">
 					<input type="checkbox" disabled />
 					{ /* A span, not a label: typing Space would toggle a label's checkbox. */ }
