@@ -73,7 +73,7 @@ interface EditProps {
  * name that WooCommerce never validates or saves.
  */
 export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
-	const { fieldKey, type, label, placeholder, required, requiredMark = '', optionalText = '' } = attributes;
+	const { fieldKey, type, label, placeholder, description = '', required, requiredMark = '', optionalText = '' } = attributes;
 	const { addressSection, usedKeys } = useSelect(
 		( select ) => {
 			const { getBlockParents, getBlockName, getBlocks } = select( blockEditorStore );
@@ -156,6 +156,14 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 							onChange={ ( value ) => setAttributes( { placeholder: value } ) }
 						/>
 					) }
+					{ type !== 'hidden' && (
+						<TextControl
+							label={ __( 'Help text', 'yaycheckout' ) }
+							help={ __( 'Shown under the field while the shopper fills it in.', 'yaycheckout' ) }
+							value={ description }
+							onChange={ ( value ) => setAttributes( { description: value } ) }
+						/>
+					) }
 					<RequiredIndicatorControls
 						required={ isEmail || required }
 						requiredMark={ requiredMark }
@@ -182,6 +190,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					requiredMark={ requiredMark }
 					optionalText={ optionalText }
 					placeholder={ placeholder }
+					description={ description }
 					inheritLabelFont
 				/>
 			</div>
