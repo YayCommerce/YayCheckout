@@ -8,8 +8,9 @@ export interface AddressFieldDef {
 }
 
 /**
- * Owns the address-field list the field picker offers. templates/default-layout.php
- * seeds new layouts with a subset of it; keep the two in step.
+ * Owns the address-field list the field picker offers. A new section's structure and labels
+ * live in shared/address-template.ts, mirrored by templates/default-layout.php; their keys
+ * come from this list.
  */
 function addressFields( prefix: 'billing' | 'shipping' ): AddressFieldDef[] {
 	return [
