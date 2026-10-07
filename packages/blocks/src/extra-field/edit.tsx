@@ -6,6 +6,7 @@ import { __ } from '@wordpress/i18n';
 import { EXTRA_FIELD_KEY_CONTROL_CLASS, EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
 import { FieldPreview, type FieldOption } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
+import { RevealLinkControls, RevealLinkPreview, defaultRevealText, isCollapsed } from '../shared/reveal-link';
 import './editor.css';
 
 const TYPE_OPTIONS = [
@@ -27,6 +28,8 @@ interface ExtraFieldAttributes {
 	optionalText: string;
 	type: string;
 	options: FieldOption[];
+	collapseBehindLink?: boolean;
+	revealText: string;
 }
 
 interface EditProps {
@@ -39,9 +42,23 @@ function emptyOption(): FieldOption {
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { fieldKey, label, placeholder, required, requiredMark = '', optionalText = '', type, options } = attributes;
+	const {
+		fieldKey,
+		label,
+		placeholder,
+		required,
+		requiredMark = '',
+		optionalText = '',
+		type,
+		options,
+		collapseBehindLink,
+		revealText = '',
+	} = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-extra-field' } );
 	const labelPlaceholder = fieldKey || __( 'Extra field', 'yaycheckout' );
+	const collapsed = isCollapsed( fieldKey.trim(), required, collapseBehindLink );
+	// render.php names an unlabelled extra field "Extra field", so its link does too.
+	const revealLabel = label || __( 'Extra field', 'yaycheckout' );
 	const showOptions = CHOICE_TYPES.includes( type );
 	const trimmedKey = fieldKey.trim();
 	const isDuplicate = useSelect(
@@ -102,6 +119,14 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
 						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
 					/>
+					<RevealLinkControls
+						fieldKey={ fieldKey.trim() }
+						label={ revealLabel }
+						required={ required }
+						collapseBehindLink={ collapseBehindLink }
+						revealText={ revealText }
+						setAttributes={ setAttributes }
+					/>
 					<SelectControl
 						label={ __( 'Type', 'yaycheckout' ) }
 						value={ type }
@@ -149,18 +174,20 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<FieldPreview
-					label={ label }
-					onLabelChange={ ( value ) => setAttributes( { label: value } ) }
-					labelPlaceholder={ labelPlaceholder }
-					type={ type }
-					required={ required }
-					requiredMark={ requiredMark }
-					optionalText={ optionalText }
-					placeholder={ placeholder }
-					options={ options }
-					inheritLabelFont
-				/>
+				<RevealLinkPreview collapsed={ collapsed } text={ revealText || defaultRevealText( fieldKey.trim(), revealLabel ) }>
+					<FieldPreview
+						label={ label }
+						onLabelChange={ ( value ) => setAttributes( { label: value } ) }
+						labelPlaceholder={ labelPlaceholder }
+						type={ type }
+						required={ required }
+						requiredMark={ requiredMark }
+						optionalText={ optionalText }
+						placeholder={ placeholder }
+						options={ options }
+						inheritLabelFont
+					/>
+				</RevealLinkPreview>
 			</div>
 		</>
 	);

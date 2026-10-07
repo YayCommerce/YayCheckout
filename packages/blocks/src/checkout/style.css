@@ -8,8 +8,8 @@
 	width: auto;
 }
 
-/* The "+ Add apartment, suite, etc." link that field/render.php prints in place of a collapsed field. */
-.yaycheckout-checkout .yaycheckout-field__reveal {
+/* The "+ Add …" link RevealLink::open() prints in place of a collapsed Field or Extra field. */
+.yaycheckout-checkout .yaycheckout-reveal-link {
 	background: none;
 	border: 0;
 	padding: 0;
@@ -20,7 +20,7 @@
 }
 
 /* A theme's button or div display rule would otherwise beat the hidden attribute. */
-.yaycheckout-checkout .yaycheckout-field__reveal[hidden],
-.yaycheckout-checkout .yaycheckout-field__collapsible[hidden] {
+.yaycheckout-checkout .yaycheckout-reveal-link[hidden],
+.yaycheckout-checkout .yaycheckout-reveal-panel[hidden] {
 	display: none;
 }

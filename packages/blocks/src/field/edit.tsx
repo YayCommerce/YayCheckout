@@ -1,16 +1,13 @@
 import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
+import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { billingAddressFields, shippingAddressFields, type AddressFieldDef } from '../shared/address-fields';
 import { FieldPreview } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
-import './editor.css';
-
-// Mirrors the apartment keys field/render.php collapses behind a link.
-const isApartmentKey = ( key: string ) => key.endsWith( '_address_2' );
+import { RevealLinkControls, RevealLinkPreview, defaultRevealText, isCollapsed } from '../shared/reveal-link';
 
 // A checkbox and a hidden input show no placeholder.
 const NO_PLACEHOLDER_TYPES = [ 'checkbox', 'hidden' ];
@@ -63,7 +60,7 @@ interface FieldAttributes {
 	autocomplete: string;
 	validate: string[];
 	width: string;
-	collapseBehindLink: boolean;
+	collapseBehindLink?: boolean;
 	revealText: string;
 }
 
@@ -87,7 +84,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		required,
 		requiredMark = '',
 		optionalText = '',
-		collapseBehindLink = true,
+		collapseBehindLink,
 		revealText = '',
 	} = attributes;
 	const { addressSection, usedKeys } = useSelect(
@@ -142,10 +139,9 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 			: catalogOptions;
 	const blockProps = useBlockProps( { className: 'yaycheckout-field' } );
 	const labelPlaceholder = fieldKey || __( 'Field', 'yaycheckout' );
-	const isApartment = isApartmentKey( fieldKey );
-	// A required field is always shown, as in render.php.
-	const collapsed = isApartment && collapseBehindLink && ! required;
-	const defaultRevealText = __( '+ Add apartment, suite, etc.', 'yaycheckout' );
+	// A hidden input has nothing for the shopper to open.
+	const canCollapse = type !== 'hidden';
+	const collapsed = canCollapse && isCollapsed( fieldKey, isEmail || required, collapseBehindLink );
 
 	return (
 		<>
@@ -190,32 +186,23 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
 						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
 					/>
-					{ isApartment && (
-						<ToggleControl
-							label={ __( 'Hide behind a link', 'yaycheckout' ) }
-							checked={ collapseBehindLink && ! required }
-							disabled={ required }
-							help={
-								required
-									? __( 'A required field is always shown.', 'yaycheckout' )
-									: __( 'Shoppers see a link and open the field when they need it.', 'yaycheckout' )
-							}
-							onChange={ ( value ) => setAttributes( { collapseBehindLink: value } ) }
-						/>
-					) }
-					{ collapsed && (
-						<TextControl
-							label={ __( 'Link text', 'yaycheckout' ) }
-							value={ revealText }
-							placeholder={ defaultRevealText }
-							onChange={ ( value ) => setAttributes( { revealText: value } ) }
+					{ canCollapse && (
+						<RevealLinkControls
+							fieldKey={ fieldKey }
+							label={ label || labelPlaceholder }
+							required={ isEmail || required }
+							collapseBehindLink={ collapseBehindLink }
+							revealText={ revealText }
+							setAttributes={ setAttributes }
 						/>
 					) }
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				{ collapsed && <span className="yaycheckout-field__reveal">{ revealText || defaultRevealText }</span> }
-				<div className={ collapsed ? 'yaycheckout-field__collapsed-preview' : undefined }>
+				<RevealLinkPreview
+					collapsed={ collapsed }
+					text={ revealText || defaultRevealText( fieldKey, label || labelPlaceholder ) }
+				>
 					<FieldPreview
 						label={ label }
 						onLabelChange={ ( value ) => setAttributes( { label: value } ) }
@@ -227,7 +214,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						placeholder={ placeholder }
 						inheritLabelFont
 					/>
-				</div>
+				</RevealLinkPreview>
 			</div>
 		</>
 	);

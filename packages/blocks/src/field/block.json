@@ -62,8 +62,7 @@
       "default": "full"
     },
     "collapseBehindLink": {
-      "type": "boolean",
-      "default": true
+      "type": "boolean"
     },
     "revealText": {
       "type": "string",
