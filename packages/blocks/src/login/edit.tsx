@@ -1,6 +1,8 @@
 import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
-import { Notice, PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import { ExternalLink, Notice, PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+
+import { loginEditorData } from './editor-data';
 
 const DEFAULT_LINK_TEXT = 'Log in';
 
@@ -64,14 +66,22 @@ export default function Edit( { attributes, setAttributes, isSelected }: EditPro
 							{ __( 'Link text is not in the sentence, so it is appended.', 'yaycheckout' ) }
 						</Notice>
 					) }
-					<p>
-						{ __(
-							'Shoppers see this only while the "Enable log-in during checkout" option is on and they are logged out.',
-							'yaycheckout'
-						) }
-					</p>
+					<p>{ __( 'Logged-out shoppers see this block.', 'yaycheckout' ) }</p>
 				</PanelBody>
 			</InspectorControls>
+			{ ! loginEditorData.reminderEnabled && (
+				<Notice status="warning" isDismissible={ false }>
+					{ __(
+						'Shoppers will not see this block until Enable log-in during checkout is turned on.',
+						'yaycheckout'
+					) }{ ' ' }
+					{ loginEditorData.settingsUrl !== '' && (
+						<ExternalLink href={ loginEditorData.settingsUrl }>
+							{ __( 'Accounts & Privacy', 'yaycheckout' ) }
+						</ExternalLink>
+					) }
+				</Notice>
+			) }
 			{ isSelected ? (
 				<RichText
 					{ ...blockProps }
