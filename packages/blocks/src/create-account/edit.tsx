@@ -32,12 +32,6 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						value={ decodeEntities( checkboxLabel ) }
 						onChange={ ( value ) => setAttributes( { checkboxLabel: value } ) }
 					/>
-					<Notice status="info" isDismissible={ false }>
-						{ __(
-							"Shown only to guests, and only when WooCommerce > Settings > Accounts & Privacy allows account creation during checkout. The checkbox appears only while guest checkout is on. Username and password appear only when WooCommerce doesn't generate them.",
-							'yaycheckout'
-						) }
-					</Notice>
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
