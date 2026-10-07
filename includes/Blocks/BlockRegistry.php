@@ -42,7 +42,6 @@ class BlockRegistry {
         'billing',
         'shipping',
         'field',
-        'order-review',
         'extra-field',
         'shipping-methods',
         'express-pay',
