@@ -1,7 +1,7 @@
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, Placeholder, SelectControl } from '@wordpress/components';
+import { Notice, PanelBody, SelectControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { createInterpolateElement } from '@wordpress/element';
+import { createInterpolateElement, type ReactNode } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __, sprintf } from '@wordpress/i18n';
 import { stepTitle } from '../shared/step-title';
@@ -17,15 +17,7 @@ interface EditProps {
 	setAttributes: ( attributes: { variant: Variant } ) => void;
 }
 
-function ProgressItem( { stepId, position }: { stepId: string; position: number } ) {
-	const title = useSelect(
-		( select ) => {
-			const value = select( blockEditorStore ).getBlockAttributes( stepId )?.title;
-
-			return typeof value === 'string' ? value : '';
-		},
-		[ stepId ]
-	);
+function ProgressItem( { title, position }: { title: string; position: number } ) {
 	const state = position === 1 ? 'current' : 'locked';
 
 	return (
@@ -39,6 +31,19 @@ function ProgressItem( { stepId, position }: { stepId: string; position: number 
 			<span className="yaycheckout-progress__title">{ stepTitle( decodeEntities( title ) ) }</span>
 		</li>
 	);
+}
+
+function StepProgressItem( { stepId, position }: { stepId: string; position: number } ) {
+	const title = useSelect(
+		( select ) => {
+			const value = select( blockEditorStore ).getBlockAttributes( stepId )?.title;
+
+			return typeof value === 'string' ? value : '';
+		},
+		[ stepId ]
+	);
+
+	return <ProgressItem title={ title } position={ position } />;
 }
 
 // Mirrors CheckoutProgress::summary(), with step 1 open.
@@ -61,6 +66,17 @@ function Summary( { total, withTrack }: { total: number; withTrack: boolean } ) 
 	);
 }
 
+function ProgressBody( { variant, total, children }: { variant: Variant; total: number; children: ReactNode } ) {
+	return (
+		<>
+			{ ( variant === 'bar' || variant === 'text' ) && (
+				<Summary total={ total } withTrack={ variant === 'bar' } />
+			) }
+			<ol className="yaycheckout-progress__list">{ children }</ol>
+		</>
+	);
+}
+
 // Mirrors CheckoutProgress::markup(): the same wrapper, list and items.
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	// The store's own order array, so typing elsewhere doesn't re-render this block.
@@ -75,17 +91,40 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		},
 		[]
 	);
+	// The inserter preview holds only this block, so it shows sample steps instead of the notice.
+	const isPreview: boolean = useSelect(
+		( select ) => select( blockEditorStore ).getSettings().isPreviewMode === true,
+		[]
+	);
 	const blockProps = useBlockProps( {
 		className: `yaycheckout-progress is-variant-${ attributes.variant }`,
 	} );
 
+	if ( isPreview && stepIds === null ) {
+		const titles = [
+			__( 'Information', 'yaycheckout' ),
+			__( 'Shipping', 'yaycheckout' ),
+			__( 'Payment', 'yaycheckout' ),
+		];
+
+		return (
+			<div { ...blockProps }>
+				<ProgressBody variant={ attributes.variant } total={ titles.length }>
+					{ titles.map( ( title, index ) => (
+						<ProgressItem key={ title } title={ title } position={ index + 1 } />
+					) ) }
+				</ProgressBody>
+			</div>
+		);
+	}
+
+	// A Notice, not a Placeholder: Placeholder hides its instructions when the block is narrow.
 	if ( stepIds === null ) {
 		return (
 			<div { ...blockProps }>
-				<Placeholder
-					label={ __( 'Progress', 'yaycheckout' ) }
-					instructions={ __( 'Add a Steps block to use Progress.', 'yaycheckout' ) }
-				/>
+				<Notice status="warning" isDismissible={ false }>
+					{ __( 'Add a Steps block to use Progress.', 'yaycheckout' ) }
+				</Notice>
 			</div>
 		);
 	}
@@ -109,14 +148,11 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				{ ( attributes.variant === 'bar' || attributes.variant === 'text' ) && (
-					<Summary total={ stepIds.length } withTrack={ attributes.variant === 'bar' } />
-				) }
-				<ol className="yaycheckout-progress__list">
+				<ProgressBody variant={ attributes.variant } total={ stepIds.length }>
 					{ stepIds.map( ( stepId, index ) => (
-						<ProgressItem key={ stepId } stepId={ stepId } position={ index + 1 } />
+						<StepProgressItem key={ stepId } stepId={ stepId } position={ index + 1 } />
 					) ) }
-				</ol>
+				</ProgressBody>
 			</div>
 		</>
 	);
