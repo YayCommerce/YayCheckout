@@ -2,7 +2,8 @@
 /**
  * Prints WooCommerce's terms, Place order button and checkout nonce; without a
  * cart, only the disabled button. The button is the block's root element, so
- * its style supports land on it.
+ * its style supports land on it. During update_order_review only the button is
+ * printed, as the fragment that refreshes its order total (CheckoutFragments).
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
@@ -25,27 +26,20 @@ $yaycheckout_wrapper = [
     'class' => 'yaycheckout-place-order wp-element-button',
 ];
 
-$yaycheckout_extra = '';
-
+// The total is shown by ::after, which also lands in the button's accessible name.
 if ( $yaycheckout_show_total && $yaycheckout_has_cart ) {
-    $yaycheckout_total = wp_strip_all_tags( wc_price( WC()->cart->get_total( 'edit' ) ) );
-
     $yaycheckout_wrapper['data-show-total'] = '1';
-    $yaycheckout_wrapper['data-total']      = $yaycheckout_total;
-    /* translators: 1: Place order button label. 2: Formatted order total. */
-    $yaycheckout_extra = ' aria-label="' . esc_attr( sprintf( __( '%1$s · %2$s', 'yaycheckout' ), $yaycheckout_label, $yaycheckout_total ) ) . '"';
-
-    wp_enqueue_script( \YayCheckout\Blocks\BlockRegistry::PLACE_ORDER_SCRIPT );
+    $yaycheckout_wrapper['data-total']      = wp_strip_all_tags( wc_price( WC()->cart->get_total( 'edit' ) ) );
 }
 
 $yaycheckout_button = '<button type="submit" '
     . get_block_wrapper_attributes( $yaycheckout_wrapper )
     . ' name="woocommerce_checkout_place_order" id="place_order" value="' . esc_attr( $yaycheckout_label ) . '" data-value="' . esc_attr( $yaycheckout_label ) . '"'
-    . $yaycheckout_extra
     . ( $yaycheckout_has_cart ? '' : ' disabled' )
     . '>' . esc_html( $yaycheckout_label ) . '</button>';
 
-if ( ! $yaycheckout_has_cart ) {
+// Unfiltered in the fragment: woocommerce_order_button_html may add siblings, which replacing #place_order would repeat.
+if ( ! $yaycheckout_has_cart || wp_doing_ajax() ) {
     // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the wrapper attributes; the label is escaped above.
     echo $yaycheckout_button;
     return;
