@@ -17,6 +17,9 @@ class CheckoutProgress {
     private const STEPS = 'yaycheckout/steps';
     private const STEP  = 'yaycheckout/step';
 
+    /** Mirrors progress/block.json "variant" enum; the first is the default. */
+    private const VARIANTS = [ 'circles', 'dots', 'segments', 'bar', 'text' ];
+
     /** @var string[]|null Memoised layout_titles(); null until first read. */
     private static $titles = null;
 
@@ -28,9 +31,22 @@ class CheckoutProgress {
     }
 
     /**
-     * Progress markup for the block being rendered. Empty when the layout has no steps.
+     * Style of the block being rendered; the default when the attribute is missing or unknown.
+     *
+     * @param array $attributes Block attributes.
      */
-    public static function markup(): string {
+    private static function variant( array $attributes ): string {
+        $variant = $attributes['variant'] ?? '';
+
+        return in_array( $variant, self::VARIANTS, true ) ? $variant : self::VARIANTS[0];
+    }
+
+    /**
+     * Progress markup for the block being rendered. Empty when the layout has no steps.
+     *
+     * @param array $attributes Block attributes.
+     */
+    public static function markup( array $attributes = [] ): string {
         $titles = self::layout_titles();
 
         if ( [] === $titles ) {
@@ -49,9 +65,34 @@ class CheckoutProgress {
             $items .= '</button></li>';
         }
 
-        $wrapper = get_block_wrapper_attributes( [ 'class' => 'yaycheckout-progress' ] );
+        $variant = self::variant( $attributes );
+        $args    = [ 'class' => 'yaycheckout-progress is-variant-' . $variant ];
+        $summary = '';
 
-        return '<ol ' . $wrapper . '>' . $items . '</ol>';
+        if ( 'bar' === $variant || 'text' === $variant ) {
+            $total   = count( $titles );
+            $summary = self::summary( $total, 'bar' === $variant );
+
+            if ( 'bar' === $variant ) {
+                $args['style'] = '--yaycheckout-progress-value:' . round( 1 / $total, 3 ) . ';';
+            }
+        }
+
+        $wrapper = get_block_wrapper_attributes( $args );
+
+        return '<div ' . $wrapper . '>' . $summary . '<ol class="yaycheckout-progress__list">' . $items . '</ol></div>';
+    }
+
+    /**
+     * "Step 1 of N", with the track for the bar style. view.ts rewrites the current span and the fill.
+     */
+    private static function summary( int $total, bool $with_track ): string {
+        /* translators: 1: number of the open step, 2: number of steps. */
+        $count = sprintf( esc_html__( 'Step %1$s of %2$s', 'yaycheckout' ), '<span class="yaycheckout-progress__current">1</span>', (string) $total );
+
+        $track = $with_track ? '<div class="yaycheckout-progress__track"><span class="yaycheckout-progress__fill"></span></div>' : '';
+
+        return '<div class="yaycheckout-progress__summary">' . $track . '<p class="yaycheckout-progress__count">' . $count . '</p></div>';
     }
 
     /**
