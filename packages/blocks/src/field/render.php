@@ -29,8 +29,25 @@ if ( '' === $yaycheckout_key ) {
 
 $yaycheckout_wrapper = get_block_wrapper_attributes( array( 'class' => 'yaycheckout-field form-row' ) );
 
+// The apartment line hides behind a link until the shopper asks for it. field/edit.tsx mirrors these keys.
+// A required field is always shown, so checkout never fails on a field the shopper cannot see.
+$yaycheckout_collapsed   = in_array( $yaycheckout_key, [ 'billing_address_2', 'shipping_address_2' ], true )
+    && ! $yaycheckout_required
+    && ( ! isset( $attributes['collapseBehindLink'] ) || ! empty( $attributes['collapseBehindLink'] ) );
+$yaycheckout_reveal_text = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'revealText', __( '+ Add apartment, suite, etc.', 'yaycheckout' ) );
+$yaycheckout_collapsible = $yaycheckout_key . '-collapsible';
+
 if ( function_exists( 'woocommerce_form_field' ) ) {
     echo '<div ' . $yaycheckout_wrapper . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
+
+    if ( $yaycheckout_collapsed ) {
+        printf(
+            '<button type="button" class="yaycheckout-field__reveal" aria-expanded="false" aria-controls="%1$s">%2$s</button><div class="yaycheckout-field__collapsible" id="%1$s" hidden>',
+            esc_attr( $yaycheckout_collapsible ),
+            esc_html( $yaycheckout_reveal_text )
+        );
+    }
+
     woocommerce_form_field(
         $yaycheckout_key,
         [
@@ -42,7 +59,7 @@ if ( function_exists( 'woocommerce_form_field' ) ) {
             'return'       => false,
         ]
     );
-    echo '</div>';
+    echo $yaycheckout_collapsed ? '</div></div>' : '</div>';
     return;
 }
 
@@ -50,6 +67,10 @@ $yaycheckout_input_type = in_array( $yaycheckout_type, [ 'email', 'tel', 'passwo
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+    <?php if ( $yaycheckout_collapsed ) : ?>
+    <button type="button" class="yaycheckout-field__reveal" aria-expanded="false" aria-controls="<?php echo esc_attr( $yaycheckout_collapsible ); ?>"><?php echo esc_html( $yaycheckout_reveal_text ); ?></button>
+    <div class="yaycheckout-field__collapsible" id="<?php echo esc_attr( $yaycheckout_collapsible ); ?>" hidden>
+    <?php endif; ?>
     <label for="<?php echo esc_attr( $yaycheckout_key ); ?>">
         <?php echo esc_html( $yaycheckout_label ); ?>
         <?php echo \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- html() escapes. ?>
@@ -68,5 +89,8 @@ $yaycheckout_input_type = in_array( $yaycheckout_type, [ 'email', 'tel', 'passwo
             autocomplete="<?php echo esc_attr( $yaycheckout_autocomplete ); ?>"
             <?php echo $yaycheckout_required ? 'required' : ''; ?>
         />
+    <?php endif; ?>
+    <?php if ( $yaycheckout_collapsed ) : ?>
+    </div>
     <?php endif; ?>
 </div>

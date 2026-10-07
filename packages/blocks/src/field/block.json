@@ -60,6 +60,14 @@
       "type": "string",
       "enum": [ "full", "half" ],
       "default": "full"
+    },
+    "collapseBehindLink": {
+      "type": "boolean",
+      "default": true
+    },
+    "revealText": {
+      "type": "string",
+      "default": ""
     }
   },
   "supports": {
@@ -92,5 +100,6 @@
   },
   "editorScript": "file:./index.js",
   "editorStyle": "file:./index.css",
+  "viewScript": "file:./view.js",
   "render": "file:./render.php"
 }
