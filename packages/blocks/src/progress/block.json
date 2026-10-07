@@ -8,8 +8,6 @@
   "textdomain": "yaycheckout",
   "keywords": [ "steps", "indicator" ],
   "example": {},
-  "ancestor": [ "yaycheckout/checkout" ],
-  "usesContext": [ "yaycheckout/stepTitles" ],
   "attributes": {},
   "supports": {
     "html": false,

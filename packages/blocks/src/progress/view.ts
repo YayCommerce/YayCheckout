@@ -4,8 +4,9 @@
  * Steps owns the open step. This script only mirrors data-state.
  */
 
+import { CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
+
 const ITEM = '.yaycheckout-progress__item';
-const CHECKOUT = '.yaycheckout-checkout';
 
 function boot(): void {
 	if ( document.documentElement.hasAttribute( 'data-yaycheckout-progress-bound' ) ) {
@@ -22,7 +23,7 @@ function onStepChange( event: Event ): void {
 		return;
 	}
 
-	const checkout = event.target.closest( CHECKOUT );
+	const checkout = event.target.closest( CHECKOUT_SELECTOR );
 
 	if ( checkout ) {
 		sync( checkout );
@@ -43,7 +44,7 @@ function onClick( event: MouseEvent ): void {
 	}
 
 	const item = button.closest< HTMLElement >( ITEM );
-	const checkout = button.closest( CHECKOUT );
+	const checkout = checkoutFor( button );
 
 	// paint() keeps the button disabled unless its step is complete.
 	if ( ! item || ! checkout || ! item.dataset.step ) {
@@ -68,7 +69,8 @@ function sync( checkout: Element ): void {
 		}
 	} );
 
-	checkout.querySelectorAll< HTMLElement >( ITEM ).forEach( ( item ) => {
+	// Progress may sit outside Checkout, so paint every one on the page.
+	document.querySelectorAll< HTMLElement >( ITEM ).forEach( ( item ) => {
 		paint( item, states.get( item.dataset.step ?? '' ) ?? 'locked' );
 	} );
 }

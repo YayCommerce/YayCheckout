@@ -19,3 +19,13 @@
 	background: transparent;
 	color: var(--yaycheckout-primary);
 }
+
+.yaycheckout-back-button[hidden] {
+	display: none;
+}
+
+/* The cart link looks like the button. */
+a.yaycheckout-back-button,
+a.yaycheckout-back-button:is(:hover, :focus) {
+	text-decoration: none;
+}

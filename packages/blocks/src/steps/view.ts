@@ -5,6 +5,8 @@
  * and required, so a form-wide checkValidity() would block step 1.
  */
 
+import { checkoutFor } from '../shared/checkout-root';
+
 const STEP = '.yaycheckout-step';
 const CURRENT = 'current';
 const LOCKED = 'locked';
@@ -21,7 +23,7 @@ function boot(): void {
 	document.documentElement.setAttribute( 'data-yaycheckout-steps-bound', '' );
 	document.addEventListener( 'click', onClick );
 	document.addEventListener( 'yaycheckout:step-reopen', onReopen );
-	syncStepButtons();
+	syncBackButtons();
 }
 
 function onReopen( event: Event ): void {
@@ -51,7 +53,8 @@ function onClick( event: MouseEvent ): void {
 		return;
 	}
 
-	const button = target.closest< HTMLButtonElement >( '.yaycheckout-step-button, .yaycheckout-back-button' );
+	// The Previous block's cart link shares its class and must navigate, so only its button is matched.
+	const button = target.closest< HTMLButtonElement >( '.yaycheckout-step-button, button.yaycheckout-back-button' );
 
 	if ( button ) {
 		event.preventDefault();
@@ -74,15 +77,22 @@ function onClick( event: MouseEvent ): void {
 }
 
 function advance( step: HTMLElement ): void {
-	if ( ! complete( step ) ) {
+	const next = siblingStep( step.nextElementSibling );
+
+	// Next always shows. On the last step it does nothing: completing that step would close it over Place order.
+	if ( ! next || ! complete( step ) ) {
 		return;
 	}
 
-	const next = siblingStep( step.nextElementSibling );
+	setState( next, CURRENT );
+	revealStep( next );
+}
 
-	if ( next ) {
-		setState( next, CURRENT );
-	}
+/** Scrolls the step Next or Back opened to the top of the viewport. Focus stays where it is. */
+function revealStep( step: HTMLElement ): void {
+	const reduced = window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+
+	step.scrollIntoView( { block: 'start', behavior: reduced ? 'auto' : 'smooth' } );
 }
 
 /** Checks the step and, when it passes, marks it complete with its summary. */
@@ -147,7 +157,7 @@ function setState( step: HTMLElement, state: StepState ): void {
 		edit.hidden = ! done;
 	}
 
-	syncStepButtons();
+	syncBackButtons();
 	// A dataset write has no subscribers. The event is how other scripts hear it.
 	step.dispatchEvent( new CustomEvent( 'yaycheckout:step-change', { bubbles: true } ) );
 }
@@ -159,20 +169,24 @@ function stepForButton( button: HTMLElement ): HTMLElement | null {
 		return inside;
 	}
 
-	return button.closest( 'form.checkout' )?.querySelector< HTMLElement >( `${ STEP }[data-state="${ CURRENT }"]` ) ?? null;
+	return checkoutFor( button )?.querySelector< HTMLElement >( `${ STEP }[data-state="${ CURRENT }"]` ) ?? null;
 }
 
-function canAdvance( step: HTMLElement ): boolean {
-	// Place order replaces Continue. A step with no next step still shows the button the merchant placed.
-	// The Place order block's wrapper is always there. The submit id appears only with a cart.
-	return ! step.querySelector( '#place_order, .yaycheckout-place-order' );
-}
-
-function syncStepButtons(): void {
-	document.querySelectorAll< HTMLButtonElement >( '.yaycheckout-step-button' ).forEach( ( button ) => {
+/**
+ * On the first step, or with no step, Previous hides its button and shows its cart link
+ * (the button's next element) when it has one. A button inside a step follows that step.
+ */
+function syncBackButtons(): void {
+	document.querySelectorAll< HTMLButtonElement >( 'button.yaycheckout-back-button' ).forEach( ( button ) => {
 		const step = stepForButton( button );
+		const atFirst = ! step || ! siblingStep( step.previousElementSibling );
+		const link = button.nextElementSibling;
 
-		button.hidden = ! step || ! canAdvance( step );
+		button.hidden = atFirst;
+
+		if ( link instanceof HTMLElement && link.matches( '.yaycheckout-back-button--cart' ) ) {
+			link.hidden = ! atFirst;
+		}
 	} );
 }
 
@@ -195,6 +209,7 @@ function retreat( step: HTMLElement ): void {
 	setState( step, step.dataset.completed === 'true' ? COMPLETE : LOCKED );
 
 	setState( previous, CURRENT );
+	revealStep( previous );
 }
 
 function siblingStep( sibling: Element | null ): HTMLElement | null {
