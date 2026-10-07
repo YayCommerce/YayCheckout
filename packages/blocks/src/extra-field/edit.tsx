@@ -1,6 +1,6 @@
 import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { BaseControl, Button, Flex, FlexBlock, Notice, PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import { BaseControl, Button, Flex, FlexBlock, Notice, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import { EXTRA_FIELD_KEY_CONTROL_CLASS, EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
@@ -31,6 +31,7 @@ interface ExtraFieldAttributes {
 	options: FieldOption[];
 	collapseBehindLink?: boolean;
 	revealText: string;
+	rememberValue: boolean;
 }
 
 interface EditProps {
@@ -55,6 +56,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		options,
 		collapseBehindLink,
 		revealText = '',
+		rememberValue = false,
 	} = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-extra-field' } );
 	const labelPlaceholder = fieldKey || __( 'Extra field', 'yaycheckout' );
@@ -134,6 +136,12 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						collapseBehindLink={ collapseBehindLink }
 						revealText={ revealText }
 						setAttributes={ setAttributes }
+					/>
+					<ToggleControl
+						label={ __( 'Remember value', 'yaycheckout' ) }
+						help={ __( 'Keeps what the shopper entered if they reload the checkout. Cleared once the order is placed.', 'yaycheckout' ) }
+						checked={ rememberValue }
+						onChange={ ( value ) => setAttributes( { rememberValue: value } ) }
 					/>
 					<SelectControl
 						label={ __( 'Type', 'yaycheckout' ) }

@@ -16,6 +16,7 @@ $yaycheckout_placeholder = isset( $attributes['placeholder'] ) && is_string( $at
 $yaycheckout_required    = ! empty( $attributes['required'] );
 $yaycheckout_options     = \YayCheckout\Services\LayoutMarkupReader::options( $attributes['options'] ?? [] );
 $yaycheckout_description = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'description' );
+$yaycheckout_remember    = ! empty( $attributes['rememberValue'] );
 
 // Without a valid Key there is no posted name to persist; the editor blocks saving until one is set.
 if ( '' === $yaycheckout_key ) {
@@ -26,11 +27,22 @@ if ( '' === $yaycheckout_label ) {
     $yaycheckout_label = __( 'Extra field', 'yaycheckout' );
 }
 
+// Remember value: the view script saves the entry on change; CheckoutExtraFields hands it back here after a reload.
+$yaycheckout_value = $yaycheckout_remember ? \YayCheckout\Renderer\CheckoutExtraFields::remembered_value( $yaycheckout_key ) : null;
+
+$yaycheckout_wrapper_attrs = [ 'class' => 'yaycheckout-extra-field form-row' ];
+
+if ( $yaycheckout_remember ) {
+    $yaycheckout_wrapper_attrs['data-yaycheckout-remember'] = '1';
+}
+
 $yaycheckout_woo_type         = 'datetime' === $yaycheckout_type ? 'datetime-local' : $yaycheckout_type;
 $yaycheckout_checkbox_choices = 'checkbox' === $yaycheckout_type && ! empty( $yaycheckout_options );
-$yaycheckout_wrapper          = get_block_wrapper_attributes( [ 'class' => 'yaycheckout-extra-field form-row' ] );
-$yaycheckout_collapsed        = \YayCheckout\Services\RevealLink::collapsed( $attributes, $yaycheckout_key, $yaycheckout_required );
+$yaycheckout_wrapper          = get_block_wrapper_attributes( $yaycheckout_wrapper_attrs );
 $yaycheckout_describedby      = '' !== $yaycheckout_description ? ' aria-describedby="' . esc_attr( $yaycheckout_key . '-description' ) . '"' : '';
+
+// A field holding a remembered value stays open, so a reload doesn't hide it.
+$yaycheckout_collapsed = \YayCheckout\Services\RevealLink::collapsed( $attributes, $yaycheckout_key, $yaycheckout_required ) && null === $yaycheckout_value;
 
 if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choices ) {
     $yaycheckout_args = [
@@ -53,7 +65,7 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
         echo \YayCheckout\Services\RevealLink::open( $yaycheckout_key, \YayCheckout\Services\RevealLink::text( $attributes, $yaycheckout_key, $yaycheckout_label ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
     }
 
-    woocommerce_form_field( $yaycheckout_key, $yaycheckout_args );
+    woocommerce_form_field( $yaycheckout_key, $yaycheckout_args, is_string( $yaycheckout_value ) ? $yaycheckout_value : null );
     echo $yaycheckout_collapsed ? \YayCheckout\Services\RevealLink::close() . '</div>' : '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup.
     return;
 }
@@ -85,7 +97,7 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
     <?php elseif ( 'checkbox' === $yaycheckout_type && ! empty( $yaycheckout_options ) ) : ?>
         <?php foreach ( $yaycheckout_options as $yaycheckout_option_value => $yaycheckout_option_label ) : ?>
             <label>
-                <input type="checkbox" name="<?php echo esc_attr( $yaycheckout_key ); ?>[]" value="<?php echo esc_attr( (string) $yaycheckout_option_value ); ?>"<?php echo $yaycheckout_describedby; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where built. ?> />
+                <input type="checkbox" name="<?php echo esc_attr( $yaycheckout_key ); ?>[]" value="<?php echo esc_attr( (string) $yaycheckout_option_value ); ?>"<?php echo $yaycheckout_describedby; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where built. ?><?php checked( is_array( $yaycheckout_value ) && in_array( (string) $yaycheckout_option_value, $yaycheckout_value, true ) ); ?> />
                 <?php echo esc_html( $yaycheckout_option_label ); ?>
             </label>
         <?php endforeach; ?>
