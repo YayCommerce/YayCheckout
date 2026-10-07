@@ -8,6 +8,7 @@ import { RequiredIndicatorControls } from '../shared/required-indicator-controls
 interface EmailAttributes {
 	label: string;
 	placeholder: string;
+	description: string;
 	required: boolean;
 	requiredMark: string;
 }
@@ -22,7 +23,7 @@ interface EditProps {
  * It is always required; that rule lives in RequiredFieldOverlay::is_required().
  */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { label, placeholder, required, requiredMark = '' } = attributes;
+	const { label, placeholder, description = '', required, requiredMark = '' } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-email' } );
 
 	return (
@@ -38,6 +39,12 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						label={ __( 'Placeholder', 'yaycheckout' ) }
 						value={ placeholder }
 						onChange={ ( value ) => setAttributes( { placeholder: value } ) }
+					/>
+					<TextControl
+						label={ __( 'Help text', 'yaycheckout' ) }
+						help={ __( 'Shown under the field while the shopper fills it in.', 'yaycheckout' ) }
+						value={ description }
+						onChange={ ( value ) => setAttributes( { description: value } ) }
 					/>
 					<RequiredIndicatorControls
 						required
@@ -58,6 +65,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					required
 					requiredMark={ requiredMark }
 					placeholder={ placeholder }
+					description={ description }
 					inheritLabelFont
 				/>
 			</div>
