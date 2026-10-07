@@ -1,6 +1,14 @@
-/* Block-level, so a constrained layout's auto margins align it with the content. */
+/*
+ * Block-level, so a constrained layout's auto margins align it with the content. The look sits on
+ * the wrapper, where the block's colour, typography and margin settings land, and the link inherits it.
+ */
 .yaycheckout-return-to-cart {
 	margin-block: 16px 0;
+	color: var(--yaycheckout-primary);
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.2;
+	text-decoration: none;
 }
 
 /* Matches .yaycheckout-back-button's link look (back-button/style.css); change both together. */
@@ -9,16 +17,16 @@
 	align-items: center;
 	gap: 6px;
 	padding: 10px 0;
-	color: var(--yaycheckout-primary);
-	font-family: inherit;
-	font-size: 16px;
-	font-weight: 600;
-	line-height: 1.2;
-	text-decoration: none;
+	color: inherit;
+	font: inherit;
+	letter-spacing: inherit;
+	text-transform: inherit;
+	/* An inline-flex box takes no decoration from its parent, so it asks for one. */
+	text-decoration: inherit;
 }
 
 /* Classic themes (Storefront) repaint a:hover. */
 .yaycheckout-return-to-cart__link:is(:hover, :focus) {
-	color: var(--yaycheckout-primary);
-	text-decoration: none;
+	color: inherit;
+	text-decoration: inherit;
 }
