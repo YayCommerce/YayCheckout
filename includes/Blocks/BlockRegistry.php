@@ -24,6 +24,9 @@ class BlockRegistry {
     /** Named by viewScript in packages/blocks/src/coupon-form/block.json; core enqueues it when the block renders. */
     public const COUPON_FORM_SCRIPT = 'yaycheckout-coupon-form';
 
+    /** Enqueued from place-order/render.php when Show order total is on. */
+    public const PLACE_ORDER_SCRIPT = 'yaycheckout-place-order';
+
     /**
      * Block directories in the order a shopper meets them. The inserter lists
      * blocks in registration order; a built block missing here still
@@ -143,6 +146,14 @@ class BlockRegistry {
         wp_register_script(
             self::COUPON_FORM_SCRIPT,
             YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-coupon-form.js',
+            [ 'jquery', 'wc-checkout' ],
+            YAYCHECKOUT_VERSION,
+            true
+        );
+
+        wp_register_script(
+            self::PLACE_ORDER_SCRIPT,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-place-order.js',
             [ 'jquery', 'wc-checkout' ],
             YAYCHECKOUT_VERSION,
             true

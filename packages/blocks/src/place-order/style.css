@@ -35,3 +35,8 @@
 .wp-block-yaycheckout-place-order.alignright {
 	margin-inline: auto 0;
 }
+
+/* Order total after the label; WooCommerce replaces the button text, so the amount stays in ::after. */
+.wp-block-yaycheckout-place-order[data-show-total='1'][data-total]:not([data-total=''])::after {
+	content: ' \00b7  ' attr(data-total);
+}
