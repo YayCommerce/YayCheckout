@@ -48,6 +48,8 @@ class BlockRegistry {
         'payment',
         'coupon-form',
         'order-summary',
+        'order-summary-items',
+        'order-summary-totals',
         'place-order',
         'slot',
     ];

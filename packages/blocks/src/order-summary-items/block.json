@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/order-summary-items",
+  "title": "Order Summary Items",
+  "category": "yaycheckout",
+  "description": "Cart line items. WooCommerce refreshes them when the order updates.",
+  "textdomain": "yaycheckout",
+  "parent": [ "yaycheckout/order-summary" ],
+  "supports": {
+    "html": false,
+    "inserter": false,
+    "multiple": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}
