@@ -37,7 +37,7 @@ class LayoutPostType {
                 'rest_base'             => Layout::POST_TYPE,
                 // Core would serve every 'publish' layout anonymously.
                 'rest_controller_class' => LayoutCoreRestController::class,
-                'supports'              => [ 'title', 'editor', 'revisions', 'custom-fields', 'author', 'thumbnail', 'page-attributes' ],
+                'supports'              => [ 'title', 'editor', 'revisions', 'custom-fields', 'author', 'thumbnail' ],
                 'has_archive'           => false,
                 'rewrite'               => false,
                 'query_var'             => false,

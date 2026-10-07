@@ -7,11 +7,13 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Gives the layout editor's canvas the storefront's full width and no title field.
+ * Gives the layout editor's canvas the storefront's full width and no title field,
+ * and takes the document bar and the Publish date row out of the editor around it.
  *
  * A layout is the whole checkout page, so the theme's content width, wide width
  * and root padding don't apply to it. Its name is set when it is created, so the
- * canvas shows no title to edit.
+ * canvas shows no title to edit, and the document bar only repeats that name. The
+ * manager publishes layouts, so the editor offers no publish date to schedule.
  */
 class LayoutEditorCanvas {
 
@@ -40,8 +42,25 @@ class LayoutEditorCanvas {
 	display: none;
 }';
 
+    /** The Publish row has no class of its own, only the schedule dropdown inside it. */
+    private const EDITOR_CSS = '.editor-document-bar,
+.editor-post-panel__row:has(.editor-post-schedule__panel-dropdown) {
+	display: none;
+}';
+
     protected function __construct() {
         add_filter( 'block_editor_settings_all', [ $this, 'canvas_styles' ], 10, 2 );
+        add_action( 'admin_enqueue_scripts', [ $this, 'editor_styles' ] );
+    }
+
+    public function editor_styles(): void {
+        $screen = get_current_screen();
+
+        if ( null === $screen || ! $screen->is_block_editor() || Layout::POST_TYPE !== $screen->post_type ) {
+            return;
+        }
+
+        wp_add_inline_style( 'wp-edit-post', self::EDITOR_CSS );
     }
 
     /**
