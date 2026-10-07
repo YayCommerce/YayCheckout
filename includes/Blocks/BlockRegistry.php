@@ -36,6 +36,7 @@ class BlockRegistry {
         'step-button',
         'back-button',
         'email',
+        'create-account',
         'billing',
         'shipping',
         'field',
