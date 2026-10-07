@@ -1,10 +1,9 @@
 import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
-import { ExternalLink, Notice, PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import { ExternalLink, Notice, PanelBody, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 import { loginEditorData } from './editor-data';
-
-const DEFAULT_LINK_TEXT = 'Log in';
+import { TRIGGER_CLASS, TRIGGER_FORMAT } from './trigger-format';
 
 interface LoginAttributes {
 	text: string;
@@ -18,29 +17,88 @@ interface EditProps {
 	isSelected: boolean;
 }
 
-/**
- * Same split as CheckoutLogin::split_link(): the first occurrence of the link
- * text is the control; a missing phrase is appended.
- */
-function splitLink( text: string, linkText: string ): [ string, string, string ] {
-	const link = linkText || DEFAULT_LINK_TEXT;
-	const at = text.indexOf( link );
+const TRIGGER_SPAN = new RegExp(
+	`<span[^>]*\\bclass=["'][^"']*\\b${ TRIGGER_CLASS }\\b[^"']*["'][^>]*>([\\s\\S]*?)<\\/span>`,
+	'i'
+);
 
-	if ( linkText === '' || at === -1 ) {
-		return [ `${ text } `, link, '' ];
+function hasTriggerSpan( html: string ): boolean {
+	return TRIGGER_SPAN.test( html );
+}
+
+/**
+ * RichText value for the canvas. A saved trigger span is used as-is. A legacy
+ * block with linkText still in the sentence gets that phrase wrapped for
+ * display only, without writing attributes until the merchant edits.
+ */
+function editorValue( text: string, linkText: string ): string {
+	if ( hasTriggerSpan( text ) ) {
+		return text;
 	}
 
-	return [ text.slice( 0, at ), link, text.slice( at + link.length ) ];
+	if ( linkText !== '' ) {
+		const at = text.indexOf( linkText );
+
+		if ( at !== -1 ) {
+			return (
+				text.slice( 0, at ) +
+				`<span class="${ TRIGGER_CLASS }">${ linkText }</span>` +
+				text.slice( at + linkText.length )
+			);
+		}
+	}
+
+	return text;
+}
+
+function stripTags( html: string ): string {
+	return html.replace( /<[^>]*>/g, '' );
+}
+
+/**
+ * Preview parts for the unselected canvas. Prefers a trigger span, then a
+ * legacy linkText match; otherwise the whole sentence is plain.
+ */
+function previewParts(
+	text: string,
+	linkText: string
+): { before: string; link: string; after: string } | null {
+	const match = text.match( TRIGGER_SPAN );
+
+	if ( match && match[ 1 ] !== '' ) {
+		const at = match.index ?? 0;
+
+		return {
+			before: stripTags( text.slice( 0, at ) ),
+			link: stripTags( match[ 1 ] ),
+			after: stripTags( text.slice( at + match[ 0 ].length ) ),
+		};
+	}
+
+	if ( linkText !== '' ) {
+		const at = text.indexOf( linkText );
+
+		if ( at !== -1 ) {
+			return {
+				before: text.slice( 0, at ),
+				link: linkText,
+				after: text.slice( at + linkText.length ),
+			};
+		}
+	}
+
+	return null;
 }
 
 export default function Edit( { attributes, setAttributes, isSelected }: EditProps ) {
-	const { text = 'Returning customers? Log in', linkText = DEFAULT_LINK_TEXT, behavior = 'modal' } = attributes;
+	const { text = 'Returning customers? Log in', linkText = 'Log in', behavior = 'modal' } = attributes;
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-login',
 		style: { fontSize: 'inherit', fontWeight: 'inherit' },
 	} );
-	const [ before, link, after ] = splitLink( text, linkText );
-	const linkMissing = linkText !== '' && ! text.includes( linkText );
+	const value = editorValue( text, linkText );
+	const parts = previewParts( text, linkText );
+	const missingTrigger = ! hasTriggerSpan( value );
 
 	return (
 		<>
@@ -53,17 +111,14 @@ export default function Edit( { attributes, setAttributes, isSelected }: EditPro
 							{ label: __( 'Open a login modal', 'yaycheckout' ), value: 'modal' },
 							{ label: __( 'Go to the login page', 'yaycheckout' ), value: 'page' },
 						] }
-						onChange={ ( value ) => setAttributes( { behavior: value } ) }
+						onChange={ ( next ) => setAttributes( { behavior: next } ) }
 					/>
-					<TextControl
-						label={ __( 'Link text', 'yaycheckout' ) }
-						value={ linkText }
-						help={ __( 'The phrase in the sentence that receives the click.', 'yaycheckout' ) }
-						onChange={ ( value ) => setAttributes( { linkText: value } ) }
-					/>
-					{ linkMissing && (
+					{ missingTrigger && (
 						<Notice status="warning" isDismissible={ false }>
-							{ __( 'Link text is not in the sentence, so it is appended.', 'yaycheckout' ) }
+							{ __(
+								'Select the words shoppers should click, then choose Login link in the toolbar.',
+								'yaycheckout'
+							) }
 						</Notice>
 					) }
 					<p>{ __( 'Logged-out shoppers see this block.', 'yaycheckout' ) }</p>
@@ -86,16 +141,18 @@ export default function Edit( { attributes, setAttributes, isSelected }: EditPro
 				<RichText
 					{ ...blockProps }
 					tagName="p"
-					allowedFormats={ [] }
-					value={ text }
-					onChange={ ( value ) => setAttributes( { text: value } ) }
+					allowedFormats={ [ TRIGGER_FORMAT ] }
+					value={ value }
+					onChange={ ( next ) => setAttributes( { text: next, linkText: '' } ) }
 				/>
-			) : (
+			) : parts ? (
 				<p { ...blockProps }>
-					{ before }
-					<span className="yaycheckout-login__trigger">{ link }</span>
-					{ after }
+					{ parts.before }
+					<span className={ TRIGGER_CLASS }>{ parts.link }</span>
+					{ parts.after }
 				</p>
+			) : (
+				<p { ...blockProps }>{ stripTags( text ) }</p>
 			) }
 		</>
 	);

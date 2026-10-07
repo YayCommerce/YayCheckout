@@ -21,6 +21,8 @@ class CheckoutLogin {
 
     public const DEFAULT_LINK_TEXT = 'Log in';
 
+    public const TRIGGER_CLASS = 'yaycheckout-login__trigger';
+
     public const NONCE_ACTION = 'yaycheckout-login';
 
     protected function __construct() {
@@ -59,6 +61,93 @@ class CheckoutLogin {
             $link,
             substr( $text, $at + strlen( $link ) ),
         );
+    }
+
+    /**
+     * Split a sentence that marks its click control with a trigger span.
+     *
+     * Returns before, trigger and after as decoded plain text. An empty array
+     * means the HTML has no non-empty trigger span.
+     *
+     * @param string $html Sentence that may contain a trigger span.
+     * @return array{0: string, 1: string, 2: string}|array{}
+     */
+    public static function trigger_parts( string $html ): array {
+        $clean = wp_kses(
+            $html,
+            array(
+                'span' => array(
+                    'class' => true,
+                ),
+            )
+        );
+
+        if ( '' === $clean ) {
+            return array();
+        }
+
+        $dom      = new \DOMDocument();
+        $previous = libxml_use_internal_errors( true );
+        // A full document keeps UTF-8 text; the fragment alone can corrupt it.
+        $dom->loadHTML( '<?xml encoding="utf-8" ?><div id="yaycheckout-login-root">' . $clean . '</div>' );
+        libxml_clear_errors();
+        libxml_use_internal_errors( $previous );
+
+        $root = $dom->getElementById( 'yaycheckout-login-root' );
+
+        if ( ! $root instanceof \DOMElement ) {
+            return array();
+        }
+
+        $trigger = null;
+
+        // phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOMDocument property names.
+        foreach ( $root->getElementsByTagName( 'span' ) as $span ) {
+            if ( ! $span instanceof \DOMElement ) {
+                continue;
+            }
+
+            $classes = preg_split( '/\s+/', $span->getAttribute( 'class' ), -1, PREG_SPLIT_NO_EMPTY );
+
+            if ( ! is_array( $classes ) || ! in_array( self::TRIGGER_CLASS, $classes, true ) ) {
+                continue;
+            }
+
+            if ( '' === $span->textContent ) {
+                continue;
+            }
+
+            $trigger = $span;
+            break;
+        }
+
+        if ( ! $trigger instanceof \DOMElement ) {
+            return array();
+        }
+
+        $before = '';
+        $after  = '';
+        $seen   = false;
+
+        foreach ( $root->childNodes as $child ) {
+            if ( $child->isSameNode( $trigger ) ) {
+                $seen = true;
+                continue;
+            }
+
+            $piece = $child->textContent;
+
+            if ( $seen ) {
+                $after .= $piece;
+            } else {
+                $before .= $piece;
+            }
+        }
+
+        $parts = array( $before, $trigger->textContent, $after );
+        // phpcs:enable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+
+        return $parts;
     }
 
     /**
