@@ -108,7 +108,7 @@ Expected: build succeeds; lint no errors; tsc no new errors versus `dev/edd`.
 Before opening the editor, load the storefront checkout of a layout whose markup still has `<!-- wp:yaycheckout/order-summary /-->`.
 Expected: heading, then `<div id="order_review">` with `table.woocommerce-checkout-review-order-table`, same as on `dev/edd`.
 Open that layout in the layout editor.
-Expected: Order Summary shows Items and Totals; neither offers Move or Remove in its toolbar/options. The inserter inside Order Summary lists Paragraph and Coupon Form, and does not list Billing, Shipping, Payment, Steps, Order Review, Place Order, Order Summary Items or Order Summary Totals.
+Expected: Order Summary shows Items and Totals; neither offers Move or Remove in its toolbar/options. The inserter inside Order Summary lists Paragraph and Coupon Form, and does not list Billing, Shipping, Payment, Steps, Place Order, Order Summary Items or Order Summary Totals.
 
 - [ ] **Step 5: Commit**
 

@@ -29,7 +29,6 @@ A merchant can add blocks to two places in the Order Summary block: above the it
 - A zone inside the totals (between rows).
 - Any Pro gating.
 - Migrating stored layout markup.
-- Changes to the Order Review block.
 
 ## Acceptance criteria
 
@@ -37,7 +36,7 @@ A merchant can add blocks to two places in the Order Summary block: above the it
 2. Given that layout opened in the editor, Order Summary gets Order Summary Items and Order Summary Totals as children, and neither can be moved or removed.
 3. Given a Paragraph inserted between Items and Totals and published, the storefront prints, in order: heading, items table, the Paragraph, totals table.
 4. Given a Coupon Form in a zone with text typed in its input, when the shopper changes shipping method or billing address (triggering `update_order_review`), the items and totals tables update and the Paragraph and the typed coupon text remain.
-5. The inserter inside Order Summary offers core blocks and Coupon Form, and does not offer Billing, Shipping, Payment, Steps, Order Review, Place Order, Order Summary Items or Order Summary Totals.
+5. The inserter inside Order Summary offers core blocks and Coupon Form, and does not offer Billing, Shipping, Payment, Steps, Place Order, Order Summary Items or Order Summary Totals.
 6. A new layout (from `LayoutRepository::default_markup()`) contains Order Summary with both children and empty zones.
 7. End-to-end verification: run `pnpm build:blocks`; create a new layout, add a Paragraph above Items and one between Items and Totals, publish; on the storefront with a cart, change the shipping address so shipping cost changes. Both Paragraphs still show, and Total shows the new amount.
 
@@ -75,7 +74,6 @@ A merchant can add blocks to two places in the Order Summary block: above the it
 **Edge cases and failure modes:**
 - No `WC_Cart` (admin, REST, CLI): Items and Totals print nothing; zone blocks still render.
 - Empty cart in a preview link: `PreviewRequest` already disables `woocommerce_checkout_update_order_review_expired`; tables render empty.
-- Layout with both Order Review and a split Order Summary: Order Review keeps WooCommerce's table and fragment; the new fragments match only the split tables.
 - A theme override of `checkout/review-order.php` applies to the fallback only, not to the split tables.
 - Theme CSS or plugin JS targeting `.woocommerce-checkout-review-order-table` does not reach the split tables.
 
