@@ -21,9 +21,16 @@ Expected:
 
 ## Deviations found while implementing
 
-- **`woocommerce-blocktheme` is dequeued too.** On block themes it styles the same form markup as `woocommerce-general`, at 0,3,2 (`.woocommerce-page form .form-row input.input-text`), which beat the base. It assumes the general stylesheet we already dequeued.
+- **`woocommerce-blocktheme`, `woocommerce-layout` and `woocommerce-smallscreen` are dequeued too** (the last two after yaytidy: layout's `.woocommerce-page form .form-row-first` float, at 0,2,1, beat the base's reset). On block themes it styles the same form markup as `woocommerce-general`, at 0,3,2 (`.woocommerce-page form .form-row input.input-text`), which beat the base. It assumes the general stylesheet we already dequeued.
 - **The page rule carries more than the background.** DesignStyles' page rule also takes `color` (Colours on) and `font-family` / `font-size` (Typography on). `color-text`, `font-family` and `font-size-base` were printed but applied nowhere. An unset inherited property on `body` would reset the theme's body value, so the base can't read them there either. This widens the README's "page background only" exception into one page rule.
 - **Inputs can be taller than 40px.** `min-height` is 40px, but the content decides when the theme's text is large: Twenty Twenty-Five's checkout text is 22px, so its inputs compute to 48.8px. Spec criterion 2's "40px" holds at a font size of about 16px.
+- **Storefront's own payment rules needed answering.** `#payment .payment_methods > li:not(.woocommerce-notice)` gave the rows a grey background and padded labels, and `li:last-child:not(.woocommerce-notice)` dropped the last row's bottom edge. Both tie the shared row rule's specificity (1,2,1 / 1,3,1) and print later. The payment selectors now name WooCommerce's `div#payment`, the label padding is reset, the last row restates its bottom edge, and the editor preview prints the same `#payment` wrapper. Storefront's own radio icon stays.
+- **Two contract changes from /yaytidy.** `DesignStyles::css()`'s `$with_custom_css` has no default, because its one caller always passes it. The primary colour expression is resolved once as `--yaycheckout-primary-color` (with `--yaycheckout-border-color` and `--yaycheckout-field-radius`) on `:root, .editor-styles-wrapper` in `checkout-base.css`, and block CSS reads `var(--yaycheckout-primary-color, #3858e9)`. The README contract is amended to match.
+- **Spec criterion 2's 40px holds at a theme text size of about 16px.** Storefront computes 40.4px. Twenty Twenty-Five, whose checkout text is 22px, computes 48.8px, because 40px is the `min-height`.
+- **Verified by simulation in the checkout page, not on a real layout or theme:**
+  - **Password meter** (layout 61 has no Create account block): the built `create-account/style-index.css` was loaded with meter markup. Short and bad compute to `rgb(204, 24, 24)`, good to `rgb(240, 184, 73)`, strong to `rgb(74, 184, 102)`.
+  - **Theme primary preset:** with `--wp--preset--color--primary` set on `:root` and Colours off, Place Order and the checked payment row both took the preset.
+  - **Payment rows on Twenty Twenty-Five after the `#payment` change:** `14px 16px`, transparent background, the last row's 14px bottom padding and 1px border intact, and the checked row primary.
 - **The Order Summary tables get 6px cell padding in the base.** That padding came from `woocommerce-blocktheme`.
 
 ### Task 1: Base stylesheet and its loader
@@ -62,7 +69,7 @@ Found while expanding:
   - **Animation:** the blockUI spinner animation is `yaycheckout-spin`, and stops under `prefers-reduced-motion: reduce`.
 - [ ] **Step 2: Add `ScriptName::STYLE_CHECKOUT_BASE = 'yaycheckout/style/checkout-base'`** in place of `STYLE_CHECKOUT_PAGE`.
 - [ ] **Step 3: Update `DesignStyles`.**
-  - `css( Design $design, bool $with_custom_css = true ): string`.
+  - `css( Design $design, bool $with_custom_css ): string` (no default since /yaytidy; see Deviations).
   - `vars()` adds `input-border-width` and `input-padding-inline`, and prints `input-radius: 0px` when the style is underline.
   - While Colours is on, `css()` prints the README's page background rule after `:root`.
   - Remove `enqueue()`.
@@ -94,17 +101,17 @@ Found while expanding:
 **Files:**
 - Delete: `includes/Renderer/CheckoutColour.php`
 - Modify: `includes/YayCheckout.php:28`
-- Modify: `packages/blocks/src/{place-order,progress,steps,step-button,back-button,return-to-cart}/style.css`. Every `var(--yaycheckout-primary)` becomes the README's primary colour expression.
+- Modify: `packages/blocks/src/{place-order,progress,steps,step-button,back-button,return-to-cart}/style.css`. Every `var(--yaycheckout-primary)` becomes the README's primary colour expression (since /yaytidy, `var(--yaycheckout-primary-color, #3858e9)`).
 
 **Interfaces:**
 - Consumes: the "Base loader" from Task 1 (the tokens now print through it).
-- Produces: nothing new. `--yaycheckout-primary` no longer exists; `git grep -- '--yaycheckout-primary'` returns nothing.
+- Produces: nothing new. The ungated `--yaycheckout-primary` no longer exists in code (the grep in Step 2).
 
 Verification: spec criterion 5, all three cases.
 
 - [ ] **Step 1:** delete `includes/Renderer/CheckoutColour.php` and its boot line. Replace every `var(--yaycheckout-primary)` in the six files with the README's primary colour expression.
 - [ ] **Step 2: Verify.**
-  - Run `git grep -n -- '--yaycheckout-primary'`. Expected: no output.
+  - Run `git grep -nE -- '--yaycheckout-primary([^-]|$)' -- ':!docs'`. Expected: no output. (`--yaycheckout-primary-color` is the base's alias; docs keep the old name as records.)
   - Run `pnpm build:blocks` and `composer lint`. Both exit 0.
   - With Colours off on Twenty Twenty-Five, Place Order's background equals `getComputedStyle(document.body).getPropertyValue('--wp--preset--color--primary')`, or `#3858e9` when that is empty.
   - With Colours on and primary `#ff0000`, it is `rgb(255, 0, 0)`.

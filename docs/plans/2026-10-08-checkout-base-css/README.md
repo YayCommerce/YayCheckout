@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute phases in order. Read this file, then the current phase file. Do not start a phase until the previous phase's exit criterion has been verified and `/yayplancheck` has passed on it.
 
-**Status:** active
+**Status:** done 2026-10-08
 **Goal:** Trim the Design page to Colours, Typography, Inputs and Custom CSS. Then give the checkout and the layout editor one neutral base stylesheet that those tokens adjust, replacing WooCommerce's dequeued `woocommerce-general`.
 **Spec:** [docs/specs/2026-10-08-checkout-base-css-design.md](../../specs/2026-10-08-checkout-base-css-design.md)
 **Architecture:**
@@ -31,7 +31,7 @@
 - Docs: `docs/architecture.md`, `docs/conventions.md`, new `docs/decisions/2026-10-08-checkout-owns-base-styles.md`
 - Shared code:
   - **The Design wire (shared):** read by the Design page, the setup wizard (`window.yayCheckoutAdmin.design` through `LocalizeHelper`) and `PreviewPane`. All three change in Phase 1, Task 2.
-  - **`--yaycheckout-primary` (shared):** read by six blocks' CSS. All six change in Phase 2, Task 2.
+  - **`--yaycheckout-primary` (shared):** read by six blocks' CSS. All six change in Phase 2, Task 2, to read `--yaycheckout-primary-color` (see the contract below).
 
 **Tests:** none. CSS and the design-schema trim decide nothing about whether a shopper can check out, and neither reproduces a fixed bug, so CLAUDE.md's test rule doesn't apply. The spec says the same. Each task has an exact manual check instead.
 
@@ -55,7 +55,7 @@
   - Anything WooCommerce or select2 appends outside the form is scoped to `body.yaycheckout-page`.
   - Per-block selectors start with `.yaycheckout-checkout .<block-class>` (≥ 0,3,0).
   - No `@layer`. No `!important` except against WooCommerce's inline styles.
-- **Tokens are values only:** CSS reads `var(--yaycheckout-<name>, <fallback>)`. `DesignStyles` prints one selector rule only: the page background while Colours is on.
+- **Tokens are values only:** CSS reads `var(--yaycheckout-<name>, <fallback>)`, or a neutral fallback resolved once in `checkout-base.css`. `DesignStyles` prints one selector rule only: the page rule (`body.yaycheckout-page, .editor-styles-wrapper`), carrying the background and text colour while Colours is on and the font while Typography is on.
 - **RTL:** use logical properties (`margin-inline`, `padding-inline`, `inset-inline`, `text-align: start/end`).
 - **Known failing checks on `dev/edd`:** `pnpm --filter @yaycheckout/admin-page lint` exits 1 there (4 eslint warnings, and prettier fails on `lib/utils.ts`, `styles/custom-header.css` and `tsconfig.node.json`). Expect no new failures beyond those.
 
@@ -73,8 +73,8 @@
 
 | Phase | Delivers (user-visible) | Exit criterion (exact check) | Status |
 |---|---|---|---|
-| 1 | [Design trim](phase-1-design-trim.md): the Design page shows Colours, Typography, Inputs and Custom CSS with no presets. The wizard's Brand step has no radius or button controls. Reset still works. | `GET /yaycheckout/v1/design` returns exactly `tokens, custom_css, updated_at, defaults` with tokens `colours, typography, inputs`. The Design page saves, resets and shows "N overrides". A wizard re-run completes. `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit` exits 0. `composer lint` exits 0. | pending |
-| 2 | [Base CSS](phase-2-base-css.md): the checkout and the editor canvas share one neutral base, per-block payment, shipping and password styles, and the tokens adjust them. | Spec criterion 17 (end-to-end on Storefront and Twenty Twenty-Five), as written in the Phase 2 exit criterion. | pending |
+| 1 | [Design trim](phase-1-design-trim.md): the Design page shows Colours, Typography, Inputs and Custom CSS with no presets. The wizard's Brand step has no radius or button controls. Reset still works. | `GET /yaycheckout/v1/design` returns exactly `tokens, custom_css, updated_at, defaults` with tokens `colours, typography, inputs`. The Design page saves, resets and shows "N overrides". A wizard re-run completes. `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit` exits 0. `composer lint` exits 0. | done |
+| 2 | [Base CSS](phase-2-base-css.md): the checkout and the editor canvas share one neutral base, per-block payment, shipping and password styles, and the tokens adjust them. | Spec criterion 17 (end-to-end on Storefront and Twenty Twenty-Five), as written in the Phase 2 exit criterion. | done |
 
 ## Interface contract
 
@@ -90,13 +90,13 @@
   - `designToWire( form: DesignForm ): { tokens: DesignTokensWire; custom_css: string }`
   - `postDesign( form: DesignForm ): Promise<DesignResponse>`
 - **`DesignStyles` CSS.** Produced by Phase 2, Task 1.
-  - **Signature:** `DesignStyles::css( Design $design, bool $with_custom_css = true ): string`.
+  - **Signature:** `DesignStyles::css( Design $design, bool $with_custom_css ): string`. Required since /yaytidy: its one caller always passes it.
   - **Variables on `:root`:** `color-primary`, `color-text`, `color-background` and `color-border` while Colours is on; `font-family` and `font-size-base` while Typography is on; `input-radius`, `input-height`, `input-border-width` and `input-padding-inline` while Inputs is on. Each name is prefixed `--yaycheckout-`.
   - **Underline inputs:** `input-radius: 0px`, `input-border-width: 0 0 1px`, `input-padding-inline: 0`.
   - **Boxed inputs:** `input-border-width: 1px`, `input-padding-inline: 12px`.
-  - **Page background:** while Colours is on, it also prints `body.yaycheckout-page, .editor-styles-wrapper { background-color: var(--yaycheckout-color-background); }`.
+  - **Page rule:** `body.yaycheckout-page, .editor-styles-wrapper { … }` with `background-color` and `color` while Colours is on, and `font-family` (unless the theme's font) and `font-size` while Typography is on, each reading its token.
   - `DesignStyles::enqueue()` is removed.
 - **Base loader.** Produced by Phase 2, Task 1. Consumed by Phase 2, Task 4.
   - `Renderer\CheckoutBaseStyles::enqueue( bool $with_custom_css ): void` enqueues `assets/css/checkout-base.css` under `ScriptName::STYLE_CHECKOUT_BASE = 'yaycheckout/style/checkout-base'`, then the `DesignStyles` CSS inline under `ScriptName::STYLE_CHECKOUT`, after it.
-- **Primary colour expression.** Produced by Phase 2, Task 2. Consumed by Phase 2, Tasks 1 and 3: `var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9))`.
+- **Primary colour expression.** Produced by Phase 2, Task 2. Consumed by Phase 2, Tasks 1 and 3: `var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9))`, resolved once since /yaytidy as `--yaycheckout-primary-color` on `:root, .editor-styles-wrapper` at the top of `checkout-base.css` (with `--yaycheckout-border-color` and `--yaycheckout-field-radius`). Block CSS reads `var(--yaycheckout-primary-color, #3858e9)`, the short fallback for the inserter preview, which loads no base.
 - **Choice-row partial.** Produced by Phase 2, Task 3. `packages/blocks/src/shared/choice-rows.css` is imported by `payment/style.css` and `shipping-methods/style.css`.
