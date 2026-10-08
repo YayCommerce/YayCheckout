@@ -37,10 +37,7 @@ export function LibraryStep({
 
       {rootError && <p className="text-destructive text-sm">{rootError}</p>}
 
-      <DialogFooter className="items-center gap-3 border-t pt-4 sm:justify-between">
-        <p className="text-muted-foreground text-xs">
-          {__('Your existing fields and gateways are mapped into the template you pick.', 'yaycheckout')}
-        </p>
+      <DialogFooter className="items-center gap-3 border-t pt-4 sm:justify-end">
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={onBack}>
             {__('Back', 'yaycheckout')}

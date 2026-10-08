@@ -35,12 +35,7 @@ export function StartFromStep({
     <div className="flex flex-col gap-6">
       <h2 className="text-lg font-semibold">{__('Where should your layout start?', 'yaycheckout')}</h2>
 
-      <div className="flex flex-col gap-3">
-        <TemplatePicker selectedSlug={templateSlug} onSelect={onTemplateChange} />
-        <p className="text-muted-foreground text-sm">
-          {__('Your existing fields and gateways are mapped into the template you pick.', 'yaycheckout')}
-        </p>
-      </div>
+      <TemplatePicker selectedSlug={templateSlug} onSelect={onTemplateChange} />
 
       <div className="flex items-center justify-between gap-2 border-t pt-4">
         <Button variant="outline" onClick={onBack}>
