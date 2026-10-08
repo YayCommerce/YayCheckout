@@ -135,6 +135,14 @@ class HideWhenEmpty {
     }
 
     /**
+     * A watchable block's wrapper attribute string: get_block_wrapper_attributes() with $base and
+     * the block's markers. A block that prints nothing when empty leaves $is_empty false.
+     */
+    public static function wrapper( array $base, array $attributes, bool $is_empty = false ): string {
+        return get_block_wrapper_attributes( array_merge( $base, self::wrapper_attributes( $attributes, $is_empty ) ) );
+    }
+
+    /**
      * Extra wrapper attributes for a watchable block, to merge into get_block_wrapper_attributes().
      *
      * @return array<string, string>

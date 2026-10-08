@@ -23,14 +23,13 @@ if ( '' !== $yaycheckout_slot_name ) {
 
 $yaycheckout_slot_content = (string) ob_get_clean();
 
-$yaycheckout_wrapper = get_block_wrapper_attributes(
-    array_merge(
-        [
-            'class'     => 'yaycheckout-slot',
-            'data-slot' => $yaycheckout_slot_name,
-        ],
-        \YayCheckout\Renderer\HideWhenEmpty::wrapper_attributes( $attributes, '' === trim( $yaycheckout_slot_content ) )
-    )
+$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
+    [
+        'class'     => 'yaycheckout-slot',
+        'data-slot' => $yaycheckout_slot_name,
+    ],
+    $attributes,
+    '' === trim( $yaycheckout_slot_content )
 );
 
 ?>

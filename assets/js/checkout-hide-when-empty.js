@@ -38,7 +38,7 @@ jQuery(function ($) {
             var $group = $(this);
             var ids = String($group.attr(GROUP_ATTR)).split(' ').filter(Boolean);
 
-            $group.toggleClass(HIDDEN_CLASS, ids.length > 0 && hidden($group, ids));
+            $group.toggleClass(HIDDEN_CLASS, hidden($group, ids));
         });
     });
 });

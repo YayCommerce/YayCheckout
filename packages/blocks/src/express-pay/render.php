@@ -22,12 +22,7 @@ if ( $yaycheckout_has_cart && function_exists( 'wc_get_pay_buttons' ) ) {
 
 $yaycheckout_buttons = (string) ob_get_clean();
 
-$yaycheckout_wrapper = get_block_wrapper_attributes(
-    array_merge(
-        [ 'class' => 'yaycheckout-express-pay' ],
-        \YayCheckout\Renderer\HideWhenEmpty::wrapper_attributes( $attributes, '' === trim( $yaycheckout_buttons ) )
-    )
-);
+$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper( [ 'class' => 'yaycheckout-express-pay' ], $attributes, '' === trim( $yaycheckout_buttons ) );
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>

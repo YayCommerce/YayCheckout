@@ -179,7 +179,9 @@ class CheckoutFragments {
             return '';
         }
 
-        if ( WC()->cart->needs_payment() ) {
+        $empty = self::payment_empty();
+
+        if ( ! $empty ) {
             $available_gateways = WC()->payment_gateways()->get_available_payment_gateways();
             WC()->payment_gateways()->set_current_gateway( $available_gateways );
         } else {
@@ -193,8 +195,8 @@ class CheckoutFragments {
             do_action( 'woocommerce_review_order_before_payment' );
         }
         ?>
-<div id="payment" class="woocommerce-checkout-payment"<?php echo self::live_attributes( self::payment_empty() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- live_attributes() prints fixed names and values. ?>>
-        <?php if ( WC()->cart->needs_payment() ) : ?>
+<div id="payment" class="woocommerce-checkout-payment"<?php echo self::live_attributes( $empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- live_attributes() prints fixed names and values. ?>>
+        <?php if ( ! $empty ) : ?>
     <ul class="wc_payment_methods payment_methods methods" aria-label="<?php esc_attr_e( 'Payment methods', 'yaycheckout' ); ?>">
             <?php
             if ( ! empty( $available_gateways ) ) {

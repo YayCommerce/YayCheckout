@@ -14,12 +14,7 @@ $yaycheckout_label = isset( $attributes['label'] ) && is_string( $attributes['la
     ? $attributes['label']
     : __( 'Payment', 'yaycheckout' );
 
-$yaycheckout_wrapper = get_block_wrapper_attributes(
-    array_merge(
-        [ 'class' => 'yaycheckout-payment' ],
-        \YayCheckout\Renderer\HideWhenEmpty::wrapper_attributes( $attributes, \YayCheckout\Renderer\CheckoutFragments::payment_empty() )
-    )
-);
+$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper( [ 'class' => 'yaycheckout-payment' ], $attributes, \YayCheckout\Renderer\CheckoutFragments::payment_empty() );
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>

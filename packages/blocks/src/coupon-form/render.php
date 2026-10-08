@@ -35,7 +35,7 @@ $yaycheckout_button_text = \YayCheckout\Services\LayoutMarkupReader::plain_text(
 $yaycheckout_button_class = \YayCheckout\Helpers\ButtonClassHelper::classes( 'button' );
 
 ?>
-<div <?php echo get_block_wrapper_attributes( array_merge( [ 'class' => 'yaycheckout-coupon-form' ], \YayCheckout\Renderer\HideWhenEmpty::wrapper_attributes( $attributes, false ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+<div <?php echo \YayCheckout\Renderer\HideWhenEmpty::wrapper( [ 'class' => 'yaycheckout-coupon-form' ], $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <div class="yaycheckout-coupon-form__row">
         <label for="yaycheckout-coupon-code" class="screen-reader-text"><?php esc_html_e( 'Coupon:', 'yaycheckout' ); ?></label>
         <?php
