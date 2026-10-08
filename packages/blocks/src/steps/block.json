@@ -50,7 +50,10 @@
   },
   "supports": {
     "html": false,
-    "reusable": false
+    "reusable": false,
+    "spacing": {
+      "blockGap": true
+    }
   },
   "editorScript": "file:./index.js",
   "viewScript": "file:./view.js",

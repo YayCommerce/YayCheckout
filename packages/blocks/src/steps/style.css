@@ -4,14 +4,18 @@
 	gap: 12px;
 }
 
-.yaycheckout-step {
+/*
+ * Defaults with no specificity, so the Step's colour, spacing and border settings and its
+ * Global Styles (:root :where(.wp-block-yaycheckout-step)) override them.
+ */
+:where(.yaycheckout-step) {
 	border: 1px solid #e5e7eb;
 	border-radius: 12px;
 	background: #fff;
 	padding: 16px 20px;
 }
 
-.yaycheckout-step[data-state="current"] {
+:where(.yaycheckout-step[data-state="current"]) {
 	border-color: var(--yaycheckout-primary);
 }
 
@@ -49,7 +53,8 @@
 	box-shadow: inset 0 0 0 1.5px #d1d5db;
 }
 
-.yaycheckout-step[data-state="locked"] .yaycheckout-step__title {
+/* Muted until the text colour support sets a colour. */
+.yaycheckout-step[data-state="locked"]:not(.has-text-color) .yaycheckout-step__title {
 	color: #6b7280;
 }
 
