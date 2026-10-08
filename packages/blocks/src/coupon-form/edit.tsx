@@ -43,10 +43,10 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						className="yaycheckout-coupon-form__code"
 						placeholder={ placeholder || __( 'Coupon code', 'yaycheckout' ) }
 					/>
-					{ /* A div, not a button: typing Space inside a button would click it. */ }
+					{ /* A div, not a button: typing Space inside a button would click it. The classes match render.php, so checkout-base.css draws it. */ }
 					<RichText
 						tagName="div"
-						className="yaycheckout-coupon-form__apply"
+						className="button wp-element-button yaycheckout-coupon-form__apply"
 						value={ buttonText }
 						onChange={ ( value: string ) => setAttributes( { buttonText: value } ) }
 						placeholder={ __( 'Apply coupon', 'yaycheckout' ) }
