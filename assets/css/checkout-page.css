@@ -45,7 +45,7 @@ body.yaycheckout-page > .wp-site-blocks,
 	text-align: end;
 }
 
-/* A Group whose watched blocks are all empty (HideWhenEmpty::HIDDEN_CLASS); beats the Group's layout display. */
+/* A Group, Columns or Column whose watched blocks are all empty (HideWhenEmpty::HIDDEN_CLASS); beats its layout display. */
 .yaycheckout-hidden-when-empty {
 	display: none !important;
 }

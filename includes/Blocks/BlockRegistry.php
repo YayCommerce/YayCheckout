@@ -165,11 +165,11 @@ class BlockRegistry {
             true
         );
 
-        // Enqueued by HideWhenEmpty::filter_group() for a Group that watches blocks.
+        // Enqueued by HideWhenEmpty::filter_container() for a container that watches blocks.
         wp_register_script(
             HideWhenEmpty::SCRIPT,
             YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-hide-when-empty.js',
-            [ 'jquery', 'wc-checkout' ],
+            [ 'jquery', 'wc-checkout', 'wc-address-i18n' ],
             YAYCHECKOUT_VERSION,
             true
         );

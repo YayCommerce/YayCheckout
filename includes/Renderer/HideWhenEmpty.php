@@ -7,7 +7,7 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Hides a core Group while every block the merchant ticked inside it is empty.
+ * Hides a container (core Group, Columns or Column) while every block the merchant ticked inside it is empty.
  *
  * Watchable blocks (block.json support `yaycheckoutWatchable`) print BLOCK_ID_ATTR and, when
  * empty, EMPTY_ATTR on their wrapper; what "empty" means for each lives in its render.php and,
@@ -17,7 +17,10 @@ class HideWhenEmpty {
 
     use SingletonTrait;
 
-    /** The core/group attribute holding the blockIds it watches. */
+    /** Core blocks that can watch blocks inside them. */
+    public const CONTAINERS = [ 'core/group', 'core/columns', 'core/column' ];
+
+    /** The container attribute holding the blockIds it watches. */
     public const ATTRIBUTE = 'yaycheckoutHideWhenEmpty';
 
     public const HIDDEN_CLASS = 'yaycheckout-hidden-when-empty';
@@ -36,24 +39,29 @@ class HideWhenEmpty {
     /** On a fragment node update_order_review swaps: its EMPTY_ATTR is copied to the block wrapper. */
     public const LIVE_ATTR = 'data-yaycheckout-live';
 
-    /** On a decorated Group: the watched ids, space-separated, for the live script. */
-    public const GROUP_ATTR = 'data-yaycheckout-hide-when-empty';
+    /** On a Field block's wrapper: its row is empty while address-i18n.js hides it for the country. */
+    public const LOCALE_ATTR = 'data-yaycheckout-locale';
+
+    /** On a decorated container: the watched ids, space-separated, for the live script. */
+    public const CONTAINER_ATTR = 'data-yaycheckout-hide-when-empty';
 
     /**
-     * Not gated on CheckoutPage::layout(): only a layout holds watchable blocks, and a Group
+     * Not gated on CheckoutPage::layout(): only a layout holds watchable blocks, and a container
      * watching none of its descendants is returned untouched.
      */
     protected function __construct() {
-        add_filter( 'render_block_core/group', [ $this, 'filter_group' ], 10, 2 );
+        foreach ( self::CONTAINERS as $name ) {
+            add_filter( 'render_block_' . $name, [ $this, 'filter_container' ], 10, 2 );
+        }
     }
 
     /**
-     * Marks a Group that watches blocks inside it for the live script, and hides it when all are empty.
+     * Marks a container that watches blocks inside it for the live script, and hides it when all are empty.
      *
-     * @param string $block_content Rendered Group, inner blocks included.
-     * @param array  $block         Parsed Group block.
+     * @param string $block_content Rendered container, inner blocks included.
+     * @param array  $block         Parsed container block.
      */
-    public function filter_group( $block_content, $block ): string {
+    public function filter_container( $block_content, $block ): string {
         $block_content = (string) $block_content;
         $ids           = self::watched_descendant_ids( is_array( $block ) ? $block : [] );
 
@@ -67,7 +75,7 @@ class HideWhenEmpty {
             return $block_content;
         }
 
-        $html->set_attribute( self::GROUP_ATTR, implode( ' ', $ids ) );
+        $html->set_attribute( self::CONTAINER_ATTR, implode( ' ', $ids ) );
 
         if ( self::hidden( $block_content, $ids ) ) {
             $html->add_class( self::HIDDEN_CLASS );
@@ -82,7 +90,7 @@ class HideWhenEmpty {
      * True when every id is empty in $html: no element carries it without EMPTY_ATTR. An id no
      * element carries counts as empty, since a block that prints nothing has no wrapper.
      *
-     * @param string[] $ids blockIds that are descendants of the Group.
+     * @param string[] $ids blockIds that are descendants of the container.
      */
     public static function hidden( string $html, array $ids ): bool {
         if ( empty( $ids ) ) {
@@ -103,7 +111,7 @@ class HideWhenEmpty {
     }
 
     /**
-     * The Group's watched ids that a watchable descendant still carries, so a stale id is ignored.
+     * The container's watched ids that a watchable descendant still carries, so a stale id is ignored.
      *
      * @return string[]
      */

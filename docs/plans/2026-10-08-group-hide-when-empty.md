@@ -6,7 +6,7 @@
 **Goal:** A core Group in a checkout layout hides while every YayCheckout block the merchant ticked inside it is empty, on first paint and after each `updated_checkout`.
 **Spec:** [docs/specs/2026-10-08-group-hide-when-empty-design.md](../specs/2026-10-08-group-hide-when-empty-design.md)
 **Architecture:** Watchable blocks print `data-yaycheckout-block-id` and, when empty, `data-yaycheckout-empty="1"` on their wrapper; Shipping methods and Payment also mark the fragment node `CheckoutFragments` swaps. A `render_block_core/group` filter (`Renderer\HideWhenEmpty`) decides first paint from those markers, and a jQuery script re-reads them after `updated_checkout`, so PHP alone defines "empty". Chosen over re-rendering the Group as a fragment, which would wipe typed input.
-**Touches:** new `includes/Renderer/HideWhenEmpty.php`; `includes/YayCheckout.php`; `includes/Renderer/CheckoutFragments.php`; `includes/Blocks/BlockRegistry.php`; `packages/blocks/src/{shipping-methods,payment,express-pay,slot,coupon-form,login,create-account}/{block.json,render.php}`; new `packages/blocks/src/shared/hide-when-empty.tsx`; `packages/blocks/src/checkout/index.ts`; new `assets/js/checkout-hide-when-empty.js`; `assets/css/checkout-page.css`; `docs/architecture.md`. No shared code across plugins.
+**Touches:** new `includes/Renderer/HideWhenEmpty.php`; `includes/YayCheckout.php`; `includes/Renderer/CheckoutFragments.php`; `includes/Blocks/BlockRegistry.php`; `packages/blocks/src/{shipping-methods,payment,express-pay,slot,coupon-form,login,create-account,field}/{block.json,render.php}`; `includes/Renderer/CheckoutFieldDefaults.php` (Task 6); new `packages/blocks/src/shared/hide-when-empty.tsx`; `packages/blocks/src/checkout/index.ts`; new `assets/js/checkout-hide-when-empty.js`; `assets/css/checkout-page.css`; `docs/architecture.md`. No shared code across plugins.
 **Tests:** `tests/Integration/Renderer/HideWhenEmptyTest.php`, Integration suite (`composer test`): guards that a Group hides only when every watched descendant is empty, ignores stale ids, and leaves an unset Group untouched (spec AC 10). Accepted with the spec.
 
 ## Global constraints
@@ -304,3 +304,71 @@ Expected: both exit 0. `composer test` reports the 4 `HideWhenEmptyTest` tests p
 
 Stage: `docs/architecture.md`, `docs/plans/2026-10-08-group-hide-when-empty.md` (Status → `done YYYY-MM-DD`)
 Message: `docs(architecture): describe group hide-when-empty`
+
+### Task 6: Field block is watchable (added after review, 2026-10-08)
+
+Added at the merchant's request, implemented directly and described here afterwards. A Field counts as empty while WooCommerce's country locale hides it (State for VN or SG, Postcode for AE). A Field the shopper hasn't filled in still counts as content.
+
+**Files:**
+- Modify: `includes/Renderer/CheckoutFieldDefaults.php`, `includes/Renderer/HideWhenEmpty.php`, `includes/Blocks/BlockRegistry.php`
+- Modify: `packages/blocks/src/field/block.json`, `packages/blocks/src/field/render.php`
+- Modify: `assets/js/checkout-hide-when-empty.js`, `packages/blocks/src/shared/hide-when-empty.tsx`, `docs/architecture.md`
+
+**Interfaces:**
+- Produces: `CheckoutFieldDefaults::hidden_for_country( string $key ): bool`. It's true when `WC()->countries->get_country_locale()` for the shopper's `{billing|shipping}_country` (falling back to `default`, as `address-i18n.js` does) sets `hidden` for the field. `get_address_fields()` isn't used because it drops `hidden`.
+- Produces: `HideWhenEmpty::LOCALE_ATTR = 'data-yaycheckout-locale'`, on every Field wrapper.
+- Changes: the `HideWhenEmpty::SCRIPT` dependencies become `[ 'jquery', 'wc-checkout', 'wc-address-i18n' ]`. The script also refreshes on `country_to_state_changing`, which `country-select.js` fires after `country_to_state_changed` and on which `address-i18n.js` shows or hides rows. There it marks a Field empty while its `#<key>_field` row has `display: none`.
+- Editor: each Field is listed as `Field · <label or key>`. A watched block no longer triggers the required-field warning.
+
+- [x] **Step 1: Implement the above, then rebuild and lint**
+
+Run: `pnpm build:blocks`, `composer lint`, `composer test`
+Expected: build succeeds, lint clean, 12 tests pass.
+
+- [x] **Step 2: Verify first paint**
+
+Render Groups watching `billing_state` and `billing_postcode` Fields with billing country VN, then US, then AE.
+Expected: for VN the State Group is hidden; for US both Groups are visible; for AE the ZIP Group is hidden.
+
+- [x] **Step 3: Verify live switching**
+
+Open a preview of a layout with those Groups inside Billing, then change the billing country to VN, US, AE and US again.
+Expected: each Group hides exactly when its row is hidden, with no reload.
+
+- [x] **Step 4: Commit**
+
+Stage: the files above.
+Message: `feat(blocks): watch fields and hide columns when empty` (Tasks 6 and 7 share files, so they land in one commit)
+
+### Task 7: Columns and Column can hide too (added after review, 2026-10-08)
+
+Added at the merchant's request, implemented directly and described here afterwards. The default layout puts State and ZIP Code each in their own Column, so the Column is the natural container to hide.
+
+**Files:**
+- Modify: `includes/Renderer/HideWhenEmpty.php`, `includes/Blocks/BlockRegistry.php` (comment), `assets/js/checkout-hide-when-empty.js`, `assets/css/checkout-page.css` (comment), `packages/blocks/src/shared/hide-when-empty.tsx`, `docs/architecture.md`
+
+**Interfaces:**
+- Produces: `HideWhenEmpty::CONTAINERS = [ 'core/group', 'core/columns', 'core/column' ]`. The constructor adds `render_block_{name}` for each, at priority 10 with 2 args.
+- Renames: `filter_group()` becomes `filter_container()`, and `GROUP_ATTR` becomes `CONTAINER_ATTR`. The value `data-yaycheckout-hide-when-empty` is unchanged, so saved layouts and the markup are unaffected.
+- Editor: `CONTAINERS` mirrors the PHP constant. The attribute and the panel apply to all three blocks. The panel text says "this block" instead of "this group". Field entries read `Field · <label> (<key>)`, and blocks other than Slot and Field show their title only.
+
+- [x] **Step 1: Implement the above, then rebuild and lint**
+
+Run: `pnpm build:blocks`, `composer lint`, `composer test`
+Expected: build succeeds, lint clean, 12 tests pass.
+
+- [x] **Step 2: Verify the storefront**
+
+On a preview of a default-based layout, make the State Column watch `billing_state`, the ZIP Column watch `billing_postcode`, and a Columns block watch Payment. Switch the billing country VN, US, AE, VN.
+Expected: the State Column is hidden for VN, the ZIP Column for AE, and both are visible for US, with no reload. Through WP-CLI, the Columns block around Payment is hidden when `woocommerce_cart_needs_payment` is false and visible otherwise.
+
+- [x] **Step 3: Verify the editor**
+
+Select each watching Column, the Columns block and an unset Columns block.
+Expected: the panel shows on all of them, with the watched block ticked, and not on a paragraph. Billing and shipping State read `Field · State (billing_state)` and `Field · State (shipping_state)`, and no block is invalid.
+
+- [x] **Step 4: Commit**
+
+Stage: the files above.
+Message: `feat(blocks): watch fields and hide columns when empty` (Tasks 6 and 7 share files, so they land in one commit)
+
