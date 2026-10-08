@@ -9,6 +9,10 @@
   "keywords": [ "hook", "placeholder" ],
   "example": {
     "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
       "slotName": "after_email"
     }
   },
@@ -21,6 +25,7 @@
   },
   "supports": {
     "html": false,
+    "yaycheckoutWatchable": true,
     "reusable": false
   },
   "editorScript": "file:./index.js",

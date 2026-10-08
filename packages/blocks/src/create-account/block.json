@@ -9,6 +9,10 @@
   "keywords": [ "account", "register", "signup", "password" ],
   "example": {
     "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
       "checkboxLabel": "Create an account?"
     }
   },
@@ -21,6 +25,7 @@
   },
   "supports": {
     "html": false,
+    "yaycheckoutWatchable": true,
     "multiple": false,
     "reusable": false
   },

@@ -43,7 +43,7 @@ $yaycheckout_wrapper   = get_block_wrapper_attributes(
         'data-behavior'  => $yaycheckout_behavior,
         'data-login-url' => $yaycheckout_login_url,
         'data-state-url' => $yaycheckout_state_url,
-    )
+    ) + \YayCheckout\Renderer\HideWhenEmpty::wrapper_attributes( $attributes, false )
 );
 
 ?>

@@ -19,7 +19,12 @@ $yaycheckout_checkout = WC()->checkout();
 // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Verbatim WooCommerce string so the storefront matches classic checkout when the merchant leaves the label empty.
 $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'checkboxLabel', __( 'Create an account?', 'woocommerce' ) );
 
-$yaycheckout_wrapper = get_block_wrapper_attributes( [ 'class' => 'yaycheckout-create-account woocommerce-account-fields' ] );
+$yaycheckout_wrapper = get_block_wrapper_attributes(
+    array_merge(
+        [ 'class' => 'yaycheckout-create-account woocommerce-account-fields' ],
+        \YayCheckout\Renderer\HideWhenEmpty::wrapper_attributes( $attributes, false )
+    )
+);
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>

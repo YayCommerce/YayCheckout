@@ -12,19 +12,28 @@ defined( 'ABSPATH' ) || exit;
 $yaycheckout_slot_name = isset( $attributes['slotName'] ) && is_string( $attributes['slotName'] )
     ? sanitize_key( $attributes['slotName'] )
     : '';
-$yaycheckout_wrapper   = get_block_wrapper_attributes(
-    [
-        'class'     => 'yaycheckout-slot',
-        'data-slot' => $yaycheckout_slot_name,
-    ]
+
+// Buffered so a slot nothing hooks into marks the block empty for HideWhenEmpty.
+ob_start();
+
+if ( '' !== $yaycheckout_slot_name ) {
+    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Slot names are merchant-chosen; the prefix is yaycheckout_slot_.
+    do_action( 'yaycheckout_slot_' . $yaycheckout_slot_name );
+}
+
+$yaycheckout_slot_content = (string) ob_get_clean();
+
+$yaycheckout_wrapper = get_block_wrapper_attributes(
+    array_merge(
+        [
+            'class'     => 'yaycheckout-slot',
+            'data-slot' => $yaycheckout_slot_name,
+        ],
+        \YayCheckout\Renderer\HideWhenEmpty::wrapper_attributes( $attributes, '' === trim( $yaycheckout_slot_content ) )
+    )
 );
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
-    <?php
-    if ( '' !== $yaycheckout_slot_name ) {
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Slot names are merchant-chosen; the prefix is yaycheckout_slot_.
-        do_action( 'yaycheckout_slot_' . $yaycheckout_slot_name );
-    }
-    ?>
+    <?php echo $yaycheckout_slot_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Whatever the slot's hooks print, as do_action() would. ?>
 </div>
