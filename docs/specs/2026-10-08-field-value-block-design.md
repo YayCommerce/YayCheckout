@@ -79,7 +79,7 @@ Merchants can add blocks that echo what the shopper has typed or picked at check
 - `WC()->countries->get_countries()` and `WC()->countries->get_states( $country )`, where `$country` is the value of `<prefix>_country`.
 - Markup: wrapper `div.yaycheckout-field-value` via `get_block_wrapper_attributes()`; `div.yaycheckout-field-value__value` with `data-field-key="<key>"`, `data-placeholder="<placeholder or field label>"`, and class `is-empty` when the value is empty.
 - Storefront: reads `form.checkout [name="<key>"]`; select values use the selected option's text. Listener on `jQuery( document.body )`.
-- When Order Summary becomes a container (other branch), it lists `yaycheckout/field-value` in its `allowedBlocks`; this block needs no change.
+- Order Summary (a container since #60) admits `yaycheckout/field-value` as the one exception to `isCheckoutSection()` in `packages/blocks/src/order-summary/edit.tsx`; Billing and Shipping still keep it out.
 
 **UI:** Gutenberg block in the layout editor; storefront output from `render.php`, updated by `view.ts`.
 
