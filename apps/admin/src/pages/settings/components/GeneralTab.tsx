@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { __ } from '@wordpress/i18n';
 
@@ -5,12 +6,15 @@ import type { Settings } from '@/lib/schema/settings.schema';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
+import { RerunSetupWizard } from '@/components/setup-wizard/SetupWizard';
 import { DocLink } from './DocLink';
 import { SettingRow } from './SettingRow';
 
 // Share usage data is stored, but nothing sends it yet.
 export function GeneralTab() {
   const { control } = useFormContext<Settings>();
+  // Unmounted on close, so each re-run starts again at Scan.
+  const [isRerunOpen, setIsRerunOpen] = useState(false);
 
   return (
     <div>
@@ -68,12 +72,16 @@ export function GeneralTab() {
 
       <SettingRow
         title={__('Setup wizard', 'yaycheckout')}
-        description={__('Re-scan your store and start a new draft. Nothing live changes.', 'yaycheckout')}
+        description={__(
+          'Re-scan your store and start a new draft. The brand you apply restyles every layout, including live ones.',
+          'yaycheckout',
+        )}
       >
-        <Button type="button" variant="outline" size="sm">
+        <Button type="button" variant="outline" size="sm" onClick={() => setIsRerunOpen(true)}>
           {__('Re-run setup wizard', 'yaycheckout')}
         </Button>
       </SettingRow>
+      {isRerunOpen && <RerunSetupWizard onClose={() => setIsRerunOpen(false)} />}
     </div>
   );
 }

@@ -35,7 +35,8 @@ const STEPS = [__('Scan', 'yaycheckout'), __('Start from', 'yaycheckout'), __('B
 /**
  * First-run setup popup, open while `showSetupWizard` is true. Picks stay in
  * memory until Apply brand sends them in one save; Skip setup only marks setup
- * done. No close icon, Esc or outside click.
+ * done. No close icon, Esc or outside click. Settings reopens it with
+ * `RerunSetupWizard`.
  */
 export function SetupWizard() {
   // Read the design only on a first run, so one the SPA rejects can't reach screens that never use it.
@@ -47,7 +48,21 @@ function SetupWizardWithDesign() {
   return design ? <SetupWizardDialog design={design} /> : null;
 }
 
-function SetupWizardDialog({ design }: { design: DesignResponse }) {
+/** The wizard reopened from Settings: Apply brand adds another draft, and Skip setup only closes. */
+export function RerunSetupWizard({ onClose }: { onClose: () => void }) {
+  const { data: design } = useDesignQuery();
+  return design ? <SetupWizardDialog design={design} rerun onClose={onClose} /> : null;
+}
+
+function SetupWizardDialog({
+  design,
+  rerun = false,
+  onClose,
+}: {
+  design: DesignResponse;
+  rerun?: boolean;
+  onClose?: () => void;
+}) {
   const [open, setOpen] = useState(true);
   const [step, setStep] = useState(0);
   const [templateSlug, setTemplateSlug] = useState<string | null>();
@@ -61,9 +76,14 @@ function SetupWizardDialog({ design }: { design: DesignResponse }) {
   const draft = setup.data?.layout;
   const isFinished = step === STEPS.length;
 
-  function onSkip() {
+  function close() {
     setOpen(false);
-    markSetupDone().catch((e) => logger.warn('Mark setup done failed', e));
+    onClose?.();
+  }
+
+  function onSkip() {
+    close();
+    if (!rerun) markSetupDone().catch((e) => logger.warn('Mark setup done failed', e));
   }
 
   async function onApply(values: DesignForm) {
@@ -74,12 +94,13 @@ function SetupWizardDialog({ design }: { design: DesignResponse }) {
         templateSlug,
         form: values,
         presetId: activePresetIdFor(design.presets, design.presetId, values.tokens),
+        rerun,
       });
       setStep(STEPS.length);
     } catch (e) {
       // 409: an earlier Apply whose response was lost, or another tab, already finished setup.
       if (e instanceof HTTPError && e.response.status === 409) {
-        setOpen(false);
+        close();
         queryClient.invalidateQueries({ queryKey: DESIGN_QUERIES.main.queryKey });
         invalidateListedLayouts(queryClient);
         toast.info(__('Setup was already completed.', 'yaycheckout'));
@@ -145,7 +166,7 @@ function SetupWizardDialog({ design }: { design: DesignResponse }) {
           </Form>
         )}
         {isFinished && draft && templateSlug && (
-          <FinishStep draft={draft} templateSlug={templateSlug} onClose={() => setOpen(false)} />
+          <FinishStep draft={draft} templateSlug={templateSlug} onClose={close} />
         )}
       </DialogContent>
     </Dialog>

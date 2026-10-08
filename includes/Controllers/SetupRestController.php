@@ -43,6 +43,10 @@ class SetupRestController extends BaseRestController {
                         'required' => true,
                         'type'     => 'object',
                     ],
+                    'rerun'         => [
+                        'type'    => 'boolean',
+                        'default' => false,
+                    ],
                 ],
             ]
         );
@@ -52,15 +56,16 @@ class SetupRestController extends BaseRestController {
      * Creates the wizard's draft layout, saves its design and marks setup done.
      *
      * Everything is validated before the first write, so a refusal leaves no
-     * draft, design or setup flag behind. Once setup is done it refuses with 409:
-     * a retry after a lost response, or a second tab, would otherwise add another draft.
+     * draft, design or setup flag behind. Once setup is done a first run refuses
+     * with 409: a retry after a lost response, or a second tab, would otherwise add
+     * another draft. A re-run from Settings sends `rerun` and always adds a draft.
      *
-     * Body: { template_slug, design: { tokens, preset_id, custom_css } }.
+     * Body: { template_slug, design: { tokens, preset_id, custom_css }, rerun? }.
      *
      * @return array|\WP_Error { layout, design }
      */
     public function complete_setup( \WP_REST_Request $request ) {
-        if ( $this->settings->is_setup_done() ) {
+        if ( ! $request->get_param( 'rerun' ) && $this->settings->is_setup_done() ) {
             return $this->error_conflict( __( 'Setup is already complete.', 'yaycheckout' ) );
         }
 

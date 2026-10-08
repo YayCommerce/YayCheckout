@@ -8,11 +8,20 @@ export type CompleteSetupPayload = {
   templateSlug: string;
   form: DesignForm;
   presetId: string | null;
+  /** A re-run from Settings: always adds a draft, though setup is done. */
+  rerun?: boolean;
 };
 
-export async function completeSetup({ templateSlug, form, presetId }: CompleteSetupPayload): Promise<SetupResult> {
+export async function completeSetup({
+  templateSlug,
+  form,
+  presetId,
+  rerun = false,
+}: CompleteSetupPayload): Promise<SetupResult> {
   const { layout, design } = setupResponseWireSchema.parse(
-    await api.post('setup', { json: { template_slug: templateSlug, design: designToWire(form, presetId) } }).json(),
+    await api
+      .post('setup', { json: { template_slug: templateSlug, design: designToWire(form, presetId), rerun } })
+      .json(),
   );
 
   return { layout: parseLayout(layout), design: designResponseFromWire(design) };
