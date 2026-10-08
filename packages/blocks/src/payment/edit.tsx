@@ -30,14 +30,17 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			</InspectorControls>
 			<div { ...blockProps }>
 				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>
-				<label className="yaycheckout-section-preview__option">
-					<input type="radio" disabled defaultChecked />{ ' ' }
-					{ __( 'Direct bank transfer', 'yaycheckout' ) }
-				</label>
-				<label className="yaycheckout-section-preview__option">
-					<input type="radio" disabled />{ ' ' }
-					{ __( 'Cash on delivery', 'yaycheckout' ) }
-				</label>
+				{ /* WooCommerce's list markup, so the block's choice-row CSS draws it as on the storefront. */ }
+				<ul className="wc_payment_methods payment_methods methods">
+					<li className="wc_payment_method">
+						<input type="radio" disabled defaultChecked />
+						<label>{ __( 'Direct bank transfer', 'yaycheckout' ) }</label>
+					</li>
+					<li className="wc_payment_method">
+						<input type="radio" disabled />
+						<label>{ __( 'Cash on delivery', 'yaycheckout' ) }</label>
+					</li>
+				</ul>
 			</div>
 		</>
 	);
