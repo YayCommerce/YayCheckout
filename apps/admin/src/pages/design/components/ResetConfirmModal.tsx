@@ -26,7 +26,7 @@ export function ResetConfirmModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{__('Reset all tokens to theme defaults?', 'yaycheckout')}</DialogTitle>
+          <DialogTitle>{__('Reset all tokens to defaults?', 'yaycheckout')}</DialogTitle>
         </DialogHeader>
 
         <p className="text-muted-foreground text-sm">
