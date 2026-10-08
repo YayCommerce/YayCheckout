@@ -36,7 +36,8 @@ class LayoutActiveGuard {
         }
 
         if ( $this->is_active_layout( $post ) ) {
-            ( new LayoutRepository() )->deactivate( (int) $post->ID );
+            // The status already moved; deactivate() would move it again and re-enter this hook.
+            ( new LayoutRepository() )->forget_active( (int) $post->ID );
         }
     }
 
