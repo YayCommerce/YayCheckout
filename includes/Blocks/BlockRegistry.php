@@ -96,9 +96,9 @@ class BlockRegistry {
     }
 
     /**
-     * Turns on colour, spacing and border settings for Step (and blockGap for Steps in a later task)
-     * so the Styles panel shows those controls on themes that leave them off. Default-origin settings:
-     * a theme's own block settings win.
+     * Turns on colour, spacing and border settings for Step, and blockGap for Steps,
+     * so the Styles panel shows those controls on themes that leave them off. Default-origin
+     * settings: a theme's own block settings win.
      *
      * @param  \WP_Theme_JSON_Data $theme_json
      * @return \WP_Theme_JSON_Data
@@ -109,7 +109,7 @@ class BlockRegistry {
                 'version'  => \WP_Theme_JSON::LATEST_SCHEMA,
                 'settings' => [
                     'blocks' => [
-                        'yaycheckout/step' => [
+                        'yaycheckout/step'  => [
                             'color'   => [
                                 'text'       => true,
                                 'background' => true,
@@ -123,6 +123,11 @@ class BlockRegistry {
                                 'radius' => true,
                                 'style'  => true,
                                 'width'  => true,
+                            ],
+                        ],
+                        'yaycheckout/steps' => [
+                            'spacing' => [
+                                'blockGap' => true,
                             ],
                         ],
                     ],

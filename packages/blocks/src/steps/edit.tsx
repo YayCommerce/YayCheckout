@@ -5,11 +5,30 @@ import stepMeta from '../step/block.json';
 
 interface StepsAttributes {
 	layout: string;
+	style?: {
+		spacing?: {
+			blockGap?: unknown;
+		};
+	};
 }
 
 interface EditProps {
 	attributes: StepsAttributes;
 	setAttributes: ( attributes: Partial< StepsAttributes > ) => void;
+}
+
+/** Turns a core spacing preset or length into a CSS gap value. */
+function gapValue( blockGap: unknown ): string | undefined {
+	if ( typeof blockGap !== 'string' || blockGap === '' ) {
+		return undefined;
+	}
+
+	const presetPrefix = 'var:preset|spacing|';
+	if ( blockGap.startsWith( presetPrefix ) ) {
+		return `var(--wp--preset--spacing--${ blockGap.slice( presetPrefix.length ) })`;
+	}
+
+	return blockGap;
 }
 
 /**
@@ -18,7 +37,11 @@ interface EditProps {
  */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { layout } = attributes;
-	const blockProps = useBlockProps( { className: 'yaycheckout-steps' } );
+	const gap = gapValue( attributes.style?.spacing?.blockGap );
+	const blockProps = useBlockProps( {
+		className: 'yaycheckout-steps',
+		...( gap !== undefined ? { style: { gap } } : {} ),
+	} );
 	const innerBlocksProps = useInnerBlocksProps( blockProps, {
 		template: [ [ stepMeta.name ], [ stepMeta.name ] ],
 		templateLock: false,
