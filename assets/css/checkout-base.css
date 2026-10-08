@@ -10,6 +10,20 @@
  * scoped to body.yaycheckout-page. No @layer: unlayered theme CSS would beat it.
  */
 
+/*
+ * Neutral fallbacks, resolved once. A Design section left at theme default leaves its token
+ * unset, so these follow the theme: its primary preset (then #3858e9, Design::schema()'s
+ * default primary), a border mixed from the text colour, a 2px corner (mirrored by
+ * NEUTRAL.radius in PreviewPane.tsx). Block CSS reads the same names.
+ */
+:root,
+.editor-styles-wrapper {
+	--yaycheckout-neutral-radius: 2px;
+	--yaycheckout-primary-color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
+	--yaycheckout-border-color: var(--yaycheckout-color-border, color-mix(in srgb, currentColor 45%, transparent));
+	--yaycheckout-field-radius: var(--yaycheckout-input-radius, var(--yaycheckout-neutral-radius));
+}
+
 /* The theme's layout limits stop at the checkout: the layout's own blocks set any width. */
 body.yaycheckout-page {
 	margin-left: 0;
@@ -54,8 +68,8 @@ body.yaycheckout-page > .wp-site-blocks,
 
 /*
  * Field rows. A Field or Email block wraps WooCommerce's p.form-row in a div.form-row of its
- * own, so the gap goes on the outer row only. woocommerce-layout still floats the half-width
- * rows; the layout's Columns place fields side by side instead.
+ * own, so the gap goes on the outer row only. Classic themes float the half-width rows; the
+ * layout's Columns place fields side by side instead.
  */
 .yaycheckout-checkout .form-row {
 	margin-block: 0 12px;
@@ -91,7 +105,7 @@ body.yaycheckout-page > .wp-site-blocks,
 .yaycheckout-checkout .form-row :is(.required, abbr.required) {
 	margin-inline-start: 2px;
 	border: 0;
-	color: #cc1818;
+	color: var(--wc-red, #cc1818);
 	font-weight: inherit;
 	text-decoration: none;
 }
@@ -106,10 +120,9 @@ body.yaycheckout-page > .wp-site-blocks,
  * Help text shows inline under its field instead of as WooCommerce's focus popup. WooCommerce
  * toggles this span with jQuery slideUp()/slideDown(), which write height, overflow, padding,
  * margin and display inline; the !important declarations only outrank those inline styles.
- * The selector outranks WooCommerce's .woocommerce form .form-row .woocommerce-input-wrapper
- * .description (0,4,1) with classes the Checkout and field wrappers always carry (0,5,0).
+ * The editor's field preview prints the same classes.
  */
-.yaycheckout-checkout.woocommerce-checkout :is(.yaycheckout-field, .yaycheckout-email, .yaycheckout-extra-field).form-row .description {
+.yaycheckout-checkout .form-row .description {
 	display: block !important;
 	height: auto !important;
 	overflow: visible !important;
@@ -123,7 +136,7 @@ body.yaycheckout-page > .wp-site-blocks,
 	opacity: 0.75;
 }
 
-.yaycheckout-checkout.woocommerce-checkout :is(.yaycheckout-field, .yaycheckout-email, .yaycheckout-extra-field).form-row .description::before {
+.yaycheckout-checkout .form-row .description::before {
 	display: none;
 }
 
@@ -159,8 +172,8 @@ body.yaycheckout-page > .wp-site-blocks,
 	padding-inline: var(--yaycheckout-input-padding-inline, 12px);
 	border-style: solid;
 	border-width: var(--yaycheckout-input-border-width, 1px);
-	border-color: var(--yaycheckout-color-border, color-mix(in srgb, currentColor 45%, transparent));
-	border-radius: var(--yaycheckout-input-radius, 2px);
+	border-color: var(--yaycheckout-border-color);
+	border-radius: var(--yaycheckout-field-radius);
 	background-color: var(--yaycheckout-color-background, transparent);
 	box-shadow: none;
 	color: inherit;
@@ -201,8 +214,8 @@ body.yaycheckout-page > .wp-site-blocks,
 
 /* select2 appends its dropdown to body, outside the form. */
 body.yaycheckout-page .select2-dropdown {
-	border-color: var(--yaycheckout-color-border, color-mix(in srgb, currentColor 45%, transparent));
-	border-radius: var(--yaycheckout-input-radius, 2px);
+	border-color: var(--yaycheckout-border-color);
+	border-radius: var(--yaycheckout-field-radius);
 	background-color: var(--yaycheckout-color-background, #fff);
 	color: var(--yaycheckout-color-text, inherit);
 }
@@ -210,13 +223,13 @@ body.yaycheckout-page .select2-dropdown {
 body.yaycheckout-page .select2-search--dropdown .select2-search__field {
 	box-sizing: border-box;
 	padding: 6px 8px;
-	border: 1px solid var(--yaycheckout-color-border, color-mix(in srgb, currentColor 45%, transparent));
-	border-radius: var(--yaycheckout-input-radius, 2px);
+	border: 1px solid var(--yaycheckout-border-color);
+	border-radius: var(--yaycheckout-field-radius);
 	font: inherit;
 }
 
 body.yaycheckout-page .select2-container--default .select2-results__option--highlighted {
-	background-color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
+	background-color: var(--yaycheckout-primary-color);
 	color: #fff;
 }
 
@@ -224,38 +237,39 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	width: 1.1em;
 	height: 1.1em;
 	margin: 0;
-	accent-color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
+	accent-color: var(--yaycheckout-primary-color);
 }
 
 /* Focus ring in the primary colour; offset so it shows beside an underline input too. */
 .yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code):focus,
 .yaycheckout-checkout .select2-container:is(.select2-container--focus, .select2-container--open) .select2-selection--single,
 .yaycheckout-checkout :is(.button, button, input[type="checkbox"], input[type="radio"]):focus-visible {
-	outline: 2px solid var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
+	outline: 2px solid var(--yaycheckout-primary-color);
 	outline-offset: 1px;
 }
 
 /* WooCommerce marks the row, not the input, when a field fails validation. */
 .yaycheckout-checkout .form-row.woocommerce-invalid :is(.input-text, select, textarea),
 .yaycheckout-checkout .form-row.woocommerce-invalid .select2-container .select2-selection--single {
-	border-color: #cc1818;
+	border-color: var(--wc-red, #cc1818);
 }
 
 /* Notices: WooCommerce's classic list markup, and the banner markup it prints on block themes (wc-blocks-style draws its layout). */
 body.yaycheckout-page :is(.woocommerce-error, .woocommerce-message, .woocommerce-info) {
-	--yaycheckout-notice: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
+	--yaycheckout-notice: var(--yaycheckout-primary-color);
 	margin: 0 0 16px;
 	padding: 12px 16px;
 	list-style: none;
+	/* Lighter than a field's border: a notice is a panel, not a control. */
 	border: 1px solid var(--yaycheckout-color-border, color-mix(in srgb, currentColor 25%, transparent));
 	border-inline-start: 4px solid var(--yaycheckout-notice);
-	border-radius: 2px;
+	border-radius: var(--yaycheckout-neutral-radius);
 	background: none;
 	color: inherit;
 }
 
 body.yaycheckout-page .woocommerce-error {
-	--yaycheckout-notice: #cc1818;
+	--yaycheckout-notice: var(--wc-red, #cc1818);
 }
 
 body.yaycheckout-page .woocommerce-message {
@@ -275,7 +289,7 @@ body.yaycheckout-page .wc-block-components-notice-banner {
 }
 
 body.yaycheckout-page .wc-block-components-notice-banner.is-error {
-	border-color: #cc1818;
+	border-color: var(--wc-red, #cc1818);
 }
 
 body.yaycheckout-page .wc-block-components-notice-banner.is-success {
@@ -283,7 +297,7 @@ body.yaycheckout-page .wc-block-components-notice-banner.is-success {
 }
 
 body.yaycheckout-page .wc-block-components-notice-banner.is-info {
-	border-color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
+	border-color: var(--yaycheckout-primary-color);
 }
 
 /* blockUI writes the overlay's white veil inline while totals update; the spinner was woocommerce-general's. */
@@ -295,7 +309,7 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	width: 24px;
 	height: 24px;
 	margin: -12px 0 0 -12px;
-	border: 2px solid var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
+	border: 2px solid var(--yaycheckout-primary-color);
 	border-inline-end-color: transparent;
 	border-radius: 50%;
 	animation: yaycheckout-spin 0.7s linear infinite;
@@ -321,9 +335,10 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	box-sizing: border-box;
 	min-height: var(--yaycheckout-input-height, 40px);
 	padding: 8px 20px;
-	border: 1px solid var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
-	border-radius: 2px;
-	background-color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
+	/* Transparent, so a background picked in the block's settings shows edge to edge. */
+	border: 1px solid transparent;
+	border-radius: var(--yaycheckout-neutral-radius);
+	background-color: var(--yaycheckout-primary-color);
 	color: #fff;
 	font-family: inherit;
 	font-weight: 600;
@@ -346,10 +361,8 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	margin-block: 0;
 }
 
-/* Order Summary's Items and Totals are separate tables; matching widths keep their amounts in one column.
-   Scoped under the summary so it outranks WooCommerce's `.woocommerce-page table.shop_table` (width: 70%). */
-.yaycheckout-order-summary table.yaycheckout-order-summary-items,
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals {
+/* Order Summary's Items and Totals are separate tables; matching widths keep their amounts in one column. */
+.yaycheckout-order-summary table:is(.yaycheckout-order-summary-items, .yaycheckout-order-summary-totals) {
 	width: 100%;
 	table-layout: fixed;
 	border-collapse: collapse;
@@ -361,13 +374,11 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	vertical-align: top;
 }
 
-.yaycheckout-order-summary table.yaycheckout-order-summary-items :is(th, td):first-child,
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):first-child {
+.yaycheckout-order-summary table:is(.yaycheckout-order-summary-items, .yaycheckout-order-summary-totals) :is(th, td):first-child {
 	text-align: start;
 }
 
-.yaycheckout-order-summary table.yaycheckout-order-summary-items :is(th, td):last-child,
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):last-child {
+.yaycheckout-order-summary table:is(.yaycheckout-order-summary-items, .yaycheckout-order-summary-totals) :is(th, td):last-child {
 	width: 40%;
 	text-align: end;
 }

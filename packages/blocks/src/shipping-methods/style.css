@@ -24,11 +24,15 @@
 	font-weight: 500;
 }
 
-/* One package: the block's own heading already names it, so the package name is for screen readers only. */
+/*
+ * One package: the block's own heading already names it, so the package name is for screen
+ * readers only. The same declarations as WordPress's .screen-reader-text and progress/style.css.
+ */
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__rates tr.woocommerce-shipping-totals:only-child th {
 	position: absolute;
 	width: 1px;
 	height: 1px;
+	margin: -1px;
 	overflow: hidden;
 	clip-path: inset(50%);
 	white-space: nowrap;

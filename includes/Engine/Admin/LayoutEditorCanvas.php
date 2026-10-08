@@ -78,7 +78,7 @@ body.yaycheckout-has-layout-actions :is(
 
     /** The storefront's base stylesheet and Design tokens, without the merchant's custom CSS. */
     public function canvas_base_styles(): void {
-        if ( ! is_admin() || ! $this->is_layout_editor() ) {
+        if ( ! $this->is_layout_editor() ) {
             return;
         }
 

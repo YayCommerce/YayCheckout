@@ -60,12 +60,13 @@ class CheckoutPage {
         wp_enqueue_script( 'wc-country-select' );
         wp_enqueue_script( 'wc-address-i18n' );
 
-        // The block checkout's checkout.css styles markup our layout does not print. The general
-        // stylesheet and its block-theme companion are replaced by checkout-base.css, which their
-        // high-specificity form rules (.woocommerce-page form .form-row input.input-text) would beat.
+        // The block checkout's checkout.css styles markup our layout does not print. WooCommerce's
+        // general stylesheets are replaced by checkout-base.css, which their form rules would beat
+        // (.woocommerce-page form .form-row input.input-text; layout's 47% floats on .form-row-first).
         wp_dequeue_style( 'wc-blocks-style-checkout' );
-        wp_dequeue_style( 'woocommerce-general' );
-        wp_dequeue_style( 'woocommerce-blocktheme' );
+        foreach ( [ 'woocommerce-general', 'woocommerce-blocktheme', 'woocommerce-layout', 'woocommerce-smallscreen' ] as $handle ) {
+            wp_dequeue_style( $handle );
+        }
 
         ( new CheckoutBaseStyles() )->enqueue( true );
     }

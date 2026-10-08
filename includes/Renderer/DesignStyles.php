@@ -28,6 +28,14 @@ class DesignStyles {
     /** The storefront page and the layout editor canvas. */
     private const PAGE_SELECTOR = 'body.yaycheckout-page, .editor-styles-wrapper';
 
+    /** Page property => the token it takes, printed only when vars() set that token. */
+    private const PAGE_PROPERTIES = [
+        'background-color' => 'color-background',
+        'color'            => 'color-text',
+        'font-family'      => 'font-family',
+        'font-size'        => 'font-size-base',
+    ];
+
     /** Pixel height per inputs.size step. Mirrored by the admin Preview (PreviewPane.tsx). */
     private const INPUT_HEIGHTS = [
         'small'  => 32,
@@ -36,9 +44,9 @@ class DesignStyles {
     ];
 
     /** @param bool $with_custom_css False in the layout editor, where the merchant's storefront CSS could break the canvas. */
-    public function css( Design $design, bool $with_custom_css = true ): string {
+    public function css( Design $design, bool $with_custom_css ): string {
         $vars = $this->vars( $design->tokens );
-        $page = $this->page_declarations( $design->tokens );
+        $page = array_intersect( self::PAGE_PROPERTIES, array_keys( $vars ) );
         $css  = '';
 
         if ( $vars ) {
@@ -103,25 +111,5 @@ class DesignStyles {
         }
 
         return $vars;
-    }
-
-    /** Page property => token name, for the sections that are on. */
-    private function page_declarations( array $tokens ): array {
-        $page = [];
-
-        if ( $tokens['colours']['enabled'] ) {
-            $page['background-color'] = 'color-background';
-            $page['color']            = 'color-text';
-        }
-
-        if ( $tokens['typography']['enabled'] ) {
-            if ( '' !== $tokens['typography']['font_family'] ) {
-                $page['font-family'] = 'font-family';
-            }
-
-            $page['font-size'] = 'font-size-base';
-        }
-
-        return $page;
     }
 }

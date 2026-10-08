@@ -23,7 +23,7 @@ const SECTION_LABEL_STYLE: CSSProperties = { fontSize: 11, letterSpacing: '0.08e
 const DEFAULT_FONT_STACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
 // What a theme-default section draws as, since the admin has no theme CSS. The colours stand in for a theme's;
-// radius and inputHeight mirror the fallbacks in assets/css/checkout-base.css (inputs and buttons alike).
+// radius mirrors --yaycheckout-neutral-radius and inputHeight the input min-height in assets/css/checkout-base.css.
 const NEUTRAL = {
   colours: { primary: '#71717a', text: '#3f3f46', background: '#ffffff', border: '#d4d4d8' },
   radius: 2,
@@ -46,7 +46,8 @@ export function PreviewPane({ isCompact = false }: { isCompact?: boolean }) {
   const inputRadius = inputs.enabled ? inputs.radius : NEUTRAL.radius;
   const themeGroups = GROUPS.filter(({ id }) => !isGroupOn(tokens, id)).map(({ label }) => label);
 
-  const gap = 10;
+  // Mirrors the .form-row gap in assets/css/checkout-base.css.
+  const gap = 12;
 
   const rootStyle: CSSProperties = {
     color: colours.text,
