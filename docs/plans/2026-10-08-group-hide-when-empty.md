@@ -202,8 +202,8 @@ Put `/** Mirrors HideWhenEmpty::hidden() in PHP. */` above the step-2 function, 
 
 - [x] **Step 2: Lint**
 
-Run: `npx --no-install prettier --check ../../assets/js/checkout-hide-when-empty.js` from `apps/admin`.
-Expected: no findings.
+Run: `npx --no-install prettier --check ../../assets/js/checkout-hide-when-empty.js ../../assets/js/checkout-coupon-form.js` from `apps/admin`.
+Expected: both files are flagged, the same result `checkout-coupon-form.js` gives on `dev/edd`. No prettier config covers `assets/js/`, so prettier applies its 2-space defaults. The new file follows `checkout-coupon-form.js`'s 4-space style instead; don't reformat it.
 
 - [x] **Step 3: Verify live toggling (spec AC 4)**
 
@@ -231,7 +231,7 @@ Message: `feat(checkout): re-check hidden groups after checkout updates`
 Panel behaviour:
 - List descendants from `getClientIdsOfDescendants( [ clientId ] )` whose block type has `hasBlockSupport( name, 'yaycheckoutWatchable' )`.
 - Show one `CheckboxControl` each, labelled with the block type's `title`, plus ` · <slotName>` for Slot.
-- With none, show `__( 'Add a Shipping methods, Payment, Express pay, Slot, Coupon form, Login or Create account block to this group.', 'yaycheckout' )`.
+- With none, show `sprintf( __( 'Add one of these blocks to this group: %s.', 'yaycheckout' ), <titles> )`, where `<titles>` joins with `, ` the titles of every registered block type that has `hasBlockSupport( type, 'yaycheckoutWatchable' )`, so the list follows the support and never repeats it.
 - Ticking a block whose `blockId` is `''` or used by another block anywhere in the editor (`getClientIdsWithDescendants()`) first calls `updateBlockAttributes( child, { blockId: newBlockId() } )`, then adds the id.
 - On render, prune attribute ids that no listed descendant carries.
 - When the attribute is non-empty and a descendant `yaycheckout/field` or `yaycheckout/email` has `required: true`, show `<Notice status="warning" isDismissible={ false }>` with `__( "This group contains required fields. If it hides, shoppers can't complete checkout.", 'yaycheckout' )`.
