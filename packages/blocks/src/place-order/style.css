@@ -12,7 +12,7 @@
 /* The primary token until the merchant picks a colour; the colour support adds these classes when they do. */
 .wp-block-yaycheckout-place-order:not(.has-background),
 .wp-block-yaycheckout-place-order:not(.has-background):is(:hover, :focus) {
-	background: var(--yaycheckout-primary);
+	background: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
 }
 
 .wp-block-yaycheckout-place-order:not(.has-text-color),

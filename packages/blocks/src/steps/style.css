@@ -16,7 +16,7 @@
 }
 
 :where(.yaycheckout-step[data-state="current"]) {
-	border-color: var(--yaycheckout-primary);
+	border-color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
 }
 
 .yaycheckout-step__header {
@@ -40,7 +40,7 @@
 	width: 28px;
 	height: 28px;
 	border-radius: 999px;
-	background: var(--yaycheckout-primary);
+	background: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
 	color: #fff;
 	font-size: 14px;
 	font-weight: 600;
@@ -94,7 +94,7 @@
 	padding: 0;
 	border: 0;
 	background: none;
-	color: var(--yaycheckout-primary);
+	color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
 	font-weight: 600;
 	cursor: pointer;
 }
