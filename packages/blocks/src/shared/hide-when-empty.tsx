@@ -1,12 +1,12 @@
 import { InspectorControls, store as blockEditorStore } from '@wordpress/block-editor';
-import { getBlockType, hasBlockSupport } from '@wordpress/blocks';
+import { getBlockType, getBlockTypes, hasBlockSupport } from '@wordpress/blocks';
 import { CheckboxControl, Notice, PanelBody } from '@wordpress/components';
 import { createHigherOrderComponent } from '@wordpress/compose';
-import { useDispatch, useSelect } from '@wordpress/data';
+import { select as selectNow, useDispatch, useSelect } from '@wordpress/data';
 import { store as editorStore } from '@wordpress/editor';
 import { useEffect } from '@wordpress/element';
 import { addFilter } from '@wordpress/hooks';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { editorData } from './editor-data';
 
 /** Mirrors HideWhenEmpty::ATTRIBUTE in PHP. */
@@ -16,8 +16,6 @@ const ATTRIBUTE = 'yaycheckoutHideWhenEmpty';
 const SUPPORT = 'yaycheckoutWatchable';
 
 const GROUP = 'core/group';
-
-const REQUIRED_FIELD_BLOCKS = [ 'yaycheckout/field', 'yaycheckout/email' ];
 
 /** Mirrors HideWhenEmpty::BLOCK_ID_PATTERN in PHP: 8 characters from [a-z0-9]. */
 function newBlockId(): string {
@@ -55,27 +53,39 @@ type PanelProps = {
 function HideWhenEmptyPanel( { clientId, attributes, setAttributes }: PanelProps ) {
 	const watched = Array.isArray( attributes[ ATTRIBUTE ] ) ? ( attributes[ ATTRIBUTE ] as string[] ) : [];
 
-	const { watchable, copies, hasRequiredField } = useSelect(
+	const { watchable, renames, sharedIds, hasRequiredField } = useSelect(
 		( select ) => {
 			const { getBlockName, getBlockAttributes, getClientIdsOfDescendants, getClientIdsWithDescendants } =
 				select( blockEditorStore );
 			const descendants: string[] = getClientIdsOfDescendants( [ clientId ] );
-			const firstWithId: Record< string, string > = {};
-			const copyIds: string[] = [];
+			const inGroup = new Set( descendants );
+			const groupWatches = getBlockAttributes( clientId )?.[ ATTRIBUTE ];
+			const holders: Record< string, string[] > = {};
 
-			// A copied block keeps its original's blockId; every block after the first holding it is a copy.
 			getClientIdsWithDescendants().forEach( ( id: string ) => {
 				const blockId = getBlockAttributes( id )?.blockId;
 
-				if ( typeof blockId !== 'string' || blockId === '' ) {
+				if ( typeof blockId === 'string' && blockId !== '' ) {
+					( holders[ blockId ] = holders[ blockId ] ?? [] ).push( id );
+				}
+			} );
+
+			// A copied block keeps its original's blockId, and the server can't tell them apart. When this
+			// Group watches the id, its first holder here keeps it and every other holder is renamed;
+			// otherwise only the holders here are, so another Group's watched block is left alone.
+			const toRename: string[] = [];
+
+			Object.entries( holders ).forEach( ( [ blockId, ids ] ) => {
+				const here = ids.filter( ( id ) => inGroup.has( id ) );
+
+				if ( ids.length < 2 || here.length === 0 ) {
 					return;
 				}
 
-				if ( firstWithId[ blockId ] ) {
-					copyIds.push( id );
-				} else {
-					firstWithId[ blockId ] = id;
-				}
+				const keeper =
+					Array.isArray( groupWatches ) && groupWatches.includes( blockId ) ? here[ 0 ] : undefined;
+
+				toRename.push( ...( keeper ? ids.filter( ( id ) => id !== keeper ) : here ) );
 			} );
 
 			const list: Watchable[] = descendants
@@ -94,10 +104,12 @@ function HideWhenEmptyPanel( { clientId, attributes, setAttributes }: PanelProps
 
 			return {
 				watchable: list,
-				copies: list.filter( ( block ) => copyIds.includes( block.clientId ) ).map( ( block ) => block.clientId ),
+				renames: toRename,
+				sharedIds: Object.keys( holders ).filter( ( blockId ) => holders[ blockId ].length > 1 ),
+				// Any block whose block.json declares `required`: Field, Email and Extra field today.
 				hasRequiredField: descendants.some(
 					( id ) =>
-						REQUIRED_FIELD_BLOCKS.includes( getBlockName( id ) ) &&
+						!! getBlockType( getBlockName( id ) )?.attributes?.required &&
 						getBlockAttributes( id )?.required === true
 				),
 			};
@@ -116,10 +128,38 @@ function HideWhenEmptyPanel( { clientId, attributes, setAttributes }: PanelProps
 		}
 	}, [ live.join( ' ' ), watched.join( ' ' ) ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
-	// The server can't tell a copy from its original, so a copy gets its own id, left unticked.
+	// A renamed block's other Groups follow it, unless they still hold another block with the old id.
 	useEffect( () => {
-		copies.forEach( ( id ) => updateBlockAttributes( id, { blockId: newBlockId() } ) );
-	}, [ copies.join( ' ' ) ] ); // eslint-disable-line react-hooks/exhaustive-deps
+		const { getBlockAttributes, getBlockName, getBlockParents, getClientIdsOfDescendants } =
+			selectNow( blockEditorStore );
+
+		renames.forEach( ( id ) => {
+			const oldId = getBlockAttributes( id )?.blockId;
+			const blockId = newBlockId();
+
+			updateBlockAttributes( id, { blockId } );
+
+			getBlockParents( id ).forEach( ( parent: string ) => {
+				const parentWatches = getBlockAttributes( parent )?.[ ATTRIBUTE ];
+				const stillHeld = getClientIdsOfDescendants( [ parent ] ).some(
+					( other: string ) => getBlockAttributes( other )?.blockId === oldId
+				);
+
+				if (
+					getBlockName( parent ) === GROUP &&
+					Array.isArray( parentWatches ) &&
+					parentWatches.includes( oldId ) &&
+					! stillHeld
+				) {
+					updateBlockAttributes( parent, {
+						[ ATTRIBUTE ]: parentWatches.map( ( watchedId: string ) =>
+							watchedId === oldId ? blockId : watchedId
+						),
+					} );
+				}
+			} );
+		} );
+	}, [ renames.join( ' ' ) ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const toggle = ( block: Watchable, checked: boolean ) => {
 		if ( ! checked ) {
@@ -129,7 +169,7 @@ function HideWhenEmptyPanel( { clientId, attributes, setAttributes }: PanelProps
 
 		let blockId = block.blockId;
 
-		if ( blockId === '' ) {
+		if ( blockId === '' || sharedIds.includes( blockId ) ) {
 			blockId = newBlockId();
 			updateBlockAttributes( block.clientId, { blockId } );
 		}
@@ -142,9 +182,13 @@ function HideWhenEmptyPanel( { clientId, attributes, setAttributes }: PanelProps
 			<PanelBody title={ __( 'Hide when empty', 'yaycheckout' ) } initialOpen={ live.length > 0 }>
 				{ watchable.length === 0 ? (
 					<p>
-						{ __(
-							'Add a Shipping methods, Payment, Express pay, Slot, Coupon form, Login or Create account block to this group.',
-							'yaycheckout'
+						{ sprintf(
+							/* translators: %s: comma-separated block titles. */
+							__( 'Add one of these blocks to this group: %s.', 'yaycheckout' ),
+							getBlockTypes()
+								.filter( ( type ) => hasBlockSupport( type, SUPPORT ) )
+								.map( ( type ) => type.title )
+								.join( ', ' )
 						) }
 					</p>
 				) : (
@@ -173,18 +217,20 @@ function HideWhenEmptyPanel( { clientId, attributes, setAttributes }: PanelProps
 	);
 }
 
+/** Subscribes to the store only while a Group is selected, so other blocks pay nothing. */
+function LayoutOnlyPanel( props: PanelProps ) {
+	const isLayout = useSelect( ( select ) => select( editorStore ).getCurrentPostType() === editorData.postType, [] );
+
+	return isLayout ? <HideWhenEmptyPanel { ...props } /> : null;
+}
+
 const withHideWhenEmptyPanel = createHigherOrderComponent(
 	( BlockEdit ) =>
 		function HideWhenEmptyBlockEdit( props: PanelProps & { name: string; isSelected: boolean } ) {
-			const isLayout = useSelect(
-				( select ) => select( editorStore ).getCurrentPostType() === editorData.postType,
-				[]
-			);
-
 			return (
 				<>
 					<BlockEdit { ...props } />
-					{ props.name === GROUP && props.isSelected && isLayout && <HideWhenEmptyPanel { ...props } /> }
+					{ props.name === GROUP && props.isSelected && <LayoutOnlyPanel { ...props } /> }
 				</>
 			);
 		},
