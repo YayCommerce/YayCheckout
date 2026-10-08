@@ -61,6 +61,10 @@ class CheckoutPage {
         wp_enqueue_script( 'wc-country-select' );
         wp_enqueue_script( 'wc-address-i18n' );
 
+        // The block checkout's checkout.css styles markup our layout does not print.
+        wp_dequeue_style( 'wc-blocks-style-checkout' );
+        wp_dequeue_style( 'woocommerce-general' );
+
         // Before DesignStyles, so the merchant's custom CSS prints after it.
         wp_enqueue_style( ScriptName::STYLE_CHECKOUT_PAGE, YAYCHECKOUT_PLUGIN_URL . 'assets/css/checkout-page.css', [], YAYCHECKOUT_VERSION );
         ( new DesignStyles() )->enqueue();

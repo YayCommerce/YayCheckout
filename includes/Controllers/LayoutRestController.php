@@ -327,7 +327,7 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Makes a layout the one shoppers see, publishing it first.
+     * Makes a layout the one shoppers see, publishing it first; on Free, drafts the one it replaces.
      *
      * @return array|\WP_Error
      */
@@ -346,7 +346,7 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Stops serving a layout to shoppers. It stays published.
+     * Stops serving a layout to shoppers and returns it to draft.
      *
      * @return array|\WP_Error
      */

@@ -6,7 +6,6 @@ import { useDebounceFn } from 'rooks';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
-import { formatDateTime } from '@/lib/helpers/date.helper';
 import { editLayoutIdFrom, withEditLayout } from '@/lib/helpers/layout.helper';
 import { isPro } from '@/lib/plan';
 import {
@@ -110,7 +109,7 @@ export default function LayoutsPage() {
   return (
     <PageLayout
       heading={__('Layouts', 'yaycheckout')}
-      description={__('Create, publish and activate checkout layouts.', 'yaycheckout')}
+      description={__('Create and activate checkout layouts.', 'yaycheckout')}
     >
       {/* isPending fires only on first load; keepPreviousData turns later fetches into isFetching. */}
       {isPending && <LayoutsPageSkeleton />}
@@ -562,8 +561,6 @@ function LayoutsTable({
           <TableHead>{__('Name', 'yaycheckout')}</TableHead>
           {isPro && <TableHead>{__('Assignment', 'yaycheckout')}</TableHead>}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
-          <TableHead>{__('Active', 'yaycheckout')}</TableHead>
-          <TableHead>{__('Published', 'yaycheckout')}</TableHead>
           <TableHead>{__('Actions', 'yaycheckout')}</TableHead>
         </TableRow>
       </TableHeader>
@@ -629,12 +626,6 @@ function LayoutTableRow({
       )}
       <TableCell>
         <LayoutStatusBadge layout={layout} />
-      </TableCell>
-      <TableCell className="font-mono text-xs">
-        {layout.isActive ? <Badge variant="success">{__('Active', 'yaycheckout')}</Badge> : '—'}
-      </TableCell>
-      <TableCell className="font-mono text-xs">
-        {formatDateTime(layout.publishedAt) || __('never', 'yaycheckout')}
       </TableCell>
       <TableCell>
         <LayoutRowActions

@@ -3,6 +3,7 @@ import Edit from './edit';
 import { registerDynamicBlock, saveNestedBlocks } from '../shared/register-dynamic-block';
 import './import-export';
 import './inserter-root';
+import './layout-actions';
 import './publish-guard';
 import './style.css';
 

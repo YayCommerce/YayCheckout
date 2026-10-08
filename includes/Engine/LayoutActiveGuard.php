@@ -31,12 +31,13 @@ class LayoutActiveGuard {
     public function deactivate_when_unpublished( $new_status, $old_status, $post ): void {
         unset( $old_status );
 
-        if ( in_array( $new_status, [ LayoutStatus::PUBLISHED, LayoutStatus::SCHEDULED ], true ) ) {
+        if ( in_array( $new_status, LayoutStatus::live(), true ) ) {
             return;
         }
 
         if ( $this->is_active_layout( $post ) ) {
-            ( new LayoutRepository() )->deactivate( (int) $post->ID );
+            // The status already moved; deactivate() would move it again and re-enter this hook.
+            ( new LayoutRepository() )->forget_active( (int) $post->ID );
         }
     }
 

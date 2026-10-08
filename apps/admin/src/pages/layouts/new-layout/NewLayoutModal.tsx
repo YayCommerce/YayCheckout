@@ -44,7 +44,7 @@ function NewLayoutForm({ onClose }: { onClose: () => void }) {
 
   const mutation = useCreateLayoutDraftMutation();
 
-  // Must reset `source` too, or Create draft would submit a stale library selection.
+  // Must reset `source` too, or Create layout would submit a stale library selection.
   function backToSource() {
     form.setValue('source', 'blank');
     setStep('source');
@@ -58,7 +58,7 @@ function NewLayoutForm({ onClose }: { onClose: () => void }) {
 
     try {
       const created = await mutation.mutateAsync(payload);
-      toast.success(`${__('Layout draft created.', 'yaycheckout')} "${created.title}"`);
+      toast.success(`${__('Layout created.', 'yaycheckout')} "${created.title}"`);
       onClose();
     } catch (error) {
       form.setError('root', { type: 'server', message: await getErrorMsg(error) });

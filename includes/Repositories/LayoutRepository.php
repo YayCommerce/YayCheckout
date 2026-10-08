@@ -170,7 +170,8 @@ class LayoutRepository {
 
     /**
      * Publishes the layout unless it already is, then makes it active, so an
-     * active layout is always one shoppers may see.
+     * active layout is always one shoppers may see. On Free, the layout it
+     * replaces goes back to draft.
      *
      * @throws \InvalidArgumentException When the layout is missing, archived or not publishable.
      */
@@ -213,10 +214,11 @@ class LayoutRepository {
     }
 
     /**
-     * Drops a layout from the active set. Leaves post_status alone: deactivate
-     * means stop serving, not unpublish.
+     * Stops serving the layout and returns it to draft, so a layout deactivated
+     * from now on is never left published. Pending and scheduled count too.
      *
      * @throws \InvalidArgumentException When the layout is missing.
+     * @throws \RuntimeException         When WordPress fails to move it to draft.
      */
     public function deactivate( int $id ): Layout {
         $post = get_post( $id );
@@ -225,9 +227,33 @@ class LayoutRepository {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
 
-        $this->store_ids( array_diff( $this->active_ids(), [ $id ] ) );
+        $this->forget_active( $id );
+
+        if ( in_array( $post->post_status, array_merge( LayoutStatus::live(), [ LayoutStatus::PENDING ] ), true ) ) {
+            $updated = wp_update_post(
+                [
+                    'ID'          => $id,
+                    'post_status' => LayoutStatus::DRAFT,
+                ],
+                true
+            );
+
+            if ( is_wp_error( $updated ) ) {
+                throw new \RuntimeException( sprintf( 'Layout %d could not be moved to draft.', $id ) );
+            }
+
+            $post = get_post( $id );
+        }
 
         return Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $id ) ), false );
+    }
+
+    /**
+     * Drops a layout from the active set and leaves post_status alone. For hooks
+     * that react to a status change: deactivate() would fire the transition again.
+     */
+    public function forget_active( int $id ): void {
+        $this->store_ids( array_diff( $this->active_ids(), [ $id ] ) );
     }
 
     /**
@@ -292,11 +318,22 @@ class LayoutRepository {
         return Layout::from_post( $restored, $this->hydrate_meta( get_post_meta( $id ) ), false );
     }
 
-    /** Free replaces the set; Pro moves the id to the end, the most recent choice. */
+    /**
+     * Free replaces the set and drafts the layout it replaces, as a Deactivate would;
+     * Pro moves the id to the end, the most recent choice.
+     */
     public function set_active( int $id ): void {
-        $ids = Plan::is_pro()
-            ? array_merge( array_diff( $this->active_ids(), [ $id ] ), [ $id ] )
-            : [ $id ];
+        $others = array_diff( $this->active_ids(), [ $id ] );
+
+        if ( Plan::is_pro() ) {
+            $ids = array_merge( $others, [ $id ] );
+        } else {
+            foreach ( $others as $replaced ) {
+                $this->deactivate( (int) $replaced );
+            }
+
+            $ids = [ $id ];
+        }
 
         $this->store_ids( $ids );
     }
