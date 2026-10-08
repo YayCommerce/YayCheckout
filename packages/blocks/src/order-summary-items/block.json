@@ -6,7 +6,7 @@
   "category": "yaycheckout",
   "description": "Cart line items. WooCommerce refreshes them when the order updates.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/order-summary" ],
+  "ancestor": [ "yaycheckout/order-summary" ],
   "supports": {
     "html": false,
     "multiple": false,
