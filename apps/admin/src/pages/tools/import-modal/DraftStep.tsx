@@ -40,7 +40,7 @@ export function DraftStep({
       <SummaryStrip
         items={[
           [__('Layout', 'yaycheckout'), layout.title],
-          [__('Status', 'yaycheckout'), __('Draft', 'yaycheckout')],
+          [__('Status', 'yaycheckout'), __('Inactive', 'yaycheckout')],
           [__('Assignment rules', 'yaycheckout'), RULES_STATUS_LABELS[rulesImport.status]],
         ]}
       />
@@ -58,9 +58,7 @@ export function DraftStep({
       )}
 
       <DialogFooter className="items-center border-t pt-4 sm:justify-between">
-        <p className="text-muted-foreground text-sm">
-          {__('Publish and set active when you are happy with it.', 'yaycheckout')}
-        </p>
+        <p className="text-muted-foreground text-sm">{__('Activate it when you are happy with it.', 'yaycheckout')}</p>
         <LayoutDraftActions layoutId={layout.id} onClose={onClose} />
       </DialogFooter>
     </>

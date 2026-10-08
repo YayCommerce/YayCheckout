@@ -7,7 +7,6 @@ import { loadMoreOnScroll } from '@/lib/helpers/infinite-list.helper';
 import { useInfiniteLayoutsQuery } from '@/lib/queries/layout.queries';
 import { LISTED_LAYOUT_STATUSES, type LayoutSummary } from '@/lib/schema/layout.schema';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { ComboboxIcon, ComboboxTrigger } from '@/components/ui/combobox';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Field, FieldLabel } from '@/components/ui/field';
@@ -52,7 +51,7 @@ export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
               {value?.title ?? __('Select a layout', 'yaycheckout')}
             </span>
             <span className="ml-auto flex shrink-0 items-center gap-2">
-              {value && <LayoutBadge layout={value} />}
+              {value && <LayoutStatusBadge layout={value} className="shrink-0" />}
               <ComboboxIcon />
             </span>
           </ComboboxTrigger>
@@ -92,7 +91,7 @@ export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
                           className="data-[selected=true]:text-primary size-3.5 stroke-[2.5px] text-transparent"
                         />
                         <span className="truncate">{layout.title}</span>
-                        <LayoutBadge layout={layout} className="ml-auto" />
+                        <LayoutStatusBadge layout={layout} className="ml-auto shrink-0" />
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -104,17 +103,4 @@ export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
       )}
     </Field>
   );
-}
-
-/** Active says more than Published for the one layout shoppers see, so it replaces the status there. */
-function LayoutBadge({ layout, className }: { layout: LayoutSummary; className?: string }) {
-  if (layout.isActive) {
-    return (
-      <Badge variant="success-soft" className={cn('shrink-0', className)}>
-        {__('Active', 'yaycheckout')}
-      </Badge>
-    );
-  }
-
-  return <LayoutStatusBadge layout={layout} className={cn('shrink-0', className)} />;
 }

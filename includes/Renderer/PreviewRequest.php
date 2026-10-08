@@ -186,14 +186,26 @@ class PreviewRequest {
         }
     }
 
+    /**
+     * What merchants call the layout's state: membership in the active set, not post_status.
+     * apps/admin/src/pages/layouts/LayoutStatusBadge.tsx copies this mapping.
+     */
+    private static function state_label( Layout $layout ): string {
+        if ( LayoutStatus::ARCHIVED === $layout->post_status ) {
+            return __( 'Archived', 'yaycheckout' );
+        }
+
+        return $layout->is_active ? __( 'Active', 'yaycheckout' ) : __( 'Inactive', 'yaycheckout' );
+    }
+
     /** The banner above the layout: what is being previewed and that it is not a live checkout. */
     public function banner( Layout $layout ): void {
         echo '<div class="woocommerce-info yaycheckout-preview-banner">';
         printf(
-            /* translators: 1: layout title, 2: layout status, 3: time until the link expires, e.g. "2 hours" */
+            /* translators: 1: layout title, 2: layout state: Active, Inactive or Archived, 3: time until the link expires, e.g. "2 hours" */
             esc_html__( 'Preview of "%1$s" (%2$s) — expires in %3$s. Orders cannot be placed here.', 'yaycheckout' ),
             esc_html( $layout->title ),
-            esc_html( LayoutStatus::label( $layout->post_status ) ),
+            esc_html( self::state_label( $layout ) ),
             esc_html( human_time_diff( time(), (int) $this->expires_at ) )
         );
 

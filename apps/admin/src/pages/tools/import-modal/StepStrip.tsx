@@ -15,7 +15,7 @@ export const IMPORT_STEPS: ImportStep[] = ['source', 'draft'];
 
 const STEP_LABELS: Record<ImportStep, string> = {
   source: __('Source', 'yaycheckout'),
-  draft: __('Draft', 'yaycheckout'),
+  draft: __('Review', 'yaycheckout'),
 };
 
 export function StepStrip({ current }: { current: ImportStep }) {

@@ -8,6 +8,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { store as noticesStore } from '@wordpress/notices';
 import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
+import { errorMessage } from '../shared/error-message';
 import { filenameFromHeaders, isJsonFileName, saveFile } from '../shared/export-file';
 import './import-export.css';
 
@@ -27,17 +28,6 @@ type ImportReview = {
 	/** The file carries assignment rules; this import leaves them behind. */
 	has_rules: boolean;
 };
-
-/** A message for an apiFetch rejection: the raw Response when `parse: false`, else `{ message }`. Never empty. */
-async function errorMessage( error: unknown, fallback: string ): Promise< string > {
-	let message: string | undefined;
-	if ( error instanceof Response ) {
-		message = ( await error.json().catch( () => null ) )?.message;
-	} else {
-		message = ( error as { message?: string } )?.message;
-	}
-	return message || fallback;
-}
 
 /** Reads as bytes below 1 KB, so a small layout does not round up to a meaningless "1 KB". */
 function formatFileSize( bytes: number ): string {

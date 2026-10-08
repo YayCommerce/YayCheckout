@@ -28,6 +28,6 @@ class LayoutTrashSync {
         }
 
         delete_post_meta( $post_id, '_wp_trash_meta_time' );
-        ( new LayoutRepository() )->deactivate( (int) $post_id );
+        ( new LayoutRepository() )->forget_active( (int) $post_id );
     }
 }

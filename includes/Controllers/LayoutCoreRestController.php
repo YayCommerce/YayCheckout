@@ -2,6 +2,7 @@
 namespace YayCheckout\Controllers;
 
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
+use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\PostTypes\LayoutPostType;
 use YayCheckout\Services\LayoutMarkupReader;
 
@@ -71,7 +72,7 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
         $status  = $prepared->post_status ?? ( $stored ? $stored->post_status : '' );
         $content = $prepared->post_content ?? ( $stored ? $stored->post_content : '' );
 
-        if ( ! in_array( $status, [ 'publish', 'future' ], true ) ) {
+        if ( ! in_array( $status, LayoutStatus::live(), true ) ) {
             return $prepared;
         }
 

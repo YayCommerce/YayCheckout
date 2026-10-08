@@ -7,7 +7,7 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { TemplatePicker } from '@/components/shared/template-picker/TemplatePicker';
 import { NameField } from '@/pages/layouts/new-layout/NameField';
 
-/** Library step: name plus template pick, then Create draft. */
+/** Library step: name plus template pick, then Create layout. */
 export function LibraryStep({
   onBack,
   onCancel,
@@ -49,7 +49,7 @@ export function LibraryStep({
             {__('Cancel', 'yaycheckout')}
           </Button>
           <Button type="submit" disabled={disabled || isPending}>
-            {isPending ? __('Creating…', 'yaycheckout') : __('Create draft', 'yaycheckout')}
+            {isPending ? __('Creating…', 'yaycheckout') : __('Create layout', 'yaycheckout')}
           </Button>
         </div>
       </DialogFooter>

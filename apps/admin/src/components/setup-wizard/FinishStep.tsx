@@ -29,7 +29,7 @@ export function FinishStep({
           <Check className="size-5" />
         </span>
         <div className="space-y-1">
-          <h2 className="text-lg font-semibold">{__('Your draft is ready. Nothing is live yet.', 'yaycheckout')}</h2>
+          <h2 className="text-lg font-semibold">{__('Your layout is ready. Nothing is live yet.', 'yaycheckout')}</h2>
           <p className="text-muted-foreground text-sm">
             {sprintf(
               /* translators: 1: layout name, 2: template name */
@@ -49,7 +49,7 @@ export function FinishStep({
           [__('Layout', 'yaycheckout'), draft.title],
           [__('Started from', 'yaycheckout'), templateName],
           [__('Renders on', 'yaycheckout'), report ? storeTypeLabel(report.store.storeType) : '—'],
-          [__('Status', 'yaycheckout'), __('Draft', 'yaycheckout')],
+          [__('Status', 'yaycheckout'), __('Inactive', 'yaycheckout')],
         ]}
       />
 

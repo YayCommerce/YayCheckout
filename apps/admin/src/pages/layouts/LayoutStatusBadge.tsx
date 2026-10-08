@@ -1,10 +1,13 @@
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 
-import { formatDateTime } from '@/lib/helpers/date.helper';
 import type { LayoutSummary } from '@/lib/schema/layout.schema';
 import { Badge } from '@/components/ui/badge';
 
-/** A layout's post status as the Layouts table shows it; the Tools picker reuses it. */
+/**
+ * A layout's state as merchants see it: membership in the active set, not post_status.
+ * Copy of PreviewRequest::state_label() (includes/Renderer/PreviewRequest.php).
+ * The Layouts table, the Tools picker and the assignment drawer reuse it.
+ */
 export function LayoutStatusBadge({ layout, className }: { layout: LayoutSummary; className?: string }) {
   if (layout.status === 'trash') {
     return (
@@ -14,39 +17,17 @@ export function LayoutStatusBadge({ layout, className }: { layout: LayoutSummary
     );
   }
 
-  if (layout.status === 'publish') {
+  if (layout.isActive) {
     return (
       <Badge variant="success" className={className}>
-        {__('Published', 'yaycheckout')}
-      </Badge>
-    );
-  }
-
-  if (layout.status === 'future') {
-    return (
-      <Badge variant="outline" className={className}>
-        {layout.scheduledAt
-          ? sprintf(
-              /* translators: %s: scheduled publish date */
-              __('Scheduled · %s', 'yaycheckout'),
-              formatDateTime(layout.scheduledAt),
-            )
-          : __('Scheduled', 'yaycheckout')}
-      </Badge>
-    );
-  }
-
-  if (layout.status === 'pending') {
-    return (
-      <Badge variant="outline" className={className}>
-        {__('Pending review', 'yaycheckout')}
+        {__('Active', 'yaycheckout')}
       </Badge>
     );
   }
 
   return (
     <Badge variant="outline" className={className}>
-      {__('Draft', 'yaycheckout')}
+      {__('Inactive', 'yaycheckout')}
     </Badge>
   );
 }
