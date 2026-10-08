@@ -22,10 +22,11 @@ const SECTION_LABEL_STYLE: CSSProperties = { fontSize: 11, letterSpacing: '0.08e
 // Mirrors DesignStyles::FONT_FALLBACK in PHP. Also stands in for "Theme default", since the preview has no theme.
 const DEFAULT_FONT_STACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
-// What a theme-default section draws as, since the admin has no theme CSS.
+// What a theme-default section draws as, since the admin has no theme CSS. The colours stand in for a theme's;
+// radius and inputHeight mirror the fallbacks in assets/css/checkout-base.css (inputs and buttons alike).
 const NEUTRAL = {
   colours: { primary: '#71717a', text: '#3f3f46', background: '#ffffff', border: '#d4d4d8' },
-  radius: 6,
+  radius: 2,
   inputHeight: 40,
 };
 
