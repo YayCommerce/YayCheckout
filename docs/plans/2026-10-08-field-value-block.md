@@ -4,7 +4,7 @@
 
 **Status:** done 2026-10-08
 **Goal:** A `yaycheckout/field-value` block that shows one checkout field's current value (server-rendered, then updated live), or a muted placeholder while empty.
-**Spec:** [docs/specs/2026-10-08-field-value-block-design.md](../specs/2026-10-08-field-value-block-design.md)
+**Spec:** [docs/specs/2026-10-08-field-value-block-design.md](../specs/2026-10-08-field-value-block-design.md) — revised after review of PR #62: see the spec's *Revision after review*, which supersedes the field list, label and fallback steps below.
 **Architecture:** Dynamic block: `render.php` prints the stored value from `CheckoutFieldDefaults::value()` so the first paint is right; `view.ts` re-syncs every `[data-field-key]` from the form on each jQuery `input change`. Chosen over a JS-only block (placeholder flash) and an `update_order_review` fragment (not live while typing).
 **Touches:** `packages/blocks/src/field-value/` (new), `includes/Blocks/BlockRegistry.php`, `includes/Renderer/CheckoutFieldDefaults.php` (shared; consumers: `field/render.php`, `email/render.php`), `packages/blocks/src/shared/jquery.ts` (new, shared; consumers: `shared/reveal-link-view.ts`, `login/view.ts`, `field-value/view.ts`), `packages/blocks/src/order-summary/edit.tsx` (admits Field Value after #60 made Order Summary a container). Reads `packages/blocks/src/shared/address-fields.ts` (shared, unchanged; consumers: `field/edit.tsx`, `shared/address-template.ts`).
 **Tests:** none (display only; outside CLAUDE.md's test bar, agreed in the spec).

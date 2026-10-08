@@ -1,20 +1,16 @@
 /**
  * Keeps each Field Value block in step with the form field it names, on every keystroke or pick.
  * select2 and WooCommerce's country-select.js fire change through jQuery only, so the listener is jQuery's.
- * Every block re-syncs on each event: a country change also changes what its state field shows.
+ * Every block re-syncs on each event: a country change also changes what its state field shows, and
+ * WooCommerce's address-i18n.js relabels fields for the country, so the label is read from the form too.
  */
 
 import { jquery, type Control } from '../shared/jquery';
 
 const VALUE = '.yaycheckout-field-value__value[data-field-key]';
 
-/** Mirrors $yaycheckout_read's shipping fallback in field-value/render.php. */
 function control( key: string ): Control | null {
-	const form = document.querySelector( 'form.checkout' );
-	const find = ( name: string ) => form?.querySelector< Control >( `[name="${ name }"]` ) ?? null;
-
-	// Without a ship_to_different_address checkbox WooCommerce copies billing into shipping.
-	return find( key ) ?? ( key.startsWith( 'shipping_' ) ? find( key.replace( /^shipping_/, 'billing_' ) ) : null );
+	return document.querySelector( 'form.checkout' )?.querySelector< Control >( `[name="${ key }"]` ) ?? null;
 }
 
 function text( field: Control | null ): string {
@@ -30,11 +26,30 @@ function text( field: Control | null ): string {
 	return field.value.trim();
 }
 
+/** The field's label as the form shows it now, without the required or optional mark. */
+function formLabel( key: string ): string {
+	const label = document.querySelector( `form.checkout label[for="${ key }"]` )?.cloneNode( true ) as HTMLElement | undefined;
+
+	label?.querySelectorAll( '.required, .optional' ).forEach( ( mark ) => mark.remove() );
+
+	return label?.textContent?.replace( /\u00a0/g, ' ' ).trim() ?? '';
+}
+
 function sync(): void {
 	document.querySelectorAll< HTMLElement >( VALUE ).forEach( ( element ) => {
-		const value = text( control( element.dataset.fieldKey ?? '' ) );
+		const key = element.dataset.fieldKey ?? '';
+		const value = text( control( key ) );
+		const label = formLabel( key );
+		const labelElement = element.parentElement?.querySelector( '.yaycheckout-field-value__label' );
 
-		element.textContent = value !== '' ? value : element.dataset.placeholder ?? '';
+		if ( labelElement && label !== '' ) {
+			labelElement.textContent = label;
+		}
+
+		// render.php sets data-placeholder only for a typed placeholder; otherwise the label stands in.
+		const placeholder = element.dataset.placeholder || label || ( labelElement?.textContent ?? '' );
+
+		element.textContent = value !== '' ? value : placeholder;
 		element.classList.toggle( 'is-empty', value === '' );
 	} );
 }
@@ -42,7 +57,8 @@ function sync(): void {
 function init(): void {
 	sync();
 
-	jquery( document.body )?.on( 'input change', sync );
+	// updated_checkout also fires once after load, after address-i18n.js has relabelled the fields.
+	jquery( document.body )?.on( 'input change country_to_state_changed updated_checkout', sync );
 }
 
 if ( document.readyState === 'loading' ) {

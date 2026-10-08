@@ -96,6 +96,19 @@ Merchants can add blocks that echo what the shopper has typed or picked at check
 
 **Decision record:** None.
 
+## Revision after review (2026-10-08)
+
+Review of PR #62 changed the field source and the label. Where this section and the rest of the doc disagree, this section wins.
+
+- **Fields come from the layout, not a static list.** The editor's Field select lists the layout's own Email address and Field blocks, with the label each prints, mirroring `LayoutMarkupReader::fields()`. It starts at "Select a field".
+- **No field, no output.** `fieldKey` defaults to `""`. `render.php` prints nothing unless the key is in the served layout's `LayoutMarkupReader::fields()`. In the editor, a Field Value whose field leaves the layout resets to `""` (not an undo step), and its canvas asks to select a field.
+- **The label is the form's label.** The server prints the layout field's label (an empty one falls back as `email/render.php` and `field/render.php` do). `view.js` then copies the label the form shows now, without its required or optional mark, on load (`updated_checkout`), on `input`/`change` and on `country_to_state_changed`, so WooCommerce's locale relabels (State → County) match. The default placeholder follows the same label; `data-placeholder` carries only a typed placeholder.
+- **No shipping → billing fallback.** A pickable field is always in the layout, so the shipping input always exists; the fallback is gone from both `render.php` and `view.ts`.
+- **Hidden-for-country fields** read as empty through `CheckoutFieldDefaults::hidden_for_country()` (from #64) instead of the `get_states() === []` check. `CheckoutFieldDefaults::label()` is dropped.
+- **Not every field type.** Field blocks of type `checkbox` (its value is always 1), `password` (never echoed) and `hidden` (nothing typed) are not offered, and `render.php` prints nothing for them.
+- Labels are tags-stripped then entity-decoded in the editor too, as `LayoutMarkupReader::plain_text()` does on the server.
+- Extra fields stay out of scope.
+
 ## Alternatives considered
 
 | Option | Why rejected |

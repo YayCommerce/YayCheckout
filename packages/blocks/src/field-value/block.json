@@ -16,7 +16,7 @@
   "attributes": {
     "fieldKey": {
       "type": "string",
-      "default": "billing_email"
+      "default": ""
     },
     "placeholder": {
       "type": "string",

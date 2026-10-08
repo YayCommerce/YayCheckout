@@ -5,8 +5,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * What classic checkout gives each address field and Field blocks would otherwise lack:
- * the shopper's value, the classes WooCommerce's checkout.js listens on, and its label.
- * No hooks; the field, email and field-value render.php call it.
+ * the shopper's value, and the classes WooCommerce's checkout.js listens on.
+ * No hooks; the field and email render.php call it.
  */
 class CheckoutFieldDefaults {
 
@@ -56,31 +56,13 @@ class CheckoutFieldDefaults {
      * @return string[]
      */
     public static function classes( string $key ): array {
-        $field = self::field( $key );
-        $class = isset( $field['class'] ) && is_array( $field['class'] ) ? $field['class'] : [];
-
-        return array_values( array_intersect( $class, self::BEHAVIOUR_CLASSES ) );
-    }
-
-    /** WooCommerce's label for a billing or shipping key; empty when it has none. */
-    public static function label( string $key ): string {
-        $field = self::field( $key );
-
-        return isset( $field['label'] ) && is_string( $field['label'] ) ? $field['label'] : '';
-    }
-
-    /**
-     * A billing or shipping key's WooCommerce field definition, after woocommerce_checkout_fields.
-     *
-     * @return array<string, mixed>
-     */
-    private static function field( string $key ): array {
         if ( ! function_exists( 'WC' ) || ! preg_match( '/^(billing|shipping)_/', $key, $match ) ) {
             return [];
         }
 
         $fields = WC()->checkout()->get_checkout_fields( $match[1] );
+        $class  = isset( $fields[ $key ]['class'] ) && is_array( $fields[ $key ]['class'] ) ? $fields[ $key ]['class'] : [];
 
-        return isset( $fields[ $key ] ) && is_array( $fields[ $key ] ) ? $fields[ $key ] : [];
+        return array_values( array_intersect( $class, self::BEHAVIOUR_CLASSES ) );
     }
 }
