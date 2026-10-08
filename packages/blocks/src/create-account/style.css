@@ -1,0 +1,25 @@
+/* WooCommerce's password strength meter (wc-password-strength-meter) after the account password field. */
+.yaycheckout-checkout .yaycheckout-create-account .woocommerce-password-strength {
+	margin-top: 4px;
+	font-size: 0.875em;
+	font-weight: 500;
+}
+
+.yaycheckout-checkout .yaycheckout-create-account .woocommerce-password-strength:is(.short, .bad) {
+	color: #cc1818;
+}
+
+.yaycheckout-checkout .yaycheckout-create-account .woocommerce-password-strength.good {
+	color: #f0b849;
+}
+
+.yaycheckout-checkout .yaycheckout-create-account .woocommerce-password-strength.strong {
+	color: #4ab866;
+}
+
+.yaycheckout-checkout .yaycheckout-create-account .woocommerce-password-hint {
+	display: block;
+	margin-top: 4px;
+	font-size: 0.875em;
+	opacity: 0.75;
+}

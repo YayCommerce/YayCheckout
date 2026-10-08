@@ -1,0 +1,6 @@
+@import "../shared/choice-rows.css";
+
+/* WooCommerce's "no available payment methods" notice when the list is empty. */
+.yaycheckout-checkout .yaycheckout-payment .woocommerce-notice {
+	margin: 0;
+}

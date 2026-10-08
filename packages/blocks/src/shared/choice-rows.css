@@ -1,0 +1,80 @@
+/*
+ * Payment gateways and shipping rates as one bordered group of rows, the checked row edged
+ * in the primary colour. Imported by payment/style.css and shipping-methods/style.css.
+ * A single rate prints a hidden input, not a checked radio, so a lone row counts as checked.
+ * Per-block selectors start with .yaycheckout-checkout and the block's class (0,3,0 or more):
+ * block styles print before checkout-base.css on the storefront.
+ */
+.yaycheckout-checkout :is(.yaycheckout-payment .wc_payment_methods, .yaycheckout-shipping-methods #shipping_method) {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.yaycheckout-checkout :is(.yaycheckout-payment .wc_payment_methods, .yaycheckout-shipping-methods #shipping_method) > li {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0 12px;
+	margin: 0;
+	padding: 14px 16px;
+	border: 1px solid var(--yaycheckout-color-border, color-mix(in srgb, currentColor 45%, transparent));
+	background-color: var(--yaycheckout-color-background, transparent);
+	list-style: none;
+}
+
+.yaycheckout-checkout :is(.yaycheckout-payment .wc_payment_methods, .yaycheckout-shipping-methods #shipping_method) > li + li {
+	margin-top: -1px;
+}
+
+.yaycheckout-checkout :is(.yaycheckout-payment .wc_payment_methods, .yaycheckout-shipping-methods #shipping_method) > li:first-child {
+	border-start-start-radius: var(--yaycheckout-input-radius, 2px);
+	border-start-end-radius: var(--yaycheckout-input-radius, 2px);
+}
+
+.yaycheckout-checkout :is(.yaycheckout-payment .wc_payment_methods, .yaycheckout-shipping-methods #shipping_method) > li:last-child {
+	border-end-start-radius: var(--yaycheckout-input-radius, 2px);
+	border-end-end-radius: var(--yaycheckout-input-radius, 2px);
+}
+
+/* Above its neighbours, so its whole edge shows where the rows overlap. */
+.yaycheckout-checkout :is(.yaycheckout-payment .wc_payment_methods, .yaycheckout-shipping-methods #shipping_method) > li:is(:has(input:checked), :only-child) {
+	z-index: 1;
+	border-color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
+}
+
+.yaycheckout-checkout :is(.yaycheckout-payment .wc_payment_methods, .yaycheckout-shipping-methods #shipping_method) > li > label {
+	flex: 1;
+	margin: 0;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+.yaycheckout-checkout .yaycheckout-payment .wc_payment_methods > li > label img {
+	max-height: 1.5em;
+	margin-inline-start: 8px;
+	vertical-align: middle;
+}
+
+/* The checked gateway's description and fields; WooCommerce slides it open and shut inline. */
+.yaycheckout-checkout .yaycheckout-payment .wc_payment_methods .payment_box {
+	flex-basis: 100%;
+	margin: 0;
+	padding: 8px 0 0;
+	background: none;
+	color: inherit;
+	font-size: 0.875em;
+}
+
+.yaycheckout-checkout .yaycheckout-payment .wc_payment_methods .payment_box::before {
+	display: none;
+}
+
+.yaycheckout-checkout .yaycheckout-payment .wc_payment_methods .payment_box > :first-child {
+	margin-top: 0;
+}
+
+.yaycheckout-checkout .yaycheckout-payment .wc_payment_methods .payment_box > :last-child {
+	margin-bottom: 0;
+}
