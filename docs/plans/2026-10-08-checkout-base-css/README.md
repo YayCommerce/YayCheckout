@@ -27,7 +27,7 @@
   - `includes/Pro/Controllers/DesignPresetRestController.php` (deleted)
 - CSS: `assets/css/checkout-page.css` (deleted), new `assets/css/checkout-base.css`
 - SPA: `apps/admin/src/lib/{schema,api,queries,helpers}/design.*`, `apps/admin/src/lib/api/setup.api.ts`, `apps/admin/src/pages/design/**`, `apps/admin/src/components/setup-wizard/{SetupWizard,BrandStep}.tsx`, `apps/admin/src/components/shared/PreviewPane.tsx`
-- Blocks: `packages/blocks/src/{checkout,payment,shipping-methods,create-account,place-order,progress,steps,step-button,back-button,return-to-cart,email}/`, `packages/blocks/src/shared/{choice-rows.css,field-preview.*,section-preview.css}`
+- Blocks: `packages/blocks/src/{checkout,payment,shipping-methods,create-account,place-order,progress,steps,step-button,back-button,return-to-cart,email}/`, `packages/blocks/src/shared/{field-preview.*,section-preview.css}`
 - Docs: `docs/architecture.md`, `docs/conventions.md`, new `docs/decisions/2026-10-08-checkout-owns-base-styles.md`
 - Shared code:
   - **The Design wire (shared):** read by the Design page, the setup wizard (`window.yayCheckoutAdmin.design` through `LocalizeHelper`) and `PreviewPane`. All three change in Phase 1, Task 2.
@@ -99,4 +99,4 @@
 - **Base loader.** Produced by Phase 2, Task 1. Consumed by Phase 2, Task 4.
   - `Renderer\CheckoutBaseStyles::enqueue( bool $with_custom_css ): void` enqueues `assets/css/checkout-base.css` under `ScriptName::STYLE_CHECKOUT_BASE = 'yaycheckout/style/checkout-base'`, then the `DesignStyles` CSS inline under `ScriptName::STYLE_CHECKOUT`, after it.
 - **Primary colour expression.** Produced by Phase 2, Task 2. Consumed by Phase 2, Tasks 1 and 3: `var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9))`, resolved once since /yaytidy as `--yaycheckout-primary-color` on `:root, .editor-styles-wrapper` at the top of `checkout-base.css` (with `--yaycheckout-border-color` and `--yaycheckout-field-radius`). Block CSS reads `var(--yaycheckout-primary-color, #3858e9)`, the short fallback for the inserter preview, which loads no base.
-- **Choice-row partial.** Produced by Phase 2, Task 3. `packages/blocks/src/shared/choice-rows.css` is imported by `payment/style.css` and `shipping-methods/style.css`.
+- **Choice rows.** Produced by Phase 2, Task 3. `payment/style.css` and `shipping-methods/style.css` each hold their own rows, scoped to their block. The shared `choice-rows.css` partial was dropped after review (see Phase 2's Deviations).

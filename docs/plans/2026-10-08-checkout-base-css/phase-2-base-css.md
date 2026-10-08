@@ -31,6 +31,7 @@ Expected:
   - **Password meter** (layout 61 has no Create account block): the built `create-account/style-index.css` was loaded with meter markup. Short and bad compute to `rgb(204, 24, 24)`, good to `rgb(240, 184, 73)`, strong to `rgb(74, 184, 102)`.
   - **Theme primary preset:** with `--wp--preset--color--primary` set on `:root` and Colours off, Place Order and the checked payment row both took the preset.
   - **Payment rows on Twenty Twenty-Five after the `#payment` change:** `14px 16px`, transparent background, the last row's 14px bottom padding and 1px border intact, and the checked row primary.
+- **No shared choice-row partial.** Task 3's `shared/choice-rows.css` was folded into `payment/style.css` and `shipping-methods/style.css`, each scoped to its own block, so each block's CSS can change on its own. Shipping drops Payment's Storefront `#payment` last-row restatement, which it never needed.
 - **The Order Summary tables get 6px cell padding in the base.** That padding came from `woocommerce-blocktheme`.
 
 ### Task 1: Base stylesheet and its loader

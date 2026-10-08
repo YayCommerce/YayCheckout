@@ -30,7 +30,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			</InspectorControls>
 			<div { ...blockProps }>
 				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>
-				{ /* WooCommerce's list markup, so the block's choice-row CSS draws it as on the storefront. */ }
+				{ /* WooCommerce's list markup, so the block's own CSS draws it as on the storefront. */ }
 				<ul id="shipping_method" className="woocommerce-shipping-methods">
 					<li>
 						<input type="radio" disabled defaultChecked />

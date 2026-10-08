@@ -1,4 +1,89 @@
-@import "../shared/choice-rows.css";
+/*
+ * The gateways as one bordered group of rows, the checked row edged in the primary colour.
+ * A single gateway prints no radio, so a lone row counts as checked. Colours and corners come
+ * from checkout-base.css's neutral fallbacks (--yaycheckout-primary-color,
+ * --yaycheckout-border-color, --yaycheckout-field-radius).
+ * Selectors start with .yaycheckout-checkout .yaycheckout-payment, because block styles print
+ * before checkout-base.css on the storefront, and name WooCommerce's div#payment, so the rows
+ * outrank a classic theme's own #payment rules (Storefront: #payment .payment_methods > li:not(.woocommerce-notice)).
+ */
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0 12px;
+	margin: 0;
+	padding: 14px 16px;
+	border: 1px solid var(--yaycheckout-border-color);
+	background-color: var(--yaycheckout-color-background, transparent);
+	list-style: none;
+}
+
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li + li {
+	margin-top: -1px;
+}
+
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li:first-child {
+	border-start-start-radius: var(--yaycheckout-field-radius);
+	border-start-end-radius: var(--yaycheckout-field-radius);
+}
+
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li:last-child {
+	/* Storefront's #payment .payment_methods li:last-child drops the last row's bottom edge. */
+	padding-bottom: 14px;
+	border-bottom: 1px solid var(--yaycheckout-border-color);
+	border-end-start-radius: var(--yaycheckout-field-radius);
+	border-end-end-radius: var(--yaycheckout-field-radius);
+}
+
+/* Above its neighbours, so its whole edge shows where the rows overlap. */
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) {
+	z-index: 1;
+	border-color: var(--yaycheckout-primary-color, #3858e9);
+}
+
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li > label {
+	flex: 1;
+	margin: 0;
+	padding: 0;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li > label img {
+	max-height: 1.5em;
+	margin-inline-start: 8px;
+	vertical-align: middle;
+}
+
+/* The checked gateway's description and fields; WooCommerce slides it open and shut inline. */
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods .payment_box {
+	flex-basis: 100%;
+	margin: 0;
+	padding: 8px 0 0;
+	background: none;
+	color: inherit;
+	font-size: 0.875em;
+}
+
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods .payment_box::before {
+	display: none;
+}
+
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods .payment_box > :first-child {
+	margin-top: 0;
+}
+
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods .payment_box > :last-child {
+	margin-bottom: 0;
+}
 
 /* WooCommerce's "no available payment methods" notice when the list is empty. */
 .yaycheckout-checkout .yaycheckout-payment .woocommerce-notice {
