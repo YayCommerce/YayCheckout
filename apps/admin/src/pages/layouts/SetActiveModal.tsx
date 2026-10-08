@@ -39,12 +39,7 @@ export function SetActiveModal({
                 {__('Cancel', 'yaycheckout')}
               </Button>
               <Button onClick={() => onConfirm(layout)} disabled={isPending}>
-                {/* Pending and scheduled are published by the same request, not just drafts. */}
-                {isPending
-                  ? __('Activating…', 'yaycheckout')
-                  : layout.status === 'publish'
-                    ? __('Activate', 'yaycheckout')
-                    : __('Publish & activate', 'yaycheckout')}
+                {isPending ? __('Activating…', 'yaycheckout') : __('Activate', 'yaycheckout')}
               </Button>
             </DialogFooter>
           </>

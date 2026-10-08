@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-/** Confirms taking a layout off the storefront. It stays published. */
+/** Confirms taking a layout off the storefront. It goes back to draft, which merchants see as Inactive. */
 export function DeactivateModal({
   layout,
   isLastActive,
@@ -38,7 +38,7 @@ export function DeactivateModal({
 
             <p className="text-muted-foreground text-sm">
               {__(
-                'Shoppers will stop seeing this layout. It stays published, so you can activate it again at any time.',
+                'Shoppers will stop seeing this layout. It becomes inactive, and you can activate it again at any time.',
                 'yaycheckout',
               )}
             </p>
