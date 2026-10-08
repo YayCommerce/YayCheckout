@@ -44,3 +44,8 @@ body.yaycheckout-page > .wp-site-blocks,
 	width: 40%;
 	text-align: end;
 }
+
+/* A Group whose watched blocks are all empty (HideWhenEmpty::HIDDEN_CLASS); beats the Group's layout display. */
+.yaycheckout-hidden-when-empty {
+	display: none !important;
+}
