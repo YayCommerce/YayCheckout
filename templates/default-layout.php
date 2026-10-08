@@ -106,6 +106,8 @@ defined( 'ABSPATH' ) || exit;
 <!-- wp:yaycheckout/field {"fieldKey":"shipping_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'In case we need to contact you about your order', 'yaycheckout' ); ?>","required":false} /-->
 <!-- /wp:yaycheckout/shipping -->
 
+<!-- wp:yaycheckout/shipping-methods /-->
+
 <!-- wp:yaycheckout/payment /-->
 
 <!-- wp:yaycheckout/place-order {"style":{"typography":{"textAlign":"center"}}} /--></div>
@@ -113,7 +115,11 @@ defined( 'ABSPATH' ) || exit;
 
 <!-- wp:column {"width":"40%"} -->
 <div class="wp-block-column" style="flex-basis:40%"><!-- wp:group {"style":{"position":{"type":"sticky","top":"0px"}}} -->
-<div class="wp-block-group"><!-- wp:yaycheckout/order-summary /-->
+<div class="wp-block-group"><!-- wp:yaycheckout/order-summary -->
+<!-- wp:yaycheckout/order-summary-items /-->
+
+<!-- wp:yaycheckout/order-summary-totals /-->
+<!-- /wp:yaycheckout/order-summary -->
 
 <!-- wp:yaycheckout/coupon-form /--></div>
 <!-- /wp:group --></div>

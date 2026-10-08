@@ -138,6 +138,8 @@ export const blockIcons: Record< string, JSX.Element > = {
 			<path d="M9 8h6M9 12h6" />
 		</>
 	),
+	'yaycheckout/order-summary-items': icon( <path d="M4 6h16M4 12h16M4 18h10" /> ),
+	'yaycheckout/order-summary-totals': icon( <path d="M4 7h16M4 12h16M12 17h8" /> ),
 	'yaycheckout/place-order': icon(
 		<>
 			<rect x="3" y="7" width="18" height="10" rx="5" />
