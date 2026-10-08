@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/create-account",
+  "title": "Create account",
+  "category": "yaycheckout",
+  "description": "Lets a guest create an account at checkout, following WooCommerce's account settings.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "account", "register", "signup", "password" ],
+  "example": {
+    "attributes": {
+      "checkboxLabel": "Create an account?"
+    }
+  },
+  "ancestor": [ "yaycheckout/checkout" ],
+  "attributes": {
+    "checkboxLabel": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php"
+}

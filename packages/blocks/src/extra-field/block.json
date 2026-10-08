@@ -55,6 +55,10 @@
       "type": "string",
       "default": ""
     },
+    "rememberValue": {
+      "type": "boolean",
+      "default": false
+    },
     "options": {
       "type": "array",
       "default": [],

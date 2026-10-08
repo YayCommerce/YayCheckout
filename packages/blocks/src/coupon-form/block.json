@@ -6,6 +6,11 @@
   "category": "yaycheckout",
   "description": "Coupon code field with apply button and its notices.",
   "textdomain": "yaycheckout",
+  "example": {
+    "attributes": {
+      "buttonText": "Apply coupon"
+    }
+  },
   "attributes": {
     "placeholder": {
       "type": "string",

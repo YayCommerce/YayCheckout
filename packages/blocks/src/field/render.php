@@ -1,7 +1,7 @@
 <?php
 /**
  * Prints one address field, through woocommerce_form_field() when WooCommerce
- * is loaded so name, id and class match classic checkout.
+ * is loaded so name, id, class and the shopper's value match classic checkout.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; field is a leaf.
@@ -30,7 +30,9 @@ if ( '' === $yaycheckout_key ) {
 
 $yaycheckout_wrapper = get_block_wrapper_attributes( array( 'class' => 'yaycheckout-field form-row' ) );
 
-$yaycheckout_collapsed = \YayCheckout\Services\RevealLink::collapsed( $attributes, $yaycheckout_key, $yaycheckout_required );
+$yaycheckout_value = \YayCheckout\Renderer\CheckoutFieldDefaults::value( $yaycheckout_key );
+
+$yaycheckout_collapsed = \YayCheckout\Services\RevealLink::collapsed( $attributes, $yaycheckout_key, $yaycheckout_required, $yaycheckout_value );
 
 if ( function_exists( 'woocommerce_form_field' ) ) {
     echo '<div ' . $yaycheckout_wrapper . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
@@ -49,8 +51,10 @@ if ( function_exists( 'woocommerce_form_field' ) ) {
             'autocomplete' => $yaycheckout_autocomplete,
             // WooCommerce runs only wp_kses_post() on it, so a typed tag would render.
             'description'  => esc_html( $yaycheckout_description ),
+            'class'        => \YayCheckout\Renderer\CheckoutFieldDefaults::classes( $yaycheckout_key ),
             'return'       => false,
-        ]
+        ],
+        $yaycheckout_value
     );
     echo $yaycheckout_collapsed ? \YayCheckout\Services\RevealLink::close() . '</div>' : '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup.
     return;

@@ -7,7 +7,8 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Shipping, payment and order summary HTML for render.php and update_order_review fragments.
+ * Shipping, payment and order summary HTML for render.php and update_order_review fragments,
+ * plus the Place order button when it shows the order total.
  *
  * Stands down without a layout so Woo's payment fragment keeps Place order.
  */
@@ -34,7 +35,7 @@ class CheckoutFragments {
         add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'fragments' ], 20 );
     }
 
-    /** Swaps the fragments of this layout's sections for this layout's HTML. */
+    /** Swaps the fragments of this layout's sections for this layout's HTML, and refreshes Place order's total. */
     public function fragments( $fragments ) {
         $layout = CheckoutPage::get_instance()->layout();
 
@@ -52,7 +53,24 @@ class CheckoutFragments {
             }
         }
 
+        $button = isset( $rendered['place_order'] ) ? self::place_order_button_html( $layout->content ) : '';
+
+        if ( '' !== $button ) {
+            $fragments['#place_order'] = $button;
+        }
+
         return $fragments;
+    }
+
+    /** The Place order button alone (render.php prints only it during AJAX), when it shows the total. */
+    private static function place_order_button_html( string $markup ): string {
+        foreach ( LayoutMarkupReader::flatten( parse_blocks( $markup ) ) as $block ) {
+            if ( 'yaycheckout/place-order' === $block['blockName'] ) {
+                return empty( $block['attrs']['showTotal'] ) ? '' : render_block( $block );
+            }
+        }
+
+        return '';
     }
 
     public static function print_shipping_rates(): void {

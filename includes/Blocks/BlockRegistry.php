@@ -39,6 +39,7 @@ class BlockRegistry {
         'back-button',
         'return-to-cart',
         'email',
+        'create-account',
         'billing',
         'shipping',
         'field',
@@ -133,6 +134,19 @@ class BlockRegistry {
         wp_add_inline_script(
             generate_block_asset_handle( 'yaycheckout/login', 'editorScript' ),
             'window.yayCheckoutLogin = ' . wp_json_encode( $login_editor_data ) . ';',
+            'before'
+        );
+
+        // The create-account editor script may not run after the checkout inline
+        // script, so its option flag is printed on its own handle.
+        $create_account_editor_data = [
+            'signupEnabled' => 'yes' === get_option( 'woocommerce_enable_signup_and_login_from_checkout' ),
+            'settingsUrl'   => admin_url( 'admin.php?page=wc-settings&tab=account#woocommerce_enable_signup_and_login_from_checkout' ),
+        ];
+
+        wp_add_inline_script(
+            generate_block_asset_handle( 'yaycheckout/create-account', 'editorScript' ),
+            'window.yayCheckoutCreateAccount = ' . wp_json_encode( $create_account_editor_data ) . ';',
             'before'
         );
     }

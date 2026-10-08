@@ -49,3 +49,8 @@
 .yaycheckout-checkout.woocommerce-checkout :is(.yaycheckout-field, .yaycheckout-email, .yaycheckout-extra-field).form-row .description::before {
 	display: none;
 }
+
+/* Columns that lay out address fields side by side keep the fields' own spacing, not core's block margin. */
+.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-columns {
+	margin-block: 0;
+}
