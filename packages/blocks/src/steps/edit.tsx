@@ -1,4 +1,9 @@
-import { InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
+import {
+	__experimentalGetGapCSSValue as getGapCSSValue,
+	InspectorControls,
+	useBlockProps,
+	useInnerBlocksProps,
+} from '@wordpress/block-editor';
 import { PanelBody, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import stepMeta from '../step/block.json';
@@ -17,30 +22,17 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< StepsAttributes > ) => void;
 }
 
-/** Turns a core spacing preset or length into a CSS gap value. */
-function gapValue( blockGap: unknown ): string | undefined {
-	if ( typeof blockGap !== 'string' || blockGap === '' ) {
-		return undefined;
-	}
-
-	const presetPrefix = 'var:preset|spacing|';
-	if ( blockGap.startsWith( presetPrefix ) ) {
-		return `var(--wp--preset--spacing--${ blockGap.slice( presetPrefix.length ) })`;
-	}
-
-	return blockGap;
-}
-
 /**
  * Canvas for checkout steps. Every step stays open here so its sections
  * can be edited; locking and Continue run on the storefront.
  */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { layout } = attributes;
-	const gap = gapValue( attributes.style?.spacing?.blockGap );
+	// The block's own Block spacing; render.php also prints the Global Styles and viewport values.
+	const gap = getGapCSSValue( attributes.style?.spacing?.blockGap );
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-steps',
-		...( gap !== undefined ? { style: { gap } } : {} ),
+		...( gap ? { style: { gap } } : {} ),
 	} );
 	const innerBlocksProps = useInnerBlocksProps( blockProps, {
 		template: [ [ stepMeta.name ], [ stepMeta.name ] ],

@@ -25,21 +25,60 @@ $yaycheckout_wrapper_attrs = [
     'data-select-message'   => __( 'Please choose an option.', 'yaycheckout' ),
 ];
 
-// blockGap is skipped in block.json; print it as inline gap so core layout styles stay off.
-$yaycheckout_block_gap = isset( $attributes['style']['spacing']['blockGap'] ) ? $attributes['style']['spacing']['blockGap'] : null;
-
-if ( is_string( $yaycheckout_block_gap ) && '' !== $yaycheckout_block_gap ) {
-    $yaycheckout_preset_prefix = 'var:preset|spacing|';
-
-    if ( 0 === strpos( $yaycheckout_block_gap, $yaycheckout_preset_prefix ) ) {
-        $yaycheckout_block_gap = 'var(--wp--preset--spacing--' . substr( $yaycheckout_block_gap, strlen( $yaycheckout_preset_prefix ) ) . ')';
+/*
+ * Block spacing. Steps has no layout support, because core prints no layout gap on classic
+ * themes, so its blockGap is printed here the way core's layout.php prints it: the block's
+ * own value, else the Global Styles value, plus each viewport value (WP 7.1+) in its media query.
+ */
+$yaycheckout_gap_css = static function ( $gap ) {
+    if ( ! is_string( $gap ) || '' === $gap ) {
+        return null;
     }
 
-    $yaycheckout_gap_style = safecss_filter_attr( 'gap:' . $yaycheckout_block_gap );
-
-    if ( is_string( $yaycheckout_gap_style ) && '' !== $yaycheckout_gap_style ) {
-        $yaycheckout_wrapper_attrs['style'] = $yaycheckout_gap_style;
+    if ( str_contains( $gap, 'var:preset|spacing|' ) ) {
+        return 'var(--wp--preset--spacing--' . _wp_to_kebab_case( substr( $gap, strrpos( $gap, '|' ) + 1 ) ) . ')';
     }
+
+    return $gap;
+};
+
+$yaycheckout_style     = $attributes['style'] ?? [];
+$yaycheckout_gap_class = wp_unique_id( 'yaycheckout-steps-gap-' );
+$yaycheckout_gap_rule  = static function ( $gap, $rules_group = null ) use ( $yaycheckout_gap_class ) {
+    return array_filter(
+        [
+            // Two classes, to beat the stylesheet's .yaycheckout-steps default.
+            'selector'     => '.yaycheckout-steps.' . $yaycheckout_gap_class,
+            'declarations' => [ 'gap' => $gap ],
+            'rules_group'  => $rules_group,
+        ]
+    );
+};
+
+$yaycheckout_gap       = $yaycheckout_gap_css( wp_sanitize_block_gap_value( $yaycheckout_style['spacing']['blockGap'] ?? null ) )
+    ?? $yaycheckout_gap_css( wp_get_global_styles( [ 'spacing', 'blockGap' ], [ 'block_name' => 'yaycheckout/steps' ] ) );
+$yaycheckout_gap_rules = null !== $yaycheckout_gap ? [ $yaycheckout_gap_rule( $yaycheckout_gap ) ] : [];
+
+if ( method_exists( 'WP_Theme_JSON', 'get_viewport_media_queries' ) ) {
+    foreach ( WP_Theme_JSON::get_viewport_media_queries( wp_get_global_settings( [ 'viewport' ] ) ) as $yaycheckout_viewport => $yaycheckout_media_query ) {
+        $yaycheckout_viewport_gap = $yaycheckout_gap_css( wp_sanitize_block_gap_value( $yaycheckout_style[ $yaycheckout_viewport ]['spacing']['blockGap'] ?? null ) );
+
+        if ( null !== $yaycheckout_viewport_gap ) {
+            $yaycheckout_gap_rules[] = $yaycheckout_gap_rule( $yaycheckout_viewport_gap, $yaycheckout_media_query );
+        }
+    }
+}
+
+if ( $yaycheckout_gap_rules ) {
+    wp_style_engine_get_stylesheet_from_css_rules(
+        $yaycheckout_gap_rules,
+        [
+            'context'  => 'block-supports',
+            'prettify' => false,
+        ]
+    );
+
+    $yaycheckout_wrapper_attrs['class'] .= ' ' . $yaycheckout_gap_class;
 }
 
 $yaycheckout_wrapper = get_block_wrapper_attributes( $yaycheckout_wrapper_attrs );

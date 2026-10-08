@@ -58,19 +58,20 @@ class BlockRegistry {
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
-        add_filter( 'wp_theme_json_data_default', [ $this, 'place_order_width_presets' ] );
-        add_filter( 'wp_theme_json_data_default', [ $this, 'step_style_settings' ] );
+        add_filter( 'wp_theme_json_data_default', [ $this, 'block_settings' ] );
     }
 
     /**
-     * Core Button's old 25/50/75/100% widths as presets for Place Order's Width control
-     * (Styles > Dimensions). WordPress ships no dimension sizes, so the control has no presets
-     * without them. Scoped to the block, and in the default origin, so a theme's own presets win.
+     * Block settings in the default origin, so a theme's own block settings and presets win:
+     * - Place Order: Core Button's old 25/50/75/100% widths as presets for its Width control
+     *   (Styles > Dimensions). WordPress ships no dimension sizes, so the control has none without them.
+     * - Step: padding, margin and border, and Steps: blockGap, which core's defaults leave off,
+     *   so their Styles controls show on themes that don't turn them on.
      *
      * @param  \WP_Theme_JSON_Data $theme_json
      * @return \WP_Theme_JSON_Data
      */
-    public function place_order_width_presets( $theme_json ) {
+    public function block_settings( $theme_json ) {
         $sizes = [];
 
         foreach ( [ 25, 50, 75, 100 ] as $percent ) {
@@ -89,31 +90,7 @@ class BlockRegistry {
                         'yaycheckout/place-order' => [
                             'dimensions' => [ 'dimensionSizes' => $sizes ],
                         ],
-                    ],
-                ],
-            ]
-        );
-    }
-
-    /**
-     * Turns on colour, spacing and border settings for Step, and blockGap for Steps,
-     * so the Styles panel shows those controls on themes that leave them off. Default-origin
-     * settings: a theme's own block settings win.
-     *
-     * @param  \WP_Theme_JSON_Data $theme_json
-     * @return \WP_Theme_JSON_Data
-     */
-    public function step_style_settings( $theme_json ) {
-        return $theme_json->update_with(
-            [
-                'version'  => \WP_Theme_JSON::LATEST_SCHEMA,
-                'settings' => [
-                    'blocks' => [
-                        'yaycheckout/step'  => [
-                            'color'   => [
-                                'text'       => true,
-                                'background' => true,
-                            ],
+                        'yaycheckout/step'        => [
                             'spacing' => [
                                 'padding' => true,
                                 'margin'  => true,
@@ -125,10 +102,8 @@ class BlockRegistry {
                                 'width'  => true,
                             ],
                         ],
-                        'yaycheckout/steps' => [
-                            'spacing' => [
-                                'blockGap' => true,
-                            ],
+                        'yaycheckout/steps'       => [
+                            'spacing' => [ 'blockGap' => true ],
                         ],
                     ],
                 ],
