@@ -2,14 +2,15 @@
 namespace YayCheckout\Engine\Admin;
 
 use YayCheckout\Models\Layout;
+use YayCheckout\Renderer\CheckoutBaseStyles;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Gives the layout editor's canvas the storefront's full width and no title field,
- * and takes the document bar, the Publish date row and core's save and status controls
- * out of the editor around it.
+ * Gives the layout editor's canvas the storefront's full width, base stylesheet and
+ * Design tokens and no title field, and takes the document bar, the Publish date row
+ * and core's save and status controls out of the editor around it.
  *
  * A layout is the whole checkout page, so the theme's content width, wide width
  * and root padding don't apply to it. Its name is set when it is created, so the
@@ -71,12 +72,27 @@ body.yaycheckout-has-layout-actions :is(
     protected function __construct() {
         add_filter( 'block_editor_settings_all', [ $this, 'canvas_styles' ], 10, 2 );
         add_action( 'admin_enqueue_scripts', [ $this, 'editor_styles' ] );
+        // The hook core collects into the iframed canvas.
+        add_action( 'enqueue_block_assets', [ $this, 'canvas_base_styles' ] );
+    }
+
+    /** The storefront's base stylesheet and Design tokens, without the merchant's custom CSS. */
+    public function canvas_base_styles(): void {
+        if ( ! $this->is_layout_editor() ) {
+            return;
+        }
+
+        ( new CheckoutBaseStyles() )->enqueue( false );
+    }
+
+    private function is_layout_editor(): bool {
+        $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+        return null !== $screen && $screen->is_block_editor() && Layout::POST_TYPE === $screen->post_type;
     }
 
     public function editor_styles(): void {
-        $screen = get_current_screen();
-
-        if ( null === $screen || ! $screen->is_block_editor() || Layout::POST_TYPE !== $screen->post_type ) {
+        if ( ! $this->is_layout_editor() ) {
             return;
         }
 

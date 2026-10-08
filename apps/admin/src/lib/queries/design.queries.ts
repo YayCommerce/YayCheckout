@@ -1,14 +1,8 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import {
-  deleteDesignPreset,
-  designResponseFromWire,
-  getDesign,
-  postDesign,
-  postDesignPreset,
-} from '@/lib/api/design.api';
+import { designResponseFromWire, getDesign, postDesign } from '@/lib/api/design.api';
 import { logger } from '@/lib/logger';
-import { designResponseWireSchema, type DesignForm, type DesignTokens } from '@/lib/schema/design.schema';
+import { designResponseWireSchema, type DesignForm } from '@/lib/schema/design.schema';
 
 export const DESIGN_QUERIES = {
   main: queryOptions({
@@ -36,33 +30,9 @@ export function useSaveDesignMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ['design', 'save'],
-    mutationFn: ({ form, presetId }: { form: DesignForm; presetId: string | null }) => postDesign(form, presetId),
+    mutationFn: (form: DesignForm) => postDesign(form),
     // The page toasts the failure itself so it can keep the form dirty.
     meta: { skipGlobalError: true },
-    onSuccess: (response) => {
-      queryClient.setQueryData(DESIGN_QUERIES.main.queryKey, response);
-    },
-  });
-}
-
-export function useSaveDesignPresetMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationKey: ['design', 'preset', 'save'],
-    mutationFn: ({ name, tokens }: { name: string; tokens: DesignTokens }) => postDesignPreset(name, tokens),
-    // The modal shows the failure inline.
-    meta: { skipGlobalError: true },
-    onSuccess: (response) => {
-      queryClient.setQueryData(DESIGN_QUERIES.main.queryKey, response);
-    },
-  });
-}
-
-export function useDeleteDesignPresetMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationKey: ['design', 'preset', 'delete'],
-    mutationFn: (id: string) => deleteDesignPreset(id),
     onSuccess: (response) => {
       queryClient.setQueryData(DESIGN_QUERIES.main.queryKey, response);
     },

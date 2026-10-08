@@ -60,7 +60,7 @@ class SetupRestController extends BaseRestController {
      * with 409: a retry after a lost response, or a second tab, would otherwise add
      * another draft. A re-run from Settings sends `rerun` and always adds a draft.
      *
-     * Body: { template_slug, design: { tokens, preset_id, custom_css }, rerun? }.
+     * Body: { template_slug, design: { tokens, custom_css }, rerun? }.
      *
      * @return array|\WP_Error { layout, design }
      */

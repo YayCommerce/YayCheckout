@@ -22,10 +22,11 @@ const SECTION_LABEL_STYLE: CSSProperties = { fontSize: 11, letterSpacing: '0.08e
 // Mirrors DesignStyles::FONT_FALLBACK in PHP. Also stands in for "Theme default", since the preview has no theme.
 const DEFAULT_FONT_STACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
-// What a theme-default section draws as, since the admin has no theme CSS.
+// What a theme-default section draws as, since the admin has no theme CSS. The colours stand in for a theme's;
+// radius mirrors --yaycheckout-neutral-radius and inputHeight the input min-height in assets/css/checkout-base.css.
 const NEUTRAL = {
   colours: { primary: '#71717a', text: '#3f3f46', background: '#ffffff', border: '#d4d4d8' },
-  radius: 6,
+  radius: 2,
   inputHeight: 40,
 };
 
@@ -39,14 +40,14 @@ export function PreviewPane({ isCompact = false }: { isCompact?: boolean }) {
   const { control } = useFormContext<DesignForm>();
   const tokens = useWatch({ control, name: 'tokens' });
   const customCss = useWatch({ control, name: 'customCss' });
-  const { typography, spacing, buttons, inputs } = tokens;
+  const { typography, inputs } = tokens;
   const colours = tokens.colours.enabled ? tokens.colours : NEUTRAL.colours;
-  const isButtonFill = !buttons.enabled || 'fill' === buttons.style;
   const isInputBoxed = !inputs.enabled || 'boxed' === inputs.style;
   const inputRadius = inputs.enabled ? inputs.radius : NEUTRAL.radius;
   const themeGroups = GROUPS.filter(({ id }) => !isGroupOn(tokens, id)).map(({ label }) => label);
 
-  const gap = 10 * (spacing.enabled ? spacing.scale : 1);
+  // Mirrors the .form-row gap in assets/css/checkout-base.css.
+  const gap = 12;
 
   const rootStyle: CSSProperties = {
     color: colours.text,
@@ -69,12 +70,12 @@ export function PreviewPane({ isCompact = false }: { isCompact?: boolean }) {
   };
 
   const buttonStyle: CSSProperties = {
-    borderRadius: buttons.enabled ? buttons.radius : NEUTRAL.radius,
+    borderRadius: NEUTRAL.radius,
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: colours.primary,
-    backgroundColor: isButtonFill ? colours.primary : 'transparent',
-    color: isButtonFill ? colours.background : colours.primary,
+    backgroundColor: colours.primary,
+    color: colours.background,
     padding: '10px 20px',
     fontWeight: 600,
   };
