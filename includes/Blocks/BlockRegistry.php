@@ -59,6 +59,7 @@ class BlockRegistry {
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
         add_filter( 'wp_theme_json_data_default', [ $this, 'place_order_width_presets' ] );
+        add_filter( 'wp_theme_json_data_default', [ $this, 'step_style_settings' ] );
     }
 
     /**
@@ -87,6 +88,42 @@ class BlockRegistry {
                     'blocks' => [
                         'yaycheckout/place-order' => [
                             'dimensions' => [ 'dimensionSizes' => $sizes ],
+                        ],
+                    ],
+                ],
+            ]
+        );
+    }
+
+    /**
+     * Turns on colour, spacing and border settings for Step (and blockGap for Steps in a later task)
+     * so the Styles panel shows those controls on themes that leave them off. Default-origin settings:
+     * a theme's own block settings win.
+     *
+     * @param  \WP_Theme_JSON_Data $theme_json
+     * @return \WP_Theme_JSON_Data
+     */
+    public function step_style_settings( $theme_json ) {
+        return $theme_json->update_with(
+            [
+                'version'  => \WP_Theme_JSON::LATEST_SCHEMA,
+                'settings' => [
+                    'blocks' => [
+                        'yaycheckout/step' => [
+                            'color'   => [
+                                'text'       => true,
+                                'background' => true,
+                            ],
+                            'spacing' => [
+                                'padding' => true,
+                                'margin'  => true,
+                            ],
+                            'border'  => [
+                                'color'  => true,
+                                'radius' => true,
+                                'style'  => true,
+                                'width'  => true,
+                            ],
                         ],
                     ],
                 ],
