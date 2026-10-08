@@ -128,6 +128,21 @@ class CheckoutFragments {
         echo self::payment_methods_html();
     }
 
+    /** Shipping methods is empty when the cart needs no shipping; the "enter your address" and "no options" messages count as content. */
+    public static function shipping_empty(): bool {
+        return ! WC()->cart instanceof \WC_Cart || ! ( WC()->cart->needs_shipping() && WC()->cart->show_shipping() );
+    }
+
+    /** Payment is empty when the order needs no payment; the "no available payment methods" notice counts as content. */
+    public static function payment_empty(): bool {
+        return ! WC()->cart instanceof \WC_Cart || ! WC()->cart->needs_payment();
+    }
+
+    /** HideWhenEmpty's markers for a fragment root, so the live script reads emptiness from the swapped HTML. */
+    private static function live_attributes( bool $is_empty ): string {
+        return ' ' . HideWhenEmpty::LIVE_ATTR . '="1"' . ( $is_empty ? ' ' . HideWhenEmpty::EMPTY_ATTR . '="1"' : '' );
+    }
+
     /**
      * Rates wrapper so AJAX can replace an empty first paint. Fires Woo's review-order shipping
      * hooks around the rates, as review-order.php does, since Totals leaves the rates to this block.
@@ -137,11 +152,13 @@ class CheckoutFragments {
             return '';
         }
 
+        $empty = self::shipping_empty();
+
         ob_start();
 
-        echo '<div class="' . esc_attr( self::SHIPPING_RATES_CLASS ) . '">';
+        echo '<div class="' . esc_attr( self::SHIPPING_RATES_CLASS ) . '"' . self::live_attributes( $empty ) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- live_attributes() prints fixed names and values.
 
-        if ( WC()->cart->needs_shipping() && WC()->cart->show_shipping() ) {
+        if ( ! $empty ) {
             echo '<table class="shop_table"><tbody>';
             // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hook.
             do_action( 'woocommerce_review_order_before_shipping' );
@@ -162,7 +179,9 @@ class CheckoutFragments {
             return '';
         }
 
-        if ( WC()->cart->needs_payment() ) {
+        $empty = self::payment_empty();
+
+        if ( ! $empty ) {
             $available_gateways = WC()->payment_gateways()->get_available_payment_gateways();
             WC()->payment_gateways()->set_current_gateway( $available_gateways );
         } else {
@@ -176,8 +195,8 @@ class CheckoutFragments {
             do_action( 'woocommerce_review_order_before_payment' );
         }
         ?>
-<div id="payment" class="woocommerce-checkout-payment">
-        <?php if ( WC()->cart->needs_payment() ) : ?>
+<div id="payment" class="woocommerce-checkout-payment"<?php echo self::live_attributes( $empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- live_attributes() prints fixed names and values. ?>>
+        <?php if ( ! $empty ) : ?>
     <ul class="wc_payment_methods payment_methods methods" aria-label="<?php esc_attr_e( 'Payment methods', 'yaycheckout' ); ?>">
             <?php
             if ( ! empty( $available_gateways ) ) {

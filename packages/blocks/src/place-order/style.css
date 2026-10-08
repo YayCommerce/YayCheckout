@@ -4,6 +4,11 @@
 	box-sizing: border-box;
 }
 
+/* Classic themes (Storefront) set button { border: none }, which beats core's :where() border-style fallback. */
+.wp-block-yaycheckout-place-order:where(.has-border-color, [style*="border-top-color"], [style*="border-right-color"], [style*="border-bottom-color"], [style*="border-left-color"], [style*="border-width"], [style*="border-top-width"], [style*="border-right-width"], [style*="border-bottom-width"], [style*="border-left-width"]) {
+	border-style: solid;
+}
+
 /* The primary token until the merchant picks a colour; the colour support adds these classes when they do. */
 .wp-block-yaycheckout-place-order:not(.has-background),
 .wp-block-yaycheckout-place-order:not(.has-background):is(:hover, :focus) {

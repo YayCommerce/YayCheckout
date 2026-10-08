@@ -8,6 +8,10 @@
   "textdomain": "yaycheckout",
   "parent": [ "yaycheckout/checkout" ],
   "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
     "text": {
       "type": "string",
       "default": "Returning customers? Log in"
@@ -24,6 +28,7 @@
   },
   "supports": {
     "html": false,
+    "yaycheckoutWatchable": true,
     "multiple": false,
     "reusable": false,
     "color": {

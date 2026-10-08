@@ -14,6 +14,10 @@
   },
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
     "checkboxLabel": {
       "type": "string",
       "default": ""
@@ -21,6 +25,7 @@
   },
   "supports": {
     "html": false,
+    "yaycheckoutWatchable": true,
     "multiple": false,
     "reusable": false
   },

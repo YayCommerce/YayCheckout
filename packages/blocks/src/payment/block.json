@@ -10,6 +10,10 @@
   "example": {},
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
     "label": {
       "type": "string",
       "default": "Payment"
@@ -17,6 +21,7 @@
   },
   "supports": {
     "html": false,
+    "yaycheckoutWatchable": true,
     "multiple": false,
     "reusable": false
   },

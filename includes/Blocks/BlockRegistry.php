@@ -3,6 +3,7 @@ namespace YayCheckout\Blocks;
 
 use YayCheckout\Models\Layout;
 use YayCheckout\Renderer\CheckoutLogin;
+use YayCheckout\Renderer\HideWhenEmpty;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -61,18 +62,20 @@ class BlockRegistry {
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
-        add_filter( 'wp_theme_json_data_default', [ $this, 'place_order_width_presets' ] );
+        add_filter( 'wp_theme_json_data_default', [ $this, 'block_settings' ] );
     }
 
     /**
-     * Core Button's old 25/50/75/100% widths as presets for Place Order's Width control
-     * (Styles > Dimensions). WordPress ships no dimension sizes, so the control has no presets
-     * without them. Scoped to the block, and in the default origin, so a theme's own presets win.
+     * Block settings in the default origin, so a theme's own block settings and presets win:
+     * - Place Order: Core Button's old 25/50/75/100% widths as presets for its Width control
+     *   (Styles > Dimensions). WordPress ships no dimension sizes, so the control has none without them.
+     * - Place Order and Step: padding, margin and border, and Steps: blockGap, which core's defaults
+     *   leave off, so their Styles controls show on themes that don't turn them on.
      *
      * @param  \WP_Theme_JSON_Data $theme_json
      * @return \WP_Theme_JSON_Data
      */
-    public function place_order_width_presets( $theme_json ) {
+    public function block_settings( $theme_json ) {
         $sizes = [];
 
         foreach ( [ 25, 50, 75, 100 ] as $percent ) {
@@ -90,6 +93,31 @@ class BlockRegistry {
                     'blocks' => [
                         'yaycheckout/place-order' => [
                             'dimensions' => [ 'dimensionSizes' => $sizes ],
+                            'spacing'    => [
+                                'padding' => true,
+                                'margin'  => true,
+                            ],
+                            'border'     => [
+                                'color'  => true,
+                                'radius' => true,
+                                'style'  => true,
+                                'width'  => true,
+                            ],
+                        ],
+                        'yaycheckout/step'        => [
+                            'spacing' => [
+                                'padding' => true,
+                                'margin'  => true,
+                            ],
+                            'border'  => [
+                                'color'  => true,
+                                'radius' => true,
+                                'style'  => true,
+                                'width'  => true,
+                            ],
+                        ],
+                        'yaycheckout/steps'       => [
+                            'spacing' => [ 'blockGap' => true ],
                         ],
                     ],
                 ],
@@ -161,6 +189,15 @@ class BlockRegistry {
             self::COUPON_FORM_SCRIPT,
             YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-coupon-form.js',
             [ 'jquery', 'wc-checkout' ],
+            YAYCHECKOUT_VERSION,
+            true
+        );
+
+        // Enqueued by HideWhenEmpty::filter_container() for a container that watches blocks.
+        wp_register_script(
+            HideWhenEmpty::SCRIPT,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-hide-when-empty.js',
+            [ 'jquery', 'wc-checkout', 'wc-address-i18n' ],
             YAYCHECKOUT_VERSION,
             true
         );

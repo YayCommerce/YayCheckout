@@ -28,6 +28,28 @@ class CheckoutFieldDefaults {
     }
 
     /**
+     * True when WooCommerce's country locale hides this billing or shipping field for the shopper's
+     * country (State for VN, Postcode for AE). Reads the locale as address-i18n.js does, with its
+     * fallback to `default`: get_address_fields() drops the `hidden` flag.
+     */
+    public static function hidden_for_country( string $key ): bool {
+        if ( ! function_exists( 'WC' ) || ! preg_match( '/^(billing|shipping)_(.+)$/', $key, $match ) ) {
+            return false;
+        }
+
+        $country = self::value( $match[1] . '_country' );
+
+        if ( ! is_string( $country ) || '' === $country ) {
+            return false;
+        }
+
+        $locale = WC()->countries->get_country_locale();
+        $fields = isset( $locale[ $country ] ) ? $locale[ $country ] : ( isset( $locale['default'] ) ? $locale['default'] : [] );
+
+        return ! empty( $fields[ $match[2] ]['hidden'] );
+    }
+
+    /**
      * WooCommerce's behaviour classes for a billing or shipping key, after locale and
      * third-party woocommerce_checkout_fields changes.
      *
