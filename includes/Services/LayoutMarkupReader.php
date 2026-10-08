@@ -150,13 +150,13 @@ class LayoutMarkupReader {
     }
 
     /**
-     * Why the layout cannot be published, or '' when it can. JavaScript copies of these rules live in
+     * Why the layout cannot be activated, or saved while live, or '' when it can. JavaScript copies of these rules live in
      * packages/blocks/src/checkout/publish-guard.ts, packages/blocks/src/shared/extra-field-keys.ts
      * and packages/blocks/src/extra-field/edit.tsx; change them together.
      */
     public static function publish_error( string $markup ): string {
         if ( ! has_block( self::CHECKOUT, $markup ) ) {
-            return __( 'Add a Checkout block to this layout before publishing it.', 'yaycheckout' );
+            return __( 'Add a Checkout block to this layout before activating it.', 'yaycheckout' );
         }
 
         $keys = [];
@@ -168,7 +168,7 @@ class LayoutMarkupReader {
         }
 
         if ( in_array( '', $keys, true ) ) {
-            return __( 'Every extra field needs a Key before this layout can be published.', 'yaycheckout' );
+            return __( 'Every extra field needs a Key before this layout can be activated.', 'yaycheckout' );
         }
 
         $malformed = array_values( array_unique( preg_grep( self::EXTRA_FIELD_KEY_PATTERN, $keys, PREG_GREP_INVERT ) ) );
