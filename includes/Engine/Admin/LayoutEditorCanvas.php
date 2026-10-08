@@ -8,12 +8,14 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Gives the layout editor's canvas the storefront's full width and no title field,
- * and takes the document bar and the Publish date row out of the editor around it.
+ * and takes the document bar, the Publish date row and core's save and status controls
+ * out of the editor around it.
  *
  * A layout is the whole checkout page, so the theme's content width, wide width
  * and root padding don't apply to it. Its name is set when it is created, so the
  * canvas shows no title to edit, and the document bar only repeats that name. The
- * manager publishes layouts, so the editor offers no publish date to schedule.
+ * manager and the editor's Activate own a layout's status, so the editor offers no
+ * publish date to schedule and no status to pick.
  */
 class LayoutEditorCanvas {
 
@@ -42,9 +44,23 @@ class LayoutEditorCanvas {
 	display: none;
 }';
 
-    /** The Publish row has no class of its own, only the schedule dropdown inside it. */
+    /**
+     * The Publish and Status rows have no class of their own, only the dropdown inside each.
+     * Core's save and status controls hide only once layout-actions.tsx has mounted its own
+     * buttons and tagged the body, so a header it can't find still leaves core's.
+     */
     private const EDITOR_CSS = '.editor-document-bar,
 .editor-post-panel__row:has(.editor-post-schedule__panel-dropdown) {
+	display: none;
+}
+body.yaycheckout-has-layout-actions :is(
+	.editor-post-publish-button__button,
+	.editor-post-publish-panel__toggle,
+	.editor-post-save-draft,
+	.editor-post-saved-state,
+	.editor-post-switch-to-draft,
+	.editor-post-panel__row:has(.editor-post-status)
+) {
 	display: none;
 }';
 

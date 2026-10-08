@@ -17,7 +17,10 @@ import checkoutMeta from './block.json';
 const CHECKOUT_BLOCK = checkoutMeta.name;
 const LOCK_KEY = 'yaycheckout-layout-invalid';
 
-interface LayoutProblem {
+/** Statuses shoppers may see; only these hold the save lock, as the server only refuses these. */
+const LIVE_STATUSES = [ 'publish', 'future' ];
+
+export interface LayoutProblem {
 	message: string;
 	// The first extra field at fault, for the notice's "Go to field" action; '' when none.
 	clientId: string;
@@ -42,12 +45,12 @@ function focusKeyControl( attempts = 20 ) {
 }
 
 /**
- * Locks saving while the layout cannot take an order: no Checkout block at any depth,
- * or an extra field Key that is empty, malformed or shared. Mirrors
- * LayoutMarkupReader::publish_error(); core has no publish-only lock, so drafts are held too.
+ * Why the layout cannot take an order: no Checkout block at any depth, or an extra field
+ * Key that is empty, malformed or shared. Mirrors LayoutMarkupReader::publish_error().
+ * layout-actions.tsx reads it too, to hold Activate.
  */
-function LayoutPublishGuard() {
-	const { message, clientId } = useSelect( ( select ): LayoutProblem => {
+export function useLayoutProblem(): LayoutProblem {
+	return useSelect( ( select ): LayoutProblem => {
 		if ( select( editorStore ).getCurrentPostType() !== editorData.postType ) {
 			return NO_PROBLEM;
 		}
@@ -55,7 +58,7 @@ function LayoutPublishGuard() {
 		const blockEditor = select( blockEditorStore );
 
 		if ( blockEditor.getGlobalBlockCount( CHECKOUT_BLOCK ) === 0 ) {
-			return { message: __( 'Add a Checkout block to save this layout.', 'yaycheckout' ), clientId: '' };
+			return { message: __( 'Add a Checkout block to this layout before activating it.', 'yaycheckout' ), clientId: '' };
 		}
 
 		const fields = extraFields( blockEditor );
@@ -65,7 +68,7 @@ function LayoutPublishGuard() {
 
 		if ( keys.includes( '' ) ) {
 			return {
-				message: __( 'Every extra field needs a Key before this layout can be saved.', 'yaycheckout' ),
+				message: __( 'Every extra field needs a Key before this layout can be activated.', 'yaycheckout' ),
 				clientId: firstWith( ( key ) => key === '' ),
 			};
 		}
@@ -95,6 +98,19 @@ function LayoutPublishGuard() {
 
 		return NO_PROBLEM;
 	}, [] );
+}
+
+/**
+ * Shows the problem as a notice, and locks saving only while the layout is live (published
+ * or scheduled, which every active layout is), matching the server. A draft is inactive,
+ * so it saves freely and the rules wait for Activate.
+ */
+function LayoutPublishGuard() {
+	const { message, clientId } = useLayoutProblem();
+	const isLive = useSelect(
+		( select ) => LIVE_STATUSES.includes( select( editorStore ).getEditedPostAttribute( 'status' ) as string ),
+		[]
+	);
 	const { lockPostSaving, unlockPostSaving } = useDispatch( editorStore );
 	const { createWarningNotice, removeNotice } = useDispatch( noticesStore );
 	const { selectBlock } = useDispatch( blockEditorStore );
@@ -105,7 +121,10 @@ function LayoutPublishGuard() {
 			return;
 		}
 
-		lockPostSaving( LOCK_KEY );
+		if ( isLive ) {
+			lockPostSaving( LOCK_KEY );
+		}
+
 		createWarningNotice( message, {
 			id: LOCK_KEY,
 			isDismissible: false,
@@ -131,6 +150,7 @@ function LayoutPublishGuard() {
 	}, [
 		message,
 		clientId,
+		isLive,
 		lockPostSaving,
 		unlockPostSaving,
 		createWarningNotice,
