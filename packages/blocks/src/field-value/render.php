@@ -55,15 +55,16 @@ if ( '' !== $yaycheckout_value && function_exists( 'WC' ) && WC()->countries ins
     }
 }
 
-$yaycheckout_placeholder = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'placeholder' );
-
-if ( '' === $yaycheckout_placeholder ) {
-    $yaycheckout_placeholder = \YayCheckout\Renderer\CheckoutFieldDefaults::label( $yaycheckout_key );
-}
+$yaycheckout_field_label = \YayCheckout\Renderer\CheckoutFieldDefaults::label( $yaycheckout_key );
+$yaycheckout_show_label  = ! empty( $attributes['showLabel'] ) && '' !== $yaycheckout_field_label;
+$yaycheckout_placeholder = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'placeholder', $yaycheckout_field_label );
 
 $yaycheckout_empty = '' === $yaycheckout_value;
 
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-field-value' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+    <?php if ( $yaycheckout_show_label ) : ?>
+        <div class="yaycheckout-field-value__label"><?php echo esc_html( $yaycheckout_field_label ); ?></div>
+    <?php endif; ?>
     <div class="yaycheckout-field-value__value<?php echo $yaycheckout_empty ? ' is-empty' : ''; ?>" data-field-key="<?php echo esc_attr( $yaycheckout_key ); ?>" data-placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>"><?php echo esc_html( $yaycheckout_empty ? $yaycheckout_placeholder : $yaycheckout_value ); ?></div>
 </div>

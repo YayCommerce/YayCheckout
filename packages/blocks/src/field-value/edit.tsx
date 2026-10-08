@@ -1,5 +1,5 @@
 import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, SelectControl } from '@wordpress/components';
+import { PanelBody, SelectControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { billingAddressFields, shippingAddressFields, type AddressFieldDef } from '../shared/address-fields';
 import './editor.css';
@@ -7,6 +7,7 @@ import './editor.css';
 interface FieldValueAttributes {
 	fieldKey: string;
 	placeholder: string;
+	showLabel: boolean;
 }
 
 interface EditProps {
@@ -28,7 +29,7 @@ function fieldGroups(): { label: string; fields: AddressFieldDef[] }[] {
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { fieldKey, placeholder } = attributes;
+	const { fieldKey, placeholder, showLabel } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-field-value' } );
 	const groups = fieldGroups();
 	const fieldLabel = groups.flatMap( ( group ) => group.fields ).find( ( field ) => field.key === fieldKey )?.label ?? '';
@@ -54,9 +55,17 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							</optgroup>
 						) ) }
 					</SelectControl>
+					<ToggleControl
+						label={ __( 'Show label', 'yaycheckout' ) }
+						help={ __( "Prints the field's name above its value.", 'yaycheckout' ) }
+						checked={ showLabel }
+						onChange={ ( value: boolean ) => setAttributes( { showLabel: value } ) }
+						__nextHasNoMarginBottom
+					/>
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
+				{ showLabel && <div className="yaycheckout-field-value__label">{ fieldLabel }</div> }
 				{ /* The muted text the shopper sees until they fill the field; empty falls back to the field's name. */ }
 				<RichText
 					tagName="div"

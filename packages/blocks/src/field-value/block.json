@@ -21,6 +21,10 @@
     "placeholder": {
       "type": "string",
       "default": ""
+    },
+    "showLabel": {
+      "type": "boolean",
+      "default": false
     }
   },
   "supports": {

@@ -43,23 +43,23 @@
 **Interfaces:**
 - Consumes: `billingAddressFields()`, `shippingAddressFields()` (`AddressFieldDef { key, type, label, required }`) from `packages/blocks/src/shared/address-fields.ts`; `registerDynamicBlock( metadata, Edit )`; `\YayCheckout\Renderer\CheckoutFieldDefaults::value( string $key )`; `\YayCheckout\Services\LayoutMarkupReader::plain_text()`.
 - Produces (Task 2 relies on): storefront markup
-  `div.yaycheckout-field-value` > `div.yaycheckout-field-value__value[data-field-key="<key>"][data-placeholder="<text>"]`, with class `is-empty` on the value element when it shows the placeholder.
+  `div.yaycheckout-field-value` > optional `div.yaycheckout-field-value__label` (when `showLabel`) + `div.yaycheckout-field-value__value[data-field-key="<key>"][data-placeholder="<text>"]`, with class `is-empty` on the value element when it shows the placeholder.
 
 - [ ] **Step 1: `block.json`**
 
 `name` `yaycheckout/field-value`, `title` `Field Value`, `category` `yaycheckout`, `description` `Shows what the shopper entered in one checkout field.`, `keywords` `[ "summary", "recap", "address" ]`, `ancestor` `[ "yaycheckout/checkout" ]`, `example` `{ "attributes": { "fieldKey": "billing_email" } }`.
-Attributes: `fieldKey` string default `"billing_email"`; `placeholder` string default `""`.
+Attributes: `fieldKey` string default `"billing_email"`; `placeholder` string default `""`; `showLabel` boolean default `false`.
 Supports: `html: false`, `reusable: false`, `color` `{ text, background }`, `typography` `{ fontSize, lineHeight, __experimentalFontFamily, __experimentalFontStyle, __experimentalFontWeight, __experimentalLetterSpacing, __experimentalTextDecoration, __experimentalTextTransform }`, `__experimentalBorder` `{ color, radius, style, width }`, `spacing` `{ margin, padding }`.
 `editorScript` `file:./index.js`, `style` `file:./style-index.css` (as `return-to-cart`), `render` `file:./render.php`. `viewScript` is added in Task 2 with `view.ts`.
 
 - [ ] **Step 2: `index.ts`, `edit.tsx`, `style.css`**
 
 - `index.ts`: `import './style.css';` and `registerDynamicBlock( metadata, Edit )`, as `return-to-cart/index.ts`.
-- `edit.tsx`: `export default function Edit( { attributes, setAttributes }: EditProps )`, attributes `{ fieldKey: string; placeholder: string }`.
-  - Inspector `PanelBody` "Field value": `SelectControl` "Field" with two `<optgroup>`s, "Billing" (`billing_email` labelled "Email address" first, then `billingAddressFields()`) and "Shipping" (`shippingAddressFields()`); changing it also sets `placeholder` to `""`.
+- `edit.tsx`: `export default function Edit( { attributes, setAttributes }: EditProps )`, attributes `{ fieldKey: string; placeholder: string; showLabel: boolean }`.
+  - Inspector `PanelBody` "Field value": `SelectControl` "Field" with two `<optgroup>`s, "Billing" (`billing_email` labelled "Email address" first, then `billingAddressFields()`) and "Shipping" (`shippingAddressFields()`); changing it also sets `placeholder` to `""`. `ToggleControl` "Show label" sets `showLabel`; when on, the canvas prints the field's label above the placeholder line.
   - Canvas (`useBlockProps( { className: 'yaycheckout-field-value' } )`): the placeholder is `RichText` (`tagName="div"`, `allowedFormats={ [] }`, `withoutInteractiveFormatting`), per `.claude/rules/blocks.md`, with class `yaycheckout-field-value__value is-empty` and the selected field's label as its hint.
 - `packages/blocks/src/shared/block-icons.tsx`: add a `yaycheckout/field-value` icon in the existing outline style.
-- `style.css`: `.yaycheckout-field-value__value.is-empty { opacity: 0.5; }`. No colours, sizes or case (merchant sets them through supports).
+- `style.css`: `.yaycheckout-field-value__value.is-empty { opacity: 0.5; }`; `.yaycheckout-field-value__label { font-size: 0.8em; font-weight: 600; }` so a shown label reads apart from the muted placeholder. No colours, sizes or case (merchant sets them through supports).
 
 - [ ] **Step 3: `render.php`**
 
