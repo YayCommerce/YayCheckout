@@ -24,15 +24,43 @@ class CheckoutFragments {
 
     /** Layout slot => [ selector WooCommerce's checkout.js replaces, method building its HTML ]. */
     private const FRAGMENTS = [
-        'payment'              => [ '.woocommerce-checkout-payment', 'payment_methods_html' ],
-        'shipping_methods'     => [ '.' . self::SHIPPING_RATES_CLASS, 'shipping_rates_html' ],
-        'order_summary_items'  => [ '.' . self::ORDER_ITEMS_CLASS, 'order_items_html' ],
-        'order_summary_totals' => [ '.' . self::ORDER_TOTALS_CLASS, 'order_totals_html' ],
+        'payment'          => [ '.woocommerce-checkout-payment', 'payment_methods_html' ],
+        'shipping_methods' => [ '.' . self::SHIPPING_RATES_CLASS, 'shipping_rates_html' ],
     ];
+
+    /** Order Summary child block => [ selector checkout.js replaces, method building its HTML ]; found by block name, not slot. */
+    private const BLOCK_FRAGMENTS = [
+        'yaycheckout/order-summary-items'  => [ '.' . self::ORDER_ITEMS_CLASS, 'order_items_html' ],
+        'yaycheckout/order-summary-totals' => [ '.' . self::ORDER_TOTALS_CLASS, 'order_totals_html' ],
+    ];
+
+    /** Woo's update_order_review fragment for its whole review-order table. */
+    private const REVIEW_ORDER_TABLE = '.woocommerce-checkout-review-order-table';
 
     protected function __construct() {
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's AJAX fragment filter.
         add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'fragments' ], 20 );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's template path filter.
+        add_filter( 'wc_get_template', [ $this, 'skip_review_order_table' ], 10, 2 );
+    }
+
+    /**
+     * During update_order_review, Woo renders its whole review-order table before the fragments
+     * filter runs. A layout with Items or Totals discards it, so swap it for an empty template
+     * and its review-order hooks fire once, in our tables.
+     */
+    public function skip_review_order_table( $template, $template_name ) {
+        if ( 'checkout/review-order.php' !== $template_name || ! doing_action( 'wc_ajax_update_order_review' ) ) {
+            return $template;
+        }
+
+        $layout = CheckoutPage::get_instance()->layout();
+
+        if ( null === $layout || empty( self::summary_block_fragments( $layout->content ) ) ) {
+            return $template;
+        }
+
+        return YAYCHECKOUT_PLUGIN_DIR . 'templates/review-order-skipped.php';
     }
 
     /** Swaps the fragments of this layout's sections for this layout's HTML, and refreshes Place order's total. */
@@ -44,8 +72,14 @@ class CheckoutFragments {
         }
 
         $rendered = array_flip( LayoutMarkupReader::slots( $layout->content ) );
+        $summary  = self::summary_block_fragments( $layout->content );
 
-        foreach ( array_intersect_key( self::FRAGMENTS, $rendered ) as [ $selector, $build ] ) {
+        if ( ! empty( $summary ) ) {
+            // Empty after skip_review_order_table(), and no element on the page matches it.
+            unset( $fragments[ self::REVIEW_ORDER_TABLE ] );
+        }
+
+        foreach ( array_merge( array_values( array_intersect_key( self::FRAGMENTS, $rendered ) ), $summary ) as [ $selector, $build ] ) {
             $html = self::$build();
 
             if ( '' !== $html ) {
@@ -60,6 +94,17 @@ class CheckoutFragments {
         }
 
         return $fragments;
+    }
+
+    /**
+     * The BLOCK_FRAGMENTS entries whose block is in the layout.
+     *
+     * @return array<int, array{0: string, 1: string}>
+     */
+    private static function summary_block_fragments( string $markup ): array {
+        $names = array_column( LayoutMarkupReader::flatten( parse_blocks( $markup ) ), 'blockName' );
+
+        return array_values( array_intersect_key( self::BLOCK_FRAGMENTS, array_flip( array_filter( $names, 'is_string' ) ) ) );
     }
 
     /** The Place order button alone (render.php prints only it during AJAX), when it shows the total. */
@@ -83,7 +128,10 @@ class CheckoutFragments {
         echo self::payment_methods_html();
     }
 
-    /** Rates wrapper so AJAX can replace an empty first paint. */
+    /**
+     * Rates wrapper so AJAX can replace an empty first paint. Fires Woo's review-order shipping
+     * hooks around the rates, as review-order.php does, since Totals leaves the rates to this block.
+     */
     public static function shipping_rates_html(): string {
         if ( ! WC()->cart instanceof \WC_Cart ) {
             return '';
@@ -95,7 +143,11 @@ class CheckoutFragments {
 
         if ( WC()->cart->needs_shipping() && WC()->cart->show_shipping() ) {
             echo '<table class="shop_table"><tbody>';
+            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hook.
+            do_action( 'woocommerce_review_order_before_shipping' );
             wc_cart_totals_shipping_html();
+            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hook.
+            do_action( 'woocommerce_review_order_after_shipping' );
             echo '</tbody></table>';
         }
 
@@ -159,14 +211,19 @@ class CheckoutFragments {
         return (string) ob_get_clean();
     }
 
-    public static function print_order_items(): void {
-        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Same HTML Woo prints for review-order rows.
-        echo self::order_items_html();
-    }
+    /** An Items or Totals block: its wrapper and the table fragments() refreshes. */
+    public static function print_summary_block( \WP_Block $block ): void {
+        if ( ! isset( self::BLOCK_FRAGMENTS[ $block->name ] ) ) {
+            return;
+        }
 
-    public static function print_order_totals(): void {
+        $build = self::BLOCK_FRAGMENTS[ $block->name ][1];
+
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
+        echo '<div ' . get_block_wrapper_attributes() . '>';
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Same HTML Woo prints for review-order rows.
-        echo self::order_totals_html();
+        echo self::$build();
+        echo '</div>';
     }
 
     /**
@@ -178,14 +235,14 @@ class CheckoutFragments {
             return '';
         }
 
-        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hooks and filters, fired where its template fires them.
+        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Woo's review-order hooks, filters and strings, so its translation still applies.
         ob_start();
         ?>
 <table class="shop_table <?php echo esc_attr( self::ORDER_ITEMS_CLASS ); ?>">
     <thead>
         <tr>
-            <th class="product-name"><?php esc_html_e( 'Product', 'yaycheckout' ); ?></th>
-            <th class="product-total"><?php esc_html_e( 'Subtotal', 'yaycheckout' ); ?></th>
+            <th class="product-name"><?php esc_html_e( 'Product', 'woocommerce' ); ?></th>
+            <th class="product-total"><?php esc_html_e( 'Subtotal', 'woocommerce' ); ?></th>
         </tr>
     </thead>
     <tbody>
@@ -218,24 +275,27 @@ class CheckoutFragments {
     </tbody>
 </table>
         <?php
-        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch
 
         return (string) ob_get_clean();
     }
 
-    /** The tfoot rows of Woo's checkout/review-order.php, as the body of their own table. */
+    /**
+     * The tfoot rows of Woo's checkout/review-order.php, as the body of their own table, without
+     * the shipping rates: the Shipping Methods block offers those, and Total still counts them.
+     */
     public static function order_totals_html(): string {
         if ( ! WC()->cart instanceof \WC_Cart ) {
             return '';
         }
 
-        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hooks, fired where its template fires them.
+        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Woo's review-order hooks and strings, so its translation still applies.
         ob_start();
         ?>
 <table class="shop_table <?php echo esc_attr( self::ORDER_TOTALS_CLASS ); ?>">
     <tbody>
         <tr class="cart-subtotal">
-            <th><?php esc_html_e( 'Subtotal', 'yaycheckout' ); ?></th>
+            <th><?php esc_html_e( 'Subtotal', 'woocommerce' ); ?></th>
             <td><?php wc_cart_totals_subtotal_html(); ?></td>
         </tr>
         <?php foreach ( WC()->cart->get_coupons() as $code => $coupon ) : ?>
@@ -244,13 +304,6 @@ class CheckoutFragments {
             <td><?php wc_cart_totals_coupon_html( $coupon ); ?></td>
         </tr>
         <?php endforeach; ?>
-        <?php
-        if ( WC()->cart->needs_shipping() && WC()->cart->show_shipping() ) {
-            do_action( 'woocommerce_review_order_before_shipping' );
-            wc_cart_totals_shipping_html();
-            do_action( 'woocommerce_review_order_after_shipping' );
-        }
-        ?>
         <?php foreach ( WC()->cart->get_fees() as $fee ) : ?>
         <tr class="fee">
             <th><?php echo esc_html( $fee->name ); ?></th>
@@ -274,14 +327,14 @@ class CheckoutFragments {
         <?php endif; ?>
         <?php do_action( 'woocommerce_review_order_before_order_total' ); ?>
         <tr class="order-total">
-            <th><?php esc_html_e( 'Total', 'yaycheckout' ); ?></th>
+            <th><?php esc_html_e( 'Total', 'woocommerce' ); ?></th>
             <td><?php wc_cart_totals_order_total_html(); ?></td>
         </tr>
         <?php do_action( 'woocommerce_review_order_after_order_total' ); ?>
     </tbody>
 </table>
         <?php
-        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch
 
         return (string) ob_get_clean();
     }

@@ -26,16 +26,14 @@ class LayoutMarkupReader {
 
     /** Section block => slot name it occupies. */
     private const SECTION_SLOTS = [
-        self::EMAIL                        => 'email',
-        'yaycheckout/billing'              => 'billing',
-        'yaycheckout/shipping'             => 'shipping',
-        'yaycheckout/shipping-methods'     => 'shipping_methods',
-        'yaycheckout/express-pay'          => 'express_pay',
-        'yaycheckout/payment'              => 'payment',
-        'yaycheckout/order-summary'        => 'order_summary',
-        'yaycheckout/order-summary-items'  => 'order_summary_items',
-        'yaycheckout/order-summary-totals' => 'order_summary_totals',
-        'yaycheckout/place-order'          => 'place_order',
+        self::EMAIL                    => 'email',
+        'yaycheckout/billing'          => 'billing',
+        'yaycheckout/shipping'         => 'shipping',
+        'yaycheckout/shipping-methods' => 'shipping_methods',
+        'yaycheckout/express-pay'      => 'express_pay',
+        'yaycheckout/payment'          => 'payment',
+        'yaycheckout/order-summary'    => 'order_summary',
+        'yaycheckout/place-order'      => 'place_order',
     ];
 
     /**

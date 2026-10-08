@@ -24,3 +24,23 @@ body.yaycheckout-page > .wp-site-blocks,
 	--wp--style--root--padding-left: 0px;
 	--wp--style--root--padding-right: 0px;
 }
+
+/* Order Summary's Items and Totals are separate tables; matching widths keep their amounts in one column.
+   Scoped under the summary so it outranks WooCommerce's `.woocommerce-page table.shop_table` (width: 70%). */
+.yaycheckout-order-summary table.yaycheckout-order-summary-items,
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-items :is(th, td):first-child,
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):first-child {
+	text-align: start;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-items :is(th, td):last-child,
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):last-child {
+	width: 40%;
+	text-align: end;
+}
