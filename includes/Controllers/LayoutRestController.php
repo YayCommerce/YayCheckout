@@ -346,7 +346,7 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Stops serving a layout to shoppers. It stays published.
+     * Stops serving a layout to shoppers and returns it to draft.
      *
      * @return array|\WP_Error
      */
