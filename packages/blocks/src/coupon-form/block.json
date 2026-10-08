@@ -8,14 +8,14 @@
   "textdomain": "yaycheckout",
   "example": {
     "attributes": {
-    "blockId": {
-      "type": "string",
-      "default": ""
-    },
       "buttonText": "Apply coupon"
     }
   },
   "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
     "placeholder": {
       "type": "string",
       "default": ""

@@ -9,15 +9,15 @@
   "keywords": [ "hook", "placeholder" ],
   "example": {
     "attributes": {
-    "blockId": {
-      "type": "string",
-      "default": ""
-    },
       "slotName": "after_email"
     }
   },
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
     "slotName": {
       "type": "string",
       "default": ""

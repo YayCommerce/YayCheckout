@@ -9,15 +9,15 @@
   "keywords": [ "account", "register", "signup", "password" ],
   "example": {
     "attributes": {
-    "blockId": {
-      "type": "string",
-      "default": ""
-    },
       "checkboxLabel": "Create an account?"
     }
   },
   "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
     "checkboxLabel": {
       "type": "string",
       "default": ""
