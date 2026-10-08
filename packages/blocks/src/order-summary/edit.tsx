@@ -16,12 +16,8 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< OrderSummaryAttributes > ) => void;
 }
 
-const LOCKED = { lock: { move: true, remove: true } };
 // templates/default-layout.php seeds the same children; change both.
-const TEMPLATE: [ string, typeof LOCKED ][] = [
-	[ itemsMeta.name, LOCKED ],
-	[ totalsMeta.name, LOCKED ],
-];
+const TEMPLATE: [ string ][] = [ [ itemsMeta.name ], [ totalsMeta.name ] ];
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label } = attributes;

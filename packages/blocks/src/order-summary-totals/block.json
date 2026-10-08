@@ -9,7 +9,6 @@
   "parent": [ "yaycheckout/order-summary" ],
   "supports": {
     "html": false,
-    "inserter": false,
     "multiple": false,
     "reusable": false
   },

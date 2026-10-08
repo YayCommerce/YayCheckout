@@ -116,9 +116,9 @@ defined( 'ABSPATH' ) || exit;
 <!-- wp:column {"width":"40%"} -->
 <div class="wp-block-column" style="flex-basis:40%"><!-- wp:group {"style":{"position":{"type":"sticky","top":"0px"}}} -->
 <div class="wp-block-group"><!-- wp:yaycheckout/order-summary -->
-<!-- wp:yaycheckout/order-summary-items {"lock":{"move":true,"remove":true}} /-->
+<!-- wp:yaycheckout/order-summary-items /-->
 
-<!-- wp:yaycheckout/order-summary-totals {"lock":{"move":true,"remove":true}} /-->
+<!-- wp:yaycheckout/order-summary-totals /-->
 <!-- /wp:yaycheckout/order-summary -->
 
 <!-- wp:yaycheckout/coupon-form /--></div>
