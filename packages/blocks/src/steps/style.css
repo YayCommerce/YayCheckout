@@ -119,3 +119,18 @@
 .yaycheckout-steps[data-layout="single"]:not(:has(.yaycheckout-step[data-state="current"])) > .yaycheckout-step[data-state="complete"]:last-child {
 	display: block;
 }
+
+/*
+ * Step text colour cascades into body content. Keep back / return-to-cart on
+ * primary; a Return to Cart block that sets its own text colour still wins.
+ */
+.yaycheckout-step .yaycheckout-return-to-cart:not(.has-text-color),
+.yaycheckout-step .yaycheckout-return-to-cart:not(.has-text-color) .yaycheckout-return-to-cart__link,
+.yaycheckout-step .yaycheckout-back-button {
+	color: var(--yaycheckout-primary);
+}
+
+.yaycheckout-step .yaycheckout-return-to-cart:not(.has-text-color) .yaycheckout-return-to-cart__link:is(:hover, :focus),
+.yaycheckout-step .yaycheckout-back-button:is(:hover, :focus) {
+	color: var(--yaycheckout-primary);
+}
