@@ -186,7 +186,10 @@ class PreviewRequest {
         }
     }
 
-    /** What merchants call the layout's state: membership in the active set, not post_status. */
+    /**
+     * What merchants call the layout's state: membership in the active set, not post_status.
+     * apps/admin/src/pages/layouts/LayoutStatusBadge.tsx copies this mapping.
+     */
     private static function state_label( Layout $layout ): string {
         if ( LayoutStatus::ARCHIVED === $layout->post_status ) {
             return __( 'Archived', 'yaycheckout' );

@@ -31,7 +31,7 @@ class LayoutActiveGuard {
     public function deactivate_when_unpublished( $new_status, $old_status, $post ): void {
         unset( $old_status );
 
-        if ( in_array( $new_status, [ LayoutStatus::PUBLISHED, LayoutStatus::SCHEDULED ], true ) ) {
+        if ( in_array( $new_status, LayoutStatus::live(), true ) ) {
             return;
         }
 

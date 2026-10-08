@@ -8,6 +8,8 @@ import { __, sprintf } from '@wordpress/i18n';
 import { store as noticesStore } from '@wordpress/notices';
 import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
+import { errorMessage } from '../shared/error-message';
+import { layoutStateStore } from './layout-state';
 import { useLayoutProblem } from './publish-guard';
 
 /** LayoutEditorCanvas hides core's status controls only under this class, so they stay if the buttons can't mount. */
@@ -16,13 +18,35 @@ const MOUNTED_CLASS = 'yaycheckout-has-layout-actions';
 /** The header's settings area: editor-header from WordPress 6.6, edit-post-header in 6.5. */
 const HEADER_SELECTOR = '.editor-header__settings, .edit-post-header__settings';
 
-type Confirm = 'activate' | 'deactivate' | null;
+type Action = 'activate' | 'deactivate';
 
-/** The yaycheckout/v1 layout fields this file reads. */
+/** Copy of the `is_active` field of Layout::to_array(), the yaycheckout/v1 layout shape. */
 type LayoutWire = { is_active: boolean };
 
-function errorMessage( error: unknown, fallback: string ): string {
-	return ( error as { message?: string } )?.message || fallback;
+/** Everything the two actions say; the copy matches SetActiveModal and DeactivateModal in the SPA. */
+function copyFor( action: Action, title: string ) {
+	return action === 'activate'
+		? {
+				label: __( 'Activate', 'yaycheckout' ),
+				busy: __( 'Activating…', 'yaycheckout' ),
+				/* translators: %s: layout title */
+				title: sprintf( __( 'Make "%s" your live checkout?', 'yaycheckout' ), title ),
+				body: __( 'Shoppers will start seeing this layout as soon as you confirm.', 'yaycheckout' ),
+				done: __( 'Layout activated.', 'yaycheckout' ),
+				failed: __( 'The layout could not be activated.', 'yaycheckout' ),
+		  }
+		: {
+				label: __( 'Deactivate', 'yaycheckout' ),
+				busy: __( 'Deactivating…', 'yaycheckout' ),
+				/* translators: %s: layout title */
+				title: sprintf( __( 'Deactivate "%s"?', 'yaycheckout' ), title ),
+				body: __(
+					'Shoppers will stop seeing this layout. It becomes inactive, and you can activate it again at any time.',
+					'yaycheckout'
+				),
+				done: __( 'Layout deactivated.', 'yaycheckout' ),
+				failed: __( 'The layout could not be deactivated.', 'yaycheckout' ),
+		  };
 }
 
 /** A container prepended to the header once it renders; the header can appear after the plugin. */
@@ -91,8 +115,9 @@ function LayoutActions() {
 	const { savePost } = useDispatch( editorStore );
 	const { receiveEntityRecords } = useDispatch( coreStore );
 	const { createSuccessNotice, createErrorNotice } = useDispatch( noticesStore );
-	const [ isActive, setActive ] = useState< boolean | null >( null );
-	const [ confirm, setConfirm ] = useState< Confirm >( null );
+	const isActive = useSelect( ( selectStore ) => selectStore( layoutStateStore ).isActive(), [] );
+	const { setActive } = useDispatch( layoutStateStore );
+	const [ confirm, setConfirm ] = useState< Action | null >( null );
 	const [ isBusy, setBusy ] = useState( false );
 	const slot = useHeaderSlot( isLayout );
 
@@ -119,7 +144,8 @@ function LayoutActions() {
 		receiveEntityRecords( 'postType', postType, [ record ] );
 	};
 
-	const run = async ( action: 'activate' | 'deactivate' ) => {
+	const run = async ( action: Action ) => {
+		const copy = copyFor( action, title );
 		setBusy( true );
 		try {
 			// The server checks the saved markup, so unsaved edits go first, and a failed save stops here.
@@ -138,51 +164,31 @@ function LayoutActions() {
 
 			await refreshPost();
 			setActive( layout.is_active );
-			createSuccessNotice(
-				action === 'activate'
-					? __( 'Layout activated.', 'yaycheckout' )
-					: __( 'Layout deactivated.', 'yaycheckout' ),
-				{ type: 'snackbar' }
-			);
+			createSuccessNotice( copy.done, { type: 'snackbar' } );
 		} catch ( error ) {
-			createErrorNotice(
-				errorMessage(
-					error,
-					action === 'activate'
-						? __( 'The layout could not be activated.', 'yaycheckout' )
-						: __( 'The layout could not be deactivated.', 'yaycheckout' )
-				),
-				{ type: 'snackbar' }
-			);
+			createErrorNotice( await errorMessage( error, copy.failed ), { type: 'snackbar' } );
 		} finally {
 			setBusy( false );
 			setConfirm( null );
 		}
 	};
 
+	// Unknown state (null) offers neither: Save alone.
+	const toggle: Action | null = isActive === null ? null : isActive ? 'deactivate' : 'activate';
+	const modal = confirm && copyFor( confirm, title );
+
 	return createPortal(
 		<>
 			<Flex gap={ 2 } expanded={ false }>
-				{ isActive === false && (
+				{ toggle && (
 					<Button
 						__next40pxDefaultSize
 						variant="secondary"
-						disabled={ problem !== '' || isBusy || isSaving }
+						disabled={ ( toggle === 'activate' && problem !== '' ) || isBusy || isSaving }
 						accessibleWhenDisabled
-						onClick={ () => setConfirm( 'activate' ) }
+						onClick={ () => setConfirm( toggle ) }
 					>
-						{ __( 'Activate', 'yaycheckout' ) }
-					</Button>
-				) }
-				{ isActive === true && (
-					<Button
-						__next40pxDefaultSize
-						variant="secondary"
-						disabled={ isBusy || isSaving }
-						accessibleWhenDisabled
-						onClick={ () => setConfirm( 'deactivate' ) }
-					>
-						{ __( 'Deactivate', 'yaycheckout' ) }
+						{ copyFor( toggle, title ).label }
 					</Button>
 				) }
 				<Button
@@ -196,43 +202,15 @@ function LayoutActions() {
 					{ isSaving ? __( 'Saving…', 'yaycheckout' ) : __( 'Save', 'yaycheckout' ) }
 				</Button>
 			</Flex>
-			{ confirm === 'activate' && (
-				<Modal
-					/* translators: %s: layout title */
-					title={ sprintf( __( 'Make "%s" your live checkout?', 'yaycheckout' ), title ) }
-					onRequestClose={ () => ! isBusy && setConfirm( null ) }
-					size="small"
-				>
-					<p>{ __( 'Shoppers will start seeing this layout as soon as you confirm.', 'yaycheckout' ) }</p>
+			{ confirm && modal && (
+				<Modal title={ modal.title } onRequestClose={ () => ! isBusy && setConfirm( null ) } size="small">
+					<p>{ modal.body }</p>
 					<Flex justify="flex-end" gap={ 2 }>
 						<Button variant="tertiary" disabled={ isBusy } onClick={ () => setConfirm( null ) }>
 							{ __( 'Cancel', 'yaycheckout' ) }
 						</Button>
-						<Button variant="primary" isBusy={ isBusy } disabled={ isBusy } onClick={ () => run( 'activate' ) }>
-							{ isBusy ? __( 'Activating…', 'yaycheckout' ) : __( 'Activate', 'yaycheckout' ) }
-						</Button>
-					</Flex>
-				</Modal>
-			) }
-			{ confirm === 'deactivate' && (
-				<Modal
-					/* translators: %s: layout title */
-					title={ sprintf( __( 'Deactivate "%s"?', 'yaycheckout' ), title ) }
-					onRequestClose={ () => ! isBusy && setConfirm( null ) }
-					size="small"
-				>
-					<p>
-						{ __(
-							'Shoppers will stop seeing this layout. It becomes inactive, and you can activate it again at any time.',
-							'yaycheckout'
-						) }
-					</p>
-					<Flex justify="flex-end" gap={ 2 }>
-						<Button variant="tertiary" disabled={ isBusy } onClick={ () => setConfirm( null ) }>
-							{ __( 'Cancel', 'yaycheckout' ) }
-						</Button>
-						<Button variant="primary" isBusy={ isBusy } disabled={ isBusy } onClick={ () => run( 'deactivate' ) }>
-							{ isBusy ? __( 'Deactivating…', 'yaycheckout' ) : __( 'Deactivate', 'yaycheckout' ) }
+						<Button variant="primary" isBusy={ isBusy } disabled={ isBusy } onClick={ () => run( confirm ) }>
+							{ isBusy ? modal.busy : modal.label }
 						</Button>
 					</Flex>
 				</Modal>

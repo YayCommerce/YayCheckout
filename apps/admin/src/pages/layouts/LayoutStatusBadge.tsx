@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 
 /**
  * A layout's state as merchants see it: membership in the active set, not post_status.
+ * Copy of PreviewRequest::state_label() (includes/Renderer/PreviewRequest.php).
  * The Layouts table, the Tools picker and the assignment drawer reuse it.
  */
 export function LayoutStatusBadge({ layout, className }: { layout: LayoutSummary; className?: string }) {

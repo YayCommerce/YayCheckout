@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. Read the spec linked below before starting; the plan argues from it.
 
-**Status:** active
+**Status:** done 2026-10-08
 **Goal:** Merchants see only Active / Inactive / Archived for a layout; Deactivate returns a layout to draft; the embedded editor offers Save plus Activate or Deactivate instead of core's Publish controls.
 **Spec:** [docs/specs/2026-10-08-layout-active-inactive-design.md](../specs/2026-10-08-layout-active-inactive-design.md)
 **Architecture:** The badge reads the active set (`is_active`), not `post_status`, so legacy published-but-inactive layouts need no migration. `LayoutRepository::deactivate()` becomes "stop serving and unpublish", and every merchant-initiated deactivation goes through it; the hooks that react to a status change only forget the id, so nothing recurses. The editor gets its own header buttons that call the existing `activate` / `deactivate` routes, so the repository's rules stay the single gate.

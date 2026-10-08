@@ -46,6 +46,8 @@ class LayoutEditorCanvas {
 
     /**
      * The Publish and Status rows have no class of their own, only the dropdown inside each.
+     * WordPress 6.5 has no Status row: its Visibility row and its Pending review checkbox (the
+     * Summary panel's only checkbox, since layouts support neither sticky nor formats) take its place.
      * Core's save and status controls hide only once layout-actions.tsx has mounted its own
      * buttons and tagged the body, so a header it can't find still leaves core's.
      */
@@ -59,7 +61,9 @@ body.yaycheckout-has-layout-actions :is(
 	.editor-post-save-draft,
 	.editor-post-saved-state,
 	.editor-post-switch-to-draft,
-	.editor-post-panel__row:has(.editor-post-status)
+	.editor-post-panel__row:has(.editor-post-status),
+	.editor-post-panel__row:has(.edit-post-post-visibility__toggle),
+	.edit-post-post-status .editor-post-panel__row:has(.components-checkbox-control)
 ) {
 	display: none;
 }';

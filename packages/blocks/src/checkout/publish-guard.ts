@@ -13,11 +13,12 @@ import {
 } from '../shared/extra-field-keys';
 import { editorData } from '../shared/editor-data';
 import checkoutMeta from './block.json';
+import { layoutStateStore } from './layout-state';
 
 const CHECKOUT_BLOCK = checkoutMeta.name;
-const LOCK_KEY = 'yaycheckout-layout-invalid';
+export const LAYOUT_INVALID_LOCK = 'yaycheckout-layout-invalid';
 
-/** Statuses shoppers may see; only these hold the save lock, as the server only refuses these. */
+/** Copy of LayoutStatus::live(): statuses shoppers may see; only these hold the save lock, as the server only refuses these. */
 const LIVE_STATUSES = [ 'publish', 'future' ];
 
 export interface LayoutProblem {
@@ -101,14 +102,16 @@ export function useLayoutProblem(): LayoutProblem {
 }
 
 /**
- * Shows the problem as a notice, and locks saving only while the layout is live (published
- * or scheduled, which every active layout is), matching the server. A draft is inactive,
+ * Shows the problem as a notice, and locks saving only while the layout is live: active, or
+ * published or scheduled, matching the server. A draft is inactive,
  * so it saves freely and the rules wait for Activate.
  */
 function LayoutPublishGuard() {
 	const { message, clientId } = useLayoutProblem();
 	const isLive = useSelect(
-		( select ) => LIVE_STATUSES.includes( select( editorStore ).getEditedPostAttribute( 'status' ) as string ),
+		( select ) =>
+			select( layoutStateStore ).isActive() === true ||
+			LIVE_STATUSES.includes( select( editorStore ).getEditedPostAttribute( 'status' ) as string ),
 		[]
 	);
 	const { lockPostSaving, unlockPostSaving } = useDispatch( editorStore );
@@ -122,11 +125,11 @@ function LayoutPublishGuard() {
 		}
 
 		if ( isLive ) {
-			lockPostSaving( LOCK_KEY );
+			lockPostSaving( LAYOUT_INVALID_LOCK );
 		}
 
 		createWarningNotice( message, {
-			id: LOCK_KEY,
+			id: LAYOUT_INVALID_LOCK,
 			isDismissible: false,
 			actions:
 				clientId === ''
@@ -144,8 +147,8 @@ function LayoutPublishGuard() {
 		} );
 
 		return () => {
-			unlockPostSaving( LOCK_KEY );
-			removeNotice( LOCK_KEY );
+			unlockPostSaving( LAYOUT_INVALID_LOCK );
+			removeNotice( LAYOUT_INVALID_LOCK );
 		};
 	}, [
 		message,

@@ -229,7 +229,7 @@ class LayoutRepository {
 
         $this->forget_active( $id );
 
-        if ( in_array( $post->post_status, [ LayoutStatus::PUBLISHED, LayoutStatus::SCHEDULED, LayoutStatus::PENDING ], true ) ) {
+        if ( in_array( $post->post_status, array_merge( LayoutStatus::live(), [ LayoutStatus::PENDING ] ), true ) ) {
             $updated = wp_update_post(
                 [
                     'ID'          => $id,
@@ -323,15 +323,17 @@ class LayoutRepository {
      * Pro moves the id to the end, the most recent choice.
      */
     public function set_active( int $id ): void {
-        if ( ! Plan::is_pro() ) {
-            foreach ( array_diff( $this->active_ids(), [ $id ] ) as $replaced ) {
+        $others = array_diff( $this->active_ids(), [ $id ] );
+
+        if ( Plan::is_pro() ) {
+            $ids = array_merge( $others, [ $id ] );
+        } else {
+            foreach ( $others as $replaced ) {
                 $this->deactivate( (int) $replaced );
             }
-        }
 
-        $ids = Plan::is_pro()
-            ? array_merge( array_diff( $this->active_ids(), [ $id ] ), [ $id ] )
-            : [ $id ];
+            $ids = [ $id ];
+        }
 
         $this->store_ids( $ids );
     }
