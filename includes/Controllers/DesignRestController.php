@@ -6,7 +6,7 @@ use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
-/** GET/POST /yaycheckout/v1/design. Both return { tokens, preset_id, custom_css, updated_at, presets }. */
+/** GET/POST /yaycheckout/v1/design. Both return { tokens, custom_css, updated_at, defaults }. */
 class DesignRestController extends BaseRestController {
     use SingletonTrait;
 
@@ -37,7 +37,7 @@ class DesignRestController extends BaseRestController {
         return $this->design->get()->to_array();
     }
 
-    /** Body: { tokens, preset_id, custom_css } — the full design, every key required. */
+    /** Body: { tokens, custom_css } — the full design, both keys required. */
     public function save_design( \WP_REST_Request $request ) {
         $input = $request->get_json_params();
 

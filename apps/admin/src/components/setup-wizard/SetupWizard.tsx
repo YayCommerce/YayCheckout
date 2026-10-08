@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
 import { markSetupDone } from '@/lib/api/settings.api';
-import { activePresetIdFor } from '@/lib/helpers/design.helper';
 import { getErrorMsg } from '@/lib/helpers/response.helper';
 import { logger } from '@/lib/logger';
 import { DESIGN_QUERIES, useDesignQuery } from '@/lib/queries/design.queries';
@@ -93,7 +92,6 @@ function SetupWizardDialog({
       await setup.mutateAsync({
         templateSlug,
         form: values,
-        presetId: activePresetIdFor(design.presets, design.presetId, values.tokens),
         rerun,
       });
       setStep(STEPS.length);

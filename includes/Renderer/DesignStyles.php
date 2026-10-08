@@ -78,15 +78,6 @@ class DesignStyles {
             $vars['font-size-base'] = $typography['base_size'] . 'px';
         }
 
-        if ( $tokens['spacing']['enabled'] ) {
-            // %F, not a (string) cast: PHP 7 casts floats per LC_NUMERIC, so a de_DE host would print 1,5.
-            $vars['spacing-scale'] = rtrim( rtrim( sprintf( '%.1F', $tokens['spacing']['scale'] ), '0' ), '.' );
-        }
-
-        if ( $tokens['buttons']['enabled'] ) {
-            $vars['button-radius'] = $tokens['buttons']['radius'] . 'px';
-        }
-
         if ( $tokens['inputs']['enabled'] ) {
             $vars['input-radius'] = $tokens['inputs']['radius'] . 'px';
             $vars['input-height'] = self::INPUT_HEIGHTS[ $tokens['inputs']['size'] ] . 'px';

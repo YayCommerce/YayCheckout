@@ -3,9 +3,7 @@ import { __ } from '@wordpress/i18n';
 
 import { isPro } from '@/lib/plan';
 import {
-  BUTTON_STYLE_LABELS,
   CUSTOM_CSS_MAX_BYTES,
-  RADIUS_RANGE,
   type DesignForm,
   type DesignTokens,
   type TokenSection,
@@ -18,8 +16,6 @@ import {
   ColorPickerPanel,
   ColorPickerTrigger,
 } from '@/components/ui/color-picker';
-import { Segmented, SegmentedItem } from '@/components/ui/segmented';
-import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
@@ -58,8 +54,6 @@ export function BrandStep({
         <div className="flex flex-col gap-5 text-sm">
           <PrimaryColourField />
           <FontField />
-          <CornerRadiusField />
-          <ButtonStyleField />
           <CustomCssField />
         </div>
 
@@ -148,60 +142,6 @@ function FontField() {
       {!isTypographyOn && (
         <p className="text-muted-foreground text-xs">{__('Turn the toggle off to pick a font.', 'yaycheckout')}</p>
       )}
-    </div>
-  );
-}
-
-function CornerRadiusField() {
-  const { control } = useFormContext<DesignForm>();
-  const radius = useWatch({ control, name: 'tokens.buttons.radius' });
-  const setToken = useSetToken();
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <span className="font-medium">{__('Corner radius', 'yaycheckout')}</span>
-        <span className="text-muted-foreground">{radius}px</span>
-      </div>
-      {/* This step couples button and input radius; the Design page splits them. */}
-      <Slider
-        min={RADIUS_RANGE.min}
-        max={RADIUS_RANGE.max}
-        step={1}
-        value={[radius]}
-        onValueChange={([value]) => {
-          setToken('buttons', 'radius', value);
-          setToken('inputs', 'radius', value);
-        }}
-        aria-label={__('Corner radius', 'yaycheckout')}
-      />
-      <div className="text-muted-foreground flex justify-between text-xs">
-        <span>{RADIUS_RANGE.min}</span>
-        <span>{RADIUS_RANGE.max}px</span>
-      </div>
-    </div>
-  );
-}
-
-function ButtonStyleField() {
-  const { control } = useFormContext<DesignForm>();
-  const buttonStyle = useWatch({ control, name: 'tokens.buttons.style' });
-  const setToken = useSetToken();
-
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="font-medium">{__('Button style', 'yaycheckout')}</span>
-      <Segmented
-        className="w-full"
-        value={buttonStyle}
-        onValueChange={(value) => value && setToken('buttons', 'style', value as typeof buttonStyle)}
-      >
-        {Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => (
-          <SegmentedItem key={value} value={value} className="flex-1">
-            {label}
-          </SegmentedItem>
-        ))}
-      </Segmented>
     </div>
   );
 }

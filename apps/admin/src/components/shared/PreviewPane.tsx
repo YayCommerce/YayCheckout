@@ -39,14 +39,13 @@ export function PreviewPane({ isCompact = false }: { isCompact?: boolean }) {
   const { control } = useFormContext<DesignForm>();
   const tokens = useWatch({ control, name: 'tokens' });
   const customCss = useWatch({ control, name: 'customCss' });
-  const { typography, spacing, buttons, inputs } = tokens;
+  const { typography, inputs } = tokens;
   const colours = tokens.colours.enabled ? tokens.colours : NEUTRAL.colours;
-  const isButtonFill = !buttons.enabled || 'fill' === buttons.style;
   const isInputBoxed = !inputs.enabled || 'boxed' === inputs.style;
   const inputRadius = inputs.enabled ? inputs.radius : NEUTRAL.radius;
   const themeGroups = GROUPS.filter(({ id }) => !isGroupOn(tokens, id)).map(({ label }) => label);
 
-  const gap = 10 * (spacing.enabled ? spacing.scale : 1);
+  const gap = 10;
 
   const rootStyle: CSSProperties = {
     color: colours.text,
@@ -69,12 +68,12 @@ export function PreviewPane({ isCompact = false }: { isCompact?: boolean }) {
   };
 
   const buttonStyle: CSSProperties = {
-    borderRadius: buttons.enabled ? buttons.radius : NEUTRAL.radius,
+    borderRadius: NEUTRAL.radius,
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: colours.primary,
-    backgroundColor: isButtonFill ? colours.primary : 'transparent',
-    color: isButtonFill ? colours.background : colours.primary,
+    backgroundColor: colours.primary,
+    color: colours.background,
     padding: '10px 20px',
     fontWeight: 600,
   };

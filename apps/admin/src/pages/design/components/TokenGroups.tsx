@@ -3,21 +3,13 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { isGroupOn } from '@/lib/helpers/design.helper';
-import {
-  BUTTON_STYLE_LABELS,
-  FONT_FAMILIES,
-  type DesignForm,
-  type DesignTokens,
-  type TokenSection,
-} from '@/lib/schema/design.schema';
+import { FONT_FAMILIES, type DesignForm, type DesignTokens, type TokenSection } from '@/lib/schema/design.schema';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FormField } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { ButtonsGroup } from './ButtonsGroup';
 import { COLOUR_KEYS, ColoursGroup } from './ColoursGroup';
 import { CustomCssGroup } from './CustomCssGroup';
 import { INPUT_SIZE_LABELS, INPUT_STYLE_LABELS, InputsGroup } from './InputsGroup';
-import { SpacingGroup } from './SpacingGroup';
 import { TypographyGroup } from './TypographyGroup';
 
 /** Each group header restates its current values so a collapsed list still reads as a design; colours as swatches. */
@@ -47,18 +39,6 @@ export const GROUPS: {
       `${FONT_FAMILIES[typography.fontFamily] || __('Theme default', 'yaycheckout')} · ${typography.baseSize}px`,
   },
   {
-    id: 'spacing',
-    label: __('Spacing', 'yaycheckout'),
-    body: SpacingGroup,
-    summary: ({ spacing }) => `${spacing.scale.toFixed(1)}×`,
-  },
-  {
-    id: 'buttons',
-    label: __('Buttons', 'yaycheckout'),
-    body: ButtonsGroup,
-    summary: ({ buttons }) => `${BUTTON_STYLE_LABELS[buttons.style]} · ${buttons.radius}px`,
-  },
-  {
     id: 'inputs',
     label: __('Inputs', 'yaycheckout'),
     body: InputsGroup,
@@ -85,7 +65,7 @@ export function TokenGroups() {
   const { control } = useFormContext<DesignForm>();
   const tokens = useWatch({ control, name: 'tokens' });
   const customCss = useWatch({ control, name: 'customCss' });
-  // Groups folded by hand; every other on group is open, so a group a preset turns on opens too.
+  // Groups folded by hand; every other on group is open, so a group a Reset or reload turns on opens too.
   const [folded, setFolded] = useState<string[]>(['customCss']);
   const openIds = GROUPS.map(({ id }) => id).filter((id) => isGroupOn(tokens, id) && !folded.includes(id));
 
