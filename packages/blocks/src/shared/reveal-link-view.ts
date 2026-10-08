@@ -5,20 +5,10 @@
  * the row hides the link too. Field and Extra field both load this; a link is bound once.
  */
 
+import { jquery, type Control } from './jquery';
+
 const LINK = '.yaycheckout-reveal-link';
 const BOUND = 'yaycheckoutRevealBound';
-
-type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-
-interface Jq {
-	on( events: string, handler: ( event: Event ) => void ): Jq;
-}
-
-function jquery( target: Element | Document ): Jq | null {
-	const jq = ( window as Window & { jQuery?: ( target: Element | Document ) => Jq } ).jQuery;
-
-	return jq ? jq( target ) : null;
-}
 
 /** A select always has a value, so only a change counts for it; a hidden input never counts. */
 function filled( control: Control ): boolean {
