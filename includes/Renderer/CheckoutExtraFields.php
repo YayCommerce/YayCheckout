@@ -9,7 +9,10 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Validates the served layout's extra fields at checkout, stores them on the
- * order, and prints them on the admin and customer order screens.
+ * order, and prints them on the admin and customer order screens. Fields with
+ * Remember value on keep the shopper's entries in the WooCommerce session until
+ * the order is created, and WC_Checkout::get_value() returns them, so a reload
+ * prints them again.
  *
  * Reads the layout CheckoutPage serves, so a preview checkout validates and
  * saves the previewed layout's fields.
@@ -20,18 +23,69 @@ class CheckoutExtraFields {
 
     public const META_SNAPSHOT = '_yaycheckout_extra_fields';
 
+    /** WooCommerce session key: Key => cleaned value of each remembered field. */
+    public const SESSION_VALUES = 'yaycheckout_extra_field_values';
+
+    /** @var array<string, array>|null The served layout's extra fields, read once per request. */
+    private $fields = null;
+
     protected function __construct() {
         add_action( 'woocommerce_after_checkout_validation', [ $this, 'validate' ], 10, 2 );
         // Fires before WooCommerce saves the new order, so meta set here is saved with it.
         add_action( 'woocommerce_checkout_create_order', [ $this, 'persist' ] );
         add_action( 'woocommerce_admin_order_data_after_billing_address', [ $this, 'print_admin' ] );
         add_action( 'woocommerce_order_details_after_order_table', [ $this, 'print_customer' ] );
+        add_action( 'wc_ajax_yaycheckout_remember_extra_fields', [ $this, 'remember' ] );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's checkout value filter.
+        add_filter( 'woocommerce_checkout_get_value', [ $this, 'remembered_value' ], 10, 2 );
     }
 
     /**
-     * @param array     $data   WooCommerce's posted checkout data; unused.
-     * @param \WP_Error $errors
+     * WC_Checkout::get_value() for a remembered field: the session's value, or '' so that
+     * WooCommerce doesn't fall back to customer meta under the same Key.
+     *
+     * @param  mixed  $value Null unless another filter answered.
+     * @param  string $input Posted field name.
+     * @return mixed
      */
+    public function remembered_value( $value, $input ) {
+        if ( null !== $value || ! is_string( $input ) || null === WC()->session ) {
+            return $value;
+        }
+
+        $fields = $this->fields();
+
+        if ( empty( $fields[ $input ]['remember'] ) ) {
+            return $value;
+        }
+
+        $values = WC()->session->get( self::SESSION_VALUES );
+
+        return is_array( $values ) && isset( $values[ $input ] ) ? $values[ $input ] : '';
+    }
+
+    /**
+     * Replaces the session's remembered values with the posted form's. Posted by
+     * the Extra field view script on change; WooCommerce's update-order-review
+     * nonce guards it, since it writes the same shopper's session.
+     */
+    public function remember(): void {
+        if ( ! check_ajax_referer( 'update-order-review', 'security', false ) || null === WC()->session ) {
+            wp_send_json_error( null, 403 );
+        }
+
+        $fields = array_filter( $this->fields(), static fn( $field ) => $field['remember'] );
+        $values = [];
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce checked above; only remembered Keys are read and ExtraFieldSubmission sanitizes them.
+        foreach ( ExtraFieldSubmission::collect( $fields, wp_unslash( $_POST ) )['rows'] as $row ) {
+            $values[ $row['key'] ] = $row['value'];
+        }
+
+        WC()->session->set( self::SESSION_VALUES, [] === $values ? null : $values );
+        wp_send_json_success();
+    }
+
     public function validate( $data, \WP_Error $errors ): void {
         foreach ( $this->submission()['errors'] as $key => $message ) {
             $errors->add( 'yaycheckout_extra_' . $key, $message );
@@ -40,17 +94,20 @@ class CheckoutExtraFields {
 
     /**
      * One meta per field plus a snapshot of the rows, so order screens keep the
-     * label and display text after the layout changes.
-     *
-     * WooCommerce reuses a pending or failed order when the shopper retries
-     * with the same cart, so the previous attempt's values are removed first;
-     * otherwise a field cleared on retry would keep its old value.
+     * label and display text after the layout changes. WooCommerce reuses a
+     * pending or failed order on retry, so the previous attempt's values are
+     * removed first; otherwise a field cleared on retry would keep its old value.
      */
     public function persist( \WC_Order $order ): void {
         $submission = $this->submission();
 
         if ( [] !== $submission['errors'] ) {
             return;
+        }
+
+        // The order now holds them; the next checkout starts empty.
+        if ( null !== WC()->session ) {
+            WC()->session->set( self::SESSION_VALUES, null );
         }
 
         $previous = $order->get_meta( self::META_SNAPSHOT );
@@ -80,15 +137,20 @@ class CheckoutExtraFields {
         $this->print_rows( $order, false );
     }
 
-    /**
-     * @return array{rows: array, errors: array<string, string>}
-     */
+    /** @return array{rows: array, errors: array<string, string>} */
     private function submission(): array {
-        $layout = CheckoutPage::get_instance()->layout();
-        $fields = null === $layout ? [] : LayoutMarkupReader::extra_fields( $layout->content );
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Woo verifies the checkout nonce before these hooks; only the layout's Keys are read and ExtraFieldSubmission sanitizes them.
+        return ExtraFieldSubmission::collect( $this->fields(), wp_unslash( $_POST ) );
+    }
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Woo verifies the checkout nonce before these hooks; only Keys in $fields are read and ExtraFieldSubmission sanitizes them.
-        return ExtraFieldSubmission::collect( $fields, wp_unslash( $_POST ) );
+    /** The served layout's extra fields, or none when the renderer stands down. get_value() asks once per field, so it is memoised. */
+    private function fields(): array {
+        if ( null === $this->fields ) {
+            $layout       = CheckoutPage::get_instance()->layout();
+            $this->fields = null === $layout ? [] : LayoutMarkupReader::extra_fields( $layout->content );
+        }
+
+        return $this->fields;
     }
 
     private function print_rows( \WC_Order $order, bool $admin ): void {

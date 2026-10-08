@@ -9,8 +9,6 @@ import {
   SettingsWire,
 } from '@/lib/schema/settings.schema';
 
-// The only place wire snake_case meets app camelCase.
-
 export function settingsFromWire(wire: SettingsWire): Settings {
   return {
     general: {
@@ -70,4 +68,8 @@ export async function postSettings(data: Settings): Promise<SettingsResponse> {
 
 export function markReviewed() {
   return api.post('mark-reviewed').json<boolean>();
+}
+
+export function markSetupDone() {
+  return api.post('mark-setup-done').json<boolean>();
 }

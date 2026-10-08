@@ -1,6 +1,8 @@
-import { InnerBlocks, InspectorControls, useBlockProps } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { addressTemplate } from './address-template';
+import { isCheckoutSection, useBlocksAllowedExcept } from './allowed-blocks';
 
 export interface AddressSectionAttributes {
 	title: string;
@@ -14,9 +16,6 @@ interface AddressSectionEditProps {
 	setAttributes: ( attributes: Partial< AddressSectionAttributes > ) => void;
 }
 
-/**
- * Billing / Shipping hold fields plus layout/text blocks. Contact is separate.
- */
 export function AddressSectionEdit( {
 	section,
 	attributes,
@@ -26,6 +25,13 @@ export function AddressSectionEdit( {
 	const fallbackTitle =
 		section === 'shipping' ? __( 'Shipping', 'yaycheckout' ) : __( 'Billing', 'yaycheckout' );
 	const blockProps = useBlockProps( { className: `yaycheckout-${ section }` } );
+	const allowedBlocks = useBlocksAllowedExcept( isCheckoutSection );
+	const { children, ...innerBlocksProps } = useInnerBlocksProps( blockProps, {
+		allowedBlocks,
+		// Only fills an empty section, so saved ones are untouched.
+		template: addressTemplate( section ),
+		templateLock: false,
+	} );
 
 	return (
 		<>
@@ -52,9 +58,9 @@ export function AddressSectionEdit( {
 					) }
 				</PanelBody>
 			</InspectorControls>
-			<div { ...blockProps }>
+			<div { ...innerBlocksProps }>
 				{ showTitle && <h3>{ title || fallbackTitle }</h3> }
-				<InnerBlocks templateLock={ false } />
+				{ children }
 			</div>
 		</>
 	);

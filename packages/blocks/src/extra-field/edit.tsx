@@ -1,9 +1,13 @@
+import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { Button, Notice, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
+import { BaseControl, Button, Flex, FlexBlock, Notice, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
+import { EXTRA_FIELD_KEY_CONTROL_CLASS, EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
 import { FieldPreview, type FieldOption } from '../shared/field-preview';
+import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
+import { RevealLinkControls, RevealLinkPreview, defaultRevealText, isCollapsed } from '../shared/reveal-link';
+import './editor.css';
 
 const TYPE_OPTIONS = [
 	{ label: __( 'Text', 'yaycheckout' ), value: 'text' },
@@ -19,9 +23,15 @@ interface ExtraFieldAttributes {
 	fieldKey: string;
 	label: string;
 	placeholder: string;
+	description: string;
 	required: boolean;
+	requiredMark: string;
+	optionalText: string;
 	type: string;
 	options: FieldOption[];
+	collapseBehindLink?: boolean;
+	revealText: string;
+	rememberValue: boolean;
 }
 
 interface EditProps {
@@ -34,9 +44,25 @@ function emptyOption(): FieldOption {
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { fieldKey, label, placeholder, required, type, options } = attributes;
+	const {
+		fieldKey,
+		label,
+		placeholder,
+		description = '',
+		required,
+		requiredMark = '',
+		optionalText = '',
+		type,
+		options,
+		collapseBehindLink,
+		revealText = '',
+		rememberValue = false,
+	} = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-extra-field' } );
-	const canvasLabel = label || fieldKey || __( 'Extra field', 'yaycheckout' );
+	const labelPlaceholder = fieldKey || __( 'Extra field', 'yaycheckout' );
+	const collapsed = isCollapsed( fieldKey.trim(), required, collapseBehindLink );
+	// render.php names an unlabelled extra field "Extra field", so its link does too.
+	const revealLabel = label || __( 'Extra field', 'yaycheckout' );
 	const showOptions = CHOICE_TYPES.includes( type );
 	const trimmedKey = fieldKey.trim();
 	const isDuplicate = useSelect(
@@ -45,6 +71,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			extraFieldKeys( select( blockEditorStore ) ).filter( ( key ) => key === trimmedKey ).length > 1,
 		[ trimmedKey ]
 	);
+	// LayoutMarkupReader::publish_error() owns these Key rules; change them together.
 	let keyError = '';
 
 	if ( trimmedKey === '' ) {
@@ -64,31 +91,57 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		<>
 			<InspectorControls>
 				<PanelBody title={ __( 'Extra field', 'yaycheckout' ) }>
+					{ keyError !== '' && (
+						<Notice status="error" isDismissible={ false } className="yaycheckout-extra-field__key-error">
+							{ keyError }
+						</Notice>
+					) }
 					<TextControl
+						className={ EXTRA_FIELD_KEY_CONTROL_CLASS }
 						label={ __( 'Key', 'yaycheckout' ) }
 						value={ fieldKey }
 						onChange={ ( value ) => setAttributes( { fieldKey: value } ) }
 						help={ __( 'Posted name stored on the order, e.g. vat_number.', 'yaycheckout' ) }
 					/>
-					{ keyError !== '' && (
-						<Notice status="error" isDismissible={ false }>
-							{ keyError }
-						</Notice>
-					) }
 					<TextControl
 						label={ __( 'Label', 'yaycheckout' ) }
-						value={ label }
+						value={ decodeEntities( label ) }
 						onChange={ ( value ) => setAttributes( { label: value } ) }
 					/>
+					{ type !== 'datetime' && (
+						<TextControl
+							label={ __( 'Placeholder', 'yaycheckout' ) }
+							value={ placeholder }
+							onChange={ ( value ) => setAttributes( { placeholder: value } ) }
+						/>
+					) }
 					<TextControl
-						label={ __( 'Placeholder', 'yaycheckout' ) }
-						value={ placeholder }
-						onChange={ ( value ) => setAttributes( { placeholder: value } ) }
+						label={ __( 'Help text', 'yaycheckout' ) }
+						help={ __( 'Shown under the field while the shopper fills it in.', 'yaycheckout' ) }
+						value={ description }
+						onChange={ ( value ) => setAttributes( { description: value } ) }
+					/>
+					<RequiredIndicatorControls
+						required={ required }
+						requiredMark={ requiredMark }
+						optionalText={ optionalText }
+						onRequiredChange={ ( value ) => setAttributes( { required: value } ) }
+						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
+						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
+					/>
+					<RevealLinkControls
+						fieldKey={ fieldKey.trim() }
+						label={ revealLabel }
+						required={ required }
+						collapseBehindLink={ collapseBehindLink }
+						revealText={ revealText }
+						setAttributes={ setAttributes }
 					/>
 					<ToggleControl
-						label={ __( 'Required', 'yaycheckout' ) }
-						checked={ required }
-						onChange={ ( value ) => setAttributes( { required: value } ) }
+						label={ __( 'Remember value', 'yaycheckout' ) }
+						help={ __( 'Keeps what the shopper entered if they reload the checkout. Cleared once the order is placed.', 'yaycheckout' ) }
+						checked={ rememberValue }
+						onChange={ ( value ) => setAttributes( { rememberValue: value } ) }
 					/>
 					<SelectControl
 						label={ __( 'Type', 'yaycheckout' ) }
@@ -98,24 +151,23 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					/>
 					{ showOptions && (
 						<>
-							<p style={ { fontWeight: 600, marginBottom: '8px' } }>
-								{ __( 'Options', 'yaycheckout' ) }
-							</p>
+							<BaseControl.VisualLabel>{ __( 'Options', 'yaycheckout' ) }</BaseControl.VisualLabel>
 							{ options.map( ( option, index ) => (
-								<div
-									key={ index }
-									style={ { display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'flex-end' } }
-								>
-									<TextControl
-										label={ index === 0 ? __( 'Label', 'yaycheckout' ) : '' }
-										value={ option.label }
-										onChange={ ( value ) => updateOption( index, { label: value } ) }
-									/>
-									<TextControl
-										label={ index === 0 ? __( 'Value', 'yaycheckout' ) : '' }
-										value={ option.value }
-										onChange={ ( value ) => updateOption( index, { value: value } ) }
-									/>
+								<Flex key={ index } align="flex-end" gap={ 2 }>
+									<FlexBlock>
+										<TextControl
+											label={ index === 0 ? __( 'Label', 'yaycheckout' ) : '' }
+											value={ option.label }
+											onChange={ ( value ) => updateOption( index, { label: value } ) }
+										/>
+									</FlexBlock>
+									<FlexBlock>
+										<TextControl
+											label={ index === 0 ? __( 'Value', 'yaycheckout' ) : '' }
+											value={ option.value }
+											onChange={ ( value ) => updateOption( index, { value: value } ) }
+										/>
+									</FlexBlock>
 									<Button
 										variant="tertiary"
 										isDestructive
@@ -125,7 +177,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 									>
 										{ __( 'Remove', 'yaycheckout' ) }
 									</Button>
-								</div>
+								</Flex>
 							) ) }
 							<Button
 								variant="secondary"
@@ -138,13 +190,21 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<FieldPreview
-					label={ canvasLabel }
-					type={ type }
-					required={ required }
-					placeholder={ placeholder }
-					options={ options }
-				/>
+				<RevealLinkPreview collapsed={ collapsed } text={ revealText || defaultRevealText( fieldKey.trim(), revealLabel ) }>
+					<FieldPreview
+						label={ label }
+						onLabelChange={ ( value ) => setAttributes( { label: value } ) }
+						labelPlaceholder={ labelPlaceholder }
+						type={ type }
+						required={ required }
+						requiredMark={ requiredMark }
+						optionalText={ optionalText }
+						placeholder={ placeholder }
+						description={ description }
+						options={ options }
+						inheritLabelFont
+					/>
+				</RevealLinkPreview>
 			</div>
 		</>
 	);

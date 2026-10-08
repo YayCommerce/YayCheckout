@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 
 const CONFIRM_PHRASE = 'DELETE';
 
-/** Confirms permanently deleting an archived layout — the only destructive action in the product, so it is gated by a typed phrase. */
+/** Confirms permanently deleting an archived layout. It cannot be undone, so it is gated by a typed phrase. */
 export function DeleteModal({
   layout,
   onOpenChange,
@@ -26,7 +26,7 @@ export function DeleteModal({
 
   useEffect(() => setTyped(''), [layout?.id]);
 
-  const canDelete = typed.trim().toUpperCase() === CONFIRM_PHRASE && !isPending;
+  const canDelete = typed.trim() === CONFIRM_PHRASE && !isPending;
 
   return (
     <Dialog open={null !== layout} onOpenChange={(open) => !isPending && onOpenChange(open)}>

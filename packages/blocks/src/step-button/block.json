@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/step-button",
+  "title": "Next Step Button",
+  "category": "yaycheckout",
+  "description": "Validates the open checkout step and opens the next one. Place it anywhere in the layout.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "continue", "next", "step" ],
+  "example": {
+    "attributes": {
+      "buttonText": "Continue"
+    }
+  },
+  "attributes": {
+    "buttonText": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "style": "file:./style-index.css",
+  "render": "file:./render.php"
+}

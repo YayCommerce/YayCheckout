@@ -6,9 +6,7 @@ use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * GET/POST /yaycheckout/v1/design. Both return { tokens, preset_id, custom_css, updated_at, presets }.
- */
+/** GET/POST /yaycheckout/v1/design. Both return { tokens, preset_id, custom_css, updated_at, presets }. */
 class DesignRestController extends BaseRestController {
     use SingletonTrait;
 
@@ -33,10 +31,6 @@ class DesignRestController extends BaseRestController {
                 ],
             ]
         );
-    }
-
-    public function permission_callback(): bool {
-        return current_user_can( 'manage_woocommerce' );
     }
 
     public function get_design( \WP_REST_Request $request ) {

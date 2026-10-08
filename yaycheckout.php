@@ -14,8 +14,6 @@
  * Requires PHP: 7.4
  * WC requires at least: 10.0.0
  * WC tested up to: 10.7.0
- *
- * @package yaycommerce/yaycheckout
  */
 
 namespace YayCheckout;
@@ -58,6 +56,10 @@ if ( ! defined( 'YAYCHECKOUT_MENU_ORDER' ) ) {
 
 if ( ! defined( 'YAYCHECKOUT_DOCS_URL' ) ) {
     define( 'YAYCHECKOUT_DOCS_URL', 'http://docs.yaycommerce.com/yaycheckout' );
+}
+
+if ( ! defined( 'YAYCHECKOUT_UPGRADE_URL' ) ) {
+    define( 'YAYCHECKOUT_UPGRADE_URL', 'https://yaycommerce.com/yaycheckout-for-woocommerce/' );
 }
 
 if ( ! defined( 'YAYCHECKOUT_COMPATIBILITY_CATALOGUE_URL' ) ) {

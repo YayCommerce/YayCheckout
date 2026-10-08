@@ -15,7 +15,7 @@ final class LayoutStatus {
 
     public const PUBLISHED = 'publish';
 
-    /** WP cron empties trash after EMPTY_TRASH_DAYS, so archive is not indefinite. */
+    /** Archived layouts are kept: LayoutTrashSync exempts them from WP's scheduled trash purge. */
     public const ARCHIVED = 'trash';
 
     /**

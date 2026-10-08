@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/email",
+  "title": "Email address",
+  "category": "yaycheckout",
+  "description": "The customer's email (billing_email). Always required; place it anywhere in the checkout.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "email", "contact", "customer" ],
+  "example": {},
+  "ancestor": [ "yaycheckout/checkout" ],
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "Email address"
+    },
+    "placeholder": {
+      "type": "string",
+      "default": ""
+    },
+    "description": {
+      "type": "string",
+      "default": ""
+    },
+    "required": {
+      "type": "boolean",
+      "default": true
+    },
+    "requiredMark": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php"
+}

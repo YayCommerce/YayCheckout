@@ -1,18 +1,12 @@
 <?php
 /**
- * Server render for yaycheckout/billing.
- *
- * Inner Field blocks supply the address controls. Attributes are read with
- * defaults so markup saved before an attribute existed still renders.
- *
+ * Prints the Billing section: an optional heading and its inner Field blocks.
  * woocommerce-billing-fields is the wrapper country-select.js searches for
  * #billing_state; without it the state box never repopulates.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Inner blocks markup, already rendered by core.
  * @var WP_Block $block      Block instance.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

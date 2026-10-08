@@ -11,9 +11,11 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Turns a checkout-page request carrying `?yaycheckout_preview=TOKEN` into a
- * preview of that layout: sample cart, ordering disabled, no caching. Hooks
- * attach only on the checkout page or a wc-ajax call, so the same token on
- * any other URL is inert. Full rules in docs/system-architecture.md, § Preview links.
+ * preview of that layout: sample cart, ordering disabled, no caching.
+ *
+ * Off the checkout page the argument still counts: any request carrying it
+ * refuses orders, and CheckoutPage::resolve() serves a valid token's layout,
+ * to the field and fragment filters too.
  */
 class PreviewRequest {
     use SingletonTrait;
@@ -111,8 +113,17 @@ class PreviewRequest {
         return PreviewToken::with_token( $url, $this->token );
     }
 
-    public function disabled_order_button(): string {
-        return '<button type="submit" class="button alt wp-element-button" id="place_order" disabled>' . esc_html__( 'Place order', 'yaycheckout' ) . '</button>';
+    /** Disables the button WooCommerce or the Place order block printed, keeping its label and styles. */
+    public function disabled_order_button( string $html ): string {
+        $button = new \WP_HTML_Tag_Processor( $html );
+
+        if ( ! $button->next_tag( 'BUTTON' ) ) {
+            return $html;
+        }
+
+        $button->set_attribute( 'disabled', true );
+
+        return $button->get_updated_html();
     }
 
     public function refuse_order(): void {

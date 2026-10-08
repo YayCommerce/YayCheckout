@@ -3,6 +3,7 @@ namespace YayCheckout\Helpers;
 
 use YayCheckout\Controllers\BaseRestController;
 use YayCheckout\Repositories\DesignRepository;
+use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
 
 defined( 'ABSPATH' ) || exit;
@@ -38,11 +39,14 @@ class LocalizeHelper {
                 'isBlockTheme' => wp_is_block_theme(),
             ],
             'checkoutMeta' => [
-                'pluginUrl' => YAYCHECKOUT_PLUGIN_URL,
-                'assetsUrl' => YAYCHECKOUT_PLUGIN_URL . 'assets',
-                'version'   => YAYCHECKOUT_VERSION,
-                'docsUrl'   => YAYCHECKOUT_DOCS_URL,
-                'reviewed'  => ( new SettingsRepository() )->is_reviewed(),
+                'pluginUrl'       => YAYCHECKOUT_PLUGIN_URL,
+                'assetsUrl'       => YAYCHECKOUT_PLUGIN_URL . 'assets',
+                'version'         => YAYCHECKOUT_VERSION,
+                'docsUrl'         => YAYCHECKOUT_DOCS_URL,
+                'upgradeUrl'      => YAYCHECKOUT_UPGRADE_URL,
+                'reviewed'        => ( new SettingsRepository() )->is_reviewed(),
+                // First run only: a store that already has layouts never sees the setup wizard.
+                'showSetupWizard' => ! ( new SettingsRepository() )->is_setup_done() && 0 === ( new LayoutRepository() )->count(),
             ],
         ];
 

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { __ } from '@wordpress/i18n';
 
 /** Mirrors Design::FONT_FAMILIES in PHP: slug stored in tokens → CSS font-family name; '' is the theme's own font. */
 export const FONT_FAMILIES = {
@@ -37,6 +38,7 @@ export const BASE_SIZE_RANGE = { min: 10, max: 24 } as const;
 /** Mirrors Design::presets()[0]['id'] in PHP: the built-in preset every payload carries. */
 export const DEFAULT_PRESET_ID = 'default';
 
+/** Mirrors the hex_color rule in Design::is_valid() in PHP. */
 const hexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 const radiusSchema = z.number().int().min(RADIUS_RANGE.min).max(RADIUS_RANGE.max);
 const baseSizeSchema = z.number().int().min(BASE_SIZE_RANGE.min).max(BASE_SIZE_RANGE.max);
@@ -44,25 +46,34 @@ const buttonStyleSchema = z.enum(['fill', 'outline']);
 const inputStyleSchema = z.enum(['boxed', 'underline']);
 const inputSizeSchema = z.enum(['small', 'medium', 'large']);
 
+/** Mirrors Design::CUSTOM_CSS_MAX_BYTES in PHP. */
 export const CUSTOM_CSS_MAX_BYTES = 50000;
 
-// Wire schemas: the PHP shape, exactly. Only lib/api/design.api.ts reads them.
+// Wire schemas: the PHP shape, exactly.
 
 export const designTokensWireSchema = z
   .object({
     colours: z
-      .object({ primary: hexColorSchema, text: hexColorSchema, background: hexColorSchema, border: hexColorSchema })
+      .object({
+        enabled: z.boolean(),
+        primary: hexColorSchema,
+        text: hexColorSchema,
+        background: hexColorSchema,
+        border: hexColorSchema,
+      })
       .strict(),
     typography: z
       .object({
-        inherit: z.boolean(),
+        enabled: z.boolean(),
         font_family: z.enum(FONT_FAMILY_KEYS),
         base_size: baseSizeSchema,
       })
       .strict(),
-    spacing: z.object({ scale: spacingScaleSchema, radius: radiusSchema }).strict(),
-    buttons: z.object({ style: buttonStyleSchema, radius: radiusSchema }).strict(),
-    inputs: z.object({ style: inputStyleSchema, size: inputSizeSchema, radius: radiusSchema }).strict(),
+    spacing: z.object({ enabled: z.boolean(), scale: spacingScaleSchema }).strict(),
+    buttons: z.object({ enabled: z.boolean(), style: buttonStyleSchema, radius: radiusSchema }).strict(),
+    inputs: z
+      .object({ enabled: z.boolean(), style: inputStyleSchema, size: inputSizeSchema, radius: radiusSchema })
+      .strict(),
   })
   .strict();
 
@@ -84,13 +95,13 @@ export type DesignTokensWire = z.infer<typeof designTokensWireSchema>;
 export type DesignPresetWire = z.infer<typeof designPresetWireSchema>;
 export type DesignResponseWire = z.infer<typeof designResponseWireSchema>;
 
-// App types, camelCase. designFormSchema doubles as the react-hook-form resolver.
-// Only typography is renamed on the way in; the other sections are the wire shape as-is.
+// App types, camelCase. Only typography differs from the wire shape.
+// designFormSchema doubles as the react-hook-form resolver.
 
 export const designTokensSchema = z.object({
   colours: designTokensWireSchema.shape.colours,
   typography: z.object({
-    inherit: z.boolean(),
+    enabled: z.boolean(),
     fontFamily: z.enum(FONT_FAMILY_KEYS),
     baseSize: baseSizeSchema,
   }),
@@ -107,6 +118,11 @@ export const designFormSchema = z.object({
 
 export type DesignTokens = z.infer<typeof designTokensSchema>;
 export type TokenSection = keyof DesignTokens;
+
+export const BUTTON_STYLE_LABELS: Record<DesignTokens['buttons']['style'], string> = {
+  fill: __('Fill', 'yaycheckout'),
+  outline: __('Outline', 'yaycheckout'),
+};
 export type DesignForm = z.infer<typeof designFormSchema>;
 
 export type DesignPreset = { id: string; name: string; builtin: boolean; tokens: DesignTokens };
@@ -118,6 +134,6 @@ export type DesignResponse = {
   customCss: string;
   updatedAt: string | null;
   presets: DesignPreset[];
-  /** Tokens of the built-in Default preset: what "Reset to theme" restores and "(from theme)" compares to. */
+  /** Tokens of the built-in Default preset: what "Reset to theme" restores. */
   defaultTokens: DesignTokens;
 };

@@ -1,15 +1,11 @@
 <?php
 /**
- * Server render for yaycheckout/shipping-methods.
- *
- * Storefront prints classic shipping radios. The editor keeps a placeholder.
- * AJAX totals replace .yaycheckout-shipping-methods__rates; see CheckoutFragments.
+ * Prints the heading and the shipping rates, which
+ * CheckoutFragments refreshes on AJAX totals updates.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
  * @var WP_Block $block      Block instance.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

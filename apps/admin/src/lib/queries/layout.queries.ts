@@ -1,4 +1,12 @@
-import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  queryOptions,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query';
 
 import {
   activateLayout,
@@ -10,19 +18,29 @@ import {
   duplicateLayout,
   getLayout,
   getLayoutCounts,
+  getLayoutRules,
   getLayouts,
   LayoutListParams,
   publishLayout,
+  resetLayout,
   restoreLayout,
+  saveLayoutRules,
 } from '@/lib/api/layout.api';
-import { LISTED_LAYOUT_STATUSES } from '@/lib/schema/layout.schema';
+import { LISTED_LAYOUT_STATUSES, type LayoutListResponse } from '@/lib/schema/layout.schema';
 
 export const LAYOUT_KEYS = {
   all: ['layouts'] as const,
   list: (params: LayoutListParams = {}) => ['layouts', 'list', params] as const,
   counts: ['layouts', 'counts'] as const,
   detail: (id: number) => ['layouts', 'detail', id] as const,
+  rules: (id: number) => ['layouts', 'rules', id] as const,
 };
+
+/** Refreshes the counts and the listed tab after a layout joins or leaves the listed set. */
+export function invalidateListedLayouts(queryClient: QueryClient) {
+  queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
+  queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+}
 
 export const LAYOUT_QUERIES = {
   // No initialData or staleTime: Infinity — layouts also change from the editor.
@@ -49,6 +67,18 @@ export function useLayoutsQuery(params: LayoutListParams = {}) {
   return useQuery(LAYOUT_QUERIES.list(params));
 }
 
+/** The picker's list: pages pile up as it is scrolled, so every layout is reachable without page controls. */
+export function useInfiniteLayoutsQuery(params: LayoutListParams = {}) {
+  return useInfiniteQuery({
+    queryKey: [...LAYOUT_KEYS.list(params), 'infinite'],
+    queryFn: ({ pageParam }) => getLayouts({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
+    // A new search is a new key; without this the open list empties while it loads.
+    placeholderData: keepPreviousData,
+  });
+}
+
 export function useLayoutCountsQuery() {
   return useQuery(LAYOUT_QUERIES.counts);
 }
@@ -66,8 +96,7 @@ export function useCreateLayoutDraftMutation() {
     // The modal renders its own inline error.
     meta: { skipGlobalError: true },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+      invalidateListedLayouts(queryClient);
     },
   });
 }
@@ -93,8 +122,7 @@ export function useActivateLayoutMutation() {
     mutationKey: ['layouts', 'activate'],
     mutationFn: activateLayout,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+      invalidateListedLayouts(queryClient);
     },
   });
 }
@@ -106,14 +134,12 @@ export function useDeactivateLayoutMutation() {
     mutationKey: ['layouts', 'deactivate'],
     mutationFn: deactivateLayout,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+      invalidateListedLayouts(queryClient);
     },
   });
 }
 
-/** The row leaves the listed tab and appears in the archived one, so both
- * list caches move — hence `all`, not one status filter. */
+/** The row moves from the listed tab to the archived one, so it invalidates every layout query, not one status filter. */
 export function useArchiveLayoutMutation() {
   const queryClient = useQueryClient();
 
@@ -126,8 +152,7 @@ export function useArchiveLayoutMutation() {
   });
 }
 
-/** The row leaves the archived tab and appears in the listed one, so both
- * list caches move — hence `all`, not one status filter. */
+/** The row moves from the archived tab to the listed one, so it invalidates every layout query, not one status filter. */
 export function useRestoreLayoutMutation() {
   const queryClient = useQueryClient();
 
@@ -166,8 +191,20 @@ export function useDuplicateLayoutMutation() {
     mutationKey: ['layouts', 'duplicate'],
     mutationFn: duplicateLayout,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
-      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+      invalidateListedLayouts(queryClient);
+    },
+  });
+}
+
+/** Rows carry blocks and size, which reset changes; counts stay valid. */
+export function useResetLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'reset'],
+    mutationFn: resetLayout,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
     },
   });
 }
@@ -177,5 +214,35 @@ export function useCreatePreviewLinkMutation() {
   return useMutation({
     mutationKey: ['layouts', 'preview-link'],
     mutationFn: createPreviewLink,
+  });
+}
+
+/** Pro only: the Free build has no rules route. */
+export function useLayoutRulesQuery(id: number) {
+  return useQuery({
+    queryKey: LAYOUT_KEYS.rules(id),
+    queryFn: () => getLayoutRules(id),
+  });
+}
+
+/** Writes the stored rules from the reply into the cached rules and every cached list, so nothing refetches. */
+export function useSaveLayoutRulesMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'save-rules'],
+    mutationFn: saveLayoutRules,
+    onSuccess: (reply, { id }) => {
+      queryClient.setQueryData(LAYOUT_KEYS.rules(id), reply);
+      // The picker's infinite lists share this key prefix but hold pages, not items: no `items`, left as is.
+      queryClient.setQueriesData<LayoutListResponse>(
+        { queryKey: LAYOUT_KEYS.list() },
+        (list) =>
+          list?.items && {
+            ...list,
+            items: list.items.map((item) => (item.id === id ? { ...item, rules: reply.rules } : item)),
+          },
+      );
+    },
   });
 }

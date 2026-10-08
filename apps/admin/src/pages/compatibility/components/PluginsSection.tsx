@@ -4,7 +4,7 @@ import type { CheckoutTouch, OwnerKind, PluginRow } from '@/lib/schema/compatibi
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { StatusBadge } from './StatusBadge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 
 const TOUCH_LABELS: Record<CheckoutTouch, string> = {
   fields: __('fields', 'yaycheckout'),

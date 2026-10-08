@@ -1,14 +1,10 @@
 #!/bin/bash
 #
-# Pro boundary guard.
+# Pro boundary guard: no file outside includes/Pro/ may name a YayCheckout\Pro\ class,
+# except the one guarded bootstrap in includes/YayCheckout.php.
 #
-# Rule: no file outside includes/Pro/ may name a YayCheckout\Pro\ class.
-# Exactly one reference is permitted — the guarded bootstrap in YayCheckout.php
-# that loads the provider when the Pro directory is present.
-#
-# Without this check the boundary erodes: a `use` here, a `new` there, and the
-# directory can no longer be removed to build the Free artifact. That failure is
-# invisible in a dev tree, which always contains everything.
+# Without it the boundary erodes until includes/Pro/ can no longer be removed to build
+# Free, a failure a dev tree, which always contains everything, never shows.
 
 set -e
 

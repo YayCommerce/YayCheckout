@@ -2,6 +2,7 @@
 namespace YayCheckout\Controllers;
 
 use YayCheckout\Helpers\Logger;
+use YayCheckout\PostTypes\LayoutPostType;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -25,6 +26,30 @@ abstract class BaseRestController {
         return new \WP_Error( 'invalid_arguments', $message, [ 'status' => 400 ] );
     }
 
+    protected function error_conflict( $message = 'Conflict.' ) {
+        return new \WP_Error( 'conflict', $message, [ 'status' => 409 ] );
+    }
+
+    /** Every route requires LayoutPostType::CAPABILITY. */
+    public function permission_callback(): bool {
+        return current_user_can( LayoutPostType::CAPABILITY );
+    }
+
+    /** Route args for an `(?P<id>\d+)` path segment. */
+    protected function id_args(): array {
+        return [
+            'id' => [
+                'required'          => true,
+                'type'              => 'integer',
+                'sanitize_callback' => 'absint',
+                // Not bare 'is_numeric': REST passes three args and an internal function throws.
+                'validate_callback' => static function ( $value ) {
+                    return is_numeric( $value );
+                },
+            ],
+        ];
+    }
+
     /**
      * Runs a route that does not write.
      *
@@ -45,9 +70,9 @@ abstract class BaseRestController {
 
     /**
      * Runs a route that writes through the WordPress API (posts, meta, options).
-     * No SQL transaction on purpose: a ROLLBACK would
-     * leave a persistent object cache holding the rolled-back write. Order
-     * writes inside the callback so a partial failure leaves the old state live.
+     * No SQL transaction on purpose: a ROLLBACK would leave a persistent object
+     * cache holding the rolled-back write. Order writes inside the callback so a
+     * partial failure leaves the old state live.
      *
      * @return \WP_REST_Response|\WP_Error|void
      */
@@ -67,7 +92,7 @@ abstract class BaseRestController {
     /**
      * Runs a route that writes custom tables inside a transaction, rolled back
      * on error. Custom tables only: a transaction cannot roll back the object
-     * cache. Unused until a custom table exists.
+     * cache. No route uses it yet.
      *
      * @return \WP_REST_Response|\WP_Error|void
      */

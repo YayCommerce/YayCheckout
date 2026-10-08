@@ -2,17 +2,15 @@
 namespace YayCheckout\Repositories;
 
 use YayCheckout\Enums\LayoutStatus;
-use YayCheckout\Helpers\BlockMarkup;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
+use YayCheckout\Services\LayoutAssignment;
 use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * All layout storage access; publishing and the active set have one owner.
- */
+/** All layout storage access; publishing and the active set have one owner. */
 class LayoutRepository {
 
     /** Layouts the Free edition may hold. */
@@ -37,21 +35,16 @@ class LayoutRepository {
         return in_array( $id, $this->active_ids(), true );
     }
 
-    /** The active layout; the last activated when Pro holds several. set_active() appends, so the end is the most recent choice. */
-    public function active(): ?Layout {
-        $ids = $this->active_ids();
-        $id  = empty( $ids ) ? 0 : (int) end( $ids );
-
-        return $id > 0 ? $this->find( $id ) : null;
-    }
-
     /**
-     * The layout that should render for the current request: the previewed one when the
-     * renderer passes an id, else the active one. Pro assignment rules (Layout::META_RULES)
-     * will be evaluated here before falling back to active().
+     * The active layout for this shopper: the most recently activated whose assignment rules match $context.
+     * Free has no assignment, so its one active layout serves everyone.
+     *
+     * @param array $context Shopper facts; see LayoutAssignment::matches().
      */
-    public function resolve_for_request( ?int $preview_id = null ): ?Layout {
-        return null !== $preview_id ? $this->find( $preview_id ) : $this->active();
+    public function active( array $context ): ?Layout {
+        $layouts = array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
+
+        return Plan::is_pro() ? LayoutAssignment::pick( $layouts, $context ) : ( $layouts[0] ?? null );
     }
 
     /**
@@ -238,11 +231,8 @@ class LayoutRepository {
     }
 
     /**
-     * Move a layout to the trash and drop it from the active set. Blocks,
-     * meta and revisions stay; the layout can be restored later.
+     * Moves a layout to the trash and out of the active set; blocks, meta and revisions stay for a restore.
      *
-     * @param  int $id
-     * @return Layout
      * @throws \InvalidArgumentException When the layout is missing or already archived.
      * @throws \RuntimeException         When WordPress refuses or fails to trash it.
      */
@@ -273,9 +263,7 @@ class LayoutRepository {
     }
 
     /**
-     * Moves an archived layout back to draft. WP always assigns 'draft' on
-     * untrash (since 5.6) regardless of the layout's pre-archive status, which
-     * is exactly the behaviour this method wants — no extra status handling needed.
+     * Moves an archived layout back to draft: wp_untrash_post() always restores to 'draft' (WordPress 5.6+).
      *
      * @throws \InvalidArgumentException When the layout is missing or not archived.
      * @throws \RuntimeException         When WordPress refuses or fails to untrash it.
@@ -300,12 +288,11 @@ class LayoutRepository {
         // wp_untrash_post() hands back the pre-update object; only the status moved.
         $restored->post_status = LayoutStatus::DRAFT;
 
-        // Deliberately no Plan::layout_limit_reached() check: restoring an
-        // existing layout is allowed to exceed the Free cap, unlike create()/duplicate().
+        // No Plan::layout_limit_reached() check: a restore may exceed the Free cap, unlike a new layout.
         return Layout::from_post( $restored, $this->hydrate_meta( get_post_meta( $id ) ), false );
     }
 
-    /** Free replaces the set; Pro moves the id to the end so active() serves it. */
+    /** Free replaces the set; Pro moves the id to the end, the most recent choice. */
     public function set_active( int $id ): void {
         $ids = Plan::is_pro()
             ? array_merge( array_diff( $this->active_ids(), [ $id ] ), [ $id ] )
@@ -322,32 +309,11 @@ class LayoutRepository {
      * @throws \InvalidArgumentException When the layout limit is reached or the insert fails.
      */
     public function create( string $title ): Layout {
-        if ( Plan::layout_limit_reached( $this->count() ) ) {
-            throw new \InvalidArgumentException( Plan::layout_limit_message() );
-        }
-
-        // wp_insert_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
-        $new_id = wp_insert_post(
-            wp_slash(
-                [
-                    'post_type'    => Layout::POST_TYPE,
-                    'post_status'  => LayoutStatus::DRAFT,
-                    'post_title'   => $title,
-                    'post_content' => self::default_markup(),
-                ]
-            ),
-            true
-        );
-
-        if ( is_wp_error( $new_id ) ) {
-            throw new \InvalidArgumentException( $new_id->get_error_message() );
-        }
-
-        return $this->find( (int) $new_id );
+        return $this->insert_draft( $title, self::default_markup() );
     }
 
     /**
-     * Copies a layout's content into a new draft layout.
+     * Copies a layout's content and assignment rules into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -358,6 +324,85 @@ class LayoutRepository {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
 
+        /* translators: %s: source layout title. */
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules );
+    }
+
+    /**
+     * Creates a draft from an export file's title, markup and assignment rules, verbatim.
+     * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
+     *
+     * @param array $rules Already sanitized (Layout::sanitize_rules()); [] for none.
+     * @throws \InvalidArgumentException When the limit is reached or the insert fails.
+     */
+    public function import( string $title, string $content, array $rules = [] ): Layout {
+        return $this->insert_draft( $title, $content, $rules );
+    }
+
+    /**
+     * Puts a layout's blocks back to the default layout. Title, status, meta and the
+     * active flag stay; WordPress stores the old markup as a revision, so the editor can undo it.
+     *
+     * @throws \InvalidArgumentException When the layout is missing or the update fails.
+     */
+    public function reset( int $id ): Layout {
+        if ( null === $this->find( $id ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        // Core revisions the post after the update, so a layout never saved in the editor has no revision
+        // holding the old markup. No-op when the latest revision already matches.
+        wp_save_post_revision( $id );
+
+        // wp_update_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
+        $result = wp_update_post(
+            wp_slash(
+                [
+                    'ID'           => $id,
+                    'post_content' => self::default_markup(),
+                ]
+            ),
+            true
+        );
+
+        if ( is_wp_error( $result ) ) {
+            throw new \InvalidArgumentException( $result->get_error_message() );
+        }
+
+        return $this->find( $id );
+    }
+
+    /**
+     * Replaces a layout's assignment rules; [] clears them. Writes meta only, so the layout's
+     * content, status and modified date stay as they are: rules save separately from the design.
+     *
+     * @param mixed $rules Raw rules; see Layout::sanitize_rules().
+     * @return array The rules as stored.
+     * @throws \InvalidArgumentException When the layout is missing or the rules are invalid.
+     */
+    public function set_rules( int $id, $rules ): array {
+        if ( null === $this->find( $id ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        $clean = Layout::sanitize_rules( $rules );
+
+        if ( [] === $clean ) {
+            delete_post_meta( $id, Layout::META_RULES );
+        } else {
+            update_post_meta( $id, Layout::META_RULES, $clean );
+        }
+
+        return $clean;
+    }
+
+    /**
+     * The one insert path for a new draft, so the cap and slashing cannot drift.
+     *
+     * @param array $rules Already sanitized; written with the post, so the draft never exists without them.
+     * @throws \InvalidArgumentException When the limit is reached or the insert fails.
+     */
+    private function insert_draft( string $title, string $content, array $rules = [] ): Layout {
         // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.
         if ( Plan::layout_limit_reached( $this->count() ) ) {
             throw new \InvalidArgumentException( Plan::layout_limit_message() );
@@ -369,9 +414,9 @@ class LayoutRepository {
                 [
                     'post_type'    => Layout::POST_TYPE,
                     'post_status'  => LayoutStatus::DRAFT,
-                    /* translators: %s: source layout title. */
-                    'post_title'   => sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ),
-                    'post_content' => $source->content,
+                    'post_title'   => $title,
+                    'post_content' => $content,
+                    'meta_input'   => [] === $rules ? [] : [ Layout::META_RULES => $rules ],
                 ]
             ),
             true
@@ -412,57 +457,14 @@ class LayoutRepository {
     }
 
     /**
-     * Block markup for a new layout: contact, billing, shipping, order review.
-     *
-     * The address keys mirror packages/blocks/src/shared/address-fields.ts,
-     * the editor's field picker; keep the two in step.
+     * Block markup for a new layout, from templates/default-layout.php: a header, the checkout in two
+     * columns (form; order summary with coupon), a footer.
      */
     public static function default_markup(): string {
-        return BlockMarkup::serialize(
-            [
-                BlockMarkup::block(
-                    'yaycheckout/checkout',
-                    [],
-                    [
-                        BlockMarkup::block( 'yaycheckout/contact' ),
-                        BlockMarkup::block( 'yaycheckout/billing', [], self::address_field_blocks( 'billing' ) ),
-                        BlockMarkup::block( 'yaycheckout/shipping', [], self::address_field_blocks( 'shipping' ) ),
-                        BlockMarkup::block( 'yaycheckout/order-review' ),
-                    ]
-                ),
-            ]
-        );
-    }
+        ob_start();
+        include YAYCHECKOUT_PLUGIN_DIR . 'templates/default-layout.php';
 
-    /**
-     * @return array[] Field blocks for one address section.
-     */
-    private static function address_field_blocks( string $prefix ): array {
-        $fields = [
-            'first_name' => [ 'text', __( 'First name', 'yaycheckout' ) ],
-            'last_name'  => [ 'text', __( 'Last name', 'yaycheckout' ) ],
-            'country'    => [ 'country', __( 'Country / Region', 'yaycheckout' ) ],
-            'address_1'  => [ 'text', __( 'Street address', 'yaycheckout' ) ],
-            'city'       => [ 'text', __( 'Town / City', 'yaycheckout' ) ],
-            'state'      => [ 'state', __( 'State / County', 'yaycheckout' ) ],
-            'postcode'   => [ 'text', __( 'Postcode / ZIP', 'yaycheckout' ) ],
-        ];
-
-        $blocks = [];
-
-        foreach ( $fields as $suffix => [ $type, $label ] ) {
-            $blocks[] = BlockMarkup::block(
-                'yaycheckout/field',
-                [
-                    'fieldKey' => $prefix . '_' . $suffix,
-                    'type'     => $type,
-                    'label'    => $label,
-                    'required' => true,
-                ]
-            );
-        }
-
-        return $blocks;
+        return (string) ob_get_clean();
     }
 
     /**
@@ -491,9 +493,6 @@ class LayoutRepository {
     /**
      * Unserializes bulk post meta. Keyless get_post_meta() skips
      * maybe_unserialize, so array meta arrives as strings.
-     *
-     * @param  mixed $meta
-     * @return array
      */
     private function hydrate_meta( $meta ): array {
         if ( ! is_array( $meta ) ) {

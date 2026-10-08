@@ -2,25 +2,22 @@
 namespace YayCheckout\Controllers;
 
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
+use YayCheckout\PostTypes\LayoutPostType;
 use YayCheckout\Services\LayoutMarkupReader;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Core's wp/v2 controller for layouts, with reads gated like everything else
- * and publishing held to the same layout rules.
- *
- * WP_REST_Posts_Controller serves any 'publish' post to anyone before it
- * consults the post type's capabilities, so the editor-facing endpoint would
- * otherwise hand a logged-out request the layout markup.
+ * Core's wp/v2 controller for layouts, with reads gated like everything else and
+ * publishing held to the same layout rules. WP_REST_Posts_Controller serves any
+ * 'publish' post to anyone before it consults the post type's capabilities, so
+ * a logged-out request would otherwise get the layout markup.
  */
 class LayoutCoreRestController extends \WP_REST_Posts_Controller {
 
-    /**
-     * @return true|\WP_Error
-     */
+    /** @return true|\WP_Error */
     public function get_items_permissions_check( $request ) {
-        if ( ! current_user_can( 'manage_woocommerce' ) ) {
+        if ( ! current_user_can( LayoutPostType::CAPABILITY ) ) {
             return new \WP_Error(
                 'rest_forbidden',
                 __( 'Sorry, you are not allowed to view checkout layouts.', 'yaycheckout' ),
@@ -32,7 +29,7 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
     }
 
     public function check_read_permission( $post ) {
-        return current_user_can( 'manage_woocommerce' ) && parent::check_read_permission( $post );
+        return current_user_can( LayoutPostType::CAPABILITY ) && parent::check_read_permission( $post );
     }
 
     /**

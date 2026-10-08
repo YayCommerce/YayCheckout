@@ -4,6 +4,7 @@ import {
   layoutCountsResponseSchema,
   LayoutListResponse,
   layoutListResponseWireSchema,
+  layoutRulesWireSchema,
   LayoutStatus,
   LayoutSummary,
   LayoutSummaryWire,
@@ -11,9 +12,9 @@ import {
   layoutWireSchema,
   PreviewLink,
   previewLinkWireSchema,
+  type LayoutRulesResponse,
+  type LayoutRulesWire,
 } from '@/lib/schema/layout.schema';
-
-// The only place wire snake_case meets app camelCase.
 
 function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
   return {
@@ -21,8 +22,11 @@ function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
     title: wire.title,
     status: wire.status,
     isActive: wire.is_active,
+    blocks: wire.blocks,
+    size: wire.size,
     publishedAt: wire.published_at,
     scheduledAt: wire.scheduled_at,
+    rules: wire.rules,
   };
 }
 
@@ -33,7 +37,7 @@ function layoutFromWire(wire: LayoutWire): Layout {
   };
 }
 
-function parseLayout(payload: unknown): Layout {
+export function parseLayout(payload: unknown): Layout {
   return layoutFromWire(layoutWireSchema.parse(payload));
 }
 
@@ -93,6 +97,10 @@ export async function duplicateLayout(id: number): Promise<Layout> {
   return parseLayout(await api.post(`layouts/${id}/duplicate`).json());
 }
 
+export async function resetLayout(id: number): Promise<Layout> {
+  return parseLayout(await api.post(`layouts/${id}/reset`).json());
+}
+
 export async function createPreviewLink(id: number): Promise<PreviewLink> {
   const wire = previewLinkWireSchema.parse(await api.post(`layouts/${id}/preview-link`).json());
 
@@ -113,4 +121,19 @@ export async function createLayoutDraft(payload: CreateLayoutDraftPayload): Prom
       : { name: payload.name, source: payload.source };
 
   return parseLayout(await api.post('layouts', { json }).json());
+}
+
+export async function getLayoutRules(id: number): Promise<LayoutRulesResponse> {
+  return layoutRulesWireSchema.parse(await api.get(`layouts/${id}/rules`).json());
+}
+
+/** Replaces the rules; resolves to them as stored (list values de-duplicated). */
+export async function saveLayoutRules({
+  id,
+  rules,
+}: {
+  id: number;
+  rules: LayoutRulesWire;
+}): Promise<LayoutRulesResponse> {
+  return layoutRulesWireSchema.parse(await api.put(`layouts/${id}/rules`, { json: { rules } }).json());
 }

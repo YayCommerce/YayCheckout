@@ -1,11 +1,14 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Search } from 'lucide-react';
+import { Loader2, Plus, Search } from 'lucide-react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useDebounceFn } from 'rooks';
 import { toast } from 'sonner';
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 
 import { formatDateTime } from '@/lib/helpers/date.helper';
+import { editLayoutIdFrom, withEditLayout } from '@/lib/helpers/layout.helper';
+import { isPro } from '@/lib/plan';
 import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
@@ -43,8 +46,11 @@ import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
+import { AssignmentChips } from '@/pages/layouts/assignment/AssignmentChips';
+import { AssignmentDrawer } from '@/pages/layouts/assignment/AssignmentDrawer';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { DeleteModal } from '@/pages/layouts/DeleteModal';
+import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import { PreviewLinkModal } from '@/pages/layouts/PreviewLinkModal';
 import { SetActiveModal } from '@/pages/layouts/SetActiveModal';
@@ -163,12 +169,21 @@ function LayoutsPageBody({
   onPageIndexChange: (pageIndex: number) => void;
 }) {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
-  const [editingLayoutId, setEditingLayoutId] = useState<number | null>(null);
+  // The URL is the only record of the open editor, so browser Back closes it and other screens can deep-link to it.
+  const editingLayoutId = editLayoutIdFrom(searchParams);
+  // The state marks an entry this page pushed, so closing pops it instead of leaving a duplicate behind.
+  const openEditor = (id: number) =>
+    setSearchParams(withEditLayout(searchParams, id), { state: { isEditorPushed: true } });
+  const lastEditingLayoutId = useRef(editingLayoutId);
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
   const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
   const [deletingLayout, setDeletingLayout] = useState<LayoutSummary | null>(null);
+  const [assigningLayout, setAssigningLayout] = useState<LayoutSummary | null>(null);
   const [previewing, setPreviewing] = useState<{ layout: LayoutSummary; link: PreviewLink } | null>(null);
 
   const activateMutation = useActivateLayoutMutation();
@@ -179,7 +194,6 @@ function LayoutsPageBody({
   const duplicateMutation = useDuplicateLayoutMutation();
   const previewLinkMutation = useCreatePreviewLinkMutation();
 
-  // Invalidate rather than patch: on Free, activating one row deactivates another.
   function onActivate(layout: LayoutSummary) {
     activateMutation.mutate(layout.id, {
       onSuccess: () => {
@@ -261,10 +275,22 @@ function LayoutsPageBody({
     return url.toString();
   }, [editingLayoutId]);
 
-  const onEditorOpenChange = (open: boolean) => {
-    if (!open) {
-      setEditingLayoutId(null);
+  // Refetch once the editor closes. Watched on the URL, not the dialog: browser Back closes it without onOpenChange.
+  useEffect(() => {
+    if (lastEditingLayoutId.current !== null && editingLayoutId === null) {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+    }
+    lastEditingLayoutId.current = editingLayoutId;
+  }, [editingLayoutId, queryClient]);
+
+  const onEditorOpenChange = (open: boolean) => {
+    if (open) {
+      return;
+    }
+    if (location.state?.isEditorPushed) {
+      navigate(-1);
+    } else {
+      setSearchParams(withEditLayout(searchParams, null), { replace: true });
     }
   };
 
@@ -302,6 +328,7 @@ function LayoutsPageBody({
         onConfirm={onDelete}
         isPending={deleteMutation.isPending}
       />
+      <AssignmentDrawer layout={assigningLayout} onOpenChange={(open) => !open && setAssigningLayout(null)} />
       <PreviewLinkModal
         layout={previewing?.layout ?? null}
         link={previewing?.link ?? null}
@@ -402,13 +429,14 @@ function LayoutsPageBody({
                     <LayoutsTable
                       items={listData.items}
                       view={view}
-                      onEditLayout={setEditingLayoutId}
+                      onEditLayout={openEditor}
                       onSetActive={setActivatingLayout}
                       onDeactivate={setDeactivatingLayout}
                       onArchive={setArchivingLayout}
                       onRestore={onRestore}
                       onDelete={setDeletingLayout}
                       onDuplicate={onDuplicate}
+                      onAssign={setAssigningLayout}
                       onPreview={onPreview}
                       previewPending={previewLinkMutation.isPending}
                     />
@@ -456,17 +484,33 @@ function LayoutsPageBody({
             <DialogTitle className="text-base">{__('Edit layout', 'yaycheckout')}</DialogTitle>
           </DialogHeader>
 
-          {editorUrl && (
-            <div className="min-h-0 flex-1 overflow-hidden">
-              <iframe
-                title={__('Layout editor', 'yaycheckout')}
-                src={editorUrl}
-                className="block h-full w-full border-0"
-              />
-            </div>
-          )}
+          {editorUrl && <LayoutEditorFrame key={editorUrl} src={editorUrl} />}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/** Block-editor iframe with a spinner over it until the editor page finishes loading. Keyed by URL so each open starts in the loading state. */
+function LayoutEditorFrame({ src }: { src: string }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className="relative min-h-0 flex-1 overflow-hidden">
+      <iframe
+        title={__('Layout editor', 'yaycheckout')}
+        src={src}
+        onLoad={() => setLoaded(true)}
+        className={cn('block size-full border-0', !loaded && 'invisible')}
+      />
+      {!loaded && (
+        <div className="bg-background absolute inset-0 flex items-center justify-center">
+          <Loader2
+            className="text-muted-foreground size-6 animate-spin"
+            aria-label={__('Loading editor…', 'yaycheckout')}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -494,6 +538,7 @@ function LayoutsTable({
   onRestore,
   onDelete,
   onDuplicate,
+  onAssign,
   onPreview,
   previewPending,
 }: {
@@ -506,8 +551,8 @@ function LayoutsTable({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
-  /** One link mints at a time; every Preview button waits. */
   previewPending: boolean;
 }) {
   return (
@@ -515,7 +560,7 @@ function LayoutsTable({
       <TableHeader>
         <TableRow>
           <TableHead>{__('Name', 'yaycheckout')}</TableHead>
-          {/* TODO: Assignment column (Pro) once LayoutSummary carries an `assignment` field. */}
+          {isPro && <TableHead>{__('Assignment', 'yaycheckout')}</TableHead>}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
           <TableHead>{__('Active', 'yaycheckout')}</TableHead>
           <TableHead>{__('Published', 'yaycheckout')}</TableHead>
@@ -535,6 +580,7 @@ function LayoutsTable({
             onRestore={onRestore}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
+            onAssign={onAssign}
             onPreview={onPreview}
             previewPending={previewPending}
           />
@@ -542,36 +588,6 @@ function LayoutsTable({
       </TableBody>
     </Table>
   );
-}
-
-function statusBadge(layout: LayoutSummary) {
-  if (layout.status === 'trash') {
-    return <Badge variant="destructive-soft">{__('Archived', 'yaycheckout')}</Badge>;
-  }
-
-  if (layout.status === 'publish') {
-    return <Badge variant="success">{__('Published', 'yaycheckout')}</Badge>;
-  }
-
-  if (layout.status === 'future') {
-    return (
-      <Badge variant="outline">
-        {layout.scheduledAt
-          ? sprintf(
-              /* translators: %s: scheduled publish date */
-              __('Scheduled · %s', 'yaycheckout'),
-              formatDateTime(layout.scheduledAt),
-            )
-          : __('Scheduled', 'yaycheckout')}
-      </Badge>
-    );
-  }
-
-  if (layout.status === 'pending') {
-    return <Badge variant="outline">{__('Pending review', 'yaycheckout')}</Badge>;
-  }
-
-  return <Badge variant="outline">{__('Draft', 'yaycheckout')}</Badge>;
 }
 
 function LayoutTableRow({
@@ -584,6 +600,7 @@ function LayoutTableRow({
   onRestore,
   onDelete,
   onDuplicate,
+  onAssign,
   onPreview,
   previewPending,
 }: {
@@ -596,8 +613,8 @@ function LayoutTableRow({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
-  /** One link mints at a time; every Preview button waits. */
   previewPending: boolean;
 }) {
   return (
@@ -605,7 +622,14 @@ function LayoutTableRow({
       <TableCell className="max-w-[320px] truncate font-medium" title={layout.title}>
         {layout.title}
       </TableCell>
-      <TableCell>{statusBadge(layout)}</TableCell>
+      {isPro && (
+        <TableCell className="max-w-70">
+          <AssignmentChips rules={layout.rules} />
+        </TableCell>
+      )}
+      <TableCell>
+        <LayoutStatusBadge layout={layout} />
+      </TableCell>
       <TableCell className="font-mono text-xs">
         {layout.isActive ? <Badge variant="success">{__('Active', 'yaycheckout')}</Badge> : '—'}
       </TableCell>
@@ -623,6 +647,7 @@ function LayoutTableRow({
           onRestore={onRestore}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
+          onAssign={onAssign}
           onPreview={onPreview}
           previewPending={previewPending}
         />
@@ -631,7 +656,7 @@ function LayoutTableRow({
   );
 }
 
-/** Per-row actions: Edit, Preview, Set active, Delete for good and the "⋯" menu (Duplicate, Deactivate, Archive). Archive is disabled on the active row: deactivating must be an explicit choice. Publishing is the editor's job. */
+/** Per-row actions. Archive is disabled on the active row, so deactivating stays an explicit choice. Publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,
@@ -642,6 +667,7 @@ function LayoutRowActions({
   onRestore,
   onDelete,
   onDuplicate,
+  onAssign,
   onPreview,
   previewPending,
 }: {
@@ -654,6 +680,7 @@ function LayoutRowActions({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
   /** One link mints at a time; every Preview button waits. */
   previewPending: boolean;
@@ -693,6 +720,7 @@ function LayoutRowActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => onAssign(layout)}>{__('Assignment', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
             {__('Deactivate', 'yaycheckout')}

@@ -6,7 +6,14 @@
   "category": "yaycheckout",
   "description": "A custom checkout field that is not part of the WooCommerce address catalog.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
+  "keywords": [ "custom", "input" ],
+  "example": {
+    "attributes": {
+      "fieldKey": "gift_note",
+      "label": "Gift note"
+    }
+  },
+  "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "fieldKey": {
       "type": "string",
@@ -20,14 +27,37 @@
       "type": "string",
       "default": ""
     },
+    "description": {
+      "type": "string",
+      "default": ""
+    },
     "required": {
       "type": "boolean",
       "default": false
+    },
+    "requiredMark": {
+      "type": "string",
+      "default": ""
+    },
+    "optionalText": {
+      "type": "string",
+      "default": ""
     },
     "type": {
       "type": "string",
       "enum": [ "text", "select", "radio", "checkbox", "datetime" ],
       "default": "text"
+    },
+    "collapseBehindLink": {
+      "type": "boolean"
+    },
+    "revealText": {
+      "type": "string",
+      "default": ""
+    },
+    "rememberValue": {
+      "type": "boolean",
+      "default": false
     },
     "options": {
       "type": "array",
@@ -42,5 +72,7 @@
     "reusable": false
   },
   "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "viewScript": "file:./view.js",
   "render": "file:./render.php"
 }

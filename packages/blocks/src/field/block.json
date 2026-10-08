@@ -6,6 +6,13 @@
   "category": "yaycheckout",
   "description": "A checkout form field. Only insertable inside Billing or Shipping.",
   "textdomain": "yaycheckout",
+  "keywords": [ "input", "form" ],
+  "example": {
+    "attributes": {
+      "fieldKey": "billing_first_name",
+      "label": "First name"
+    }
+  },
   "ancestor": [ "yaycheckout/billing", "yaycheckout/shipping" ],
   "attributes": {
     "fieldKey": {
@@ -33,6 +40,14 @@
       "type": "boolean",
       "default": false
     },
+    "requiredMark": {
+      "type": "string",
+      "default": ""
+    },
+    "optionalText": {
+      "type": "string",
+      "default": ""
+    },
     "autocomplete": {
       "type": "string",
       "default": ""
@@ -45,6 +60,13 @@
       "type": "string",
       "enum": [ "full", "half" ],
       "default": "full"
+    },
+    "collapseBehindLink": {
+      "type": "boolean"
+    },
+    "revealText": {
+      "type": "string",
+      "default": ""
     }
   },
   "supports": {
@@ -76,5 +98,7 @@
     }
   },
   "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "viewScript": "file:./view.js",
   "render": "file:./render.php"
 }

@@ -1,14 +1,10 @@
 <?php
 /**
- * Server render for yaycheckout/express-pay.
- *
- * Storefront hosts wallet buttons via wc_get_pay_buttons().
+ * Prints the wallet buttons from wc_get_pay_buttons() when there is a cart.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
  * @var WP_Block $block      Block instance.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

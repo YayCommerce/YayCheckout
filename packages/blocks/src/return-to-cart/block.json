@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/return-to-cart",
+  "title": "Return to Cart Button",
+  "category": "yaycheckout",
+  "description": "Links to the cart. Shows on every step. Place it anywhere in the layout.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "cart", "return", "back" ],
+  "example": {
+    "attributes": {
+      "buttonText": "Return to cart"
+    }
+  },
+  "attributes": {
+    "buttonText": {
+      "type": "string",
+      "default": ""
+    },
+    "arrow": {
+      "type": "string",
+      "default": "chevron",
+      "enum": [ "none", "arrow", "chevron" ]
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false,
+    "color": {
+      "text": true,
+      "background": false
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "__experimentalFontFamily": true,
+      "__experimentalFontStyle": true,
+      "__experimentalFontWeight": true,
+      "__experimentalLetterSpacing": true,
+      "__experimentalTextDecoration": true,
+      "__experimentalTextTransform": true
+    },
+    "spacing": {
+      "margin": true
+    }
+  },
+  "editorScript": "file:./index.js",
+  "style": "file:./style-index.css",
+  "render": "file:./render.php"
+}

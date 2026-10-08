@@ -6,7 +6,13 @@
   "category": "yaycheckout",
   "description": "Named empty place for other plugins or Pro to inject content.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
+  "keywords": [ "hook", "placeholder" ],
+  "example": {
+    "attributes": {
+      "slotName": "after_email"
+    }
+  },
+  "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
     "slotName": {
       "type": "string",
@@ -18,5 +24,6 @@
     "reusable": false
   },
   "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
   "render": "file:./render.php"
 }

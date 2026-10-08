@@ -2,7 +2,6 @@ import { ComponentProps } from 'react';
 
 import { cn } from '@/lib/utils';
 
-/** Inline external link used by the settings rows — opens in a new tab. */
 export function DocLink({ className, ...props }: ComponentProps<'a'>) {
   return (
     <a

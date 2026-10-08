@@ -1,15 +1,11 @@
 <?php
 /**
- * Server render for yaycheckout/payment.
- *
- * Storefront prints gateway radios. Place order is a separate block.
- * AJAX totals replace .woocommerce-checkout-payment; see CheckoutFragments.
+ * Prints the heading and the gateway list, which
+ * CheckoutFragments refreshes on AJAX totals updates.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
  * @var WP_Block $block      Block instance.
- *
- * @package yaycommerce/yaycheckout
  */
 
 defined( 'ABSPATH' ) || exit;

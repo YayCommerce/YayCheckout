@@ -1,6 +1,8 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Engine\Register\ScriptName;
+use YayCheckout\Enums\ConditionType;
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
@@ -10,12 +12,12 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Makes the active layout the checkout page: our template in place of the
- * theme's, the theme's header and footer around the layout's blocks (the
- * root block is the form). WooCommerce's own validation is untouched.
+ * theme's, printing the layout's blocks in its own document without the
+ * theme's header or footer (the root block is the form).
  *
  * Stands down entirely, leaving WooCommerce untouched, when safe mode is on
  * or no layout resolves; a preview link (PreviewRequest) renders its layout
- * regardless. Full rules in docs/system-architecture.md, § Storefront.
+ * regardless.
  */
 class CheckoutPage {
     use SingletonTrait;
@@ -53,11 +55,15 @@ class CheckoutPage {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php';
     }
 
-    /** Woo only enqueues these on is_checkout(); our template needs them regardless of theme. */
+    /** Woo's checkout scripts, the full-width stylesheet and the Design page's tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
     public function enqueue_scripts(): void {
         wp_enqueue_script( 'wc-checkout' );
         wp_enqueue_script( 'wc-country-select' );
         wp_enqueue_script( 'wc-address-i18n' );
+
+        // Before DesignStyles, so the merchant's custom CSS prints after it.
+        wp_enqueue_style( ScriptName::STYLE_CHECKOUT_PAGE, YAYCHECKOUT_PLUGIN_URL . 'assets/css/checkout-page.css', [], YAYCHECKOUT_VERSION );
+        ( new DesignStyles() )->enqueue();
     }
 
     private function resolve(): ?Layout {
@@ -65,14 +71,30 @@ class CheckoutPage {
 
         // Before the safe-mode check: safe mode protects shoppers, a preview is the merchant looking.
         if ( null !== $preview_id ) {
-            return ( new LayoutRepository() )->resolve_for_request( $preview_id );
+            return ( new LayoutRepository() )->find( $preview_id );
         }
 
         if ( ! empty( ( new SettingsRepository() )->get()->general['safe_mode'] ) ) {
             return null;
         }
 
-        return ( new LayoutRepository() )->resolve_for_request();
+        // Picked afresh by every request, AJAX and order submit too, with no pin: safe because every ConditionType reads a fact that holds for the life of the form.
+        return ( new LayoutRepository() )->active( $this->shopper_context() );
+    }
+
+    /**
+     * What assignment conditions test, read once for this request. Keyed by ConditionType.
+     *
+     * @return array{customer_role: string[], login_status: string, device: string}
+     */
+    private function shopper_context(): array {
+        return [
+            ConditionType::CUSTOMER_ROLE => array_values( wp_get_current_user()->roles ),
+            // Not "no roles": a user of another site in the network is logged in with none here.
+            ConditionType::LOGIN_STATUS  => is_user_logged_in() ? ConditionType::LOGGED_IN : ConditionType::GUEST,
+            // TODO(device-detection): wp_is_mobile() counts tablets as mobile; a tablet value needs user-agent detection that core does not offer.
+            ConditionType::DEVICE        => wp_is_mobile() ? ConditionType::MOBILE : ConditionType::DESKTOP,
+        ];
     }
 
     /**

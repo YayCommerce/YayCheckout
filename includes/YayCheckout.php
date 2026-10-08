@@ -22,11 +22,15 @@ class YayCheckout {
         \YayCheckout\Engine\LayoutTrashSync::get_instance();
         \YayCheckout\Engine\LayoutActiveGuard::get_instance();
         \YayCheckout\Engine\Admin\LayoutEditorEmbed::get_instance();
+        \YayCheckout\Engine\Admin\LayoutEditorCanvas::get_instance();
         \YayCheckout\Renderer\PreviewRequest::get_instance();
         \YayCheckout\Renderer\CheckoutScripts::get_instance();
+        \YayCheckout\Renderer\CheckoutColour::get_instance();
         \YayCheckout\Renderer\CheckoutPage::get_instance();
         \YayCheckout\Renderer\CheckoutFragments::get_instance();
         \YayCheckout\Renderer\CheckoutExtraFields::get_instance();
+        \YayCheckout\Renderer\CheckoutRequiredFields::get_instance();
+        \YayCheckout\Renderer\CheckoutLogin::get_instance();
     }
 
     public static function initialize() {
@@ -34,10 +38,8 @@ class YayCheckout {
     }
 
     /**
-     * Loads the Pro service provider when this build ships one.
-     * The only place core may name a YayCheckout\Pro class
-     * (scripts/check-pro-boundary.sh). Must run before every other component
-     * so Plan::is_pro() is settled.
+     * Boots the Pro service provider when this build ships one. The only place core
+     * names a YayCheckout\Pro class. Runs first so Plan::is_pro() is settled.
      */
     private function boot_pro(): void {
         $provider = YAYCHECKOUT_PLUGIN_DIR . 'includes/Pro/ProServiceProvider.php';

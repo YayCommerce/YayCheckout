@@ -1,10 +1,12 @@
-import type { CSSProperties } from 'react';
+import { RichText } from '@wordpress/block-editor';
+import './field-preview.css';
 
 export function previewInputType( type: string ): string {
 	if ( [ 'email', 'tel', 'password' ].includes( type ) ) {
 		return type;
 	}
 
+	// Mirrors $yaycheckout_woo_type in packages/blocks/src/extra-field/render.php.
 	if ( type === 'datetime' ) {
 		return 'datetime-local';
 	}
@@ -21,47 +23,71 @@ interface FieldPreviewProps {
 	label: string;
 	type: string;
 	required?: boolean;
+	requiredMark?: string;
+	optionalText?: string;
 	placeholder?: string;
+	/** Help text, shown under the control. */
+	description?: string;
 	options?: FieldOption[];
-	labelStyle?: CSSProperties;
+	/** The block's own typography styles the label. */
+	inheritLabelFont?: boolean;
+	/** Makes the label editable on the canvas; labelPlaceholder shows while it is empty. */
+	onLabelChange?: ( value: string ) => void;
+	labelPlaceholder?: string;
 }
 
-const inputStyle = {
-	display: 'block',
-	width: '100%',
-	boxSizing: 'border-box' as const,
-	marginTop: '4px',
-	padding: '8px 10px',
-	border: '1px solid #8c8f94',
-	borderRadius: '4px',
-	background: '#fff',
-};
-
-/**
- * Read-only canvas control. Typing here must not fight Gutenberg selection.
- */
+/** Read-only so typing on the canvas does not fight block selection. */
 export function FieldPreview( {
 	label,
 	type,
 	required = false,
+	requiredMark = '',
+	optionalText = '',
 	placeholder = '',
+	description = '',
 	options = [],
-	labelStyle,
+	inheritLabelFont = false,
+	onLabelChange,
+	labelPlaceholder = '',
 }: FieldPreviewProps ) {
+	const LabelTag = onLabelChange ? 'div' : 'label';
+
 	const usableOptions = options.filter( ( option ) => option.label !== '' || option.value !== '' );
 
 	return (
-		<div style={ { marginBottom: '12px' } }>
-			<label style={ { display: 'block', fontSize: '13px', fontWeight: 600, ...labelStyle } }>
-				{ label }
-				{ required && <span style={ { color: '#cc1818', marginLeft: '4px' } }>*</span> }
-			</label>
+		<div className="yaycheckout-field-preview">
+			<LabelTag
+				className={
+					'yaycheckout-field-preview__label' +
+					( inheritLabelFont ? ' yaycheckout-field-preview__label--inherit' : '' )
+				}
+			>
+				{ onLabelChange ? (
+					<RichText
+						tagName="span"
+						value={ label }
+						onChange={ onLabelChange }
+						placeholder={ labelPlaceholder }
+						allowedFormats={ [] }
+						withoutInteractiveFormatting
+					/>
+				) : (
+					label
+				) }
+				{ required ? (
+					<span className="yaycheckout-field-preview__required">{ requiredMark || '*' }</span>
+				) : (
+					<span className="yaycheckout-field-preview__optional">
+						({ optionalText || 'optional' })
+					</span>
+				) }
+			</LabelTag>
 			{ type === 'textarea' ? (
-				<textarea readOnly rows={ 3 } placeholder={ placeholder } style={ inputStyle } />
+				<textarea readOnly rows={ 3 } placeholder={ placeholder } className="yaycheckout-field-preview__input" />
 			) : type === 'select' ? (
-				<select disabled style={ inputStyle }>
+				<select disabled className="yaycheckout-field-preview__input">
 					{ usableOptions.length === 0 ? (
-						<option>{ placeholder || label }</option>
+						<option>{ placeholder || label || labelPlaceholder }</option>
 					) : (
 						usableOptions.map( ( option, index ) => (
 							<option key={ index } value={ option.value }>
@@ -71,39 +97,40 @@ export function FieldPreview( {
 					) }
 				</select>
 			) : type === 'radio' ? (
-				<div style={ { marginTop: '8px' } }>
+				<div className="yaycheckout-field-preview__choices">
 					{ usableOptions.length === 0 ? (
-						<label style={ { display: 'block' } }>
-							<input type="radio" disabled /> { placeholder || label }
+						<label className="yaycheckout-field-preview__choice">
+							<input type="radio" disabled /> { placeholder || label || labelPlaceholder }
 						</label>
 					) : (
 						usableOptions.map( ( option, index ) => (
-							<label key={ index } style={ { display: 'block', marginBottom: '4px' } }>
+							<label key={ index } className="yaycheckout-field-preview__choice">
 								<input type="radio" disabled /> { option.label || option.value }
 							</label>
 						) )
 					) }
 				</div>
 			) : type === 'checkbox' && usableOptions.length > 0 ? (
-				<div style={ { marginTop: '8px' } }>
+				<div className="yaycheckout-field-preview__choices">
 					{ usableOptions.map( ( option, index ) => (
-						<label key={ index } style={ { display: 'block', marginBottom: '4px' } }>
+						<label key={ index } className="yaycheckout-field-preview__choice">
 							<input type="checkbox" disabled /> { option.label || option.value }
 						</label>
 					) ) }
 				</div>
 			) : type === 'checkbox' ? (
-				<input type="checkbox" disabled style={ { marginTop: '8px' } } />
+				<input type="checkbox" disabled className="yaycheckout-field-preview__check" />
 			) : type === 'hidden' ? (
-				<span style={ { color: '#646970', fontSize: '12px' } }>{ label }</span>
+				<span className="yaycheckout-field-preview__hidden">{ label || labelPlaceholder }</span>
 			) : (
 				<input
 					type={ previewInputType( type ) }
 					readOnly
-					placeholder={ type === 'datetime' ? placeholder || 'YYYY-MM-DD HH:mm' : placeholder }
-					style={ inputStyle }
+					placeholder={ placeholder }
+					className="yaycheckout-field-preview__input"
 				/>
 			) }
+			{ description !== '' && <p className="yaycheckout-field-preview__description">{ description }</p> }
 		</div>
 	);
 }

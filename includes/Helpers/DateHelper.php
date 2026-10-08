@@ -19,15 +19,17 @@ class DateHelper {
             return null;
         }
 
-        $utc  = new \DateTimeZone( 'UTC' );
-        $date = \DateTimeImmutable::createFromFormat( self::MYSQL_FORMAT, $mysql_gmt, $utc );
+        $date = self::parse( $mysql_gmt, self::MYSQL_FORMAT );
+
+        return null === $date ? null : $date->format( \DateTimeInterface::ATOM );
+    }
+
+    /** Strict format check: null when $value isn't exactly $format or names a date that doesn't exist. Parsed as UTC, so the result is only a true instant when $value is GMT. */
+    public static function parse( string $value, string $format ): ?\DateTimeImmutable {
+        $date = \DateTimeImmutable::createFromFormat( '!' . $format, $value, new \DateTimeZone( 'UTC' ) );
 
         // createFromFormat rolls 31 Feb over instead of failing.
-        if ( false === $date || $date->format( self::MYSQL_FORMAT ) !== $mysql_gmt ) {
-            return null;
-        }
-
-        return $date->format( \DateTimeInterface::ATOM );
+        return false === $date || $date->format( $format ) !== $value ? null : $date;
     }
 
     public static function now_iso8601(): string {

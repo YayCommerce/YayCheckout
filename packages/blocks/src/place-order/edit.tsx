@@ -1,9 +1,10 @@
-import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, TextControl } from '@wordpress/components';
+import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
+import { PanelBody, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 interface PlaceOrderAttributes {
-	buttonText: string;
+	buttonText?: string;
+	showTotal?: boolean;
 }
 
 interface EditProps {
@@ -11,40 +12,42 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< PlaceOrderAttributes > ) => void;
 }
 
+/** The button is the block's root element, so its style supports land on it. Mirrors the class and default label render.php prints on the <button>. */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { buttonText } = attributes;
-	const blockProps = useBlockProps( { className: 'yaycheckout-place-order' } );
-	const label = buttonText || __( 'Place order', 'yaycheckout' );
+	const showTotal = attributes.showTotal === true;
+	const blockProps = useBlockProps( {
+		className: 'yaycheckout-place-order wp-element-button',
+		...( showTotal
+			? {
+					'data-show-total': '1',
+					'data-total': '$20.00',
+			  }
+			: {} ),
+	} );
 
 	return (
 		<>
 			<InspectorControls>
 				<PanelBody title={ __( 'Place order', 'yaycheckout' ) }>
-					<TextControl
-						label={ __( 'Button text', 'yaycheckout' ) }
-						value={ buttonText }
-						onChange={ ( value ) => setAttributes( { buttonText: value } ) }
+					<ToggleControl
+						label={ __( 'Show order total', 'yaycheckout' ) }
+						checked={ showTotal }
+						onChange={ ( value ) => setAttributes( { showTotal: value } ) }
 					/>
 				</PanelBody>
 			</InspectorControls>
-			<div { ...blockProps }>
-				<button
-					type="button"
-					disabled
-					style={ {
-						display: 'block',
-						width: '100%',
-						padding: '12px 16px',
-						border: 0,
-						borderRadius: '4px',
-						background: '#1e1e1e',
-						color: '#fff',
-						fontSize: '14px',
-					} }
-				>
-					{ label }
-				</button>
-			</div>
+			<RichText
+				{ ...blockProps }
+				tagName="div"
+				value={ attributes.buttonText ?? '' }
+				onChange={ ( buttonText: string ) =>
+					setAttributes( { buttonText: buttonText.replace( /\s*\n\s*/g, ' ' ) } )
+				}
+				placeholder={ __( 'Place order', 'yaycheckout' ) }
+				// Plain text on one line (pasted line breaks become spaces): the label also goes into value and data-value.
+				__unstableDisableFormats
+				disableLineBreaks
+			/>
 		</>
 	);
 }

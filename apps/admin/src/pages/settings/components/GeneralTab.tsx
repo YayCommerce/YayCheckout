@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { DocLink } from './DocLink';
 import { SettingRow } from './SettingRow';
 
-// Only uninstall deletion has a consumer yet; safe mode and telemetry are stored, unused.
+// Share usage data is stored, but nothing sends it yet.
 export function GeneralTab() {
   const { control } = useFormContext<Settings>();
 

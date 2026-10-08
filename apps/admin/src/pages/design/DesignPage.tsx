@@ -16,28 +16,39 @@ import {
 } from '@/lib/schema/design.schema';
 import { useRouteLeaveGuard } from '@/hooks/useRouteLeaveGuard';
 import { Form } from '@/components/ui/form';
+import { PreviewPane } from '@/components/shared/PreviewPane';
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog';
 import PageLayout from '@/pages/PageLayout';
 import { DesignActions } from './components/DesignActions';
 import { PresetsCard } from './components/PresetsCard';
-import { PreviewPane } from './components/PreviewPane';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { SavePresetModal } from './components/SavePresetModal';
 import { TokenGroups } from './components/TokenGroups';
 
 const FORM_ID = 'design-form';
+const HEADING = __('Design', 'yaycheckout');
+const DESCRIPTION = __('Customize checkout colors, typography and spacing.', 'yaycheckout');
 
 function toFormValues(design: DesignResponse): DesignForm {
   return { tokens: design.tokens, customCss: design.customCss };
 }
 
 export default function DesignPage() {
-  // initialData from the bootstrap: data is defined on first render.
-  const { data } = useDesignQuery();
+  // Defined on first render unless the bootstrap was rejected and is being refetched.
+  const { data, error } = useDesignQuery();
+  if (data) return <DesignPageBody data={data} />;
+
+  return (
+    <PageLayout heading={HEADING} description={DESCRIPTION}>
+      {error && <p className="text-destructive text-sm">{error.message}</p>}
+    </PageLayout>
+  );
+}
+
+function DesignPageBody({ data }: { data: DesignResponse }) {
   const saveMutation = useSaveDesignMutation();
   const deletePresetMutation = useDeleteDesignPresetMutation();
-  // Which preset the editor's tokens were copied from. Page state, not a form field: it is
-  // bookkeeping, not an edit, so it must not make the form dirty on its own.
+  // The preset the tokens were copied from. Kept out of the form so it never makes the form dirty on its own.
   const [presetId, setPresetId] = useState(data.presetId);
   // Null while closed; the override count the modal quotes once opened.
   const [resetCount, setResetCount] = useState<number | null>(null);
@@ -98,9 +109,11 @@ export default function DesignPage() {
   return (
     <Form {...form}>
       <PageLayout
-        heading={__('Design', 'yaycheckout')}
-        description={__('Customize checkout colors, typography and spacing.', 'yaycheckout')}
-        actions={<DesignActions formId={FORM_ID} isPending={saveMutation.isPending} onReset={setResetCount} />}
+        heading={HEADING}
+        description={DESCRIPTION}
+        actions={
+          <DesignActions design={data} formId={FORM_ID} isPending={saveMutation.isPending} onReset={setResetCount} />
+        }
       >
         <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-5 lg:flex-row">

@@ -1,5 +1,6 @@
 import { __, sprintf } from '@wordpress/i18n';
 
+import { storeTypeLabel } from '@/lib/helpers/compatibility.helper';
 import type { StoreEnvironment } from '@/lib/schema/compatibility.schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -14,10 +15,7 @@ export function StoreSection({ store }: { store: StoreEnvironment }) {
     : themeLabel;
 
   const rows: [string, string][] = [
-    [
-      __('Store type', 'yaycheckout'),
-      store.storeType === 'block' ? __('Block checkout', 'yaycheckout') : __('Classic store', 'yaycheckout'),
-    ],
+    [__('Store type', 'yaycheckout'), storeTypeLabel(store.storeType)],
     [__('WooCommerce', 'yaycheckout'), store.woocommerceVersion],
     [__('WordPress', 'yaycheckout'), store.wordpressVersion],
     [__('Theme', 'yaycheckout'), theme],

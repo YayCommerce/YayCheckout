@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { YayCheckoutToolTip } from '@/components/shared/YayCheckoutToolTip';
 
-const UPGRADE_URL = 'https://yaycommerce.com/yaycheckout-for-woocommerce/';
+const UPGRADE_URL = window.yayCheckoutMeta.checkoutMeta.upgradeUrl;
 
 interface ProGateProps {
   children?: ReactNode;
@@ -19,12 +19,8 @@ interface ProGateProps {
 }
 
 /**
- * Shows pro content to Pro builds and a blurred upsell to Free builds.
- *
- * Cosmetic gate, not a security boundary: Free users can unblur it with
- * devtools. Safe only because the Free build's PHP has no matching endpoint.
- * Never wrap real data or a real endpoint in it; use ProOnly or a call-site
- * `isPro &&` branch.
+ * Renders children in a Pro build; in Free, renders them blurred under an upsell.
+ * Cosmetic only: the children ship to Free, so never put real data or a real endpoint behind it.
  */
 export function ProGate({ children, inline = false, className }: ProGateProps) {
   if (isPro) {
@@ -49,21 +45,19 @@ export function ProGate({ children, inline = false, className }: ProGateProps) {
 }
 
 /**
- * Renders children only in a Pro build.
- *
- * Prevents rendering only; children still ship in the bundle. To drop them,
- * branch at the call site (`{isPro && <X />}`) so the bundler can fold it.
+ * Renders children only in a Pro build. They still ship in the Free bundle;
+ * a call-site `{isPro && <X />}` branch lets the bundler drop them.
  */
 export function ProOnly({ children }: { children: ReactNode }) {
   return isPro ? <>{children}</> : null;
 }
 
-/** Renders children only in a Free build. Runtime-only, as ProOnly. */
+/** Renders children only in a Free build; like ProOnly, they ship in both bundles. */
 export function FreeOnly({ children }: { children: ReactNode }) {
   return isPro ? null : <>{children}</>;
 }
 
-/** Clickable chip for menu items and headings; links to the upgrade page. */
+/** Pro chip that opens the upgrade page. */
 export function ProBadge({ className }: { className?: string }) {
   return (
     <YayCheckoutToolTip
@@ -82,7 +76,7 @@ export function ProBadge({ className }: { className?: string }) {
   );
 }
 
-/** Inert chip for a locked item; ProBadge is the clickable one. */
+/** Inert Pro chip for a locked item; ProBadge is the clickable one. */
 export function ProTag({ className }: { className?: string }) {
   return (
     <Badge variant="outline" className={cn('px-1.5 text-[10px]', className)}>
@@ -91,16 +85,16 @@ export function ProTag({ className }: { className?: string }) {
   );
 }
 
-/** Plain "Upgrade" CTA. No default onClick: not every Upgrade button goes to the same place. */
-export function UpgradeButton(props: Omit<ComponentProps<typeof Button>, 'children'>) {
+/** Plain "Upgrade" CTA. Opens the upgrade page; pass onClick only for a button that goes somewhere else. */
+export function UpgradeButton({ onClick, ...props }: Omit<ComponentProps<typeof Button>, 'children'>) {
   return (
-    <Button size="sm" variant="primary-outline" {...props}>
+    <Button size="sm" variant="primary-outline" onClick={onClick ?? (() => window.open(UPGRADE_URL))} {...props}>
       {__('Upgrade', 'yaycheckout')}
     </Button>
   );
 }
 
-/** Standalone upsell card, for a whole page with no content to blur. */
+/** Upsell card with an Upgrade button; ProGate lays it over blurred children. */
 export function UpgradePrompt() {
   return (
     <Empty className="my-5">

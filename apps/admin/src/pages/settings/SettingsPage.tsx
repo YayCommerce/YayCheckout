@@ -27,7 +27,7 @@ const TAB_LABELS: Record<SettingsSubMenu, string> = {
 
 const TAB_PANEL_CLASS = 'bg-card rounded-md border';
 
-// One react-hook-form spans all tabs; the active tab is the :subMenu route param.
+// One react-hook-form spans all tabs.
 export default function SettingsPage() {
   const { subMenu } = useParams<{ subMenu: SettingsSubMenu }>();
   const activeTab: SettingsSubMenu = subMenu ?? 'general';

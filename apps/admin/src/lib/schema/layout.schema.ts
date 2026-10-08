@@ -7,20 +7,37 @@ export const layoutStatusSchema = z.enum(['draft', 'pending', 'future', 'publish
 /** Mirrors LayoutStatus::listed(). */
 export const LISTED_LAYOUT_STATUSES = layoutStatusSchema.options.filter((status) => status !== 'trash');
 
-// Wire schemas: the PHP shape, exactly. Only lib/api/layout.api.ts reads them.
+// Wire schemas: the PHP shape, exactly. .strict() makes a renamed PHP key fail loudly instead of parsing to undefined.
+
+/**
+ * Assignment rules as PHP sends them: groups ORed, conditions ANDed.
+ * Loose on type and operator: the server validated them on save, and the drawer owns their vocabulary.
+ */
+const rulesWireSchema = z.array(
+  z.array(
+    z.object({
+      type: z.string(),
+      operator: z.string(),
+      value: z.union([z.array(z.union([z.string(), z.number()])), z.string(), z.number()]),
+    }),
+  ),
+);
 
 const layoutSummaryWireFields = {
   id: z.number(),
   title: z.string(),
   status: layoutStatusSchema,
   is_active: z.boolean(),
+  blocks: z.number(),
+  size: z.number(),
   /** ISO 8601 UTC while status is 'publish'; null otherwise. */
   published_at: z.string().nullable(),
   /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduled_at: z.string().nullable(),
+  /** [] when the layout has none. */
+  rules: rulesWireSchema,
 };
 
-// .strict() so a renamed PHP key fails loudly instead of parsing to undefined.
 /** Collection row. Mirrors Layout::to_summary_array(): no markup. */
 export const layoutSummaryWireSchema = z.object(layoutSummaryWireFields).strict();
 
@@ -72,17 +89,20 @@ export type LayoutSummaryWire = z.infer<typeof layoutSummaryWireSchema>;
 export type LayoutWire = z.infer<typeof layoutWireSchema>;
 export type LayoutListResponseWire = z.infer<typeof layoutListResponseWireSchema>;
 
-// App-side shapes, camelCase. Built by layout.api.ts; what pages and hooks consume.
-/** App-side shapes, camelCase. Built from the wire types by layout.api.ts; what pages and hooks consume. */
+/** App-side shapes, camelCase. Built from the wire types by layout.api.ts. */
 export type LayoutSummary = {
   id: number;
   title: string;
   status: LayoutStatus;
   isActive: boolean;
-  /** ISO 8601 UTC while status is 'publish'; null otherwise. Format with lib/helpers/date.helper. */
+  blocks: number;
+  size: number;
+  /** ISO 8601 UTC while status is 'publish'; null otherwise. */
   publishedAt: string | null;
   /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduledAt: string | null;
+  /** Groups ORed, conditions ANDed; [] means the layout applies to everyone. */
+  rules: LayoutRulesWire;
 };
 
 export type Layout = LayoutSummary & {
@@ -98,11 +118,11 @@ export type LayoutListResponse = {
 
 export type PreviewLink = {
   url: string;
-  /** ISO 8601 UTC. Format with lib/helpers/date.helper. */
+  /** ISO 8601 UTC. */
   expiresAt: string;
 };
 
-/** Client-side validation for the New layout form. Mirrors LayoutRestController's template_slug rule; catalogue membership is server-side only. */
+/** New layout form. Mirrors LayoutRestController's template_slug rule; only the server checks the slug is in the catalogue. */
 export const newLayoutFormSchema = z
   .object({
     name: z.string().trim().min(1, __('Name is required', 'yaycheckout')),
@@ -115,3 +135,10 @@ export const newLayoutFormSchema = z
   });
 
 export type NewLayoutFormValues = z.infer<typeof newLayoutFormSchema>;
+
+export const layoutRulesWireSchema = z.object({
+  rules: rulesWireSchema,
+});
+
+export type LayoutRulesResponse = z.infer<typeof layoutRulesWireSchema>;
+export type LayoutRulesWire = LayoutRulesResponse['rules'];
