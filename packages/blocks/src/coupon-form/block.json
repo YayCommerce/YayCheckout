@@ -12,6 +12,10 @@
     }
   },
   "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
     "placeholder": {
       "type": "string",
       "default": ""
@@ -23,6 +27,7 @@
   },
   "supports": {
     "html": false,
+    "yaycheckoutWatchable": true,
     "multiple": false,
     "reusable": false,
     "color": {

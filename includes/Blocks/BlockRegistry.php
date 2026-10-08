@@ -3,6 +3,7 @@ namespace YayCheckout\Blocks;
 
 use YayCheckout\Models\Layout;
 use YayCheckout\Renderer\CheckoutLogin;
+use YayCheckout\Renderer\HideWhenEmpty;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -160,6 +161,15 @@ class BlockRegistry {
             self::COUPON_FORM_SCRIPT,
             YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-coupon-form.js',
             [ 'jquery', 'wc-checkout' ],
+            YAYCHECKOUT_VERSION,
+            true
+        );
+
+        // Enqueued by HideWhenEmpty::filter_container() for a container that watches blocks.
+        wp_register_script(
+            HideWhenEmpty::SCRIPT,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-hide-when-empty.js',
+            [ 'jquery', 'wc-checkout', 'wc-address-i18n' ],
             YAYCHECKOUT_VERSION,
             true
         );

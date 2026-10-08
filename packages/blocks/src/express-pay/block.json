@@ -9,8 +9,15 @@
   "keywords": [ "apple pay", "wallet" ],
   "example": {},
   "ancestor": [ "yaycheckout/checkout" ],
+  "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    }
+  },
   "supports": {
     "html": false,
+    "yaycheckoutWatchable": true,
     "multiple": false,
     "reusable": false
   },

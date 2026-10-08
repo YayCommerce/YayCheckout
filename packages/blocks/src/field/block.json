@@ -15,6 +15,10 @@
   },
   "ancestor": [ "yaycheckout/billing", "yaycheckout/shipping" ],
   "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
     "fieldKey": {
       "type": "string",
       "default": ""
@@ -71,6 +75,7 @@
   },
   "supports": {
     "html": false,
+    "yaycheckoutWatchable": true,
     "reusable": false,
     "color": {
       "text": true,
