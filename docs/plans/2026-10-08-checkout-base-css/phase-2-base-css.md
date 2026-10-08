@@ -1,7 +1,7 @@
 # Phase 2: Base CSS
 
 **Plan:** `README.md` in this directory: the Status, constraints and interface contract
-**Depends on:** Phase 1 merged into `dev/edd`. `Design::schema()` has only `colours`, `typography` and `inputs`. Branch `Trace/feat/checkout-base-css` from `dev/edd`.
+**Depends on:** Phase 1 (`Design::schema()` has only `colours`, `typography` and `inputs`). Phase 1 is not merged yet, so `Trace/feat/checkout-base-css` is stacked on `Trace/refactor/design-token-trim`. Its PR targets that branch, or is rebased onto `dev/edd` once Phase 1 merges.
 **Delivers:**
 - The storefront checkout and the layout editor canvas share one neutral base that takes the theme's font and colour.
 - Payment and shipping options are bordered choice rows, and the password meter is styled.
@@ -18,6 +18,13 @@ Expected:
 - The editor canvas matches the storefront's input and row styling.
 - The order is placed.
 - `composer lint` exits 0.
+
+## Deviations found while implementing
+
+- **`woocommerce-blocktheme` is dequeued too.** On block themes it styles the same form markup as `woocommerce-general`, at 0,3,2 (`.woocommerce-page form .form-row input.input-text`), which beat the base. It assumes the general stylesheet we already dequeued.
+- **The page rule carries more than the background.** DesignStyles' page rule also takes `color` (Colours on) and `font-family` / `font-size` (Typography on). `color-text`, `font-family` and `font-size-base` were printed but applied nowhere. An unset inherited property on `body` would reset the theme's body value, so the base can't read them there either. This widens the README's "page background only" exception into one page rule.
+- **Inputs can be taller than 40px.** `min-height` is 40px, but the content decides when the theme's text is large: Twenty Twenty-Five's checkout text is 22px, so its inputs compute to 48.8px. Spec criterion 2's "40px" holds at a font size of about 16px.
+- **The Order Summary tables get 6px cell padding in the base.** That padding came from `woocommerce-blocktheme`.
 
 ### Task 1: Base stylesheet and its loader
 
@@ -42,7 +49,45 @@ Verification must cover:
 - the select2 dropdown styled on the checkout and absent elsewhere (Review focus);
 - the custom CSS printing after `checkout-base.css`.
 
-Steps: expand after Phase 1 lands.
+Found while expanding:
+- `select2-css`, `woocommerce-layout`, `woocommerce-smallscreen` and `wc-blocks-style` are still enqueued on the storefront. `wc-blocks-style` already draws `.wc-block-components-notice-banner`, so the base only sets that banner's border colours, and it must not restyle the banner's layout.
+- Field and Email wrappers are `div.form-row` holding WooCommerce's `p.form-row`. The 12px row gap goes on the block wrapper only. The inner `.form-row .form-row` gets `margin: 0`.
+
+- [ ] **Step 1: Create `assets/css/checkout-base.css`.**
+  - **Order:** spec Components items 1–19, in the spec's order.
+  - **Moved rules:** copy items 1, 2 and 18 verbatim from `checkout-page.css`. Copy items 3, 7, 8 and 17 verbatim from `checkout/style.css`.
+  - **Inputs:** the input rule covers `.input-text`, `select`, `textarea`, `.yaycheckout-coupon-form__code` and `.select2-selection--single`. It reads `input-height`, `input-radius`, `input-border-width`, `input-padding-inline`, `color-border` and `color-background`, each with the fallback from the README contract.
+  - **Buttons:** the button rule is `.yaycheckout-checkout :is(.button, button[type=submit])`. It never sets `display`, because Place Order's align classes set it.
+  - **Notices:** they use a private `--yaycheckout-notice` colour set per type.
+  - **Animation:** the blockUI spinner animation is `yaycheckout-spin`, and stops under `prefers-reduced-motion: reduce`.
+- [ ] **Step 2: Add `ScriptName::STYLE_CHECKOUT_BASE = 'yaycheckout/style/checkout-base'`** in place of `STYLE_CHECKOUT_PAGE`.
+- [ ] **Step 3: Update `DesignStyles`.**
+  - `css( Design $design, bool $with_custom_css = true ): string`.
+  - `vars()` adds `input-border-width` and `input-padding-inline`, and prints `input-radius: 0px` when the style is underline.
+  - While Colours is on, `css()` prints the README's page background rule after `:root`.
+  - Remove `enqueue()`.
+- [ ] **Step 4: Create `Renderer\CheckoutBaseStyles`** with `enqueue( bool $with_custom_css ): void`.
+  - Enqueue `checkout-base.css`.
+  - Register `ScriptName::STYLE_CHECKOUT` with no source and depending on the base.
+  - Add `DesignStyles::css()` to it inline.
+- [ ] **Step 5: Switch the storefront to the new loader.**
+  - `CheckoutPage::enqueue_scripts()` calls `( new CheckoutBaseStyles() )->enqueue( true )` in place of the `checkout-page.css` enqueue and `DesignStyles::enqueue()`.
+  - Delete `assets/css/checkout-page.css` and `packages/blocks/src/checkout/style.css`.
+  - In the Checkout block, remove `"style"` from `block.json` and the `./style.css` import from `index.ts`.
+- [ ] **Step 6: Verify.**
+  - Run `composer lint` and `pnpm build:blocks`. Both exit 0.
+  - On the storefront checkout (Twenty Twenty-Five, every Design section off):
+    - `link#yaycheckout/style/checkout-base-css` is present, and `checkout-page-css` and `woocommerce-general-css` are absent.
+    - A billing input computes `border-top-width: 1px`, a 2px radius and height 40px, and takes the theme's `font-family`.
+    - The country select2 selection is 40px high.
+    - Submitting with First name empty gives its input a `rgb(204, 24, 24)` border.
+  - Turn Inputs on (large, underline): inputs are 48px with `border-width: 0 0 1px`.
+  - Turn Colours on (background `#0a0a0a`): `body` background is `rgb(10, 10, 10)`. Turn it off again: the theme background returns.
+  - Open the select2 dropdown: its options list is bordered and the highlighted option uses the primary colour.
+  - Restore the developer's `yaycheckout_design` from a backup afterwards.
+- [ ] **Step 7: Commit.**
+  - Stage the files above.
+  - Message: `feat(checkout): add the base stylesheet and its loader`
 
 ### Task 2: One gated primary colour
 
@@ -57,7 +102,13 @@ Steps: expand after Phase 1 lands.
 
 Verification: spec criterion 5, all three cases.
 
-Steps: expand after Phase 1 lands.
+- [ ] **Step 1:** delete `includes/Renderer/CheckoutColour.php` and its boot line. Replace every `var(--yaycheckout-primary)` in the six files with the README's primary colour expression.
+- [ ] **Step 2: Verify.**
+  - Run `git grep -n -- '--yaycheckout-primary'`. Expected: no output.
+  - Run `pnpm build:blocks` and `composer lint`. Both exit 0.
+  - With Colours off on Twenty Twenty-Five, Place Order's background equals `getComputedStyle(document.body).getPropertyValue('--wp--preset--color--primary')`, or `#3858e9` when that is empty.
+  - With Colours on and primary `#ff0000`, it is `rgb(255, 0, 0)`.
+- [ ] **Step 3: Commit.** Message: `refactor(blocks): read the primary colour from the gated Design token`
 
 ### Task 3: Per-block choice rows and password meter
 
@@ -78,7 +129,22 @@ Verification must cover:
 - a one-gateway cart, where the row shows the checked border (Review focus);
 - a per-block rule beating the base rule it refines, even though block CSS prints first (Review focus).
 
-Steps: expand after Phase 1 lands.
+Found while expanding: shipping rates print inside `table.shop_table > tr.woocommerce-shipping-totals > th + td > ul#shipping_method`. A single rate prints `input[type=hidden].shipping_method`, not a checked radio. So a row counts as checked when it matches `:is(:has(input:checked), :only-child)`.
+
+- [ ] **Step 1: Create `shared/choice-rows.css`.**
+  - Each `li` has a 1px border, rows overlap by `margin-top: -1px`, and the first and last rows take the group's corner radius.
+  - A checked row has a primary-coloured border, and sits above its neighbours (`position: relative; z-index: 1`).
+  - The label takes the remaining width with weight 500.
+  - `.payment_box` spans the full row width, with 8px top padding and no background.
+- [ ] **Step 2: Create `payment/style.css` and `shipping-methods/style.css`.** Each `@import`s the partial. The shipping one also flattens the rates table to blocks, and visually hides the package `th` when there is only one package row.
+- [ ] **Step 3: Create `create-account/style.css`** for the password meter (`short`/`bad` `#cc1818`, `good` `#f0b849`, `strong` `#4ab866`) and the password hint.
+- [ ] **Step 4: Register the new styles.** In all three blocks, add `"style": "file:./style-index.css"` to `block.json` and `import './style.css';` to `index.ts`.
+- [ ] **Step 5: Verify.**
+  - `pnpm build:blocks` exits 0, and `assets/dist/blocks/{payment,shipping-methods,create-account}/style-index.css` exist.
+  - On the storefront: payment rows are bordered with `14px 16px` padding, the checked row's border is the primary colour, and only the checked gateway's `.payment_box` shows.
+  - Shipping shows the same rows, and with one rate that row still has the primary border.
+  - In `document.styleSheets`, the payment block sheet precedes `checkout-base`, yet the row padding is `14px 16px`, not overridden by the base.
+- [ ] **Step 6: Commit.** Message: `feat(blocks): style payment and shipping choices and the password meter`
 
 ### Task 4: Editor parity
 
@@ -98,7 +164,21 @@ Verification must cover:
 - a post or page editor loads neither `yaycheckout/style/checkout-base` nor the tokens (Review focus);
 - custom CSS `body{outline:5px solid red}` shows on the storefront but not in the layout canvas.
 
-Steps: expand after Phase 1 lands.
+- [ ] **Step 1: Load the base in the editor canvas.** In `LayoutEditorCanvas::__construct()`, add `add_action( 'enqueue_block_assets', [ $this, 'canvas_base_styles' ] )`. Add `public function canvas_base_styles(): void`, which returns unless `is_admin()` and the current screen is the block editor for `Layout::POST_TYPE`, then calls `( new CheckoutBaseStyles() )->enqueue( false )`.
+- [ ] **Step 2: Print storefront classes in the field preview.** In `FieldPreview`:
+  - the root also gets `form-row`
+  - the `input`, `select` and `textarea` get `input-text`
+  - the required mark gets `required`
+  - the description gets `description`
+
+  Then trim `field-preview.css` to the rules no base rule covers: the `--inherit` label, `__optional`, `__hidden`, and `__choices` spacing.
+- [ ] **Step 3: Print WooCommerce's list markup in the Payment and Shipping previews.** Payment prints `ul.wc_payment_methods > li.wc_payment_method` and Shipping prints `ul#shipping_method > li`, each `li` holding an `input[type=radio]` and a `label`. Then trim `section-preview.css` to the heading rule.
+- [ ] **Step 4: Verify.**
+  - Run `pnpm build:blocks`, `composer lint` and `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit`. All exit 0.
+  - In layout 61's editor, a Field input computes the same border width, radius and height as on the storefront, and the Payment preview shows bordered rows.
+  - A Post editor (`post-new.php`) has no `yaycheckout/style/checkout-base` stylesheet.
+  - With custom CSS `body{outline:5px solid red}` saved, the storefront shows the outline and the layout canvas does not. Restore the design afterwards.
+- [ ] **Step 5: Commit.** Message: `feat(editor): match the layout canvas to the storefront base`
 
 ### Task 5: Preview mirror, docs and decision record
 
@@ -117,4 +197,7 @@ Verification:
 - `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit` exits 0.
 - With every Design group off, the Design page's Preview shows inputs and buttons with a 2px radius.
 
-Steps: expand after Phase 1 lands.
+- [ ] **Step 1:** make the `PreviewPane.tsx`, `architecture.md` and `conventions.md` edits listed above.
+- [ ] **Step 2:** write the decision record.
+- [ ] **Step 3: Verify.** `tsc --noEmit` exits 0, and with every Design group off, the Design page's Preview shows inputs and buttons with a 2px radius.
+- [ ] **Step 4: Commit.** Message: `docs: record the checkout base styles decision`. The plan Status flips in the PR that finishes the plan.

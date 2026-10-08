@@ -1,7 +1,6 @@
 <?php
 namespace YayCheckout\Renderer;
 
-use YayCheckout\Engine\Register\ScriptName;
 use YayCheckout\Enums\ConditionType;
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
@@ -55,19 +54,20 @@ class CheckoutPage {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php';
     }
 
-    /** Woo's checkout scripts, the full-width stylesheet and the Design page's tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
+    /** Woo's checkout scripts, the base stylesheet and the Design page's tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
     public function enqueue_scripts(): void {
         wp_enqueue_script( 'wc-checkout' );
         wp_enqueue_script( 'wc-country-select' );
         wp_enqueue_script( 'wc-address-i18n' );
 
-        // The block checkout's checkout.css styles markup our layout does not print.
+        // The block checkout's checkout.css styles markup our layout does not print. The general
+        // stylesheet and its block-theme companion are replaced by checkout-base.css, which their
+        // high-specificity form rules (.woocommerce-page form .form-row input.input-text) would beat.
         wp_dequeue_style( 'wc-blocks-style-checkout' );
         wp_dequeue_style( 'woocommerce-general' );
+        wp_dequeue_style( 'woocommerce-blocktheme' );
 
-        // Before DesignStyles, so the merchant's custom CSS prints after it.
-        wp_enqueue_style( ScriptName::STYLE_CHECKOUT_PAGE, YAYCHECKOUT_PLUGIN_URL . 'assets/css/checkout-page.css', [], YAYCHECKOUT_VERSION );
-        ( new DesignStyles() )->enqueue();
+        ( new CheckoutBaseStyles() )->enqueue( true );
     }
 
     private function resolve(): ?Layout {
