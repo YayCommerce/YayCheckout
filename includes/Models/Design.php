@@ -13,6 +13,25 @@ class Design {
 
     public const CUSTOM_CSS_MAX_BYTES = 50000;
 
+    /** A hex_color token: six-digit #rrggbb, no alpha. Unanchored by delimiters so a JSON Schema `pattern` can use it too. */
+    public const HEX_COLOR_PATTERN = '^#[0-9A-Fa-f]{6}$';
+
+    /**
+     * A gradient a `fill` token may hold instead of a hex colour. It is printed unescaped inside a declaration,
+     * so quotes, backslashes, `*`, `;`, braces and angle brackets are refused: none can end the declaration,
+     * open a comment or close the style element.
+     */
+    public const GRADIENT_PATTERN = '^(repeating-)?(linear|radial|conic)-gradient\\([^"\'\\\\*;{}<>]*\\)$';
+
+    /** A theme colour preset, by the custom property WordPress prints for it, so the token follows the theme's palette. */
+    public const PRESET_COLOR_PATTERN = '^var\\(--wp--preset--color--[a-z0-9-]+\\)$';
+
+    /** A theme gradient preset, the same way. */
+    public const PRESET_GRADIENT_PATTERN = '^var\\(--wp--preset--gradient--[a-z0-9-]+\\)$';
+
+    /** Longest gradient a `fill` token accepts; a picked or theme gradient is far shorter. */
+    public const GRADIENT_MAX_LENGTH = 1000;
+
     public array $tokens = [];
 
     public string $custom_css = '';
@@ -193,12 +212,27 @@ class Design {
         $tokens = is_array( $tokens ) ? $tokens : [];
         $clean  = [];
 
-        foreach ( self::schema() as $section => $keys ) {
-            foreach ( $keys as $key => $rule ) {
-                $value = $tokens[ $section ][ $key ] ?? null;
+        foreach ( array_keys( self::schema() ) as $section ) {
+            $clean[ $section ] = self::project_section( self::schema()[ $section ], $tokens[ $section ] ?? null );
+        }
 
-                $clean[ $section ][ $key ] = self::is_valid( $value, $rule ) ? $value : $rule['default'];
-            }
+        return $clean;
+    }
+
+    /**
+     * One section's tokens, each taken from $values when valid there and from the default otherwise.
+     *
+     * @param array $rules  The section's rules: one entry of schema(), or of a schema derived from it.
+     * @param mixed $values The section's raw tokens; anything but an array reads as all defaults.
+     */
+    public static function project_section( array $rules, $values ): array {
+        $values = is_array( $values ) ? $values : [];
+        $clean  = [];
+
+        foreach ( $rules as $key => $rule ) {
+            $value = $values[ $key ] ?? null;
+
+            $clean[ $key ] = self::is_valid( $value, $rule ) ? $value : $rule['default'];
         }
 
         return $clean;
@@ -284,6 +318,16 @@ class Design {
         ];
     }
 
+    /** Whether $fill is a gradient, written out or a theme preset, rather than a colour. */
+    public static function is_gradient( string $fill ): bool {
+        return strlen( $fill ) <= self::GRADIENT_MAX_LENGTH
+            && ( self::matches( self::GRADIENT_PATTERN, $fill ) || self::matches( self::PRESET_GRADIENT_PATTERN, $fill ) );
+    }
+
+    private static function matches( string $pattern, string $value ): bool {
+        return 1 === preg_match( '/' . $pattern . '/D', $value );
+    }
+
     private static function is_valid( $value, array $rule ): bool {
         switch ( $rule['type'] ) {
             case 'bool':
@@ -296,7 +340,16 @@ class Design {
                 return in_array( $value, $rule['enum'], true );
 
             case 'hex_color':
-                return is_string( $value ) && 1 === preg_match( '/^#[0-9A-Fa-f]{6}$/D', $value );
+                return is_string( $value ) && self::matches( self::HEX_COLOR_PATTERN, $value );
+
+            // A layout's colour: unset (''), a hex colour or a theme colour preset.
+            case 'color':
+                return is_string( $value )
+                    && ( '' === $value || self::matches( self::HEX_COLOR_PATTERN, $value ) || self::matches( self::PRESET_COLOR_PATTERN, $value ) );
+
+            // A layout's background: any `color`, or a gradient.
+            case 'fill':
+                return self::is_valid( $value, [ 'type' => 'color' ] ) || ( is_string( $value ) && self::is_gradient( $value ) );
         }
 
         return false;

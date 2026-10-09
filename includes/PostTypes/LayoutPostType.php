@@ -3,6 +3,7 @@ namespace YayCheckout\PostTypes;
 
 use YayCheckout\Controllers\LayoutCoreRestController;
 use YayCheckout\Models\Layout;
+use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -75,6 +76,25 @@ class LayoutPostType {
                 'template'              => [
                     [ 'yaycheckout/checkout' ],
                 ],
+            ]
+        );
+
+        // In REST so the editor's Save writes it with the markup; the schema makes core refuse an invalid token.
+        register_post_meta(
+            Layout::POST_TYPE,
+            Layout::META_DESIGN,
+            [
+                'type'              => 'object',
+                'single'            => true,
+                'default'           => LayoutDesign::none()->to_meta(),
+                'show_in_rest'      => [ 'schema' => LayoutDesign::rest_schema() ],
+                'sanitize_callback' => static function ( $value ) {
+                    return LayoutDesign::from_meta( $value )->to_meta();
+                },
+                // The key is protected (leading underscore), so core requires an explicit check.
+                'auth_callback'     => static function () {
+                    return current_user_can( self::CAPABILITY );
+                },
             ]
         );
     }

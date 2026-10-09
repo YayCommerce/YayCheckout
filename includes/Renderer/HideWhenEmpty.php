@@ -42,6 +42,9 @@ class HideWhenEmpty {
     /** On a Field block's wrapper: its row is empty while address-i18n.js hides it for the country. */
     public const LOCALE_ATTR = 'data-yaycheckout-locale';
 
+    /** A jQuery event on body that makes the live script re-check now; Field Value fires it as the shopper types. */
+    public const REFRESH_EVENT = 'yaycheckout_hide_when_empty_refresh';
+
     /** On a decorated container: the watched ids, space-separated, for the live script. */
     public const CONTAINER_ATTR = 'data-yaycheckout-hide-when-empty';
 

@@ -1,9 +1,13 @@
 <?php
 namespace YayCheckout\Blocks;
 
+use YayCheckout\Engine\Register\ScriptName;
+use YayCheckout\Models\Design;
 use YayCheckout\Models\Layout;
+use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Renderer\HideWhenEmpty;
+use YayCheckout\Repositories\DesignRepository;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -24,6 +28,9 @@ class BlockRegistry {
 
     /** Named by viewScript in packages/blocks/src/coupon-form/block.json; core enqueues it when the block renders. */
     public const COUPON_FORM_SCRIPT = 'yaycheckout-coupon-form';
+
+    /** Named by viewScript in packages/blocks/src/order-summary-items/block.json; drives the quantity stepper. */
+    public const ORDER_SUMMARY_ITEMS_SCRIPT = 'yaycheckout-order-summary-items';
 
     /**
      * Block directories in the order a shopper meets them. The inserter lists
@@ -49,15 +56,18 @@ class BlockRegistry {
         'express-pay',
         'payment',
         'coupon-form',
+        'coupon-button',
         'order-summary',
         'order-summary-items',
         'order-summary-totals',
+        'field-value',
         'place-order',
         'slot',
     ];
 
     protected function __construct() {
         add_action( 'init', [ $this, 'register_blocks' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'editor_design_data' ] );
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
@@ -68,7 +78,7 @@ class BlockRegistry {
      * Block settings in the default origin, so a theme's own block settings and presets win:
      * - Place Order: Core Button's old 25/50/75/100% widths as presets for its Width control
      *   (Styles > Dimensions). WordPress ships no dimension sizes, so the control has none without them.
-     * - Place Order and Step: padding, margin and border, and Steps: blockGap, which core's defaults
+     * - Place Order, Step and Coupon Button: padding, margin and border, and Steps: blockGap, which core's defaults
      *   leave off, so their Styles controls show on themes that don't turn them on.
      *
      * @param  \WP_Theme_JSON_Data $theme_json
@@ -90,7 +100,7 @@ class BlockRegistry {
                 'version'  => \WP_Theme_JSON::LATEST_SCHEMA,
                 'settings' => [
                     'blocks' => [
-                        'yaycheckout/place-order' => [
+                        'yaycheckout/place-order'   => [
                             'dimensions' => [ 'dimensionSizes' => $sizes ],
                             'spacing'    => [
                                 'padding' => true,
@@ -103,7 +113,7 @@ class BlockRegistry {
                                 'width'  => true,
                             ],
                         ],
-                        'yaycheckout/step'        => [
+                        'yaycheckout/step'          => [
                             'spacing' => [
                                 'padding' => true,
                                 'margin'  => true,
@@ -115,8 +125,20 @@ class BlockRegistry {
                                 'width'  => true,
                             ],
                         ],
-                        'yaycheckout/steps'       => [
+                        'yaycheckout/steps'         => [
                             'spacing' => [ 'blockGap' => true ],
+                        ],
+                        'yaycheckout/coupon-button' => [
+                            'spacing' => [
+                                'padding' => true,
+                                'margin'  => true,
+                            ],
+                            'border'  => [
+                                'color'  => true,
+                                'radius' => true,
+                                'style'  => true,
+                                'width'  => true,
+                            ],
                         ],
                     ],
                 ],
@@ -180,6 +202,30 @@ class BlockRegistry {
     }
 
     /**
+     * Adds `design` to window.yayCheckoutBlocks: the global design and its rules, which the Layout design
+     * sidebar edits the layout's override against. Only in the block editor, since register_blocks() runs
+     * on every request and nothing else reads it.
+     */
+    public function editor_design_data(): void {
+        $design = [
+            'metaKey'           => Layout::META_DESIGN,
+            // The id WordPress gives this handle's inline style, which holds the printed design.
+            'styleId'           => ScriptName::STYLE_CHECKOUT . '-inline-css',
+            'tokens'            => ( new DesignRepository() )->get()->tokens,
+            'schema'            => LayoutDesign::schema(),
+            'fontFamilies'      => Design::FONT_FAMILIES,
+            'customCssMaxBytes' => Design::CUSTOM_CSS_MAX_BYTES,
+        ];
+
+        // Added after register_blocks()' own inline script, so window.yayCheckoutBlocks exists.
+        wp_add_inline_script(
+            generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
+            'window.yayCheckoutBlocks.design = ' . wp_json_encode( $design ) . ';',
+            'before'
+        );
+    }
+
+    /**
      * Storefront scripts that a block.json names by handle, because they depend on WooCommerce
      * handles the blocks build can't declare. wc-checkout supplies wc_checkout_params.
      */
@@ -187,6 +233,14 @@ class BlockRegistry {
         wp_register_script(
             self::COUPON_FORM_SCRIPT,
             YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-coupon-form.js',
+            [ 'jquery', 'wc-checkout' ],
+            YAYCHECKOUT_VERSION,
+            true
+        );
+
+        wp_register_script(
+            self::ORDER_SUMMARY_ITEMS_SCRIPT,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-order-summary-items.js',
             [ 'jquery', 'wc-checkout' ],
             YAYCHECKOUT_VERSION,
             true

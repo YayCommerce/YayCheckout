@@ -48,10 +48,12 @@
       "enum": [ "text", "select", "radio", "checkbox", "datetime" ],
       "default": "text"
     },
-    "collapseBehindLink": {
-      "type": "boolean"
+    "disclosure": {
+      "type": "string",
+      "enum": [ "none", "link", "collapsible" ],
+      "default": "none"
     },
-    "revealText": {
+    "disclosureText": {
       "type": "string",
       "default": ""
     },

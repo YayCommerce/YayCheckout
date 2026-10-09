@@ -17,6 +17,7 @@ class Layout {
 
     public const META_RULES     = '_yaycheckout_rules';
     public const META_SELF_TEST = '_yaycheckout_self_test';
+    public const META_DESIGN    = '_yaycheckout_design';
 
     public const OPTION_ACTIVE = 'yaycheckout_active_layout';
 
@@ -46,6 +47,9 @@ class Layout {
      */
     public array $rules = [];
 
+    /** This layout's override of the global Design; none() when it has none. */
+    public LayoutDesign $design;
+
     /**
      * @param array $meta Bulk meta as returned by get_post_meta( $id ), unserialized.
      */
@@ -60,6 +64,7 @@ class Layout {
         $layout->scheduled_at = LayoutStatus::SCHEDULED === $layout->post_status ? (string) $post->post_date_gmt : null;
         $layout->is_active    = $is_active;
         $layout->rules        = (array) self::meta_value( $meta, self::META_RULES, [] );
+        $layout->design       = LayoutDesign::from_meta( self::meta_value( $meta, self::META_DESIGN, null ) );
 
         return $layout;
     }

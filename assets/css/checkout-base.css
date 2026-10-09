@@ -140,8 +140,8 @@ body.yaycheckout-page > .wp-site-blocks,
 	display: none;
 }
 
-/* The "+ Add …" link RevealLink::open() prints in place of a collapsed Field or Extra field. */
-.yaycheckout-checkout .yaycheckout-reveal-link {
+/* The toggle Disclosure::open() prints in front of a hidden Field, Extra field or Coupon form. */
+.yaycheckout-checkout .yaycheckout-disclosure__toggle {
 	background: none;
 	border: 0;
 	padding: 0;
@@ -151,9 +151,43 @@ body.yaycheckout-page > .wp-site-blocks,
 	cursor: pointer;
 }
 
+/* Collapsible: a full-width header that opens and closes the panel below it. */
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="collapsible"] {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	width: 100%;
+	color: inherit;
+	font-weight: 600;
+	text-align: start;
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__chevron {
+	flex: none;
+	width: 1.25em;
+	height: 1.25em;
+	fill: currentColor;
+	transition: transform 0.15s ease;
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[aria-expanded="true"] .yaycheckout-disclosure__chevron {
+	transform: rotate(180deg);
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="collapsible"] + .yaycheckout-disclosure__panel {
+	padding-top: 0.5em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.yaycheckout-checkout .yaycheckout-disclosure__chevron {
+		transition: none;
+	}
+}
+
 /* A theme's button or div display rule would otherwise beat the hidden attribute. */
-.yaycheckout-checkout .yaycheckout-reveal-link[hidden],
-.yaycheckout-checkout .yaycheckout-reveal-panel[hidden] {
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[hidden],
+.yaycheckout-checkout .yaycheckout-disclosure__panel[hidden] {
 	display: none;
 }
 
@@ -361,24 +395,24 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	margin-block: 0;
 }
 
-/* Order Summary's Items and Totals are separate tables; matching widths keep their amounts in one column. */
-.yaycheckout-order-summary table:is(.yaycheckout-order-summary-items, .yaycheckout-order-summary-totals) {
+/* Order Summary's Totals table: its amounts end-aligned in a fixed column. Items lays out its own rows. */
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals {
 	width: 100%;
 	table-layout: fixed;
 	border-collapse: collapse;
 }
 
-.yaycheckout-order-summary table:is(.yaycheckout-order-summary-items, .yaycheckout-order-summary-totals) :is(th, td) {
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td) {
 	padding: 6px 0;
 	border: 0;
 	vertical-align: top;
 }
 
-.yaycheckout-order-summary table:is(.yaycheckout-order-summary-items, .yaycheckout-order-summary-totals) :is(th, td):first-child {
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):first-child {
 	text-align: start;
 }
 
-.yaycheckout-order-summary table:is(.yaycheckout-order-summary-items, .yaycheckout-order-summary-totals) :is(th, td):last-child {
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):last-child {
 	width: 40%;
 	text-align: end;
 }
