@@ -2,6 +2,7 @@
 namespace YayCheckout\Pro\Services;
 
 use YayCheckout\Models\Layout;
+use YayCheckout\Models\LayoutDesign;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -19,8 +20,8 @@ class LayoutImportReview {
     public const RULES_NONE     = 'none';
 
     /**
-     * @return array { title, content, rules, design } rules and design as the file holds them, unchecked;
-     *               see rules_from_file() and Design::project_layer().
+     * @return array { title, content, rules, design } rules as the file holds them, unchecked (see rules_from_file());
+     *               design projected through LayoutDesign::from_meta().
      * @throws \InvalidArgumentException When the file is not an export or has no Checkout block.
      */
     public static function from_envelope( array $envelope ): array {
@@ -64,6 +65,10 @@ class LayoutImportReview {
     }
 
     /**
+     * The design override is projected, never refused: a bad value only changes how the layout looks, so a missing
+     * or malformed section follows the global design and an invalid token reads as its default. A file from before
+     * design overrides has none.
+     *
      * @return array { title, content, rules, design }
      * @throws \InvalidArgumentException When the envelope is not a YayCheckout export.
      */
@@ -83,7 +88,7 @@ class LayoutImportReview {
             'title'   => $layout['title'],
             'content' => $layout['content'],
             'rules'   => $layout['rules'] ?? null,
-            'design'  => $layout['design'] ?? null,
+            'design'  => LayoutDesign::from_meta( $layout['design'] ?? null ),
         ];
     }
 }

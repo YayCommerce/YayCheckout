@@ -54,7 +54,7 @@ class CheckoutPage {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php';
     }
 
-    /** Woo's checkout scripts, the base stylesheet and the Design page's tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
+    /** Woo's checkout scripts, the base stylesheet and the design tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
     public function enqueue_scripts(): void {
         wp_enqueue_script( 'wc-checkout' );
         wp_enqueue_script( 'wc-country-select' );
@@ -68,7 +68,7 @@ class CheckoutPage {
             wp_dequeue_style( $handle );
         }
 
-        ( new CheckoutBaseStyles() )->enqueue( true, $this->layout() );
+        ( new CheckoutBaseStyles() )->enqueue( true, $this->layout()->design );
     }
 
     private function resolve(): ?Layout {

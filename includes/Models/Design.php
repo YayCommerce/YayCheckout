@@ -13,6 +13,25 @@ class Design {
 
     public const CUSTOM_CSS_MAX_BYTES = 50000;
 
+    /** A hex_color token: six-digit #rrggbb, no alpha. Unanchored by delimiters so a JSON Schema `pattern` can use it too. */
+    public const HEX_COLOR_PATTERN = '^#[0-9A-Fa-f]{6}$';
+
+    /**
+     * A gradient a `fill` token may hold instead of a hex colour. It is printed unescaped inside a declaration,
+     * so quotes, backslashes, `*`, `;`, braces and angle brackets are refused: none can end the declaration,
+     * open a comment or close the style element.
+     */
+    public const GRADIENT_PATTERN = '^(repeating-)?(linear|radial|conic)-gradient\\([^"\'\\\\*;{}<>]*\\)$';
+
+    /** A theme colour preset, by the custom property WordPress prints for it, so the token follows the theme's palette. */
+    public const PRESET_COLOR_PATTERN = '^var\\(--wp--preset--color--[a-z0-9-]+\\)$';
+
+    /** A theme gradient preset, the same way. */
+    public const PRESET_GRADIENT_PATTERN = '^var\\(--wp--preset--gradient--[a-z0-9-]+\\)$';
+
+    /** Longest gradient a `fill` token accepts; a picked or theme gradient is far shorter. */
+    public const GRADIENT_MAX_LENGTH = 1000;
+
     public array $tokens = [];
 
     public string $custom_css = '';
@@ -188,132 +207,32 @@ class Design {
         ];
     }
 
-    /**
-     * A layout's sparse layer, as stored in Layout::META_DESIGN: { tokens?: { section: every key }, custom_css? }.
-     * Forgiving: a section missing a key or holding an invalid value, unknown keys and
-     * unsafe or empty CSS are dropped, so the layout falls back to global for them.
-     *
-     * @param mixed $raw Stored or imported value; anything but an array reads as no layer.
-     */
-    public static function project_layer( $raw ): array {
-        $raw    = is_array( $raw ) ? $raw : [];
-        $tokens = is_array( $raw['tokens'] ?? null ) ? $raw['tokens'] : [];
-        $layer  = [];
-
-        foreach ( self::schema() as $section => $keys ) {
-            $clean = self::layer_section( $tokens[ $section ] ?? null, $keys );
-
-            if ( null !== $clean ) {
-                $layer['tokens'][ $section ] = $clean;
-            }
-        }
-
-        $css = $raw['custom_css'] ?? null;
-
-        if ( is_string( $css ) && '' !== $css && is_string( self::sanitize_custom_css( $css ) ) ) {
-            $layer['custom_css'] = $css;
-        }
-
-        return $layer;
-    }
-
-    /**
-     * Strict twin of project_layer() for a write: the first invalid section, key or CSS fails.
-     *
-     * @return array|\WP_Error The same shape project_layer() returns, or the first failure.
-     */
-    public static function validate_layer( array $input ) {
-        $tokens = $input['tokens'] ?? [];
-
-        if ( ! is_array( $tokens ) ) {
-            return self::invalid( 'tokens' );
-        }
-
-        foreach ( self::schema() as $section => $keys ) {
-            if ( ! array_key_exists( $section, $tokens ) ) {
-                continue;
-            }
-
-            if ( ! is_array( $tokens[ $section ] ) ) {
-                return self::invalid( $section );
-            }
-
-            $key = self::invalid_key( $tokens[ $section ], $keys );
-
-            if ( null !== $key ) {
-                return self::invalid( $section . '.' . $key );
-            }
-        }
-
-        $css = $input['custom_css'] ?? '';
-
-        if ( ! is_string( $css ) ) {
-            return self::invalid( 'custom_css' );
-        }
-
-        $css = self::sanitize_custom_css( $css );
-
-        if ( $css instanceof \WP_Error ) {
-            return $css;
-        }
-
-        return self::project_layer( $input );
-    }
-
-    /**
-     * This design with a layout's layer on top: each layer section replaces the global one whole, and layer CSS
-     * prints after global CSS, unless the two together pass CUSTOM_CSS_MAX_BYTES, when global CSS alone is kept.
-     */
-    public function with_layer( array $layer ): self {
-        $design = clone $this;
-
-        foreach ( $layer['tokens'] ?? [] as $section => $values ) {
-            $design->tokens[ $section ] = $values;
-        }
-
-        if ( isset( $layer['custom_css'] ) ) {
-            $css = '' === $design->custom_css ? $layer['custom_css'] : $design->custom_css . "\n" . $layer['custom_css'];
-
-            // Over the size limit together (global CSS grew after the layer was saved), printing would drop both: keep global.
-            if ( ! self::sanitize_custom_css( $css ) instanceof \WP_Error ) {
-                $design->custom_css = $css;
-            }
-        }
-
-        return $design;
-    }
-
-    /** A layer section with every schema key valid, in schema order; null when any is missing or invalid. */
-    private static function layer_section( $values, array $keys ): ?array {
-        if ( ! is_array( $values ) || null !== self::invalid_key( $values, $keys ) ) {
-            return null;
-        }
-
-        return array_intersect_key( array_replace( $keys, $values ), $keys );
-    }
-
-    /** The first schema key a layer section lacks or holds an invalid value for; null when the section is complete. */
-    private static function invalid_key( array $values, array $keys ): ?string {
-        foreach ( $keys as $key => $rule ) {
-            if ( ! array_key_exists( $key, $values ) || ! self::is_valid( $values[ $key ], $rule ) ) {
-                return $key;
-            }
-        }
-
-        return null;
-    }
-
     /** Every schema token, taken from $tokens when valid there and from the default otherwise. */
     private static function project( $tokens ): array {
         $tokens = is_array( $tokens ) ? $tokens : [];
         $clean  = [];
 
-        foreach ( self::schema() as $section => $keys ) {
-            foreach ( $keys as $key => $rule ) {
-                $value = $tokens[ $section ][ $key ] ?? null;
+        foreach ( array_keys( self::schema() ) as $section ) {
+            $clean[ $section ] = self::project_section( self::schema()[ $section ], $tokens[ $section ] ?? null );
+        }
 
-                $clean[ $section ][ $key ] = self::is_valid( $value, $rule ) ? $value : $rule['default'];
-            }
+        return $clean;
+    }
+
+    /**
+     * One section's tokens, each taken from $values when valid there and from the default otherwise.
+     *
+     * @param array $rules  The section's rules: one entry of schema(), or of a schema derived from it.
+     * @param mixed $values The section's raw tokens; anything but an array reads as all defaults.
+     */
+    public static function project_section( array $rules, $values ): array {
+        $values = is_array( $values ) ? $values : [];
+        $clean  = [];
+
+        foreach ( $rules as $key => $rule ) {
+            $value = $values[ $key ] ?? null;
+
+            $clean[ $key ] = self::is_valid( $value, $rule ) ? $value : $rule['default'];
         }
 
         return $clean;
@@ -399,6 +318,16 @@ class Design {
         ];
     }
 
+    /** Whether $fill is a gradient, written out or a theme preset, rather than a colour. */
+    public static function is_gradient( string $fill ): bool {
+        return strlen( $fill ) <= self::GRADIENT_MAX_LENGTH
+            && ( self::matches( self::GRADIENT_PATTERN, $fill ) || self::matches( self::PRESET_GRADIENT_PATTERN, $fill ) );
+    }
+
+    private static function matches( string $pattern, string $value ): bool {
+        return 1 === preg_match( '/' . $pattern . '/D', $value );
+    }
+
     private static function is_valid( $value, array $rule ): bool {
         switch ( $rule['type'] ) {
             case 'bool':
@@ -411,7 +340,16 @@ class Design {
                 return in_array( $value, $rule['enum'], true );
 
             case 'hex_color':
-                return is_string( $value ) && 1 === preg_match( '/^#[0-9A-Fa-f]{6}$/D', $value );
+                return is_string( $value ) && self::matches( self::HEX_COLOR_PATTERN, $value );
+
+            // A layout's colour: unset (''), a hex colour or a theme colour preset.
+            case 'color':
+                return is_string( $value )
+                    && ( '' === $value || self::matches( self::HEX_COLOR_PATTERN, $value ) || self::matches( self::PRESET_COLOR_PATTERN, $value ) );
+
+            // A layout's background: any `color`, or a gradient.
+            case 'fill':
+                return self::is_valid( $value, [ 'type' => 'color' ] ) || ( is_string( $value ) && self::is_gradient( $value ) );
         }
 
         return false;

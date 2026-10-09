@@ -61,9 +61,10 @@ class LayoutImportRestController extends BaseRestController {
 
     /**
      * The layout an export file holds, without storing it, so the editor's Import checks a file the same way import does.
-     * Rules are not returned; `has_rules` says whether the file holds rules an import would keep.
+     * Rules are not returned; `has_rules` says whether the file holds rules an import would keep. `design` is the
+     * override an import would store (LayoutDesign::to_meta()), so the editor's Import applies it with the markup.
      *
-     * @return array|\WP_Error { title, content, blocks, has_rules }
+     * @return array|\WP_Error { title, content, blocks, has_rules, design }
      */
     public function review_layout( \WP_REST_Request $request ) {
         try {
@@ -77,12 +78,13 @@ class LayoutImportRestController extends BaseRestController {
             'content'   => $layout['content'],
             'blocks'    => Layout::block_count( $layout['content'] ),
             'has_rules' => LayoutImportReview::RULES_IMPORTED === LayoutImportReview::rules_from_file( $layout['rules'] )['status'],
+            'design'    => $layout['design']->to_meta(),
         ];
     }
 
     /**
-     * Reviews the file, then inserts the draft with the file's rules and design layer. A file without a Checkout block is refused here;
-     * blocks the site lacks pass. Unreadable rules and invalid design sections are dropped, never refusing the file.
+     * Reviews the file, then inserts the draft with the file's rules and design override. A file without a Checkout block is refused here;
+     * blocks the site lacks pass. Unreadable rules are dropped, never refusing the file.
      *
      * @return \WP_REST_Response|\WP_Error The new draft (Layout::to_array()) plus `rules_import` { status }.
      */
@@ -90,7 +92,7 @@ class LayoutImportRestController extends BaseRestController {
         try {
             $layout = LayoutImportReview::from_envelope( (array) $request->get_param( 'file' ) );
             $rules  = LayoutImportReview::rules_from_file( $layout['rules'] );
-            $draft  = $this->layouts->import( $layout['title'], $layout['content'], $rules['rules'], (array) $layout['design'] );
+            $draft  = $this->layouts->import( $layout['title'], $layout['content'], $rules['rules'], $layout['design'] );
 
             return new \WP_REST_Response(
                 array_merge(

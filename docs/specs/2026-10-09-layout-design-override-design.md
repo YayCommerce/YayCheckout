@@ -1,6 +1,6 @@
 # Per-Layout Design Override Design
 
-**Status:** accepted 2026-10-09
+**Status:** superseded by [docs/plans/2026-10-09-layout-design-override.md](../plans/2026-10-09-layout-design-override.md)
 **Related:** YC-04 Design mock (override layer states); docs/decisions/2026-10-05-layout-is-one-post.md; branch `alan/feat/design-page-tokens` (removes the spacing and buttons sections and design presets)
 
 ## Goal

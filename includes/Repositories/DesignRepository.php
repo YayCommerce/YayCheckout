@@ -3,7 +3,6 @@ namespace YayCheckout\Repositories;
 
 use YayCheckout\Helpers\DateHelper;
 use YayCheckout\Models\Design;
-use YayCheckout\Models\Layout;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -15,16 +14,6 @@ class DesignRepository {
 
     public function get(): Design {
         return Design::from_option( get_option( Design::OPTION_DESIGN, [] ) );
-    }
-
-    /**
-     * The design a layout prints: global, then the filter `yaycheckout_design_for_layout`,
-     * which only Pro hooks to apply the layout's layer. Free always gets global.
-     */
-    public function for_layout( ?Layout $layout ): Design {
-        $design = $this->get();
-
-        return null === $layout ? $design : apply_filters( 'yaycheckout_design_for_layout', $design, $layout );
     }
 
     /**

@@ -47,8 +47,8 @@ class Layout {
      */
     public array $rules = [];
 
-    /** Pro design layer, projected through Design::project_layer(); [] means the layout follows global. */
-    public array $design = [];
+    /** This layout's override of the global Design; none() when it has none. */
+    public LayoutDesign $design;
 
     /**
      * @param array $meta Bulk meta as returned by get_post_meta( $id ), unserialized.
@@ -64,7 +64,7 @@ class Layout {
         $layout->scheduled_at = LayoutStatus::SCHEDULED === $layout->post_status ? (string) $post->post_date_gmt : null;
         $layout->is_active    = $is_active;
         $layout->rules        = (array) self::meta_value( $meta, self::META_RULES, [] );
-        $layout->design       = Design::project_layer( self::meta_value( $meta, self::META_DESIGN, null ) );
+        $layout->design       = LayoutDesign::from_meta( self::meta_value( $meta, self::META_DESIGN, null ) );
 
         return $layout;
     }

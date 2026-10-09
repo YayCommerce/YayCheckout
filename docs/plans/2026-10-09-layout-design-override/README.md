@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute phases in order. Read this file, then the current phase file. Do not start a phase until the previous phase's exit criterion has been verified and `/yayplancheck` has passed on it.
 
-**Status:** done 2026-10-09
+**Status:** superseded by [docs/plans/2026-10-09-layout-design-override.md](../2026-10-09-layout-design-override.md)
 **Goal:** A Pro merchant overrides a layout's design per token group, or adds layout custom CSS, from a Design sidebar in that layout's editor. Every other group keeps following global.
 **Spec:** [docs/specs/2026-10-09-layout-design-override-design.md](../../specs/2026-10-09-layout-design-override-design.md)
 **Architecture:** A sparse per-group layer in the layout meta `_yaycheckout_design`, saved by core's `wp/v2` with the layout. `DesignRepository::for_layout()` runs the filter `yaycheckout_design_for_layout`, and only Pro hooks it, so Free always prints global. `CheckoutBaseStyles` is the single print point for the storefront and the editor canvas.

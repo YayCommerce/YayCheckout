@@ -3,7 +3,6 @@ import { Monitor, Smartphone, Tablet } from 'lucide-react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { FONT_FALLBACK, INPUT_HEIGHTS } from '@blocks-shared/design-vars';
 import { isGroupOn } from '@/lib/helpers/design.helper';
 import { FONT_FAMILIES, type DesignForm } from '@/lib/schema/design.schema';
 import { cn } from '@/lib/utils';
@@ -20,8 +19,8 @@ const VIEWPORT_WIDTH: Record<Viewport, string> = {
 
 const SECTION_LABEL_STYLE: CSSProperties = { fontSize: 11, letterSpacing: '0.08em', opacity: 0.6 };
 
-// The storefront's fallback font also stands in for "Theme default", since the preview has no theme.
-const DEFAULT_FONT_STACK = FONT_FALLBACK;
+// Mirrors DesignStyles::FONT_FALLBACK in PHP. Also stands in for "Theme default", since the preview has no theme.
+const DEFAULT_FONT_STACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
 // What a theme-default section draws as, since the admin has no theme CSS. The colours stand in for a theme's;
 // radius mirrors --yaycheckout-neutral-radius and inputHeight the input min-height in assets/css/checkout-base.css.
@@ -66,7 +65,8 @@ export function PreviewPane({ isCompact = false }: { isCompact?: boolean }) {
     borderStyle: 'solid',
     borderColor: colours.border,
     backgroundColor: colours.background,
-    height: inputs.enabled ? INPUT_HEIGHTS[inputs.size] : NEUTRAL.inputHeight,
+    // Mirrors DesignStyles::INPUT_HEIGHTS (PHP), which the storefront prints.
+    height: inputs.enabled ? { small: 32, medium: 40, large: 48 }[inputs.size] : NEUTRAL.inputHeight,
   };
 
   const buttonStyle: CSSProperties = {
