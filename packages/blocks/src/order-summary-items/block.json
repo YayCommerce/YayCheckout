@@ -7,11 +7,29 @@
   "description": "Cart line items. WooCommerce refreshes them when the order updates.",
   "textdomain": "yaycheckout",
   "ancestor": [ "yaycheckout/order-summary" ],
+  "attributes": {
+    "showLabels": {
+      "type": "boolean",
+      "default": true
+    },
+    "productLabel": {
+      "type": "string"
+    },
+    "subtotalLabel": {
+      "type": "string"
+    },
+    "showThumbnails": {
+      "type": "boolean",
+      "default": true
+    }
+  },
   "supports": {
     "html": false,
     "multiple": false,
     "reusable": false
   },
   "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css",
   "render": "file:./render.php"
 }
