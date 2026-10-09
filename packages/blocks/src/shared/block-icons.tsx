@@ -111,6 +111,12 @@ export const blockIcons: Record< string, JSX.Element > = {
 			<path d="M7.5 10v4M19 9v6M16 12h6" />
 		</>
 	),
+	'yaycheckout/order-note': icon(
+		<>
+			<path d="M14 3.5H7.5a2.5 2.5 0 0 0-2.5 2.5v12a2.5 2.5 0 0 0 2.5 2.5h9a2.5 2.5 0 0 0 2.5-2.5V8.5l-5-5Z" />
+			<path d="M14 3.5v5h5M8.5 12.5h7M8.5 16h5" />
+		</>
+	),
 	'yaycheckout/shipping-methods': icon(
 		<>
 			<path d="M14 16V7a1.5 1.5 0 0 0-1.5-1.5h-8A1.5 1.5 0 0 0 3 7v7.5A1.5 1.5 0 0 0 4.5 16H5" />

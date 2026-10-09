@@ -52,6 +52,7 @@ class BlockRegistry {
         'shipping',
         'field',
         'extra-field',
+        'order-note',
         'shipping-methods',
         'express-pay',
         'payment',
