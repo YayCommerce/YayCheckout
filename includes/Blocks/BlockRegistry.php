@@ -52,6 +52,7 @@ class BlockRegistry {
         'order-summary',
         'order-summary-items',
         'order-summary-totals',
+        'field-value',
         'place-order',
         'slot',
     ];

@@ -3,6 +3,8 @@
  * nonces and empty fields without replacing the checkout form.
  */
 
+import { jquery } from '../shared/jquery';
+
 const TRIGGER = '.yaycheckout-login__trigger';
 
 interface LoginState {
@@ -19,31 +21,8 @@ interface JsonBody {
 	data?: LoginState & { message?: string };
 }
 
-interface Jq {
-	val( value: string ): Jq;
-	trigger( event: string ): Jq;
-}
-
 let dialog: HTMLDialogElement | null = null;
 let returnFocus: HTMLElement | null = null;
-
-function jquery( target: Element ): Jq {
-	const owner = window as Window & { jQuery?: ( target: Element ) => Jq };
-	const jq = owner.jQuery;
-
-	if ( ! jq ) {
-		return {
-			val() {
-				return this;
-			},
-			trigger() {
-				return this;
-			},
-		};
-	}
-
-	return jq( target );
-}
 
 function rank( key: string ): number {
 	if ( key.endsWith( '_country' ) ) {
@@ -96,14 +75,14 @@ function applyState( checkout: HTMLFormElement, state: LoginState ): void {
 			}
 
 			field.value = value;
-			jquery( field ).val( value ).trigger( 'change' );
+			jquery( field )?.val( value ).trigger( 'change' );
 		} );
 
 	dialog?.close();
 	document.querySelectorAll( '.yaycheckout-login' ).forEach( ( node ) => node.remove() );
 	dialog?.remove();
 	dialog = null;
-	jquery( document.body ).trigger( 'update_checkout' );
+	jquery( document.body )?.trigger( 'update_checkout' );
 }
 
 async function submit( block: HTMLElement, form: HTMLFormElement ): Promise< void > {
