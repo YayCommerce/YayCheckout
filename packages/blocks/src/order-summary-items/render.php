@@ -1,8 +1,8 @@
 <?php
 /**
- * Prints the Items table, which CheckoutFragments refreshes on AJAX totals updates.
+ * Prints the Items rows, which CheckoutFragments refreshes on AJAX totals updates.
  *
- * @var array    $attributes Block attributes (none).
+ * @var array    $attributes Block attributes; CheckoutFragments::order_items_options() reads them.
  * @var string   $content    Unused; this block is a leaf.
  * @var WP_Block $block      Block instance.
  */

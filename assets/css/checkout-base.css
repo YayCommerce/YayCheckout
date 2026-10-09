@@ -395,24 +395,24 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	margin-block: 0;
 }
 
-/* Order Summary's Items and Totals are separate tables; matching widths keep their amounts in one column. */
-.yaycheckout-order-summary table:is(.yaycheckout-order-summary-items, .yaycheckout-order-summary-totals) {
+/* Order Summary's Totals table: its amounts end-aligned in a fixed column. Items lays out its own rows. */
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals {
 	width: 100%;
 	table-layout: fixed;
 	border-collapse: collapse;
 }
 
-.yaycheckout-order-summary table:is(.yaycheckout-order-summary-items, .yaycheckout-order-summary-totals) :is(th, td) {
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td) {
 	padding: 6px 0;
 	border: 0;
 	vertical-align: top;
 }
 
-.yaycheckout-order-summary table:is(.yaycheckout-order-summary-items, .yaycheckout-order-summary-totals) :is(th, td):first-child {
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):first-child {
 	text-align: start;
 }
 
-.yaycheckout-order-summary table:is(.yaycheckout-order-summary-items, .yaycheckout-order-summary-totals) :is(th, td):last-child {
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):last-child {
 	width: 40%;
 	text-align: end;
 }
