@@ -30,15 +30,26 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			</InspectorControls>
 			<div { ...blockProps }>
 				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>
-				{ /* WooCommerce's list markup, so the block's own CSS draws it as on the storefront. */ }
-				<ul id="shipping_method" className="woocommerce-shipping-methods">
-					<li>
-						<input type="radio" disabled defaultChecked />
-						<label>{ __( 'Flat rate — $5.00', 'yaycheckout' ) }</label>
+				{ /* Same row markup the storefront prints, so the block CSS draws it the same way. */ }
+				<ul id="shipping_method" className="woocommerce-shipping-methods yaycheckout-shipping-methods__list">
+					<li className="yaycheckout-shipping-methods__option">
+						<input type="radio" className="shipping_method" disabled defaultChecked />
+						<label>
+							<span className="yaycheckout-shipping-methods__indicator" aria-hidden="true" />
+							<span className="yaycheckout-shipping-methods__body">
+								<span className="yaycheckout-shipping-methods__name">{ __( 'Flat rate', 'yaycheckout' ) }</span>
+							</span>
+							<span className="yaycheckout-shipping-methods__price">{ __( '$5.00', 'yaycheckout' ) }</span>
+						</label>
 					</li>
-					<li>
-						<input type="radio" disabled />
-						<label>{ __( 'Free shipping — $0.00', 'yaycheckout' ) }</label>
+					<li className="yaycheckout-shipping-methods__option">
+						<input type="radio" className="shipping_method" disabled />
+						<label>
+							<span className="yaycheckout-shipping-methods__indicator" aria-hidden="true" />
+							<span className="yaycheckout-shipping-methods__body">
+								<span className="yaycheckout-shipping-methods__name">{ __( 'Free shipping', 'yaycheckout' ) }</span>
+							</span>
+						</label>
 					</li>
 				</ul>
 			</div>
