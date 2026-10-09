@@ -39,6 +39,42 @@ class RequiredFieldOverlay {
     }
 
     /**
+     * The order note required exactly when the layout's Order note block says so, the way apply()
+     * does for address fields. Without the block WooCommerce keeps its own rule. A note a plugin
+     * removed is added back, or WooCommerce would never save the note the block prints.
+     *
+     * @param  array      $fields WooCommerce checkout fields, by fieldset.
+     * @param  array|null $note   LayoutMarkupReader::order_note(); null when the layout has no Order note block.
+     */
+    public static function apply_order_note( array $fields, ?array $note ): array {
+        if ( null === $note ) {
+            return $fields;
+        }
+
+        $label = self::filled( $note, 'label', '' );
+
+        if ( ! isset( $fields['order'] ) || ! is_array( $fields['order'] ) ) {
+            $fields['order'] = [];
+        }
+
+        if ( ! isset( $fields['order']['order_comments'] ) || ! is_array( $fields['order']['order_comments'] ) ) {
+            $fields['order']['order_comments'] = [
+                'type'  => 'textarea',
+                'class' => [ 'notes' ],
+                'label' => '' !== $label ? $label : 'order_comments',
+            ];
+        }
+
+        $fields['order']['order_comments']['required'] = ! empty( $note['required'] );
+
+        if ( '' !== $label ) {
+            $fields['order']['order_comments']['label'] = $label;
+        }
+
+        return $fields;
+    }
+
+    /**
      * Whether the field is required. Owns the email-always-required rule: billing_email and any
      * email-type field always are, as email is the only way to reach the customer. Any other
      * field is required only when the layout marks it.

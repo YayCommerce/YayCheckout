@@ -14,6 +14,7 @@ class LayoutMarkupReader {
     private const EMAIL       = 'yaycheckout/email';
     private const FIELD       = 'yaycheckout/field';
     private const EXTRA_FIELD = 'yaycheckout/extra-field';
+    private const ORDER_NOTE  = 'yaycheckout/order-note';
     private const SLOT        = 'yaycheckout/slot';
 
     /**
@@ -137,6 +138,35 @@ class LayoutMarkupReader {
         }
 
         return $fields;
+    }
+
+    /**
+     * The Order note block as a field entry for WooCommerce's order_comments, in the shape
+     * fields() returns; null when the layout has none. The block allows one, so the first wins.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function order_note( string $markup ): ?array {
+        foreach ( self::blocks( $markup ) as $block ) {
+            if ( self::ORDER_NOTE !== $block['blockName'] ) {
+                continue;
+            }
+
+            $attrs = $block['attrs'];
+
+            return [
+                'fieldKey'     => 'order_comments',
+                'type'         => 'textarea',
+                'label'        => self::plain_text( $attrs, 'label' ),
+                'placeholder'  => self::text( $attrs, 'placeholder' ),
+                'description'  => self::text( $attrs, 'description' ),
+                'required'     => ! empty( $attrs['required'] ),
+                'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
+                'optionalText' => trim( self::text( $attrs, 'optionalText' ) ),
+            ];
+        }
+
+        return null;
     }
 
     /**
