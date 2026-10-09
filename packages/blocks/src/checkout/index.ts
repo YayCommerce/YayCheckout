@@ -6,6 +6,5 @@ import './inserter-root';
 import './layout-actions';
 import './publish-guard';
 import '../shared/hide-when-empty';
-import './style.css';
 
 registerDynamicBlock( metadata, Edit, saveNestedBlocks );

@@ -1,0 +1,93 @@
+/*
+ * The rates as one bordered group of rows, the checked row edged in the primary colour.
+ * A single rate prints a hidden input, not a checked radio, so a lone row counts as checked.
+ * Colours and corners come from checkout-base.css's neutral fallbacks (--yaycheckout-primary-color,
+ * --yaycheckout-border-color, --yaycheckout-field-radius).
+ * Selectors start with .yaycheckout-checkout .yaycheckout-shipping-methods, because block styles
+ * print before checkout-base.css on the storefront, and name WooCommerce's ul#shipping_method,
+ * so the rows outrank a classic theme's own rules for it.
+ */
+.yaycheckout-checkout .yaycheckout-shipping-methods #shipping_method {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods #shipping_method > li {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0 12px;
+	margin: 0;
+	padding: 14px 16px;
+	border: 1px solid var(--yaycheckout-border-color);
+	background-color: var(--yaycheckout-color-background, transparent);
+	list-style: none;
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods #shipping_method > li + li {
+	margin-top: -1px;
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods #shipping_method > li:first-child {
+	border-start-start-radius: var(--yaycheckout-field-radius);
+	border-start-end-radius: var(--yaycheckout-field-radius);
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods #shipping_method > li:last-child {
+	border-end-start-radius: var(--yaycheckout-field-radius);
+	border-end-end-radius: var(--yaycheckout-field-radius);
+}
+
+/* Above its neighbours, so its whole edge shows where the rows overlap. */
+.yaycheckout-checkout .yaycheckout-shipping-methods #shipping_method > li:is(:has(input:checked), :only-child) {
+	z-index: 1;
+	border-color: var(--yaycheckout-primary-color, #3858e9);
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods #shipping_method > li > label {
+	flex: 1;
+	margin: 0;
+	padding: 0;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+/*
+ * WooCommerce prints the rates inside its review table: tr.woocommerce-shipping-totals, a
+ * th naming the package and a td holding the list. Flattened to blocks so the rows fill the
+ * section like Payment's.
+ */
+.yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__rates :is(table, tbody, tr, th, td) {
+	display: block;
+	width: auto;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	text-align: start;
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__rates tr + tr {
+	margin-top: 16px;
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__rates th {
+	margin-bottom: 8px;
+	font-weight: 500;
+}
+
+/*
+ * One package: the block's own heading already names it, so the package name is for screen
+ * readers only. The same declarations as WordPress's .screen-reader-text and progress/style.css.
+ */
+.yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__rates tr.woocommerce-shipping-totals:only-child th {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}

@@ -6,7 +6,6 @@ import itemsMeta from '../order-summary-items/block.json';
 import totalsMeta from '../order-summary-totals/block.json';
 import { isCheckoutSection, useBlocksAllowedExcept } from '../shared/allowed-blocks';
 import '../shared/section-preview.css';
-import './editor.css';
 
 interface OrderSummaryAttributes {
 	label: string;

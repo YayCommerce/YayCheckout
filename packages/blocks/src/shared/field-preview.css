@@ -1,38 +1,8 @@
-.editor-styles-wrapper .yaycheckout-field-preview {
-	margin-bottom: 12px;
-}
-
-.editor-styles-wrapper .yaycheckout-field-preview__label {
-	display: block;
-	font-size: 13px;
-	font-weight: 600;
-}
-
-.editor-styles-wrapper .yaycheckout-field-preview__label--inherit {
+/* The look comes from checkout-base.css, which the layout canvas loads; these are the editor-only parts. */
+/* Beats the base's .yaycheckout-checkout .form-row label weight. */
+.editor-styles-wrapper .yaycheckout-field-preview.form-row .yaycheckout-field-preview__label--inherit {
 	font-size: inherit;
 	font-weight: inherit;
-}
-
-.editor-styles-wrapper .yaycheckout-field-preview__required {
-	margin-left: 4px;
-	color: #cc1818;
-}
-
-.editor-styles-wrapper .yaycheckout-field-preview__optional {
-	margin-left: 4px;
-	color: #646970;
-	font-weight: 400;
-}
-
-.editor-styles-wrapper .yaycheckout-field-preview__input {
-	display: block;
-	box-sizing: border-box;
-	width: 100%;
-	margin-top: 4px;
-	padding: 8px 10px;
-	border: 1px solid #8c8f94;
-	border-radius: 4px;
-	background: #fff;
 }
 
 .editor-styles-wrapper .yaycheckout-field-preview__choices,
@@ -41,17 +11,14 @@
 }
 
 .editor-styles-wrapper .yaycheckout-field-preview__choice {
-	display: block;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 	margin-bottom: 4px;
+	font-weight: inherit;
 }
 
 .editor-styles-wrapper .yaycheckout-field-preview__hidden {
-	color: #646970;
-	font-size: 12px;
-}
-
-.editor-styles-wrapper .yaycheckout-field-preview__description {
-	margin: 4px 0 0;
-	color: #646970;
-	font-size: 12px;
+	opacity: 0.7;
+	font-size: 0.875em;
 }

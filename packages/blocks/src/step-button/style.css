@@ -5,7 +5,7 @@
 	padding: 10px 18px;
 	border: 0;
 	border-radius: 6px;
-	background: var(--yaycheckout-primary);
+	background: var(--yaycheckout-primary-color, #3858e9);
 	color: #fff;
 	font-family: inherit;
 	font-size: 16px;
@@ -16,6 +16,6 @@
 
 /* Classic themes (Storefront) repaint button:hover. */
 .yaycheckout-step-button:is(:hover, :focus) {
-	background: var(--yaycheckout-primary);
+	background: var(--yaycheckout-primary-color, #3858e9);
 	color: #fff;
 }

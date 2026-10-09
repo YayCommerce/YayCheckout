@@ -1,12 +1,5 @@
-.editor-styles-wrapper .yaycheckout-coupon-form__code {
-	padding: 10px 12px;
-}
-
+/* The preview's Apply is a div with the storefront button's classes; a div doesn't centre its text the way a button does. */
 .editor-styles-wrapper .yaycheckout-coupon-form__apply {
-	padding: 10px 16px;
-	border: 0;
-	border-radius: 4px;
-	background: #1e1e1e;
-	color: #fff;
-	font-size: 14px;
+	display: flex;
+	align-items: center;
 }

@@ -7,7 +7,7 @@ class ScriptName {
 
     public const STYLE_CHECKOUT = 'yaycheckout/style/checkout';
 
-    public const STYLE_CHECKOUT_PAGE = 'yaycheckout/style/checkout-page';
+    public const STYLE_CHECKOUT_BASE = 'yaycheckout/style/checkout-base';
 
     public const MODULE_PREFIX = 'yaycheckout/module/';
 

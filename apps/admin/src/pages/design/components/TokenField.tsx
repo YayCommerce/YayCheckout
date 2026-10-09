@@ -13,7 +13,7 @@ type TokenPath<S extends TokenSection, K extends keyof DesignTokens[S] & string>
 
 /**
  * One token row, with a revert button while the token differs from the last save.
- * Revert restores the last save, not the value of an applied preset.
+ * Revert restores the last save.
  */
 export function TokenField<S extends TokenSection, K extends keyof DesignTokens[S] & string>({
   section,

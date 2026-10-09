@@ -6,7 +6,7 @@ import { Button, LoadingButton } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 /**
- * Confirms loading the Default preset over every token and saves immediately —
+ * Confirms resetting every token to its default and saves immediately —
  * hence the destructive button, since this one cannot be undone by leaving unsaved.
  */
 export function ResetConfirmModal({
@@ -26,12 +26,12 @@ export function ResetConfirmModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{__('Reset all tokens to theme defaults?', 'yaycheckout')}</DialogTitle>
+          <DialogTitle>{__('Reset all tokens to defaults?', 'yaycheckout')}</DialogTitle>
         </DialogHeader>
 
         <p className="text-muted-foreground text-sm">
           {__(
-            'Colours, typography, spacing, buttons and inputs go back to the Default preset and save immediately. Custom CSS is kept.',
+            'Colours, typography and inputs go back to their defaults and save immediately. Custom CSS is kept.',
             'yaycheckout',
           )}
         </p>
@@ -40,7 +40,7 @@ export function ResetConfirmModal({
           <Info />
           <AlertDescription className="text-xs">
             {sprintf(
-              /* translators: %d: number of tokens that differ from the Default preset */
+              /* translators: %d: number of tokens that differ from their defaults */
               _n(
                 '%d override will be cleared · custom CSS untouched',
                 '%d overrides will be cleared · custom CSS untouched',

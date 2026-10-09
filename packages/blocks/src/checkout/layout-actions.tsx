@@ -23,6 +23,9 @@ type Action = 'activate' | 'deactivate';
 /** Copy of the `is_active` field of Layout::to_array(), the yaycheckout/v1 layout shape. */
 type LayoutWire = { is_active: boolean };
 
+/** Copy of LayoutRestController::create_preview_link(); previewLinkWireSchema in the SPA. */
+type PreviewLinkWire = { url: string; expires_at: string };
+
 /** Everything the two actions say; the copy matches SetActiveModal and DeactivateModal in the SPA. */
 function copyFor( action: Action, title: string ) {
 	return action === 'activate'
@@ -91,8 +94,8 @@ function useHeaderSlot( enabled: boolean ): HTMLElement | null {
 }
 
 /**
- * The layout editor's own Save, Activate and Deactivate, in place of core's Publish controls:
- * Save keeps the status, and the other two call the same routes as the layouts list, so
+ * The layout editor's own Preview, Save, Activate and Deactivate, in place of core's Publish
+ * controls: Save keeps the status, and the others call the same routes as the layouts list, so
  * LayoutRepository's rules decide. Merchants see Active or Inactive, never a post status.
  */
 function LayoutActions() {
@@ -119,6 +122,7 @@ function LayoutActions() {
 	const { setActive } = useDispatch( layoutStateStore );
 	const [ confirm, setConfirm ] = useState< Action | null >( null );
 	const [ isBusy, setBusy ] = useState( false );
+	const [ isPreviewing, setPreviewing ] = useState( false );
 	const slot = useHeaderSlot( isLayout );
 
 	useEffect( () => {
@@ -173,6 +177,33 @@ function LayoutActions() {
 		}
 	};
 
+	/** Previews the saved markup; unsaved edits are left alone and don't show. */
+	const preview = async () => {
+		// Opened inside the click: a tab opened after the await is a popup the browser blocks.
+		const tab = window.open( '', '_blank' );
+		setPreviewing( true );
+		try {
+			const link = await apiFetch< PreviewLinkWire >( {
+				path: `/yaycheckout/v1/layouts/${ postId }/preview-link`,
+				method: 'POST',
+			} );
+
+			if ( tab ) {
+				tab.opener = null;
+				tab.location.href = link.url;
+			} else {
+				window.open( link.url, '_blank', 'noopener' );
+			}
+		} catch ( error ) {
+			tab?.close();
+			createErrorNotice( await errorMessage( error, __( 'The preview could not be opened.', 'yaycheckout' ) ), {
+				type: 'snackbar',
+			} );
+		} finally {
+			setPreviewing( false );
+		}
+	};
+
 	// Unknown state (null) offers neither: Save alone.
 	const toggle: Action | null = isActive === null ? null : isActive ? 'deactivate' : 'activate';
 	const modal = confirm && copyFor( confirm, title );
@@ -180,6 +211,16 @@ function LayoutActions() {
 	return createPortal(
 		<>
 			<Flex gap={ 2 } expanded={ false }>
+				<Button
+					__next40pxDefaultSize
+					variant="tertiary"
+					isBusy={ isPreviewing }
+					disabled={ isPreviewing || isBusy || isSaving }
+					accessibleWhenDisabled
+					onClick={ preview }
+				>
+					{ __( 'Preview', 'yaycheckout' ) }
+				</Button>
 				{ toggle && (
 					<Button
 						__next40pxDefaultSize

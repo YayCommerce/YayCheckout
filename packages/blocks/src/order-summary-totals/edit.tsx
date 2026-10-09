@@ -1,18 +1,19 @@
 import { useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 
+// Mirrors CheckoutFragments::order_totals_html(), so checkout-base.css draws it as on the storefront.
 export default function Edit() {
 	return (
 		<div { ...useBlockProps() }>
-			<table className="yaycheckout-order-summary__table">
+			<table className="shop_table yaycheckout-order-summary-totals">
 				<tbody>
-					<tr>
-						<td className="yaycheckout-order-summary__cell yaycheckout-order-summary__cell--muted">{ __( 'Subtotal', 'yaycheckout' ) }</td>
-						<td className="yaycheckout-order-summary__cell yaycheckout-order-summary__cell--end yaycheckout-order-summary__cell--muted">$20.00</td>
+					<tr className="cart-subtotal">
+						<th>{ __( 'Subtotal', 'yaycheckout' ) }</th>
+						<td>$20.00</td>
 					</tr>
-					<tr>
-						<td className="yaycheckout-order-summary__cell yaycheckout-order-summary__cell--total">{ __( 'Total', 'yaycheckout' ) }</td>
-						<td className="yaycheckout-order-summary__cell yaycheckout-order-summary__cell--end yaycheckout-order-summary__cell--total">$20.00</td>
+					<tr className="order-total">
+						<th>{ __( 'Total', 'yaycheckout' ) }</th>
+						<td>$20.00</td>
 					</tr>
 				</tbody>
 			</table>

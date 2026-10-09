@@ -6,7 +6,6 @@
   "category": "yaycheckout",
   "description": "A reminder so a returning customer can log in during checkout.",
   "textdomain": "yaycheckout",
-  "parent": [ "yaycheckout/checkout" ],
   "attributes": {
     "blockId": {
       "type": "string",
