@@ -1,0 +1,77 @@
+/* The Design sidebar sits outside the canvas, in the editor's own document. */
+.yaycheckout-layout-design {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px;
+}
+
+.yaycheckout-layout-design h2 {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.yaycheckout-layout-design .yaycheckout-layout-design__header h2 {
+	flex: 1;
+}
+
+.yaycheckout-layout-design hr {
+	width: 100%;
+	margin: 0;
+	border: 0;
+	border-top: 1px solid #e0e0e0;
+}
+
+.yaycheckout-layout-design .yaycheckout-layout-design__help {
+	margin: 0;
+	color: #757575;
+}
+
+.yaycheckout-layout-design .yaycheckout-layout-design__preview {
+	height: 96px;
+	padding: 0 24px;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+	font-size: 40px;
+}
+
+.yaycheckout-layout-design .yaycheckout-layout-design__row,
+.yaycheckout-layout-design .yaycheckout-layout-design__colour {
+	gap: 8px;
+	width: 100%;
+}
+
+.yaycheckout-layout-design .yaycheckout-layout-design__row-label {
+	flex: 1;
+	text-align: left;
+}
+
+.yaycheckout-layout-design .yaycheckout-layout-design__row-state {
+	color: #757575;
+}
+
+.yaycheckout-layout-design .yaycheckout-layout-design__colour code {
+	margin-left: auto;
+	background: none;
+}
+
+.yaycheckout-layout-design .yaycheckout-layout-design__global {
+	align-self: flex-start;
+}
+
+.yaycheckout-layout-design .yaycheckout-layout-design__pro-tag {
+	align-self: flex-start;
+	padding: 1px 6px;
+	border-radius: 2px;
+	background: #f9bd09;
+	color: #fff;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.yaycheckout-layout-design__changes {
+	margin: 0 0 24px;
+	padding-left: 20px;
+	list-style: disc;
+}
