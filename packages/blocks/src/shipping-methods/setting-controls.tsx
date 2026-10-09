@@ -1,4 +1,4 @@
-import { ColorPalette, RangeControl } from '@wordpress/components';
+import { RangeControl } from '@wordpress/components';
 import type { ComponentType } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
@@ -8,6 +8,25 @@ export type ShippingSettingKey =
 	| 'backgroundColor'
 	| 'backgroundColorSelected'
 	| 'backgroundColorHover';
+
+export const BACKGROUND_SETTING_KEYS: ShippingSettingKey[] = [
+	'backgroundColor',
+	'backgroundColorSelected',
+	'backgroundColorHover',
+];
+
+export const BACKGROUND_SETTING_LABELS: Record<
+	( typeof BACKGROUND_SETTING_KEYS )[ number ],
+	string
+> = {
+	backgroundColor: __( 'Background', 'yaycheckout' ),
+	backgroundColorSelected: __( 'Background (selected)', 'yaycheckout' ),
+	backgroundColorHover: __( 'Background (hover)', 'yaycheckout' ),
+};
+
+export function isBackgroundSetting( key: ShippingSettingKey ): boolean {
+	return ( BACKGROUND_SETTING_KEYS as string[] ).includes( key );
+}
 
 export interface SettingControlProps {
 	value: unknown;
@@ -55,45 +74,13 @@ function BorderRadiusControl( { value, onChange }: SettingControlProps ) {
 	);
 }
 
-function ColorControl( {
-	label,
-	value,
-	onChange,
-}: SettingControlProps & { label: string } ) {
-	const color = typeof value === 'string' ? value : undefined;
-
-	return (
-		<div className="yaycheckout-shipping-methods__color-control">
-			<p className="yaycheckout-shipping-methods__color-label">{ label }</p>
-			<ColorPalette
-				value={ color }
-				onChange={ ( next ) => onChange( next || undefined ) }
-				clearable
-			/>
-		</div>
-	);
-}
-
-function BackgroundColorControl( props: SettingControlProps ) {
-	return <ColorControl { ...props } label={ __( 'Background', 'yaycheckout' ) } />;
-}
-
-function BackgroundColorSelectedControl( props: SettingControlProps ) {
-	return <ColorControl { ...props } label={ __( 'Background (selected)', 'yaycheckout' ) } />;
-}
-
-function BackgroundColorHoverControl( props: SettingControlProps ) {
-	return <ColorControl { ...props } label={ __( 'Background (hover)', 'yaycheckout' ) } />;
-}
-
 /**
- * Shared setting controls for Shipping Methods layouts. A layout lists the keys
- * it uses; the Styles tab only renders those.
+ * Range controls for Shipping Methods layouts. Background colours use
+ * PanelColorSettings in edit.tsx so they match Gutenberg's Styles UI.
  */
-export const SETTING_CONTROLS: Record< ShippingSettingKey, ComponentType< SettingControlProps > > = {
+export const SETTING_CONTROLS: Partial<
+	Record< ShippingSettingKey, ComponentType< SettingControlProps > >
+> = {
 	gap: GapControl,
 	borderRadius: BorderRadiusControl,
-	backgroundColor: BackgroundColorControl,
-	backgroundColorSelected: BackgroundColorSelectedControl,
-	backgroundColorHover: BackgroundColorHoverControl,
 };
