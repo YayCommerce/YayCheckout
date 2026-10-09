@@ -140,11 +140,15 @@ class BlockRegistry {
         }
 
         // One bundle serves both editions, so the plan reaches it at runtime; PHP supplies the post type and upgrade link so the bundle never redeclares them.
-        $editor_data = [
-            'isPro'      => Plan::is_pro(),
-            'postType'   => Layout::POST_TYPE,
-            'upgradeUrl' => YAYCHECKOUT_UPGRADE_URL,
-        ];
+        // Pro adds `design` through the filter.
+        $editor_data = apply_filters(
+            'yaycheckout_editor_data',
+            [
+                'isPro'      => Plan::is_pro(),
+                'postType'   => Layout::POST_TYPE,
+                'upgradeUrl' => YAYCHECKOUT_UPGRADE_URL,
+            ]
+        );
 
         wp_add_inline_script(
             generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),

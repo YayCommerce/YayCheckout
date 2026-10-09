@@ -8,6 +8,7 @@ use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Pro\Controllers\LayoutImportRestController;
 use YayCheckout\Pro\Controllers\LayoutRulesRestController;
 use YayCheckout\Pro\Services\AssignmentStoreData;
+use YayCheckout\Repositories\DesignRepository;
 use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
@@ -29,6 +30,18 @@ class ProServiceProvider {
         add_action( 'init', [ $this, 'register_design_meta' ] );
         add_filter( 'rest_pre_insert_' . Layout::POST_TYPE, [ $this, 'validate_design_meta' ], 10, 2 );
         add_filter( 'update_post_metadata', [ $this, 'delete_empty_design' ], 10, 4 );
+        add_filter( 'yaycheckout_editor_data', [ $this, 'editor_data' ] );
+    }
+
+    /** Adds `design` for the layout editor's Design sidebar: global tokens, the token rules and the font labels, so the bundle copies none of them. */
+    public function editor_data( array $data ): array {
+        $data['design'] = [
+            'tokens'        => ( new DesignRepository() )->get()->tokens,
+            'schema'        => Design::schema(),
+            'font_families' => Design::FONT_FAMILIES,
+        ];
+
+        return $data;
     }
 
     /** The layout's design layer on top of global. */
