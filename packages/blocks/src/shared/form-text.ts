@@ -14,7 +14,7 @@ export function labelText( label: Element ): string {
 }
 
 /** A select's chosen option text, a radio or checkbox's option label, or the typed value. */
-export function controlText( control: Control ): string {
+function controlText( control: Control ): string {
 	if ( control instanceof HTMLSelectElement ) {
 		return control.value.trim() === '' ? '' : control.selectedOptions[ 0 ]?.text.trim() ?? '';
 	}
@@ -26,6 +26,25 @@ export function controlText( control: Control ): string {
 	}
 
 	return control.value.trim();
+}
+
+/** Every control's text, skipping unticked radios and checkboxes, as one comma-separated line. */
+export function controlsText( controls: Iterable< Control > ): string {
+	const values: string[] = [];
+
+	for ( const control of controls ) {
+		if ( control instanceof HTMLInputElement && ( control.type === 'radio' || control.type === 'checkbox' ) && ! control.checked ) {
+			continue;
+		}
+
+		const value = controlText( control );
+
+		if ( value !== '' ) {
+			values.push( value );
+		}
+	}
+
+	return values.join( ', ' );
 }
 
 function optionLabel( control: HTMLInputElement ): Element | null {

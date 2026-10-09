@@ -5,7 +5,7 @@
  * WooCommerce's address-i18n.js relabels fields for the country, so the label is read from the form too.
  */
 
-import { controlText, labelText } from '../shared/form-text';
+import { controlsText, labelText } from '../shared/form-text';
 import { jquery, type Control } from '../shared/jquery';
 
 const VALUE = '.yaycheckout-field-value__value[data-field-keys]';
@@ -25,8 +25,9 @@ interface Source {
 const sources = new WeakMap< HTMLElement, Source >();
 
 function text( form: Element | null, key: string ): string {
-	const field = form?.querySelector< Control >( `[name="${ key }"]` );
-
+	// A radio group, or an Extra field's checkboxes posted as key[], is several controls under one name.
+	const controls = [ ...( form?.querySelectorAll< Control >( `[name="${ key }"], [name="${ key }[]"]` ) ?? [] ) ];
+	const field = controls[ 0 ];
 	const row = form?.querySelector< HTMLElement >( `#${ key }_field` );
 
 	// WooCommerce hides the state field for a country without states, and address-i18n.js hides the row of a
@@ -36,7 +37,7 @@ function text( form: Element | null, key: string ): string {
 		return '';
 	}
 
-	return controlText( field );
+	return controlsText( controls );
 }
 
 /** The field's label as the form shows it now, without the required or optional mark. */

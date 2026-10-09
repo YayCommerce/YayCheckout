@@ -3,6 +3,7 @@ import { FormTokenField, PanelBody, TextControl } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { useEffect, useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { EXTRA_FIELD_BLOCK, EXTRA_FIELD_KEY_PATTERN } from '../shared/extra-field-keys';
 import { plainText } from '../shared/plain-text';
 import './editor.css';
 
@@ -20,23 +21,25 @@ interface EditProps {
 interface LayoutField {
 	key: string;
 	label: string;
+	section: 'billing' | 'shipping' | 'extra';
 }
 
 /** Mirrors render.php: a checkbox's value is always 1, a password must never be echoed, a hidden field holds nothing typed. */
 const UNSHOWABLE_TYPES = [ 'checkbox', 'password', 'hidden' ];
 
 /**
- * The layout's address fields with the label each prints. Mirrors LayoutMarkupReader::fields():
- * Email address is billing_email, each Field block with a Key is its own, a later block with the
- * same Key wins. An empty label falls back as email/render.php and field/render.php print it.
- * Only billing_ and shipping_ keys, as render.php shows.
+ * The layout's fields with the label each prints. Mirrors LayoutMarkupReader::fields() and
+ * LayoutMarkupReader::extra_fields(): Email address is billing_email, each Field block with a
+ * billing_ or shipping_ Key and each Extra field with a valid Key is its own, a later block with
+ * the same Key wins. An empty label falls back as email/render.php, field/render.php and
+ * extra-field/render.php print it. An Extra field's single checkbox is left out, as render.php does.
  */
 function layoutFields(
 	clientIds: string[],
 	getBlockName: ( clientId: string ) => string | null,
 	getBlockAttributes: ( clientId: string ) => Record< string, unknown > | null
 ): LayoutField[] {
-	const fields = new Map< string, string >();
+	const fields = new Map< string, LayoutField >();
 
 	for ( const clientId of clientIds ) {
 		const name = getBlockName( clientId );
@@ -44,18 +47,31 @@ function layoutFields(
 		const label = plainText( attributes.label );
 
 		if ( name === 'yaycheckout/email' ) {
-			fields.set( 'billing_email', label || __( 'Email address', 'yaycheckout' ) );
+			fields.set( 'billing_email', { key: 'billing_email', label: label || __( 'Email address', 'yaycheckout' ), section: 'billing' } );
 		} else if ( name === 'yaycheckout/field' ) {
 			const key = String( attributes.fieldKey ?? '' ).trim();
 
 			if ( /^(billing|shipping)_/.test( key ) && ! UNSHOWABLE_TYPES.includes( String( attributes.type ?? 'text' ) ) ) {
-				fields.set( key, label || key );
+				fields.set( key, { key, label: label || key, section: key.startsWith( 'shipping_' ) ? 'shipping' : 'billing' } );
+			}
+		} else if ( name === EXTRA_FIELD_BLOCK ) {
+			const key = String( attributes.fieldKey ?? '' ).trim();
+			const options = Array.isArray( attributes.options ) ? attributes.options : [];
+
+			if ( EXTRA_FIELD_KEY_PATTERN.test( key ) && ! ( attributes.type === 'checkbox' && options.length === 0 ) ) {
+				fields.set( key, { key, label: label || __( 'Extra field', 'yaycheckout' ), section: 'extra' } );
 			}
 		}
 	}
 
-	return [ ...fields ].map( ( [ key, fieldLabel ] ) => ( { key, label: fieldLabel } ) );
+	return [ ...fields.values() ];
 }
+
+const SECTIONS = {
+	billing: __( 'Billing', 'yaycheckout' ),
+	shipping: __( 'Shipping', 'yaycheckout' ),
+	extra: __( 'Extra', 'yaycheckout' ),
+};
 
 /**
  * The name each field goes by in the Fields picker: its label and section, so Billing and Shipping
@@ -63,9 +79,7 @@ function layoutFields(
  */
 function tokenNames( fields: LayoutField[] ): Map< string, string > {
 	const named = fields.map( ( field ) => {
-		const section = field.key.startsWith( 'shipping_' ) ? __( 'Shipping', 'yaycheckout' ) : __( 'Billing', 'yaycheckout' );
-
-		return { key: field.key, name: `${ field.label } (${ section })` };
+		return { key: field.key, name: `${ field.label } (${ SECTIONS[ field.section ] })` };
 	} );
 
 	const counts = new Map< string, number >();
@@ -131,7 +145,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					/>
 					{ fields.length === 0 && (
 						<p className="components-base-control__help">
-							{ __( 'Add an Email address or Field block to the layout first.', 'yaycheckout' ) }
+							{ __( 'Add an Email address, Field or Extra Field block to the layout first.', 'yaycheckout' ) }
 						</p>
 					) }
 					{ fieldKeys.length > 1 && (

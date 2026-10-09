@@ -6,7 +6,7 @@
  */
 
 import { checkoutFor } from '../shared/checkout-root';
-import { controlText } from '../shared/form-text';
+import { controlsText } from '../shared/form-text';
 
 const STEP = '.yaycheckout-step';
 const CURRENT = 'current';
@@ -104,7 +104,7 @@ function complete( step: HTMLElement ): boolean {
 		return false;
 	}
 
-	writeSummary( step, summaryText( controls ) );
+	writeSummary( step, controlsText( controls ) );
 	setState( step, COMPLETE );
 	return true;
 }
@@ -309,24 +309,6 @@ function message( step: HTMLElement, key: 'requiredMessage' | 'selectMessage' ):
 	const steps = step.closest< HTMLElement >( '.yaycheckout-steps' );
 
 	return steps?.dataset[ key ] ?? '';
-}
-
-function summaryText( controls: Control[] ): string {
-	const values: string[] = [];
-
-	for ( const control of controls ) {
-		if ( control instanceof HTMLInputElement && ( control.type === 'radio' || control.type === 'checkbox' ) && ! control.checked ) {
-			continue;
-		}
-
-		const value = controlText( control );
-
-		if ( value !== '' ) {
-			values.push( value );
-		}
-	}
-
-	return values.join( ', ' );
 }
 
 if ( document.readyState === 'loading' ) {

@@ -23,19 +23,36 @@ if ( [] === $yaycheckout_keys ) {
 $yaycheckout_layout = \YayCheckout\Renderer\CheckoutPage::get_instance()->layout();
 // Parses the layout once per Field Value block; memoise if a layout ever holds dozens of them.
 $yaycheckout_fields = null !== $yaycheckout_layout ? \YayCheckout\Services\LayoutMarkupReader::fields( $yaycheckout_layout->content ) : [];
+$yaycheckout_extra  = null !== $yaycheckout_layout ? \YayCheckout\Services\LayoutMarkupReader::extra_fields( $yaycheckout_layout->content ) : [];
 
 // Mirrored by UNSHOWABLE_TYPES in edit.tsx: a checkbox's value is always 1, a password must never be
 // echoed, and a hidden field holds nothing typed.
 $yaycheckout_unshowable = [ 'checkbox', 'password', 'hidden' ];
 
-// Only fields the layout prints; any other key could read a value this block was never meant to show.
+// Key => label of each field the layout prints that this block can show; any other key could read a value
+// it was never meant to show. Empty labels fall back as email/render.php, field/render.php and
+// extra-field/render.php do. An Extra field's single checkbox is left out: its value is always 1.
+$yaycheckout_showable = [];
+
+foreach ( $yaycheckout_fields as $yaycheckout_key => $yaycheckout_field ) {
+    if ( 1 === preg_match( '/^(billing|shipping)_/', $yaycheckout_key ) && ! in_array( $yaycheckout_field['type'], $yaycheckout_unshowable, true ) ) {
+        $yaycheckout_showable[ $yaycheckout_key ] = '' !== $yaycheckout_field['label']
+            ? $yaycheckout_field['label']
+            : ( 'billing_email' === $yaycheckout_key ? __( 'Email address', 'yaycheckout' ) : $yaycheckout_key );
+    }
+}
+
+foreach ( $yaycheckout_extra as $yaycheckout_key => $yaycheckout_field ) {
+    if ( ! isset( $yaycheckout_showable[ $yaycheckout_key ] ) && ! ( 'checkbox' === $yaycheckout_field['type'] && empty( $yaycheckout_field['options'] ) ) ) {
+        $yaycheckout_showable[ $yaycheckout_key ] = '' !== $yaycheckout_field['label'] ? $yaycheckout_field['label'] : __( 'Extra field', 'yaycheckout' );
+    }
+}
+
 $yaycheckout_keys = array_values(
     array_filter(
         $yaycheckout_keys,
-        static function ( string $key ) use ( $yaycheckout_fields, $yaycheckout_unshowable ): bool {
-            return isset( $yaycheckout_fields[ $key ] )
-                && ! in_array( $yaycheckout_fields[ $key ]['type'], $yaycheckout_unshowable, true )
-                && 1 === preg_match( '/^(billing|shipping)_/', $key );
+        static function ( string $key ) use ( $yaycheckout_showable ): bool {
+            return isset( $yaycheckout_showable[ $key ] );
         }
     )
 );
@@ -51,7 +68,30 @@ $yaycheckout_read = static function ( string $key ): string {
 };
 
 // One field's value as its form control shows it.
-$yaycheckout_value_of = static function ( string $key ) use ( $yaycheckout_read ): string {
+$yaycheckout_value_of = static function ( string $key ) use ( $yaycheckout_read, $yaycheckout_fields, $yaycheckout_extra ): string {
+    if ( ! isset( $yaycheckout_fields[ $key ] ) ) {
+        $field = $yaycheckout_extra[ $key ];
+
+        // As extra-field/render.php: only a remembered field prints a value on load; view.js fills the rest.
+        if ( empty( $field['remember'] ) ) {
+            return '';
+        }
+
+        $value = \YayCheckout\Renderer\CheckoutFieldDefaults::value( $key );
+        $names = [];
+
+        // A choice shows its option's label, as the form does; ticked checkboxes are listed with commas.
+        foreach ( is_array( $value ) ? $value : [ $value ] as $choice ) {
+            $choice = is_scalar( $choice ) ? trim( (string) $choice ) : '';
+
+            if ( '' !== $choice ) {
+                $names[] = isset( $field['options'][ $choice ] ) ? $field['options'][ $choice ] : $choice;
+            }
+        }
+
+        return implode( ', ', $names );
+    }
+
     // A field the country's locale hides (State for VN) means nothing, even with a value left over.
     $value = \YayCheckout\Renderer\CheckoutFieldDefaults::hidden_for_country( $key ) ? '' : $yaycheckout_read( $key );
 
@@ -77,12 +117,7 @@ $yaycheckout_labels = [];
 
 foreach ( $yaycheckout_keys as $yaycheckout_key ) {
     $yaycheckout_values[] = $yaycheckout_value_of( $yaycheckout_key );
-
-    // The label the layout's field prints; an empty one falls back as email/render.php and field/render.php do.
-    $yaycheckout_field_label = $yaycheckout_fields[ $yaycheckout_key ]['label'];
-    $yaycheckout_labels[]    = '' !== $yaycheckout_field_label
-        ? $yaycheckout_field_label
-        : ( 'billing_email' === $yaycheckout_key ? __( 'Email address', 'yaycheckout' ) : $yaycheckout_key );
+    $yaycheckout_labels[] = $yaycheckout_showable[ $yaycheckout_key ];
 }
 
 // Empty values are skipped, so a half-filled block shows no dangling separator.
