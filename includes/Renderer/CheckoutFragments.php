@@ -176,6 +176,15 @@ class CheckoutFragments {
             $decls[] = '--yaycheckout-shipping-bg-hover:' . $bg_hover;
         }
 
+        // Text colour from color.text or the textColor preset slug (skipSerialization).
+        $text = self::shipping_css_color( $color['text'] ?? null );
+        if ( '' === $text && isset( $attributes['textColor'] ) && is_string( $attributes['textColor'] ) && '' !== $attributes['textColor'] ) {
+            $text = 'var(--wp--preset--color--' . sanitize_title( $attributes['textColor'] ) . ')';
+        }
+        if ( '' !== $text ) {
+            $decls[] = 'color:' . $text;
+        }
+
         return implode( ';', $decls );
     }
 
@@ -221,11 +230,17 @@ class CheckoutFragments {
     }
 
     /**
-     * @param mixed $value A CSS colour string.
+     * @param mixed $value A CSS colour string or var:preset|color|slug.
      */
     private static function shipping_css_color( $value ): string {
         if ( ! is_string( $value ) || '' === $value ) {
             return '';
+        }
+
+        if ( 0 === strpos( $value, 'var:preset|color|' ) ) {
+            $slug = substr( $value, strlen( 'var:preset|color|' ) );
+
+            return '' !== $slug ? 'var(--wp--preset--color--' . _wp_to_kebab_case( $slug ) . ')' : '';
         }
 
         $hex = sanitize_hex_color( $value );

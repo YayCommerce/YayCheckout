@@ -68,14 +68,37 @@ export function setStyleSetting(
 	return setAt( style, PATHS[ key ], value );
 }
 
-/** CSS custom properties for the shipping-methods wrapper from `style`. */
-export function shippingStyleVars( style: StyleObject | undefined ): Record< string, string > {
+/** Resolve a colour value or theme preset slug to a CSS colour. */
+function cssColor( value: unknown, presetSlug?: string ): string | undefined {
+	if ( typeof value === 'string' && value !== '' ) {
+		if ( value.startsWith( 'var:preset|color|' ) ) {
+			const slug = value.slice( 'var:preset|color|'.length );
+			return slug ? `var(--wp--preset--color--${ slug })` : undefined;
+		}
+		return value;
+	}
+	if ( typeof presetSlug === 'string' && presetSlug !== '' ) {
+		return `var(--wp--preset--color--${ presetSlug })`;
+	}
+	return undefined;
+}
+
+/**
+ * Inline styles for the shipping-methods wrapper: Methods CSS variables plus
+ * text colour from color.text / textColor (skipSerialization keeps core from
+ * painting the wrapper; we apply colour here so it still shows).
+ */
+export function shippingStyleVars(
+	style: StyleObject | undefined,
+	textColor?: string
+): Record< string, string > {
 	const vars: Record< string, string > = {};
 	const gap = getStyleSetting( style, 'gap' );
 	const radius = getStyleSetting( style, 'borderRadius' );
 	const bg = getStyleSetting( style, 'backgroundColor' );
 	const bgSelected = getStyleSetting( style, 'backgroundColorSelected' );
 	const bgHover = getStyleSetting( style, 'backgroundColorHover' );
+	const text = cssColor( getAt( style, [ 'color', 'text' ] ), textColor );
 
 	if ( typeof gap === 'string' && gap !== '' ) {
 		vars[ '--yaycheckout-shipping-gap' ] = gap;
@@ -93,6 +116,9 @@ export function shippingStyleVars( style: StyleObject | undefined ): Record< str
 	}
 	if ( typeof bgHover === 'string' && bgHover !== '' ) {
 		vars[ '--yaycheckout-shipping-bg-hover' ] = bgHover;
+	}
+	if ( text ) {
+		vars.color = text;
 	}
 
 	return vars;

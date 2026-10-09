@@ -15,6 +15,7 @@ interface ShippingMethodsAttributes {
 	label: string;
 	layout?: string;
 	style?: Record< string, unknown >;
+	textColor?: string;
 }
 
 interface EditProps {
@@ -27,11 +28,11 @@ function colorValue( value: unknown ): string | undefined {
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { label, layout, style } = attributes;
+	const { label, layout, style, textColor } = attributes;
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-shipping-methods',
 		'data-layout': layout || 'default',
-		style: shippingStyleVars( style ),
+		style: shippingStyleVars( style, textColor ),
 	} );
 	const heading = label || __( 'Shipping methods', 'yaycheckout' );
 	const selectedLayout = layoutFor( layout );
