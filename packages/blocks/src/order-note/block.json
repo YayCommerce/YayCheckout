@@ -77,6 +77,7 @@
     }
   },
   "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
   "viewScript": "file:./view.js",
   "render": "file:./render.php"
 }
