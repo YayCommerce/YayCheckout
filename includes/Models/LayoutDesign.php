@@ -21,13 +21,17 @@ final class LayoutDesign {
     public string $custom_css = '';
 
     /**
-     * Design::schema() with one difference: the background is a `fill`, so a layout's page can take a
-     * gradient. The global design's background stays a hex colour.
+     * Design::schema() with its colours widened: each may be unset ('') or a theme preset, so the layout follows
+     * the theme's palette, and the background may also be a gradient. The global design's colours stay hex.
      */
     public static function schema(): array {
         $schema = Design::schema();
 
-        $schema['colours']['background']['type'] = 'fill';
+        foreach ( $schema['colours'] as $key => $rule ) {
+            if ( 'hex_color' === $rule['type'] ) {
+                $schema['colours'][ $key ]['type'] = 'background' === $key ? 'fill' : 'color';
+            }
+        }
 
         return $schema;
     }
@@ -109,6 +113,11 @@ final class LayoutDesign {
         ];
     }
 
+    /** One pattern matching any of $patterns, each keeping its own anchors. */
+    private static function any_of( array $patterns ): string {
+        return '(' . implode( ')|(', $patterns ) . ')';
+    }
+
     private static function token_schema( array $rule ): array {
         switch ( $rule['type'] ) {
             case 'bool':
@@ -133,10 +142,18 @@ final class LayoutDesign {
                     'pattern' => Design::HEX_COLOR_PATTERN,
                 ];
 
+            case 'color':
+                return [
+                    'type'    => 'string',
+                    'pattern' => self::any_of( [ '^$', Design::HEX_COLOR_PATTERN, Design::PRESET_COLOR_PATTERN ] ),
+                ];
+
             case 'fill':
                 return [
                     'type'      => 'string',
-                    'pattern'   => '(' . Design::HEX_COLOR_PATTERN . ')|(' . Design::GRADIENT_PATTERN . ')',
+                    'pattern'   => self::any_of(
+                        [ '^$', Design::HEX_COLOR_PATTERN, Design::PRESET_COLOR_PATTERN, Design::GRADIENT_PATTERN, Design::PRESET_GRADIENT_PATTERN ]
+                    ),
                     'maxLength' => Design::GRADIENT_MAX_LENGTH,
                 ];
         }

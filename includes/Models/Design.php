@@ -23,6 +23,12 @@ class Design {
      */
     public const GRADIENT_PATTERN = '^(repeating-)?(linear|radial|conic)-gradient\\([^"\'\\\\*;{}<>]*\\)$';
 
+    /** A theme colour preset, by the custom property WordPress prints for it, so the token follows the theme's palette. */
+    public const PRESET_COLOR_PATTERN = '^var\\(--wp--preset--color--[a-z0-9-]+\\)$';
+
+    /** A theme gradient preset, the same way. */
+    public const PRESET_GRADIENT_PATTERN = '^var\\(--wp--preset--gradient--[a-z0-9-]+\\)$';
+
     /** Longest gradient a `fill` token accepts; a picked or theme gradient is far shorter. */
     public const GRADIENT_MAX_LENGTH = 1000;
 
@@ -312,9 +318,14 @@ class Design {
         ];
     }
 
-    /** Whether $fill is a gradient GRADIENT_PATTERN accepts, rather than a hex colour. */
+    /** Whether $fill is a gradient, written out or a theme preset, rather than a colour. */
     public static function is_gradient( string $fill ): bool {
-        return strlen( $fill ) <= self::GRADIENT_MAX_LENGTH && 1 === preg_match( '/' . self::GRADIENT_PATTERN . '/D', $fill );
+        return strlen( $fill ) <= self::GRADIENT_MAX_LENGTH
+            && ( self::matches( self::GRADIENT_PATTERN, $fill ) || self::matches( self::PRESET_GRADIENT_PATTERN, $fill ) );
+    }
+
+    private static function matches( string $pattern, string $value ): bool {
+        return 1 === preg_match( '/' . $pattern . '/D', $value );
     }
 
     private static function is_valid( $value, array $rule ): bool {
@@ -329,10 +340,16 @@ class Design {
                 return in_array( $value, $rule['enum'], true );
 
             case 'hex_color':
-                return is_string( $value ) && 1 === preg_match( '/' . self::HEX_COLOR_PATTERN . '/D', $value );
+                return is_string( $value ) && self::matches( self::HEX_COLOR_PATTERN, $value );
 
+            // A layout's colour: unset (''), a hex colour or a theme colour preset.
+            case 'color':
+                return is_string( $value )
+                    && ( '' === $value || self::matches( self::HEX_COLOR_PATTERN, $value ) || self::matches( self::PRESET_COLOR_PATTERN, $value ) );
+
+            // A layout's background: any `color`, or a gradient.
             case 'fill':
-                return is_string( $value ) && ( self::is_valid( $value, [ 'type' => 'hex_color' ] ) || self::is_gradient( $value ) );
+                return self::is_valid( $value, [ 'type' => 'color' ] ) || ( is_string( $value ) && self::is_gradient( $value ) );
         }
 
         return false;

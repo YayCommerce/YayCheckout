@@ -213,10 +213,6 @@ class BlockRegistry {
             'styleId'           => ScriptName::STYLE_CHECKOUT . '-inline-css',
             'tokens'            => ( new DesignRepository() )->get()->tokens,
             'schema'            => LayoutDesign::schema(),
-            // So the sidebar offers only swatches the meta's REST schema accepts.
-            'hexPattern'        => Design::HEX_COLOR_PATTERN,
-            'gradientPattern'   => Design::GRADIENT_PATTERN,
-            'gradientMaxLength' => Design::GRADIENT_MAX_LENGTH,
             'fontFamilies'      => Design::FONT_FAMILIES,
             'customCssMaxBytes' => Design::CUSTOM_CSS_MAX_BYTES,
         ];

@@ -97,13 +97,19 @@ class DesignStyles {
         if ( $tokens['colours']['enabled'] ) {
             $background = $tokens['colours']['background'];
 
-            // A gradient fills only the page: inputs and rows read color-background as a colour, so they keep their fallback.
-            $vars += [
-                'color-primary' => $tokens['colours']['primary'],
-                'color-text'    => $tokens['colours']['text'],
-                Design::is_gradient( $background ) ? 'background-gradient' : 'color-background' => $background,
-                'color-border'  => $tokens['colours']['border'],
-            ];
+            // A gradient fills only the page: inputs and rows read color-background as a colour, so they keep their
+            // fallback. A layout's unset ('') colour prints nothing, so it follows the theme.
+            $vars += array_filter(
+                [
+                    'color-primary' => $tokens['colours']['primary'],
+                    'color-text'    => $tokens['colours']['text'],
+                    Design::is_gradient( $background ) ? 'background-gradient' : 'color-background' => $background,
+                    'color-border'  => $tokens['colours']['border'],
+                ],
+                static function ( $value ) {
+                    return '' !== $value;
+                }
+            );
         }
 
         if ( $typography['enabled'] ) {

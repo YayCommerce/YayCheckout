@@ -1,6 +1,7 @@
 import {
 	__experimentalColorGradientSettingsDropdown as ColorGradientSettingsDropdown,
 	__experimentalUseMultipleOriginColorsAndGradients as useMultipleOriginColorsAndGradients,
+	getColorClassName,
 } from '@wordpress/block-editor';
 import {
 	Flex,
@@ -14,7 +15,7 @@ import {
 } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { PluginSidebar, PluginSidebarMoreMenuItem, store as editorStore } from '@wordpress/editor';
-import { useEffect, useMemo, useRef, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
 import { designCss, isGradient } from '../shared/design-css';
@@ -140,76 +141,93 @@ function seed( design: EditorDesign, section: Section ): SectionTokens {
 	);
 }
 
-type ColourOrigin = { name: string; slug: string; colors?: { color: string }[]; gradients?: { gradient: string }[] };
+type Swatch = { slug: string; color?: string; gradient?: string };
+type ColourOrigin = { name: string; slug: string; colors?: Swatch[]; gradients?: Swatch[] };
+type PresetKind = 'color' | 'gradient';
 
-/** Each palette origin with only the swatches `accepts` keeps; origins left empty are dropped. */
-function keepSwatches< T >(
-	origins: ColourOrigin[] | undefined,
-	key: 'colors' | 'gradients',
-	accepts: ( item: T ) => boolean
-): ColourOrigin[] {
+/**
+ * The custom property WordPress prints for a theme preset. Its name is the slug kebab-cased the way
+ * getColorClassName() does, which is how core names `--wp--preset--*` properties.
+ */
+function presetVar( kind: PresetKind, slug: string ): string {
+	const kebab = ( getColorClassName( 'x', slug ) ?? '' ).slice( 'has-'.length, -'-x'.length );
+
+	return `var(--wp--preset--${ kind }--${ kebab })`;
+}
+
+/** The theme preset a stored `var(--wp--preset--…)` names, with its value for the indicator; undefined otherwise. */
+function presetOf( value: string, kind: PresetKind, origins: ColourOrigin[] | undefined ): Swatch | undefined {
+	const key = 'color' === kind ? 'colors' : 'gradients';
+
 	return ( origins ?? [] )
-		.map( ( origin ) => ( { ...origin, [ key ]: ( ( origin[ key ] ?? [] ) as T[] ).filter( accepts ) } ) )
-		.filter( ( origin ) => ( origin[ key ] as T[] ).length > 0 );
+		.flatMap( ( origin ) => origin[ key ] ?? [] )
+		.find( ( swatch ) => presetVar( kind, swatch.slug ) === value );
 }
 
 function isColourRule( rule: DesignRule ): boolean {
-	return 'hex_color' === rule.type || 'fill' === rule.type;
+	return 'hex_color' === rule.type || 'color' === rule.type || 'fill' === rule.type;
 }
 
 /**
  * A section's colour tokens as the block editor's colour items, in a ToolsPanel styled like a block's Color panel.
- * Palettes keep only swatches the meta's schema accepts, so a pick never fails Save; a fill also gets gradients.
+ * A theme swatch is stored as its preset's custom property, so the layout follows later palette changes; a
+ * custom pick is stored as written. Clicking the selected swatch again unsets the colour (''), which prints
+ * nothing, so the theme's colour shows. A fill (the background) also takes gradients.
  */
 function ColourSettings( {
-	design,
 	rules,
 	values,
 	onChange,
 }: {
-	design: EditorDesign;
 	rules: Record< string, DesignRule >;
 	values: SectionTokens;
 	onChange: ( next: SectionTokens ) => void;
 } ) {
 	const palettes = useMultipleOriginColorsAndGradients();
-	// Stable between edits, so the open picker's palette doesn't re-render on every change.
-	const colors = useMemo( () => {
-		const hex = new RegExp( design.hexPattern );
+	// The control calls back twice for one pick (the new value, then a clear of the other kind), so each call
+	// must see the value the one before it left, not the value this render started with.
+	const latest = useRef( values );
+	latest.current = values;
 
-		return keepSwatches< { color: string } >( palettes.colors, 'colors', ( { color } ) => hex.test( color ) );
-	}, [ palettes.colors, design.hexPattern ] );
-	const gradients = useMemo( () => {
-		const gradient = new RegExp( design.gradientPattern );
+	const change = ( token: string, kind: PresetKind, next: string | undefined, slug: string | undefined ) => {
+		const current = String( latest.current[ token ] ?? '' );
+		let value: string;
 
-		return keepSwatches< { gradient: string } >(
-			palettes.gradients,
-			'gradients',
-			( item ) => item.gradient.length <= design.gradientMaxLength && gradient.test( item.gradient )
-		);
-	}, [ palettes.gradients, design.gradientPattern, design.gradientMaxLength ] );
-
-	const tokens = Object.entries( rules ).filter( ( [ , rule ] ) => isColourRule( rule ) );
-	// Picking a colour on a control that also takes gradients calls onGradientChange() with nothing, and the
-	// reverse, to clear the other kind; a Custom section always holds every token, so an empty call is ignored.
-	const set = ( token: string, next: string | undefined ) => {
 		if ( next ) {
-			onChange( { ...values, [ token ]: next } );
+			value = slug ? presetVar( kind, slug ) : next;
+		} else {
+			// No value: either the selected swatch was clicked again, or the control is clearing the other kind
+			// after a pick. Only the first unsets, and only when the token holds this kind.
+			const holdsKind = 'gradient' === kind ? isGradient( current ) : '' !== current && ! isGradient( current );
+			if ( ! holdsKind ) {
+				return;
+			}
+			value = '';
 		}
+
+		latest.current = { ...latest.current, [ token ]: value };
+		onChange( latest.current );
 	};
 
+	const tokens = Object.entries( rules ).filter( ( [ , rule ] ) => isColourRule( rule ) );
+
 	const settings = tokens.map( ( [ token, rule ] ) => {
-		const value = String( values[ token ] );
+		const value = String( values[ token ] ?? '' );
 		const isFill = 'fill' === rule.type;
+		const gradient = isFill && isGradient( value );
+		const colorPreset = gradient ? undefined : presetOf( value, 'color', palettes.colors );
+		const gradientPreset = gradient ? presetOf( value, 'gradient', palettes.gradients ) : undefined;
 
 		return {
 			label: TOKEN_LABELS[ token ] ?? token,
-			colorValue: isFill && isGradient( value ) ? undefined : value,
-			onColorChange: ( next?: string ) => set( token, next ),
+			colorValue: gradient || '' === value ? undefined : colorPreset?.color ?? value,
+			colorSlug: colorPreset?.slug,
+			onColorChange: ( next?: string, slug?: string ) => change( token, 'color', next, slug ),
 			...( isFill
 				? {
-						gradientValue: isGradient( value ) ? value : undefined,
-						onGradientChange: ( next?: string ) => set( token, next ),
+						gradientValue: gradient ? gradientPreset?.gradient ?? value : undefined,
+						gradientSlug: gradientPreset?.slug,
+						onGradientChange: ( next?: string, slug?: string ) => change( token, 'gradient', next, slug ),
 				  }
 				: {} ),
 			clearable: false,
@@ -237,8 +255,8 @@ function ColourSettings( {
 					__experimentalIsRenderedInSidebar
 					panelId={ SIDEBAR }
 					settings={ settings }
-					colors={ colors }
-					gradients={ gradients }
+					colors={ palettes.colors }
+					gradients={ palettes.gradients }
 					disableCustomColors={ palettes.disableCustomColors }
 					disableCustomGradients={ palettes.disableCustomGradients }
 					enableAlpha={ false }
@@ -339,7 +357,6 @@ function SectionPanel( {
 				</ToggleGroupControl>
 				{ 'custom' === mode && values && 'colours' === section && (
 					<ColourSettings
-						design={ design }
 						rules={ design.schema[ section ] }
 						values={ values }
 						onChange={ onChange }

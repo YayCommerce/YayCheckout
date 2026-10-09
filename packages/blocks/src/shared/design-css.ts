@@ -15,9 +15,12 @@ const PAGE_PROPERTIES: [ string, string ][] = [
 	[ 'font-size', 'font-size-base' ],
 ];
 
-/** Mirrors Design::is_gradient() in PHP for a fill that already passed it or the hex rule: a gradient is anything but #rrggbb. */
+/**
+ * Mirrors Design::is_gradient() in PHP for a value that already passed the `fill` rule: a gradient is written
+ * out (`linear-gradient(…)` and the like) or a theme gradient preset.
+ */
 export function isGradient( fill: unknown ): boolean {
-	return 'string' === typeof fill && ! fill.startsWith( '#' );
+	return 'string' === typeof fill && ( fill.includes( '-gradient(' ) || fill.startsWith( 'var(--wp--preset--gradient--' ) );
 }
 
 /** Mirrors DesignStyles::INPUT_HEIGHTS in PHP. */
@@ -29,12 +32,15 @@ function vars( tokens: DesignTokens, fontFamilies: Record< string, string > ): [
 	const out: [ string, string ][] = [];
 
 	if ( colours.enabled ) {
-		out.push(
+		const pairs: [ string, string ][] = [
 			[ 'color-primary', String( colours.primary ) ],
 			[ 'color-text', String( colours.text ) ],
 			[ isGradient( colours.background ) ? 'background-gradient' : 'color-background', String( colours.background ) ],
-			[ 'color-border', String( colours.border ) ]
-		);
+			[ 'color-border', String( colours.border ) ],
+		];
+
+		// A layout's unset colour prints nothing, as in PHP.
+		out.push( ...pairs.filter( ( [ , value ] ) => '' !== value ) );
 	}
 
 	if ( typography.enabled ) {

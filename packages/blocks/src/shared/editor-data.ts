@@ -4,7 +4,9 @@ export type DesignRule =
 	| { type: 'int'; default: number; min: number; max: number }
 	| { type: 'enum'; default: string; enum: string[] }
 	| { type: 'hex_color'; default: string }
-	/** A hex colour or a gradient; only a layout's background is one. */
+	/** A layout's colour: unset (''), a hex colour or `var(--wp--preset--color--…)`. */
+	| { type: 'color'; default: string }
+	/** A layout's background: any `color`, or a gradient, written out or `var(--wp--preset--gradient--…)`. */
 	| { type: 'fill'; default: string };
 
 /** Section => token => value, as Design stores them (snake_case keys). */
@@ -17,10 +19,6 @@ export type EditorDesign = {
 	styleId: string;
 	tokens: DesignTokens;
 	schema: Record< string, Record< string, DesignRule > >;
-	/** Design::HEX_COLOR_PATTERN and Design::GRADIENT_PATTERN, as RegExp sources. */
-	hexPattern: string;
-	gradientPattern: string;
-	gradientMaxLength: number;
 	/** Slug => CSS font-family name; '' is the theme's font. */
 	fontFamilies: Record< string, string >;
 	customCssMaxBytes: number;
