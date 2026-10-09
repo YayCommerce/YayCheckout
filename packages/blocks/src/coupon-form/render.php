@@ -49,13 +49,13 @@ foreach ( $yaycheckout_button_properties as $yaycheckout_attr => $yaycheckout_pr
 
 $yaycheckout_button_style = safecss_filter_attr( implode( ';', $yaycheckout_button_styles ) );
 
-$yaycheckout_collapsed = \YayCheckout\Services\RevealLink::collapsed( $attributes, 'yaycheckout-coupon-code', false );
+$yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, 'yaycheckout-coupon-code', false );
 
 ?>
 <div <?php echo \YayCheckout\Renderer\HideWhenEmpty::wrapper( [ 'class' => 'yaycheckout-coupon-form' ], $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php
-    if ( $yaycheckout_collapsed ) {
-        echo \YayCheckout\Services\RevealLink::open( 'yaycheckout-coupon-code', \YayCheckout\Services\RevealLink::text( $attributes, 'yaycheckout-coupon-code', __( 'Coupon code', 'yaycheckout' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
+    if ( \YayCheckout\Services\Disclosure::NONE !== $yaycheckout_disclosure ) {
+        echo \YayCheckout\Services\Disclosure::open( 'yaycheckout-coupon-code', \YayCheckout\Services\Disclosure::text( $attributes, 'yaycheckout-coupon-code', __( 'Coupon code', 'yaycheckout' ), $yaycheckout_disclosure ), $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
     }
     ?>
     <div class="yaycheckout-coupon-form__row">
@@ -68,5 +68,5 @@ $yaycheckout_collapsed = \YayCheckout\Services\RevealLink::collapsed( $attribute
         <button type="button" class="<?php echo esc_attr( $yaycheckout_button_class ); ?> yaycheckout-coupon-form__apply"<?php echo '' !== $yaycheckout_button_style ? ' style="' . esc_attr( $yaycheckout_button_style ) . '"' : ''; ?>><?php echo esc_html( $yaycheckout_button_text ); ?></button>
     </div>
     <div class="yaycheckout-coupon-form__notices" aria-live="polite" data-error-text="<?php esc_attr_e( 'The coupon could not be applied. Please try again.', 'yaycheckout' ); ?>"></div>
-    <?php echo $yaycheckout_collapsed ? \YayCheckout\Services\RevealLink::close() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
+    <?php echo \YayCheckout\Services\Disclosure::NONE !== $yaycheckout_disclosure ? \YayCheckout\Services\Disclosure::close() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
 </div>

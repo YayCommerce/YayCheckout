@@ -37,7 +37,7 @@ function row(
 /**
  * What a new Billing or Shipping section holds, whether it comes with a new Checkout or on its own.
  * templates/default-layout.php seeds new layouts with the same structure; change both together.
- * Keys come from shared/address-fields.ts; the apartment line starts behind its RevealLink link.
+ * Keys come from shared/address-fields.ts; the apartment line starts behind its Disclosure link.
  */
 export function addressTemplate( prefix: 'billing' | 'shipping' ): TemplateArray {
 	return [

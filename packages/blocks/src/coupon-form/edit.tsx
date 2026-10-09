@@ -2,10 +2,10 @@ import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, PanelColorSettings, RichText, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { RevealLinkControls, RevealLinkPreview, defaultRevealText, isCollapsed } from '../shared/reveal-link';
+import { DisclosureControls, DisclosurePreview, defaultDisclosureText, disclosureMode, type DisclosureMode } from '../shared/disclosure';
 import './editor.css';
 
-/** The key and label render.php hands RevealLink for the coupon field. */
+/** The key and label render.php hands Disclosure for the coupon field. */
 const COUPON_KEY = 'yaycheckout-coupon-code';
 const COUPON_LABEL = __( 'Coupon code', 'yaycheckout' );
 
@@ -14,8 +14,8 @@ interface CouponFormAttributes {
 	buttonText: string;
 	buttonBackgroundColor: string;
 	buttonTextColor: string;
-	collapseBehindLink: boolean;
-	revealText: string;
+	disclosure: DisclosureMode;
+	disclosureText: string;
 }
 
 interface EditProps {
@@ -30,11 +30,11 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		buttonText,
 		buttonBackgroundColor = '',
 		buttonTextColor = '',
-		collapseBehindLink = false,
-		revealText = '',
+		disclosure = 'none',
+		disclosureText = '',
 	} = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-coupon-form' } );
-	const collapsed = isCollapsed( COUPON_KEY, false, collapseBehindLink );
+	const mode = disclosureMode( COUPON_KEY, false, disclosure );
 	const buttonStyle = {
 		...( buttonBackgroundColor ? { backgroundColor: buttonBackgroundColor } : {} ),
 		...( buttonTextColor ? { color: buttonTextColor } : {} ),
@@ -54,12 +54,12 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						value={ decodeEntities( buttonText ) }
 						onChange={ ( value ) => setAttributes( { buttonText: value } ) }
 					/>
-					<RevealLinkControls
+					<DisclosureControls
 						fieldKey={ COUPON_KEY }
 						label={ COUPON_LABEL }
 						required={ false }
-						collapseBehindLink={ collapseBehindLink }
-						revealText={ revealText }
+						disclosure={ disclosure }
+						disclosureText={ disclosureText }
 						setAttributes={ setAttributes }
 					/>
 				</PanelBody>
@@ -81,7 +81,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				/>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<RevealLinkPreview collapsed={ collapsed } text={ revealText || defaultRevealText( COUPON_KEY, COUPON_LABEL ) }>
+				<DisclosurePreview mode={ mode } text={ disclosureText || defaultDisclosureText( COUPON_KEY, COUPON_LABEL, mode ) }>
 					<div className="yaycheckout-coupon-form__row">
 						<input
 							type="text"
@@ -101,7 +101,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							withoutInteractiveFormatting
 						/>
 					</div>
-				</RevealLinkPreview>
+				</DisclosurePreview>
 			</div>
 		</>
 	);

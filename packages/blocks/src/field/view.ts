@@ -1,3 +1,3 @@
-import { initRevealLinks } from '../shared/reveal-link-view';
+import { initDisclosures } from '../shared/disclosure-view';
 
-initRevealLinks();
+initDisclosures();

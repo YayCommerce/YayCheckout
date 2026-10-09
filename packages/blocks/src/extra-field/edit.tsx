@@ -7,7 +7,7 @@ import { __ } from '@wordpress/i18n';
 import { EXTRA_FIELD_KEY_CONTROL_CLASS, EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
 import { FieldPreview, type FieldOption } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
-import { RevealLinkControls, RevealLinkPreview, defaultRevealText, isCollapsed } from '../shared/reveal-link';
+import { DisclosureControls, DisclosurePreview, defaultDisclosureText, disclosureMode, type DisclosureMode } from '../shared/disclosure';
 import './editor.css';
 
 const TYPE_OPTIONS = [
@@ -30,8 +30,8 @@ interface ExtraFieldAttributes {
 	optionalText: string;
 	type: string;
 	options: FieldOption[];
-	collapseBehindLink?: boolean;
-	revealText: string;
+	disclosure: DisclosureMode;
+	disclosureText: string;
 	rememberValue: boolean;
 }
 
@@ -60,8 +60,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		optionalText = '',
 		type,
 		options,
-		collapseBehindLink,
-		revealText = '',
+		disclosure = 'none',
+		disclosureText = '',
 		rememberValue = false,
 	} = attributes;
 	const { __unstableMarkNextChangeAsNotPersistent: markNotPersistent } = useDispatch( blockEditorStore );
@@ -77,9 +77,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 
 	const blockProps = useBlockProps( { className: 'yaycheckout-extra-field' } );
 	const labelPlaceholder = fieldKey || __( 'Extra field', 'yaycheckout' );
-	const collapsed = isCollapsed( fieldKey.trim(), required, collapseBehindLink );
-	// render.php names an unlabelled extra field "Extra field", so its link does too.
-	const revealLabel = label || __( 'Extra field', 'yaycheckout' );
+	const mode = disclosureMode( fieldKey.trim(), required, disclosure );
+	// render.php names an unlabelled extra field "Extra field", so its link or header does too.
+	const disclosureLabel = label || __( 'Extra field', 'yaycheckout' );
 	const showOptions = CHOICE_TYPES.includes( type );
 	const trimmedKey = fieldKey.trim();
 	const isDuplicate = useSelect(
@@ -146,12 +146,12 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
 						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
 					/>
-					<RevealLinkControls
+					<DisclosureControls
 						fieldKey={ fieldKey.trim() }
-						label={ revealLabel }
+						label={ disclosureLabel }
 						required={ required }
-						collapseBehindLink={ collapseBehindLink }
-						revealText={ revealText }
+						disclosure={ disclosure }
+						disclosureText={ disclosureText }
 						setAttributes={ setAttributes }
 					/>
 					<ToggleControl
@@ -207,7 +207,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<RevealLinkPreview collapsed={ collapsed } text={ revealText || defaultRevealText( fieldKey.trim(), revealLabel ) }>
+				<DisclosurePreview mode={ mode } text={ disclosureText || defaultDisclosureText( fieldKey.trim(), disclosureLabel, mode ) }>
 					<FieldPreview
 						label={ label }
 						onLabelChange={ ( value ) => setAttributes( { label: value } ) }
@@ -221,7 +221,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						options={ options }
 						inheritLabelFont
 					/>
-				</RevealLinkPreview>
+				</DisclosurePreview>
 			</div>
 		</>
 	);

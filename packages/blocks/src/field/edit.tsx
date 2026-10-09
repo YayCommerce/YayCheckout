@@ -7,7 +7,7 @@ import { __ } from '@wordpress/i18n';
 import { billingAddressFields, shippingAddressFields, type AddressFieldDef } from '../shared/address-fields';
 import { FieldPreview } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
-import { RevealLinkControls, RevealLinkPreview, defaultRevealText, isCollapsed } from '../shared/reveal-link';
+import { DisclosureControls, DisclosurePreview, defaultDisclosureText, disclosureMode, type DisclosureMode } from '../shared/disclosure';
 
 // A checkbox and a hidden input show no placeholder.
 const NO_PLACEHOLDER_TYPES = [ 'checkbox', 'hidden' ];
@@ -60,8 +60,8 @@ interface FieldAttributes {
 	autocomplete: string;
 	validate: string[];
 	width: string;
-	collapseBehindLink?: boolean;
-	revealText: string;
+	disclosure?: DisclosureMode;
+	disclosureText: string;
 }
 
 interface EditProps {
@@ -85,8 +85,8 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		required,
 		requiredMark = '',
 		optionalText = '',
-		collapseBehindLink,
-		revealText = '',
+		disclosure,
+		disclosureText = '',
 	} = attributes;
 	const { addressSection, usedKeys } = useSelect(
 		( select ) => {
@@ -142,7 +142,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	const labelPlaceholder = fieldKey || __( 'Field', 'yaycheckout' );
 	// A hidden input has nothing for the shopper to open.
 	const canCollapse = type !== 'hidden';
-	const collapsed = canCollapse && isCollapsed( fieldKey, isEmail || required, collapseBehindLink );
+	const mode = canCollapse ? disclosureMode( fieldKey, isEmail || required, disclosure ) : 'none';
 
 	return (
 		<>
@@ -196,21 +196,21 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
 					/>
 					{ canCollapse && (
-						<RevealLinkControls
+						<DisclosureControls
 							fieldKey={ fieldKey }
 							label={ label || labelPlaceholder }
 							required={ isEmail || required }
-							collapseBehindLink={ collapseBehindLink }
-							revealText={ revealText }
+							disclosure={ disclosure }
+							disclosureText={ disclosureText }
 							setAttributes={ setAttributes }
 						/>
 					) }
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<RevealLinkPreview
-					collapsed={ collapsed }
-					text={ revealText || defaultRevealText( fieldKey, label || labelPlaceholder ) }
+				<DisclosurePreview
+					mode={ mode }
+					text={ disclosureText || defaultDisclosureText( fieldKey, label || labelPlaceholder, mode ) }
 				>
 					<FieldPreview
 						label={ label }
@@ -224,7 +224,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						description={ description }
 						inheritLabelFont
 					/>
-				</RevealLinkPreview>
+				</DisclosurePreview>
 			</div>
 		</>
 	);
