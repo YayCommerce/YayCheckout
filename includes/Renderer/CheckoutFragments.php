@@ -350,20 +350,31 @@ class CheckoutFragments {
         echo '<p class="woocommerce-shipping-contents"><small>' . esc_html( implode( ', ', $product_names ) ) . '</small></p>';
     }
 
-    /** A review-order shipping hook's table rows, wrapped only when a plugin printed something. */
+    /**
+     * Output from a review-order shipping hook. Plugins usually print <tr> rows
+     * (needs a table); anything else (div, notice) goes in a plain wrapper so it
+     * is not forced into <tbody>.
+     */
     private static function print_shipping_extension_rows( string $hook ): void {
         ob_start();
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Caller passes Woo's review-order shipping hooks.
         do_action( $hook );
-        $rows = (string) ob_get_clean();
+        $html = (string) ob_get_clean();
 
-        if ( '' === trim( $rows ) ) {
+        if ( '' === trim( $html ) ) {
             return;
         }
 
-        echo '<table class="shop_table yaycheckout-shipping-methods__extensions"><tbody>';
-        echo $rows; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML plugins print on Woo's review-order shipping hooks, which are table rows.
-        echo '</tbody></table>';
+        if ( 1 === preg_match( '/^\s*<tr[\s>]/i', $html ) ) {
+            echo '<table class="shop_table yaycheckout-shipping-methods__extensions"><tbody>';
+            echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML plugins print on Woo's review-order shipping hooks.
+            echo '</tbody></table>';
+            return;
+        }
+
+        echo '<div class="yaycheckout-shipping-methods__extensions">';
+        echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML plugins print on Woo's review-order shipping hooks.
+        echo '</div>';
     }
 
     /** Gateway radios only; Place order is a separate block. */
