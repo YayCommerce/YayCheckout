@@ -3,8 +3,8 @@
  * after each update_order_review and each country change. PHP owns what "empty" means: HideWhenEmpty marks wrappers and
  * CheckoutFragments marks the fragments it swaps; for a Field, WooCommerce's address-i18n.js
  * hides the row for the country. This script only reads the markers (HideWhenEmpty::BLOCK_ID_ATTR,
- * EMPTY_ATTR, LIVE_ATTR, LOCALE_ATTR, CONTAINER_ATTR and HIDDEN_CLASS). Field Value marks itself as the
- * shopper types and fires REFRESH_EVENT.
+ * EMPTY_ATTR, LIVE_ATTR, LOCALE_ATTR, CONTAINER_ATTR, HIDDEN_CLASS and REFRESH_EVENT). Field Value marks
+ * itself as the shopper types and fires REFRESH_EVENT.
  */
 jQuery(function ($) {
     var BLOCK_ID_ATTR = 'data-yaycheckout-block-id';

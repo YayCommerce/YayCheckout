@@ -5,38 +5,45 @@
  * WooCommerce's address-i18n.js relabels fields for the country, so the label is read from the form too.
  */
 
+import { controlText, labelText } from '../shared/form-text';
 import { jquery, type Control } from '../shared/jquery';
 
 const VALUE = '.yaycheckout-field-value__value[data-field-keys]';
 
-/** Mirrors HideWhenEmpty::EMPTY_ATTR and HideWhenEmpty::REFRESH_EVENT in PHP. */
+/** Mirrors HideWhenEmpty::BLOCK_ID_ATTR, HideWhenEmpty::EMPTY_ATTR and HideWhenEmpty::REFRESH_EVENT in PHP. */
+const BLOCK_ID_ATTR = 'data-yaycheckout-block-id';
 const EMPTY_ATTR = 'data-yaycheckout-empty';
 const REFRESH_EVENT = 'yaycheckout_hide_when_empty_refresh';
 
-function control( key: string ): Control | null {
-	return document.querySelector( 'form.checkout' )?.querySelector< Control >( `[name="${ key }"]` ) ?? null;
+interface Source {
+	keys: string[];
+	serverLabels: string[];
+	separator: string;
 }
 
-function text( field: Control | null ): string {
-	// WooCommerce hides the state field for a country without states; a leftover value there means nothing.
-	if ( ! field || ( field instanceof HTMLInputElement && field.type === 'hidden' ) ) {
+/** What render.php printed on each value element, parsed once rather than on every keystroke. */
+const sources = new WeakMap< HTMLElement, Source >();
+
+function text( form: Element | null, key: string ): string {
+	const field = form?.querySelector< Control >( `[name="${ key }"]` );
+
+	const row = form?.querySelector< HTMLElement >( `#${ key }_field` );
+
+	// WooCommerce hides the state field for a country without states, and address-i18n.js hides the row of a
+	// field the country's locale hides; a leftover value there means nothing. Mirrors syncLocaleMarkers() in
+	// checkout-hide-when-empty.js, which follows CheckoutFieldDefaults::hidden_for_country().
+	if ( ! field || ( field instanceof HTMLInputElement && field.type === 'hidden' ) || ( row && getComputedStyle( row ).display === 'none' ) ) {
 		return '';
 	}
 
-	if ( field instanceof HTMLSelectElement ) {
-		return field.value !== '' ? ( field.selectedOptions[ 0 ]?.text ?? '' ).trim() : '';
-	}
-
-	return field.value.trim();
+	return controlText( field );
 }
 
 /** The field's label as the form shows it now, without the required or optional mark. */
 function formLabel( key: string ): string {
-	const label = document.querySelector( `form.checkout label[for="${ key }"]` )?.cloneNode( true ) as HTMLElement | undefined;
+	const label = document.querySelector( `form.checkout label[for="${ key }"]` );
 
-	label?.querySelectorAll( '.required, .optional' ).forEach( ( mark ) => mark.remove() );
-
-	return label?.textContent?.replace( /\u00a0/g, ' ' ).trim() ?? '';
+	return label ? labelText( label ) : '';
 }
 
 /** A JSON array of strings from a data attribute render.php printed; anything else reads as empty. */
@@ -50,27 +57,48 @@ function strings( json: string | undefined ): string[] {
 	}
 }
 
+function source( element: HTMLElement ): Source {
+	let parsed = sources.get( element );
+
+	if ( ! parsed ) {
+		parsed = {
+			keys: strings( element.dataset.fieldKeys ),
+			serverLabels: strings( element.dataset.labels ),
+			separator: element.dataset.separator ?? ', ',
+		};
+		sources.set( element, parsed );
+	}
+
+	return parsed;
+}
+
 function sync(): void {
+	const form = document.querySelector( 'form.checkout' );
 	let changed = false;
 
 	document.querySelectorAll< HTMLElement >( VALUE ).forEach( ( element ) => {
-		const keys = strings( element.dataset.fieldKeys );
-		const serverLabels = strings( element.dataset.labels );
-		const separator = element.dataset.separator ?? ', ';
+		const { keys, serverLabels, separator } = source( element );
 		// Empty values are skipped, as render.php does, so a half-filled block shows no dangling separator.
 		const value = keys
-			.map( ( key ) => text( control( key ) ) )
+			.map( ( key ) => text( form, key ) )
 			.filter( ( part ) => part !== '' )
 			.join( separator );
-		const label = keys.map( ( key, index ) => formLabel( key ) || serverLabels[ index ] || key ).join( separator );
 		// render.php sets data-placeholder only for a typed placeholder; otherwise the labels stand in.
-		element.textContent = value !== '' ? value : element.dataset.placeholder || label;
+		const shown =
+			value ||
+			element.dataset.placeholder ||
+			keys.map( ( key, index ) => formLabel( key ) || serverLabels[ index ] || key ).join( separator );
+
+		if ( element.textContent !== shown ) {
+			element.textContent = shown;
+		}
+
 		element.classList.toggle( 'is-empty', value === '' );
 
 		// The wrapper's Hide when empty marker, which HideWhenEmpty::wrapper() printed for the first paint.
 		const wrapper = element.parentElement;
 
-		if ( wrapper?.hasAttribute( 'data-yaycheckout-block-id' ) && wrapper.hasAttribute( EMPTY_ATTR ) !== ( value === '' ) ) {
+		if ( wrapper?.hasAttribute( BLOCK_ID_ATTR ) && wrapper.hasAttribute( EMPTY_ATTR ) !== ( value === '' ) ) {
 			wrapper.toggleAttribute( EMPTY_ATTR, value === '' );
 			changed = true;
 		}

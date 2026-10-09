@@ -6,6 +6,7 @@
  */
 
 import { checkoutFor } from '../shared/checkout-root';
+import { controlText } from '../shared/form-text';
 
 const STEP = '.yaycheckout-step';
 const CURRENT = 'current';
@@ -318,7 +319,7 @@ function summaryText( controls: Control[] ): string {
 			continue;
 		}
 
-		const value = textOf( control );
+		const value = controlText( control );
 
 		if ( value !== '' ) {
 			values.push( value );
@@ -326,44 +327,6 @@ function summaryText( controls: Control[] ): string {
 	}
 
 	return values.join( ', ' );
-}
-
-function textOf( control: Control ): string {
-	if ( control instanceof HTMLSelectElement ) {
-		return control.value.trim() === '' ? '' : control.selectedOptions[ 0 ]?.text.trim() ?? '';
-	}
-
-	if ( control instanceof HTMLInputElement && ( control.type === 'radio' || control.type === 'checkbox' ) ) {
-		return labelFor( control );
-	}
-
-	return control.value.trim();
-}
-
-function labelFor( control: HTMLInputElement ): string {
-	const label = optionLabel( control );
-
-	if ( ! label ) {
-		return control.value.trim();
-	}
-
-	// Woo puts the required * and "(optional)" inside the option label.
-	const copy = label.cloneNode( true ) as HTMLElement;
-	copy.querySelectorAll( '.required, .optional, abbr, input' ).forEach( ( mark ) => mark.remove() );
-
-	return ( copy.textContent ?? '' ).replace( /\s+/g, ' ' ).trim();
-}
-
-function optionLabel( control: HTMLInputElement ): Element | null {
-	const wrapping = control.closest( 'label' );
-
-	if ( wrapping ) {
-		return wrapping;
-	}
-
-	const labels = [ ...( control.labels ?? [] ) ];
-
-	return labels.find( ( label ) => label.classList.contains( 'radio' ) || label.classList.contains( 'checkbox' ) ) ?? labels[ 0 ] ?? null;
 }
 
 if ( document.readyState === 'loading' ) {

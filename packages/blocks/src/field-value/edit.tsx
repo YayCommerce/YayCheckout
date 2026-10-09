@@ -1,9 +1,9 @@
-import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, RichText, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { FormTokenField, PanelBody, TextControl } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
-import { useEffect } from '@wordpress/element';
+import { useEffect, useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { plainText } from '../shared/plain-text';
 import './editor.css';
 
 interface FieldValueAttributes {
@@ -29,6 +29,7 @@ const UNSHOWABLE_TYPES = [ 'checkbox', 'password', 'hidden' ];
  * The layout's address fields with the label each prints. Mirrors LayoutMarkupReader::fields():
  * Email address is billing_email, each Field block with a Key is its own, a later block with the
  * same Key wins. An empty label falls back as email/render.php and field/render.php print it.
+ * Only billing_ and shipping_ keys, as render.php shows.
  */
 function layoutFields(
 	clientIds: string[],
@@ -40,15 +41,14 @@ function layoutFields(
 	for ( const clientId of clientIds ) {
 		const name = getBlockName( clientId );
 		const attributes = getBlockAttributes( clientId ) ?? {};
-		// Tags stripped before entities are decoded, as LayoutMarkupReader::plain_text() does.
-		const label = decodeEntities( String( attributes.label ?? '' ).replace( /<[^>]*>/g, '' ) ).trim();
+		const label = plainText( attributes.label );
 
 		if ( name === 'yaycheckout/email' ) {
 			fields.set( 'billing_email', label || __( 'Email address', 'yaycheckout' ) );
 		} else if ( name === 'yaycheckout/field' ) {
 			const key = String( attributes.fieldKey ?? '' ).trim();
 
-			if ( key !== '' && ! UNSHOWABLE_TYPES.includes( String( attributes.type ?? 'text' ) ) ) {
+			if ( /^(billing|shipping)_/.test( key ) && ! UNSHOWABLE_TYPES.includes( String( attributes.type ?? 'text' ) ) ) {
 				fields.set( key, label || key );
 			}
 		}
@@ -68,22 +68,23 @@ function tokenNames( fields: LayoutField[] ): Map< string, string > {
 		return { key: field.key, name: `${ field.label } (${ section })` };
 	} );
 
-	return new Map(
-		named.map( ( { key, name } ) => [
-			key,
-			named.filter( ( other ) => other.name === name ).length > 1 ? `${ name } [${ key }]` : name,
-		] )
-	);
+	const counts = new Map< string, number >();
+
+	named.forEach( ( { name } ) => counts.set( name, ( counts.get( name ) ?? 0 ) + 1 ) );
+
+	return new Map( named.map( ( { key, name } ) => [ key, ( counts.get( name ) ?? 0 ) > 1 ? `${ name } [${ key }]` : name ] ) );
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { fieldKeys, separator, placeholder } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-field-value' } );
-	const fields = useSelect( ( select ) => {
+	// A string, so the block re-renders only when the layout's fields change, not on every store change.
+	const fieldsJson = useSelect( ( select ) => {
 		const { getClientIdsWithDescendants, getBlockName, getBlockAttributes } = select( blockEditorStore );
 
-		return layoutFields( getClientIdsWithDescendants(), getBlockName, getBlockAttributes );
+		return JSON.stringify( layoutFields( getClientIdsWithDescendants(), getBlockName, getBlockAttributes ) );
 	}, [] );
+	const fields = useMemo( (): LayoutField[] => JSON.parse( fieldsJson ), [ fieldsJson ] );
 	const picked = fieldKeys
 		.map( ( key ) => fields.find( ( candidate ) => candidate.key === key ) )
 		.filter( ( field ): field is LayoutField => field !== undefined );
@@ -100,8 +101,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		}
 	}, [ fieldKeys, picked.length ] );
 
-	const names = tokenNames( fields );
-	const keyOf = new Map( [ ...names ].map( ( [ key, name ] ) => [ name, key ] ) );
+	const names = useMemo( () => tokenNames( fields ), [ fields ] );
+	const keyOf = useMemo( () => new Map( [ ...names ].map( ( [ key, name ] ) => [ name, key ] ) ), [ names ] );
 	const labels = picked.map( ( field ) => field.label ).join( separator );
 
 	return (
@@ -145,19 +146,17 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
+				{ /* The muted text the shopper sees until they fill a field; empty falls back to the fields' labels. */ }
 				{ picked.length > 0 ? (
-					<>
-						{ /* The muted text the shopper sees until they fill a field; empty falls back to the fields' labels. */ }
-						<RichText
-							tagName="span"
-							className="yaycheckout-field-value__value is-empty"
-							value={ placeholder }
-							onChange={ ( value: string ) => setAttributes( { placeholder: value } ) }
-							placeholder={ labels }
-							allowedFormats={ [] }
-							withoutInteractiveFormatting
-						/>
-					</>
+					<RichText
+						tagName="span"
+						className="yaycheckout-field-value__value is-empty"
+						value={ placeholder }
+						onChange={ ( value: string ) => setAttributes( { placeholder: value } ) }
+						placeholder={ labels }
+						allowedFormats={ [] }
+						withoutInteractiveFormatting
+					/>
 				) : (
 					<span className="yaycheckout-field-value__value is-empty">
 						{ __( 'Select a field in the block settings. Nothing shows on the storefront until then.', 'yaycheckout' ) }

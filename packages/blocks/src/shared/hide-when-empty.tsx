@@ -8,6 +8,7 @@ import { useEffect } from '@wordpress/element';
 import { addFilter } from '@wordpress/hooks';
 import { __, sprintf } from '@wordpress/i18n';
 import { editorData } from './editor-data';
+import { plainText } from './plain-text';
 
 /** Mirrors HideWhenEmpty::ATTRIBUTE in PHP. */
 const ATTRIBUTE = 'yaycheckoutHideWhenEmpty';
@@ -97,7 +98,7 @@ function HideWhenEmptyPanel( { clientId, attributes, setAttributes }: PanelProps
 					const attrs = getBlockAttributes( id ) ?? {};
 					const title = getBlockType( name )?.title ?? name;
 					// Which Slot or Field it is: a container can hold several, and billing and shipping share labels.
-					const fieldLabel = String( attrs.label ?? '' ).replace( /<[^>]*>/g, '' );
+					const fieldLabel = plainText( attrs.label );
 					let detail = String( attrs.slotName ?? '' );
 
 					if ( attrs.fieldKey ) {
