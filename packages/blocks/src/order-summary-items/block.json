@@ -77,6 +77,7 @@
   },
   "editorScript": "file:./index.js",
   "editorStyle": "file:./index.css",
+  "viewScript": [ "yaycheckout-order-summary-items" ],
   "style": "file:./style-index.css",
   "render": "file:./render.php"
 }
