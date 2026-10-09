@@ -1,5 +1,15 @@
-import { InspectorControls, PanelColorSettings, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import {
+	InspectorControls,
+	__experimentalColorGradientSettingsDropdown as ColorGradientSettingsDropdown,
+	__experimentalUseMultipleOriginColorsAndGradients as useMultipleOriginColorsAndGradients,
+	useBlockProps,
+} from '@wordpress/block-editor';
+import {
+	PanelBody,
+	SelectControl,
+	TextControl,
+	__experimentalItemGroup as ItemGroup,
+} from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { layoutFor, SHIPPING_LAYOUTS } from './layouts';
 import {
@@ -21,13 +31,14 @@ interface ShippingMethodsAttributes {
 interface EditProps {
 	attributes: ShippingMethodsAttributes;
 	setAttributes: ( attributes: Partial< ShippingMethodsAttributes > ) => void;
+	clientId: string;
 }
 
 function colorValue( value: unknown ): string | undefined {
 	return typeof value === 'string' && value !== '' ? value : undefined;
 }
 
-export default function Edit( { attributes, setAttributes }: EditProps ) {
+export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
 	const { label, layout, style, textColor } = attributes;
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-shipping-methods',
@@ -40,6 +51,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		( key ): key is ShippingSettingKey => ! isBackgroundSetting( key ) && Boolean( SETTING_CONTROLS[ key ] )
 	);
 	const colorKeys = selectedLayout.settings.filter( isBackgroundSetting );
+	const colorGradientSettings = useMultipleOriginColorsAndGradients();
+	const showMethods = rangeKeys.length > 0 || colorKeys.length > 0;
 
 	return (
 		<>
@@ -62,7 +75,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<InspectorControls group="styles">
-				{ rangeKeys.length > 0 && (
+				{ showMethods && (
 					<PanelBody title={ __( 'Methods', 'yaycheckout' ) }>
 						{ rangeKeys.map( ( key ) => {
 							const Control = SETTING_CONTROLS[ key ];
@@ -82,21 +95,30 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 								/>
 							);
 						} ) }
+						{ colorKeys.length > 0 && (
+							<div className="yaycheckout-shipping-methods__method-colors">
+								<ItemGroup isBordered isSeparated size="large">
+									<ColorGradientSettingsDropdown
+										panelId={ clientId }
+										settings={ colorKeys.map( ( key ) => ( {
+											label: BACKGROUND_SETTING_LABELS[ key ],
+											colorValue: colorValue( getStyleSetting( style, key ) ),
+											onColorChange: ( value: string | undefined ) =>
+												setAttributes( {
+													style: setStyleSetting( style, key, value || undefined ),
+												} ),
+											isShownByDefault: true,
+											clearable: true,
+										} ) ) }
+										{ ...colorGradientSettings }
+										gradients={ [] }
+										disableCustomGradients
+										__experimentalIsRenderedInSidebar
+									/>
+								</ItemGroup>
+							</div>
+						) }
 					</PanelBody>
-				) }
-				{ colorKeys.length > 0 && (
-					<PanelColorSettings
-						title={ __( 'Background', 'yaycheckout' ) }
-						__experimentalIsRenderedInSidebar
-						colorSettings={ colorKeys.map( ( key ) => ( {
-							label: BACKGROUND_SETTING_LABELS[ key ],
-							value: colorValue( getStyleSetting( style, key ) ),
-							onChange: ( value: string | undefined ) =>
-								setAttributes( {
-									style: setStyleSetting( style, key, value || undefined ),
-								} ),
-						} ) ) }
-					/>
 				) }
 			</InspectorControls>
 			<div { ...blockProps }>
