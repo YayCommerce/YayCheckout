@@ -7,14 +7,44 @@ export interface ShippingLayout {
 	settings: ShippingSettingKey[];
 }
 
+const BACKGROUNDS: ShippingSettingKey[] = [
+	'backgroundColor',
+	'backgroundColorSelected',
+	'backgroundColorHover',
+];
+
 /** Mirrors CheckoutFragments::SHIPPING_LAYOUTS in PHP. */
 export const SHIPPING_LAYOUTS: ShippingLayout[] = [
-	{ value: 'default', label: __( 'Default', 'yaycheckout' ), settings: [] },
-	{ value: 'check', label: __( 'Check', 'yaycheckout' ), settings: [] },
-	{ value: 'boxed', label: __( 'Boxed', 'yaycheckout' ), settings: [] },
-	{ value: 'columns', label: __( 'Columns', 'yaycheckout' ), settings: [] },
-	{ value: 'stacked', label: __( 'Stacked', 'yaycheckout' ), settings: [] },
-	{ value: 'divided', label: __( 'Divided', 'yaycheckout' ), settings: [] },
+	{
+		value: 'default',
+		label: __( 'Default', 'yaycheckout' ),
+		settings: [ 'borderRadius', ...BACKGROUNDS ],
+	},
+	{
+		value: 'check',
+		label: __( 'Check', 'yaycheckout' ),
+		settings: [ 'gap', 'borderRadius', ...BACKGROUNDS ],
+	},
+	{
+		value: 'boxed',
+		label: __( 'Boxed', 'yaycheckout' ),
+		settings: [ 'borderRadius', ...BACKGROUNDS ],
+	},
+	{
+		value: 'columns',
+		label: __( 'Columns', 'yaycheckout' ),
+		settings: [ 'gap', 'borderRadius', ...BACKGROUNDS ],
+	},
+	{
+		value: 'stacked',
+		label: __( 'Stacked', 'yaycheckout' ),
+		settings: [ 'gap', 'borderRadius', ...BACKGROUNDS ],
+	},
+	{
+		value: 'divided',
+		label: __( 'Divided', 'yaycheckout' ),
+		settings: [ ...BACKGROUNDS ],
+	},
 ];
 
 /** The layout for a stored value, or Default when missing or unknown. */

@@ -2,13 +2,12 @@ import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { layoutFor, SHIPPING_LAYOUTS } from './layouts';
-import { SETTING_CONTROLS } from './setting-controls';
 import '../shared/section-preview.css';
 
 interface ShippingMethodsAttributes {
 	label: string;
 	layout?: string;
-	layoutSettings?: Record< string, unknown >;
+	style?: Record< string, unknown >;
 }
 
 interface EditProps {
@@ -17,7 +16,7 @@ interface EditProps {
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { label, layout, layoutSettings = {} } = attributes;
+	const { label, layout } = attributes;
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-shipping-methods',
 		'data-layout': layout || 'default',
@@ -43,21 +42,6 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						} ) ) }
 						onChange={ ( value ) => setAttributes( { layout: value } ) }
 					/>
-					{ selectedLayout.settings.map( ( key ) => {
-						const Control = SETTING_CONTROLS[ key ];
-
-						return (
-							<Control
-								key={ key }
-								value={ layoutSettings[ key ] }
-								onChange={ ( value ) =>
-									setAttributes( {
-										layoutSettings: { ...layoutSettings, [ key ]: value },
-									} )
-								}
-							/>
-						);
-					} ) }
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>

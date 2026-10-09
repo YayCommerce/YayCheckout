@@ -21,17 +21,35 @@
     "layout": {
       "type": "string",
       "default": "default"
-    },
-    "layoutSettings": {
-      "type": "object",
-      "default": {}
     }
   },
   "supports": {
     "html": false,
     "yaycheckoutWatchable": true,
     "multiple": false,
-    "reusable": false
+    "reusable": false,
+    "color": {
+      "background": true,
+      "text": false,
+      "__experimentalSkipSerialization": true,
+      "__experimentalDefaultControls": {
+        "background": false
+      }
+    },
+    "spacing": {
+      "blockGap": true,
+      "__experimentalSkipSerialization": [ "blockGap" ],
+      "__experimentalDefaultControls": {
+        "blockGap": false
+      }
+    },
+    "__experimentalBorder": {
+      "radius": true,
+      "__experimentalSkipSerialization": true,
+      "__experimentalDefaultControls": {
+        "radius": false
+      }
+    }
   },
   "editorScript": "file:./index.js",
   "editorStyle": "file:./index.css",
