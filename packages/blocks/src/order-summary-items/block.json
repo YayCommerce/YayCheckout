@@ -41,7 +41,7 @@
     },
     "quantityDisplay": {
       "type": "string",
-      "enum": [ "inline", "badge" ],
+      "enum": [ "inline", "badge", "stepper" ],
       "default": "inline"
     }
   },

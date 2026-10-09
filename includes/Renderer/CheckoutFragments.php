@@ -106,21 +106,17 @@ class CheckoutFragments {
      * @return array<int, array{0: string, 1: string, 2: array}>
      */
     private static function summary_block_fragments( string $markup ): array {
-        $attrs = [];
+        $summary = [];
 
         foreach ( LayoutMarkupReader::flatten( parse_blocks( $markup ) ) as $block ) {
-            if ( is_string( $block['blockName'] ) && isset( self::BLOCK_FRAGMENTS[ $block['blockName'] ] ) && ! isset( $attrs[ $block['blockName'] ] ) ) {
-                $attrs[ $block['blockName'] ] = $block['attrs'];
+            $name = $block['blockName'];
+
+            if ( is_string( $name ) && isset( self::BLOCK_FRAGMENTS[ $name ] ) && ! isset( $summary[ $name ] ) ) {
+                $summary[ $name ] = [ self::BLOCK_FRAGMENTS[ $name ][0], self::BLOCK_FRAGMENTS[ $name ][1], $block['attrs'] ];
             }
         }
 
-        $summary = [];
-
-        foreach ( array_intersect_key( self::BLOCK_FRAGMENTS, $attrs ) as $name => [ $selector, $build ] ) {
-            $summary[] = [ $selector, $build, $attrs[ $name ] ];
-        }
-
-        return $summary;
+        return array_values( $summary );
     }
 
     /** The Place order button alone (render.php prints only it during AJAX), when it shows the total. */
@@ -254,13 +250,22 @@ class CheckoutFragments {
 
         $build   = self::BLOCK_FRAGMENTS[ $block->name ][1];
         $wrapper = [];
+        $stepper = false;
 
+        // Items only. Its gap class, nonce and notices sit on the wrapper because checkout.js replaces the root on every refresh.
         if ( 'yaycheckout/order-summary-items' === $block->name ) {
-            // Block spacing is the gap between rows. The class sits on the wrapper because checkout.js replaces the root on every refresh.
+            // Block spacing is the gap between rows.
             $class = wp_unique_id( 'yaycheckout-order-summary-items-gap-' );
 
             if ( BlockGap::add_rules( $block->attributes['style'] ?? [], $block->name, '.' . $class . ' > .' . self::ORDER_ITEMS_CLASS ) ) {
                 $wrapper['class'] = $class;
+            }
+
+            $stepper = 'stepper' === self::order_items_options( $block->attributes )['quantity_display'];
+
+            if ( $stepper ) {
+                $wrapper['data-yaycheckout-cart-nonce'] = wp_create_nonce( CartItemQuantity::NONCE_ACTION );
+                $wrapper['data-error-text']             = CartItemQuantity::retry_message();
             }
         }
 
@@ -268,6 +273,11 @@ class CheckoutFragments {
         echo '<div ' . get_block_wrapper_attributes( $wrapper ) . '>';
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Same HTML Woo prints for review-order rows.
         echo self::$build( $block->attributes );
+
+        if ( $stepper ) {
+            echo '<div class="' . esc_attr( self::ORDER_ITEMS_CLASS . '__notices' ) . '" aria-live="polite"></div>';
+        }
+
         echo '</div>';
     }
 
@@ -297,7 +307,7 @@ class CheckoutFragments {
             'show_sku'               => $bool( 'showSku', false ),
             'show_unit_price'        => $bool( 'showUnitPrice', false ),
             'show_short_description' => $bool( 'showShortDescription', false ),
-            'quantity_display'       => $choice( 'quantityDisplay', [ 'inline', 'badge' ] ),
+            'quantity_display'       => $choice( 'quantityDisplay', [ 'inline', 'badge', 'stepper' ] ),
         ];
     }
 
@@ -337,6 +347,11 @@ class CheckoutFragments {
             if ( ! $product instanceof \WC_Product || ! $product->exists() || $cart_item['quantity'] <= 0 || ! $visible ) {
                 continue;
             }
+
+            // A product with one allowed quantity gets no stepper; its quantity shows inline.
+            $stepper = 'stepper' === $options['quantity_display']
+                && ! $product->is_sold_individually()
+                && $product->get_min_purchase_quantity() !== $product->get_max_purchase_quantity();
             ?>
     <div class="<?php echo esc_attr( apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) . ' ' . self::ORDER_ITEMS_CLASS . '__item' ); ?>">
             <?php if ( $options['show_thumbnails'] ) : ?>
@@ -354,7 +369,7 @@ class CheckoutFragments {
             <?php endif; ?>
         <div class="product-name">
             <?php echo wp_kses_post( apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key ) ) . '&nbsp;'; ?>
-            <?php if ( ! $badge ) : ?>
+            <?php if ( ! $badge && ! $stepper ) : ?>
                 <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered HTML. ?>
             <?php endif; ?>
             <?php
@@ -363,6 +378,16 @@ class CheckoutFragments {
             }
 
             self::print_item_details( $options, $product, $cart_item, $cart_item_key );
+
+            if ( $stepper ) {
+                // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart quantity filter, so an extension that locks an item's quantity locks it here.
+                echo apply_filters( 'woocommerce_cart_item_quantity', self::stepper_html( $product, $cart_item, $cart_item_key ), $cart_item_key, $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in stepper_html(), then Woo's filtered HTML.
+            }
+
+            if ( 'stepper' === $options['quantity_display'] ) {
+                // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart remove-link filter.
+                echo apply_filters( 'woocommerce_cart_item_remove_link', self::remove_link_html( $product, $cart_item_key ), $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in remove_link_html(), then Woo's filtered HTML.
+            }
             ?>
         </div>
         <div class="product-total">
@@ -409,6 +434,36 @@ class CheckoutFragments {
             }
         }
         // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+    }
+
+    /**
+     * − / input / + for one cart item. The input has no name, so the checkout form never posts
+     * it, and every button is type="button", so neither places the order.
+     */
+    private static function stepper_html( \WC_Product $product, array $cart_item, string $cart_item_key ): string {
+        $name     = wp_strip_all_tags( $product->get_name() );
+        $quantity = (int) $cart_item['quantity'];
+        $max      = $product->get_max_purchase_quantity();
+        $button   = static function ( int $step, string $label, string $text, bool $disabled ): string {
+            return '<button type="button" class="yaycheckout-qty__button" data-step="' . esc_attr( (string) $step ) . '" aria-label="' . esc_attr( $label ) . '"' . ( $disabled ? ' disabled' : '' ) . '>' . esc_html( $text ) . '</button>';
+        };
+
+        return '<div class="yaycheckout-qty">'
+            /* translators: %s: product name */
+            . $button( -1, sprintf( __( 'Decrease quantity of %s', 'yaycheckout' ), $name ), '−', $quantity <= 1 )
+            . '<input type="number" class="yaycheckout-qty__input" value="' . esc_attr( (string) $quantity ) . '" min="1"' . ( $max > 0 ? ' max="' . esc_attr( (string) $max ) . '"' : '' ) . ' step="1" inputmode="numeric" data-cart-item-key="' . esc_attr( $cart_item_key ) . '"'
+            /* translators: %s: product name */
+            . ' aria-label="' . esc_attr( sprintf( __( 'Quantity of %s', 'yaycheckout' ), $name ) ) . '">'
+            /* translators: %s: product name */
+            . $button( 1, sprintf( __( 'Increase quantity of %s', 'yaycheckout' ), $name ), '+', $max > 0 && $quantity >= $max )
+            . '</div>';
+    }
+
+    /** The remove link, which still works without JavaScript through WooCommerce's cart URL. */
+    private static function remove_link_html( \WC_Product $product, string $cart_item_key ): string {
+        return '<a href="' . esc_url( wc_get_cart_remove_url( $cart_item_key ) ) . '" class="remove ' . esc_attr( self::ORDER_ITEMS_CLASS . '__remove' ) . '" data-cart-item-key="' . esc_attr( $cart_item_key ) . '"'
+            /* translators: %s: product name */
+            . ' aria-label="' . esc_attr( sprintf( __( 'Remove %s from cart', 'yaycheckout' ), wp_strip_all_tags( $product->get_name() ) ) ) . '">&times;</a>';
     }
 
     /** Fires a cart-contents hook and prints its output, if any, in a table of its own. */

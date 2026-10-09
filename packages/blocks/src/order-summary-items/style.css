@@ -112,3 +112,88 @@
 	clip-path: inset(50%);
 	white-space: nowrap;
 }
+
+/* Quantity stepper: − / input / + in one bordered 32px row, then the remove control. */
+.yaycheckout-order-summary-items .yaycheckout-qty {
+	--yaycheckout-qty-border: color-mix(in srgb, currentColor 25%, transparent);
+
+	display: inline-flex;
+	align-items: stretch;
+	height: 32px;
+	margin-block-start: 6px;
+	border: 1px solid var(--yaycheckout-qty-border);
+	border-radius: var(--yaycheckout-field-radius);
+	overflow: hidden;
+	vertical-align: middle;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-qty__button {
+	box-sizing: border-box;
+	width: 32px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-qty__button:disabled {
+	cursor: not-allowed;
+	opacity: 0.4;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-qty__input {
+	box-sizing: border-box;
+	width: 40px;
+	height: auto;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-inline: 1px solid var(--yaycheckout-qty-border);
+	border-radius: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: center;
+	appearance: textfield;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-qty__input::-webkit-inner-spin-button,
+.yaycheckout-order-summary-items .yaycheckout-qty__input::-webkit-outer-spin-button {
+	margin: 0;
+	appearance: none;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-order-summary-items__remove {
+	display: inline-block;
+	margin-block-start: 6px;
+	margin-inline-start: 8px;
+	color: inherit;
+	font-size: 1.25em;
+	line-height: 32px;
+	text-decoration: none;
+	vertical-align: middle;
+	opacity: 0.6;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-order-summary-items__remove:hover {
+	opacity: 1;
+}
+
+.wp-block-yaycheckout-order-summary-items[aria-busy="true"] .yaycheckout-order-summary-items {
+	opacity: 0.6;
+}
+
+.yaycheckout-order-summary-items__notices:not(:empty) {
+	margin-block-start: 12px;
+}
+
+.yaycheckout-order-summary-items__notices p {
+	margin: 0;
+	color: var(--wc-red, #cc1818);
+}

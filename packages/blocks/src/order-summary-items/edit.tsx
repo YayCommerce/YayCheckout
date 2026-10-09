@@ -2,6 +2,7 @@ import { InspectorControls, useBlockProps, useSettings } from '@wordpress/block-
 import { PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import { blockGapCSS, type BlockGapStyles } from '../shared/block-gap';
+import { plainText } from '../shared/plain-text';
 import './editor.css';
 
 interface OrderSummaryItemsAttributes {
@@ -13,7 +14,7 @@ interface OrderSummaryItemsAttributes {
 	showSku: boolean;
 	showUnitPrice: boolean;
 	showShortDescription: boolean;
-	quantityDisplay: 'inline' | 'badge';
+	quantityDisplay: 'inline' | 'badge' | 'stepper';
 	style?: BlockGapStyles;
 }
 
@@ -39,6 +40,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	} = attributes;
 	// As order_items_html(): a badge needs a thumbnail to sit on.
 	const badge = quantityDisplay === 'badge' && showThumbnails;
+	const stepper = quantityDisplay === 'stepper';
 	const [ viewport ] = useSettings( 'viewport' );
 	const css = blockGapCSS( `#block-${ clientId } > .yaycheckout-order-summary-items`, style, viewport );
 	const productPlaceholder = __( 'Product', 'yaycheckout' );
@@ -105,6 +107,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						options={ [
 							{ label: __( 'Inline', 'yaycheckout' ), value: 'inline' },
 							{ label: __( 'Badge', 'yaycheckout' ), value: 'badge' },
+							{ label: __( 'Stepper', 'yaycheckout' ), value: 'stepper' },
 						] }
 						help={
 							quantityDisplay === 'badge' && ! showThumbnails
@@ -120,16 +123,14 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 			<div { ...useBlockProps() }>
 				{ css && <style>{ css }</style> }
 				<div
-					className={
-						itemData === 'inline'
-							? 'yaycheckout-order-summary-items yaycheckout-order-summary-items--item-data-inline'
-							: 'yaycheckout-order-summary-items'
-					}
+					className={ `yaycheckout-order-summary-items${
+						itemData === 'inline' ? ' yaycheckout-order-summary-items--item-data-inline' : ''
+					}` }
 				>
 					{ showLabels && (
 						<div className="yaycheckout-order-summary-items__header">
-							<span className="product-name">{ productLabel?.trim() || productPlaceholder }</span>
-							<span className="product-total">{ subtotalLabel?.trim() || subtotalPlaceholder }</span>
+							<span className="product-name">{ plainText( productLabel ) || productPlaceholder }</span>
+							<span className="product-total">{ plainText( subtotalLabel ) || subtotalPlaceholder }</span>
 						</div>
 					) }
 					<div className="cart_item yaycheckout-order-summary-items__item">
@@ -145,7 +146,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						) }
 						<div className="product-name">
 							{ __( 'Sample product', 'yaycheckout' ) }&nbsp;
-							{ ! badge && <strong className="product-quantity">×&nbsp;1</strong> }
+							{ ! badge && ! stepper && <strong className="product-quantity">×&nbsp;1</strong> }
 							{ itemData !== 'hidden' && (
 								<dl className="variation">
 									<dt>{ __( 'Color:', 'yaycheckout' ) }</dt>
@@ -162,6 +163,20 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 									}</div> }
 							{ showShortDescription && (
 								<div className="product-short-description">{ __( 'A short product description.', 'yaycheckout' ) }</div>
+							) }
+							{ stepper && (
+								<>
+									<div className="yaycheckout-qty">
+										<button type="button" className="yaycheckout-qty__button" disabled>
+											−
+										</button>
+										<input type="number" className="yaycheckout-qty__input" value={ 1 } readOnly disabled />
+										<button type="button" className="yaycheckout-qty__button" disabled>
+											+
+										</button>
+									</div>
+									<span className="remove yaycheckout-order-summary-items__remove">×</span>
+								</>
 							) }
 						</div>
 						<div className="product-total">$20.00</div>
