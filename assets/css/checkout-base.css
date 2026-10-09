@@ -185,6 +185,22 @@ body.yaycheckout-page > .wp-site-blocks,
 	}
 }
 
+/* Checkbox: ticking shows the panel below, unticking hides it again. */
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="checkbox"] {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	color: inherit;
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__checkbox {
+	margin: 0;
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="checkbox"] + .yaycheckout-disclosure__panel {
+	padding-top: 0.5em;
+}
+
 /* A theme's button or div display rule would otherwise beat the hidden attribute. */
 .yaycheckout-checkout .yaycheckout-disclosure__toggle[hidden],
 .yaycheckout-checkout .yaycheckout-disclosure__panel[hidden] {

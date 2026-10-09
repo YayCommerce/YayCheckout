@@ -33,7 +33,7 @@
     },
     "disclosure": {
       "type": "string",
-      "enum": [ "none", "link", "collapsible" ],
+      "enum": [ "none", "link", "collapsible", "checkbox" ],
       "default": "none"
     },
     "disclosureText": {
