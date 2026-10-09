@@ -238,10 +238,10 @@ class Design {
                 return self::invalid( $section );
             }
 
-            foreach ( $keys as $key => $rule ) {
-                if ( ! self::is_valid( $tokens[ $section ][ $key ] ?? null, $rule ) ) {
-                    return self::invalid( $section . '.' . $key );
-                }
+            $key = self::invalid_key( $tokens[ $section ], $keys );
+
+            if ( null !== $key ) {
+                return self::invalid( $section . '.' . $key );
             }
         }
 
@@ -277,21 +277,22 @@ class Design {
 
     /** A layer section with every schema key valid, in schema order; null when any is missing or invalid. */
     private static function layer_section( $values, array $keys ): ?array {
-        if ( ! is_array( $values ) ) {
+        if ( ! is_array( $values ) || null !== self::invalid_key( $values, $keys ) ) {
             return null;
         }
 
-        $clean = [];
+        return array_intersect_key( array_replace( $keys, $values ), $keys );
+    }
 
+    /** The first schema key a layer section lacks or holds an invalid value for; null when the section is complete. */
+    private static function invalid_key( array $values, array $keys ): ?string {
         foreach ( $keys as $key => $rule ) {
             if ( ! array_key_exists( $key, $values ) || ! self::is_valid( $values[ $key ], $rule ) ) {
-                return null;
+                return $key;
             }
-
-            $clean[ $key ] = $values[ $key ];
         }
 
-        return $clean;
+        return null;
     }
 
     /** Every schema token, taken from $tokens when valid there and from the default otherwise. */

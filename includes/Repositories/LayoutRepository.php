@@ -2,6 +2,7 @@
 namespace YayCheckout\Repositories;
 
 use YayCheckout\Enums\LayoutStatus;
+use YayCheckout\Models\Design;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Services\LayoutAssignment;
@@ -370,7 +371,7 @@ class LayoutRepository {
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
      * @param array $rules  Already sanitized (Layout::sanitize_rules()); [] for none.
-     * @param array $design Already projected (Design::project_layer()); [] for none.
+     * @param array $design The file's design layer, raw; insert_draft() projects it.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
     public function import( string $title, string $content, array $rules = [], array $design = [] ): Layout {
@@ -438,7 +439,7 @@ class LayoutRepository {
      * The one insert path for a new draft, so the cap and slashing cannot drift.
      *
      * @param array $rules  Already sanitized; written with the post, so the draft never exists without them.
-     * @param array $design Already projected design layer; [] stores no meta.
+     * @param array $design Design layer, projected here so no caller can store an unchecked one; [] stores no meta.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
     private function insert_draft( string $title, string $content, array $rules = [], array $design = [] ): Layout {
@@ -458,7 +459,7 @@ class LayoutRepository {
                     'meta_input'   => array_filter(
                         [
                             Layout::META_RULES  => $rules,
-                            Layout::META_DESIGN => $design,
+                            Layout::META_DESIGN => Design::project_layer( $design ),
                         ]
                     ),
                 ]

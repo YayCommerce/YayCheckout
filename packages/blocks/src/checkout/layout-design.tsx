@@ -5,7 +5,6 @@ import {
 	Dashicon,
 	Dropdown,
 	Flex,
-	Modal,
 	RangeControl,
 	SelectControl,
 	TextareaControl,
@@ -18,9 +17,11 @@ import { PluginSidebar, store as editorStore } from '@wordpress/editor';
 import { useMemo, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
+import { ConfirmModal } from '../shared/confirm-modal';
 import { designVars } from '../shared/design-vars';
 import { editorData, type DesignTokens, type TokenRule, type TokenValue } from '../shared/editor-data';
 import { useLiveDesignStyle } from './use-live-design-style';
+import '../shared/editor-panel.css';
 import './layout-design.css';
 
 /** Layout::META_DESIGN in PHP. */
@@ -220,23 +221,33 @@ function TokenControl( { name, rule, value, onChange }: { name: string; rule: To
 	);
 }
 
-function ConfirmModal( { title, lines, confirmLabel, onConfirm, onCancel }: { title: string; lines: string[]; confirmLabel: string; onConfirm: () => void; onCancel: () => void } ) {
+function ScreenHeader( { section, isUnsaved, onRevert, onBack }: { section: string; isUnsaved: boolean; onRevert: () => void; onBack: () => void } ) {
 	return (
-		<Modal title={ title } size="small" onRequestClose={ onCancel }>
-			<ul className="yaycheckout-layout-design__changes">
-				{ lines.map( ( line ) => (
-					<li key={ line }>{ line }</li>
-				) ) }
-			</ul>
-			<Flex justify="flex-end" gap={ 2 }>
-				<Button __next40pxDefaultSize variant="tertiary" onClick={ onCancel }>
-					{ __( 'Cancel', 'yaycheckout' ) }
-				</Button>
-				<Button __next40pxDefaultSize variant="primary" onClick={ onConfirm }>
-					{ confirmLabel }
-				</Button>
-			</Flex>
-		</Modal>
+		<Flex justify="flex-start" gap={ 2 } className="yaycheckout-layout-design__header">
+			<Button size="small" icon={ <Dashicon icon="arrow-left-alt2" /> } label={ __( 'Back', 'yaycheckout' ) } onClick={ onBack } />
+			<h2>{ SECTION_LABELS[ section ] }</h2>
+			{ isUnsaved && (
+				<Button size="small" icon={ <Dashicon icon="image-rotate" /> } label={ __( 'Revert to saved', 'yaycheckout' ) } showTooltip onClick={ onRevert } />
+			) }
+		</Flex>
+	);
+}
+
+/** CSS adds to global, so it has no Global/Custom switch: empty means none. */
+function CssScreen( { layer, saved, onChange, onBack }: { layer: Layer; saved: Layer; onChange: ( layer: Layer ) => void; onBack: () => void } ) {
+	const setCss = ( css: string ) => {
+		const { custom_css: _css, ...rest } = layer;
+		onChange( css === '' ? rest : { ...rest, custom_css: css } );
+	};
+
+	return (
+		<div className="yaycheckout-layout-design">
+			<ScreenHeader section={ CSS_ROW } isUnsaved={ layer.custom_css !== saved.custom_css } onRevert={ () => setCss( saved.custom_css ?? '' ) } onBack={ onBack } />
+			<p className="yaycheckout-editor-help">
+				{ __( 'Added after the global custom CSS. Shown on the storefront and in preview, not here.', 'yaycheckout' ) }
+			</p>
+			<TextareaControl __nextHasNoMarginBottom label={ SECTION_LABELS[ CSS_ROW ] } rows={ 10 } value={ layer.custom_css ?? '' } onChange={ setCss } />
+		</div>
 	);
 }
 
@@ -257,8 +268,9 @@ function GroupScreen( {
 	onBack: () => void;
 } ) {
 	const [ isReverting, setReverting ] = useState( false );
-	const isCss = section === CSS_ROW;
-	const isCustom = !! layer.tokens?.[ section ];
+	const current = layer.tokens?.[ section ];
+	const savedValues = saved.tokens?.[ section ];
+	const rules = DESIGN?.schema[ section ] ?? {};
 
 	const setSection = ( values: Record< string, TokenValue > | undefined ) => {
 		const { [ section ]: _old, ...rest } = layer.tokens ?? {};
@@ -266,18 +278,6 @@ function GroupScreen( {
 		const { tokens: _tokens, ...withoutTokens } = layer;
 		onChange( Object.keys( tokens ).length ? { ...withoutTokens, tokens } : withoutTokens );
 	};
-	// CSS adds to global, so it has no Global/Custom switch: empty means none.
-	const setCss = ( css: string ) => {
-		const { custom_css: _css, ...rest } = layer;
-		onChange( css === '' ? rest : { ...rest, custom_css: css } );
-	};
-	const savedValues = saved.tokens?.[ section ];
-	const currentValues = layer.tokens?.[ section ];
-	const isUnsaved = isCss
-		? layer.custom_css !== saved.custom_css
-		: !! savedValues !== !! currentValues ||
-		  ( !! savedValues && Object.keys( savedValues ).some( ( key ) => savedValues[ key ] !== currentValues?.[ key ] ) );
-	const revertToSaved = () => ( isCss ? setCss( saved.custom_css ?? '' ) : setSection( savedValues ) );
 	const toggle = ( on: boolean ) => {
 		if ( on ) {
 			// Seeded from global and always on: a group at theme default globally starts printing global's stored values.
@@ -286,42 +286,29 @@ function GroupScreen( {
 		return changes( section, layer, global ).length ? setReverting( true ) : setSection( undefined );
 	};
 
-	const values = layer.tokens?.[ section ] ?? {};
-	const rules = DESIGN?.schema[ section ] ?? {};
-
 	return (
 		<div className="yaycheckout-layout-design">
-			<Flex justify="flex-start" gap={ 2 } className="yaycheckout-layout-design__header">
-				<Button size="small" icon={ <Dashicon icon="arrow-left-alt2" /> } label={ __( 'Back', 'yaycheckout' ) } onClick={ onBack } />
-				<h2>{ SECTION_LABELS[ section ] }</h2>
-				{ isUnsaved && (
-					<Button size="small" icon={ <Dashicon icon="image-rotate" /> } label={ __( 'Revert to saved', 'yaycheckout' ) } showTooltip onClick={ revertToSaved } />
-				) }
-			</Flex>
-			{ isCss ? (
-				<>
-					<p className="yaycheckout-layout-design__help">
-						{ __( 'Added after the global custom CSS. Shown on the storefront and in preview, not here.', 'yaycheckout' ) }
-					</p>
-					<TextareaControl __nextHasNoMarginBottom label={ SECTION_LABELS[ CSS_ROW ] } rows={ 10 } value={ layer.custom_css ?? '' } onChange={ setCss } />
-				</>
-			) : (
-				<ToggleControl __nextHasNoMarginBottom label={ __( 'Custom for this layout', 'yaycheckout' ) } checked={ isCustom } onChange={ toggle } />
-			) }
-			{ ! isCss && ! isCustom && (
-				<div className="yaycheckout-layout-design__help">
-					{ __( 'Follows the Design page:', 'yaycheckout' ) } { summary( section, global ) }
-				</div>
-			) }
-			{ ! isCss && isCustom && (
+			<ScreenHeader
+				section={ section }
+				// Both sides keep schema key order (readLayer, seeding and edits spread it), so the strings compare values.
+				isUnsaved={ JSON.stringify( current ) !== JSON.stringify( savedValues ) }
+				onRevert={ () => setSection( savedValues ) }
+				onBack={ onBack }
+			/>
+			<ToggleControl __nextHasNoMarginBottom label={ __( 'Custom for this layout', 'yaycheckout' ) } checked={ !! current } onChange={ toggle } />
+			{ current ? (
 				<Flex direction="column" align="stretch" gap={ 4 }>
 					{ Object.entries( rules )
 						.filter( ( [ key ] ) => key !== 'enabled' )
 						.map( ( [ key, rule ] ) => (
 							// enabled: true too, so an imported section stored at theme default prints once edited.
-							<TokenControl key={ key } name={ key } rule={ rule } value={ values[ key ] } onChange={ ( value ) => setSection( { ...values, [ key ]: value, enabled: true } ) } />
+							<TokenControl key={ key } name={ key } rule={ rule } value={ current[ key ] } onChange={ ( value ) => setSection( { ...current, [ key ]: value, enabled: true } ) } />
 						) ) }
 				</Flex>
+			) : (
+				<div className="yaycheckout-editor-help">
+					{ __( 'Follows the Design page:', 'yaycheckout' ) } { summary( section, global ) }
+				</div>
 			) }
 			{ isReverting && (
 				<ConfirmModal
@@ -368,7 +355,7 @@ function RootScreen( { layer, effective, isDirty, onOpen }: { layer: Layer; effe
 			) }</div>
 			<hr />
 			{ row( CSS_ROW, layer.custom_css ? cssLines( layer.custom_css ) : __( 'None', 'yaycheckout' ) ) }
-			<p className="yaycheckout-layout-design__help">
+			<p className="yaycheckout-editor-help">
 				{ __( 'Only this layout. Groups on Global follow the Design page. A block’s own styles still win.', 'yaycheckout' ) }
 			</p>
 			<Button variant="link" className="yaycheckout-layout-design__global" onClick={ () => ( isDirty ? setLeaving( true ) : goToGlobal() ) }>
@@ -408,9 +395,11 @@ function LayoutDesignPro( { global }: { global: DesignTokens } ) {
 
 	return (
 		<PluginSidebar name="yaycheckout-layout-design" title={ __( 'Design', 'yaycheckout' ) } icon={ STYLES_ICON }>
-			{ screen ? (
+			{ screen === CSS_ROW && <CssScreen layer={ layer } saved={ saved } onChange={ setLayer } onBack={ () => setScreen( null ) } /> }
+			{ screen && screen !== CSS_ROW && (
 				<GroupScreen section={ screen } layer={ layer } saved={ saved } global={ global } onChange={ setLayer } onBack={ () => setScreen( null ) } />
-			) : (
+			) }
+			{ ! screen && (
 				<RootScreen layer={ layer } effective={ effective } isDirty={ isDirty } onOpen={ setScreen } />
 			) }
 		</PluginSidebar>
@@ -422,8 +411,8 @@ function LayoutDesignTeaser() {
 	return (
 		<PluginSidebar name="yaycheckout-layout-design" title={ __( 'Design', 'yaycheckout' ) } icon={ STYLES_ICON }>
 			<div className="yaycheckout-layout-design">
-				<span className="yaycheckout-layout-design__pro-tag">{ __( 'Pro', 'yaycheckout' ) }</span>
-				<p className="yaycheckout-layout-design__help">
+				<span className="yaycheckout-editor-pro-tag">{ __( 'Pro', 'yaycheckout' ) }</span>
+				<p className="yaycheckout-editor-help">
 					{ __( 'Give this layout its own colours, typography, inputs and CSS.', 'yaycheckout' ) }
 				</p>
 				<Button __next40pxDefaultSize variant="primary" href={ editorData.upgradeUrl } target="_blank">

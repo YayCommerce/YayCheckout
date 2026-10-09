@@ -97,11 +97,11 @@ class ProServiceProvider {
      * An empty layer is deleted, never stored as {}, whoever writes it.
      *
      * @param null|bool $check
-     * @param mixed     $value Already through the meta's sanitize_callback.
+     * @param mixed     $value Already projected by the meta's sanitize_callback.
      * @return null|bool
      */
     public function delete_empty_design( $check, int $object_id, string $meta_key, $value ) {
-        if ( Layout::META_DESIGN !== $meta_key || [] !== Design::project_layer( $value ) ) {
+        if ( Layout::META_DESIGN !== $meta_key || [] !== $value ) {
             return $check;
         }
 

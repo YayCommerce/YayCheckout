@@ -10,6 +10,7 @@ import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
 import { errorMessage } from '../shared/error-message';
 import { filenameFromHeaders, isJsonFileName, saveFile } from '../shared/export-file';
+import '../shared/editor-panel.css';
 import './import-export.css';
 
 /** Locks Import / Export outside Pro. Cosmetic only: it hides UI, it guards no data. */
@@ -247,8 +248,8 @@ function LayoutImportExport() {
 		>
 			<Flex direction="column" align="stretch" gap={ 4 } className="yaycheckout-import-export">
 				{ ! IS_PRO && (
-					<p className="yaycheckout-import-export__help">
-						<span className="yaycheckout-import-export__pro-tag">
+					<p className="yaycheckout-editor-help">
+						<span className="yaycheckout-editor-pro-tag">
 							{ __( 'Pro', 'yaycheckout' ) }
 						</span>
 						{ __( 'Upgrade to PRO to unlock this feature now.', 'yaycheckout' ) }{ ' ' }
@@ -259,7 +260,7 @@ function LayoutImportExport() {
 					<h3 className="yaycheckout-import-export__heading">
 						{ __( 'Import', 'yaycheckout' ) }
 					</h3>
-					<p className="yaycheckout-import-export__help">
+					<p className="yaycheckout-editor-help">
 						{ __( 'Replaces this layout’s blocks. Nothing is saved until you save.', 'yaycheckout' ) }
 					</p>
 					<Button
@@ -276,7 +277,7 @@ function LayoutImportExport() {
 					<h3 className="yaycheckout-import-export__heading">
 						{ __( 'Export', 'yaycheckout' ) }
 					</h3>
-					<p className="yaycheckout-import-export__help">
+					<p className="yaycheckout-editor-help">
 						{ __( 'Downloads one layout with its tokens and slots.', 'yaycheckout' ) }
 					</p>
 					<Button
@@ -291,7 +292,7 @@ function LayoutImportExport() {
 						{ __( 'Export', 'yaycheckout' ) }
 					</Button>
 					{ IS_PRO && hasUnsavedChanges && (
-						<p className="yaycheckout-import-export__help">
+						<p className="yaycheckout-editor-help">
 							{ __( 'Save your changes to include them in the export.', 'yaycheckout' ) }
 						</p>
 					) }

@@ -2,7 +2,6 @@
 namespace YayCheckout\Pro\Controllers;
 
 use YayCheckout\Controllers\BaseRestController;
-use YayCheckout\Models\Design;
 use YayCheckout\Models\Layout;
 use YayCheckout\Pro\Services\LayoutImportReview;
 use YayCheckout\Repositories\LayoutRepository;
@@ -91,7 +90,7 @@ class LayoutImportRestController extends BaseRestController {
         try {
             $layout = LayoutImportReview::from_envelope( (array) $request->get_param( 'file' ) );
             $rules  = LayoutImportReview::rules_from_file( $layout['rules'] );
-            $draft  = $this->layouts->import( $layout['title'], $layout['content'], $rules['rules'], Design::project_layer( $layout['design'] ) );
+            $draft  = $this->layouts->import( $layout['title'], $layout['content'], $rules['rules'], (array) $layout['design'] );
 
             return new \WP_REST_Response(
                 array_merge(

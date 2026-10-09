@@ -43,12 +43,8 @@ function css( tokens: DesignTokens ): string {
  * Shows the unsaved effective tokens on the canvas: a `<style>` after the saved design's,
  * naming every variable, so it wins over what CheckoutBaseStyles printed. Removed on unmount.
  */
-export function useLiveDesignStyle( tokens: DesignTokens | null ): void {
+export function useLiveDesignStyle( tokens: DesignTokens ): void {
 	useEffect( () => {
-		if ( ! tokens ) {
-			return;
-		}
-
 		const text = css( tokens );
 		const write = () => {
 			const doc = canvasDocument();

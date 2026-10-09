@@ -22,10 +22,10 @@ defined( 'ABSPATH' ) || exit;
  */
 class DesignStyles {
 
-    /** Behind a picked font, which is named, not loaded. Mirrored by the admin Preview (PreviewPane.tsx). */
+    /** Behind a picked font, which is named, not loaded. Mirrored by packages/blocks/src/shared/design-vars.ts, which the admin Preview (PreviewPane.tsx) imports. */
     private const FONT_FALLBACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
-    /** The storefront page and the layout editor canvas. */
+    /** The storefront page and the layout editor canvas. Mirrored, with PAGE_PROPERTIES, by the layout editor's live style (use-live-design-style.ts). */
     private const PAGE_SELECTOR = 'body.yaycheckout-page, .editor-styles-wrapper';
 
     /** Page property => the token it takes, printed only when vars() set that token. */
@@ -36,7 +36,7 @@ class DesignStyles {
         'font-size'        => 'font-size-base',
     ];
 
-    /** Pixel height per inputs.size step. Mirrored by the admin Preview (PreviewPane.tsx). */
+    /** Pixel height per inputs.size step. Mirrored by packages/blocks/src/shared/design-vars.ts, which the admin Preview (PreviewPane.tsx) imports. */
     private const INPUT_HEIGHTS = [
         'small'  => 32,
         'medium' => 40,
@@ -78,7 +78,7 @@ class DesignStyles {
         return $css . $custom_css . "\n";
     }
 
-    /** Custom property values by name (without the `--yaycheckout-` prefix), for the sections that are on. */
+    /** Custom property values by name (without the `--yaycheckout-` prefix), for the sections that are on. Mirrored by designVars() (design-vars.ts) for the layout editor's live canvas. */
     private function vars( array $tokens ): array {
         $typography = $tokens['typography'];
         $vars       = [];

@@ -1,0 +1,20 @@
+/* Shared by the editor's own panels and dialogs (Import / Export, Design), which sit outside the canvas; each panel root outranks core's sidebar paragraph margins. */
+:is(.yaycheckout-import-export, .yaycheckout-layout-design) .yaycheckout-editor-help {
+	margin: 0;
+	color: #757575;
+}
+
+.yaycheckout-editor-pro-tag {
+	padding: 1px 6px;
+	border-radius: 2px;
+	background: #f9bd09;
+	color: #fff;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.yaycheckout-confirm-modal__lines {
+	margin: 0 0 24px;
+	padding-left: 20px;
+	list-style: disc;
+}
