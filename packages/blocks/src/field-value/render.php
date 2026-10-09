@@ -25,6 +25,20 @@ $yaycheckout_layout = \YayCheckout\Renderer\CheckoutPage::get_instance()->layout
 $yaycheckout_fields = null !== $yaycheckout_layout ? \YayCheckout\Services\LayoutMarkupReader::fields( $yaycheckout_layout->content ) : [];
 $yaycheckout_extra  = null !== $yaycheckout_layout ? \YayCheckout\Services\LayoutMarkupReader::extra_fields( $yaycheckout_layout->content ) : [];
 
+// Keys of the Field blocks inside Billing and inside Shipping, as edit.tsx finds them. Email address
+// (billing_email) is found by its block name in fields().
+$yaycheckout_in_section = [];
+
+foreach ( null !== $yaycheckout_layout ? \YayCheckout\Services\LayoutMarkupReader::flatten( parse_blocks( $yaycheckout_layout->content ) ) : [] as $yaycheckout_section ) {
+    if ( in_array( $yaycheckout_section['blockName'], [ 'yaycheckout/billing', 'yaycheckout/shipping' ], true ) ) {
+        foreach ( \YayCheckout\Services\LayoutMarkupReader::flatten( $yaycheckout_section['innerBlocks'] ) as $yaycheckout_inner ) {
+            if ( 'yaycheckout/field' === $yaycheckout_inner['blockName'] && isset( $yaycheckout_inner['attrs']['fieldKey'] ) && is_string( $yaycheckout_inner['attrs']['fieldKey'] ) ) {
+                $yaycheckout_in_section[ trim( $yaycheckout_inner['attrs']['fieldKey'] ) ] = true;
+            }
+        }
+    }
+}
+
 // Mirrored by UNSHOWABLE_TYPES in edit.tsx: a checkbox's value is always 1, a password must never be
 // echoed, and a hidden field holds nothing typed.
 $yaycheckout_unshowable = [ 'checkbox', 'password', 'hidden' ];
@@ -35,7 +49,7 @@ $yaycheckout_unshowable = [ 'checkbox', 'password', 'hidden' ];
 $yaycheckout_showable = [];
 
 foreach ( $yaycheckout_fields as $yaycheckout_key => $yaycheckout_field ) {
-    if ( 1 === preg_match( '/^(billing|shipping)_/', $yaycheckout_key ) && ! in_array( $yaycheckout_field['type'], $yaycheckout_unshowable, true ) ) {
+    if ( ( 'billing_email' === $yaycheckout_key || isset( $yaycheckout_in_section[ $yaycheckout_key ] ) ) && ! in_array( $yaycheckout_field['type'], $yaycheckout_unshowable, true ) ) {
         $yaycheckout_showable[ $yaycheckout_key ] = '' !== $yaycheckout_field['label']
             ? $yaycheckout_field['label']
             : ( 'billing_email' === $yaycheckout_key ? __( 'Email address', 'yaycheckout' ) : $yaycheckout_key );

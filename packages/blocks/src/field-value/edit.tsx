@@ -27,42 +27,63 @@ interface LayoutField {
 /** Mirrors render.php: a checkbox's value is always 1, a password must never be echoed, a hidden field holds nothing typed. */
 const UNSHOWABLE_TYPES = [ 'checkbox', 'password', 'hidden' ];
 
+interface BlockEditorSelectors {
+	getBlocksByName: ( name: string ) => string[];
+	getClientIdsOfDescendants: ( clientIds: string[] ) => string[];
+	getBlockName: ( clientId: string ) => string | null;
+	getBlockAttributes: ( clientId: string ) => Record< string, unknown > | null;
+}
+
+/** Field blocks live only inside these, and take their section from the one they sit in. */
+const ADDRESS_SECTIONS = [
+	[ 'yaycheckout/billing', 'billing' ],
+	[ 'yaycheckout/shipping', 'shipping' ],
+] as const;
+
 /**
- * The layout's fields with the label each prints. Mirrors LayoutMarkupReader::fields() and
- * LayoutMarkupReader::extra_fields(): Email address is billing_email, each Field block with a
- * billing_ or shipping_ Key and each Extra field with a valid Key is its own, a later block with
- * the same Key wins. An empty label falls back as email/render.php, field/render.php and
- * extra-field/render.php print it. An Extra field's single checkbox is left out, as render.php does.
+ * The layout's fields with the label each prints: Email address (billing_email), the Field blocks
+ * inside Billing and inside Shipping, then the Extra fields with a valid Key. A later block with the
+ * same Key wins, as LayoutMarkupReader::fields() and ::extra_fields() read them. An empty label falls
+ * back as email/render.php, field/render.php and extra-field/render.php print it. Fields with nothing
+ * to show are left out, as render.php does.
  */
-function layoutFields(
-	clientIds: string[],
-	getBlockName: ( clientId: string ) => string | null,
-	getBlockAttributes: ( clientId: string ) => Record< string, unknown > | null
-): LayoutField[] {
+function layoutFields( editor: BlockEditorSelectors ): LayoutField[] {
 	const fields = new Map< string, LayoutField >();
+	const attributesOf = ( clientId: string ) => editor.getBlockAttributes( clientId ) ?? {};
 
-	for ( const clientId of clientIds ) {
-		const name = getBlockName( clientId );
-		const attributes = getBlockAttributes( clientId ) ?? {};
-		const label = plainText( attributes.label );
+	editor.getBlocksByName( 'yaycheckout/email' ).forEach( ( clientId ) => {
+		const label = plainText( attributesOf( clientId ).label ) || __( 'Email address', 'yaycheckout' );
 
-		if ( name === 'yaycheckout/email' ) {
-			fields.set( 'billing_email', { key: 'billing_email', label: label || __( 'Email address', 'yaycheckout' ), section: 'billing' } );
-		} else if ( name === 'yaycheckout/field' ) {
-			const key = String( attributes.fieldKey ?? '' ).trim();
+		fields.set( 'billing_email', { key: 'billing_email', label, section: 'billing' } );
+	} );
 
-			if ( /^(billing|shipping)_/.test( key ) && ! UNSHOWABLE_TYPES.includes( String( attributes.type ?? 'text' ) ) ) {
-				fields.set( key, { key, label: label || key, section: key.startsWith( 'shipping_' ) ? 'shipping' : 'billing' } );
-			}
-		} else if ( name === EXTRA_FIELD_BLOCK ) {
-			const key = String( attributes.fieldKey ?? '' ).trim();
-			const options = Array.isArray( attributes.options ) ? attributes.options : [];
+	ADDRESS_SECTIONS.forEach( ( [ blockName, section ] ) => {
+		editor.getBlocksByName( blockName ).forEach( ( sectionId ) => {
+			editor
+				.getClientIdsOfDescendants( [ sectionId ] )
+				.filter( ( clientId ) => editor.getBlockName( clientId ) === 'yaycheckout/field' )
+				.forEach( ( clientId ) => {
+					const attributes = attributesOf( clientId );
+					const key = String( attributes.fieldKey ?? '' ).trim();
 
-			if ( EXTRA_FIELD_KEY_PATTERN.test( key ) && ! ( attributes.type === 'checkbox' && options.length === 0 ) ) {
-				fields.set( key, { key, label: label || __( 'Extra field', 'yaycheckout' ), section: 'extra' } );
-			}
+					if ( key !== '' && ! UNSHOWABLE_TYPES.includes( String( attributes.type ?? 'text' ) ) ) {
+						fields.set( key, { key, label: plainText( attributes.label ) || key, section } );
+					}
+				} );
+		} );
+	} );
+
+	editor.getBlocksByName( EXTRA_FIELD_BLOCK ).forEach( ( clientId ) => {
+		const attributes = attributesOf( clientId );
+		const key = String( attributes.fieldKey ?? '' ).trim();
+		// A single checkbox's value is always 1.
+		const singleCheckbox = attributes.type === 'checkbox' && ! ( Array.isArray( attributes.options ) && attributes.options.length > 0 );
+
+		// An address field with the same Key keeps it, as render.php does.
+		if ( EXTRA_FIELD_KEY_PATTERN.test( key ) && ! singleCheckbox && ! fields.has( key ) ) {
+			fields.set( key, { key, label: plainText( attributes.label ) || __( 'Extra field', 'yaycheckout' ), section: 'extra' } );
 		}
-	}
+	} );
 
 	return [ ...fields.values() ];
 }
@@ -93,11 +114,10 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { fieldKeys, separator, placeholder } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-field-value' } );
 	// A string, so the block re-renders only when the layout's fields change, not on every store change.
-	const fieldsJson = useSelect( ( select ) => {
-		const { getClientIdsWithDescendants, getBlockName, getBlockAttributes } = select( blockEditorStore );
-
-		return JSON.stringify( layoutFields( getClientIdsWithDescendants(), getBlockName, getBlockAttributes ) );
-	}, [] );
+	const fieldsJson = useSelect(
+		( select ) => JSON.stringify( layoutFields( select( blockEditorStore ) as BlockEditorSelectors ) ),
+		[]
+	);
 	const fields = useMemo( (): LayoutField[] => JSON.parse( fieldsJson ), [ fieldsJson ] );
 	const picked = fieldKeys
 		.map( ( key ) => fields.find( ( candidate ) => candidate.key === key ) )
