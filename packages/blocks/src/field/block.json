@@ -65,10 +65,11 @@
       "enum": [ "full", "half" ],
       "default": "full"
     },
-    "collapseBehindLink": {
-      "type": "boolean"
+    "disclosure": {
+      "type": "string",
+      "enum": [ "none", "link", "collapsible" ]
     },
-    "revealText": {
+    "disclosureText": {
       "type": "string",
       "default": ""
     }

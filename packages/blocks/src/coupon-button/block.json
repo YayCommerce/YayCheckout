@@ -1,0 +1,70 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/coupon-button",
+  "title": "Coupon Button",
+  "category": "yaycheckout",
+  "description": "The Coupon Form's apply button.",
+  "textdomain": "yaycheckout",
+  "parent": [ "yaycheckout/coupon-form" ],
+  "attributes": {
+    "buttonText": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "styles": [
+    { "name": "fill", "label": "Fill", "isDefault": true },
+    { "name": "outline", "label": "Outline" }
+  ],
+  "supports": {
+    "html": false,
+    "reusable": false,
+    "inserter": false,
+    "multiple": false,
+    "color": {
+      "text": true,
+      "background": true,
+      "gradients": true,
+      "__experimentalDefaultControls": {
+        "background": true,
+        "text": true
+      }
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "__experimentalFontFamily": true,
+      "__experimentalFontWeight": true,
+      "__experimentalFontStyle": true,
+      "__experimentalTextTransform": true,
+      "__experimentalTextDecoration": true,
+      "__experimentalLetterSpacing": true,
+      "__experimentalDefaultControls": {
+        "fontSize": true
+      }
+    },
+    "spacing": {
+      "padding": true,
+      "margin": true,
+      "__experimentalDefaultControls": {
+        "padding": true
+      }
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true,
+      "__experimentalDefaultControls": {
+        "color": true,
+        "radius": true,
+        "style": true,
+        "width": true
+      }
+    }
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php",
+  "style": "file:./style-index.css"
+}

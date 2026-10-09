@@ -44,12 +44,12 @@ class FieldRenderTest extends WP_UnitTestCase {
     }
 
     public function test_apartment_prints_open_only_when_it_holds_a_value(): void {
-        $this->assertStringContainsString( 'yaycheckout-reveal-panel', $this->field( 'billing_address_2' ) );
+        $this->assertStringContainsString( 'yaycheckout-disclosure__panel', $this->field( 'billing_address_2' ) );
 
         WC()->customer->set_billing_address_2( 'Unit 4' );
         $filled = $this->field( 'billing_address_2' );
 
-        $this->assertStringNotContainsString( 'yaycheckout-reveal-panel', $filled );
+        $this->assertStringNotContainsString( 'yaycheckout-disclosure__panel', $filled );
         $this->assertStringContainsString( 'value="Unit 4"', $filled );
     }
 }

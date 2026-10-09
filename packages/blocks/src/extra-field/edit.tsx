@@ -1,12 +1,13 @@
 import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { BaseControl, Button, Flex, FlexBlock, Notice, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
-import { useSelect } from '@wordpress/data';
+import { useDispatch, useSelect } from '@wordpress/data';
+import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { EXTRA_FIELD_KEY_CONTROL_CLASS, EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
 import { FieldPreview, type FieldOption } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
-import { RevealLinkControls, RevealLinkPreview, defaultRevealText, isCollapsed } from '../shared/reveal-link';
+import { DisclosureControls, DisclosurePreview, defaultDisclosureText, disclosureMode, type DisclosureMode } from '../shared/disclosure';
 import './editor.css';
 
 const TYPE_OPTIONS = [
@@ -29,8 +30,8 @@ interface ExtraFieldAttributes {
 	optionalText: string;
 	type: string;
 	options: FieldOption[];
-	collapseBehindLink?: boolean;
-	revealText: string;
+	disclosure: DisclosureMode;
+	disclosureText: string;
 	rememberValue: boolean;
 }
 
@@ -41,6 +42,11 @@ interface EditProps {
 
 function emptyOption(): FieldOption {
 	return { label: '', value: '' };
+}
+
+/** A Key that passes EXTRA_FIELD_KEY_PATTERN, e.g. field_k3x9qa. */
+function randomFieldKey(): string {
+	return `field_${ Math.random().toString( 36 ).slice( 2, 8 ).padEnd( 6, '0' ) }`;
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
@@ -54,15 +60,26 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		optionalText = '',
 		type,
 		options,
-		collapseBehindLink,
-		revealText = '',
+		disclosure = 'none',
+		disclosureText = '',
 		rememberValue = false,
 	} = attributes;
+	const { __unstableMarkNextChangeAsNotPersistent: markNotPersistent } = useDispatch( blockEditorStore );
+
+	// A block with neither Key nor Label was just inserted: give it both, so it is publishable at once.
+	useEffect( () => {
+		if ( fieldKey === '' && label === '' ) {
+			// Part of inserting the block, not an edit the author should undo back to keyless.
+			markNotPersistent();
+			setAttributes( { fieldKey: randomFieldKey(), label: __( 'Extra field', 'yaycheckout' ) } );
+		}
+	}, [] );
+
 	const blockProps = useBlockProps( { className: 'yaycheckout-extra-field' } );
 	const labelPlaceholder = fieldKey || __( 'Extra field', 'yaycheckout' );
-	const collapsed = isCollapsed( fieldKey.trim(), required, collapseBehindLink );
-	// render.php names an unlabelled extra field "Extra field", so its link does too.
-	const revealLabel = label || __( 'Extra field', 'yaycheckout' );
+	const mode = disclosureMode( fieldKey.trim(), required, disclosure );
+	// render.php names an unlabelled extra field "Extra field", so its link or header does too.
+	const disclosureLabel = label || __( 'Extra field', 'yaycheckout' );
 	const showOptions = CHOICE_TYPES.includes( type );
 	const trimmedKey = fieldKey.trim();
 	const isDuplicate = useSelect(
@@ -129,12 +146,12 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
 						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
 					/>
-					<RevealLinkControls
+					<DisclosureControls
 						fieldKey={ fieldKey.trim() }
-						label={ revealLabel }
+						label={ disclosureLabel }
 						required={ required }
-						collapseBehindLink={ collapseBehindLink }
-						revealText={ revealText }
+						disclosure={ disclosure }
+						disclosureText={ disclosureText }
 						setAttributes={ setAttributes }
 					/>
 					<ToggleControl
@@ -190,7 +207,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<RevealLinkPreview collapsed={ collapsed } text={ revealText || defaultRevealText( fieldKey.trim(), revealLabel ) }>
+				<DisclosurePreview mode={ mode } text={ disclosureText || defaultDisclosureText( fieldKey.trim(), disclosureLabel, mode ) }>
 					<FieldPreview
 						label={ label }
 						onLabelChange={ ( value ) => setAttributes( { label: value } ) }
@@ -204,7 +221,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						options={ options }
 						inheritLabelFont
 					/>
-				</RevealLinkPreview>
+				</DisclosurePreview>
 			</div>
 		</>
 	);
