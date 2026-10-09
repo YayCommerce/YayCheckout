@@ -23,7 +23,7 @@ class CheckoutFragments {
     public const ORDER_TOTALS_CLASS = 'yaycheckout-order-summary-totals';
 
     /** Layout values the Shipping Methods block accepts; an unknown attribute falls back to default. */
-    public const SHIPPING_LAYOUTS = [ 'default' ];
+    public const SHIPPING_LAYOUTS = [ 'default', 'check', 'boxed', 'columns', 'stacked', 'divided' ];
 
     /** Layout slot => [ selector WooCommerce's checkout.js replaces, method building its HTML ]. */
     private const FRAGMENTS = [
