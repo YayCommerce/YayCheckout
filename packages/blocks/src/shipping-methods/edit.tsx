@@ -2,6 +2,8 @@ import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { layoutFor, SHIPPING_LAYOUTS } from './layouts';
+import { SETTING_CONTROLS } from './setting-controls';
+import { getStyleSetting, setStyleSetting, shippingStyleVars } from './style-paths';
 import '../shared/section-preview.css';
 
 interface ShippingMethodsAttributes {
@@ -16,10 +18,11 @@ interface EditProps {
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { label, layout } = attributes;
+	const { label, layout, style } = attributes;
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-shipping-methods',
 		'data-layout': layout || 'default',
+		style: shippingStyleVars( style ),
 	} );
 	const heading = label || __( 'Shipping methods', 'yaycheckout' );
 	const selectedLayout = layoutFor( layout );
@@ -42,6 +45,25 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						} ) ) }
 						onChange={ ( value ) => setAttributes( { layout: value } ) }
 					/>
+				</PanelBody>
+			</InspectorControls>
+			<InspectorControls group="styles">
+				<PanelBody title={ __( 'Methods', 'yaycheckout' ) }>
+					{ selectedLayout.settings.map( ( key ) => {
+						const Control = SETTING_CONTROLS[ key ];
+
+						return (
+							<Control
+								key={ key }
+								value={ getStyleSetting( style, key ) }
+								onChange={ ( value ) =>
+									setAttributes( {
+										style: setStyleSetting( style, key, value ),
+									} )
+								}
+							/>
+						);
+					} ) }
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
