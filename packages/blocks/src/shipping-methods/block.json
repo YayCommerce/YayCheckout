@@ -32,12 +32,11 @@
     "yaycheckoutWatchable": true,
     "multiple": false,
     "reusable": false,
-    "color": {
-      "background": true,
-      "text": false,
-      "__experimentalSkipSerialization": true,
+    "typography": {
+      "fontSize": true,
+      "__experimentalSkipSerialization": [ "fontSize" ],
       "__experimentalDefaultControls": {
-        "background": false
+        "fontSize": false
       }
     }
   },
