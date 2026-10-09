@@ -137,6 +137,114 @@ class CheckoutFragments {
         return in_array( $layout, self::SHIPPING_LAYOUTS, true ) ? $layout : 'default';
     }
 
+    /**
+     * Inline style attribute value of --yaycheckout-shipping-* vars from the block's style object.
+     * Empty when no Methods styles are set. Mirrors packages/blocks/.../style-paths.ts.
+     *
+     * @param array $attributes Block attributes.
+     */
+    public static function shipping_methods_style_attribute( array $attributes ): string {
+        $style   = isset( $attributes['style'] ) && is_array( $attributes['style'] ) ? $attributes['style'] : [];
+        $spacing = isset( $style['spacing'] ) && is_array( $style['spacing'] ) ? $style['spacing'] : [];
+        $border  = isset( $style['border'] ) && is_array( $style['border'] ) ? $style['border'] : [];
+        $color   = isset( $style['color'] ) && is_array( $style['color'] ) ? $style['color'] : [];
+        $yay     = isset( $style['yaycheckout'] ) && is_array( $style['yaycheckout'] ) ? $style['yaycheckout'] : [];
+        $decls   = [];
+
+        $gap = self::shipping_css_gap( $spacing['blockGap'] ?? null );
+        if ( '' !== $gap ) {
+            $decls[] = '--yaycheckout-shipping-gap:' . $gap;
+        }
+
+        $radius = self::shipping_css_length( $border['radius'] ?? null );
+        if ( '' !== $radius ) {
+            $decls[] = '--yaycheckout-shipping-radius:' . $radius;
+        }
+
+        $bg = self::shipping_css_color( $color['background'] ?? null );
+        if ( '' !== $bg ) {
+            $decls[] = '--yaycheckout-shipping-bg:' . $bg;
+        }
+
+        $bg_selected = self::shipping_css_color( $yay['backgroundSelected'] ?? null );
+        if ( '' !== $bg_selected ) {
+            $decls[] = '--yaycheckout-shipping-bg-selected:' . $bg_selected;
+        }
+
+        $bg_hover = self::shipping_css_color( $yay['backgroundHover'] ?? null );
+        if ( '' !== $bg_hover ) {
+            $decls[] = '--yaycheckout-shipping-bg-hover:' . $bg_hover;
+        }
+
+        return implode( ';', $decls );
+    }
+
+    /**
+     * @param mixed $gap Block style spacing.blockGap.
+     */
+    private static function shipping_css_gap( $gap ): string {
+        if ( ! is_string( $gap ) && ! is_numeric( $gap ) ) {
+            return '';
+        }
+
+        $raw = is_string( $gap ) ? $gap : (string) $gap;
+        if ( function_exists( 'wp_sanitize_block_gap_value' ) ) {
+            $raw = wp_sanitize_block_gap_value( $raw );
+        }
+
+        if ( ! is_string( $raw ) || '' === $raw ) {
+            return '';
+        }
+
+        if ( false !== strpos( $raw, 'var:preset|spacing|' ) ) {
+            $slug = substr( $raw, strrpos( $raw, '|' ) + 1 );
+
+            return 'var(--wp--preset--spacing--' . _wp_to_kebab_case( $slug ) . ')';
+        }
+
+        return self::shipping_css_safe_token( $raw );
+    }
+
+    /**
+     * @param mixed $value Border radius string, number, or corner object (ignored).
+     */
+    private static function shipping_css_length( $value ): string {
+        if ( is_numeric( $value ) ) {
+            return absint( $value ) . 'px';
+        }
+
+        if ( ! is_string( $value ) || '' === $value ) {
+            return '';
+        }
+
+        return self::shipping_css_safe_token( $value );
+    }
+
+    /**
+     * @param mixed $value A CSS colour string.
+     */
+    private static function shipping_css_color( $value ): string {
+        if ( ! is_string( $value ) || '' === $value ) {
+            return '';
+        }
+
+        $hex = sanitize_hex_color( $value );
+        if ( $hex ) {
+            return $hex;
+        }
+
+        return self::shipping_css_safe_token( $value );
+    }
+
+    /** Rejects values that could break out of a CSS custom-property declaration. */
+    private static function shipping_css_safe_token( string $value ): string {
+        if ( preg_match( '/[=<>{}]|\/\*/', $value ) ) {
+            return '';
+        }
+
+        return $value;
+    }
+
     public static function print_payment_methods(): void {
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Same HTML Woo prints for gateways.
         echo self::payment_methods_html();

@@ -4,7 +4,8 @@
  * so the rows outrank a classic theme's rules for ul#shipping_method. The markup still
  * keeps that id and WooCommerce's class for plugin scripts that look for them.
  * data-layout: default, stacked, columns, check, divided, boxed.
- * Check and divided keep one background; stacked, columns and boxed tint the selected row.
+ * Methods styles from the Styles tab set --yaycheckout-shipping-* on the wrapper.
+ * Check and divided keep one background unless the merchant sets selected/hover.
  */
 
 /* Shared */
@@ -108,7 +109,7 @@
 	margin: 0;
 	padding: 14px 16px;
 	border: 1px solid var(--yaycheckout-border-color);
-	background-color: var(--yaycheckout-color-background, transparent);
+	background-color: var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, transparent));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="default"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option + .yaycheckout-shipping-methods__option {
@@ -116,18 +117,23 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="default"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:first-child {
-	border-start-start-radius: var(--yaycheckout-field-radius);
-	border-start-end-radius: var(--yaycheckout-field-radius);
+	border-start-start-radius: var(--yaycheckout-shipping-radius, var(--yaycheckout-field-radius));
+	border-start-end-radius: var(--yaycheckout-shipping-radius, var(--yaycheckout-field-radius));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="default"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:last-child {
-	border-end-start-radius: var(--yaycheckout-field-radius);
-	border-end-end-radius: var(--yaycheckout-field-radius);
+	border-end-start-radius: var(--yaycheckout-shipping-radius, var(--yaycheckout-field-radius));
+	border-end-end-radius: var(--yaycheckout-shipping-radius, var(--yaycheckout-field-radius));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="default"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
 	z-index: 1;
 	border-color: var(--yaycheckout-primary-color, #3858e9);
+	background-color: var(--yaycheckout-shipping-bg-selected, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, transparent)));
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="default"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
+	background-color: var(--yaycheckout-shipping-bg-hover, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, transparent)));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="default"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option > label {
@@ -148,7 +154,7 @@
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="stacked"] .yaycheckout-shipping-methods__list {
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	gap: var(--yaycheckout-shipping-gap, 10px);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="stacked"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option {
@@ -157,13 +163,17 @@
 	align-items: center;
 	padding: 14px 16px;
 	border: 1.5px solid var(--yaycheckout-border-color);
-	border-radius: 12px;
-	background-color: var(--yaycheckout-color-background, #fff);
+	border-radius: var(--yaycheckout-shipping-radius, 12px);
+	background-color: var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="stacked"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
 	border-color: var(--yaycheckout-primary-color, #3858e9);
-	background-color: color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-color-background, #fff));
+	background-color: var(--yaycheckout-shipping-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff))));
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="stacked"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
+	background-color: var(--yaycheckout-shipping-bg-hover, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff)));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="stacked"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option > label {
@@ -185,7 +195,7 @@
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="columns"] .yaycheckout-shipping-methods__list {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-	gap: 10px;
+	gap: var(--yaycheckout-shipping-gap, 10px);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="columns"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option {
@@ -193,13 +203,17 @@
 	flex-wrap: wrap;
 	padding: 14px 16px;
 	border: 1.5px solid var(--yaycheckout-border-color);
-	border-radius: 12px;
-	background-color: var(--yaycheckout-color-background, #fff);
+	border-radius: var(--yaycheckout-shipping-radius, 12px);
+	background-color: var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="columns"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
 	border-color: var(--yaycheckout-primary-color, #3858e9);
-	background-color: color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-color-background, #fff));
+	background-color: var(--yaycheckout-shipping-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff))));
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="columns"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
+	background-color: var(--yaycheckout-shipping-bg-hover, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff)));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="columns"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option > label {
@@ -230,11 +244,11 @@
 	margin-top: auto;
 }
 
-/* Check: soft cards, same background always; select = border + check circle on the right. */
+/* Check: soft cards; select = border + check circle on the right. */
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="check"] .yaycheckout-shipping-methods__list {
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	gap: var(--yaycheckout-shipping-gap, 10px);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="check"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option {
@@ -243,12 +257,17 @@
 	align-items: center;
 	padding: 16px 18px;
 	border: 2px solid transparent;
-	border-radius: 16px;
-	background-color: color-mix(in srgb, currentColor 6%, var(--yaycheckout-color-background, #fff));
+	border-radius: var(--yaycheckout-shipping-radius, 16px);
+	background-color: var(--yaycheckout-shipping-bg, color-mix(in srgb, currentColor 6%, var(--yaycheckout-color-background, #fff)));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="check"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
 	border-color: var(--yaycheckout-primary-color, #3858e9);
+	background-color: var(--yaycheckout-shipping-bg-selected, var(--yaycheckout-shipping-bg, color-mix(in srgb, currentColor 6%, var(--yaycheckout-color-background, #fff))));
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="check"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
+	background-color: var(--yaycheckout-shipping-bg-hover, var(--yaycheckout-shipping-bg, color-mix(in srgb, currentColor 6%, var(--yaycheckout-color-background, #fff))));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="check"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option > label {
@@ -303,8 +322,16 @@
 	padding: 16px 0;
 	border: 0;
 	border-bottom: 1px solid currentColor;
-	background: transparent;
+	background-color: var(--yaycheckout-shipping-bg, transparent);
 	border-radius: 0;
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="divided"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
+	background-color: var(--yaycheckout-shipping-bg-selected, var(--yaycheckout-shipping-bg, transparent));
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="divided"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
+	background-color: var(--yaycheckout-shipping-bg-hover, var(--yaycheckout-shipping-bg, transparent));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="divided"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:last-child {
@@ -333,8 +360,8 @@
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="boxed"] .yaycheckout-shipping-methods__list {
 	overflow: hidden;
 	border: 1px solid var(--yaycheckout-border-color);
-	border-radius: 12px;
-	background-color: var(--yaycheckout-color-background, #fff);
+	border-radius: var(--yaycheckout-shipping-radius, 12px);
+	background-color: var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="boxed"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option {
@@ -353,7 +380,11 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="boxed"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
-	background-color: color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-color-background, #fff));
+	background-color: var(--yaycheckout-shipping-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff))));
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="boxed"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
+	background-color: var(--yaycheckout-shipping-bg-hover, transparent);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="boxed"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option > label {

@@ -14,11 +14,18 @@ $yaycheckout_label = isset( $attributes['label'] ) && is_string( $attributes['la
     ? $attributes['label']
     : __( 'Shipping methods', 'yaycheckout' );
 
+$yaycheckout_wrapper_base = [
+    'class'       => 'yaycheckout-shipping-methods',
+    'data-layout' => \YayCheckout\Renderer\CheckoutFragments::shipping_layout( $attributes ),
+];
+
+$yaycheckout_style = \YayCheckout\Renderer\CheckoutFragments::shipping_methods_style_attribute( $attributes );
+if ( '' !== $yaycheckout_style ) {
+    $yaycheckout_wrapper_base['style'] = $yaycheckout_style;
+}
+
 $yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
-    [
-        'class'       => 'yaycheckout-shipping-methods',
-        'data-layout' => \YayCheckout\Renderer\CheckoutFragments::shipping_layout( $attributes ),
-    ],
+    $yaycheckout_wrapper_base,
     $attributes,
     \YayCheckout\Renderer\CheckoutFragments::shipping_empty()
 );
