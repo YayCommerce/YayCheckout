@@ -23,6 +23,22 @@
     "buttonText": {
       "type": "string",
       "default": ""
+    },
+    "buttonBackgroundColor": {
+      "type": "string",
+      "default": ""
+    },
+    "buttonTextColor": {
+      "type": "string",
+      "default": ""
+    },
+    "collapseBehindLink": {
+      "type": "boolean",
+      "default": false
+    },
+    "revealText": {
+      "type": "string",
+      "default": ""
     }
   },
   "supports": {
@@ -56,7 +72,7 @@
     }
   },
   "editorScript": "file:./index.js",
-  "viewScript": "yaycheckout-coupon-form",
+  "viewScript": [ "yaycheckout-coupon-form", "file:./view.js" ],
   "editorStyle": "file:./index.css",
   "style": "file:./style-index.css",
   "render": "file:./render.php"

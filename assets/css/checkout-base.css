@@ -140,7 +140,7 @@ body.yaycheckout-page > .wp-site-blocks,
 	display: none;
 }
 
-/* The "+ Add …" link RevealLink::open() prints in place of a collapsed Field or Extra field. */
+/* The "+ Add …" link RevealLink::open() prints in place of a collapsed Field, Extra field or Coupon form. */
 .yaycheckout-checkout .yaycheckout-reveal-link {
 	background: none;
 	border: 0;

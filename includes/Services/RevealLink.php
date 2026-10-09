@@ -4,7 +4,7 @@ namespace YayCheckout\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The "+ Add …" link a Field or Extra field can hide behind until the shopper asks for it.
+ * The "+ Add …" link a Field, Extra field or Coupon form can hide behind until the shopper asks for it.
  * Pure: no storage, no hooks. packages/blocks/src/shared/reveal-link.tsx mirrors the rules.
  */
 class RevealLink {

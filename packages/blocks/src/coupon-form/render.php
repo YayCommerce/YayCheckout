@@ -34,8 +34,30 @@ $yaycheckout_button_text = \YayCheckout\Services\LayoutMarkupReader::plain_text(
 
 $yaycheckout_button_class = \YayCheckout\Helpers\ButtonClassHelper::classes( 'button' );
 
+// The block's own color supports paint the wrapper; these paint only Apply, over checkout-base.css's primary color.
+$yaycheckout_button_styles     = [];
+$yaycheckout_button_properties = [
+    'buttonBackgroundColor' => 'background-color',
+    'buttonTextColor'       => 'color',
+];
+
+foreach ( $yaycheckout_button_properties as $yaycheckout_attr => $yaycheckout_property ) {
+    if ( isset( $attributes[ $yaycheckout_attr ] ) && is_string( $attributes[ $yaycheckout_attr ] ) && '' !== $attributes[ $yaycheckout_attr ] ) {
+        $yaycheckout_button_styles[] = $yaycheckout_property . ':' . $attributes[ $yaycheckout_attr ];
+    }
+}
+
+$yaycheckout_button_style = safecss_filter_attr( implode( ';', $yaycheckout_button_styles ) );
+
+$yaycheckout_collapsed = \YayCheckout\Services\RevealLink::collapsed( $attributes, 'yaycheckout-coupon-code', false );
+
 ?>
 <div <?php echo \YayCheckout\Renderer\HideWhenEmpty::wrapper( [ 'class' => 'yaycheckout-coupon-form' ], $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+    <?php
+    if ( $yaycheckout_collapsed ) {
+        echo \YayCheckout\Services\RevealLink::open( 'yaycheckout-coupon-code', \YayCheckout\Services\RevealLink::text( $attributes, 'yaycheckout-coupon-code', __( 'Coupon code', 'yaycheckout' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
+    }
+    ?>
     <div class="yaycheckout-coupon-form__row">
         <label for="yaycheckout-coupon-code" class="screen-reader-text"><?php esc_html_e( 'Coupon:', 'yaycheckout' ); ?></label>
         <?php
@@ -43,7 +65,8 @@ $yaycheckout_button_class = \YayCheckout\Helpers\ButtonClassHelper::classes( 'bu
         // No input-text or form-row: inside the checkout form, WooCommerce's validate_field would claim the field and strip its error.
         ?>
         <input type="text" id="yaycheckout-coupon-code" class="yaycheckout-coupon-form__code" placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>" value="" />
-        <button type="button" class="<?php echo esc_attr( $yaycheckout_button_class ); ?> yaycheckout-coupon-form__apply"><?php echo esc_html( $yaycheckout_button_text ); ?></button>
+        <button type="button" class="<?php echo esc_attr( $yaycheckout_button_class ); ?> yaycheckout-coupon-form__apply"<?php echo '' !== $yaycheckout_button_style ? ' style="' . esc_attr( $yaycheckout_button_style ) . '"' : ''; ?>><?php echo esc_html( $yaycheckout_button_text ); ?></button>
     </div>
     <div class="yaycheckout-coupon-form__notices" aria-live="polite" data-error-text="<?php esc_attr_e( 'The coupon could not be applied. Please try again.', 'yaycheckout' ); ?>"></div>
+    <?php echo $yaycheckout_collapsed ? \YayCheckout\Services\RevealLink::close() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
 </div>

@@ -2,7 +2,7 @@
  * Opens a field that render.php printed behind its "+ Add …" link: on a click, when the field gets a
  * value (the login modal fills it through jQuery), or when the country's locale makes it required.
  * WooCommerce's locale script shows and hides the inner row, never our panel, so a locale that hides
- * the row hides the link too. Field and Extra field both load this; a link is bound once.
+ * the row hides the link too. Field, Extra field and Coupon form load this; a link is bound once.
  */
 
 import { jquery, type Control } from './jquery';
