@@ -252,10 +252,20 @@ class CheckoutFragments {
             return;
         }
 
-        $build = self::BLOCK_FRAGMENTS[ $block->name ][1];
+        $build   = self::BLOCK_FRAGMENTS[ $block->name ][1];
+        $wrapper = [];
+
+        if ( 'yaycheckout/order-summary-items' === $block->name ) {
+            // Block spacing is the gap between rows. The class sits on the wrapper because checkout.js replaces the root on every refresh.
+            $class = wp_unique_id( 'yaycheckout-order-summary-items-gap-' );
+
+            if ( BlockGap::add_rules( $block->attributes['style'] ?? [], $block->name, '.' . $class . ' > .' . self::ORDER_ITEMS_CLASS ) ) {
+                $wrapper['class'] = $class;
+            }
+        }
 
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
-        echo '<div ' . get_block_wrapper_attributes() . '>';
+        echo '<div ' . get_block_wrapper_attributes( $wrapper ) . '>';
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Same HTML Woo prints for review-order rows.
         echo self::$build( $block->attributes );
         echo '</div>';

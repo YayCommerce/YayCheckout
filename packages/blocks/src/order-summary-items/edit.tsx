@@ -1,6 +1,7 @@
-import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps, useSettings } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { blockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 import './editor.css';
 
 interface OrderSummaryItemsAttributes {
@@ -8,16 +9,20 @@ interface OrderSummaryItemsAttributes {
 	productLabel?: string;
 	subtotalLabel?: string;
 	showThumbnails: boolean;
+	style?: BlockGapStyles;
 }
 
 interface EditProps {
 	attributes: OrderSummaryItemsAttributes;
 	setAttributes: ( attributes: Partial< OrderSummaryItemsAttributes > ) => void;
+	clientId: string;
 }
 
 // Mirrors CheckoutFragments::order_items_html(), so the block's style.css draws it as on the storefront.
-export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { showLabels, productLabel, subtotalLabel, showThumbnails } = attributes;
+export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
+	const { showLabels, productLabel, subtotalLabel, showThumbnails, style } = attributes;
+	const [ viewport ] = useSettings( 'viewport' );
+	const css = blockGapCSS( `#block-${ clientId } > .yaycheckout-order-summary-items`, style, viewport );
 	const productPlaceholder = __( 'Product', 'yaycheckout' );
 	const subtotalPlaceholder = __( 'Subtotal', 'yaycheckout' );
 
@@ -54,6 +59,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...useBlockProps() }>
+				{ css && <style>{ css }</style> }
 				<div className="yaycheckout-order-summary-items">
 					{ showLabels && (
 						<div className="yaycheckout-order-summary-items__header">
