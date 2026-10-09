@@ -1,7 +1,8 @@
 import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { BaseControl, Button, Flex, FlexBlock, Notice, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
-import { useSelect } from '@wordpress/data';
+import { useDispatch, useSelect } from '@wordpress/data';
+import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { EXTRA_FIELD_KEY_CONTROL_CLASS, EXTRA_FIELD_KEY_PATTERN, extraFieldKeys } from '../shared/extra-field-keys';
 import { FieldPreview, type FieldOption } from '../shared/field-preview';
@@ -43,6 +44,11 @@ function emptyOption(): FieldOption {
 	return { label: '', value: '' };
 }
 
+/** A Key that passes EXTRA_FIELD_KEY_PATTERN, e.g. field_k3x9qa. */
+function randomFieldKey(): string {
+	return `field_${ Math.random().toString( 36 ).slice( 2, 8 ).padEnd( 6, '0' ) }`;
+}
+
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const {
 		fieldKey,
@@ -58,6 +64,17 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		revealText = '',
 		rememberValue = false,
 	} = attributes;
+	const { __unstableMarkNextChangeAsNotPersistent: markNotPersistent } = useDispatch( blockEditorStore );
+
+	// A block with neither Key nor Label was just inserted: give it both, so it is publishable at once.
+	useEffect( () => {
+		if ( fieldKey === '' && label === '' ) {
+			// Part of inserting the block, not an edit the author should undo back to keyless.
+			markNotPersistent();
+			setAttributes( { fieldKey: randomFieldKey(), label: __( 'Extra field', 'yaycheckout' ) } );
+		}
+	}, [] );
+
 	const blockProps = useBlockProps( { className: 'yaycheckout-extra-field' } );
 	const labelPlaceholder = fieldKey || __( 'Extra field', 'yaycheckout' );
 	const collapsed = isCollapsed( fieldKey.trim(), required, collapseBehindLink );
