@@ -17,6 +17,8 @@ export type EditorDesignData = {
 	tokens: DesignTokens;
 	schema: Record< string, Record< string, TokenRule > >;
 	font_families: Record< string, string >;
+	/** The admin SPA's Design page, for the editor opened outside the SPA. */
+	page_url: string;
 };
 
 type EditorData = { isPro: boolean; postType: string; upgradeUrl: string; design?: EditorDesignData };

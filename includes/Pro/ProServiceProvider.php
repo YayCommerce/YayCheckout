@@ -33,12 +33,13 @@ class ProServiceProvider {
         add_filter( 'yaycheckout_editor_data', [ $this, 'editor_data' ] );
     }
 
-    /** Adds `design` for the layout editor's Design sidebar: global tokens, the token rules and the font labels, so the bundle copies none of them. */
+    /** Adds `design` for the layout editor's Design sidebar: global tokens, the token rules, the font labels and the Design page's URL, so the bundle copies none of them. */
     public function editor_data( array $data ): array {
         $data['design'] = [
             'tokens'        => ( new DesignRepository() )->get()->tokens,
             'schema'        => Design::schema(),
             'font_families' => Design::FONT_FAMILIES,
+            'page_url'      => admin_url( 'admin.php?page=yaycheckout#/design' ),
         ];
 
         return $data;
@@ -88,6 +89,21 @@ class ProServiceProvider {
 
         if ( $layer instanceof \WP_Error ) {
             return new \WP_Error( 'invalid_arguments', $layer->get_error_message(), [ 'status' => 400 ] );
+        }
+
+        // Each CSS passes on its own, but the storefront prints them as one, under the same limit.
+        $global = ( new DesignRepository() )->get();
+
+        if ( isset( $layer['custom_css'] ) && $global->with_layer( $layer )->custom_css === $global->custom_css ) {
+            return new \WP_Error(
+                'invalid_arguments',
+                sprintf(
+                    /* translators: %d: size limit in KB */
+                    __( 'This layout\'s custom CSS and the global custom CSS together must be under %d KB.', 'yaycheckout' ),
+                    (int) ( Design::CUSTOM_CSS_MAX_BYTES / 1000 )
+                ),
+                [ 'status' => 400 ]
+            );
         }
 
         return $prepared_post;

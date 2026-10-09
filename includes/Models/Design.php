@@ -260,7 +260,10 @@ class Design {
         return self::project_layer( $input );
     }
 
-    /** This design with a layout's layer on top: each layer section replaces the global one whole, and layer CSS prints after global CSS. */
+    /**
+     * This design with a layout's layer on top: each layer section replaces the global one whole, and layer CSS
+     * prints after global CSS, unless the two together pass CUSTOM_CSS_MAX_BYTES, when global CSS alone is kept.
+     */
     public function with_layer( array $layer ): self {
         $design = clone $this;
 
@@ -269,7 +272,12 @@ class Design {
         }
 
         if ( isset( $layer['custom_css'] ) ) {
-            $design->custom_css = '' === $design->custom_css ? $layer['custom_css'] : $design->custom_css . "\n" . $layer['custom_css'];
+            $css = '' === $design->custom_css ? $layer['custom_css'] : $design->custom_css . "\n" . $layer['custom_css'];
+
+            // Over the size limit together (global CSS grew after the layer was saved), printing would drop both: keep global.
+            if ( ! self::sanitize_custom_css( $css ) instanceof \WP_Error ) {
+                $design->custom_css = $css;
+            }
         }
 
         return $design;

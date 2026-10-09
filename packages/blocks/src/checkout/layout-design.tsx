@@ -330,7 +330,10 @@ function RootScreen( { layer, effective, isDirty, onOpen }: { layer: Layer; effe
 	const [ isLeaving, setLeaving ] = useState( false );
 	const vars = designVars( effective );
 	const goToGlobal = () => {
-		( window.top ?? window ).location.hash = '#/design';
+		// href, not hash: WordPress 7 isolates the block editor (Document-Isolation-Policy), so the SPA around the
+		// embedded editor is cross-origin to it, and href is the one Location setter allowed across origins.
+		// Inside the SPA only the hash differs, so it routes without a reload; on a plain post.php it opens the SPA.
+		( window.top ?? window ).location.href = DESIGN?.page_url ?? '';
 	};
 	const row = ( section: string, state: string ) => (
 		<Button key={ section } __next40pxDefaultSize className="yaycheckout-layout-design__row" onClick={ () => onOpen( section ) }>
