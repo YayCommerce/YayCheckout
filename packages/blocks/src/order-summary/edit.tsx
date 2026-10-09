@@ -1,7 +1,6 @@
 import { InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import fieldValueMeta from '../field-value/block.json';
 import itemsMeta from '../order-summary-items/block.json';
 import totalsMeta from '../order-summary-totals/block.json';
 import { isCheckoutSection, useBlocksAllowedExcept } from '../shared/allowed-blocks';
@@ -19,15 +18,11 @@ interface EditProps {
 // templates/default-layout.php seeds the same children; change both.
 const TEMPLATE: [ string ][] = [ [ itemsMeta.name ], [ totalsMeta.name ] ];
 
-// Field Value recaps the shopper's entries here, though Billing and Shipping keep it out.
-const isExcluded = ( type: { name: string; ancestor?: string[] } ) =>
-	type.name !== fieldValueMeta.name && isCheckoutSection( type );
-
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-order-summary' } );
 	const heading = label || __( 'Your order', 'yaycheckout' );
-	const allowedBlocks = useBlocksAllowedExcept( isExcluded );
+	const allowedBlocks = useBlocksAllowedExcept( isCheckoutSection );
 	const { children, ...innerBlocksProps } = useInnerBlocksProps( blockProps, {
 		allowedBlocks,
 		template: TEMPLATE,

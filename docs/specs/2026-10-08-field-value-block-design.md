@@ -109,6 +109,15 @@ Review of PR #62 changed the field source and the label. Where this section and 
 - Labels are tags-stripped then entity-decoded in the editor too, as `LayoutMarkupReader::plain_text()` does on the server.
 - Extra fields stay out of scope.
 
+## Revision 2 (2026-10-09)
+
+Three corrections. Where this section and the rest of the doc (the first revision included) disagree, this section wins.
+
+- **Placed anywhere in the layout.** `block.json` has no `ancestor`, as Progress, so `isCheckoutSection()` no longer matches it: it is insertable outside Checkout and inside Billing, Shipping, Steps and Order Summary. Order Summary's Field Value exception is gone.
+- **No label.** `showLabel` and its label element are removed; the fields' labels serve only as the default placeholder. Headings come from other blocks.
+- **Several fields per block.** `fieldKey` becomes `fieldKeys` (string array, default `[]`, ordered) plus `separator` (string, default `", "`, printed verbatim). The value is the non-empty values joined by the separator (empty ones skipped); the default placeholder is every field's label joined by the separator. The value element carries `data-field-keys`, `data-separator` and `data-labels` (server labels, the fallback when the form shows none). In the editor, fields are picked with a `FormTokenField` multi-select (each shown as `Label (Billing|Shipping)`), in the order added; a field that leaves the layout is dropped from the list. The block is not on `dev/edd` yet, so there is no deprecation for `fieldKey`.
+- **Hide when empty.** Field Value is watchable (`yaycheckoutWatchable`, `blockId`), so a Group, Columns or Column holding it can hide while it is empty, i.e. while every field it shows is empty. `render.php` marks the first paint through `HideWhenEmpty::wrapper()`; `view.ts` moves `data-yaycheckout-empty` as values come and go and fires `HideWhenEmpty::REFRESH_EVENT`, which `checkout-hide-when-empty.js` re-checks on. The block itself still shows its placeholder when not hidden by a container.
+
 ## Alternatives considered
 
 | Option | Why rejected |

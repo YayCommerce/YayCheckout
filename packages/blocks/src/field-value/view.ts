@@ -1,5 +1,5 @@
 /**
- * Keeps each Field Value block in step with the form field it names, on every keystroke or pick.
+ * Keeps each Field Value block in step with the form fields it names, on every keystroke or pick.
  * select2 and WooCommerce's country-select.js fire change through jQuery only, so the listener is jQuery's.
  * Every block re-syncs on each event: a country change also changes what its state field shows, and
  * WooCommerce's address-i18n.js relabels fields for the country, so the label is read from the form too.
@@ -7,7 +7,11 @@
 
 import { jquery, type Control } from '../shared/jquery';
 
-const VALUE = '.yaycheckout-field-value__value[data-field-key]';
+const VALUE = '.yaycheckout-field-value__value[data-field-keys]';
+
+/** Mirrors HideWhenEmpty::EMPTY_ATTR and HideWhenEmpty::REFRESH_EVENT in PHP. */
+const EMPTY_ATTR = 'data-yaycheckout-empty';
+const REFRESH_EVENT = 'yaycheckout_hide_when_empty_refresh';
 
 function control( key: string ): Control | null {
 	return document.querySelector( 'form.checkout' )?.querySelector< Control >( `[name="${ key }"]` ) ?? null;
@@ -35,23 +39,47 @@ function formLabel( key: string ): string {
 	return label?.textContent?.replace( /\u00a0/g, ' ' ).trim() ?? '';
 }
 
+/** A JSON array of strings from a data attribute render.php printed; anything else reads as empty. */
+function strings( json: string | undefined ): string[] {
+	try {
+		const parsed: unknown = JSON.parse( json ?? '[]' );
+
+		return Array.isArray( parsed ) ? parsed.map( String ) : [];
+	} catch {
+		return [];
+	}
+}
+
 function sync(): void {
+	let changed = false;
+
 	document.querySelectorAll< HTMLElement >( VALUE ).forEach( ( element ) => {
-		const key = element.dataset.fieldKey ?? '';
-		const value = text( control( key ) );
-		const label = formLabel( key );
-		const labelElement = element.parentElement?.querySelector( '.yaycheckout-field-value__label' );
-
-		if ( labelElement && label !== '' ) {
-			labelElement.textContent = label;
-		}
-
-		// render.php sets data-placeholder only for a typed placeholder; otherwise the label stands in.
-		const placeholder = element.dataset.placeholder || label || ( labelElement?.textContent ?? '' );
-
-		element.textContent = value !== '' ? value : placeholder;
+		const keys = strings( element.dataset.fieldKeys );
+		const serverLabels = strings( element.dataset.labels );
+		const separator = element.dataset.separator ?? ', ';
+		// Empty values are skipped, as render.php does, so a half-filled block shows no dangling separator.
+		const value = keys
+			.map( ( key ) => text( control( key ) ) )
+			.filter( ( part ) => part !== '' )
+			.join( separator );
+		const label = keys.map( ( key, index ) => formLabel( key ) || serverLabels[ index ] || key ).join( separator );
+		// render.php sets data-placeholder only for a typed placeholder; otherwise the labels stand in.
+		element.textContent = value !== '' ? value : element.dataset.placeholder || label;
 		element.classList.toggle( 'is-empty', value === '' );
+
+		// The wrapper's Hide when empty marker, which HideWhenEmpty::wrapper() printed for the first paint.
+		const wrapper = element.parentElement;
+
+		if ( wrapper?.hasAttribute( 'data-yaycheckout-block-id' ) && wrapper.hasAttribute( EMPTY_ATTR ) !== ( value === '' ) ) {
+			wrapper.toggleAttribute( EMPTY_ATTR, value === '' );
+			changed = true;
+		}
 	} );
+
+	// A container watching this block re-checks only on WooCommerce's events, so tell it a value came or went.
+	if ( changed ) {
+		jquery( document.body )?.trigger( REFRESH_EVENT );
+	}
 }
 
 function init(): void {

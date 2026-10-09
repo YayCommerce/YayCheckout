@@ -4,32 +4,39 @@
   "name": "yaycheckout/field-value",
   "title": "Field Value",
   "category": "yaycheckout",
-  "description": "Shows what the shopper entered in one checkout field.",
+  "description": "Shows what the shopper entered in one or more checkout fields.",
   "textdomain": "yaycheckout",
   "keywords": [ "summary", "recap", "address" ],
   "example": {
     "attributes": {
-      "fieldKey": "billing_email"
+      "fieldKeys": [ "billing_email" ]
     }
   },
-  "ancestor": [ "yaycheckout/checkout" ],
   "attributes": {
-    "fieldKey": {
+    "blockId": {
       "type": "string",
       "default": ""
+    },
+    "fieldKeys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "separator": {
+      "type": "string",
+      "default": ", "
     },
     "placeholder": {
       "type": "string",
       "default": ""
-    },
-    "showLabel": {
-      "type": "boolean",
-      "default": false
     }
   },
   "supports": {
     "html": false,
     "reusable": false,
+    "yaycheckoutWatchable": true,
     "color": {
       "text": true,
       "background": true

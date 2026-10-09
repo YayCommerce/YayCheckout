@@ -102,6 +102,8 @@ function HideWhenEmptyPanel( { clientId, attributes, setAttributes }: PanelProps
 
 					if ( attrs.fieldKey ) {
 						detail = fieldLabel ? `${ fieldLabel } (${ attrs.fieldKey })` : String( attrs.fieldKey );
+					} else if ( Array.isArray( attrs.fieldKeys ) ) {
+						detail = attrs.fieldKeys.join( ', ' );
 					}
 
 					return {
