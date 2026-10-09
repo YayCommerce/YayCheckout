@@ -3,6 +3,7 @@ import { Notice } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import orderNoteMeta from '../order-note/block.json';
+import { ORDER_NOTE_LABEL, ORDER_NOTE_PLACEHOLDER } from '../order-note/defaults';
 import { FieldPreview } from '../shared/field-preview';
 
 /**
@@ -20,9 +21,9 @@ export default function Edit() {
 		<div { ...blockProps }>
 			{ ! hasOrderNote && (
 				<FieldPreview
-					label={ __( 'Order notes', 'yaycheckout' ) }
+					label={ ORDER_NOTE_LABEL }
 					type="textarea"
-					placeholder={ __( 'Notes about your order, e.g. special notes for delivery.', 'yaycheckout' ) }
+					placeholder={ ORDER_NOTE_PLACEHOLDER }
 				/>
 			) }
 			<Notice status="info" isDismissible={ false }>

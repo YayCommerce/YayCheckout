@@ -4,7 +4,7 @@ namespace YayCheckout\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * How a Field, Extra field or Coupon form hides until the shopper asks for it: behind a one-way
+ * How a Field, Extra field, Order note or Coupon form hides until the shopper asks for it: behind a one-way
  * "+ Add …" link, in a section a header opens and closes, or behind a checkbox that shows it while ticked.
  * Pure: no storage, no hooks. packages/blocks/src/shared/disclosure.tsx mirrors the rules.
  */

@@ -18,7 +18,7 @@ if ( ! function_exists( 'WC' ) ) {
 $yaycheckout_checkout = WC()->checkout();
 $yaycheckout_layout   = \YayCheckout\Renderer\CheckoutPage::get_instance()->layout();
 // The Order note block prints order_comments; printing it twice would post the name twice.
-$yaycheckout_skip_note = null !== $yaycheckout_layout && null !== \YayCheckout\Services\LayoutMarkupReader::order_note( $yaycheckout_layout->content );
+$yaycheckout_skip_note = null !== $yaycheckout_layout && \YayCheckout\Services\LayoutMarkupReader::has_order_note( $yaycheckout_layout->content );
 
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-additional-fields woocommerce-additional-fields' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
@@ -33,7 +33,7 @@ $yaycheckout_skip_note = null !== $yaycheckout_layout && null !== \YayCheckout\S
         <div class="woocommerce-additional-fields__field-wrapper">
             <?php foreach ( $yaycheckout_checkout->get_checkout_fields( 'order' ) as $yaycheckout_key => $yaycheckout_field ) : ?>
                 <?php
-                if ( $yaycheckout_skip_note && 'order_comments' === $yaycheckout_key ) {
+                if ( $yaycheckout_skip_note && \YayCheckout\Services\LayoutMarkupReader::ORDER_NOTE_KEY === $yaycheckout_key ) {
                     continue;
                 }
 

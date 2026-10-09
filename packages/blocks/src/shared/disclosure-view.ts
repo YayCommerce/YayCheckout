@@ -4,7 +4,7 @@
  * A link opens its field for good and disappears; a collapsible header or a checkbox stays and closes
  * it again, until a locale makes the field required, which opens it and hides the header or checkbox.
  * WooCommerce's locale script shows and hides the inner row, never our panel, so a locale that hides
- * the row hides the toggle too. Field, Extra field and Coupon form load this; a toggle is bound once.
+ * the row hides the toggle too. Field, Extra field, Order note and Coupon form load this; a toggle is bound once.
  */
 
 import { jquery, type Control } from './jquery';

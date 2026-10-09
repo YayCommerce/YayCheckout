@@ -51,25 +51,19 @@ class RequiredFieldOverlay {
             return $fields;
         }
 
-        $label = self::filled( $note, 'label', '' );
+        $fields['order'] = isset( $fields['order'] ) && is_array( $fields['order'] ) ? $fields['order'] : [];
+        $field           = $fields['order'][ LayoutMarkupReader::ORDER_NOTE_KEY ] ?? null;
 
-        if ( ! isset( $fields['order'] ) || ! is_array( $fields['order'] ) ) {
-            $fields['order'] = [];
+        if ( ! is_array( $field ) ) {
+            $fields['order'][ LayoutMarkupReader::ORDER_NOTE_KEY ] = self::restore_missing_field( LayoutMarkupReader::ORDER_NOTE_KEY, $note ) + [ 'class' => [ 'notes' ] ];
+
+            return $fields;
         }
 
-        if ( ! isset( $fields['order']['order_comments'] ) || ! is_array( $fields['order']['order_comments'] ) ) {
-            $fields['order']['order_comments'] = [
-                'type'  => 'textarea',
-                'class' => [ 'notes' ],
-                'label' => '' !== $label ? $label : 'order_comments',
-            ];
-        }
+        $field['required'] = self::is_required( LayoutMarkupReader::ORDER_NOTE_KEY, $note, $field );
+        $field['label']    = self::filled( $note, 'label', $field['label'] ?? LayoutMarkupReader::ORDER_NOTE_KEY );
 
-        $fields['order']['order_comments']['required'] = ! empty( $note['required'] );
-
-        if ( '' !== $label ) {
-            $fields['order']['order_comments']['label'] = $label;
-        }
+        $fields['order'][ LayoutMarkupReader::ORDER_NOTE_KEY ] = $field;
 
         return $fields;
     }

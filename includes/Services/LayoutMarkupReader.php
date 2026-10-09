@@ -25,6 +25,9 @@ class LayoutMarkupReader {
      */
     public const EXTRA_FIELD_KEY_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9_]*$/';
 
+    /** WooCommerce's posted name for the order note, which the Order note block prints. */
+    public const ORDER_NOTE_KEY = 'order_comments';
+
     /** Section block => slot name it occupies. */
     private const SECTION_SLOTS = [
         self::EMAIL                    => 'email',
@@ -88,15 +91,8 @@ class LayoutMarkupReader {
                 continue;
             }
 
-            $fields[ $key ] = [
-                'fieldKey'     => $key,
-                'type'         => self::text( $attrs, 'type', 'text' ),
-                'label'        => self::plain_text( $attrs, 'label' ),
-                'placeholder'  => self::text( $attrs, 'placeholder' ),
+            $fields[ $key ] = self::field_entry( $key, self::text( $attrs, 'type', 'text' ), $attrs ) + [
                 'description'  => self::text( $attrs, 'description' ),
-                'required'     => ! empty( $attrs['required'] ),
-                'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
-                'optionalText' => trim( self::text( $attrs, 'optionalText' ) ),
                 'enabled'      => true,
                 'autocomplete' => self::text( $attrs, 'autocomplete' ),
                 'validate'     => isset( $attrs['validate'] ) && is_array( $attrs['validate'] ) ? array_values( array_map( 'strval', $attrs['validate'] ) ) : [],
@@ -124,16 +120,9 @@ class LayoutMarkupReader {
             }
 
             $attrs          = $block['attrs'];
-            $fields[ $key ] = [
-                'fieldKey'     => $key,
-                'type'         => self::text( $attrs, 'type', 'text' ),
-                'label'        => self::plain_text( $attrs, 'label' ),
-                'placeholder'  => self::text( $attrs, 'placeholder' ),
-                'required'     => ! empty( $attrs['required'] ),
-                'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
-                'optionalText' => trim( self::text( $attrs, 'optionalText' ) ),
-                'options'      => self::options( $attrs['options'] ?? [] ),
-                'remember'     => ! empty( $attrs['rememberValue'] ),
+            $fields[ $key ] = self::field_entry( $key, self::text( $attrs, 'type', 'text' ), $attrs ) + [
+                'options'  => self::options( $attrs['options'] ?? [] ),
+                'remember' => ! empty( $attrs['rememberValue'] ),
             ];
         }
 
@@ -141,8 +130,8 @@ class LayoutMarkupReader {
     }
 
     /**
-     * The Order note block as a field entry for WooCommerce's order_comments, in the shape
-     * fields() returns; null when the layout has none. The block allows one, so the first wins.
+     * The Order note block as a field entry for WooCommerce's order_comments, with the keys of
+     * fields()' entries that a note has; null when the layout has none. The block allows one, so the first wins.
      *
      * @return array<string, mixed>|null
      */
@@ -152,21 +141,34 @@ class LayoutMarkupReader {
                 continue;
             }
 
-            $attrs = $block['attrs'];
-
-            return [
-                'fieldKey'     => 'order_comments',
-                'type'         => 'textarea',
-                'label'        => self::plain_text( $attrs, 'label' ),
-                'placeholder'  => self::text( $attrs, 'placeholder' ),
-                'description'  => self::text( $attrs, 'description' ),
-                'required'     => ! empty( $attrs['required'] ),
-                'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
-                'optionalText' => trim( self::text( $attrs, 'optionalText' ) ),
+            return self::field_entry( self::ORDER_NOTE_KEY, 'textarea', $block['attrs'] ) + [
+                'description' => self::text( $block['attrs'], 'description' ),
             ];
         }
 
         return null;
+    }
+
+    /** Whether the layout has an Order note block, without parsing it. */
+    public static function has_order_note( string $markup ): bool {
+        return has_block( self::ORDER_NOTE, $markup );
+    }
+
+    /**
+     * The entry keys every field reader shares: what the shopper sees and whether it is required.
+     *
+     * @param array $attrs Raw block attributes.
+     */
+    private static function field_entry( string $key, string $type, array $attrs ): array {
+        return [
+            'fieldKey'     => $key,
+            'type'         => $type,
+            'label'        => self::plain_text( $attrs, 'label' ),
+            'placeholder'  => self::text( $attrs, 'placeholder' ),
+            'required'     => ! empty( $attrs['required'] ),
+            'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
+            'optionalText' => trim( self::text( $attrs, 'optionalText' ) ),
+        ];
     }
 
     /**

@@ -28,7 +28,7 @@ class CheckoutRequiredFields {
 
     private const SCRIPT_HANDLE = 'yaycheckout-field-requirements';
 
-    /** @var array{address: array, all: array}|null|false False until first read; null when standing down. */
+    /** @var array{address: array, all: array, order_note: array|null}|null|false False until first read; null when standing down. */
     private $fields = false;
 
     protected function __construct() {
@@ -136,7 +136,7 @@ class CheckoutRequiredFields {
         $all = array_replace( $address, LayoutMarkupReader::extra_fields( $layout->content ) );
 
         if ( null !== $order_note ) {
-            $all = array_replace( $all, [ 'order_comments' => $order_note ] );
+            $all[ LayoutMarkupReader::ORDER_NOTE_KEY ] = $order_note;
         }
 
         $this->fields = [

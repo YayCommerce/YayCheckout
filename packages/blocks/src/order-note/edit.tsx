@@ -5,9 +5,7 @@ import { __ } from '@wordpress/i18n';
 import { FieldPreview } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
 import { DisclosureControls, DisclosurePreview, defaultDisclosureText, disclosureMode, type DisclosureMode } from '../shared/disclosure';
-
-// The note's fixed WooCommerce key; render.php prints the same.
-const FIELD_KEY = 'order_comments';
+import { ORDER_NOTE_KEY, ORDER_NOTE_LABEL, ORDER_NOTE_PLACEHOLDER } from './defaults';
 
 interface OrderNoteAttributes {
 	label: string;
@@ -38,8 +36,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		disclosureText = '',
 	} = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-order-note' } );
-	const labelPlaceholder = __( 'Order notes', 'yaycheckout' );
-	const mode = disclosureMode( FIELD_KEY, required, disclosure );
+	const labelPlaceholder = ORDER_NOTE_LABEL;
+	const mode = disclosureMode( ORDER_NOTE_KEY, required, disclosure );
 
 	return (
 		<>
@@ -70,7 +68,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
 					/>
 					<DisclosureControls
-						fieldKey={ FIELD_KEY }
+						fieldKey={ ORDER_NOTE_KEY }
 						label={ label || labelPlaceholder }
 						required={ required }
 						disclosure={ disclosure }
@@ -82,7 +80,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			<div { ...blockProps }>
 				<DisclosurePreview
 					mode={ mode }
-					text={ disclosureText || defaultDisclosureText( FIELD_KEY, label || labelPlaceholder, mode ) }
+					text={ disclosureText || defaultDisclosureText( ORDER_NOTE_KEY, label || labelPlaceholder, mode ) }
 				>
 					<FieldPreview
 						label={ label }
@@ -92,9 +90,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						required={ required }
 						requiredMark={ requiredMark }
 						optionalText={ optionalText }
-						placeholder={
-							placeholder || __( 'Notes about your order, e.g. special notes for delivery.', 'yaycheckout' )
-						}
+						placeholder={ placeholder || ORDER_NOTE_PLACEHOLDER }
 						description={ description }
 						inheritLabelFont
 					/>
