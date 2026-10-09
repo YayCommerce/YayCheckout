@@ -38,6 +38,11 @@
     "showShortDescription": {
       "type": "boolean",
       "default": false
+    },
+    "quantityDisplay": {
+      "type": "string",
+      "enum": [ "inline", "badge" ],
+      "default": "inline"
     }
   },
   "supports": {

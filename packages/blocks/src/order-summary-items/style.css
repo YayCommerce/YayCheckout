@@ -82,3 +82,33 @@
 .yaycheckout-order-summary-items--item-data-inline dl.variation dd:not(:last-child) > p:last-child::after {
 	content: ",";
 }
+
+.yaycheckout-order-summary-items__badge {
+	position: absolute;
+	inset-block-start: -6px;
+	inset-inline-end: -6px;
+	box-sizing: border-box;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 6px;
+	border-radius: 10px;
+	background: color-mix(in srgb, currentColor 70%, transparent);
+	font-size: 12px;
+	line-height: 20px;
+	text-align: center;
+}
+
+.yaycheckout-order-summary-items__badge > [aria-hidden] {
+	color: #fff;
+}
+
+/* The same declarations as WordPress's .screen-reader-text, which not every theme defines. */
+.yaycheckout-order-summary-items__badge .screen-reader-text {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}

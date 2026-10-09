@@ -13,6 +13,7 @@ interface OrderSummaryItemsAttributes {
 	showSku: boolean;
 	showUnitPrice: boolean;
 	showShortDescription: boolean;
+	quantityDisplay: 'inline' | 'badge';
 	style?: BlockGapStyles;
 }
 
@@ -33,8 +34,11 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		showSku,
 		showUnitPrice,
 		showShortDescription,
+		quantityDisplay,
 		style,
 	} = attributes;
+	// As order_items_html(): a badge needs a thumbnail to sit on.
+	const badge = quantityDisplay === 'badge' && showThumbnails;
 	const [ viewport ] = useSettings( 'viewport' );
 	const css = blockGapCSS( `#block-${ clientId } > .yaycheckout-order-summary-items`, style, viewport );
 	const productPlaceholder = __( 'Product', 'yaycheckout' );
@@ -95,6 +99,22 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						checked={ showShortDescription }
 						onChange={ ( value ) => setAttributes( { showShortDescription: value } ) }
 					/>
+					<SelectControl
+						label={ __( 'Quantity', 'yaycheckout' ) }
+						value={ quantityDisplay }
+						options={ [
+							{ label: __( 'Inline', 'yaycheckout' ), value: 'inline' },
+							{ label: __( 'Badge', 'yaycheckout' ), value: 'badge' },
+						] }
+						help={
+							quantityDisplay === 'badge' && ! showThumbnails
+								? __( 'Shown inline while thumbnails are off.', 'yaycheckout' )
+								: undefined
+						}
+						onChange={ ( value ) =>
+							setAttributes( { quantityDisplay: value as OrderSummaryItemsAttributes[ 'quantityDisplay' ] } )
+						}
+					/>
 				</PanelBody>
 			</InspectorControls>
 			<div { ...useBlockProps() }>
@@ -116,11 +136,16 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						{ showThumbnails && (
 							<div className="product-thumbnail">
 								<div className="yaycheckout-order-summary-items__placeholder" />
+								{ badge && (
+									<span className="yaycheckout-order-summary-items__badge">
+										<span aria-hidden="true">1</span>
+									</span>
+								) }
 							</div>
 						) }
 						<div className="product-name">
 							{ __( 'Sample product', 'yaycheckout' ) }&nbsp;
-							<strong className="product-quantity">×&nbsp;1</strong>
+							{ ! badge && <strong className="product-quantity">×&nbsp;1</strong> }
 							{ itemData !== 'hidden' && (
 								<dl className="variation">
 									<dt>{ __( 'Color:', 'yaycheckout' ) }</dt>

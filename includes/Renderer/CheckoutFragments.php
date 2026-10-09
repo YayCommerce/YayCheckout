@@ -275,7 +275,7 @@ class CheckoutFragments {
      * The Items block's attributes with their defaults. During AJAX they come from the parsed
      * layout, where an untouched attribute is missing, so each default matches block.json's.
      *
-     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool}
+     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string}
      */
     public static function order_items_options( array $attributes ): array {
         $bool = static function ( string $name, bool $fallback ) use ( $attributes ): bool {
@@ -297,6 +297,7 @@ class CheckoutFragments {
             'show_sku'               => $bool( 'showSku', false ),
             'show_unit_price'        => $bool( 'showUnitPrice', false ),
             'show_short_description' => $bool( 'showShortDescription', false ),
+            'quantity_display'       => $choice( 'quantityDisplay', [ 'inline', 'badge' ] ),
         ];
     }
 
@@ -312,7 +313,9 @@ class CheckoutFragments {
         }
 
         $options = self::order_items_options( $attributes );
-        $root    = self::ORDER_ITEMS_CLASS . ( 'inline' === $options['item_data'] ? ' ' . self::ORDER_ITEMS_CLASS . '--item-data-inline' : '' );
+        // A badge sits on the thumbnail; without one, the quantity shows inline rather than vanish.
+        $badge = 'badge' === $options['quantity_display'] && $options['show_thumbnails'];
+        $root  = self::ORDER_ITEMS_CLASS . ( 'inline' === $options['item_data'] ? ' ' . self::ORDER_ITEMS_CLASS . '--item-data-inline' : '' );
 
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hooks and filters.
         ob_start();
@@ -339,11 +342,21 @@ class CheckoutFragments {
             <?php if ( $options['show_thumbnails'] ) : ?>
         <div class="product-thumbnail">
                 <?php echo apply_filters( 'woocommerce_cart_item_thumbnail', $product->get_image(), $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered image HTML, as cart/cart.php prints it. ?>
+                <?php if ( $badge ) : ?>
+            <span class="<?php echo esc_attr( self::ORDER_ITEMS_CLASS . '__badge' ); ?>"><span aria-hidden="true"><?php echo esc_html( $cart_item['quantity'] ); ?></span><span class="screen-reader-text">
+                    <?php
+                    /* translators: %s: quantity */
+                    echo esc_html( sprintf( __( 'Quantity: %s', 'yaycheckout' ), $cart_item['quantity'] ) );
+                    ?>
+            </span></span>
+                <?php endif; ?>
         </div>
             <?php endif; ?>
         <div class="product-name">
             <?php echo wp_kses_post( apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key ) ) . '&nbsp;'; ?>
-            <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered HTML. ?>
+            <?php if ( ! $badge ) : ?>
+                <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered HTML. ?>
+            <?php endif; ?>
             <?php
             if ( 'hidden' !== $options['item_data'] ) {
                 echo wc_get_formatted_cart_item_data( $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo escapes item data.
