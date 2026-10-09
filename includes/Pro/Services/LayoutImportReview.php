@@ -19,7 +19,8 @@ class LayoutImportReview {
     public const RULES_NONE     = 'none';
 
     /**
-     * @return array { title, content, rules } rules as the file holds them, unchecked; see rules_from_file().
+     * @return array { title, content, rules, design } rules and design as the file holds them, unchecked;
+     *               see rules_from_file() and Design::project_layer().
      * @throws \InvalidArgumentException When the file is not an export or has no Checkout block.
      */
     public static function from_envelope( array $envelope ): array {
@@ -63,7 +64,7 @@ class LayoutImportReview {
     }
 
     /**
-     * @return array { title, content, rules }
+     * @return array { title, content, rules, design }
      * @throws \InvalidArgumentException When the envelope is not a YayCheckout export.
      */
     private static function layout( array $envelope ): array {
@@ -82,6 +83,7 @@ class LayoutImportReview {
             'title'   => $layout['title'],
             'content' => $layout['content'],
             'rules'   => $layout['rules'] ?? null,
+            'design'  => $layout['design'] ?? null,
         ];
     }
 }

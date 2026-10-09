@@ -2,6 +2,7 @@
 namespace YayCheckout\Pro\Controllers;
 
 use YayCheckout\Controllers\BaseRestController;
+use YayCheckout\Models\Design;
 use YayCheckout\Models\Layout;
 use YayCheckout\Pro\Services\LayoutImportReview;
 use YayCheckout\Repositories\LayoutRepository;
@@ -81,8 +82,8 @@ class LayoutImportRestController extends BaseRestController {
     }
 
     /**
-     * Reviews the file, then inserts the draft with the file's rules. A file without a Checkout block is refused here;
-     * blocks the site lacks pass. Unreadable rules are dropped, never refusing the file.
+     * Reviews the file, then inserts the draft with the file's rules and design layer. A file without a Checkout block is refused here;
+     * blocks the site lacks pass. Unreadable rules and invalid design sections are dropped, never refusing the file.
      *
      * @return \WP_REST_Response|\WP_Error The new draft (Layout::to_array()) plus `rules_import` { status }.
      */
@@ -90,7 +91,7 @@ class LayoutImportRestController extends BaseRestController {
         try {
             $layout = LayoutImportReview::from_envelope( (array) $request->get_param( 'file' ) );
             $rules  = LayoutImportReview::rules_from_file( $layout['rules'] );
-            $draft  = $this->layouts->import( $layout['title'], $layout['content'], $rules['rules'] );
+            $draft  = $this->layouts->import( $layout['title'], $layout['content'], $rules['rules'], Design::project_layer( $layout['design'] ) );
 
             return new \WP_REST_Response(
                 array_merge(
