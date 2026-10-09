@@ -79,13 +79,17 @@ class CheckoutFragments {
             unset( $fragments[ self::REVIEW_ORDER_TABLE ] );
         }
 
-        foreach ( array_merge( array_values( array_intersect_key( self::FRAGMENTS, $rendered ) ), $summary ) as [ $selector, $build ] ) {
-            $html = self::$build();
+        $html = [];
 
-            if ( '' !== $html ) {
-                $fragments[ $selector ] = $html;
-            }
+        foreach ( array_intersect_key( self::FRAGMENTS, $rendered ) as [ $selector, $build ] ) {
+            $html[ $selector ] = self::$build();
         }
+
+        foreach ( $summary as [ $selector, $build, $attrs ] ) {
+            $html[ $selector ] = self::$build( $attrs );
+        }
+
+        $fragments = array_merge( $fragments, array_filter( $html, 'strlen' ) );
 
         $button = isset( $rendered['place_order'] ) ? self::place_order_button_html( $layout->content ) : '';
 
@@ -97,14 +101,22 @@ class CheckoutFragments {
     }
 
     /**
-     * The BLOCK_FRAGMENTS entries whose block is in the layout.
+     * The BLOCK_FRAGMENTS entries whose block is in the layout, each with that block's parsed attrs.
      *
-     * @return array<int, array{0: string, 1: string}>
+     * @return array<int, array{0: string, 1: string, 2: array}>
      */
     private static function summary_block_fragments( string $markup ): array {
-        $names = array_column( LayoutMarkupReader::flatten( parse_blocks( $markup ) ), 'blockName' );
+        $summary = [];
 
-        return array_values( array_intersect_key( self::BLOCK_FRAGMENTS, array_flip( array_filter( $names, 'is_string' ) ) ) );
+        foreach ( LayoutMarkupReader::flatten( parse_blocks( $markup ) ) as $block ) {
+            $name = $block['blockName'];
+
+            if ( is_string( $name ) && isset( self::BLOCK_FRAGMENTS[ $name ] ) && ! isset( $summary[ $name ] ) ) {
+                $summary[ $name ] = [ self::BLOCK_FRAGMENTS[ $name ][0], self::BLOCK_FRAGMENTS[ $name ][1], $block['attrs'] ];
+            }
+        }
+
+        return array_values( $summary );
     }
 
     /** The Place order button alone (render.php prints only it during AJAX), when it shows the total. */
@@ -230,43 +242,104 @@ class CheckoutFragments {
         return (string) ob_get_clean();
     }
 
-    /** An Items or Totals block: its wrapper and the table fragments() refreshes. */
+    /** An Items or Totals block: its wrapper and the fragment root fragments() refreshes. */
     public static function print_summary_block( \WP_Block $block ): void {
         if ( ! isset( self::BLOCK_FRAGMENTS[ $block->name ] ) ) {
             return;
         }
 
-        $build = self::BLOCK_FRAGMENTS[ $block->name ][1];
+        $build   = self::BLOCK_FRAGMENTS[ $block->name ][1];
+        $wrapper = [];
+        $stepper = false;
+
+        // Items only. Its gap class, nonce and notices sit on the wrapper because checkout.js replaces the root on every refresh.
+        if ( 'yaycheckout/order-summary-items' === $block->name ) {
+            // Block spacing is the gap between rows.
+            $class = wp_unique_id( 'yaycheckout-order-summary-items-gap-' );
+
+            if ( BlockGap::add_rules( $block->attributes['style'] ?? [], $block->name, '.' . $class . ' > .' . self::ORDER_ITEMS_CLASS ) ) {
+                $wrapper['class'] = $class;
+            }
+
+            $stepper = self::order_items_options( $block->attributes )['show_stepper'];
+
+            if ( $stepper ) {
+                $wrapper['data-yaycheckout-cart-nonce'] = wp_create_nonce( CartItemQuantity::NONCE_ACTION );
+                $wrapper['data-error-text']             = CartItemQuantity::retry_message();
+            }
+        }
 
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
-        echo '<div ' . get_block_wrapper_attributes() . '>';
+        echo '<div ' . get_block_wrapper_attributes( $wrapper ) . '>';
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Same HTML Woo prints for review-order rows.
-        echo self::$build();
+        echo self::$build( $block->attributes );
+
+        if ( $stepper ) {
+            echo '<div class="' . esc_attr( self::ORDER_ITEMS_CLASS . '__notices' ) . '" aria-live="polite"></div>';
+        }
+
         echo '</div>';
     }
 
     /**
-     * The thead and tbody of Woo's checkout/review-order.php, without its table class so
-     * Woo's own review-order fragment cannot replace it with the whole table.
+     * The Items block's attributes with their defaults. During AJAX they come from the parsed
+     * layout, where an untouched attribute is missing, so each default matches block.json's.
+     *
+     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_stepper: bool}
      */
-    public static function order_items_html(): string {
+    public static function order_items_options( array $attributes ): array {
+        $bool = static function ( string $name, bool $fallback ) use ( $attributes ): bool {
+            return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
+        };
+        // The first choice is the default.
+        $choice = static function ( string $name, array $choices ) use ( $attributes ): string {
+            return isset( $attributes[ $name ] ) && in_array( $attributes[ $name ], $choices, true ) ? $attributes[ $name ] : $choices[0];
+        };
+
+        return [
+            'show_labels'            => $bool( 'showLabels', true ),
+            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own header word, so its translation still applies.
+            'product_label'          => LayoutMarkupReader::plain_text( $attributes, 'productLabel', __( 'Product', 'woocommerce' ) ),
+            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own header word, so its translation still applies.
+            'subtotal_label'         => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
+            'show_thumbnails'        => $bool( 'showThumbnails', true ),
+            'item_data'              => $choice( 'itemData', [ 'list', 'inline', 'hidden' ] ),
+            'show_sku'               => $bool( 'showSku', false ),
+            'show_unit_price'        => $bool( 'showUnitPrice', false ),
+            'show_short_description' => $bool( 'showShortDescription', false ),
+            'quantity_display'       => $choice( 'quantityDisplay', [ 'inline', 'badge' ] ),
+            'show_stepper'           => $bool( 'showStepper', false ),
+        ];
+    }
+
+    /**
+     * The cart rows of Woo's checkout/review-order.php as divs, without its table class so Woo's
+     * own review-order fragment cannot replace it with the whole table. A table has no room for a
+     * thumbnail beside the name, so only the cart-contents hooks keep one: extensions echo table
+     * rows into them, which print as loose text outside a table.
+     */
+    public static function order_items_html( array $attributes = [] ): string {
         if ( ! WC()->cart instanceof \WC_Cart ) {
             return '';
         }
 
-        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Woo's review-order hooks, filters and strings, so its translation still applies.
+        $options = self::order_items_options( $attributes );
+        // A badge sits on the thumbnail; without one, the quantity shows inline rather than vanish.
+        $badge = 'badge' === $options['quantity_display'] && $options['show_thumbnails'];
+        $root  = self::ORDER_ITEMS_CLASS . ( 'inline' === $options['item_data'] ? ' ' . self::ORDER_ITEMS_CLASS . '--item-data-inline' : '' );
+
+        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hooks and filters.
         ob_start();
         ?>
-<table class="shop_table <?php echo esc_attr( self::ORDER_ITEMS_CLASS ); ?>">
-    <thead>
-        <tr>
-            <th class="product-name"><?php esc_html_e( 'Product', 'woocommerce' ); ?></th>
-            <th class="product-total"><?php esc_html_e( 'Subtotal', 'woocommerce' ); ?></th>
-        </tr>
-    </thead>
-    <tbody>
+<div class="<?php echo esc_attr( $root ); ?>">
+        <?php if ( $options['show_labels'] ) : ?>
+    <div class="<?php echo esc_attr( self::ORDER_ITEMS_CLASS . '__header' ); ?>">
+        <span class="product-name"><?php echo esc_html( $options['product_label'] ); ?></span>
+        <span class="product-total"><?php echo esc_html( $options['subtotal_label'] ); ?></span>
+    </div>
+        <?php endif; ?>
         <?php
-        do_action( 'woocommerce_review_order_before_cart_contents' );
+        self::print_order_items_hook( 'woocommerce_review_order_before_cart_contents' );
 
         foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
             $product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
@@ -275,35 +348,148 @@ class CheckoutFragments {
             if ( ! $product instanceof \WC_Product || ! $product->exists() || $cart_item['quantity'] <= 0 || ! $visible ) {
                 continue;
             }
+
+            // A product with one allowed quantity gets no stepper; its quantity shows as the Quantity option says.
+            $stepper = $options['show_stepper']
+                && ! $product->is_sold_individually()
+                && $product->get_min_purchase_quantity() !== $product->get_max_purchase_quantity();
             ?>
-        <tr class="<?php echo esc_attr( apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) ); ?>">
-            <td class="product-name">
-                <?php echo wp_kses_post( apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key ) ) . '&nbsp;'; ?>
+    <div class="<?php echo esc_attr( apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) . ' ' . self::ORDER_ITEMS_CLASS . '__item' ); ?>">
+            <?php if ( $options['show_thumbnails'] ) : ?>
+        <div class="product-thumbnail">
+                <?php echo apply_filters( 'woocommerce_cart_item_thumbnail', $product->get_image(), $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered image HTML, as cart/cart.php prints it. ?>
+                <?php if ( $badge ) : ?>
+            <span class="<?php echo esc_attr( self::ORDER_ITEMS_CLASS . '__badge' ); ?>"><span aria-hidden="true"><?php echo esc_html( $cart_item['quantity'] ); ?></span><span class="screen-reader-text">
+                    <?php
+                    /* translators: %s: quantity */
+                    echo esc_html( sprintf( __( 'Quantity: %s', 'yaycheckout' ), $cart_item['quantity'] ) );
+                    ?>
+            </span></span>
+                <?php endif; ?>
+        </div>
+            <?php endif; ?>
+        <div class="product-name">
+            <?php echo wp_kses_post( apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key ) ) . '&nbsp;'; ?>
+            <?php // The stepper's input shows the quantity, so inline it would say it twice. ?>
+            <?php if ( ! $badge && ! $stepper ) : ?>
                 <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered HTML. ?>
-                <?php echo wc_get_formatted_cart_item_data( $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo escapes item data. ?>
-            </td>
-            <td class="product-total">
-                <?php echo apply_filters( 'woocommerce_cart_item_subtotal', WC()->cart->get_product_subtotal( $product, $cart_item['quantity'] ), $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's price HTML. ?>
-            </td>
-        </tr>
+            <?php endif; ?>
+            <?php
+            if ( 'hidden' !== $options['item_data'] ) {
+                echo wc_get_formatted_cart_item_data( $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo escapes item data.
+            }
+
+            self::print_item_details( $options, $product, $cart_item, $cart_item_key );
+
+            if ( $stepper ) {
+                // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart quantity filter, so an extension that locks an item's quantity locks it here.
+                echo apply_filters( 'woocommerce_cart_item_quantity', self::stepper_html( $product, $cart_item, $cart_item_key ), $cart_item_key, $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in stepper_html(), then Woo's filtered HTML.
+            }
+
+            if ( $options['show_stepper'] ) {
+                // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart remove-link filter.
+                echo apply_filters( 'woocommerce_cart_item_remove_link', self::remove_link_html( $product, $cart_item_key ), $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in remove_link_html(), then Woo's filtered HTML.
+            }
+            ?>
+        </div>
+        <div class="product-total">
+            <?php echo apply_filters( 'woocommerce_cart_item_subtotal', WC()->cart->get_product_subtotal( $product, $cart_item['quantity'] ), $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's price HTML. ?>
+        </div>
+    </div>
             <?php
         }
 
-        do_action( 'woocommerce_review_order_after_cart_contents' );
+        self::print_order_items_hook( 'woocommerce_review_order_after_cart_contents' );
         ?>
-    </tbody>
-</table>
+</div>
         <?php
-        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch
+        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
         return (string) ob_get_clean();
+    }
+
+    /** The SKU, unit price and short description under an item's name, each when its option is on. */
+    private static function print_item_details( array $options, \WC_Product $product, array $cart_item, string $cart_item_key ): void {
+        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart filter.
+        $sku = $options['show_sku'] ? $product->get_sku() : '';
+
+        if ( '' !== $sku ) {
+            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
+            echo '<div class="product-sku">' . esc_html__( 'SKU:', 'woocommerce' ) . ' ' . esc_html( $sku ) . '</div>';
+        }
+
+        if ( $options['show_unit_price'] ) {
+            $price = apply_filters( 'woocommerce_cart_item_price', WC()->cart->get_product_price( $product ), $cart_item, $cart_item_key );
+            /* translators: %s: product price */
+            echo '<div class="product-unit-price">' . sprintf( esc_html__( '%s each', 'yaycheckout' ), $price ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered price HTML.
+        }
+
+        if ( $options['show_short_description'] ) {
+            $text   = $product->get_short_description();
+            $parent = '' === $text && $product->get_parent_id() > 0 ? wc_get_product( $product->get_parent_id() ) : null;
+            $text   = $parent instanceof \WC_Product ? $parent->get_short_description() : $text;
+            // A literal ellipsis: the default &hellip; would print as text through esc_html().
+            $text = wp_trim_words( wp_strip_all_tags( strip_shortcodes( $text ) ), 20, '…' );
+
+            if ( '' !== $text ) {
+                echo '<div class="product-short-description">' . esc_html( $text ) . '</div>';
+            }
+        }
+        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+    }
+
+    /**
+     * − / input / + for one cart item. The input has no name, so the checkout form never posts
+     * it, and every button is type="button", so neither places the order.
+     */
+    private static function stepper_html( \WC_Product $product, array $cart_item, string $cart_item_key ): string {
+        $name     = wp_strip_all_tags( $product->get_name() );
+        $quantity = (int) $cart_item['quantity'];
+        $max      = $product->get_max_purchase_quantity();
+        $button   = static function ( int $step, string $label, string $text, bool $disabled ): string {
+            return '<button type="button" class="yaycheckout-qty__button" data-step="' . esc_attr( (string) $step ) . '" aria-label="' . esc_attr( $label ) . '"' . ( $disabled ? ' disabled' : '' ) . '>' . esc_html( $text ) . '</button>';
+        };
+
+        return '<div class="yaycheckout-qty">'
+            /* translators: %s: product name */
+            . $button( -1, sprintf( __( 'Decrease quantity of %s', 'yaycheckout' ), $name ), '−', $quantity <= 1 )
+            . '<input type="number" class="yaycheckout-qty__input" value="' . esc_attr( (string) $quantity ) . '" min="1"' . ( $max > 0 ? ' max="' . esc_attr( (string) $max ) . '"' : '' ) . ' step="1" inputmode="numeric" data-cart-item-key="' . esc_attr( $cart_item_key ) . '"'
+            /* translators: %s: product name */
+            . ' aria-label="' . esc_attr( sprintf( __( 'Quantity of %s', 'yaycheckout' ), $name ) ) . '">'
+            /* translators: %s: product name */
+            . $button( 1, sprintf( __( 'Increase quantity of %s', 'yaycheckout' ), $name ), '+', $max > 0 && $quantity >= $max )
+            . '</div>';
+    }
+
+    /** The remove link, which still works without JavaScript through WooCommerce's cart URL. */
+    private static function remove_link_html( \WC_Product $product, string $cart_item_key ): string {
+        return '<a href="' . esc_url( wc_get_cart_remove_url( $cart_item_key ) ) . '" class="remove ' . esc_attr( self::ORDER_ITEMS_CLASS . '__remove' ) . '" data-cart-item-key="' . esc_attr( $cart_item_key ) . '"'
+            /* translators: %s: product name */
+            . ' aria-label="' . esc_attr( sprintf( __( 'Remove %s from cart', 'yaycheckout' ), wp_strip_all_tags( $product->get_name() ) ) ) . '">&times;</a>';
+    }
+
+    /** Fires a cart-contents hook and prints its output, if any, in a table of its own. */
+    private static function print_order_items_hook( string $hook ): void {
+        ob_start();
+        do_action( $hook ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Woo's review-order hooks, named by the caller.
+        $output = (string) ob_get_clean();
+
+        if ( '' === trim( $output ) ) {
+            return;
+        }
+
+        echo '<table class="shop_table ' . esc_attr( self::ORDER_ITEMS_CLASS . '__hook' ) . '"><tbody>';
+        echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Extensions' own review-order rows.
+        echo '</tbody></table>';
     }
 
     /**
      * The tfoot rows of Woo's checkout/review-order.php, as the body of their own table, without
      * the shipping rates: the Shipping Methods block offers those, and Total still counts them.
+     *
+     * @param array $attributes Unused; Totals has no attributes.
      */
-    public static function order_totals_html(): string {
+    public static function order_totals_html( array $attributes = [] ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- fragments() passes every summary builder its attrs.
         if ( ! WC()->cart instanceof \WC_Cart ) {
             return '';
         }

@@ -1,0 +1,199 @@
+/*
+ * Items as a column of rows: the header, then one row per cart item, with the subtotal at the
+ * end. Single-class selectors, so the printed Block spacing rule (wrapper class > root) wins.
+ */
+.yaycheckout-order-summary-items {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.yaycheckout-order-summary-items__header,
+.yaycheckout-order-summary-items__item {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	column-gap: 12px;
+	align-items: start;
+}
+
+.yaycheckout-order-summary-items__item:has(> .product-thumbnail) {
+	grid-template-columns: 48px minmax(0, 1fr) auto;
+}
+
+.yaycheckout-order-summary-items__header {
+	font-weight: 600;
+}
+
+.yaycheckout-order-summary-items .product-name {
+	overflow-wrap: anywhere;
+}
+
+.yaycheckout-order-summary-items .product-total {
+	text-align: end;
+	white-space: nowrap;
+}
+
+.yaycheckout-order-summary-items .product-thumbnail {
+	position: relative;
+}
+
+.yaycheckout-order-summary-items .product-thumbnail img {
+	display: block;
+	width: 48px;
+	height: 48px;
+	object-fit: cover;
+	border-radius: var(--yaycheckout-field-radius);
+}
+
+.yaycheckout-order-summary-items__hook {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.yaycheckout-order-summary-items__hook :is(th, td) {
+	border: 0;
+}
+
+.yaycheckout-order-summary-items :is(.product-sku, .product-unit-price, .product-short-description) {
+	font-size: 0.875em;
+	opacity: 0.75;
+}
+
+/* Inline item data: every "Label: value" pair on one wrapping line, separated by commas. */
+.yaycheckout-order-summary-items--item-data-inline dl.variation {
+	display: block;
+	margin: 0;
+}
+
+.yaycheckout-order-summary-items--item-data-inline dl.variation :is(dt, dd) {
+	display: inline;
+	float: none;
+	clear: none;
+	margin: 0;
+	padding: 0;
+}
+
+.yaycheckout-order-summary-items--item-data-inline dl.variation dd p {
+	display: inline;
+	margin: 0;
+}
+
+/* On the paragraph, not the dd: Woo leaves whitespace after it, which would print before the comma. */
+.yaycheckout-order-summary-items--item-data-inline dl.variation dd:not(:last-child) > p:last-child::after {
+	content: ",";
+}
+
+.yaycheckout-order-summary-items__badge {
+	position: absolute;
+	inset-block-start: -6px;
+	inset-inline-end: -6px;
+	box-sizing: border-box;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 6px;
+	border-radius: 10px;
+	background: color-mix(in srgb, currentColor 70%, transparent);
+	font-size: 12px;
+	line-height: 20px;
+	text-align: center;
+}
+
+.yaycheckout-order-summary-items__badge > [aria-hidden] {
+	color: #fff;
+}
+
+/* The same declarations as WordPress's .screen-reader-text, which not every theme defines. */
+.yaycheckout-order-summary-items__badge .screen-reader-text {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* Quantity stepper: − / input / + in one bordered 32px row, then the remove control. */
+.yaycheckout-order-summary-items .yaycheckout-qty {
+	--yaycheckout-qty-border: color-mix(in srgb, currentColor 25%, transparent);
+
+	display: inline-flex;
+	align-items: stretch;
+	height: 32px;
+	margin-block-start: 6px;
+	border: 1px solid var(--yaycheckout-qty-border);
+	border-radius: var(--yaycheckout-field-radius);
+	overflow: hidden;
+	vertical-align: middle;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-qty__button {
+	box-sizing: border-box;
+	width: 32px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-qty__button:disabled {
+	cursor: not-allowed;
+	opacity: 0.4;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-qty__input {
+	box-sizing: border-box;
+	width: 40px;
+	height: auto;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-inline: 1px solid var(--yaycheckout-qty-border);
+	border-radius: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: center;
+	appearance: textfield;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-qty__input::-webkit-inner-spin-button,
+.yaycheckout-order-summary-items .yaycheckout-qty__input::-webkit-outer-spin-button {
+	margin: 0;
+	appearance: none;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-order-summary-items__remove {
+	display: inline-block;
+	margin-block-start: 6px;
+	margin-inline-start: 8px;
+	color: inherit;
+	font-size: 1.25em;
+	line-height: 32px;
+	text-decoration: none;
+	vertical-align: middle;
+	opacity: 0.6;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-order-summary-items__remove:hover {
+	opacity: 1;
+}
+
+.wp-block-yaycheckout-order-summary-items[aria-busy="true"] .yaycheckout-order-summary-items {
+	opacity: 0.6;
+}
+
+.yaycheckout-order-summary-items__notices:not(:empty) {
+	margin-block-start: 12px;
+}
+
+.yaycheckout-order-summary-items__notices p {
+	margin: 0;
+	color: var(--wc-red, #cc1818);
+}

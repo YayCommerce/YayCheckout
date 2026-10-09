@@ -25,6 +25,9 @@ class BlockRegistry {
     /** Named by viewScript in packages/blocks/src/coupon-form/block.json; core enqueues it when the block renders. */
     public const COUPON_FORM_SCRIPT = 'yaycheckout-coupon-form';
 
+    /** Named by viewScript in packages/blocks/src/order-summary-items/block.json; drives the quantity stepper. */
+    public const ORDER_SUMMARY_ITEMS_SCRIPT = 'yaycheckout-order-summary-items';
+
     /**
      * Block directories in the order a shopper meets them. The inserter lists
      * blocks in registration order; a built block missing here still
@@ -205,6 +208,14 @@ class BlockRegistry {
         wp_register_script(
             self::COUPON_FORM_SCRIPT,
             YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-coupon-form.js',
+            [ 'jquery', 'wc-checkout' ],
+            YAYCHECKOUT_VERSION,
+            true
+        );
+
+        wp_register_script(
+            self::ORDER_SUMMARY_ITEMS_SCRIPT,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-order-summary-items.js',
             [ 'jquery', 'wc-checkout' ],
             YAYCHECKOUT_VERSION,
             true

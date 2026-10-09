@@ -1,0 +1,7 @@
+/* The canvas has no product image; a grey square stands in for the storefront thumbnail. */
+.editor-styles-wrapper .yaycheckout-order-summary-items__placeholder {
+	width: 48px;
+	height: 48px;
+	border-radius: var(--yaycheckout-field-radius);
+	background: #ddd;
+}

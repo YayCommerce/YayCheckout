@@ -7,11 +7,81 @@
   "description": "Cart line items. WooCommerce refreshes them when the order updates.",
   "textdomain": "yaycheckout",
   "ancestor": [ "yaycheckout/order-summary" ],
+  "attributes": {
+    "showLabels": {
+      "type": "boolean",
+      "default": true
+    },
+    "productLabel": {
+      "type": "string"
+    },
+    "subtotalLabel": {
+      "type": "string"
+    },
+    "showThumbnails": {
+      "type": "boolean",
+      "default": true
+    },
+    "itemData": {
+      "type": "string",
+      "enum": [ "list", "inline", "hidden" ],
+      "default": "list"
+    },
+    "showSku": {
+      "type": "boolean",
+      "default": false
+    },
+    "showUnitPrice": {
+      "type": "boolean",
+      "default": false
+    },
+    "showShortDescription": {
+      "type": "boolean",
+      "default": false
+    },
+    "quantityDisplay": {
+      "type": "string",
+      "enum": [ "inline", "badge" ],
+      "default": "inline"
+    },
+    "showStepper": {
+      "type": "boolean",
+      "default": false
+    }
+  },
   "supports": {
     "html": false,
     "multiple": false,
-    "reusable": false
+    "reusable": false,
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "__experimentalFontFamily": true,
+      "__experimentalFontStyle": true,
+      "__experimentalFontWeight": true,
+      "__experimentalLetterSpacing": true,
+      "__experimentalTextDecoration": true,
+      "__experimentalTextTransform": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true,
+      "blockGap": true
+    }
   },
   "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "viewScript": [ "yaycheckout-order-summary-items" ],
+  "style": "file:./style-index.css",
   "render": "file:./render.php"
 }
