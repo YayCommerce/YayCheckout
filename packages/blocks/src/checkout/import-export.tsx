@@ -9,6 +9,7 @@ import { store as noticesStore } from '@wordpress/notices';
 import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
 import { errorMessage } from '../shared/error-message';
+import type { LayoutDesignMeta } from './layout-design';
 import { filenameFromHeaders, isJsonFileName, saveFile } from '../shared/export-file';
 import './import-export.css';
 
@@ -27,6 +28,8 @@ type ImportReview = {
 	blocks: number;
 	/** The file carries assignment rules; this import leaves them behind. */
 	has_rules: boolean;
+	/** The file's design override as an import stores it; every section null when the file has none. */
+	design: LayoutDesignMeta;
 };
 
 /** Reads as bytes below 1 KB, so a small layout does not round up to a meaningless "1 KB". */
@@ -41,7 +44,7 @@ function formatFileSize( bytes: number ): string {
 }
 
 /** The file's layout as LayoutImportReview accepts it; rejects with the server's reason. Only JSON is checked here, since it cannot be sent otherwise. */
-async function reviewFile( text: string ): Promise< Pick< ImportReview, 'title' | 'content' | 'blocks' | 'has_rules' > > {
+async function reviewFile( text: string ): Promise< Pick< ImportReview, 'title' | 'content' | 'blocks' | 'has_rules' | 'design' > > {
 	let file: unknown;
 	try {
 		file = JSON.parse( text );
@@ -53,7 +56,13 @@ async function reviewFile( text: string ): Promise< Pick< ImportReview, 'title' 
 }
 
 /** Picks an export file, has the server review it, and hands the reviewed markup to `onImport`. */
-function ImportModal( { onClose, onImport }: { onClose: () => void; onImport: ( content: string ) => void } ) {
+function ImportModal( {
+	onClose,
+	onImport,
+}: {
+	onClose: () => void;
+	onImport: ( content: string, design: LayoutDesignMeta ) => void;
+} ) {
 	const [ importReview, setImportReview ] = useState< ImportReview | null >( null );
 	const [ importError, setImportError ] = useState( '' );
 	const latestPick = useRef( 0 );
@@ -154,7 +163,7 @@ function ImportModal( { onClose, onImport }: { onClose: () => void; onImport: ( 
 					</Flex>
 					<Notice status="warning" isDismissible={ false }>
 						{ __(
-							'Import replaces all the content of this layout with the file’s content. The layout title stays the same. Nothing is saved until you click Save, and you can undo it.',
+							'Import replaces all the content and the layout design of this layout with the file’s. The layout title stays the same. Nothing is saved until you click Save, and you can undo it.',
 							'yaycheckout'
 						) }
 					</Notice>
@@ -177,7 +186,7 @@ function ImportModal( { onClose, onImport }: { onClose: () => void; onImport: ( 
 					variant="primary"
 					disabled={ ! importReview }
 					accessibleWhenDisabled
-					onClick={ () => importReview && onImport( importReview.content ) }
+					onClick={ () => importReview && onImport( importReview.content, importReview.design ) }
 				>
 					{ __( 'Import', 'yaycheckout' ) }
 				</Button>
@@ -198,7 +207,7 @@ function LayoutImportExport() {
 		} ),
 		[]
 	);
-	const { resetEditorBlocks } = useDispatch( editorStore );
+	const { resetEditorBlocks, editPost } = useDispatch( editorStore );
 	const { createSuccessNotice, createErrorNotice } = useDispatch( noticesStore );
 
 	if ( postType !== editorData.postType ) {
@@ -206,8 +215,11 @@ function LayoutImportExport() {
 	}
 
 	// Unsaved and undoable on purpose: saving stays the merchant's call.
-	const applyImport = ( content: string ) => {
+	const applyImport = ( content: string, design: LayoutDesignMeta ) => {
 		resetEditorBlocks( parse( content ) );
+		if ( editorData.design ) {
+			editPost( { meta: { [ editorData.design.metaKey ]: design } } );
+		}
 		createSuccessNotice(
 			__( 'Layout imported. Review it, then save when ready.', 'yaycheckout' ),
 			{ type: 'snackbar' }

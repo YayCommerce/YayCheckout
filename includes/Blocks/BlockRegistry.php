@@ -1,9 +1,13 @@
 <?php
 namespace YayCheckout\Blocks;
 
+use YayCheckout\Engine\Register\ScriptName;
+use YayCheckout\Models\Design;
 use YayCheckout\Models\Layout;
+use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Renderer\HideWhenEmpty;
+use YayCheckout\Repositories\DesignRepository;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -63,6 +67,7 @@ class BlockRegistry {
 
     protected function __construct() {
         add_action( 'init', [ $this, 'register_blocks' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'editor_design_data' ] );
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
@@ -192,6 +197,34 @@ class BlockRegistry {
         wp_add_inline_script(
             generate_block_asset_handle( 'yaycheckout/create-account', 'editorScript' ),
             'window.yayCheckoutCreateAccount = ' . wp_json_encode( $create_account_editor_data ) . ';',
+            'before'
+        );
+    }
+
+    /**
+     * Adds `design` to window.yayCheckoutBlocks: the global design and its rules, which the Layout design
+     * sidebar edits the layout's override against. Only in the block editor, since register_blocks() runs
+     * on every request and nothing else reads it.
+     */
+    public function editor_design_data(): void {
+        $design = [
+            'metaKey'           => Layout::META_DESIGN,
+            // The id WordPress gives this handle's inline style, which holds the printed design.
+            'styleId'           => ScriptName::STYLE_CHECKOUT . '-inline-css',
+            'tokens'            => ( new DesignRepository() )->get()->tokens,
+            'schema'            => LayoutDesign::schema(),
+            // So the sidebar offers only swatches the meta's REST schema accepts.
+            'hexPattern'        => Design::HEX_COLOR_PATTERN,
+            'gradientPattern'   => Design::GRADIENT_PATTERN,
+            'gradientMaxLength' => Design::GRADIENT_MAX_LENGTH,
+            'fontFamilies'      => Design::FONT_FAMILIES,
+            'customCssMaxBytes' => Design::CUSTOM_CSS_MAX_BYTES,
+        ];
+
+        // Added after register_blocks()' own inline script, so window.yayCheckoutBlocks exists.
+        wp_add_inline_script(
+            generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
+            'window.yayCheckoutBlocks.design = ' . wp_json_encode( $design ) . ';',
             'before'
         );
     }
