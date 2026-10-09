@@ -14,7 +14,8 @@ interface OrderSummaryItemsAttributes {
 	showSku: boolean;
 	showUnitPrice: boolean;
 	showShortDescription: boolean;
-	quantityDisplay: 'inline' | 'badge' | 'stepper';
+	quantityDisplay: 'inline' | 'badge';
+	showStepper: boolean;
 	style?: BlockGapStyles;
 }
 
@@ -36,11 +37,11 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		showUnitPrice,
 		showShortDescription,
 		quantityDisplay,
+		showStepper,
 		style,
 	} = attributes;
 	// As order_items_html(): a badge needs a thumbnail to sit on.
 	const badge = quantityDisplay === 'badge' && showThumbnails;
-	const stepper = quantityDisplay === 'stepper';
 	const [ viewport ] = useSettings( 'viewport' );
 	const css = blockGapCSS( `#block-${ clientId } > .yaycheckout-order-summary-items`, style, viewport );
 	const productPlaceholder = __( 'Product', 'yaycheckout' );
@@ -107,7 +108,6 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						options={ [
 							{ label: __( 'Inline', 'yaycheckout' ), value: 'inline' },
 							{ label: __( 'Badge', 'yaycheckout' ), value: 'badge' },
-							{ label: __( 'Stepper', 'yaycheckout' ), value: 'stepper' },
 						] }
 						help={
 							quantityDisplay === 'badge' && ! showThumbnails
@@ -117,6 +117,12 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						onChange={ ( value ) =>
 							setAttributes( { quantityDisplay: value as OrderSummaryItemsAttributes[ 'quantityDisplay' ] } )
 						}
+					/>
+					<ToggleControl
+						label={ __( 'Quantity stepper', 'yaycheckout' ) }
+						help={ __( 'Lets shoppers change or remove items.', 'yaycheckout' ) }
+						checked={ showStepper }
+						onChange={ ( value ) => setAttributes( { showStepper: value } ) }
 					/>
 				</PanelBody>
 			</InspectorControls>
@@ -146,7 +152,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						) }
 						<div className="product-name">
 							{ __( 'Sample product', 'yaycheckout' ) }&nbsp;
-							{ ! badge && ! stepper && <strong className="product-quantity">×&nbsp;1</strong> }
+							{ ! badge && ! showStepper && <strong className="product-quantity">×&nbsp;1</strong> }
 							{ itemData !== 'hidden' && (
 								<dl className="variation">
 									<dt>{ __( 'Color:', 'yaycheckout' ) }</dt>
@@ -164,7 +170,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 							{ showShortDescription && (
 								<div className="product-short-description">{ __( 'A short product description.', 'yaycheckout' ) }</div>
 							) }
-							{ stepper && (
+							{ showStepper && (
 								<>
 									<div className="yaycheckout-qty">
 										<button type="button" className="yaycheckout-qty__button" disabled>
