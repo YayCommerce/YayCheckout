@@ -25,9 +25,18 @@ export interface LayoutProblem {
 	message: string;
 	// The first extra field at fault, for the notice's "Go to field" action; '' when none.
 	clientId: string;
+	// True for a missing required block: the layout can't be saved at all, draft included.
+	blocksSave?: boolean;
 }
 
 const NO_PROBLEM: LayoutProblem = { message: '', clientId: '' };
+
+/** Blocks every layout needs before it can be saved, with the notice shown when one is missing. */
+const REQUIRED_BLOCKS: Array< [ name: string, message: string ] > = [
+	[ CHECKOUT_BLOCK, __( 'Add a Checkout block to this layout before saving it.', 'yaycheckout' ) ],
+	[ 'yaycheckout/email', __( 'Add an Email field to this layout before saving it.', 'yaycheckout' ) ],
+	[ 'yaycheckout/place-order', __( 'Add a Place order button to this layout before saving it.', 'yaycheckout' ) ],
+];
 
 /**
  * Focuses the Key control once the inspector has rendered the selected block. Waits a
@@ -58,8 +67,10 @@ export function useLayoutProblem(): LayoutProblem {
 
 		const blockEditor = select( blockEditorStore );
 
-		if ( blockEditor.getGlobalBlockCount( CHECKOUT_BLOCK ) === 0 ) {
-			return { message: __( 'Add a Checkout block to this layout before activating it.', 'yaycheckout' ), clientId: '' };
+		for ( const [ name, message ] of REQUIRED_BLOCKS ) {
+			if ( blockEditor.getGlobalBlockCount( name ) === 0 ) {
+				return { message, clientId: '', blocksSave: true };
+			}
 		}
 
 		const fields = extraFields( blockEditor );
@@ -102,12 +113,12 @@ export function useLayoutProblem(): LayoutProblem {
 }
 
 /**
- * Shows the problem as a notice, and locks saving only while the layout is live: active, or
- * published or scheduled, matching the server. A draft is inactive,
- * so it saves freely and the rules wait for Activate.
+ * Shows the problem as a notice. A missing required block always locks saving, draft included.
+ * The extra field Key rules lock it only while the layout is live: active, or published or
+ * scheduled, matching the server. A draft with a bad Key saves freely and waits for Activate.
  */
 function LayoutPublishGuard() {
-	const { message, clientId } = useLayoutProblem();
+	const { message, clientId, blocksSave } = useLayoutProblem();
 	const isLive = useSelect(
 		( select ) =>
 			select( layoutStateStore ).isActive() === true ||
@@ -124,7 +135,7 @@ function LayoutPublishGuard() {
 			return;
 		}
 
-		if ( isLive ) {
+		if ( isLive || blocksSave ) {
 			lockPostSaving( LAYOUT_INVALID_LOCK );
 		}
 
@@ -154,6 +165,7 @@ function LayoutPublishGuard() {
 		message,
 		clientId,
 		isLive,
+		blocksSave,
 		lockPostSaving,
 		unlockPostSaving,
 		createWarningNotice,
