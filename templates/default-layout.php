@@ -121,7 +121,9 @@ defined( 'ABSPATH' ) || exit;
 <!-- wp:yaycheckout/order-summary-totals /-->
 <!-- /wp:yaycheckout/order-summary -->
 
-<!-- wp:yaycheckout/coupon-form /--></div>
+<!-- wp:yaycheckout/coupon-form -->
+<!-- wp:yaycheckout/coupon-button /-->
+<!-- /wp:yaycheckout/coupon-form --></div>
 <!-- /wp:group --></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->

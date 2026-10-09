@@ -7,9 +7,12 @@
   "description": "Coupon code field with apply button and its notices.",
   "textdomain": "yaycheckout",
   "example": {
-    "attributes": {
-      "buttonText": "Apply coupon"
-    }
+    "innerBlocks": [
+      {
+        "name": "yaycheckout/coupon-button",
+        "attributes": { "buttonText": "Apply coupon" }
+      }
+    ]
   },
   "attributes": {
     "blockId": {
@@ -17,10 +20,6 @@
       "default": ""
     },
     "placeholder": {
-      "type": "string",
-      "default": ""
-    },
-    "buttonText": {
       "type": "string",
       "default": ""
     },

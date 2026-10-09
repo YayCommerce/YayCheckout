@@ -7,7 +7,7 @@
  * Why no <form>: docs/architecture.md, Storefront (Coupon form).
  *
  * @var array    $attributes Block attributes.
- * @var string   $content    Unused; this block is a leaf.
+ * @var string   $content    The Coupon Button inner block's markup; empty when the form has none.
  * @var WP_Block $block      Block instance.
  *
  * @package yaycommerce/yaycheckout
@@ -30,29 +30,45 @@ $yaycheckout_placeholder = isset( $attributes['placeholder'] ) && is_string( $at
     ? $attributes['placeholder']
     : __( 'Coupon code', 'yaycheckout' );
 
-$yaycheckout_button_text = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'buttonText', __( 'Apply coupon', 'yaycheckout' ) );
-
-$yaycheckout_button_class = \YayCheckout\Helpers\ButtonClassHelper::classes( 'button' );
-
-// The block's own color supports paint the wrapper; these paint only Apply, over checkout-base.css's primary color.
-$yaycheckout_button_styles     = [];
+// The Button colors are the Coupon Button's starting look; its own colour support wins (coupon-button/style.css).
+$yaycheckout_button_vars       = [];
 $yaycheckout_button_properties = [
-    'buttonBackgroundColor' => 'background-color',
-    'buttonTextColor'       => 'color',
+    'buttonBackgroundColor' => '--yaycheckout-coupon-button-background',
+    'buttonTextColor'       => '--yaycheckout-coupon-button-text',
 ];
 
 foreach ( $yaycheckout_button_properties as $yaycheckout_attr => $yaycheckout_property ) {
-    if ( isset( $attributes[ $yaycheckout_attr ] ) && is_string( $attributes[ $yaycheckout_attr ] ) && '' !== $attributes[ $yaycheckout_attr ] ) {
-        $yaycheckout_button_styles[] = $yaycheckout_property . ':' . $attributes[ $yaycheckout_attr ];
+    $yaycheckout_color = isset( $attributes[ $yaycheckout_attr ] ) && is_string( $attributes[ $yaycheckout_attr ] ) ? $attributes[ $yaycheckout_attr ] : '';
+
+    // Kept only if core's CSS filter passes it whole as a color, so no second declaration rides along.
+    if ( '' !== $yaycheckout_color && 'color:' . $yaycheckout_color === safecss_filter_attr( 'color:' . $yaycheckout_color ) ) {
+        $yaycheckout_button_vars[] = $yaycheckout_property . ':' . $yaycheckout_color;
     }
 }
 
-$yaycheckout_button_style = safecss_filter_attr( implode( ';', $yaycheckout_button_styles ) );
+$yaycheckout_wrapper_attrs = [ 'class' => 'yaycheckout-coupon-form' ];
+
+if ( $yaycheckout_button_vars ) {
+    $yaycheckout_wrapper_attrs['style'] = implode( ';', $yaycheckout_button_vars ) . ';';
+}
+
+// Inner block markup (the Coupon Button); a form saved without one gets the default button.
+$yaycheckout_button = '' !== trim( $content )
+    ? $content
+    : render_block(
+        [
+            'blockName'    => 'yaycheckout/coupon-button',
+            'attrs'        => [],
+            'innerBlocks'  => [],
+            'innerHTML'    => '',
+            'innerContent' => [],
+        ]
+    );
 
 $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, 'yaycheckout-coupon-code', false );
 
 ?>
-<div <?php echo \YayCheckout\Renderer\HideWhenEmpty::wrapper( [ 'class' => 'yaycheckout-coupon-form' ], $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+<div <?php echo \YayCheckout\Renderer\HideWhenEmpty::wrapper( $yaycheckout_wrapper_attrs, $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php
     if ( \YayCheckout\Services\Disclosure::NONE !== $yaycheckout_disclosure ) {
         echo \YayCheckout\Services\Disclosure::open( 'yaycheckout-coupon-code', \YayCheckout\Services\Disclosure::text( $attributes, 'yaycheckout-coupon-code', __( 'Coupon code', 'yaycheckout' ), $yaycheckout_disclosure ), $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
@@ -65,7 +81,7 @@ $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, '
         // No input-text or form-row: inside the checkout form, WooCommerce's validate_field would claim the field and strip its error.
         ?>
         <input type="text" id="yaycheckout-coupon-code" class="yaycheckout-coupon-form__code" placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>" value="" />
-        <button type="button" class="<?php echo esc_attr( $yaycheckout_button_class ); ?> yaycheckout-coupon-form__apply"<?php echo '' !== $yaycheckout_button_style ? ' style="' . esc_attr( $yaycheckout_button_style ) . '"' : ''; ?>><?php echo esc_html( $yaycheckout_button_text ); ?></button>
+        <?php echo $yaycheckout_button; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered block markup; its render.php escapes. ?>
     </div>
     <div class="yaycheckout-coupon-form__notices" aria-live="polite" data-error-text="<?php esc_attr_e( 'The coupon could not be applied. Please try again.', 'yaycheckout' ); ?>"></div>
     <?php echo \YayCheckout\Services\Disclosure::NONE !== $yaycheckout_disclosure ? \YayCheckout\Services\Disclosure::close() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
