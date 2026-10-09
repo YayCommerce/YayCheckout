@@ -275,20 +275,28 @@ class CheckoutFragments {
      * The Items block's attributes with their defaults. During AJAX they come from the parsed
      * layout, where an untouched attribute is missing, so each default matches block.json's.
      *
-     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool}
+     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool}
      */
     public static function order_items_options( array $attributes ): array {
         $bool = static function ( string $name, bool $fallback ) use ( $attributes ): bool {
             return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
         };
+        // The first choice is the default.
+        $choice = static function ( string $name, array $choices ) use ( $attributes ): string {
+            return isset( $attributes[ $name ] ) && in_array( $attributes[ $name ], $choices, true ) ? $attributes[ $name ] : $choices[0];
+        };
 
         return [
-            'show_labels'     => $bool( 'showLabels', true ),
+            'show_labels'            => $bool( 'showLabels', true ),
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own header word, so its translation still applies.
-            'product_label'   => LayoutMarkupReader::plain_text( $attributes, 'productLabel', __( 'Product', 'woocommerce' ) ),
+            'product_label'          => LayoutMarkupReader::plain_text( $attributes, 'productLabel', __( 'Product', 'woocommerce' ) ),
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own header word, so its translation still applies.
-            'subtotal_label'  => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
-            'show_thumbnails' => $bool( 'showThumbnails', true ),
+            'subtotal_label'         => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
+            'show_thumbnails'        => $bool( 'showThumbnails', true ),
+            'item_data'              => $choice( 'itemData', [ 'list', 'inline', 'hidden' ] ),
+            'show_sku'               => $bool( 'showSku', false ),
+            'show_unit_price'        => $bool( 'showUnitPrice', false ),
+            'show_short_description' => $bool( 'showShortDescription', false ),
         ];
     }
 
@@ -304,11 +312,12 @@ class CheckoutFragments {
         }
 
         $options = self::order_items_options( $attributes );
+        $root    = self::ORDER_ITEMS_CLASS . ( 'inline' === $options['item_data'] ? ' ' . self::ORDER_ITEMS_CLASS . '--item-data-inline' : '' );
 
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hooks and filters.
         ob_start();
         ?>
-<div class="<?php echo esc_attr( self::ORDER_ITEMS_CLASS ); ?>">
+<div class="<?php echo esc_attr( $root ); ?>">
         <?php if ( $options['show_labels'] ) : ?>
     <div class="<?php echo esc_attr( self::ORDER_ITEMS_CLASS . '__header' ); ?>">
         <span class="product-name"><?php echo esc_html( $options['product_label'] ); ?></span>
@@ -328,12 +337,20 @@ class CheckoutFragments {
             ?>
     <div class="<?php echo esc_attr( apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) . ' ' . self::ORDER_ITEMS_CLASS . '__item' ); ?>">
             <?php if ( $options['show_thumbnails'] ) : ?>
-        <div class="product-thumbnail"><?php echo apply_filters( 'woocommerce_cart_item_thumbnail', $product->get_image(), $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered image HTML, as cart/cart.php prints it. ?></div>
+        <div class="product-thumbnail">
+                <?php echo apply_filters( 'woocommerce_cart_item_thumbnail', $product->get_image(), $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered image HTML, as cart/cart.php prints it. ?>
+        </div>
             <?php endif; ?>
         <div class="product-name">
             <?php echo wp_kses_post( apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key ) ) . '&nbsp;'; ?>
             <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered HTML. ?>
-            <?php echo wc_get_formatted_cart_item_data( $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo escapes item data. ?>
+            <?php
+            if ( 'hidden' !== $options['item_data'] ) {
+                echo wc_get_formatted_cart_item_data( $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo escapes item data.
+            }
+
+            self::print_item_details( $options, $product, $cart_item, $cart_item_key );
+            ?>
         </div>
         <div class="product-total">
             <?php echo apply_filters( 'woocommerce_cart_item_subtotal', WC()->cart->get_product_subtotal( $product, $cart_item['quantity'] ), $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's price HTML. ?>
@@ -349,6 +366,36 @@ class CheckoutFragments {
         // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
         return (string) ob_get_clean();
+    }
+
+    /** The SKU, unit price and short description under an item's name, each when its option is on. */
+    private static function print_item_details( array $options, \WC_Product $product, array $cart_item, string $cart_item_key ): void {
+        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart filter.
+        $sku = $options['show_sku'] ? $product->get_sku() : '';
+
+        if ( '' !== $sku ) {
+            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
+            echo '<div class="product-sku">' . esc_html__( 'SKU:', 'woocommerce' ) . ' ' . esc_html( $sku ) . '</div>';
+        }
+
+        if ( $options['show_unit_price'] ) {
+            $price = apply_filters( 'woocommerce_cart_item_price', WC()->cart->get_product_price( $product ), $cart_item, $cart_item_key );
+            /* translators: %s: product price */
+            echo '<div class="product-unit-price">' . sprintf( esc_html__( '%s each', 'yaycheckout' ), $price ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered price HTML.
+        }
+
+        if ( $options['show_short_description'] ) {
+            $text   = $product->get_short_description();
+            $parent = '' === $text && $product->get_parent_id() > 0 ? wc_get_product( $product->get_parent_id() ) : null;
+            $text   = $parent instanceof \WC_Product ? $parent->get_short_description() : $text;
+            // A literal ellipsis: the default &hellip; would print as text through esc_html().
+            $text = wp_trim_words( wp_strip_all_tags( strip_shortcodes( $text ) ), 20, '…' );
+
+            if ( '' !== $text ) {
+                echo '<div class="product-short-description">' . esc_html( $text ) . '</div>';
+            }
+        }
+        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
     }
 
     /** Fires a cart-contents hook and prints its output, if any, in a table of its own. */

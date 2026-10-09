@@ -53,3 +53,32 @@
 .yaycheckout-order-summary-items__hook :is(th, td) {
 	border: 0;
 }
+
+.yaycheckout-order-summary-items :is(.product-sku, .product-unit-price, .product-short-description) {
+	font-size: 0.875em;
+	opacity: 0.75;
+}
+
+/* Inline item data: every "Label: value" pair on one wrapping line, separated by commas. */
+.yaycheckout-order-summary-items--item-data-inline dl.variation {
+	display: block;
+	margin: 0;
+}
+
+.yaycheckout-order-summary-items--item-data-inline dl.variation :is(dt, dd) {
+	display: inline;
+	float: none;
+	clear: none;
+	margin: 0;
+	padding: 0;
+}
+
+.yaycheckout-order-summary-items--item-data-inline dl.variation dd p {
+	display: inline;
+	margin: 0;
+}
+
+/* On the paragraph, not the dd: Woo leaves whitespace after it, which would print before the comma. */
+.yaycheckout-order-summary-items--item-data-inline dl.variation dd:not(:last-child) > p:last-child::after {
+	content: ",";
+}

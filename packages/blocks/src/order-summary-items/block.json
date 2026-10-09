@@ -21,6 +21,23 @@
     "showThumbnails": {
       "type": "boolean",
       "default": true
+    },
+    "itemData": {
+      "type": "string",
+      "enum": [ "list", "inline", "hidden" ],
+      "default": "list"
+    },
+    "showSku": {
+      "type": "boolean",
+      "default": false
+    },
+    "showUnitPrice": {
+      "type": "boolean",
+      "default": false
+    },
+    "showShortDescription": {
+      "type": "boolean",
+      "default": false
     }
   },
   "supports": {
