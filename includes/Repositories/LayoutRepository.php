@@ -350,7 +350,7 @@ class LayoutRepository {
     }
 
     /**
-     * Copies a layout's content and assignment rules into a new draft layout.
+     * Copies a layout's content, assignment rules and design layer into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -362,18 +362,19 @@ class LayoutRepository {
         }
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design );
     }
 
     /**
-     * Creates a draft from an export file's title, markup and assignment rules, verbatim.
+     * Creates a draft from an export file's title, markup, assignment rules and design layer, verbatim.
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
-     * @param array $rules Already sanitized (Layout::sanitize_rules()); [] for none.
+     * @param array $rules  Already sanitized (Layout::sanitize_rules()); [] for none.
+     * @param array $design Already projected (Design::project_layer()); [] for none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    public function import( string $title, string $content, array $rules = [] ): Layout {
-        return $this->insert_draft( $title, $content, $rules );
+    public function import( string $title, string $content, array $rules = [], array $design = [] ): Layout {
+        return $this->insert_draft( $title, $content, $rules, $design );
     }
 
     /**
@@ -436,10 +437,11 @@ class LayoutRepository {
     /**
      * The one insert path for a new draft, so the cap and slashing cannot drift.
      *
-     * @param array $rules Already sanitized; written with the post, so the draft never exists without them.
+     * @param array $rules  Already sanitized; written with the post, so the draft never exists without them.
+     * @param array $design Already projected design layer; [] stores no meta.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content, array $rules = [] ): Layout {
+    private function insert_draft( string $title, string $content, array $rules = [], array $design = [] ): Layout {
         // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.
         if ( Plan::layout_limit_reached( $this->count() ) ) {
             throw new \InvalidArgumentException( Plan::layout_limit_message() );
@@ -453,7 +455,12 @@ class LayoutRepository {
                     'post_status'  => LayoutStatus::DRAFT,
                     'post_title'   => $title,
                     'post_content' => $content,
-                    'meta_input'   => [] === $rules ? [] : [ Layout::META_RULES => $rules ],
+                    'meta_input'   => array_filter(
+                        [
+                            Layout::META_RULES  => $rules,
+                            Layout::META_DESIGN => $design,
+                        ]
+                    ),
                 ]
             ),
             true

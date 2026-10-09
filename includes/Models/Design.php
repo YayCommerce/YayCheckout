@@ -188,6 +188,112 @@ class Design {
         ];
     }
 
+    /**
+     * A layout's sparse layer, as stored in Layout::META_DESIGN: { tokens?: { section: every key }, custom_css? }.
+     * Forgiving: a section missing a key or holding an invalid value, unknown keys and
+     * unsafe or empty CSS are dropped, so the layout falls back to global for them.
+     *
+     * @param mixed $raw Stored or imported value; anything but an array reads as no layer.
+     */
+    public static function project_layer( $raw ): array {
+        $raw    = is_array( $raw ) ? $raw : [];
+        $tokens = is_array( $raw['tokens'] ?? null ) ? $raw['tokens'] : [];
+        $layer  = [];
+
+        foreach ( self::schema() as $section => $keys ) {
+            $clean = self::layer_section( $tokens[ $section ] ?? null, $keys );
+
+            if ( null !== $clean ) {
+                $layer['tokens'][ $section ] = $clean;
+            }
+        }
+
+        $css = $raw['custom_css'] ?? null;
+
+        if ( is_string( $css ) && '' !== $css && is_string( self::sanitize_custom_css( $css ) ) ) {
+            $layer['custom_css'] = $css;
+        }
+
+        return $layer;
+    }
+
+    /**
+     * Strict twin of project_layer() for a write: the first invalid section, key or CSS fails.
+     *
+     * @return array|\WP_Error The same shape project_layer() returns, or the first failure.
+     */
+    public static function validate_layer( array $input ) {
+        $tokens = $input['tokens'] ?? [];
+
+        if ( ! is_array( $tokens ) ) {
+            return self::invalid( 'tokens' );
+        }
+
+        foreach ( self::schema() as $section => $keys ) {
+            if ( ! array_key_exists( $section, $tokens ) ) {
+                continue;
+            }
+
+            if ( ! is_array( $tokens[ $section ] ) ) {
+                return self::invalid( $section );
+            }
+
+            foreach ( $keys as $key => $rule ) {
+                if ( ! self::is_valid( $tokens[ $section ][ $key ] ?? null, $rule ) ) {
+                    return self::invalid( $section . '.' . $key );
+                }
+            }
+        }
+
+        $css = $input['custom_css'] ?? '';
+
+        if ( ! is_string( $css ) ) {
+            return self::invalid( 'custom_css' );
+        }
+
+        $css = self::sanitize_custom_css( $css );
+
+        if ( $css instanceof \WP_Error ) {
+            return $css;
+        }
+
+        return self::project_layer( $input );
+    }
+
+    /** This design with a layout's layer on top: each layer section replaces the global one whole, and layer CSS prints after global CSS. */
+    public function with_layer( array $layer ): self {
+        $design = clone $this;
+
+        foreach ( $layer['tokens'] ?? [] as $section => $values ) {
+            $design->tokens[ $section ] = $values;
+        }
+
+        if ( isset( $layer['custom_css'] ) ) {
+            $design->custom_css = '' === $design->custom_css ? $layer['custom_css'] : $design->custom_css . "\n" . $layer['custom_css'];
+        }
+
+        return $design;
+    }
+
+    /** A layer section with every schema key valid, in schema order; null when any is missing or invalid. */
+    private static function layer_section( $values, array $keys ): ?array {
+        if ( ! is_array( $values ) ) {
+            return null;
+        }
+
+        $clean = [];
+
+        foreach ( $keys as $key => $rule ) {
+            if ( ! array_key_exists( $key, $values ) || ! self::is_valid( $values[ $key ], $rule ) ) {
+                return null;
+            }
+
+            $clean[ $key ] = $values[ $key ];
+        }
+
+        return $clean;
+    }
+
     /** Every schema token, taken from $tokens when valid there and from the default otherwise. */
     private static function project( $tokens ): array {
         $tokens = is_array( $tokens ) ? $tokens : [];

@@ -68,7 +68,7 @@ class CheckoutPage {
             wp_dequeue_style( $handle );
         }
 
-        ( new CheckoutBaseStyles() )->enqueue( true );
+        ( new CheckoutBaseStyles() )->enqueue( true, $this->layout() );
     }
 
     private function resolve(): ?Layout {

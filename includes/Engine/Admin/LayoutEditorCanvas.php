@@ -3,6 +3,7 @@ namespace YayCheckout\Engine\Admin;
 
 use YayCheckout\Models\Layout;
 use YayCheckout\Renderer\CheckoutBaseStyles;
+use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -82,7 +83,7 @@ body.yaycheckout-has-layout-actions :is(
             return;
         }
 
-        ( new CheckoutBaseStyles() )->enqueue( false );
+        ( new CheckoutBaseStyles() )->enqueue( false, ( new LayoutRepository() )->find( (int) get_the_ID() ) );
     }
 
     private function is_layout_editor(): bool {
