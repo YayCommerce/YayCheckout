@@ -39,6 +39,10 @@
       "__experimentalDefaultControls": {
         "text": false
       }
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true
     }
   },
   "editorScript": "file:./index.js",
