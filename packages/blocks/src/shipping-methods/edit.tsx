@@ -5,6 +5,8 @@ import '../shared/section-preview.css';
 
 interface ShippingMethodsAttributes {
 	label: string;
+	layout?: string;
+	layoutSettings?: Record< string, unknown >;
 }
 
 interface EditProps {
@@ -13,8 +15,11 @@ interface EditProps {
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { label } = attributes;
-	const blockProps = useBlockProps( { className: 'yaycheckout-shipping-methods' } );
+	const { label, layout } = attributes;
+	const blockProps = useBlockProps( {
+		className: 'yaycheckout-shipping-methods',
+		'data-layout': layout || 'default',
+	} );
 	const heading = label || __( 'Shipping methods', 'yaycheckout' );
 
 	return (

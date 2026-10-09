@@ -17,6 +17,14 @@
     "label": {
       "type": "string",
       "default": "Shipping methods"
+    },
+    "layout": {
+      "type": "string",
+      "default": "default"
+    },
+    "layoutSettings": {
+      "type": "object",
+      "default": {}
     }
   },
   "supports": {

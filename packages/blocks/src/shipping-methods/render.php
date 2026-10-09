@@ -14,7 +14,14 @@ $yaycheckout_label = isset( $attributes['label'] ) && is_string( $attributes['la
     ? $attributes['label']
     : __( 'Shipping methods', 'yaycheckout' );
 
-$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper( [ 'class' => 'yaycheckout-shipping-methods' ], $attributes, \YayCheckout\Renderer\CheckoutFragments::shipping_empty() );
+$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
+    [
+        'class'       => 'yaycheckout-shipping-methods',
+        'data-layout' => \YayCheckout\Renderer\CheckoutFragments::shipping_layout( $attributes ),
+    ],
+    $attributes,
+    \YayCheckout\Renderer\CheckoutFragments::shipping_empty()
+);
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>

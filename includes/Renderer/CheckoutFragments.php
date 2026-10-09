@@ -22,6 +22,9 @@ class CheckoutFragments {
 
     public const ORDER_TOTALS_CLASS = 'yaycheckout-order-summary-totals';
 
+    /** Layout values the Shipping Methods block accepts; an unknown attribute falls back to default. */
+    public const SHIPPING_LAYOUTS = [ 'default' ];
+
     /** Layout slot => [ selector WooCommerce's checkout.js replaces, method building its HTML ]. */
     private const FRAGMENTS = [
         'payment'          => [ '.woocommerce-checkout-payment', 'payment_methods_html' ],
@@ -121,6 +124,17 @@ class CheckoutFragments {
     public static function print_shipping_rates(): void {
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rate inputs match Woo's checkout contract; labels are its filtered HTML.
         echo self::shipping_rates_html();
+    }
+
+    /**
+     * The Shipping Methods layout from block attributes, or default when missing or unknown.
+     *
+     * @param array $attributes Block attributes.
+     */
+    public static function shipping_layout( array $attributes ): string {
+        $layout = isset( $attributes['layout'] ) && is_string( $attributes['layout'] ) ? $attributes['layout'] : '';
+
+        return in_array( $layout, self::SHIPPING_LAYOUTS, true ) ? $layout : 'default';
     }
 
     public static function print_payment_methods(): void {
