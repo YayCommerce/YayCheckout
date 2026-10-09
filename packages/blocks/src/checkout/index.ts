@@ -4,6 +4,7 @@ import { registerDynamicBlock, saveNestedBlocks } from '../shared/register-dynam
 import './import-export';
 import './inserter-root';
 import './layout-actions';
+import './layout-design';
 import './publish-guard';
 import '../shared/hide-when-empty';
 

@@ -1,0 +1,14 @@
+/* The Layout design sidebar sits outside the canvas, in the editor's own document. */
+.yaycheckout-layout-design__help {
+	margin: 0;
+	color: #757575;
+}
+
+.yaycheckout-layout-design__css textarea {
+	font-family: Menlo, Consolas, monospace;
+	font-size: 12px;
+}
+
+.yaycheckout-layout-design__css.is-invalid .components-base-control__help {
+	color: #cc1818;
+}

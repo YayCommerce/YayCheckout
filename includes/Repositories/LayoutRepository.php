@@ -3,6 +3,7 @@ namespace YayCheckout\Repositories;
 
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Models\Layout;
+use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Services\LayoutAssignment;
 use YayCheckout\Services\LayoutMarkupReader;
@@ -346,11 +347,11 @@ class LayoutRepository {
      * @throws \InvalidArgumentException When the layout limit is reached or the insert fails.
      */
     public function create( string $title ): Layout {
-        return $this->insert_draft( $title, self::default_markup() );
+        return $this->insert_draft( $title, self::default_markup(), [], LayoutDesign::none() );
     }
 
     /**
-     * Copies a layout's content and assignment rules into a new draft layout.
+     * Copies a layout's content, assignment rules and design override into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -362,18 +363,18 @@ class LayoutRepository {
         }
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design );
     }
 
     /**
-     * Creates a draft from an export file's title, markup and assignment rules, verbatim.
+     * Creates a draft from an export file's title, markup, assignment rules and design override, verbatim.
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
      * @param array $rules Already sanitized (Layout::sanitize_rules()); [] for none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    public function import( string $title, string $content, array $rules = [] ): Layout {
-        return $this->insert_draft( $title, $content, $rules );
+    public function import( string $title, string $content, array $rules, LayoutDesign $design ): Layout {
+        return $this->insert_draft( $title, $content, $rules, $design );
     }
 
     /**
@@ -436,10 +437,16 @@ class LayoutRepository {
     /**
      * The one insert path for a new draft, so the cap and slashing cannot drift.
      *
-     * @param array $rules Already sanitized; written with the post, so the draft never exists without them.
+     * @param array $rules Already sanitized; written with the post, like the design, so the draft never exists without them.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content, array $rules = [] ): Layout {
+    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design ): Layout {
+        $meta = [ Layout::META_DESIGN => $design->to_meta() ];
+
+        if ( [] !== $rules ) {
+            $meta[ Layout::META_RULES ] = $rules;
+        }
+
         // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.
         if ( Plan::layout_limit_reached( $this->count() ) ) {
             throw new \InvalidArgumentException( Plan::layout_limit_message() );
@@ -453,7 +460,7 @@ class LayoutRepository {
                     'post_status'  => LayoutStatus::DRAFT,
                     'post_title'   => $title,
                     'post_content' => $content,
-                    'meta_input'   => [] === $rules ? [] : [ Layout::META_RULES => $rules ],
+                    'meta_input'   => $meta,
                 ]
             ),
             true

@@ -2,7 +2,9 @@
 namespace YayCheckout\Engine\Admin;
 
 use YayCheckout\Models\Layout;
+use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutBaseStyles;
+use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -76,13 +78,15 @@ body.yaycheckout-has-layout-actions :is(
         add_action( 'enqueue_block_assets', [ $this, 'canvas_base_styles' ] );
     }
 
-    /** The storefront's base stylesheet and Design tokens, without the merchant's custom CSS. */
+    /** The storefront's base stylesheet and the edited layout's design tokens, without the merchant's custom CSS. */
     public function canvas_base_styles(): void {
         if ( ! $this->is_layout_editor() ) {
             return;
         }
 
-        ( new CheckoutBaseStyles() )->enqueue( false );
+        $layout = ( new LayoutRepository() )->find( (int) get_the_ID() );
+
+        ( new CheckoutBaseStyles() )->enqueue( false, null !== $layout ? $layout->design : LayoutDesign::none() );
     }
 
     private function is_layout_editor(): bool {

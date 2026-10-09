@@ -2,12 +2,14 @@
 namespace YayCheckout\Renderer;
 
 use YayCheckout\Models\Design;
+use YayCheckout\Models\LayoutDesign;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Prints the Design page's tokens as `--yaycheckout-*` custom properties on
- * :root, then the page rule, then the merchant's custom CSS. A section left at
+ * Prints the Design page's tokens, with the layout's overridden sections swapped in,
+ * as `--yaycheckout-*` custom properties on :root, then the page rule, then the
+ * global custom CSS and the layout's. A section left at
  * theme default prints nothing: checkout-base.css and the blocks' CSS read each
  * property with a neutral fallback that follows the theme.
  *
@@ -17,12 +19,13 @@ defined( 'ABSPATH' ) || exit;
  * inherited property on body takes html's value, not the theme's body value).
  *
  * Values are printed unescaped: Design::from_option() only lets through hex
- * colours, enum members and in-range ints. Custom CSS is checked again here,
- * not only on save: the option can be written without going through REST.
+ * colours, enum members and in-range ints, and LayoutDesign::from_meta() projects the same
+ * way. Each custom CSS is checked here, not only on save: the option and the meta can be
+ * written without going through REST, and one rejected CSS must not drop the other.
  */
 class DesignStyles {
 
-    /** Behind a picked font, which is named, not loaded. Mirrored by the admin Preview (PreviewPane.tsx). */
+    /** Behind a picked font, which is named, not loaded. Mirrored by the admin Preview (PreviewPane.tsx) and the layout editor (design-css.ts). */
     private const FONT_FALLBACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
     /** The storefront page and the layout editor canvas. */
@@ -31,21 +34,27 @@ class DesignStyles {
     /** Page property => the token it takes, printed only when vars() set that token. */
     private const PAGE_PROPERTIES = [
         'background-color' => 'color-background',
+        'background-image' => 'background-gradient',
         'color'            => 'color-text',
         'font-family'      => 'font-family',
         'font-size'        => 'font-size-base',
     ];
 
-    /** Pixel height per inputs.size step. Mirrored by the admin Preview (PreviewPane.tsx). */
+    /** Pixel height per inputs.size step. Mirrored by the admin Preview (PreviewPane.tsx) and the layout editor (design-css.ts). */
     private const INPUT_HEIGHTS = [
         'small'  => 32,
         'medium' => 40,
         'large'  => 48,
     ];
 
-    /** @param bool $with_custom_css False in the layout editor, where the merchant's storefront CSS could break the canvas. */
-    public function css( Design $design, bool $with_custom_css ): string {
-        $vars = $this->vars( $design->tokens );
+    /**
+     * The design as one stylesheet. Everything before the custom CSS is mirrored by the layout
+     * editor (design-css.ts), which reprints it as the merchant edits the layout's override.
+     *
+     * @param bool $with_custom_css False in the layout editor, where the merchant's storefront CSS could break the canvas.
+     */
+    public function css( Design $design, LayoutDesign $layout, bool $with_custom_css ): string {
+        $vars = $this->vars( $layout->tokens_over( $design->tokens ) );
         $page = array_intersect( self::PAGE_PROPERTIES, array_keys( $vars ) );
         $css  = '';
 
@@ -69,13 +78,15 @@ class DesignStyles {
             return $css;
         }
 
-        $custom_css = Design::sanitize_custom_css( $design->custom_css );
+        foreach ( [ $design->custom_css, $layout->custom_css ] as $custom_css ) {
+            $custom_css = Design::sanitize_custom_css( $custom_css );
 
-        if ( $custom_css instanceof \WP_Error || '' === trim( $custom_css ) ) {
-            return $css;
+            if ( ! $custom_css instanceof \WP_Error && '' !== trim( $custom_css ) ) {
+                $css .= $custom_css . "\n";
+            }
         }
 
-        return $css . $custom_css . "\n";
+        return $css;
     }
 
     /** Custom property values by name (without the `--yaycheckout-` prefix), for the sections that are on. */
@@ -84,12 +95,21 @@ class DesignStyles {
         $vars       = [];
 
         if ( $tokens['colours']['enabled'] ) {
-            $vars += [
-                'color-primary'    => $tokens['colours']['primary'],
-                'color-text'       => $tokens['colours']['text'],
-                'color-background' => $tokens['colours']['background'],
-                'color-border'     => $tokens['colours']['border'],
-            ];
+            $background = $tokens['colours']['background'];
+
+            // A gradient fills only the page: inputs and rows read color-background as a colour, so they keep their
+            // fallback. A layout's unset ('') colour prints nothing, so it follows the theme.
+            $vars += array_filter(
+                [
+                    'color-primary' => $tokens['colours']['primary'],
+                    'color-text'    => $tokens['colours']['text'],
+                    Design::is_gradient( $background ) ? 'background-gradient' : 'color-background' => $background,
+                    'color-border'  => $tokens['colours']['border'],
+                ],
+                static function ( $value ) {
+                    return '' !== $value;
+                }
+            );
         }
 
         if ( $typography['enabled'] ) {
