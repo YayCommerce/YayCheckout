@@ -1,10 +1,10 @@
 /**
  * Opens a field that render.php printed behind a Disclosure toggle: on a click, when the field gets
  * a value (the login modal fills it through jQuery), or when the country's locale makes it required.
- * A link opens its field for good and disappears; a collapsible header stays and closes it again,
- * until a locale makes the field required, which opens it and hides the header.
+ * A link opens its field for good and disappears; a collapsible header or a checkbox stays and closes
+ * it again, until a locale makes the field required, which opens it and hides the header or checkbox.
  * WooCommerce's locale script shows and hides the inner row, never our panel, so a locale that hides
- * the row hides the toggle too. Field, Extra field and Coupon form load this; a toggle is bound once.
+ * the row hides the toggle too. Field, Extra field, Order note and Coupon form load this; a toggle is bound once.
  */
 
 import { jquery, type Control } from './jquery';
@@ -25,8 +25,10 @@ function filled( control: Control ): boolean {
 	return control instanceof HTMLTextAreaElement && control.value !== '';
 }
 
-function bind( toggle: HTMLButtonElement ): void {
-	const panel = document.getElementById( toggle.getAttribute( 'aria-controls' ) ?? '' );
+function bind( toggle: HTMLElement ): void {
+	// A link or header is the button itself; a checkbox mode's toggle is a label around the checkbox.
+	const box = toggle.querySelector< HTMLInputElement >( '.yaycheckout-disclosure__checkbox' );
+	const panel = document.getElementById( ( box ?? toggle ).getAttribute( 'aria-controls' ) ?? '' );
 
 	if ( ! panel || toggle.dataset[ BOUND ] ) {
 		return;
@@ -34,7 +36,7 @@ function bind( toggle: HTMLButtonElement ): void {
 
 	toggle.dataset[ BOUND ] = '1';
 
-	const isLink = toggle.dataset.mode !== 'collapsible';
+	const isLink = toggle.dataset.mode === 'link';
 	const controls = Array.from( panel.querySelectorAll< Control >( 'input, select, textarea' ) );
 	const row = panel.querySelector< HTMLElement >( '.form-row' );
 	// Once a link is used or a locale requires the field, it stays open with no toggle.
@@ -42,7 +44,12 @@ function bind( toggle: HTMLButtonElement ): void {
 
 	const setOpen = ( open: boolean, focus: boolean ) => {
 		panel.hidden = ! open;
-		toggle.setAttribute( 'aria-expanded', open ? 'true' : 'false' );
+
+		if ( box ) {
+			box.checked = open;
+		} else {
+			toggle.setAttribute( 'aria-expanded', open ? 'true' : 'false' );
+		}
 
 		if ( open && isLink ) {
 			toggle.hidden = true;
@@ -66,7 +73,12 @@ function bind( toggle: HTMLButtonElement ): void {
 		}
 	};
 
-	toggle.addEventListener( 'click', () => setOpen( panel.hidden, true ) );
+	if ( box ) {
+		// Focus stays on the checkbox, so a keyboard shopper can untick it again.
+		box.addEventListener( 'change', () => setOpen( box.checked, false ) );
+	} else {
+		toggle.addEventListener( 'click', () => setOpen( panel.hidden, true ) );
+	}
 
 	controls.forEach( ( control ) => {
 		control.addEventListener( 'input', onChange );
@@ -95,7 +107,7 @@ function bind( toggle: HTMLButtonElement ): void {
 }
 
 export function initDisclosures(): void {
-	const init = () => document.querySelectorAll< HTMLButtonElement >( TOGGLE ).forEach( bind );
+	const init = () => document.querySelectorAll< HTMLElement >( TOGGLE ).forEach( bind );
 
 	if ( document.readyState === 'loading' ) {
 		document.addEventListener( 'DOMContentLoaded', init );

@@ -4,8 +4,8 @@ namespace YayCheckout\Services;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * How a Field, Extra field or Coupon form hides until the shopper asks for it: behind a one-way
- * "+ Add …" link, or in a section a header opens and closes.
+ * How a Field, Extra field, Order note or Coupon form hides until the shopper asks for it: behind a one-way
+ * "+ Add …" link, in a section a header opens and closes, or behind a checkbox that shows it while ticked.
  * Pure: no storage, no hooks. packages/blocks/src/shared/disclosure.tsx mirrors the rules.
  */
 class Disclosure {
@@ -13,6 +13,7 @@ class Disclosure {
     public const NONE        = 'none';
     public const LINK        = 'link';
     public const COLLAPSIBLE = 'collapsible';
+    public const CHECKBOX    = 'checkbox';
 
     /** Behind a link unless the merchant says otherwise; every other field is shown unless asked. */
     public const APARTMENT_KEYS = [ 'billing_address_2', 'shipping_address_2' ];
@@ -30,7 +31,7 @@ class Disclosure {
             return self::NONE;
         }
 
-        if ( isset( $attrs['disclosure'] ) && in_array( $attrs['disclosure'], [ self::NONE, self::LINK, self::COLLAPSIBLE ], true ) ) {
+        if ( isset( $attrs['disclosure'] ) && in_array( $attrs['disclosure'], [ self::NONE, self::LINK, self::COLLAPSIBLE, self::CHECKBOX ], true ) ) {
             return $attrs['disclosure'];
         }
 
@@ -38,7 +39,7 @@ class Disclosure {
     }
 
     /**
-     * The toggle's text: the merchant's, or by mode "+ Add" and the label, or the label alone.
+     * The toggle's text: the merchant's, or by mode "+ Add" and the label, "Add" and the label, or the label alone.
      *
      * @param array  $attrs Raw block attributes.
      * @param string $label The field's label as plain text.
@@ -46,6 +47,11 @@ class Disclosure {
     public static function text( array $attrs, string $key, string $label, string $mode ): string {
         if ( self::COLLAPSIBLE === $mode ) {
             $fallback = $label;
+        } elseif ( self::CHECKBOX === $mode && in_array( $key, self::APARTMENT_KEYS, true ) ) {
+            $fallback = __( 'Add apartment, suite, etc.', 'yaycheckout' );
+        } elseif ( self::CHECKBOX === $mode ) {
+            /* translators: %s: field label, e.g. "company name". */
+            $fallback = sprintf( __( 'Add %s', 'yaycheckout' ), self::lower_first( $label ) );
         } elseif ( in_array( $key, self::APARTMENT_KEYS, true ) ) {
             $fallback = __( '+ Add apartment, suite, etc.', 'yaycheckout' );
         } else {
@@ -58,6 +64,16 @@ class Disclosure {
 
     /** The toggle, then the opening of the hidden panel that holds the field. */
     public static function open( string $key, string $text, string $mode ): string {
+        // No name, so the checkbox never posts with the checkout form.
+        if ( self::CHECKBOX === $mode ) {
+            return sprintf(
+                '<label class="yaycheckout-disclosure__toggle" data-mode="%1$s"><input type="checkbox" class="yaycheckout-disclosure__checkbox" aria-controls="%2$s" /><span>%3$s</span></label><div class="yaycheckout-disclosure__panel" id="%2$s" hidden>',
+                esc_attr( $mode ),
+                esc_attr( $key . '-disclosure-panel' ),
+                esc_html( $text )
+            );
+        }
+
         $chevron = self::COLLAPSIBLE === $mode
             ? '<svg class="yaycheckout-disclosure__chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17.5 11.6 12 16l-5.5-4.4.9-1.2L12 14l4.5-3.6 1 1.2Z"/></svg>'
             : '';

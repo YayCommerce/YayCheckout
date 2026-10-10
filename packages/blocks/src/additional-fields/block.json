@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/additional-fields",
+  "title": "Additional fields",
+  "category": "yaycheckout",
+  "description": "WooCommerce's order fields, such as the order note and fields that plugins add, as WooCommerce defines them.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "note", "additional", "order", "fields" ],
+  "ancestor": [ "yaycheckout/checkout" ],
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false
+  },
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php"
+}

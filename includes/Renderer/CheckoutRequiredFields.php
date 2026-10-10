@@ -28,7 +28,7 @@ class CheckoutRequiredFields {
 
     private const SCRIPT_HANDLE = 'yaycheckout-field-requirements';
 
-    /** @var array{address: array, all: array}|null|false False until first read; null when standing down. */
+    /** @var array{address: array, all: array, order_note: array|null}|null|false False until first read; null when standing down. */
     private $fields = false;
 
     protected function __construct() {
@@ -49,7 +49,10 @@ class CheckoutRequiredFields {
             return $fields;
         }
 
-        return RequiredFieldOverlay::apply( $fields, $layout_fields['address'] );
+        return RequiredFieldOverlay::apply_order_note(
+            RequiredFieldOverlay::apply( $fields, $layout_fields['address'] ),
+            $layout_fields['order_note']
+        );
     }
 
     public function filter_form_field( $field, $key, $args ) {
@@ -110,9 +113,9 @@ class CheckoutRequiredFields {
     }
 
     /**
-     * The served layout's address fields, and those plus its extra fields.
+     * The served layout's address fields; those plus its extra fields and order note; and its order note.
      *
-     * @return array{address: array, all: array}|null Null when no layout is served, so WooCommerce keeps its own rules.
+     * @return array{address: array, all: array, order_note: array|null}|null Null when no layout is served, so WooCommerce keeps its own rules.
      */
     private function fields(): ?array {
         if ( false !== $this->fields ) {
@@ -127,11 +130,19 @@ class CheckoutRequiredFields {
             return null;
         }
 
-        $address      = LayoutMarkupReader::fields( $layout->content );
+        $address    = LayoutMarkupReader::fields( $layout->content );
+        $order_note = LayoutMarkupReader::order_note( $layout->content );
+        // Not array_merge(): an all-digit extra field Key is an integer key, which array_merge() renumbers.
+        $all = array_replace( $address, LayoutMarkupReader::extra_fields( $layout->content ) );
+
+        if ( null !== $order_note ) {
+            $all[ LayoutMarkupReader::ORDER_NOTE_KEY ] = $order_note;
+        }
+
         $this->fields = [
-            'address' => $address,
-            // Not array_merge(): an all-digit extra field Key is an integer key, which array_merge() renumbers.
-            'all'     => array_replace( $address, LayoutMarkupReader::extra_fields( $layout->content ) ),
+            'address'    => $address,
+            'all'        => $all,
+            'order_note' => $order_note,
         ];
 
         return $this->fields;
