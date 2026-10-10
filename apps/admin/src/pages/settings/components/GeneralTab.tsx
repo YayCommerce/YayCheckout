@@ -73,7 +73,7 @@ export function GeneralTab() {
       <SettingRow
         title={__('Setup wizard', 'yaycheckout')}
         description={__(
-          'Re-scan your store and start a new draft. The brand you apply restyles every layout, including live ones.',
+          'Re-scan your store and start a new draft from a template. Your other layouts are not changed.',
           'yaycheckout',
         )}
       >

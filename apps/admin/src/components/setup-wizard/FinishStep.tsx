@@ -8,7 +8,7 @@ import type { Layout } from '@/lib/schema/layout.schema';
 import { LayoutDraftActions } from '@/components/shared/LayoutDraftActions';
 import { SummaryStrip } from '@/components/shared/SummaryStrip';
 
-/** Wizard confirmation: the draft Apply brand created, and where to take it next. Nothing is live yet. */
+/** Wizard confirmation: the draft Start from created, and where to take it next. Nothing is live yet. */
 export function FinishStep({
   draft,
   templateSlug,

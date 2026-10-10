@@ -55,7 +55,7 @@
 
 | Phase | Delivers (user-visible) | Exit criterion (exact check) | Status |
 |---|---|---|---|
-| 1 | New, Blank, library and Reset layouts come from template files with their own design; unbuilt templates show Coming soon | `composer test -- --filter LayoutTemplateCatalogueTest` passes. In the SPA, a "From library" Classic two-column layout opens in the editor with a `#f0f0f1` canvas background, and every other template shows Coming soon | pending |
+| 1 | New, Blank, library and Reset layouts come from template files with their own design; unbuilt templates show Coming soon | `composer test -- --filter LayoutTemplateCatalogueTest` passes. In the SPA, a "From library" Classic two-column layout opens in the editor with a `#f0f0f1` canvas background, and every other template shows Coming soon | done 2026-10-10 |
 | 2 | Setup wizard is Scan → Start from → Finish, with no Brand step, and setup no longer writes the global design | Run the wizard from Settings (re-run): no Brand step; `wp option get yaycheckout_design` is unchanged before and after; the created layout's `_yaycheckout_template` is `classic-two-column` | pending |
 | 3 | Template 01 matches its mock as far as existing blocks allow | The spec's acceptance criterion 12 end-to-end walkthrough passes | pending |
 

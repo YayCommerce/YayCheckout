@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { completeSetup } from '@/lib/api/setup.api';
-import { DESIGN_QUERIES } from '@/lib/queries/design.queries';
 import { invalidateListedLayouts } from '@/lib/queries/layout.queries';
 
 export function useCompleteSetupMutation() {
@@ -11,8 +10,7 @@ export function useCompleteSetupMutation() {
     mutationKey: ['setup', 'complete'],
     mutationFn: completeSetup,
     meta: { skipGlobalError: true },
-    onSuccess: ({ design }) => {
-      queryClient.setQueryData(DESIGN_QUERIES.main.queryKey, design);
+    onSuccess: () => {
       invalidateListedLayouts(queryClient);
     },
   });
