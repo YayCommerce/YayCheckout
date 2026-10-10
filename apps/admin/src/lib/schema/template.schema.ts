@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+/** Mirrors LayoutTemplateCatalogue::templates(). */
 export const templateSchema = z.object({
   slug: z.string(),
   name: z.string(),

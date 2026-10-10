@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { useTemplate, useTemplateLibraryQuery } from '@/lib/queries/template.queries';
+import { isPickable, useTemplate, useTemplateLibraryQuery } from '@/lib/queries/template.queries';
 import { Button, LoadingButton } from '@/components/ui/button';
 import { TemplatePicker } from '@/components/shared/template-picker/TemplatePicker';
 
@@ -27,7 +27,7 @@ export function StartFromStep({
   onApply: () => void;
 }) {
   const { data } = useTemplateLibraryQuery();
-  const firstPickable = data?.templates.find((t) => !t.locked && t.available);
+  const firstPickable = data?.templates.find(isPickable);
 
   useEffect(() => {
     if (templateSlug === undefined && firstPickable) onTemplateChange(firstPickable.slug);

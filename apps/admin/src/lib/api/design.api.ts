@@ -46,7 +46,7 @@ export async function getDesign(): Promise<DesignResponse> {
 }
 
 /** The applied-design body POST /design and POST /setup both send. */
-export function designToWire(form: DesignForm) {
+function designToWire(form: DesignForm) {
   return { tokens: tokensToWire(form.tokens), custom_css: form.customCss };
 }
 

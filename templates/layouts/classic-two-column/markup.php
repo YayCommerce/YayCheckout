@@ -18,8 +18,12 @@ defined( 'ABSPATH' ) || exit;
 $yaycheckout_terms_url   = wc_terms_and_conditions_page_id() > 0 ? (string) wc_get_page_permalink( 'terms' ) : '';
 $yaycheckout_privacy_url = get_privacy_policy_url();
 
-$yaycheckout_terms_link   = '' === $yaycheckout_terms_url ? '' : sprintf( '<a href="%s">%s</a>', esc_url( $yaycheckout_terms_url ), esc_html__( 'Terms and Conditions', 'yaycheckout' ) );
-$yaycheckout_privacy_link = '' === $yaycheckout_privacy_url ? '' : sprintf( '<a href="%s">%s</a>', esc_url( $yaycheckout_privacy_url ), esc_html__( 'Privacy Policy', 'yaycheckout' ) );
+$yaycheckout_link = static function ( string $url, string $label ): string {
+    return '' === $url ? '' : sprintf( '<a href="%s">%s</a>', esc_url( $url ), esc_html( $label ) );
+};
+
+$yaycheckout_terms_link   = $yaycheckout_link( $yaycheckout_terms_url, __( 'Terms and Conditions', 'yaycheckout' ) );
+$yaycheckout_privacy_link = $yaycheckout_link( $yaycheckout_privacy_url, __( 'Privacy Policy', 'yaycheckout' ) );
 
 if ( '' !== $yaycheckout_terms_link && '' !== $yaycheckout_privacy_link ) {
     /* translators: 1: Terms and Conditions link, 2: Privacy Policy link */
@@ -33,8 +37,8 @@ if ( '' !== $yaycheckout_terms_link && '' !== $yaycheckout_privacy_link ) {
 
 $yaycheckout_policy_links = array_filter(
     [
-        '' === $yaycheckout_privacy_url ? '' : sprintf( '<a href="%s">%s</a>', esc_url( $yaycheckout_privacy_url ), esc_html__( 'Privacy', 'yaycheckout' ) ),
-        '' === $yaycheckout_terms_url ? '' : sprintf( '<a href="%s">%s</a>', esc_url( $yaycheckout_terms_url ), esc_html__( 'Terms', 'yaycheckout' ) ),
+        $yaycheckout_link( $yaycheckout_privacy_url, __( 'Privacy', 'yaycheckout' ) ),
+        $yaycheckout_link( $yaycheckout_terms_url, __( 'Terms', 'yaycheckout' ) ),
     ]
 );
 ?>

@@ -27,13 +27,12 @@ class DesignRepository {
     }
 
     /**
-     * The stored design with $input applied, not yet persisted. Lets a caller
-     * validate before its first write and store() after it without a second read.
+     * The stored design with $input applied, not yet persisted.
      *
      * @param array $input Raw { tokens, custom_css } body.
      * @throws \InvalidArgumentException When the body fails Design::sanitize_input().
      */
-    public function prepare( array $input ): Design {
+    private function prepare( array $input ): Design {
         $design = $this->get();
         $clean  = $design->sanitize_input( $input );
 
@@ -48,7 +47,7 @@ class DesignRepository {
     }
 
     /** Persists a design from prepare(), stamping updated_at. */
-    public function store( Design $design ): Design {
+    private function store( Design $design ): Design {
         $design->updated_at = DateHelper::now_iso8601();
 
         $this->persist( $design );

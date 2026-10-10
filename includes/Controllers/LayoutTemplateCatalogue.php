@@ -36,27 +36,27 @@ class LayoutTemplateCatalogue {
             return false;
         }
 
-        return is_file( self::dir( $slug ) . 'markup.php' ) && is_file( self::dir( $slug ) . 'design.json' );
+        return is_file( self::path( $slug, 'markup.php' ) ) && is_file( self::path( $slug, 'design.json' ) );
     }
 
     /**
      * Refuses a template this plan cannot build from. Shared by every route
      * that creates from a template so the lock rule has one owner.
      *
-     * @throws \InvalidArgumentException When $slug is unknown or locked on this plan.
+     * @throws \InvalidArgumentException When $slug is unknown, locked on this plan or coming soon.
      */
     public static function assert_available( string $slug ): void {
-        $locked = array_column( self::templates( Plan::is_pro() ), 'locked', 'slug' );
+        $template = array_column( self::templates( Plan::is_pro() ), null, 'slug' )[ $slug ] ?? null;
 
-        if ( ! array_key_exists( $slug, $locked ) ) {
+        if ( null === $template ) {
             throw new \InvalidArgumentException( __( 'Unknown template.', 'yaycheckout' ) );
         }
 
-        if ( $locked[ $slug ] ) {
+        if ( $template['locked'] ) {
             throw new \InvalidArgumentException( __( 'This template is part of YayCheckout Pro.', 'yaycheckout' ) );
         }
 
-        if ( ! self::is_available( $slug ) ) {
+        if ( ! $template['available'] ) {
             throw new \InvalidArgumentException( __( 'This template is coming soon.', 'yaycheckout' ) );
         }
     }
@@ -67,10 +67,10 @@ class LayoutTemplateCatalogue {
      * @throws \InvalidArgumentException When $slug is not an available template.
      */
     public static function markup( string $slug ): string {
-        self::require_available( $slug );
+        $file = self::file( $slug, 'markup.php' );
 
         ob_start();
-        include self::dir( $slug ) . 'markup.php';
+        include $file;
 
         return (string) ob_get_clean();
     }
@@ -81,25 +81,25 @@ class LayoutTemplateCatalogue {
      * @throws \InvalidArgumentException When $slug is not an available template.
      */
     public static function design( string $slug ): LayoutDesign {
-        self::require_available( $slug );
-
-        return LayoutDesign::from_meta( wp_json_file_decode( self::dir( $slug ) . 'design.json', [ 'associative' => true ] ) );
+        return LayoutDesign::from_meta( wp_json_file_decode( self::file( $slug, 'design.json' ), [ 'associative' => true ] ) );
     }
 
     /**
-     * Guards every file lookup, so only catalogue slugs ever reach a path.
+     * The path of one of the template's files. Guards every file lookup, so only catalogue slugs ever reach a path.
      *
      * @throws \InvalidArgumentException When $slug is not an available template.
      */
-    private static function require_available( string $slug ): void {
+    private static function file( string $slug, string $name ): string {
         if ( ! self::is_available( $slug ) ) {
             throw new \InvalidArgumentException( sprintf( 'Template "%s" is not available.', $slug ) );
         }
+
+        return self::path( $slug, $name );
     }
 
-    /** Callers check $slug against the catalogue first. */
-    private static function dir( string $slug ): string {
-        return YAYCHECKOUT_PLUGIN_DIR . 'templates/layouts/' . $slug . '/';
+    /** Unchecked: callers check $slug against the catalogue first. */
+    private static function path( string $slug, string $name ): string {
+        return YAYCHECKOUT_PLUGIN_DIR . 'templates/layouts/' . $slug . '/' . $name;
     }
 
     /** @return array{ slug: string, name: string, category: string }[] */
