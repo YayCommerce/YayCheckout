@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. There is no spec; the Requirements below are the contract.
 
-**Status:** active
+**Status:** superseded by [docs/specs/2026-10-10-remove-global-design-design.md](../specs/2026-10-10-remove-global-design-design.md)
 **Goal:** Each layout can override the global Design per section (Colours, Typography, Inputs) and add its own custom CSS. The merchant sets this in a plugin sidebar in the layout editor, and the canvas restyles live.
 **Spec:** none, planned from the request
 **Architecture:** The override is one post meta on the layout, `_yaycheckout_design`, registered with `show_in_rest`. The editor's existing Save (core `savePost()`) writes it with the markup, so there is no new route or writer. Its REST schema is derived from `Design::schema()`, so core rejects an invalid token with a 400 and no second schema exists. The storefront and the canvas print the global tokens with each overridden section swapped in, then the global custom CSS, then the layout's. In the editor, the sidebar recomputes that CSS and replaces the text of the canvas's existing inline design `<style>`. We chose this over printing a second, override-only stylesheet, which would need `initial` resets to undo a global section the override replaces.

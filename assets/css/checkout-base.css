@@ -2,7 +2,7 @@
  * YayCheckout's base for the checkout layout, on the storefront and in the layout editor canvas
  * (Renderer\CheckoutBaseStyles). WooCommerce's woocommerce-general is dequeued, so this styles
  * the markup that several blocks, or WooCommerce itself, print. Markup only one block prints is
- * styled in that block's style.css. Values come from the Design tokens (DesignStyles) with
+ * styled in that block's style.css. Values come from the layout's design tokens (DesignStyles) with
  * neutral fallbacks that take the theme's font and colour; block supports override per instance.
  *
  * Selectors are .yaycheckout-checkout plus a class or more, so they beat a theme's
@@ -11,10 +11,9 @@
  */
 
 /*
- * Neutral fallbacks, resolved once. A Design section left at theme default leaves its token
- * unset, so these follow the theme: its primary preset (then #3858e9, Design::schema()'s
- * default primary), a border mixed from the text colour, a 2px corner (mirrored by
- * NEUTRAL.radius in PreviewPane.tsx). Block CSS reads the same names.
+ * Neutral fallbacks, resolved once. A layout's empty token leaves its property unset, so these
+ * follow the theme: its primary preset (then #3858e9, Classic two-column's primary), a border
+ * mixed from the text colour, a 2px corner. Block CSS reads the same names.
  */
 :root,
 .editor-styles-wrapper {

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. Read the spec linked below before starting; the plan argues from it.
 
-**Status:** active
+**Status:** done 2026-10-10
 **Goal:** A layout owns its whole design: the global design (option, model, repository, `/design` route, Design page) is deleted, every layout token can be empty and then prints nothing, and site-wide custom CSS becomes the setting `advanced.custom_css`.
 **Spec:** [docs/specs/2026-10-10-remove-global-design-design.md](../specs/2026-10-10-remove-global-design-design.md)
 **Architecture:** `LayoutDesign` absorbs the rules `Design` owned and loses `enabled` and `null` sections (spec approach A). `DesignStyles::css()` then builds CSS from one layout plus a site CSS string. The site CSS reuses the settings schema, route and form, so it adds no new storage or route.
