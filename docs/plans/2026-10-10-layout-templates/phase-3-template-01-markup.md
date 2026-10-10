@@ -33,16 +33,19 @@
   - `yaycheckout/coupon-form` `disclosure: "collapsible"`, `disclosureText`
 - Produces: nothing new. The file's output is template 01.
 
-Steps: expand after Phase 2 lands. The steps must:
-1. Build the layout in the YayCheckout editor exactly as the spec's **UI → Template 01 markup** lists, with its exact colours, sizes and copy. Copy it from the Code editor and paste it into `markup.php`.
-2. Put back the PHP:
-   - `esc_html_e()` / `esc_html__()` for every string;
-   - the `has_custom_logo()` choice;
+**Steps:**
+1. Build the layout in the YayCheckout editor on a scratch layout, exactly as the spec's **UI → Template 01 markup** lists. Build it with `wp.blocks.createBlock()` and `resetBlocks()` from the editor's console, reusing the current Billing and Shipping blocks. Save it, then read the saved `post_content`, which is what the Code editor shows.
+2. Paste that markup into `markup.php` and put back the PHP:
+   - `esc_html_e()` for every string, both in the block content and in the attribute JSON;
+   - `has_custom_logo()` choosing Site Logo or Site Title;
    - `wc_get_cart_url()` for the breadcrumb's Cart link;
-   - the terms link printed only when `wc_terms_and_conditions_page_id() > 0`, and the privacy link only when `get_privacy_policy_url()` is not `''`, in both the terms sentence and the links under the summary, with each sentence reading correctly when either or both links are missing.
-3. Verify a fresh layout opens with no invalid-block warning. Check the four page states: both pages set, only terms, only privacy, neither.
-4. Run `composer test -- --filter LayoutTemplateCatalogueTest` (PASS) and `composer lint -- templates/layouts/classic-two-column/markup.php` (clean).
-5. Run the exit criterion.
-6. Set the plan Status in `README.md` to `done YYYY-MM-DD` and the phase table rows to done.
+   - the terms sentence and the links under the summary, built at the top of the file, each printing only for the pages that exist. A paragraph whose links are all missing is left out with its block comment.
+   - Drop the legacy `align` attribute the editor writes next to `typography.textAlign`.
+3. Run `composer lint -- templates/layouts/classic-two-column/markup.php`. Expect it clean.
+4. Render the template with the terms and privacy pages filtered into the four states (both, terms only, privacy only, neither). Expect `publish_error()` to be `''` and the sentence to read correctly in each. Parse each state in the editor with `wp.blocks.parse()`. Expect no invalid block.
+5. Run `composer test`. Expect it to pass, including `LayoutTemplateCatalogueTest`.
+6. Update `docs/architecture.md:46`, and the mirror comment in `packages/blocks/src/order-summary/edit.tsx`: the template puts Coupon Form between Items and Totals.
+7. Run the exit criterion. Delete the layouts it creates, and leave layout 61 the only active layout.
+8. Set the plan Status in `README.md` to `done YYYY-MM-DD` and the phase table rows to done.
 
 Commit message: `feat(templates): rebuild Classic two-column to match its mock`

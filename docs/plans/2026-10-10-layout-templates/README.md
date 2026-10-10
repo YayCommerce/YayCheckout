@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute phases in order. Read this file, then the current phase file. Do not start a phase until the previous phase's exit criterion has been verified and `/yayplancheck` has passed on it.
 
-**Status:** active
+**Status:** done 2026-10-10
 **Goal:** Layouts are created from per-template files (markup plus design meta), unbuilt templates show as Coming soon, Reset restores a layout's own template, the setup wizard loses its Brand step, and template 01 (Classic two-column) replaces the default layout and matches its mock.
 **Spec:** [docs/specs/2026-10-10-layout-templates-design.md](../../specs/2026-10-10-layout-templates-design.md)
 **Architecture:** `LayoutTemplateCatalogue` stays the single owner of the template list and the plan lock, and gains the file lookups (`templates/layouts/<slug>/markup.php` and `design.json`). `LayoutRepository` takes a slug on every insert and stores it in `_yaycheckout_template`, so Reset can find the template again. Template data stays beside the markup (spec approach B), not in the PHP array.
@@ -56,8 +56,8 @@
 | Phase | Delivers (user-visible) | Exit criterion (exact check) | Status |
 |---|---|---|---|
 | 1 | New, Blank, library and Reset layouts come from template files with their own design; unbuilt templates show Coming soon | `composer test -- --filter LayoutTemplateCatalogueTest` passes. In the SPA, a "From library" Classic two-column layout opens in the editor with a `#f0f0f1` canvas background, and every other template shows Coming soon | done 2026-10-10 |
-| 2 | Setup wizard is Scan → Start from → Finish, with no Brand step, and setup no longer writes the global design | Run the wizard from Settings (re-run): no Brand step; `wp option get yaycheckout_design` is unchanged before and after; the created layout's `_yaycheckout_template` is `classic-two-column` | pending |
-| 3 | Template 01 matches its mock as far as existing blocks allow | The spec's acceptance criterion 12 end-to-end walkthrough passes | pending |
+| 2 | Setup wizard is Scan → Start from → Finish, with no Brand step, and setup no longer writes the global design | Run the wizard from Settings (re-run): no Brand step; `wp option get yaycheckout_design` is unchanged before and after; the created layout's `_yaycheckout_template` is `classic-two-column` | done 2026-10-10 |
+| 3 | Template 01 matches its mock as far as existing blocks allow | The spec's acceptance criterion 12 end-to-end walkthrough passes | done 2026-10-10 |
 
 ## Interface contract
 
