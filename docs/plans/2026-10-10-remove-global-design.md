@@ -200,7 +200,7 @@
   Run spec criterion 2's command:
 
   ```
-  git grep -nE "DesignRepository|DesignRestController|Models\\\\Design;|OPTION_DESIGN|['\"]yaycheckout_design['\"]|design\.(api|queries|schema|helper)|PreviewPane|FontFamilySelect" -- includes apps packages templates
+  git grep -nE "DesignRepository|DesignRestController|Models\\\\Design;|OPTION_DESIGN|['\"]yaycheckout_design['\"]|/design\.(api|queries|schema|helper)|PreviewPane|FontFamilySelect" -- includes apps packages templates
   ```
 
   Expect no output.

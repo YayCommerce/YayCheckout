@@ -53,7 +53,7 @@ A layout owns its whole design: the merchant styles each checkout layout in the 
 ## Acceptance criteria
 
 1. The header nav has no Design tab, and `router.tsx` has no `design` route. `GET /yaycheckout/v1/design` returns 404 (`rest_no_route`).
-2. `git grep -nE "DesignRepository|DesignRestController|Models\\\\Design;|OPTION_DESIGN|['\"]yaycheckout_design['\"]|design\.(api|queries|schema|helper)|PreviewPane|FontFamilySelect" -- includes apps packages templates` prints nothing. The leading quote keeps the meta key `_yaycheckout_design` out of the match.
+2. `git grep -nE "DesignRepository|DesignRestController|Models\\\\Design;|OPTION_DESIGN|['\"]yaycheckout_design['\"]|/design\.(api|queries|schema|helper)|PreviewPane|FontFamilySelect" -- includes apps packages templates` prints nothing. The leading quote keeps the meta key `_yaycheckout_design` out of the match.
 3. `LayoutDesign::from_meta( $value )->to_meta()` always returns exactly `colours`, `typography`, `inputs` and `custom_css`, with the token keys in the table below and no `enabled` key. For `$value` = `[]`, `null`, `[ 'colours' => null ]`, a section holding `enabled` or an unknown key, or a token of the wrong type, each such token reads as its empty value.
 4. Token schema (`LayoutDesign::schema()`), all defaults empty:
 

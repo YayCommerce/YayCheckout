@@ -4,7 +4,6 @@ import AppLayout from './AppLayout';
 import NotFoundPage from './pages/404';
 import ErrorPage from './pages/500';
 import CompatibilityPage from './pages/compatibility/CompatibilityPage';
-import DesignPage from './pages/design/DesignPage';
 import LayoutsPage from './pages/layouts/LayoutsPage';
 import { SETTINGS_SUB_MENUS } from './pages/settings/settings-sub-menus';
 import SettingsPage from './pages/settings/SettingsPage';
@@ -24,10 +23,6 @@ export function getManagerRouter() {
         {
           path: 'layouts',
           element: <LayoutsPage />,
-        },
-        {
-          path: 'design',
-          element: <DesignPage />,
         },
         {
           path: 'tools',

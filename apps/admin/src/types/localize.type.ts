@@ -1,4 +1,3 @@
-import { DesignResponseWire } from '@/lib/schema/design.schema';
 import { IntegrationWire, SettingsResponseWire } from '@/lib/schema/settings.schema';
 
 export type Meta = {
@@ -28,7 +27,6 @@ export type Meta = {
 export type AdminData = {
   settings: SettingsResponseWire;
   integrations: IntegrationWire[];
-  design: DesignResponseWire;
   /** Pro only: Free has no Assignment drawer. */
   store?: StoreData;
 };

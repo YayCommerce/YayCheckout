@@ -1,5 +1,5 @@
 import { ComponentProps } from 'react';
-import { LayoutTemplate, Paintbrush, Plug, Wrench } from 'lucide-react';
+import { LayoutTemplate, Plug, Wrench } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { __ } from '@wordpress/i18n';
 
@@ -14,12 +14,6 @@ export function HeaderMenu() {
         <NavLink to="/layouts">
           <LayoutTemplate className="stroke-2" />
           <span>{__('Layouts', 'yaycheckout')}</span>
-        </NavLink>
-      </CustomMenuItem>
-      <CustomMenuItem asChild key="design">
-        <NavLink to="/design">
-          <Paintbrush className="stroke-2" />
-          <span>{__('Design', 'yaycheckout')}</span>
         </NavLink>
       </CustomMenuItem>
       <CustomMenuItem asChild key="tools">
