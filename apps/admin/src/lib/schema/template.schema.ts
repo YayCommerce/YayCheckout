@@ -5,6 +5,7 @@ export const templateSchema = z.object({
   name: z.string(),
   category: z.string(),
   locked: z.boolean(),
+  available: z.boolean(),
 });
 
 export const templateLibrarySchema = z.object({

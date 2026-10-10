@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Repositories;
 
+use YayCheckout\Controllers\LayoutTemplateCatalogue;
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
@@ -340,18 +341,24 @@ class LayoutRepository {
     }
 
     /**
-     * Creates a layout draft seeded with a complete checkout, so activating it
-     * as-is lets a shopper place an order. The post type's template only
+     * Creates a layout draft from a catalogue template: its markup, which is a complete checkout, so
+     * activating it as-is lets a shopper place an order, and its design. The post type's template only
      * applies to auto-drafts, not to this insert.
      *
-     * @throws \InvalidArgumentException When the layout limit is reached or the insert fails.
+     * @throws \InvalidArgumentException When the template is not available, the layout limit is reached or the insert fails.
      */
-    public function create( string $title ): Layout {
-        return $this->insert_draft( $title, self::default_markup(), [], LayoutDesign::none() );
+    public function create( string $title, string $template_slug ): Layout {
+        return $this->insert_draft(
+            $title,
+            LayoutTemplateCatalogue::markup( $template_slug ),
+            [],
+            LayoutTemplateCatalogue::design( $template_slug ),
+            $template_slug
+        );
     }
 
     /**
-     * Copies a layout's content, assignment rules and design override into a new draft layout.
+     * Copies a layout's content, assignment rules, design override and template into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -363,7 +370,7 @@ class LayoutRepository {
         }
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template );
     }
 
     /**
@@ -374,19 +381,25 @@ class LayoutRepository {
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
     public function import( string $title, string $content, array $rules, LayoutDesign $design ): Layout {
-        return $this->insert_draft( $title, $content, $rules, $design );
+        return $this->insert_draft( $title, $content, $rules, $design, '' );
     }
 
     /**
-     * Puts a layout's blocks back to the default layout. Title, status, meta and the
-     * active flag stay; WordPress stores the old markup as a revision, so the editor can undo it.
+     * Puts a layout's blocks and design back to its template's, or to the default template's when it has
+     * none still available. The plan lock is not checked: it governs creating, not the merchant's own layout.
+     * Title, status, rules, the template and the active flag stay. WordPress stores the old markup as a
+     * revision, so the editor can undo it; the design meta has no revisions.
      *
      * @throws \InvalidArgumentException When the layout is missing or the update fails.
      */
     public function reset( int $id ): Layout {
-        if ( null === $this->find( $id ) ) {
+        $layout = $this->find( $id );
+
+        if ( null === $layout ) {
             throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
         }
+
+        $slug = LayoutTemplateCatalogue::is_available( $layout->template ) ? $layout->template : LayoutTemplateCatalogue::DEFAULT_SLUG;
 
         // Core revisions the post after the update, so a layout never saved in the editor has no revision
         // holding the old markup. No-op when the latest revision already matches.
@@ -397,7 +410,7 @@ class LayoutRepository {
             wp_slash(
                 [
                     'ID'           => $id,
-                    'post_content' => self::default_markup(),
+                    'post_content' => LayoutTemplateCatalogue::markup( $slug ),
                 ]
             ),
             true
@@ -406,6 +419,9 @@ class LayoutRepository {
         if ( is_wp_error( $result ) ) {
             throw new \InvalidArgumentException( $result->get_error_message() );
         }
+
+        // update_post_meta() unslashes too; a template's custom CSS may hold backslashes.
+        update_post_meta( $id, Layout::META_DESIGN, wp_slash( LayoutTemplateCatalogue::design( $slug )->to_meta() ) );
 
         return $this->find( $id );
     }
@@ -437,14 +453,19 @@ class LayoutRepository {
     /**
      * The one insert path for a new draft, so the cap and slashing cannot drift.
      *
-     * @param array $rules Already sanitized; written with the post, like the design, so the draft never exists without them.
+     * @param array  $rules         Already sanitized; written with the post, like the design, so the draft never exists without them.
+     * @param string $template_slug The catalogue template it comes from; '' when none (an import).
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design ): Layout {
+    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug ): Layout {
         $meta = [ Layout::META_DESIGN => $design->to_meta() ];
 
         if ( [] !== $rules ) {
             $meta[ Layout::META_RULES ] = $rules;
+        }
+
+        if ( '' !== $template_slug ) {
+            $meta[ Layout::META_TEMPLATE ] = $template_slug;
         }
 
         // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.
@@ -498,17 +519,6 @@ class LayoutRepository {
         if ( ! wp_delete_post( $id, true ) ) {
             throw new \RuntimeException( sprintf( 'Layout %d could not be deleted.', $id ) );
         }
-    }
-
-    /**
-     * Block markup for a new layout, from templates/default-layout.php: a header, the checkout in two
-     * columns (form; order summary with coupon), a footer.
-     */
-    public static function default_markup(): string {
-        ob_start();
-        include YAYCHECKOUT_PLUGIN_DIR . 'templates/default-layout.php';
-
-        return (string) ob_get_clean();
     }
 
     /**

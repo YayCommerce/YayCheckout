@@ -23,11 +23,11 @@ export function StartFromStep({
   onContinue: () => void;
 }) {
   const { data } = useTemplateLibraryQuery();
-  const firstUnlocked = data?.templates.find((t) => !t.locked);
+  const firstPickable = data?.templates.find((t) => !t.locked && t.available);
 
   useEffect(() => {
-    if (templateSlug === undefined && firstUnlocked) onTemplateChange(firstUnlocked.slug);
-  }, [templateSlug, firstUnlocked, onTemplateChange]);
+    if (templateSlug === undefined && firstPickable) onTemplateChange(firstPickable.slug);
+  }, [templateSlug, firstPickable, onTemplateChange]);
 
   const selected = useTemplate(templateSlug);
 

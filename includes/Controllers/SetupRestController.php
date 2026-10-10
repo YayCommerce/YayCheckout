@@ -70,9 +70,10 @@ class SetupRestController extends BaseRestController {
         }
 
         try {
-            LayoutTemplateCatalogue::assert_available( (string) $request->get_param( 'template_slug' ) );
+            $template_slug = (string) $request->get_param( 'template_slug' );
+            LayoutTemplateCatalogue::assert_available( $template_slug );
             $design = $this->design->prepare( (array) $request->get_param( 'design' ) );
-            $layout = $this->layouts->create( __( 'Checkout — draft', 'yaycheckout' ) );
+            $layout = $this->layouts->create( __( 'Checkout — draft', 'yaycheckout' ), $template_slug );
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }

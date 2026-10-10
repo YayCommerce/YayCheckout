@@ -1,0 +1,21 @@
+{
+	"colours": {
+		"enabled": true,
+		"primary": "#3858e9",
+		"text": "#1e1e1e",
+		"background": "#f0f0f1",
+		"border": "#dddddd"
+	},
+	"typography": {
+		"enabled": true,
+		"font_family": "",
+		"base_size": 13
+	},
+	"inputs": {
+		"enabled": true,
+		"style": "boxed",
+		"size": "medium",
+		"radius": 2
+	},
+	"custom_css": ""
+}
