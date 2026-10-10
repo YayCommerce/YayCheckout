@@ -2,10 +2,16 @@ import { ExternalLink } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { PREVIEW_LINK_LIFETIME_OPTIONS, type PreviewLinkLifetime, type Settings } from '@/lib/schema/settings.schema';
+import {
+  CUSTOM_CSS_MAX_BYTES,
+  PREVIEW_LINK_LIFETIME_OPTIONS,
+  type PreviewLinkLifetime,
+  type Settings,
+} from '@/lib/schema/settings.schema';
 import { FormField } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { DocLink } from './DocLink';
 import { SettingRow } from './SettingRow';
 
@@ -80,6 +86,29 @@ export function AdvancedTab() {
             )}
           >
             <Switch checked={field.value} onCheckedChange={field.onChange} />
+          </SettingRow>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="advanced.customCss"
+        render={({ field }) => (
+          <SettingRow
+            title={__('Custom CSS', 'yaycheckout')}
+            description={__(
+              "Printed on every checkout, before each layout's own custom CSS. Not shown in the editor.",
+              'yaycheckout',
+            )}
+          >
+            <Textarea
+              {...field}
+              rows={8}
+              maxLength={CUSTOM_CSS_MAX_BYTES}
+              placeholder=".yaycheckout-checkout { }"
+              spellCheck={false}
+              className="w-96 font-mono text-xs md:text-xs"
+            />
           </SettingRow>
         )}
       />

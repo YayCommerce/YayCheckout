@@ -25,7 +25,9 @@ class Settings {
     public ?string $updated_at = null;
 
     /**
-     * Shape: section => key => [ 'type' => 'bool'|'int', 'default' => mixed, 'enum' => int[] (optional) ]
+     * Shape: section => key => [ 'type' => 'bool'|'int'|'css', 'default' => mixed, 'enum' => int[] (optional) ]
+     *
+     * A `css` value is a string LayoutDesign::sanitize_custom_css() accepts unchanged.
      */
     public static function schema(): array {
         return [
@@ -54,6 +56,11 @@ class Settings {
 					'type'    => 'bool',
 					'default' => false,
                 ],
+                // Read by Renderer\CheckoutBaseStyles: printed on every checkout, before the layout's own custom CSS.
+                'custom_css'                     => [
+					'type'    => 'css',
+					'default' => '',
+				],
             ],
         ];
     }
@@ -106,6 +113,15 @@ class Settings {
 
                 $value = $input[ $section ][ $key ];
 
+                // A refused CSS says why, as the layout editor does.
+                if ( 'css' === $rule['type'] && is_string( $value ) ) {
+                    $css = LayoutDesign::sanitize_custom_css( $value );
+
+                    if ( $css instanceof \WP_Error ) {
+                        return $css;
+                    }
+                }
+
                 if ( ! self::is_valid( $value, $rule ) ) {
                     return self::invalid( $section . '.' . $key );
                 }
@@ -134,6 +150,10 @@ class Settings {
     }
 
     private static function is_valid( $value, array $rule ): bool {
+        if ( 'css' === $rule['type'] ) {
+            return is_string( $value ) && LayoutDesign::sanitize_custom_css( $value ) === $value;
+        }
+
         $valid = 'bool' === $rule['type'] ? is_bool( $value ) : is_int( $value );
 
         if ( $valid && isset( $rule['enum'] ) ) {
