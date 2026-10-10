@@ -287,7 +287,7 @@ function TokenControl( {
 						value: option,
 						label:
 							'font_family' === token
-								? design.fontFamilies[ option ] || __( 'Theme default', 'yaycheckout' )
+								? design.fontFamilies[ option ] || ENUM_LABELS[ '' ]
 								: ENUM_LABELS[ option ] ?? option,
 					} ) ) }
 					onChange={ ( next: string ) => onChange( next ) }

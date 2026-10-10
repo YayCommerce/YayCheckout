@@ -48,7 +48,7 @@ class Layout {
      */
     public array $rules = [];
 
-    /** This layout's override of the global Design; none() when it has none. */
+    /** This layout's design; every token empty when it has none. */
     public LayoutDesign $design;
 
     /** The LayoutTemplateCatalogue slug it was created from, which Reset restores; '' when unknown (older or imported). */

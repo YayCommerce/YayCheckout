@@ -27,7 +27,8 @@ class Settings {
     /**
      * Shape: section => key => [ 'type' => 'bool'|'int'|'css', 'default' => mixed, 'enum' => int[] (optional) ]
      *
-     * A `css` value is a string LayoutDesign::sanitize_custom_css() accepts unchanged.
+     * A `css` value is a string. sanitize() refuses one LayoutDesign::sanitize_custom_css() rejects, with its
+     * message; DesignStyles checks it again on print, so a stored value written another way can't break out.
      */
     public static function schema(): array {
         return [
@@ -151,7 +152,7 @@ class Settings {
 
     private static function is_valid( $value, array $rule ): bool {
         if ( 'css' === $rule['type'] ) {
-            return is_string( $value ) && LayoutDesign::sanitize_custom_css( $value ) === $value;
+            return is_string( $value );
         }
 
         $valid = 'bool' === $rule['type'] ? is_bool( $value ) : is_int( $value );

@@ -358,7 +358,7 @@ class LayoutRepository {
     }
 
     /**
-     * Copies a layout's content, assignment rules, design override and template into a new draft layout.
+     * Copies a layout's content, assignment rules, design and template into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -374,7 +374,7 @@ class LayoutRepository {
     }
 
     /**
-     * Creates a draft from an export file's title, markup, assignment rules and design override, verbatim.
+     * Creates a draft from an export file's title, markup, assignment rules and design, verbatim.
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
      * @param array $rules Already sanitized (Layout::sanitize_rules()); [] for none.
