@@ -9,8 +9,6 @@ import {
 	RangeControl,
 	SelectControl,
 	TextareaControl,
-	__experimentalToggleGroupControl as ToggleGroupControl,
-	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
 	__experimentalToolsPanel as ToolsPanel,
 } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
@@ -19,24 +17,23 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
 import { designCss, isGradient } from '../shared/design-css';
-import { editorData, type DesignRule, type DesignTokens, type EditorDesign } from '../shared/editor-data';
+import { editorData, type DesignRule, type EditorDesign } from '../shared/editor-data';
 import './layout-design.css';
 
 const SIDEBAR = 'yaycheckout-layout-design';
 const CSS_LOCK = 'yaycheckout-layout-design-css';
 
-type SectionTokens = Record< string, string | number | boolean >;
+type SectionTokens = Record< string, string | number | null >;
 
-/** Layout::META_DESIGN as LayoutDesign::to_meta() shapes it: null follows the global design. */
+/** Layout::META_DESIGN as LayoutDesign::to_meta() shapes it: every section present, an empty token '' or null. */
 export type LayoutDesignMeta = {
-	colours: SectionTokens | null;
-	typography: SectionTokens | null;
-	inputs: SectionTokens | null;
+	colours: SectionTokens;
+	typography: SectionTokens;
+	inputs: SectionTokens;
 	custom_css: string;
 };
 
 type Section = 'colours' | 'typography' | 'inputs';
-type Mode = 'global' | 'custom';
 
 const SECTIONS: Record< Section, string > = {
 	colours: __( 'Colours', 'yaycheckout' ),
@@ -57,6 +54,7 @@ const TOKEN_LABELS: Record< string, string > = {
 };
 
 const ENUM_LABELS: Record< string, string > = {
+	'': __( 'Theme default', 'yaycheckout' ),
 	boxed: __( 'Boxed', 'yaycheckout' ),
 	underline: __( 'Underline', 'yaycheckout' ),
 	small: __( 'Small', 'yaycheckout' ),
@@ -64,27 +62,35 @@ const ENUM_LABELS: Record< string, string > = {
 	large: __( 'Large', 'yaycheckout' ),
 };
 
-const NONE: LayoutDesignMeta = { colours: null, typography: null, inputs: null, custom_css: '' };
-
-function isTokens( value: unknown ): value is SectionTokens {
+function isTokens( value: unknown ): value is Record< string, unknown > {
 	return null !== value && 'object' === typeof value && ! Array.isArray( value );
 }
 
-/** The meta as the editor holds it, with every key present. */
-function normalize( raw: unknown ): LayoutDesignMeta {
-	if ( ! isTokens( raw ) ) {
-		return NONE;
-	}
+/** One section with every key of its rules, each from `raw` when present there and from the empty default otherwise. */
+function sectionTokens( rules: Record< string, DesignRule >, raw: unknown ): SectionTokens {
+	const values = isTokens( raw ) ? raw : {};
+
+	return Object.fromEntries(
+		Object.entries( rules ).map( ( [ token, rule ] ) => [
+			token,
+			token in values ? ( values[ token ] as string | number | null ) : rule.default,
+		] )
+	);
+}
+
+/** The meta as the editor holds it, with every key present. The server projects it on save. */
+function normalize( design: EditorDesign, raw: unknown ): LayoutDesignMeta {
+	const meta = isTokens( raw ) ? raw : {};
 
 	return {
-		colours: isTokens( raw.colours ) ? raw.colours : null,
-		typography: isTokens( raw.typography ) ? raw.typography : null,
-		inputs: isTokens( raw.inputs ) ? raw.inputs : null,
-		custom_css: 'string' === typeof raw.custom_css ? raw.custom_css : '',
+		colours: sectionTokens( design.schema.colours, meta.colours ),
+		typography: sectionTokens( design.schema.typography, meta.typography ),
+		inputs: sectionTokens( design.schema.inputs, meta.inputs ),
+		custom_css: 'string' === typeof meta.custom_css ? meta.custom_css : '',
 	};
 }
 
-/** The edited override and its setter; writing marks the post dirty, and Save stores it with the markup. */
+/** The edited design and its setter; writing marks the post dirty, and Save stores it with the markup. */
 function useLayoutDesign( design: EditorDesign ): [ LayoutDesignMeta, ( next: LayoutDesignMeta ) => void ] {
 	const raw = useSelect(
 		( selectStore ) =>
@@ -95,24 +101,10 @@ function useLayoutDesign( design: EditorDesign ): [ LayoutDesignMeta, ( next: La
 	);
 	const { editPost } = useDispatch( editorStore );
 
-	return [ normalize( raw ), ( next ) => editPost( { meta: { [ design.metaKey ]: next } } ) ];
+	return [ normalize( design, raw ), ( next ) => editPost( { meta: { [ design.metaKey ]: next } } ) ];
 }
 
-/** The global tokens with each overridden section swapped in, as LayoutDesign::tokens_over() does in PHP. */
-function effectiveTokens( tokens: DesignTokens, override: LayoutDesignMeta ): DesignTokens {
-	const effective = { ...tokens };
-
-	( Object.keys( SECTIONS ) as Section[] ).forEach( ( section ) => {
-		const values = override[ section ];
-		if ( values ) {
-			effective[ section ] = values;
-		}
-	} );
-
-	return effective;
-}
-
-/** Mirrors Design::sanitize_custom_css() in PHP: its limits and its messages. */
+/** Mirrors LayoutDesign::sanitize_custom_css() in PHP: its limits and its messages. */
 function customCssError( css: string, maxBytes: number ): string | null {
 	if ( new TextEncoder().encode( css ).length > maxBytes ) {
 		/* translators: %d: size limit in KB */
@@ -124,21 +116,6 @@ function customCssError( css: string, maxBytes: number ): string | null {
 	}
 
 	return null;
-}
-
-function modeOf( values: SectionTokens | null ): Mode {
-	return values ? 'custom' : 'global';
-}
-
-/** Where a section starts when it leaves Global design: the global values while that section is on, else the defaults. */
-function seed( design: EditorDesign, section: Section ): SectionTokens {
-	if ( design.tokens[ section ]?.enabled ) {
-		return { ...design.tokens[ section ] };
-	}
-
-	return Object.fromEntries(
-		Object.entries( design.schema[ section ] ).map( ( [ key, rule ] ) => [ key, rule.default ] )
-	);
 }
 
 type Swatch = { slug: string; color?: string; gradient?: string };
@@ -165,14 +142,14 @@ function presetOf( value: string, kind: PresetKind, origins: ColourOrigin[] | un
 }
 
 function isColourRule( rule: DesignRule ): boolean {
-	return 'hex_color' === rule.type || 'color' === rule.type || 'fill' === rule.type;
+	return 'color' === rule.type || 'fill' === rule.type;
 }
 
 /**
  * A section's colour tokens as the block editor's colour items, in a ToolsPanel styled like a block's Color panel.
  * A theme swatch is stored as its preset's custom property, so the layout follows later palette changes; a
- * custom pick is stored as written. Clicking the selected swatch again unsets the colour (''), which prints
- * nothing, so the theme's colour shows. A fill (the background) also takes gradients.
+ * custom pick is stored as written. Clear, or clicking the selected swatch again, unsets the colour (''), which
+ * prints nothing, so the theme's colour shows. A fill (the background) also takes gradients.
  */
 function ColourSettings( {
 	rules,
@@ -230,7 +207,8 @@ function ColourSettings( {
 						onGradientChange: ( next?: string, slug?: string ) => change( token, 'gradient', next, slug ),
 				  }
 				: {} ),
-			clearable: false,
+			// Clear empties the token (''), so the theme's colour shows.
+			clearable: true,
 			isShownByDefault: true,
 		};
 	} );
@@ -276,8 +254,8 @@ function TokenControl( {
 	design: EditorDesign;
 	token: string;
 	rule: DesignRule;
-	value: string | number | boolean;
-	onChange: ( next: string | number ) => void;
+	value: string | number | null;
+	onChange: ( next: string | number | null ) => void;
 } ) {
 	const label = TOKEN_LABELS[ token ] ?? token;
 
@@ -290,9 +268,11 @@ function TokenControl( {
 					label={ label }
 					min={ rule.min }
 					max={ rule.max }
-					value={ Number( value ) }
+					// Reset empties the token (null), so the theme's value shows.
+					allowReset
+					value={ 'number' === typeof value ? value : undefined }
 					afterIcon={ <span>px</span> }
-					onChange={ ( next ) => onChange( 'number' === typeof next ? next : rule.default ) }
+					onChange={ ( next ) => onChange( 'number' === typeof next ? next : null ) }
 				/>
 			);
 
@@ -302,7 +282,7 @@ function TokenControl( {
 					__next40pxDefaultSize
 					__nextHasNoMarginBottom
 					label={ label }
-					value={ String( value ) }
+					value={ String( value ?? '' ) }
 					options={ rule.enum.map( ( option ) => ( {
 						value: option,
 						label:
@@ -326,51 +306,22 @@ function SectionPanel( {
 }: {
 	design: EditorDesign;
 	section: Section;
-	values: SectionTokens | null;
-	onChange: ( next: SectionTokens | null ) => void;
+	values: SectionTokens;
+	onChange: ( next: SectionTokens ) => void;
 } ) {
-	const mode = modeOf( values );
-
-	const setMode = ( next: Mode ) => {
-		if ( 'global' === next ) {
-			onChange( null );
-			return;
-		}
-
-		onChange( { ...( values ?? seed( design, section ) ), enabled: true } );
-	};
-
 	return (
-		<PanelBody title={ SECTIONS[ section ] } initialOpen={ 'global' !== mode }>
+		<PanelBody title={ SECTIONS[ section ] }>
 			<Flex direction="column" align="stretch" gap={ 4 }>
-				<ToggleGroupControl
-					__next40pxDefaultSize
-					__nextHasNoMarginBottom
-					isBlock
-					hideLabelFromVision
-					label={ SECTIONS[ section ] }
-					value={ mode }
-					onChange={ ( next: string | number | undefined ) => setMode( next as Mode ) }
-				>
-					<ToggleGroupControlOption value="global" label={ __( 'Global design', 'yaycheckout' ) } />
-					<ToggleGroupControlOption value="custom" label={ __( 'Custom', 'yaycheckout' ) } />
-				</ToggleGroupControl>
-				{ 'custom' === mode && values && 'colours' === section && (
+				{ 'colours' === section && (
 					<ColourSettings
 						rules={ design.schema[ section ] }
 						values={ values }
 						onChange={ onChange }
 					/>
 				) }
-				{ 'custom' === mode &&
-					values &&
-					Object.entries( design.schema[ section ] ).map( ( [ token, rule ] ) => {
-						// Enabled is the mode above, colours are in ColourSettings, and an underline input has no radius.
-						if (
-							'enabled' === token ||
-							isColourRule( rule ) ||
-							( 'radius' === token && 'underline' === values.style )
-						) {
+				{ Object.entries( design.schema[ section ] ).map( ( [ token, rule ] ) => {
+						// Colours are in ColourSettings, and an underline input has no radius.
+						if ( isColourRule( rule ) || ( 'radius' === token && 'underline' === values.style ) ) {
 							return null;
 						}
 
@@ -462,7 +413,7 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 	// Edits live here while the merchant drags or types, and reach the post once they pause: every editPost
 	// re-renders the whole editor and adds an undo step, which made a dragged colour picker crawl.
 	const [ draft, setDraft ] = useState< LayoutDesignMeta | null >( null );
-	const override = draft ?? stored;
+	const current = draft ?? stored;
 	const pending = useRef< { next: LayoutDesignMeta | null; timer?: number } >( { next: null } );
 	const storeRef = useRef( store );
 	storeRef.current = store;
@@ -478,7 +429,7 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 	const flushRef = useRef( flush );
 	flushRef.current = flush;
 
-	const setOverride = ( next: LayoutDesignMeta ) => {
+	const setCurrent = ( next: LayoutDesignMeta ) => {
 		setDraft( next );
 		pending.current.next = next;
 		window.clearTimeout( pending.current.timer );
@@ -487,10 +438,10 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 
 	// Leaving the layout editor must not drop a pending edit.
 	useEffect( () => () => flushRef.current(), [] );
-	const cssError = customCssError( override.custom_css, design.customCssMaxBytes );
+	const cssError = customCssError( current.custom_css, design.customCssMaxBytes );
 	const { lockPostSaving, unlockPostSaving } = useDispatch( editorStore );
 
-	useCanvasDesign( designCss( effectiveTokens( design.tokens, override ), design.fontFamilies ), design.styleId );
+	useCanvasDesign( designCss( current, design.fontFamilies ), design.styleId );
 
 	// The server would skip this CSS on print without saying so, so it is never saved.
 	useEffect( () => {
@@ -510,7 +461,7 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 				<PanelBody>
 					<p className="yaycheckout-layout-design__help">
 						{ __(
-							'Override the global design for this layout only. Global design follows the Design page.',
+							"This layout's design. An empty value follows your theme.",
 							'yaycheckout'
 						) }
 					</p>
@@ -520,23 +471,26 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 						key={ section }
 						design={ design }
 						section={ section }
-						values={ override[ section ] }
-						onChange={ ( next ) => setOverride( { ...override, [ section ]: next } ) }
+						values={ current[ section ] }
+						onChange={ ( next ) => setCurrent( { ...current, [ section ]: next } ) }
 					/>
 				) ) }
-				<PanelBody title={ __( 'Custom CSS', 'yaycheckout' ) } initialOpen={ '' !== override.custom_css }>
+				<PanelBody title={ __( 'Custom CSS', 'yaycheckout' ) } initialOpen={ '' !== current.custom_css }>
 					<TextareaControl
 						__nextHasNoMarginBottom
 						label={ __( 'Custom CSS', 'yaycheckout' ) }
 						hideLabelFromVision
 						className={ `yaycheckout-layout-design__css${ cssError ? ' is-invalid' : '' }` }
 						rows={ 10 }
-						value={ override.custom_css }
+						value={ current.custom_css }
 						help={
 							cssError ??
-							__( 'Printed on the checkout after the global custom CSS. Not shown in the editor.', 'yaycheckout' )
+							__(
+								'Printed on the checkout after the site-wide custom CSS (Settings → Advanced). Not shown in the editor.',
+								'yaycheckout'
+							)
 						}
-						onChange={ ( next: string ) => setOverride( { ...override, custom_css: next } ) }
+						onChange={ ( next: string ) => setCurrent( { ...current, custom_css: next } ) }
 					/>
 				</PanelBody>
 			</PluginSidebar>

@@ -28,7 +28,7 @@ type ImportReview = {
 	blocks: number;
 	/** The file carries assignment rules; this import leaves them behind. */
 	has_rules: boolean;
-	/** The file's design override as an import stores it; every section null when the file has none. */
+	/** The file's design as an import stores it; every token empty when the file has none. */
 	design: LayoutDesignMeta;
 };
 

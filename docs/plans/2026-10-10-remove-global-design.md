@@ -161,7 +161,7 @@
   1. Create a layout from Classic two-column, then open it at `/wp-admin/post.php?post=<id>&action=edit`.
   2. Open the Layout design sidebar. Expect:
      - Colours, Typography and Inputs each show their controls, with no toggle;
-     - the canvas has a `#f0f0f1` background, and `#3858e9` as `--yaycheckout-color-primary` in the inline style `yaycheckout-checkout-inline-css`.
+     - the canvas has a `#f0f0f1` background, and `#3858e9` as `--yaycheckout-color-primary` in the inline style `yaycheckout/style/checkout-inline-css`.
   3. Clear Primary. Expect the inline style to lose `--yaycheckout-color-primary` at once.
   4. Set Radius to 0. Expect `input-radius: 0px`.
   5. Reset Radius. Expect no `input-radius`.
@@ -269,7 +269,7 @@
 
   1. Save `.yaycheckout-checkout{outline:1px solid red}` in Settings → Advanced. Expect it to persist after a reload.
   2. Give the active layout a custom CSS of `.yaycheckout-checkout{outline-offset:2px}`.
-  3. Load the checkout. Expect the inline style `yaycheckout-checkout-inline-css` to hold the site rule, then the layout rule, after the tokens.
+  3. Load the checkout. Expect the inline style `yaycheckout/style/checkout-inline-css` to hold the site rule, then the layout rule, after the tokens.
   4. Set the layout CSS to a value containing `</style` through `wp post meta update`. Expect the site rule still prints and the layout rule is dropped.
   5. Open the editor. Expect the canvas inline style to hold neither rule.
   6. Restore both values.

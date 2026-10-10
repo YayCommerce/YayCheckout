@@ -16,7 +16,7 @@ const PAGE_PROPERTIES: [ string, string ][] = [
 ];
 
 /**
- * Mirrors Design::is_gradient() in PHP for a value that already passed the `fill` rule: a gradient is written
+ * Mirrors LayoutDesign::is_gradient() in PHP for a value that already passed the `fill` rule: a gradient is written
  * out (`linear-gradient(…)` and the like) or a theme gradient preset.
  */
 export function isGradient( fill: unknown ): boolean {
@@ -26,37 +26,40 @@ export function isGradient( fill: unknown ): boolean {
 /** Mirrors DesignStyles::INPUT_HEIGHTS in PHP. */
 const INPUT_HEIGHTS: Record< string, number > = { small: 32, medium: 40, large: 48 };
 
-/** Mirrors DesignStyles::vars() in PHP: custom property values by name, for the sections that are on. */
+/** Mirrors DesignStyles::vars() in PHP: custom property values by name, for the tokens that aren't empty. */
 function vars( tokens: DesignTokens, fontFamilies: Record< string, string > ): [ string, string ][] {
 	const { colours, typography, inputs } = tokens;
-	const out: [ string, string ][] = [];
+	const background = String( colours.background ?? '' );
+	const pairs: [ string, string ][] = [
+		[ 'color-primary', String( colours.primary ?? '' ) ],
+		[ 'color-text', String( colours.text ?? '' ) ],
+		[ isGradient( background ) ? 'background-gradient' : 'color-background', background ],
+		[ 'color-border', String( colours.border ?? '' ) ],
+	];
+	const out = pairs.filter( ( [ , value ] ) => '' !== value );
 
-	if ( colours.enabled ) {
-		const pairs: [ string, string ][] = [
-			[ 'color-primary', String( colours.primary ) ],
-			[ 'color-text', String( colours.text ) ],
-			[ isGradient( colours.background ) ? 'background-gradient' : 'color-background', String( colours.background ) ],
-			[ 'color-border', String( colours.border ) ],
-		];
-
-		// A layout's unset colour prints nothing, as in PHP.
-		out.push( ...pairs.filter( ( [ , value ] ) => '' !== value ) );
+	if ( '' !== typography.font_family ) {
+		out.push( [ 'font-family', `"${ fontFamilies[ String( typography.font_family ) ] }", ${ FONT_FALLBACK }` ] );
 	}
 
-	if ( typography.enabled ) {
-		if ( '' !== typography.font_family ) {
-			out.push( [ 'font-family', `"${ fontFamilies[ String( typography.font_family ) ] }", ${ FONT_FALLBACK }` ] );
-		}
-
+	if ( null !== typography.base_size ) {
 		out.push( [ 'font-size-base', `${ typography.base_size }px` ] );
 	}
 
-	if ( inputs.enabled ) {
-		const isUnderline = 'underline' === inputs.style;
+	const isUnderline = 'underline' === inputs.style;
 
+	if ( isUnderline ) {
+		out.push( [ 'input-radius', '0px' ] );
+	} else if ( null !== inputs.radius ) {
+		out.push( [ 'input-radius', `${ inputs.radius }px` ] );
+	}
+
+	if ( '' !== inputs.size ) {
+		out.push( [ 'input-height', `${ INPUT_HEIGHTS[ String( inputs.size ) ] }px` ] );
+	}
+
+	if ( '' !== inputs.style ) {
 		out.push(
-			[ 'input-radius', isUnderline ? '0px' : `${ inputs.radius }px` ],
-			[ 'input-height', `${ INPUT_HEIGHTS[ String( inputs.size ) ] }px` ],
 			[ 'input-border-width', isUnderline ? '0 0 1px' : '1px' ],
 			[ 'input-padding-inline', isUnderline ? '0' : '12px' ]
 		);
