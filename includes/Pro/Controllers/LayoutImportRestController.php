@@ -62,7 +62,7 @@ class LayoutImportRestController extends BaseRestController {
     /**
      * The layout an export file holds, without storing it, so the editor's Import checks a file the same way import does.
      * Rules are not returned; `has_rules` says whether the file holds rules an import would keep. `design` is the
-     * override an import would store (LayoutDesign::to_meta()), so the editor's Import applies it with the markup.
+     * design an import would store (LayoutDesign::to_meta()), so the editor's Import applies it with the markup.
      *
      * @return array|\WP_Error { title, content, blocks, has_rules, design }
      */

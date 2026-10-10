@@ -76,7 +76,7 @@ class LayoutTemplateCatalogue {
     }
 
     /**
-     * The template's design override, from its design.json projected through LayoutDesign::schema().
+     * The template's design, from its design.json projected through LayoutDesign::schema().
      *
      * @throws \InvalidArgumentException When $slug is not an available template.
      */

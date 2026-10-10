@@ -86,7 +86,7 @@ class LayoutPostType {
             [
                 'type'              => 'object',
                 'single'            => true,
-                'default'           => LayoutDesign::none()->to_meta(),
+                'default'           => LayoutDesign::from_meta( [] )->to_meta(),
                 'show_in_rest'      => [ 'schema' => LayoutDesign::rest_schema() ],
                 'sanitize_callback' => static function ( $value ) {
                     return LayoutDesign::from_meta( $value )->to_meta();

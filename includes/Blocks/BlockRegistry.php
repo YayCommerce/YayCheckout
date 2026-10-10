@@ -215,8 +215,8 @@ class BlockRegistry {
             'styleId'           => ScriptName::STYLE_CHECKOUT . '-inline-css',
             'tokens'            => ( new DesignRepository() )->get()->tokens,
             'schema'            => LayoutDesign::schema(),
-            'fontFamilies'      => Design::FONT_FAMILIES,
-            'customCssMaxBytes' => Design::CUSTOM_CSS_MAX_BYTES,
+            'fontFamilies'      => LayoutDesign::FONT_FAMILIES,
+            'customCssMaxBytes' => LayoutDesign::CUSTOM_CSS_MAX_BYTES,
         ];
 
         // Added after register_blocks()' own inline script, so window.yayCheckoutBlocks exists.
