@@ -290,21 +290,19 @@ class LayoutRestController extends BaseRestController {
 
     /**
      * Creates a layout draft from the New layout modal. Titles may repeat, as Pages do.
-     * 'library' only checks the template is available on this plan: both sources seed the same default draft.
+     * 'blank' builds from the default template, 'library' from the picked one, once it is available on this plan.
      *
      * @return array|\WP_Error
      */
     public function create_draft( \WP_REST_Request $request ) {
         $name          = (string) $request->get_param( 'name' );
         $source        = (string) $request->get_param( 'source' );
-        $template_slug = (string) $request->get_param( 'template_slug' );
+        $template_slug = 'library' === $source ? (string) $request->get_param( 'template_slug' ) : LayoutTemplateCatalogue::DEFAULT_SLUG;
 
         try {
-            if ( 'library' === $source ) {
-                LayoutTemplateCatalogue::assert_available( $template_slug );
-            }
+            LayoutTemplateCatalogue::assert_available( $template_slug );
 
-            return $this->layouts->create( $name )->to_array();
+            return $this->layouts->create( $name, $template_slug )->to_array();
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
@@ -422,7 +420,7 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Replaces a layout's blocks with the default layout (LayoutRepository::default_markup()).
+     * Replaces a layout's blocks and design with its template's (LayoutRepository::reset()).
      *
      * @return array|\WP_Error
      */

@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 import { __, _n } from '@wordpress/i18n';
 
 import { isPro } from '@/lib/plan';
-import { useTemplate, useTemplateLibraryQuery } from '@/lib/queries/template.queries';
+import { isPickable, useTemplate, useTemplateLibraryQuery } from '@/lib/queries/template.queries';
 import type { Template } from '@/lib/schema/template.schema';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { focusVariants } from '@/components/ui/variants/focus.variants';
 import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
@@ -19,10 +20,33 @@ type GridProps = {
   onSelect: (slug: string | null) => void;
 };
 
+/** A template without its files yet: shown, never selectable. Locked wins, so a locked one keeps its Pro tag. */
+function isComingSoon(template: Template): boolean {
+  return !template.locked && !template.available;
+}
+
+function tileTitle(template: Template): string | undefined {
+  if (template.locked) return __('Upgrade to Pro to use this template', 'yaycheckout');
+  if (isComingSoon(template)) return COMING_SOON_TITLE;
+  return undefined;
+}
+
+/** Sits on the thumbnail's corner, so the name keeps the tile's width. */
+function ComingSoonBadge() {
+  return (
+    <Badge variant="dimmed-outline" className="bg-background absolute top-1 right-1">
+      {__('Coming soon', 'yaycheckout')}
+    </Badge>
+  );
+}
+
+const COMING_SOON_TITLE = __('This template is coming soon', 'yaycheckout');
+
 /**
  * Template grid. Free sees its unlocked templates plus a greyed strip of the
- * locked ones; Pro the full grid, filterable by category. A filter that hides
- * the selection clears it (onSelect(null)).
+ * locked ones; Pro the full grid, filterable by category. Coming soon templates
+ * show in place but can't be picked. A filter that hides the selection clears
+ * it (onSelect(null)).
  */
 export function TemplatePicker({
   selectedSlug,
@@ -99,18 +123,19 @@ function ProTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: GridP
             <button
               key={template.slug}
               type="button"
-              disabled={template.locked}
+              disabled={!isPickable(template)}
               onClick={() => onSelect(template.slug)}
-              title={template.locked ? __('Upgrade to Pro to use this template', 'yaycheckout') : undefined}
+              title={tileTitle(template)}
               className={cn(
                 'transition-default flex flex-col items-start gap-2 rounded-md border p-2 text-left',
                 focusVariants({ variant: 'none' }),
                 template.slug === selectedSlug && 'border-primary ring-primary ring-1',
-                template.locked ? 'cursor-not-allowed opacity-50' : 'hover:border-muted-foreground',
+                isPickable(template) ? 'hover:border-muted-foreground' : 'cursor-not-allowed opacity-50',
               )}
             >
-              <div className="aspect-3/2 w-full overflow-hidden rounded-sm border">
+              <div className="relative aspect-3/2 w-full overflow-hidden rounded-sm border">
                 <TemplateThumbnail slug={template.slug} />
+                {isComingSoon(template) && <ComingSoonBadge />}
               </div>
               <div className="flex w-full items-center justify-between gap-1">
                 <span className="text-xs font-medium">{template.name}</span>
@@ -139,15 +164,19 @@ function FreeTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: Grid
           <button
             key={template.slug}
             type="button"
+            disabled={!isPickable(template)}
             onClick={() => onSelect(template.slug)}
+            title={tileTitle(template)}
             className={cn(
-              'transition-default hover:border-muted-foreground flex flex-col items-start gap-2 rounded-md border p-2 text-left',
+              'transition-default flex flex-col items-start gap-2 rounded-md border p-2 text-left',
               focusVariants({ variant: 'none' }),
               template.slug === selectedSlug && 'border-primary ring-primary ring-1',
+              isPickable(template) ? 'hover:border-muted-foreground' : 'cursor-not-allowed opacity-50',
             )}
           >
-            <div className="aspect-3/2 w-full overflow-hidden rounded-sm border">
+            <div className="relative aspect-3/2 w-full overflow-hidden rounded-sm border">
               <TemplateThumbnail slug={template.slug} />
+              {isComingSoon(template) && <ComingSoonBadge />}
             </div>
             <span className="text-xs font-medium">{template.name}</span>
           </button>

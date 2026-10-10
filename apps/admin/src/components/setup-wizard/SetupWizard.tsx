@@ -1,18 +1,14 @@
 import { Fragment, useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { HTTPError } from 'ky';
-import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
 import { markSetupDone } from '@/lib/api/settings.api';
 import { getErrorMsg } from '@/lib/helpers/response.helper';
 import { logger } from '@/lib/logger';
-import { DESIGN_QUERIES, useDesignQuery } from '@/lib/queries/design.queries';
 import { invalidateListedLayouts } from '@/lib/queries/layout.queries';
 import { useCompleteSetupMutation } from '@/lib/queries/setup.queries';
-import { designFormSchema, type DesignForm, type DesignResponse } from '@/lib/schema/design.schema';
 import { Badge } from '@/components/ui/badge';
 import {
   Breadcrumb,
@@ -23,55 +19,34 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Form } from '@/components/ui/form';
-import { BrandStep } from './BrandStep';
 import { FinishStep } from './FinishStep';
 import { ScanStep } from './ScanStep';
 import { StartFromStep } from './StartFromStep';
 
-const STEPS = [__('Scan', 'yaycheckout'), __('Start from', 'yaycheckout'), __('Brand', 'yaycheckout')];
+const STEPS = [__('Scan', 'yaycheckout'), __('Start from', 'yaycheckout')];
 
 /**
- * First-run setup popup, open while `showSetupWizard` is true. Picks stay in
- * memory until Apply brand sends them in one save; Skip setup only marks setup
+ * First-run setup popup, open while `showSetupWizard` is true. The pick stays in
+ * memory until Create layout sends it in one save; Skip setup only marks setup
  * done. No close icon, Esc or outside click. Settings reopens it with
  * `RerunSetupWizard`.
  */
 export function SetupWizard() {
-  // Read the design only on a first run, so one the SPA rejects can't reach screens that never use it.
-  return window.yayCheckoutMeta.checkoutMeta.showSetupWizard ? <SetupWizardWithDesign /> : null;
+  return window.yayCheckoutMeta.checkoutMeta.showSetupWizard ? <SetupWizardDialog /> : null;
 }
 
-function SetupWizardWithDesign() {
-  const { data: design } = useDesignQuery();
-  return design ? <SetupWizardDialog design={design} /> : null;
-}
-
-/** The wizard reopened from Settings: Apply brand adds another draft, and Skip setup only closes. */
+/** The wizard reopened from Settings: Create layout adds another draft, and Skip setup only closes. */
 export function RerunSetupWizard({ onClose }: { onClose: () => void }) {
-  const { data: design } = useDesignQuery();
-  return design ? <SetupWizardDialog design={design} rerun onClose={onClose} /> : null;
+  return <SetupWizardDialog rerun onClose={onClose} />;
 }
 
-function SetupWizardDialog({
-  design,
-  rerun = false,
-  onClose,
-}: {
-  design: DesignResponse;
-  rerun?: boolean;
-  onClose?: () => void;
-}) {
+function SetupWizardDialog({ rerun = false, onClose }: { rerun?: boolean; onClose?: () => void }) {
   const [open, setOpen] = useState(true);
   const [step, setStep] = useState(0);
   const [templateSlug, setTemplateSlug] = useState<string | null>();
   const [applyError, setApplyError] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const setup = useCompleteSetupMutation();
-  const brandForm = useForm<DesignForm>({
-    resolver: zodResolver(designFormSchema),
-    defaultValues: { tokens: design.tokens, customCss: design.customCss },
-  });
   const draft = setup.data?.layout;
   const isFinished = step === STEPS.length;
 
@@ -85,21 +60,16 @@ function SetupWizardDialog({
     if (!rerun) markSetupDone().catch((e) => logger.warn('Mark setup done failed', e));
   }
 
-  async function onApply(values: DesignForm) {
+  async function onApply() {
     if (!templateSlug) return;
     setApplyError(null);
     try {
-      await setup.mutateAsync({
-        templateSlug,
-        form: values,
-        rerun,
-      });
+      await setup.mutateAsync({ templateSlug, rerun });
       setStep(STEPS.length);
     } catch (e) {
-      // 409: an earlier Apply whose response was lost, or another tab, already finished setup.
+      // 409: an earlier Create layout whose response was lost, or another tab, already finished setup.
       if (e instanceof HTTPError && e.response.status === 409) {
         close();
-        queryClient.invalidateQueries({ queryKey: DESIGN_QUERIES.main.queryKey });
         invalidateListedLayouts(queryClient);
         toast.info(__('Setup was already completed.', 'yaycheckout'));
         return;
@@ -146,22 +116,14 @@ function SetupWizardDialog({
           <StartFromStep
             templateSlug={templateSlug}
             onTemplateChange={setTemplateSlug}
-            onBack={() => setStep(0)}
-            onContinue={() => setStep(2)}
+            isApplying={setup.isPending}
+            error={applyError}
+            onBack={() => {
+              setApplyError(null);
+              setStep(0);
+            }}
+            onApply={onApply}
           />
-        )}
-        {step === 2 && templateSlug && (
-          <Form {...brandForm}>
-            <BrandStep
-              isApplying={setup.isPending}
-              error={applyError}
-              onBack={() => {
-                setApplyError(null);
-                setStep(1);
-              }}
-              onApply={onApply}
-            />
-          </Form>
         )}
         {isFinished && draft && templateSlug && (
           <FinishStep draft={draft} templateSlug={templateSlug} onClose={close} />

@@ -2,12 +2,10 @@
 namespace YayCheckout\Blocks;
 
 use YayCheckout\Engine\Register\ScriptName;
-use YayCheckout\Models\Design;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Renderer\HideWhenEmpty;
-use YayCheckout\Repositories\DesignRepository;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -204,19 +202,18 @@ class BlockRegistry {
     }
 
     /**
-     * Adds `design` to window.yayCheckoutBlocks: the global design and its rules, which the Layout design
-     * sidebar edits the layout's override against. Only in the block editor, since register_blocks() runs
-     * on every request and nothing else reads it.
+     * Adds `design` to window.yayCheckoutBlocks: LayoutDesign's rules, which the Layout design sidebar edits
+     * the layout's design with. Only in the block editor, since register_blocks() runs on every request and
+     * nothing else reads it.
      */
     public function editor_design_data(): void {
         $design = [
             'metaKey'           => Layout::META_DESIGN,
             // The id WordPress gives this handle's inline style, which holds the printed design.
             'styleId'           => ScriptName::STYLE_CHECKOUT . '-inline-css',
-            'tokens'            => ( new DesignRepository() )->get()->tokens,
             'schema'            => LayoutDesign::schema(),
-            'fontFamilies'      => Design::FONT_FAMILIES,
-            'customCssMaxBytes' => Design::CUSTOM_CSS_MAX_BYTES,
+            'fontFamilies'      => LayoutDesign::FONT_FAMILIES,
+            'customCssMaxBytes' => LayoutDesign::CUSTOM_CSS_MAX_BYTES,
         ];
 
         // Added after register_blocks()' own inline script, so window.yayCheckoutBlocks exists.

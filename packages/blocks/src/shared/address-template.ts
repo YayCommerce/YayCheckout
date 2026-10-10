@@ -17,7 +17,8 @@ function field( prefix: string, { key, ...attrs }: FieldSeed ): TemplateArray {
 	return [ fieldMeta.name, { fieldKey: `${ prefix }_${ key }`, ...attrs } ];
 }
 
-// Matches the horizontal spacing between side-by-side fields in templates/default-layout.php.
+// Matches the horizontal spacing between side-by-side fields in
+// templates/layouts/classic-two-column/markup.php.
 const COLUMN_GAP = { style: { spacing: { blockGap: { left: '24px' } } } };
 
 /** Core aligns each Column, not the row, so a row's verticalAlignment is copied onto its columns as the editor does. */
@@ -36,7 +37,8 @@ function row(
 
 /**
  * What a new Billing or Shipping section holds, whether it comes with a new Checkout or on its own.
- * templates/default-layout.php seeds new layouts with the same structure; change both together.
+ * templates/layouts/classic-two-column/markup.php seeds new layouts with the same structure;
+ * change both together.
  * Keys come from shared/address-fields.ts; the apartment line starts behind its Disclosure link.
  */
 export function addressTemplate( prefix: 'billing' | 'shipping' ): TemplateArray {

@@ -14,12 +14,9 @@ export function ResetCard() {
   return (
     <Card className="bg-muted/30">
       <CardHeader>
-        <CardTitle>{__('Reset to default layout', 'yaycheckout')}</CardTitle>
+        <CardTitle>{__('Reset to its template', 'yaycheckout')}</CardTitle>
         <CardDescription>
-          {__(
-            "Replaces the selected layout's blocks with the default layout: a header, the checkout in two columns and a footer.",
-            'yaycheckout',
-          )}
+          {__("Replaces the selected layout's blocks and design with the template it was created from.", 'yaycheckout')}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 space-y-3">

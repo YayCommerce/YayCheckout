@@ -65,9 +65,9 @@ class LayoutImportReview {
     }
 
     /**
-     * The design override is projected, never refused: a bad value only changes how the layout looks, so a missing
-     * or malformed section follows the global design and an invalid token reads as its default. A file from before
-     * design overrides has none.
+     * The design is projected, never refused: a bad value only changes how the layout looks, so a missing
+     * or malformed section imports as empty and an invalid token reads as its empty default. A file from before
+     * layout designs has none.
      *
      * @return array { title, content, rules, design }
      * @throws \InvalidArgumentException When the envelope is not a YayCheckout export.

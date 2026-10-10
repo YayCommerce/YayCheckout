@@ -60,7 +60,7 @@ export function ResetModal({
               <DialogTitle>
                 {sprintf(
                   /* translators: %s: layout title */
-                  __('Reset "%s" to the default layout?', 'yaycheckout'),
+                  __('Reset "%s" to its template?', 'yaycheckout'),
                   layout.title,
                 )}
               </DialogTitle>
@@ -68,7 +68,7 @@ export function ResetModal({
 
             <p className="text-sm">
               {__(
-                "Every block you added is removed and replaced with the default layout: a header, the checkout in two columns and a footer. Revisions are kept, so you can roll back from the editor's history.",
+                "Every block you added is removed and replaced with the layout's template. Your design changes for this layout will be lost. Revisions keep the old blocks, so you can roll back the blocks from the editor's history.",
                 'yaycheckout',
               )}
             </p>

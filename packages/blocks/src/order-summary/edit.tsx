@@ -15,7 +15,7 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< OrderSummaryAttributes > ) => void;
 }
 
-// templates/default-layout.php seeds the same children; change both.
+// templates/layouts/classic-two-column/markup.php seeds the same children, with Coupon Form between them; change both.
 const TEMPLATE: [ string ][] = [ [ itemsMeta.name ], [ totalsMeta.name ] ];
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
