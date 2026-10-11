@@ -112,6 +112,8 @@ $yaycheckout_policy_links = array_filter(
 <!-- wp:yaycheckout/field {"fieldKey":"billing_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'In case we need to contact you about your order', 'yaycheckout' ); ?>"} /-->
 <!-- /wp:yaycheckout/billing -->
 
+<!-- wp:yaycheckout/different-address /-->
+
 <!-- wp:yaycheckout/shipping {"title":"<?php esc_html_e( 'Shipping address', 'yaycheckout' ); ?>"} -->
 <!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"24px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->

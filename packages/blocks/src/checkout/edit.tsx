@@ -1,6 +1,7 @@
 import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { addressTemplate } from '../shared/address-template';
 import billingMeta from '../billing/block.json';
+import differentAddressMeta from '../different-address/block.json';
 import emailMeta from '../email/block.json';
 import paymentMeta from '../payment/block.json';
 import placeOrderMeta from '../place-order/block.json';
@@ -14,6 +15,7 @@ import shippingMethodsMeta from '../shipping-methods/block.json';
 const defaultTemplate = () => [
 	[ emailMeta.name ],
 	[ billingMeta.name, {}, addressTemplate( 'billing' ) ],
+	[ differentAddressMeta.name ],
 	[ shippingMeta.name, {}, addressTemplate( 'shipping' ) ],
 	[ shippingMethodsMeta.name ],
 	[ paymentMeta.name ],
