@@ -19,6 +19,13 @@ jQuery(function ($) {
                 return;
             }
             if (config.required) {
+                // address-i18n.js hides a row with .hide() when the country's locale hides the field, and has
+                // already dropped its required state. The row's own display is read, not :hidden, which a
+                // hidden container would make true for every row.
+                if (field.css('display') === 'none') {
+                    return;
+                }
+
                 field.find('label .optional').remove();
                 field.addClass('validate-required');
                 var mark = config.requiredMark !== '' ? config.requiredMark : '*';
