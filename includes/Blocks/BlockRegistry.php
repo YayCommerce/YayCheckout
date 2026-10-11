@@ -31,6 +31,9 @@ class BlockRegistry {
     /** Named by viewScript in packages/blocks/src/order-summary-items/block.json; drives the quantity stepper. */
     public const ORDER_SUMMARY_ITEMS_SCRIPT = 'yaycheckout-order-summary-items';
 
+    /** Named by viewScript in packages/blocks/src/different-address/block.json; hides and mirrors Billing when shipping is main. */
+    public const DIFFERENT_ADDRESS_SCRIPT = 'yaycheckout-different-address';
+
     /**
      * Block directories in the order a shopper meets them. The inserter lists
      * blocks in registration order; a built block missing here still
@@ -233,6 +236,14 @@ class BlockRegistry {
             self::ORDER_SUMMARY_ITEMS_SCRIPT,
             YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-order-summary-items.js',
             [ 'jquery', 'wc-checkout' ],
+            YAYCHECKOUT_VERSION,
+            true
+        );
+
+        wp_register_script(
+            self::DIFFERENT_ADDRESS_SCRIPT,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-different-address.js',
+            [ 'jquery', 'wc-checkout', 'wc-address-i18n' ],
             YAYCHECKOUT_VERSION,
             true
         );
