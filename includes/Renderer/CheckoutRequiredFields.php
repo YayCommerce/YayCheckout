@@ -68,7 +68,7 @@ class CheckoutRequiredFields {
 
         $hidden = [];
 
-        foreach ( [ 'billing', 'shipping' ] as $fieldset ) {
+        foreach ( RequiredFieldOverlay::ADDRESS_FIELDSETS as $fieldset ) {
             if ( empty( $fields[ $fieldset ] ) || ! is_array( $fields[ $fieldset ] ) ) {
                 continue;
             }

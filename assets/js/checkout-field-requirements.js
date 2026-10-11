@@ -19,9 +19,8 @@ jQuery(function ($) {
                 return;
             }
             if (config.required) {
-                // address-i18n.js hides a row with .hide() when the country's locale hides the field, and has
-                // already dropped its required state. The row's own display is read, not :hidden, which a
-                // hidden container would make true for every row.
+                // address-i18n.js hid this row and dropped its required state; same row test as
+                // syncLocaleMarkers() in checkout-hide-when-empty.js.
                 if (field.css('display') === 'none') {
                     return;
                 }
