@@ -27,9 +27,7 @@ $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, $
 
 echo '<div ' . get_block_wrapper_attributes( [ 'class' => 'yaycheckout-order-note form-row' ] ) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
 
-if ( \YayCheckout\Services\Disclosure::NONE !== $yaycheckout_disclosure ) {
-    echo \YayCheckout\Services\Disclosure::open( $yaycheckout_key, \YayCheckout\Services\Disclosure::text( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ), $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
-}
+echo \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
 
 woocommerce_form_field(
     $yaycheckout_key,
@@ -46,4 +44,4 @@ woocommerce_form_field(
     $yaycheckout_value
 );
 
-echo \YayCheckout\Services\Disclosure::NONE !== $yaycheckout_disclosure ? \YayCheckout\Services\Disclosure::close() . '</div>' : '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup.
+echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup.

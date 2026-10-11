@@ -15,7 +15,7 @@ class RequiredIndicator {
      * @param array $attrs Raw block attributes, so strings are trimmed here.
      */
     public static function html( bool $required, array $attrs ): string {
-        return '&nbsp;' . self::span( $required, trim( self::text( $attrs, $required ? 'requiredMark' : 'optionalText' ) ) );
+        return '&nbsp;' . self::span( $required, trim( LayoutMarkupReader::text( $attrs, $required ? 'requiredMark' : 'optionalText' ) ) );
     }
 
     /**
@@ -30,7 +30,7 @@ class RequiredIndicator {
     public static function swap_in( $field, string $key, array $args, array $layout_fields ) {
         $required = ! empty( $args['required'] );
         $layout   = $layout_fields[ $key ] ?? null;
-        $text     = is_array( $layout ) ? self::text( $layout, $required ? 'requiredMark' : 'optionalText' ) : '';
+        $text     = is_array( $layout ) ? LayoutMarkupReader::text( $layout, $required ? 'requiredMark' : 'optionalText' ) : '';
 
         if ( ! is_string( $field ) || '' === $text ) {
             return $field;
@@ -59,8 +59,8 @@ class RequiredIndicator {
         foreach ( $layout_fields as $key => $layout ) {
             $payload[ $key ] = [
                 'required'     => RequiredFieldOverlay::is_required( (string) $key, $layout ),
-                'requiredMark' => self::text( $layout, 'requiredMark' ),
-                'optionalText' => self::text( $layout, 'optionalText' ),
+                'requiredMark' => LayoutMarkupReader::text( $layout, 'requiredMark' ),
+                'optionalText' => LayoutMarkupReader::text( $layout, 'optionalText' ),
             ];
         }
 
@@ -74,9 +74,5 @@ class RequiredIndicator {
         }
 
         return '<span class="optional">(' . esc_html( '' === $text ? 'optional' : $text ) . ')</span>';
-    }
-
-    private static function text( array $attrs, string $name ): string {
-        return isset( $attrs[ $name ] ) && is_string( $attrs[ $name ] ) ? $attrs[ $name ] : '';
     }
 }

@@ -43,7 +43,7 @@ class LayoutExportRestController extends BaseRestController {
         $layout = $this->layouts->find( (int) $request->get_param( 'id' ) );
 
         if ( null === $layout ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+            return $this->error_layout_not_found();
         }
 
         $exported_at = DateHelper::now_iso8601();

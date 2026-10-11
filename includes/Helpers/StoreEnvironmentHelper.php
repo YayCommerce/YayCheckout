@@ -27,7 +27,7 @@ class StoreEnvironmentHelper {
                 'version'        => (string) $theme->get( 'Version' ),
                 'is_block_theme' => wp_is_block_theme(),
             ],
-            'safe_mode'           => ! empty( ( new SettingsRepository() )->get()->general['safe_mode'] ),
+            'safe_mode'           => ( new SettingsRepository() )->is_safe_mode(),
         ];
     }
 

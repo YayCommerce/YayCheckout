@@ -10,9 +10,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_label = isset( $attributes['label'] ) && is_string( $attributes['label'] ) && '' !== $attributes['label']
-    ? $attributes['label']
-    : __( 'Payment', 'yaycheckout' );
+$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', __( 'Payment', 'yaycheckout' ) );
 
 $yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper( [ 'class' => 'yaycheckout-payment' ], $attributes, \YayCheckout\Renderer\CheckoutFragments::payment_empty() );
 

@@ -92,6 +92,16 @@ class Disclosure {
         return '</div>';
     }
 
+    /** The toggle and open panel, as open() with text(); '' when $mode is NONE. */
+    public static function open_if( array $attrs, string $key, string $label, string $mode ): string {
+        return self::NONE === $mode ? '' : self::open( $key, self::text( $attrs, $key, $label, $mode ), $mode );
+    }
+
+    /** Closes the panel open_if() started; '' when $mode is NONE. */
+    public static function close_if( string $mode ): string {
+        return self::NONE === $mode ? '' : self::close();
+    }
+
     /** "Company name" reads "company name" after "+ Add", but "VAT number" keeps its capitals. */
     private static function lower_first( string $label ): string {
         return preg_match( '/^[A-Z](?![A-Z])/', $label ) ? lcfirst( $label ) : $label;

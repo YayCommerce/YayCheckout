@@ -111,7 +111,7 @@ body.yaycheckout-has-layout-actions :is(
      * @return array
      */
     public function canvas_styles( array $settings, $context ): array {
-        if ( ! $context->post instanceof \WP_Post || Layout::POST_TYPE !== $context->post->post_type ) {
+        if ( ! LayoutRepository::is_layout( $context->post ) ) {
             return $settings;
         }
 

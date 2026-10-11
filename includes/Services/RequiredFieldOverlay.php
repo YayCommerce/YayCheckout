@@ -69,7 +69,7 @@ class RequiredFieldOverlay {
         }
 
         $field['required'] = self::is_required( LayoutMarkupReader::ORDER_NOTE_KEY, $note, $field );
-        $field['label']    = self::filled( $note, 'label', $field['label'] ?? LayoutMarkupReader::ORDER_NOTE_KEY );
+        $field['label']    = LayoutMarkupReader::text( $note, 'label', $field['label'] ?? LayoutMarkupReader::ORDER_NOTE_KEY );
 
         $fields['order'][ LayoutMarkupReader::ORDER_NOTE_KEY ] = $field;
 
@@ -101,17 +101,17 @@ class RequiredFieldOverlay {
      * WooCommerce never validates or saves a field the layout still renders.
      */
     private static function restore_missing_field( string $key, array $layout ): array {
-        $type = self::filled( $layout, 'type', 'text' );
+        $type = LayoutMarkupReader::text( $layout, 'type', 'text' );
 
         $definition = [
             'type'     => $type,
-            'label'    => self::filled( $layout, 'label', $key ),
+            'label'    => LayoutMarkupReader::text( $layout, 'label', $key ),
             'required' => self::is_required( $key, $layout ),
             'validate' => ! empty( $layout['validate'] ) && is_array( $layout['validate'] ) ? $layout['validate'] : self::validate_rules( $key, $type ),
         ];
 
         foreach ( [ 'placeholder', 'autocomplete' ] as $attr ) {
-            if ( '' !== self::filled( $layout, $attr, '' ) ) {
+            if ( '' !== LayoutMarkupReader::text( $layout, $attr, '' ) ) {
                 $definition[ $attr ] = $layout[ $attr ];
             }
         }
@@ -144,10 +144,5 @@ class RequiredFieldOverlay {
         }
 
         return $rules;
-    }
-
-    /** A non-empty string attribute, or $fallback. */
-    private static function filled( array $layout, string $name, string $fallback ): string {
-        return isset( $layout[ $name ] ) && is_string( $layout[ $name ] ) && '' !== $layout[ $name ] ? $layout[ $name ] : $fallback;
     }
 }

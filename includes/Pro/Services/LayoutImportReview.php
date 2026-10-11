@@ -3,6 +3,7 @@ namespace YayCheckout\Pro\Services;
 
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
+use YayCheckout\Services\LayoutMarkupReader;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -28,7 +29,7 @@ class LayoutImportReview {
         $layout = self::layout( $envelope );
 
         // First of LayoutMarkupReader::publish_error()'s rules; the rest wait for publish, as for any draft.
-        if ( ! has_block( 'yaycheckout/checkout', $layout['content'] ) ) {
+        if ( ! LayoutMarkupReader::has_checkout( $layout['content'] ) ) {
             throw new \InvalidArgumentException( __( 'The file does not contain a checkout layout.', 'yaycheckout' ) );
         }
 

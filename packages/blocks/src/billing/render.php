@@ -14,13 +14,8 @@ defined( 'ABSPATH' ) || exit;
 $yaycheckout_title      = isset( $attributes['title'] ) && is_string( $attributes['title'] ) ? $attributes['title'] : __( 'Billing', 'yaycheckout' );
 $yaycheckout_show_title = ! isset( $attributes['showTitle'] ) || (bool) $attributes['showTitle'];
 
-// Block spacing. Two classes, to beat the stylesheet's default.
-$yaycheckout_class     = 'yaycheckout-billing woocommerce-billing-fields';
-$yaycheckout_gap_class = wp_unique_id( 'yaycheckout-billing-gap-' );
-
-if ( \YayCheckout\Renderer\BlockGap::add_rules( $attributes['style'] ?? [], 'yaycheckout/billing', '.yaycheckout-billing.' . $yaycheckout_gap_class ) ) {
-    $yaycheckout_class .= ' ' . $yaycheckout_gap_class;
-}
+// Block spacing.
+$yaycheckout_class = 'yaycheckout-billing woocommerce-billing-fields' . \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/billing', 'yaycheckout-billing' );
 
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => $yaycheckout_class ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>

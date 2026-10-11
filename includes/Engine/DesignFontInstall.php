@@ -5,6 +5,7 @@ use YayCheckout\Helpers\Logger;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Repositories\FontRepository;
+use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -46,7 +47,7 @@ class DesignFontInstall {
      * @param mixed  $meta_value The meta value written, unslashed.
      */
     public function install_font( $meta_id, $post_id, $meta_key, $meta_value ): void {
-        if ( Layout::META_DESIGN !== $meta_key || Layout::POST_TYPE !== get_post_type( $post_id ) ) {
+        if ( Layout::META_DESIGN !== $meta_key || ! LayoutRepository::is_layout( $post_id ) ) {
             return;
         }
 

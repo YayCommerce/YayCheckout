@@ -103,7 +103,7 @@ class CheckoutProgress {
     private static function layout_titles(): array {
         if ( null === self::$titles ) {
             $layout       = CheckoutPage::get_instance()->layout();
-            self::$titles = null !== $layout ? self::titles_in( parse_blocks( $layout->content ) ) : [];
+            self::$titles = null !== $layout ? self::titles_in( $layout->content ) : [];
         }
 
         return self::$titles;
@@ -112,26 +112,18 @@ class CheckoutProgress {
     /**
      * Titles of the first Steps block's Step children, in order; empty without one.
      *
-     * @param array[] $blocks The layout's blocks.
      * @return string[]
      */
-    private static function titles_in( array $blocks ): array {
-        foreach ( LayoutMarkupReader::flatten( $blocks ) as $block ) {
-            if ( self::STEPS !== $block['blockName'] ) {
-                continue;
+    private static function titles_in( string $markup ): array {
+        $block  = LayoutMarkupReader::first_block( $markup, self::STEPS );
+        $titles = [];
+
+        foreach ( null !== $block ? $block['innerBlocks'] : [] as $child ) {
+            if ( self::STEP === ( $child['blockName'] ?? '' ) ) {
+                $titles[] = self::step_title( LayoutMarkupReader::plain_text( is_array( $child['attrs'] ?? null ) ? $child['attrs'] : [], 'title' ) );
             }
-
-            $titles = [];
-
-            foreach ( $block['innerBlocks'] as $child ) {
-                if ( self::STEP === ( $child['blockName'] ?? '' ) ) {
-                    $titles[] = self::step_title( LayoutMarkupReader::plain_text( is_array( $child['attrs'] ?? null ) ? $child['attrs'] : [], 'title' ) );
-                }
-            }
-
-            return $titles;
         }
 
-        return [];
+        return $titles;
     }
 }

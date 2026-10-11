@@ -12,19 +12,12 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_label = isset( $attributes['label'] ) && is_string( $attributes['label'] ) && '' !== $attributes['label']
-    ? $attributes['label']
-    : __( 'Your order', 'yaycheckout' );
+$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', __( 'Your order', 'yaycheckout' ) );
 
 $yaycheckout_has_cart = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart;
 
-// Block spacing. Two classes, to beat the stylesheet's default.
-$yaycheckout_class     = 'yaycheckout-order-summary';
-$yaycheckout_gap_class = wp_unique_id( 'yaycheckout-order-summary-gap-' );
-
-if ( \YayCheckout\Renderer\BlockGap::add_rules( $attributes['style'] ?? [], 'yaycheckout/order-summary', '.yaycheckout-order-summary.' . $yaycheckout_gap_class ) ) {
-    $yaycheckout_class .= ' ' . $yaycheckout_gap_class;
-}
+// Block spacing.
+$yaycheckout_class = 'yaycheckout-order-summary' . \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/order-summary', 'yaycheckout-order-summary' );
 
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => $yaycheckout_class ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>

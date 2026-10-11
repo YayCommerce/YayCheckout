@@ -35,7 +35,22 @@ class CheckoutLogin {
      * True when a logged-out shopper should see the reminder.
      */
     public static function reminder_shown(): bool {
-        return 'yes' === get_option( self::OPTION_REMINDER ) && ! is_user_logged_in();
+        return self::reminder_enabled() && ! is_user_logged_in();
+    }
+
+    /** WooCommerce's "log in at checkout" reminder setting. */
+    public static function reminder_enabled(): bool {
+        return 'yes' === get_option( self::OPTION_REMINDER );
+    }
+
+    /**
+     * A guest WooCommerce gives no checkout form: registration is required and not offered at checkout.
+     * Mirrors form-checkout.php and woocommerce_checkout_coupon_form().
+     */
+    public static function must_log_in(): bool {
+        $checkout = WC()->checkout();
+
+        return ! is_user_logged_in() && ! $checkout->is_registration_enabled() && $checkout->is_registration_required();
     }
 
     /**

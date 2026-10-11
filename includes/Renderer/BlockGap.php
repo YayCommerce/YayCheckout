@@ -50,6 +50,19 @@ final class BlockGap {
         return true;
     }
 
+    /**
+     * Queues the gap rules for a block wrapper that carries $base_class, under a second, unique
+     * class, so the rule beats the block stylesheet's default.
+     *
+     * @param array $attributes The block's attributes.
+     * @return string A space and the unique class, to append to the wrapper's class; '' when nothing was queued.
+     */
+    public static function wrapper_class( array $attributes, string $block_name, string $base_class ): string {
+        $class = wp_unique_id( $base_class . '-gap-' );
+
+        return self::add_rules( $attributes['style'] ?? [], $block_name, '.' . $base_class . '.' . $class ) ? ' ' . $class : '';
+    }
+
     /** A gap value as CSS, or null; a spacing preset becomes its custom property. */
     private static function css_value( $gap ): ?string {
         if ( ! is_string( $gap ) || '' === $gap ) {
