@@ -19,6 +19,12 @@ jQuery(function ($) {
                 return;
             }
             if (config.required) {
+                // address-i18n.js hid this row and dropped its required state; same row test as
+                // syncLocaleMarkers() in checkout-hide-when-empty.js.
+                if (field.css('display') === 'none') {
+                    return;
+                }
+
                 field.find('label .optional').remove();
                 field.addClass('validate-required');
                 var mark = config.requiredMark !== '' ? config.requiredMark : '*';

@@ -6,17 +6,19 @@ defined( 'ABSPATH' ) || exit;
 /** Makes WooCommerce's checkout field registry follow the layout's required flags. Pure: no storage, no hooks. */
 class RequiredFieldOverlay {
 
-    private const ADDRESS_FIELDSETS = [ 'billing', 'shipping' ];
+    public const ADDRESS_FIELDSETS = [ 'billing', 'shipping' ];
 
     /**
      * Address fields required exactly when the layout says so. A field the
      * layout leaves out becomes optional; a layout field WooCommerce dropped
-     * is added back.
+     * is added back. A field the shopper's country locale hides is never
+     * required: the shopper can't see or fill it in.
      *
-     * @param  array $fields        WooCommerce checkout fields, by fieldset.
-     * @param  array $layout_fields LayoutMarkupReader::fields() map.
+     * @param  array    $fields        WooCommerce checkout fields, by fieldset.
+     * @param  array    $layout_fields LayoutMarkupReader::fields() map.
+     * @param  string[] $hidden_keys   Field keys the country locale hides, from CheckoutFieldDefaults::hidden_for_country().
      */
-    public static function apply( array $fields, array $layout_fields ): array {
+    public static function apply( array $fields, array $layout_fields, array $hidden_keys = [] ): array {
         foreach ( self::ADDRESS_FIELDSETS as $fieldset ) {
             $fields[ $fieldset ] = isset( $fields[ $fieldset ] ) && is_array( $fields[ $fieldset ] ) ? $fields[ $fieldset ] : [];
 
@@ -31,6 +33,12 @@ class RequiredFieldOverlay {
 
                 if ( str_starts_with( $key, $fieldset . '_' ) && ! isset( $fields[ $fieldset ][ $key ] ) ) {
                     $fields[ $fieldset ][ $key ] = self::restore_missing_field( $key, $layout );
+                }
+            }
+
+            foreach ( $fields[ $fieldset ] as $key => $field ) {
+                if ( is_array( $field ) && ( true === ( $field['hidden'] ?? false ) || in_array( (string) $key, $hidden_keys, true ) ) ) {
+                    $fields[ $fieldset ][ $key ]['required'] = false;
                 }
             }
         }
@@ -71,7 +79,8 @@ class RequiredFieldOverlay {
     /**
      * Whether the field is required. Owns the email-always-required rule: billing_email and any
      * email-type field always are, as email is the only way to reach the customer. Any other
-     * field is required only when the layout marks it.
+     * field is required only when the layout marks it. apply() then drops `required` from a
+     * field the country locale hides.
      *
      * @param array|null $layout   The field's layout entry; null when the layout leaves it out.
      * @param array      $wc_field WooCommerce's definition; its type counts only when the layout has no entry.
