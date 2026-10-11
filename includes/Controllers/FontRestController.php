@@ -8,7 +8,7 @@ use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
-/** POST /yaycheckout/v1/fonts/{slug}: installs a design font when the layout editor picks it. */
+/** GET /yaycheckout/v1/fonts/{slug}: a design font's faces for the layout editor canvas, and whether it is uploaded. */
 class FontRestController extends BaseRestController {
     use SingletonTrait;
 
@@ -17,8 +17,8 @@ class FontRestController extends BaseRestController {
             self::REST_NAMESPACE,
             '/fonts/(?P<slug>[a-z0-9-]+)',
             [
-                'methods'             => \WP_REST_Server::CREATABLE,
-                'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'install' ], $request ),
+                'methods'             => \WP_REST_Server::READABLE,
+                'callback'            => fn( $request ) => $this->exec_read( [ $this, 'faces' ], $request ),
                 'permission_callback' => [ $this, 'permission_callback' ],
                 'args'                => [
                     'slug' => [
@@ -34,20 +34,21 @@ class FontRestController extends BaseRestController {
     }
 
     /**
-     * Installs the font into the Font Library unless the site loads it already, then answers with the
-     * `@font-face` rules the canvas prints for it: '' when the site's own faces cover it.
-     * A failed download is a 502, so the editor can say the font only shows if the theme has it.
+     * The `@font-face` rules the canvas prints for a font. Uploaded (or loaded by the site itself, which gives '')
+     * they point at this site; not uploaded yet, they point at Google, as a preview until the layout is saved
+     * (Engine\DesignFontInstall uploads it then). Uploads nothing itself.
      *
-     * @return array|\WP_Error { css }
+     * @return array { uploaded, css }
      */
-    public function install( \WP_REST_Request $request ) {
-        $slug      = (string) $request->get_param( 'slug' );
-        $installed = ( new FontRepository() )->ensure_installed( $slug );
+    public function faces( \WP_REST_Request $request ): array {
+        $slug     = (string) $request->get_param( 'slug' );
+        $fonts    = new FontRepository();
+        $uploaded = $fonts->is_provided_by_site( $slug ) || [] !== $fonts->faces( $slug );
+        $design   = new DesignFonts();
 
-        if ( is_wp_error( $installed ) ) {
-            return new \WP_Error( 'font_install_failed', $installed->get_error_message(), [ 'status' => 502 ] );
-        }
-
-        return [ 'css' => ( new DesignFonts() )->css( $slug ) ];
+        return [
+            'uploaded' => $uploaded,
+            'css'      => $uploaded ? $design->css( $slug ) : $design->preview_css( $slug ),
+        ];
     }
 }
