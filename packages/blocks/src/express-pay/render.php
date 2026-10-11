@@ -13,7 +13,7 @@ unset( $content, $block );
 
 $yaycheckout_has_cart = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart;
 
-// Buffered so an empty result marks the block empty for HideWhenEmpty.
+// Buffered so an empty result prints nothing.
 ob_start();
 
 if ( $yaycheckout_has_cart && function_exists( 'wc_get_pay_buttons' ) ) {
@@ -22,7 +22,13 @@ if ( $yaycheckout_has_cart && function_exists( 'wc_get_pay_buttons' ) ) {
 
 $yaycheckout_buttons = (string) ob_get_clean();
 
-$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper( [ 'class' => 'yaycheckout-express-pay' ], $attributes, '' === trim( $yaycheckout_buttons ) );
+// Prints nothing without buttons, so the merchant's padding, border or background don't draw an empty box.
+// HideWhenEmpty counts a block that prints nothing as empty.
+if ( '' === trim( $yaycheckout_buttons ) ) {
+    return;
+}
+
+$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper( [ 'class' => 'yaycheckout-express-pay' ], $attributes );
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
