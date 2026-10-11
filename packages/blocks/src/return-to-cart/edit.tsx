@@ -1,9 +1,8 @@
 import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { arrowGlyph, arrowOptions, type Arrow } from '../shared/button-arrow';
 import type { StepNavButtonAttributes } from '../shared/step-nav-button-edit';
-
-type Arrow = 'none' | 'arrow' | 'chevron';
 
 interface ReturnToCartAttributes extends StepNavButtonAttributes {
 	arrow: Arrow;
@@ -14,13 +13,12 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< ReturnToCartAttributes > ) => void;
 }
 
-// The icons, the Arrow values and the placeholder mirror block.json's arrow enum and return-to-cart/render.php.
-const ICONS: Record< Arrow, string > = { none: '', arrow: '←', chevron: '‹' };
+// The placeholder mirrors return-to-cart/render.php; the icons come from ButtonArrow through shared/button-arrow.ts.
 
 /** A div, not a link: clicking the label edits it instead of leaving the editor. */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps( { className: 'yaycheckout-return-to-cart' } );
-	const icon = ICONS[ attributes.arrow ];
+	const icon = arrowGlyph( attributes.arrow, 'back' );
 
 	return (
 		<>
@@ -29,11 +27,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					<SelectControl
 						label={ __( 'Icon', 'yaycheckout' ) }
 						value={ attributes.arrow }
-						options={ [
-							{ label: __( 'None', 'yaycheckout' ), value: 'none' },
-							{ label: __( 'Arrow (←)', 'yaycheckout' ), value: 'arrow' },
-							{ label: __( 'Chevron (‹)', 'yaycheckout' ), value: 'chevron' },
-						] }
+						options={ arrowOptions( 'back' ) }
 						onChange={ ( value: string ) => setAttributes( { arrow: value as Arrow } ) }
 					/>
 				</PanelBody>
