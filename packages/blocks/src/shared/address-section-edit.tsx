@@ -1,27 +1,33 @@
-import { InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps, useInnerBlocksProps, useSettings } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { addressTemplate } from './address-template';
 import { isCheckoutSection, useBlocksAllowedExcept } from './allowed-blocks';
+import { blockGapCSS, type BlockGapStyles } from './block-gap';
 
 export interface AddressSectionAttributes {
 	title: string;
 	showTitle: boolean;
 	shipToDifferent?: boolean;
+	style?: BlockGapStyles;
 }
 
 interface AddressSectionEditProps {
 	section: 'billing' | 'shipping';
 	attributes: AddressSectionAttributes;
 	setAttributes: ( attributes: Partial< AddressSectionAttributes > ) => void;
+	clientId: string;
 }
 
 export function AddressSectionEdit( {
 	section,
 	attributes,
 	setAttributes,
+	clientId,
 }: AddressSectionEditProps ) {
-	const { title, showTitle, shipToDifferent } = attributes;
+	const { title, showTitle, shipToDifferent, style } = attributes;
+	const [ viewport ] = useSettings( 'viewport' );
+	const css = blockGapCSS( `#block-${ clientId }`, style, viewport );
 	const fallbackTitle =
 		section === 'shipping' ? __( 'Shipping', 'yaycheckout' ) : __( 'Billing', 'yaycheckout' );
 	const blockProps = useBlockProps( { className: `yaycheckout-${ section }` } );
@@ -59,6 +65,7 @@ export function AddressSectionEdit( {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...innerBlocksProps }>
+				{ css && <style>{ css }</style> }
 				{ showTitle && <h3>{ title || fallbackTitle }</h3> }
 				{ children }
 			</div>

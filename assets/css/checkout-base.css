@@ -57,12 +57,14 @@ body.yaycheckout-page > .wp-site-blocks,
 
 /*
  * Classic themes (Storefront) float WooCommerce's order review into a right-hand column of
- * their own; the layout places it. No block setting can undo a theme's float.
+ * their own; the layout places it. No block setting can undo a theme's float. Their margins are 0 too,
+ * since Order Summary's Block spacing places them and themes style them by id.
  */
 .yaycheckout-checkout #order_review_heading,
 .yaycheckout-checkout #order_review {
 	float: none;
 	width: auto;
+	margin-block: 0;
 }
 
 /*
@@ -408,6 +410,46 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 /* Columns that lay out address fields side by side keep the fields' own spacing, not core's block margin. */
 .yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-columns {
 	margin-block: 0;
+}
+
+/*
+ * Billing, Shipping and Order Summary space their children with Block spacing, as core's layouts do: a flex
+ * column whose gap (12px, or the block's Block spacing, printed by BlockGap) replaces the children's own block
+ * margins. A hidden child (display:none, or the editor's <style>) takes no gap. A child's own margin setting is
+ * inline, so it still wins.
+ */
+:is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary) {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary) > * {
+	margin-block: 0;
+}
+
+/*
+ * The editor on a classic theme centres a block with auto inline margins and an 840px cap unless its parent is
+ * .is-layout-flex, which these sections aren't; in their flex column that shrinks each child to its content.
+ * Core's Columns undoes it the same way.
+ */
+.editor-styles-wrapper .yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary) > .wp-block {
+	margin-inline: 0;
+	max-width: none;
+}
+
+/* Fields in a Columns row end at the row, which the section's gap spaces; fields stacked in one Column keep 12px. */
+.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-column > * {
+	margin-block: 0;
+}
+
+.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-column > * + * {
+	margin-block-start: 12px;
+}
+
+/* A Field whose row WooCommerce's address-i18n.js hid for the country is left empty; it takes no gap. */
+:is(.yaycheckout-billing, .yaycheckout-shipping) > .yaycheckout-field:has(> .form-row[style*="display: none"]):not(:has(> .form-row:not([style*="display: none"]))) {
+	display: none;
 }
 
 /* Order Summary's Totals table: its amounts end-aligned in a fixed column. Items lays out its own rows. */
