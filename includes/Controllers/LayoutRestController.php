@@ -41,14 +41,7 @@ class LayoutRestController extends BaseRestController {
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'create_draft' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => [
-                        'name'          => [
-                            'required'          => true,
-                            'type'              => 'string',
-                            'sanitize_callback' => 'sanitize_text_field',
-                            'validate_callback' => static function ( $value ) {
-                                return '' !== trim( (string) $value );
-                            },
-                        ],
+                        'name'          => $this->name_arg(),
                         'source'        => [
                             'required'          => true,
                             'type'              => 'string',
@@ -117,6 +110,12 @@ class LayoutRestController extends BaseRestController {
                     'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_layout' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => $this->id_args(),
+                ],
+                [
+                    'methods'             => \WP_REST_Server::EDITABLE,
+                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'rename_layout' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => array_merge( $this->id_args(), [ 'name' => $this->name_arg() ] ),
                 ],
                 [
                     'methods'             => \WP_REST_Server::DELETABLE,
@@ -420,6 +419,25 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
+     * Changes a layout's title from the layouts list's Rename action.
+     *
+     * @return array|\WP_Error
+     */
+    public function rename_layout( \WP_REST_Request $request ) {
+        $id = (int) $request->get_param( 'id' );
+
+        if ( null === $this->layouts->find( $id ) ) {
+            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+        }
+
+        try {
+            return $this->layouts->rename( $id, (string) $request->get_param( 'name' ) )->to_array();
+        } catch ( \InvalidArgumentException $ex ) {
+            return $this->error_invalid_arguments( $ex->getMessage() );
+        }
+    }
+
+    /**
      * Replaces a layout's blocks and design with its template's (LayoutRepository::reset()).
      *
      * @return array|\WP_Error
@@ -481,6 +499,18 @@ class LayoutRestController extends BaseRestController {
         return [
             'id'      => $id,
             'deleted' => true,
+        ];
+    }
+
+    /** A layout's name, as create and rename take it. Titles may repeat, as Pages do. */
+    private function name_arg(): array {
+        return [
+            'required'          => true,
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'validate_callback' => static function ( $value ) {
+                return '' !== trim( (string) $value );
+            },
         ];
     }
 

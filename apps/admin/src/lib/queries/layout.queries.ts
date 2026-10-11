@@ -22,6 +22,7 @@ import {
   getLayouts,
   LayoutListParams,
   publishLayout,
+  renameLayout,
   resetLayout,
   restoreLayout,
   saveLayoutRules,
@@ -192,6 +193,22 @@ export function useDuplicateLayoutMutation() {
     mutationFn: duplicateLayout,
     onSuccess: () => {
       invalidateListedLayouts(queryClient);
+    },
+  });
+}
+
+/** The title shows in every list and in the open layout; counts stay valid. */
+export function useRenameLayoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'rename'],
+    mutationFn: ({ id, name }: { id: number; name: string }) => renameLayout(id, name),
+    // The modal renders its own inline error.
+    meta: { skipGlobalError: true },
+    onSuccess: (_layout, { id }) => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.detail(id) });
     },
   });
 }

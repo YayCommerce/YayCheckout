@@ -427,6 +427,41 @@ class LayoutRepository {
     }
 
     /**
+     * Changes a layout's title. Status, content, rules, design and the active flag stay.
+     *
+     * @param string $title Already sanitized (sanitize_text_field()).
+     * @throws \InvalidArgumentException When the layout is missing, the title is blank, or the update fails.
+     */
+    public function rename( int $id, string $title ): Layout {
+        if ( null === $this->find( $id ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        $title = trim( $title );
+
+        if ( '' === $title ) {
+            throw new \InvalidArgumentException( __( 'Name is required.', 'yaycheckout' ) );
+        }
+
+        // wp_update_post() unslashes; a title may hold backslashes.
+        $result = wp_update_post(
+            wp_slash(
+                [
+                    'ID'         => $id,
+                    'post_title' => $title,
+                ]
+            ),
+            true
+        );
+
+        if ( is_wp_error( $result ) ) {
+            throw new \InvalidArgumentException( $result->get_error_message() );
+        }
+
+        return $this->find( $id );
+    }
+
+    /**
      * Replaces a layout's assignment rules; [] clears them. Writes meta only, so the layout's
      * content, status and modified date stay as they are: rules save separately from the design.
      *

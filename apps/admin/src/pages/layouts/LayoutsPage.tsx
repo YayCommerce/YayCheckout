@@ -52,6 +52,7 @@ import { DeleteModal } from '@/pages/layouts/DeleteModal';
 import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import { PreviewLinkModal } from '@/pages/layouts/PreviewLinkModal';
+import { RenameModal } from '@/pages/layouts/RenameModal';
 import { SetActiveModal } from '@/pages/layouts/SetActiveModal';
 import PageLayout from '@/pages/PageLayout';
 
@@ -180,6 +181,7 @@ function LayoutsPageBody({
   const lastEditingLayoutId = useRef(editingLayoutId);
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
+  const [renamingLayout, setRenamingLayout] = useState<LayoutSummary | null>(null);
   const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
   const [deletingLayout, setDeletingLayout] = useState<LayoutSummary | null>(null);
   const [assigningLayout, setAssigningLayout] = useState<LayoutSummary | null>(null);
@@ -315,6 +317,7 @@ function LayoutsPageBody({
         onConfirm={onDeactivate}
         isPending={deactivateMutation.isPending}
       />
+      <RenameModal layout={renamingLayout} onOpenChange={(open) => !open && setRenamingLayout(null)} />
       <ArchiveModal
         layout={archivingLayout}
         onOpenChange={(open) => !open && setArchivingLayout(null)}
@@ -435,6 +438,7 @@ function LayoutsPageBody({
                       onRestore={onRestore}
                       onDelete={setDeletingLayout}
                       onDuplicate={onDuplicate}
+                      onRename={setRenamingLayout}
                       onAssign={setAssigningLayout}
                       onPreview={onPreview}
                       previewPending={previewLinkMutation.isPending}
@@ -537,6 +541,7 @@ function LayoutsTable({
   onRestore,
   onDelete,
   onDuplicate,
+  onRename,
   onAssign,
   onPreview,
   previewPending,
@@ -550,6 +555,7 @@ function LayoutsTable({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onRename: (layout: LayoutSummary) => void;
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
   previewPending: boolean;
@@ -577,6 +583,7 @@ function LayoutsTable({
             onRestore={onRestore}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
+            onRename={onRename}
             onAssign={onAssign}
             onPreview={onPreview}
             previewPending={previewPending}
@@ -597,6 +604,7 @@ function LayoutTableRow({
   onRestore,
   onDelete,
   onDuplicate,
+  onRename,
   onAssign,
   onPreview,
   previewPending,
@@ -610,6 +618,7 @@ function LayoutTableRow({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onRename: (layout: LayoutSummary) => void;
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
   previewPending: boolean;
@@ -638,6 +647,7 @@ function LayoutTableRow({
           onRestore={onRestore}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
+          onRename={onRename}
           onAssign={onAssign}
           onPreview={onPreview}
           previewPending={previewPending}
@@ -658,6 +668,7 @@ function LayoutRowActions({
   onRestore,
   onDelete,
   onDuplicate,
+  onRename,
   onAssign,
   onPreview,
   previewPending,
@@ -671,6 +682,7 @@ function LayoutRowActions({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onRename: (layout: LayoutSummary) => void;
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
   /** One link mints at a time; every Preview button waits. */
@@ -712,6 +724,7 @@ function LayoutRowActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={() => onAssign(layout)}>{__('Assignment', 'yaycheckout')}</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onRename(layout)}>{__('Rename', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
             {__('Deactivate', 'yaycheckout')}
