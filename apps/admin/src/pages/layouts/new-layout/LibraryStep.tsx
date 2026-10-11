@@ -1,7 +1,7 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 import { __ } from '@wordpress/i18n';
 
-import type { NewLayoutFormValues } from '@/lib/schema/layout.schema';
+import { layoutNameSchema, type NewLayoutFormValues } from '@/lib/schema/layout.schema';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { TemplatePicker } from '@/components/shared/template-picker/TemplatePicker';
@@ -27,7 +27,7 @@ export function LibraryStep({
     setValue('templateSlug', slug, { shouldValidate: true });
   }
 
-  const disabled = '' === (name ?? '').trim() || !selectedSlug;
+  const disabled = !layoutNameSchema.safeParse(name).success || !selectedSlug;
 
   return (
     <div className="flex flex-col gap-5">

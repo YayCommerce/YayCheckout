@@ -1,7 +1,7 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 import { __ } from '@wordpress/i18n';
 
-import type { NewLayoutFormValues } from '@/lib/schema/layout.schema';
+import { layoutNameSchema, type NewLayoutFormValues } from '@/lib/schema/layout.schema';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
@@ -24,7 +24,7 @@ export function SourceStep({
   const { control } = useFormContext<NewLayoutFormValues>();
   const name = useWatch<NewLayoutFormValues, 'name'>({ control, name: 'name' });
 
-  const disabled = '' === (name ?? '').trim();
+  const disabled = !layoutNameSchema.safeParse(name).success;
 
   return (
     <div className="flex flex-col gap-5">

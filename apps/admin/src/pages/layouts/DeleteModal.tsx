@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react';
 import { TriangleAlert } from 'lucide-react';
 import { __, sprintf } from '@wordpress/i18n';
 
 import type { LayoutSummary } from '@/lib/schema/layout.schema';
+import { useTypedConfirm } from '@/hooks/useTypedConfirm';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { TypedConfirmField } from '@/components/shared/TypedConfirmField';
 
 const CONFIRM_PHRASE = 'DELETE';
 
@@ -22,11 +21,7 @@ export function DeleteModal({
   onConfirm: (layout: LayoutSummary) => void;
   isPending: boolean;
 }) {
-  const [typed, setTyped] = useState('');
-
-  useEffect(() => setTyped(''), [layout?.id]);
-
-  const canDelete = typed.trim() === CONFIRM_PHRASE && !isPending;
+  const { typed, setTyped, confirmed: canDelete } = useTypedConfirm(CONFIRM_PHRASE, layout?.id, isPending);
 
   return (
     <Dialog open={null !== layout} onOpenChange={(open) => !isPending && onOpenChange(open)}>
@@ -58,19 +53,15 @@ export function DeleteModal({
               )}
             </p>
 
-            <Field>
-              <FieldLabel htmlFor="delete-layout-confirm">{__('Type DELETE to confirm', 'yaycheckout')}</FieldLabel>
-              <Input
-                id="delete-layout-confirm"
-                className="font-mono tracking-widest"
-                placeholder={CONFIRM_PHRASE}
-                autoComplete="off"
-                autoFocus
-                value={typed}
-                onChange={(event) => setTyped(event.target.value)}
-                disabled={isPending}
-              />
-            </Field>
+            <TypedConfirmField
+              id="delete-layout-confirm"
+              label={__('Type DELETE to confirm', 'yaycheckout')}
+              phrase={CONFIRM_PHRASE}
+              className="font-mono"
+              value={typed}
+              onChange={setTyped}
+              disabled={isPending}
+            />
 
             <DialogFooter className="sm:justify-between">
               <p className="text-muted-foreground self-center text-xs">

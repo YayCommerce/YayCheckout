@@ -7,12 +7,15 @@ const gatewayStatusWireSchema = z.enum(['verified', 'community', 'unverified', '
 const pluginStatusWireSchema = z.enum(['verified', 'community', 'unverified']);
 /** Mirrors CheckoutHookScanHelper::HOOKS buckets. */
 const touchWireSchema = z.enum(['fields', 'templates', 'gateways', 'order_review', 'submission']);
+const storeTypeWireSchema = z.enum(['classic', 'block']);
+const ownerKindWireSchema = z.enum(['plugin', 'mu-plugin', 'theme']);
+const catalogueSourceWireSchema = z.enum(['remote', 'bundled']);
 
 export const compatibilityWireSchema = z
   .object({
     store: z
       .object({
-        store_type: z.enum(['classic', 'block']),
+        store_type: storeTypeWireSchema,
         woocommerce_version: z.string(),
         wordpress_version: z.string(),
         theme: z
@@ -43,7 +46,7 @@ export const compatibilityWireSchema = z
           slug: z.string(),
           name: z.string(),
           version: z.string(),
-          kind: z.enum(['plugin', 'mu-plugin', 'theme']),
+          kind: ownerKindWireSchema,
           touches: z.array(touchWireSchema),
           status: pluginStatusWireSchema,
           notes: z.string().nullable(),
@@ -53,7 +56,7 @@ export const compatibilityWireSchema = z
     ),
     catalogue: z
       .object({
-        source: z.enum(['remote', 'bundled']),
+        source: catalogueSourceWireSchema,
         fetched_at: z.string().nullable(),
       })
       .strict(),
@@ -67,10 +70,10 @@ export type CompatibilityWire = z.infer<typeof compatibilityWireSchema>;
 export type GatewayStatus = z.infer<typeof gatewayStatusWireSchema>;
 export type PluginStatus = z.infer<typeof pluginStatusWireSchema>;
 export type CheckoutTouch = z.infer<typeof touchWireSchema>;
-export type OwnerKind = 'plugin' | 'mu-plugin' | 'theme';
+export type OwnerKind = z.infer<typeof ownerKindWireSchema>;
 
 export type StoreEnvironment = {
-  storeType: 'classic' | 'block';
+  storeType: z.infer<typeof storeTypeWireSchema>;
   woocommerceVersion: string;
   wordpressVersion: string;
   theme: { name: string; version: string; isBlockTheme: boolean };
@@ -102,7 +105,7 @@ export type CompatibilityReport = {
   gateways: GatewayRow[];
   plugins: PluginRow[];
   catalogue: {
-    source: 'remote' | 'bundled';
+    source: z.infer<typeof catalogueSourceWireSchema>;
     /** ISO 8601 UTC; null on the bundled list. */
     fetchedAt: string | null;
   };
