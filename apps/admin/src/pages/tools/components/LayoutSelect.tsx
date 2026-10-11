@@ -1,18 +1,18 @@
-import { useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import { CheckIcon } from 'lucide-react';
-import { useDebounceFn } from 'rooks';
 import { __ } from '@wordpress/i18n';
 
 import { loadMoreOnScroll } from '@/lib/helpers/infinite-list.helper';
 import { useInfiniteLayoutsQuery } from '@/lib/queries/layout.queries';
 import { LISTED_LAYOUT_STATUSES, type LayoutSummary } from '@/lib/schema/layout.schema';
 import { cn } from '@/lib/utils';
+import { useDebouncedSearch } from '@/hooks/useDebouncedSearch';
 import { ComboboxIcon, ComboboxTrigger } from '@/components/ui/combobox';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
-import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';
+import { LayoutStatusBadge } from '@/components/shared/LayoutStatusBadge';
 
 interface LayoutSelectProps {
   value: LayoutSummary | null;
@@ -24,15 +24,7 @@ interface LayoutSelectProps {
  * layouts, so a default taken from it could be the wrong one.
  */
 export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  // useDebounceFn has no cancel; the trailing callback checks this ref to drop a stale value.
-  const searchInputRef = useRef('');
-  const [applySearch] = useDebounceFn((value: string) => {
-    if (value !== searchInputRef.current) return;
-
-    setSearch(value);
-  }, 300);
+  const { input: searchInput, search, setInput: setSearchInput } = useDebouncedSearch();
 
   const list = useInfiniteLayoutsQuery({ status: LISTED_LAYOUT_STATUSES, search });
   const layouts = list.data?.pages.flatMap((page) => page.items) ?? [];
@@ -61,11 +53,7 @@ export function LayoutSelect({ value, onChange }: LayoutSelectProps) {
               <CommandInput
                 placeholder={__('Search layouts', 'yaycheckout')}
                 value={searchInput}
-                onValueChange={(next) => {
-                  searchInputRef.current = next;
-                  setSearchInput(next);
-                  applySearch(next);
-                }}
+                onValueChange={setSearchInput}
               />
               <CommandList
                 className={cn('transition-opacity', list.isPlaceholderData && 'opacity-60')}

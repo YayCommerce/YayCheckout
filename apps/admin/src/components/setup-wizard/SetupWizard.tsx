@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { HTTPError } from 'ky';
 import { toast } from 'sonner';
@@ -10,15 +10,9 @@ import { logger } from '@/lib/logger';
 import { invalidateListedLayouts } from '@/lib/queries/layout.queries';
 import { useCompleteSetupMutation } from '@/lib/queries/setup.queries';
 import { Badge } from '@/components/ui/badge';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { StepBreadcrumb } from '@/components/shared/StepBreadcrumb';
 import { FinishStep } from './FinishStep';
 import { ScanStep } from './ScanStep';
 import { StartFromStep } from './StartFromStep';
@@ -90,18 +84,7 @@ function SetupWizardDialog({ rerun = false, onClose }: { rerun?: boolean; onClos
 
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Breadcrumb>
-              <BreadcrumbList>
-                {STEPS.map((label, index) => (
-                  <Fragment key={label}>
-                    {index > 0 && <BreadcrumbSeparator />}
-                    <BreadcrumbItem>
-                      {index === step ? <BreadcrumbPage>{label}</BreadcrumbPage> : <span>{label}</span>}
-                    </BreadcrumbItem>
-                  </Fragment>
-                ))}
-              </BreadcrumbList>
-            </Breadcrumb>
+            <StepBreadcrumb labels={STEPS} current={step} />
             {isFinished && <Badge variant="success-outline">{__('Done', 'yaycheckout')}</Badge>}
           </div>
           {!isFinished && (

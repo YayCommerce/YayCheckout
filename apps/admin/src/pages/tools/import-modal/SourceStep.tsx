@@ -1,10 +1,11 @@
-import { Check, TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import type { ImportReview } from '@/lib/schema/tools.schema';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button, LoadingButton } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
+import { SuccessHeader } from '@/components/shared/SuccessHeader';
 import { SummaryStrip } from '@/components/shared/SummaryStrip';
 
 export function SourceStep({
@@ -23,23 +24,14 @@ export function SourceStep({
 }) {
   return (
     <>
-      <div className="flex gap-3">
-        <span className="bg-success/10 text-success flex size-8 shrink-0 items-center justify-center rounded-full">
-          <Check className="size-4" />
-        </span>
-        <div className="space-y-1">
-          <h3 className="text-base/snug font-semibold">
-            {sprintf(
-              /* translators: %s: layout title */
-              __('Ready to import "%s"', 'yaycheckout'),
-              review.title,
-            )}
-          </h3>
-          <p className="text-muted-foreground text-sm">
-            {__('A new draft is created. Your current layouts stay as they are.', 'yaycheckout')}
-          </p>
-        </div>
-      </div>
+      <SuccessHeader
+        title={sprintf(
+          /* translators: %s: layout title */
+          __('Ready to import "%s"', 'yaycheckout'),
+          review.title,
+        )}
+        description={__('A new draft is created. Your current layouts stay as they are.', 'yaycheckout')}
+      />
 
       <SummaryStrip
         items={[

@@ -120,32 +120,60 @@ function ProTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: GridP
       ) : (
         <div className="grid h-84 scrollbar-none grid-cols-5 content-start gap-3 overflow-y-auto pt-0.5 pl-0.5">
           {shownTemplates.map((template) => (
-            <button
+            <TemplateTile
               key={template.slug}
-              type="button"
-              disabled={!isPickable(template)}
-              onClick={() => onSelect(template.slug)}
-              title={tileTitle(template)}
-              className={cn(
-                'transition-default flex flex-col items-start gap-2 rounded-md border p-2 text-left',
-                focusVariants({ variant: 'none' }),
-                template.slug === selectedSlug && 'border-primary ring-primary ring-1',
-                isPickable(template) ? 'hover:border-muted-foreground' : 'cursor-not-allowed opacity-50',
-              )}
-            >
-              <div className="relative aspect-3/2 w-full overflow-hidden rounded-sm border">
-                <TemplateThumbnail slug={template.slug} />
-                {isComingSoon(template) && <ComingSoonBadge />}
-              </div>
-              <div className="flex w-full items-center justify-between gap-1">
-                <span className="text-xs font-medium">{template.name}</span>
-                {template.locked && <ProTag />}
-              </div>
-            </button>
+              template={template}
+              isSelected={template.slug === selectedSlug}
+              onSelect={onSelect}
+              withProTag
+            />
           ))}
         </div>
       )}
     </>
+  );
+}
+
+/** One pickable template. `withProTag` gives the name a row that holds ProTag when the template is locked. */
+function TemplateTile({
+  template,
+  isSelected,
+  onSelect,
+  withProTag = false,
+}: {
+  template: Template;
+  isSelected: boolean;
+  onSelect: (slug: string) => void;
+  withProTag?: boolean;
+}) {
+  const name = <span className="text-xs font-medium">{template.name}</span>;
+
+  return (
+    <button
+      type="button"
+      disabled={!isPickable(template)}
+      onClick={() => onSelect(template.slug)}
+      title={tileTitle(template)}
+      className={cn(
+        'transition-default flex flex-col items-start gap-2 rounded-md border p-2 text-left',
+        focusVariants({ variant: 'none' }),
+        isSelected && 'border-primary ring-primary ring-1',
+        isPickable(template) ? 'hover:border-muted-foreground' : 'cursor-not-allowed opacity-50',
+      )}
+    >
+      <div className="relative aspect-3/2 w-full overflow-hidden rounded-sm border">
+        <TemplateThumbnail slug={template.slug} />
+        {isComingSoon(template) && <ComingSoonBadge />}
+      </div>
+      {withProTag ? (
+        <div className="flex w-full items-center justify-between gap-1">
+          {name}
+          {template.locked && <ProTag />}
+        </div>
+      ) : (
+        name
+      )}
+    </button>
   );
 }
 
@@ -161,25 +189,12 @@ function FreeTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: Grid
     <>
       <div className="grid grid-cols-3 gap-3">
         {unlockedTemplates.map((template) => (
-          <button
+          <TemplateTile
             key={template.slug}
-            type="button"
-            disabled={!isPickable(template)}
-            onClick={() => onSelect(template.slug)}
-            title={tileTitle(template)}
-            className={cn(
-              'transition-default flex flex-col items-start gap-2 rounded-md border p-2 text-left',
-              focusVariants({ variant: 'none' }),
-              template.slug === selectedSlug && 'border-primary ring-primary ring-1',
-              isPickable(template) ? 'hover:border-muted-foreground' : 'cursor-not-allowed opacity-50',
-            )}
-          >
-            <div className="relative aspect-3/2 w-full overflow-hidden rounded-sm border">
-              <TemplateThumbnail slug={template.slug} />
-              {isComingSoon(template) && <ComingSoonBadge />}
-            </div>
-            <span className="text-xs font-medium">{template.name}</span>
-          </button>
+            template={template}
+            isSelected={template.slug === selectedSlug}
+            onSelect={onSelect}
+          />
         ))}
       </div>
 

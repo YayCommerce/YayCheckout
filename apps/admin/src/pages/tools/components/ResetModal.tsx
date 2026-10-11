@@ -1,16 +1,15 @@
-import { useEffect, useState } from 'react';
 import { TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { useResetLayoutMutation } from '@/lib/queries/layout.queries';
 import type { LayoutSummary } from '@/lib/schema/layout.schema';
+import { useTypedConfirm } from '@/hooks/useTypedConfirm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button, LoadingButton } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
 import { HelpTip } from '@/components/ui/tooltip';
+import { TypedConfirmField } from '@/components/shared/TypedConfirmField';
 
 const CONFIRM_PHRASE = 'RESET';
 
@@ -25,12 +24,8 @@ export function ResetModal({
   /** The layout as reset, so the card's copy shows the new block count and size. */
   onReset: (layout: LayoutSummary) => void;
 }) {
-  const [typed, setTyped] = useState('');
   const reset = useResetLayoutMutation();
-
-  useEffect(() => setTyped(''), [layout?.id]);
-
-  const canReset = typed.trim() === CONFIRM_PHRASE && !reset.isPending;
+  const { typed, setTyped, confirmed: canReset } = useTypedConfirm(CONFIRM_PHRASE, layout?.id, reset.isPending);
 
   return (
     <Dialog open={null !== layout} onOpenChange={(open) => !reset.isPending && onOpenChange(open)}>
@@ -98,18 +93,14 @@ export function ResetModal({
               </div>
             </dl>
 
-            <Field>
-              <FieldLabel htmlFor="reset-layout-confirm">{__('Type RESET to confirm', 'yaycheckout')}</FieldLabel>
-              <Input
-                id="reset-layout-confirm"
-                className="max-w-xs tracking-widest"
-                placeholder={CONFIRM_PHRASE}
-                autoComplete="off"
-                autoFocus
-                value={typed}
-                onChange={(event) => setTyped(event.target.value)}
-              />
-            </Field>
+            <TypedConfirmField
+              id="reset-layout-confirm"
+              label={__('Type RESET to confirm', 'yaycheckout')}
+              phrase={CONFIRM_PHRASE}
+              className="max-w-xs"
+              value={typed}
+              onChange={setTyped}
+            />
 
             {layout.isActive && (
               // Tinted like the dialog's other boxes, so it does not read as loose text beside the footer rule.

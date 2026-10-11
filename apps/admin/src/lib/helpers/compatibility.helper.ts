@@ -7,10 +7,15 @@ export type CompatibilityWarnings = {
   unverifiedPlugins: PluginRow[];
 };
 
+/** A gateway that only works on WooCommerce's block checkout, so not in a layout. */
+export function isBlockOnly(gateway: GatewayRow): boolean {
+  return gateway.status === 'block-only';
+}
+
 /** What the banner counts. `community` is a hint, never a warning. */
 export function deriveWarnings(report: CompatibilityReport): CompatibilityWarnings {
   return {
-    blockOnly: report.gateways.filter((gateway) => gateway.status === 'block-only'),
+    blockOnly: report.gateways.filter(isBlockOnly),
     unverifiedPlugins: report.plugins.filter((plugin) => plugin.status === 'unverified'),
   };
 }
