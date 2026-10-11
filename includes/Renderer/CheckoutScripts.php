@@ -30,6 +30,11 @@ class CheckoutScripts {
             return;
         }
 
+        self::enqueue_wc_scripts();
+    }
+
+    /** WooCommerce's classic checkout scripts, which the layout's fields rely on. */
+    public static function enqueue_wc_scripts(): void {
         wp_enqueue_script( 'wc-checkout' );
         wp_enqueue_script( 'wc-country-select' );
         wp_enqueue_script( 'wc-address-i18n' );

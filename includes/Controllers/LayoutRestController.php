@@ -271,7 +271,7 @@ class LayoutRestController extends BaseRestController {
         $layout = $this->layouts->find( (int) $request->get_param( 'id' ) );
 
         if ( null === $layout ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+            return $this->error_layout_not_found();
         }
 
         return $layout->to_array();
@@ -309,18 +309,7 @@ class LayoutRestController extends BaseRestController {
 
     /** @return array|\WP_Error */
     public function publish_layout( \WP_REST_Request $request ) {
-        $id = (int) $request->get_param( 'id' );
-
-        // Post-type check: without it any post id could be mutated by a manage_woocommerce user.
-        if ( null === $this->layouts->find( $id ) ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
-        }
-
-        try {
-            return $this->layouts->publish( $id )->to_array();
-        } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
-        }
+        return $this->change_layout( $request, fn( int $id ) => $this->layouts->publish( $id ) );
     }
 
     /**
@@ -329,17 +318,7 @@ class LayoutRestController extends BaseRestController {
      * @return array|\WP_Error
      */
     public function activate_layout( \WP_REST_Request $request ) {
-        $id = (int) $request->get_param( 'id' );
-
-        if ( null === $this->layouts->find( $id ) ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
-        }
-
-        try {
-            return $this->layouts->activate( $id )->to_array();
-        } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
-        }
+        return $this->change_layout( $request, fn( int $id ) => $this->layouts->activate( $id ) );
     }
 
     /**
@@ -348,17 +327,7 @@ class LayoutRestController extends BaseRestController {
      * @return array|\WP_Error
      */
     public function deactivate_layout( \WP_REST_Request $request ) {
-        $id = (int) $request->get_param( 'id' );
-
-        if ( null === $this->layouts->find( $id ) ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
-        }
-
-        try {
-            return $this->layouts->deactivate( $id )->to_array();
-        } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
-        }
+        return $this->change_layout( $request, fn( int $id ) => $this->layouts->deactivate( $id ) );
     }
 
     /**
@@ -367,17 +336,7 @@ class LayoutRestController extends BaseRestController {
      * @return array|\WP_Error
      */
     public function archive_layout( \WP_REST_Request $request ) {
-        $id = (int) $request->get_param( 'id' );
-
-        if ( null === $this->layouts->find( $id ) ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
-        }
-
-        try {
-            return $this->layouts->archive( $id )->to_array();
-        } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
-        }
+        return $this->change_layout( $request, fn( int $id ) => $this->layouts->archive( $id ) );
     }
 
     /**
@@ -386,17 +345,7 @@ class LayoutRestController extends BaseRestController {
      * @return array|\WP_Error
      */
     public function restore_layout( \WP_REST_Request $request ) {
-        $id = (int) $request->get_param( 'id' );
-
-        if ( null === $this->layouts->find( $id ) ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
-        }
-
-        try {
-            return $this->layouts->restore( $id )->to_array();
-        } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
-        }
+        return $this->change_layout( $request, fn( int $id ) => $this->layouts->restore( $id ) );
     }
 
     /**
@@ -405,17 +354,7 @@ class LayoutRestController extends BaseRestController {
      * @return array|\WP_Error
      */
     public function duplicate_layout( \WP_REST_Request $request ) {
-        $id = (int) $request->get_param( 'id' );
-
-        if ( null === $this->layouts->find( $id ) ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
-        }
-
-        try {
-            return $this->layouts->duplicate( $id )->to_array();
-        } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
-        }
+        return $this->change_layout( $request, fn( int $id ) => $this->layouts->duplicate( $id ) );
     }
 
     /**
@@ -424,17 +363,7 @@ class LayoutRestController extends BaseRestController {
      * @return array|\WP_Error
      */
     public function rename_layout( \WP_REST_Request $request ) {
-        $id = (int) $request->get_param( 'id' );
-
-        if ( null === $this->layouts->find( $id ) ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
-        }
-
-        try {
-            return $this->layouts->rename( $id, (string) $request->get_param( 'name' ) )->to_array();
-        } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
-        }
+        return $this->change_layout( $request, fn( int $id ) => $this->layouts->rename( $id, (string) $request->get_param( 'name' ) ) );
     }
 
     /**
@@ -443,17 +372,7 @@ class LayoutRestController extends BaseRestController {
      * @return array|\WP_Error
      */
     public function reset_layout( \WP_REST_Request $request ) {
-        $id = (int) $request->get_param( 'id' );
-
-        if ( null === $this->layouts->find( $id ) ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
-        }
-
-        try {
-            return $this->layouts->reset( $id )->to_array();
-        } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
-        }
+        return $this->change_layout( $request, fn( int $id ) => $this->layouts->reset( $id ) );
     }
 
     /**
@@ -466,7 +385,7 @@ class LayoutRestController extends BaseRestController {
         $id = (int) $request->get_param( 'id' );
 
         if ( null === $this->layouts->find( $id ) ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+            return $this->error_layout_not_found();
         }
 
         $lifetime = (int) ( new SettingsRepository() )->get()->advanced['preview_link_lifetime'];
@@ -487,7 +406,7 @@ class LayoutRestController extends BaseRestController {
         $id = (int) $request->get_param( 'id' );
 
         if ( null === $this->layouts->find( $id ) ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+            return $this->error_layout_not_found();
         }
 
         try {
@@ -500,6 +419,28 @@ class LayoutRestController extends BaseRestController {
             'id'      => $id,
             'deleted' => true,
         ];
+    }
+
+    /**
+     * Runs $op on the requested layout and replies with the layout it returns: 404 when the id
+     * is not a layout, 400 when $op refuses. The post-type check is what stops a
+     * manage_woocommerce user mutating any post id.
+     *
+     * @param callable $op fn( int $id ): Layout.
+     * @return array|\WP_Error
+     */
+    private function change_layout( \WP_REST_Request $request, callable $op ) {
+        $id = (int) $request->get_param( 'id' );
+
+        if ( null === $this->layouts->find( $id ) ) {
+            return $this->error_layout_not_found();
+        }
+
+        try {
+            return $op( $id )->to_array();
+        } catch ( \InvalidArgumentException $ex ) {
+            return $this->error_invalid_arguments( $ex->getMessage() );
+        }
     }
 
     /** A layout's name, as create and rename take it. Titles may repeat, as Pages do. */

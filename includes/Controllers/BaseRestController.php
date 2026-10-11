@@ -22,6 +22,10 @@ abstract class BaseRestController {
         return new \WP_Error( 'not_found', $message, [ 'status' => 404 ] );
     }
 
+    protected function error_layout_not_found() {
+        return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+    }
+
     protected function error_invalid_arguments( $message = 'Invalid Arguments.' ) {
         return new \WP_Error( 'invalid_arguments', $message, [ 'status' => 400 ] );
     }

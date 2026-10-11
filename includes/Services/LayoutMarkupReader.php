@@ -139,17 +139,35 @@ class LayoutMarkupReader {
      * @return array<string, mixed>|null
      */
     public static function order_note( string $markup ): ?array {
-        foreach ( self::blocks( $markup ) as $block ) {
-            if ( self::ORDER_NOTE !== $block['blockName'] ) {
-                continue;
-            }
+        $block = self::first_block( $markup, self::ORDER_NOTE );
 
-            return self::field_entry( self::ORDER_NOTE_KEY, 'textarea', $block['attrs'] ) + [
-                'description' => self::text( $block['attrs'], 'description' ),
-            ];
+        if ( null === $block ) {
+            return null;
+        }
+
+        return self::field_entry( self::ORDER_NOTE_KEY, 'textarea', $block['attrs'] ) + [
+            'description' => self::text( $block['attrs'], 'description' ),
+        ];
+    }
+
+    /**
+     * The first block named $name, at any depth, in document order; null when the layout has none.
+     *
+     * @return array|null A parsed block, attrs always an array.
+     */
+    public static function first_block( string $markup, string $name ): ?array {
+        foreach ( self::blocks( $markup ) as $block ) {
+            if ( $name === $block['blockName'] ) {
+                return $block;
+            }
         }
 
         return null;
+    }
+
+    /** Whether the layout has a Checkout block, without parsing it. */
+    public static function has_checkout( string $markup ): bool {
+        return has_block( self::CHECKOUT, $markup );
     }
 
     /** Whether the layout has an Order note block, without parsing it. */
@@ -205,7 +223,7 @@ class LayoutMarkupReader {
      * and packages/blocks/src/extra-field/edit.tsx; change them together.
      */
     public static function publish_error( string $markup ): string {
-        if ( ! has_block( self::CHECKOUT, $markup ) ) {
+        if ( ! self::has_checkout( $markup ) ) {
             return __( 'Add a Checkout block to this layout before activating it.', 'yaycheckout' );
         }
 

@@ -121,13 +121,9 @@ class CheckoutFragments {
 
     /** The Place order button alone (render.php prints only it during AJAX), when it shows the total. */
     private static function place_order_button_html( string $markup ): string {
-        foreach ( LayoutMarkupReader::flatten( parse_blocks( $markup ) ) as $block ) {
-            if ( 'yaycheckout/place-order' === $block['blockName'] ) {
-                return empty( $block['attrs']['showTotal'] ) ? '' : render_block( $block );
-            }
-        }
+        $block = LayoutMarkupReader::first_block( $markup, 'yaycheckout/place-order' );
 
-        return '';
+        return null === $block || empty( $block['attrs']['showTotal'] ) ? '' : render_block( $block );
     }
 
     public static function print_shipping_rates(): void {

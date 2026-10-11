@@ -33,10 +33,8 @@ if ( ! function_exists( 'WC' ) ) {
     return;
 }
 
-$yaycheckout_checkout = WC()->checkout();
-
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Verbatim from WooCommerce's form-checkout.php so its filter and translation still apply.
-if ( ! $yaycheckout_checkout->is_registration_enabled() && $yaycheckout_checkout->is_registration_required() && ! is_user_logged_in() ) {
+if ( \YayCheckout\Renderer\CheckoutLogin::must_log_in() ) {
     if ( \YayCheckout\Renderer\CheckoutLogin::reminder_shown() ) {
         $yaycheckout_login = null;
 

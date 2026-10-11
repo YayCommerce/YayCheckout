@@ -48,7 +48,7 @@ class DesignFonts {
             $style  = preg_match( '/^(normal|italic|oblique)$/', $face['style'] ) ? $face['style'] : 'normal';
             $weight = preg_match( '/^\d{3}( \d{3})?$/', $face['weight'] ) ? $face['weight'] : '400';
             $url    = esc_url_raw( $face['url'] );
-            $format = 'woff2' === strtolower( pathinfo( (string) wp_parse_url( $url, PHP_URL_PATH ), PATHINFO_EXTENSION ) ) ? " format('woff2')" : '';
+            $format = 'woff2' === FontRepository::extension( $url ) ? " format('woff2')" : '';
 
             if ( '' === $url ) {
                 continue;

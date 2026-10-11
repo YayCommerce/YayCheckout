@@ -311,13 +311,18 @@ class FontRepository {
         return $files;
     }
 
+    /** A font file URL's extension, lowercased, query and fragment ignored. */
+    public static function extension( string $url ): string {
+        return strtolower( pathinfo( (string) wp_parse_url( $url, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
+    }
+
     /**
      * One font file, downloaded and moved into the fonts directory the way core's font face upload moves one.
      *
      * @return array{url: string, file: string, relative: string}|\WP_Error
      */
     private function download( string $src, string $name ) {
-        $extension = strtolower( pathinfo( (string) wp_parse_url( $src, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
+        $extension = self::extension( $src );
         $mimes     = \WP_Font_Utils::get_allowed_font_mime_types();
 
         if ( ! isset( $mimes[ $extension ] ) ) {

@@ -153,24 +153,16 @@ class BlockRegistry {
             'upgradeUrl' => YAYCHECKOUT_UPGRADE_URL,
         ];
 
-        wp_add_inline_script(
-            generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
-            'window.yayCheckoutBlocks = ' . wp_json_encode( $editor_data ) . ';',
-            'before'
-        );
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks', $editor_data );
 
         // The login block's editor script does not run after the checkout inline
         // script, so its option flag is printed on its own handle.
         $login_editor_data = [
-            'reminderEnabled' => 'yes' === get_option( CheckoutLogin::OPTION_REMINDER ),
+            'reminderEnabled' => CheckoutLogin::reminder_enabled(),
             'settingsUrl'     => admin_url( 'admin.php?page=wc-settings&tab=account#woocommerce_enable_checkout_login_reminder' ),
         ];
 
-        wp_add_inline_script(
-            generate_block_asset_handle( 'yaycheckout/login', 'editorScript' ),
-            'window.yayCheckoutLogin = ' . wp_json_encode( $login_editor_data ) . ';',
-            'before'
-        );
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/login', 'editorScript' ), 'window.yayCheckoutLogin', $login_editor_data );
 
         // The create-account editor script may not run after the checkout inline
         // script, so its option flag is printed on its own handle.
@@ -179,11 +171,7 @@ class BlockRegistry {
             'settingsUrl'   => admin_url( 'admin.php?page=wc-settings&tab=account#woocommerce_enable_signup_and_login_from_checkout' ),
         ];
 
-        wp_add_inline_script(
-            generate_block_asset_handle( 'yaycheckout/create-account', 'editorScript' ),
-            'window.yayCheckoutCreateAccount = ' . wp_json_encode( $create_account_editor_data ) . ';',
-            'before'
-        );
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/create-account', 'editorScript' ), 'window.yayCheckoutCreateAccount', $create_account_editor_data );
 
         // The different-address editor script may not run after the checkout inline
         // script, so WooCommerce's Shipping destination is printed on its own handle.
@@ -193,11 +181,7 @@ class BlockRegistry {
             'settingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=shipping&section=options' ),
         ];
 
-        wp_add_inline_script(
-            generate_block_asset_handle( 'yaycheckout/different-address', 'editorScript' ),
-            'window.yayCheckoutDifferentAddress = ' . wp_json_encode( $different_address_editor_data ) . ';',
-            'before'
-        );
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/different-address', 'editorScript' ), 'window.yayCheckoutDifferentAddress', $different_address_editor_data );
     }
 
     /**
@@ -219,11 +203,7 @@ class BlockRegistry {
         ];
 
         // Added after register_blocks()' own inline script, so window.yayCheckoutBlocks exists.
-        wp_add_inline_script(
-            generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
-            'window.yayCheckoutBlocks.design = ' . wp_json_encode( $design ) . ';',
-            'before'
-        );
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.design', $design );
     }
 
     /**
@@ -255,15 +235,13 @@ class BlockRegistry {
             true
         );
 
-        wp_add_inline_script(
+        self::inline_data(
             self::DIFFERENT_ADDRESS_SCRIPT,
-            'window.yayCheckoutSameBilling = ' . wp_json_encode(
-                [
-                    'field'      => CheckoutDifferentAddress::SAME_BILLING_FIELD,
-                    'copiedKeys' => CheckoutDifferentAddress::COPIED_KEYS,
-                ]
-            ) . ';',
-            'before'
+            'window.yayCheckoutSameBilling',
+            [
+                'field'      => CheckoutDifferentAddress::SAME_BILLING_FIELD,
+                'copiedKeys' => CheckoutDifferentAddress::COPIED_KEYS,
+            ]
         );
 
         // Enqueued by HideWhenEmpty::filter_container() for a container that watches blocks.
@@ -348,5 +326,10 @@ class BlockRegistry {
         }
 
         return array_values( array_filter( $allowed_block_types, static fn( $name ) => ! $drop( $name ) ) );
+    }
+
+    /** Prints $data as $variable (window.x or window.x.y) before $handle runs. */
+    private static function inline_data( string $handle, string $variable, array $data ): void {
+        wp_add_inline_script( $handle, $variable . ' = ' . wp_json_encode( $data ) . ';', 'before' );
     }
 }

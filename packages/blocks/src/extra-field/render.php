@@ -11,8 +11,8 @@ defined( 'ABSPATH' ) || exit;
 
 $yaycheckout_label       = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'label' );
 $yaycheckout_key         = \YayCheckout\Services\LayoutMarkupReader::extra_field_key( $attributes );
-$yaycheckout_type        = isset( $attributes['type'] ) && is_string( $attributes['type'] ) && '' !== $attributes['type'] ? $attributes['type'] : 'text';
-$yaycheckout_placeholder = isset( $attributes['placeholder'] ) && is_string( $attributes['placeholder'] ) ? $attributes['placeholder'] : '';
+$yaycheckout_type        = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'type', 'text' );
+$yaycheckout_placeholder = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'placeholder' );
 $yaycheckout_required    = ! empty( $attributes['required'] );
 $yaycheckout_options     = \YayCheckout\Services\LayoutMarkupReader::options( $attributes['options'] ?? [] );
 $yaycheckout_description = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'description' );
@@ -60,21 +60,17 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
 
     echo '<div ' . $yaycheckout_wrapper . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
 
-    if ( \YayCheckout\Services\Disclosure::NONE !== $yaycheckout_disclosure ) {
-        echo \YayCheckout\Services\Disclosure::open( $yaycheckout_key, \YayCheckout\Services\Disclosure::text( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ), $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
-    }
+    echo \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
 
     woocommerce_form_field( $yaycheckout_key, $yaycheckout_args, is_string( $yaycheckout_value ) ? $yaycheckout_value : null );
-    echo \YayCheckout\Services\Disclosure::NONE !== $yaycheckout_disclosure ? \YayCheckout\Services\Disclosure::close() . '</div>' : '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup.
+    echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup.
     return;
 }
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php
-    if ( \YayCheckout\Services\Disclosure::NONE !== $yaycheckout_disclosure ) {
-        echo \YayCheckout\Services\Disclosure::open( $yaycheckout_key, \YayCheckout\Services\Disclosure::text( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ), $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
-    }
+    echo \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
     ?>
     <label for="<?php echo esc_attr( $yaycheckout_key ); ?>">
         <?php echo esc_html( $yaycheckout_label ); ?>
@@ -116,5 +112,5 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
     <?php if ( '' !== $yaycheckout_description ) : ?>
         <span class="description" id="<?php echo esc_attr( $yaycheckout_key . '-description' ); ?>"><?php echo esc_html( $yaycheckout_description ); ?></span>
     <?php endif; ?>
-    <?php echo \YayCheckout\Services\Disclosure::NONE !== $yaycheckout_disclosure ? \YayCheckout\Services\Disclosure::close() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
+    <?php echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
 </div>
