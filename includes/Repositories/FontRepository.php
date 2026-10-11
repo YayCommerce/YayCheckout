@@ -110,7 +110,7 @@ class FontRepository {
             return $definition;
         }
 
-        $files = $this->download_faces( $slug, $definition['fontFace'] );
+        $files = $this->download_faces( $slug, $this->pick_faces( $definition['fontFace'] ) );
 
         if ( [] === $files ) {
             return new \WP_Error( 'font_download_failed', __( 'The font files could not be downloaded.', 'yaycheckout' ) );
@@ -182,6 +182,48 @@ class FontRepository {
             : new \WP_Error( 'font_install_failed', __( 'The font could not be installed.', 'yaycheckout' ) );
     }
 
+    /**
+     * The faces ensure_installed() would upload, at Google's own URLs (fonts.gstatic.com), for the layout editor to
+     * preview a font that isn't uploaded. Never for the storefront, so shoppers don't load fonts from Google.
+     * [] when core's collection can't be reached.
+     *
+     * @param string $slug A LayoutDesign::FONT_FAMILIES key other than ''.
+     * @return array<int, array{style: string, weight: string, url: string}>
+     */
+    public function remote_faces( string $slug ): array {
+        $definition = $this->collection_family( $slug );
+
+        return is_wp_error( $definition ) ? [] : $this->pick_faces( $definition['fontFace'] );
+    }
+
+    /**
+     * A collection font's normal faces at WEIGHTS, each with its first source URL.
+     *
+     * @param array $faces The font's `fontFace` entries in core's collection.
+     * @return array<int, array{style: string, weight: string, url: string}>
+     */
+    private function pick_faces( array $faces ): array {
+        $picked = [];
+
+        foreach ( $faces as $face ) {
+            $style  = isset( $face['fontStyle'] ) ? (string) $face['fontStyle'] : 'normal';
+            $weight = isset( $face['fontWeight'] ) ? (string) $face['fontWeight'] : '400';
+            $src    = isset( $face['src'] ) ? ( is_array( $face['src'] ) ? reset( $face['src'] ) : $face['src'] ) : '';
+
+            if ( 'normal' !== $style || ! in_array( $weight, self::WEIGHTS, true ) || ! is_string( $src ) || ! wp_http_validate_url( $src ) ) {
+                continue;
+            }
+
+            $picked[] = [
+                'style'  => $style,
+                'weight' => $weight,
+                'url'    => $src,
+            ];
+        }
+
+        return $picked;
+    }
+
     /** The Font Library family post of a font, by slug; 0 when it isn't installed. */
     private function family_id( string $slug ): int {
         $ids = get_posts(
@@ -230,8 +272,9 @@ class FontRepository {
     }
 
     /**
-     * Downloads each normal face at WEIGHTS into the fonts directory.
+     * Downloads each face into the fonts directory.
      *
+     * @param array $faces From pick_faces().
      * @return array<int, array{style: string, weight: string, url: string, file: string, relative: string}>
      */
     private function download_faces( string $slug, array $faces ): array {
@@ -242,22 +285,14 @@ class FontRepository {
         $files = [];
 
         foreach ( $faces as $face ) {
-            $style  = isset( $face['fontStyle'] ) ? (string) $face['fontStyle'] : 'normal';
-            $weight = isset( $face['fontWeight'] ) ? (string) $face['fontWeight'] : '400';
-            $src    = isset( $face['src'] ) ? ( is_array( $face['src'] ) ? reset( $face['src'] ) : $face['src'] ) : '';
-
-            if ( 'normal' !== $style || ! in_array( $weight, self::WEIGHTS, true ) || ! is_string( $src ) || ! wp_http_validate_url( $src ) ) {
-                continue;
-            }
-
-            $file = $this->download( $src, sprintf( '%s-%s-%s', $slug, $style, $weight ) );
+            $file = $this->download( $face['url'], sprintf( '%s-%s-%s', $slug, $face['style'], $face['weight'] ) );
 
             if ( is_wp_error( $file ) ) {
                 Logger::warning(
                     'Font download failed',
                     [
                         'font'  => $slug,
-                        'src'   => $src,
+                        'src'   => $face['url'],
                         'error' => $file->get_error_message(),
                     ]
                 );
@@ -267,8 +302,8 @@ class FontRepository {
             $files[] = array_merge(
                 $file,
                 [
-                    'style'  => $style,
-                    'weight' => $weight,
+                    'style'  => $face['style'],
+                    'weight' => $face['weight'],
                 ]
             );
         }

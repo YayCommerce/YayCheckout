@@ -3,7 +3,6 @@ namespace YayCheckout\Repositories;
 
 use YayCheckout\Controllers\LayoutTemplateCatalogue;
 use YayCheckout\Enums\LayoutStatus;
-use YayCheckout\Helpers\Logger;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Models\LayoutQuery;
@@ -422,9 +421,7 @@ class LayoutRepository {
         }
 
         // update_post_meta() unslashes too; a template's custom CSS may hold backslashes.
-        $design = LayoutTemplateCatalogue::design( $slug );
-        update_post_meta( $id, Layout::META_DESIGN, wp_slash( $design->to_meta() ) );
-        $this->install_font( $design );
+        update_post_meta( $id, Layout::META_DESIGN, wp_slash( LayoutTemplateCatalogue::design( $slug )->to_meta() ) );
 
         return $this->find( $id );
     }
@@ -494,34 +491,7 @@ class LayoutRepository {
             throw new \InvalidArgumentException( $new_id->get_error_message() );
         }
 
-        $this->install_font( $design );
-
         return $this->find( (int) $new_id );
-    }
-
-    /**
-     * Installs the design's font into the Font Library, so a layout that arrives with one (a template, an import,
-     * a duplicate) shows it on the checkout without first being opened in the editor. A failure leaves the layout
-     * as it is: its text falls back to the system font until the editor installs the font.
-     */
-    private function install_font( LayoutDesign $design ): void {
-        $slug = (string) $design->sections['typography']['font_family'];
-
-        if ( '' === $slug ) {
-            return;
-        }
-
-        $installed = ( new FontRepository() )->ensure_installed( $slug );
-
-        if ( is_wp_error( $installed ) ) {
-            Logger::warning(
-                'Design font install failed',
-                [
-                    'font'  => $slug,
-                    'error' => $installed->get_error_message(),
-                ]
-            );
-        }
     }
 
     /**

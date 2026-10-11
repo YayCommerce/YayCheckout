@@ -419,54 +419,67 @@ function useCanvasDesign( css: string | null, styleId: string ) {
 	}, [] );
 }
 
-/** A font's `@font-face` rules by slug, once asked for, so switching back to it doesn't ask again. */
-const fontFaces = new Map< string, Promise< string > >();
-
 /**
- * Installs the picked font into the Font Library (FontRestController) and gives its `@font-face` rules for the
- * canvas: '' for the theme's font, or when the theme loads it. The saved font is asked for too when the editor
- * opens, so a layout whose font was never installed (one from before fonts were installed, or a failed install)
- * gets it. The CSS is null until the answer, so the faces WordPress printed stay meanwhile.
+ * The picked font's `@font-face` rules for the canvas (FontRestController): '' for the theme's font or one the
+ * theme loads, the uploaded files once the font is uploaded, and Google's files as a preview until then. The
+ * font uploads when the layout is saved (Engine\DesignFontInstall), so the rules are asked for again after
+ * every save. The CSS is null until the answer, so the faces already printed stay meanwhile.
  */
-function useDesignFont( slug: string ): { css: string | null; help?: string } {
-	const [ state, setState ] = useState< { slug: string; css: string | null; error?: string } >( {
+function useDesignFont( design: EditorDesign, slug: string ): { css: string | null; help?: string } {
+	const { savedSlug, isDirty, isSaving, saveFailed } = useSelect(
+		( selectStore ) => {
+			const editor = selectStore( editorStore );
+			const meta = editor.getCurrentPostAttribute( 'meta' ) as Record< string, unknown > | undefined;
+			const saved = meta?.[ design.metaKey ] as LayoutDesignMeta | undefined;
+
+			return {
+				savedSlug: String( saved?.typography?.font_family ?? '' ),
+				isDirty: editor.isEditedPostDirty(),
+				isSaving: editor.isSavingPost(),
+				saveFailed: editor.didPostSaveRequestFail(),
+			};
+		},
+		[ design.metaKey ]
+	);
+	const [ saves, setSaves ] = useState( 0 );
+	const wasSaving = useRef( isSaving );
+	const [ state, setState ] = useState< { slug: string; css: string | null; uploaded: boolean; error?: string } >( {
 		slug,
 		css: null,
+		uploaded: true,
 	} );
+
+	useEffect( () => {
+		if ( wasSaving.current && ! isSaving && ! saveFailed ) {
+			setSaves( ( count ) => count + 1 );
+		}
+		wasSaving.current = isSaving;
+	}, [ isSaving, saveFailed ] );
 
 	useEffect( () => {
 		let cancelled = false;
 
 		if ( '' === slug ) {
-			setState( { slug, css: '' } );
+			setState( { slug, css: '', uploaded: true } );
 			return;
 		}
 
-		setState( { slug, css: null } );
+		// After a save the same font keeps its faces until the answer, so the canvas doesn't flicker.
+		setState( ( previous ) => ( previous.slug === slug ? previous : { slug, css: null, uploaded: true } ) );
 
-		if ( ! fontFaces.has( slug ) ) {
-			const install = apiFetch( { path: `/yaycheckout/v1/fonts/${ slug }`, method: 'POST' } ) as Promise< {
-				css: string;
-			} >;
-			fontFaces.set(
-				slug,
-				install.then( ( response ) => response.css )
-			);
-		}
-
-		( fontFaces.get( slug ) as Promise< string > ).then(
-			( css ) => {
+		(
+			apiFetch( { path: `/yaycheckout/v1/fonts/${ slug }` } ) as Promise< { uploaded: boolean; css: string } >
+		).then(
+			( response ) => {
 				if ( ! cancelled ) {
-					setState( { slug, css } );
+					setState( { slug, css: response.css, uploaded: response.uploaded } );
 				}
 			},
 			async ( error: unknown ) => {
-				// A failed install is asked again the next time the font is picked.
-				fontFaces.delete( slug );
-				const message = await errorMessage( error, __( 'The font could not be installed.', 'yaycheckout' ) );
+				const message = await errorMessage( error, __( 'The font could not be loaded.', 'yaycheckout' ) );
 
 				if ( ! cancelled ) {
-					setState( { slug, css: '', error: message } );
+					setState( { slug, css: '', uploaded: false, error: message } );
 				}
 			}
 		);
@@ -474,25 +487,35 @@ function useDesignFont( slug: string ): { css: string | null; help?: string } {
 		return () => {
 			cancelled = true;
 		};
-	}, [ slug ] );
+	}, [ slug, saves ] );
 
 	if ( '' === slug ) {
 		return { css: '' };
 	}
 
 	if ( state.slug !== slug || null === state.css ) {
-		return { css: null, help: __( 'Installing the font…', 'yaycheckout' ) };
+		return { css: null };
+	}
+
+	if ( state.error ) {
+		return { css: state.css, help: state.error };
+	}
+
+	if ( state.uploaded ) {
+		return { css: state.css };
+	}
+
+	// Saved here, yet still not uploaded: the save's upload failed. The reason is in WooCommerce → Status → Logs.
+	if ( saves > 0 && slug === savedSlug && ! isDirty ) {
+		return {
+			css: state.css,
+			help: __( "Couldn't upload this font. It shows only where the theme provides it.", 'yaycheckout' ),
+		};
 	}
 
 	return {
 		css: state.css,
-		help: state.error
-			? sprintf(
-					/* translators: %s: why the install failed */
-					__( "Couldn't install this font: %s It shows only where the theme provides it.", 'yaycheckout' ),
-					state.error
-			  )
-			: undefined,
+		help: __( 'Previewed from Google Fonts. Uploads to your site when you save.', 'yaycheckout' ),
 	};
 }
 
@@ -532,7 +555,7 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 	const cssError = customCssError( current.custom_css, design.customCssMaxBytes );
 	const { lockPostSaving, unlockPostSaving } = useDispatch( editorStore );
 
-	const font = useDesignFont( String( current.typography.font_family ?? '' ) );
+	const font = useDesignFont( design, String( current.typography.font_family ?? '' ) );
 
 	useCanvasDesign( designCss( current, design ), design.styleId );
 	useCanvasDesign( font.css, design.fontStyleId );

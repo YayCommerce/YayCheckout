@@ -7,10 +7,10 @@ use YayCheckout\Repositories\FontRepository;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The `@font-face` rules of a layout's picked font, from its Font Library install (FontRepository), for the
+ * The `@font-face` rules of a layout's picked font, from its Font Library upload (FontRepository), for the
  * storefront checkout and the layout editor canvas. Prints nothing when the theme or the site's global styles
- * load the font already, since core prints its faces then, or when it isn't installed. Never installs:
- * the editor installs a font when it is picked, and the storefront must not download one on a page view.
+ * load the font already, since core prints its faces then, or when it isn't uploaded. Never uploads: that
+ * happens when the layout's design is saved (Engine\DesignFontInstall), so a page view never downloads.
  */
 class DesignFonts {
 
@@ -26,10 +26,24 @@ class DesignFonts {
             return '';
         }
 
-        $name = LayoutDesign::FONT_FAMILIES[ $slug ];
-        $css  = '';
+        return $this->faces_css( LayoutDesign::FONT_FAMILIES[ $slug ], $this->fonts->faces( $slug ) );
+    }
 
-        foreach ( $this->fonts->faces( $slug ) as $face ) {
+    /**
+     * The faces of a font that isn't uploaded yet, at Google's own URLs, so the layout editor can show it before the
+     * save uploads it. Editor only: the storefront prints css(), so shoppers never load fonts from Google.
+     *
+     * @param string $slug A LayoutDesign::FONT_FAMILIES key other than ''.
+     */
+    public function preview_css( string $slug ): string {
+        return $this->faces_css( LayoutDesign::FONT_FAMILIES[ $slug ], $this->fonts->remote_faces( $slug ) );
+    }
+
+    /** @param array<int, array{style: string, weight: string, url: string}> $faces */
+    private function faces_css( string $name, array $faces ): string {
+        $css = '';
+
+        foreach ( $faces as $face ) {
             // The style and weight come from Font Library posts, which anyone with edit_theme_options can write.
             $style  = preg_match( '/^(normal|italic|oblique)$/', $face['style'] ) ? $face['style'] : 'normal';
             $weight = preg_match( '/^\d{3}( \d{3})?$/', $face['weight'] ) ? $face['weight'] : '400';
