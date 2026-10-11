@@ -110,15 +110,22 @@ export function DisclosureControls( {
 
 interface DisclosurePreviewProps {
 	mode: DisclosureMode;
-	text: string;
+	fieldKey: string;
+	label: string;
+	disclosureText: string;
 	children: JSX.Element;
 }
 
-/** On the canvas a hidden field shows the shopper's link or header, then the field faded but still editable. */
-export function DisclosurePreview( { mode, text, children }: DisclosurePreviewProps ) {
+/**
+ * On the canvas a hidden field shows the shopper's link or header, then the field faded but still editable.
+ * The text is the merchant's, else defaultDisclosureText().
+ */
+export function DisclosurePreview( { mode, fieldKey, label, disclosureText, children }: DisclosurePreviewProps ) {
 	if ( mode === 'none' ) {
 		return <>{ children }</>;
 	}
+
+	const text = disclosureText || defaultDisclosureText( fieldKey, label, mode );
 
 	return (
 		<>

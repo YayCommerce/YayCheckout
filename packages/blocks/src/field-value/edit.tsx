@@ -4,8 +4,11 @@ import { useDispatch, useSelect } from '@wordpress/data';
 import { useEffect, useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { EXTRA_FIELD_BLOCK, EXTRA_FIELD_KEY_PATTERN } from '../shared/extra-field-keys';
+import emailMeta from '../email/block.json';
+import { EMAIL_LABEL } from '../email/defaults';
+import { EXTRA_FIELD_LABEL } from '../extra-field/defaults';
 import { plainText } from '../shared/plain-text';
-import { type BlockEditorSelectors, sectionFields } from '../shared/section-fields';
+import { ADDRESS_SECTIONS, type AddressSection, type BlockEditorSelectors, sectionFields } from '../shared/section-fields';
 import './editor.css';
 
 interface FieldValueAttributes {
@@ -28,12 +31,6 @@ interface LayoutField {
 /** Mirrors render.php: a checkbox's value is always 1, a password must never be echoed, a hidden field holds nothing typed. */
 const UNSHOWABLE_TYPES = [ 'checkbox', 'password', 'hidden' ];
 
-/** Field blocks live only inside these, and take their section from the one they sit in. */
-const ADDRESS_SECTIONS = [
-	[ 'yaycheckout/billing', 'billing' ],
-	[ 'yaycheckout/shipping', 'shipping' ],
-] as const;
-
 /**
  * The layout's fields with the label each prints: Email address (billing_email), the Field blocks
  * inside Billing and inside Shipping, then the Extra fields with a valid Key. A later block with the
@@ -45,13 +42,13 @@ function layoutFields( editor: BlockEditorSelectors ): LayoutField[] {
 	const fields = new Map< string, LayoutField >();
 	const attributesOf = ( clientId: string ) => editor.getBlockAttributes( clientId ) ?? {};
 
-	editor.getBlocksByName( 'yaycheckout/email' ).forEach( ( clientId ) => {
-		const label = plainText( attributesOf( clientId ).label ) || __( 'Email address', 'yaycheckout' );
+	editor.getBlocksByName( emailMeta.name ).forEach( ( clientId ) => {
+		const label = plainText( attributesOf( clientId ).label ) || EMAIL_LABEL;
 
 		fields.set( 'billing_email', { key: 'billing_email', label, section: 'billing' } );
 	} );
 
-	ADDRESS_SECTIONS.forEach( ( [ blockName, section ] ) => {
+	( Object.entries( ADDRESS_SECTIONS ) as [ AddressSection, string ][] ).forEach( ( [ section, blockName ] ) => {
 		sectionFields( editor, blockName ).forEach( ( { key, attributes } ) => {
 			if ( ! UNSHOWABLE_TYPES.includes( String( attributes.type ?? 'text' ) ) ) {
 				fields.set( key, { key, label: plainText( attributes.label ) || key, section } );
@@ -67,7 +64,7 @@ function layoutFields( editor: BlockEditorSelectors ): LayoutField[] {
 
 		// An address field with the same Key keeps it, as render.php does.
 		if ( EXTRA_FIELD_KEY_PATTERN.test( key ) && ! singleCheckbox && ! fields.has( key ) ) {
-			fields.set( key, { key, label: plainText( attributes.label ) || __( 'Extra field', 'yaycheckout' ), section: 'extra' } );
+			fields.set( key, { key, label: plainText( attributes.label ) || EXTRA_FIELD_LABEL, section: 'extra' } );
 		}
 	} );
 

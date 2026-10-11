@@ -5,8 +5,10 @@
  * and required, so a form-wide checkValidity() would block step 1.
  */
 
-import { checkoutFor } from '../shared/checkout-root';
+import { CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
+import { onDomReady } from '../shared/dom-ready';
 import { controlsText } from '../shared/form-text';
+import type { Control } from '../shared/jquery';
 
 const STEP = '.yaycheckout-step';
 const CURRENT = 'current';
@@ -14,7 +16,6 @@ const LOCKED = 'locked';
 const COMPLETE = 'complete';
 
 type StepState = typeof CURRENT | typeof LOCKED | typeof COMPLETE;
-type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
 function boot(): void {
 	if ( document.documentElement.hasAttribute( 'data-yaycheckout-steps-bound' ) ) {
@@ -39,7 +40,7 @@ function onReopen( event: Event ): void {
 		return;
 	}
 
-	const checkout = event.target.closest( '.yaycheckout-checkout' );
+	const checkout = event.target.closest( CHECKOUT_SELECTOR );
 	const step = checkout?.querySelector< HTMLElement >( `${ STEP }[data-step="${ CSS.escape( stepNumber ) }"]` );
 
 	if ( step ) {
@@ -311,8 +312,4 @@ function message( step: HTMLElement, key: 'requiredMessage' | 'selectMessage' ):
 	return steps?.dataset[ key ] ?? '';
 }
 
-if ( document.readyState === 'loading' ) {
-	document.addEventListener( 'DOMContentLoaded', boot );
-} else {
-	boot();
-}
+onDomReady( boot );

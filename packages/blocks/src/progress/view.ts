@@ -5,6 +5,7 @@
  */
 
 import { CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
+import { onDomReady } from '../shared/dom-ready';
 
 const ITEM = '.yaycheckout-progress__item';
 
@@ -108,8 +109,4 @@ function paint( item: HTMLElement, state: string ): void {
 	}
 }
 
-if ( document.readyState === 'loading' ) {
-	document.addEventListener( 'DOMContentLoaded', boot );
-} else {
-	boot();
-}
+onDomReady( boot );

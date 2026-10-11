@@ -1,7 +1,7 @@
-import { InspectorControls, useBlockProps, useSettings } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
-import { blockGapCSS, type BlockGapStyles } from '../shared/block-gap';
+import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 import { plainText } from '../shared/plain-text';
 import './editor.css';
 
@@ -42,8 +42,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	} = attributes;
 	// As order_items_html(): a badge needs a thumbnail to sit on.
 	const badge = quantityDisplay === 'badge' && showThumbnails;
-	const [ viewport ] = useSettings( 'viewport' );
-	const css = blockGapCSS( `#block-${ clientId } > .yaycheckout-order-summary-items`, style, viewport );
+	const css = useBlockGapCSS( `#block-${ clientId } > .yaycheckout-order-summary-items`, style );
 	const productPlaceholder = __( 'Product', 'yaycheckout' );
 	const subtotalPlaceholder = __( 'Subtotal', 'yaycheckout' );
 

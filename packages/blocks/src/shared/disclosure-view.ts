@@ -7,6 +7,7 @@
  * the row hides the toggle too. Field, Extra field, Order note and Coupon form load this; a toggle is bound once.
  */
 
+import { onDomReady } from './dom-ready';
 import { jquery, type Control } from './jquery';
 
 const TOGGLE = '.yaycheckout-disclosure__toggle';
@@ -109,9 +110,5 @@ function bind( toggle: HTMLElement ): void {
 export function initDisclosures(): void {
 	const init = () => document.querySelectorAll< HTMLElement >( TOGGLE ).forEach( bind );
 
-	if ( document.readyState === 'loading' ) {
-		document.addEventListener( 'DOMContentLoaded', init );
-	} else {
-		init();
-	}
+	onDomReady( init );
 }

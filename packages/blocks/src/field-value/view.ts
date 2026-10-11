@@ -5,6 +5,7 @@
  * WooCommerce's address-i18n.js relabels fields for the country, so the label is read from the form too.
  */
 
+import { onDomReady } from '../shared/dom-ready';
 import { controlsText, labelText } from '../shared/form-text';
 import { jquery, type Control } from '../shared/jquery';
 
@@ -118,8 +119,4 @@ function init(): void {
 	jquery( document.body )?.on( 'input change country_to_state_changed updated_checkout', sync );
 }
 
-if ( document.readyState === 'loading' ) {
-	document.addEventListener( 'DOMContentLoaded', init );
-} else {
-	init();
-}
+onDomReady( init );

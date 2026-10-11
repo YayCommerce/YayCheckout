@@ -2,12 +2,11 @@ import {
 	InspectorControls,
 	useBlockProps,
 	useInnerBlocksProps,
-	useSettings,
 } from '@wordpress/block-editor';
 import { PanelBody, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import stepMeta from '../step/block.json';
-import { blockGapCSS, type BlockGapStyles } from '../shared/block-gap';
+import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 
 interface StepsAttributes {
 	layout: string;
@@ -26,9 +25,7 @@ interface EditProps {
  */
 export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
 	const { layout, style } = attributes;
-	const [ viewport ] = useSettings( 'viewport' );
-
-	const css = blockGapCSS( `#block-${ clientId }`, style, viewport );
+	const css = useBlockGapCSS( `#block-${ clientId }`, style );
 
 	const blockProps = useBlockProps( { className: 'yaycheckout-steps' } );
 	const innerBlocksProps = useInnerBlocksProps( blockProps, {

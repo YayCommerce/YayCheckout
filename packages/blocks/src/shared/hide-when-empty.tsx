@@ -3,11 +3,10 @@ import { getBlockType, getBlockTypes, hasBlockSupport } from '@wordpress/blocks'
 import { CheckboxControl, Notice, PanelBody } from '@wordpress/components';
 import { createHigherOrderComponent } from '@wordpress/compose';
 import { select as selectNow, useDispatch, useSelect } from '@wordpress/data';
-import { store as editorStore } from '@wordpress/editor';
 import { useEffect } from '@wordpress/element';
 import { addFilter } from '@wordpress/hooks';
 import { __, sprintf } from '@wordpress/i18n';
-import { editorData } from './editor-data';
+import { useIsLayoutEditor } from './layout-editor';
 import { plainText } from './plain-text';
 
 /** Mirrors HideWhenEmpty::ATTRIBUTE in PHP. */
@@ -233,7 +232,7 @@ function HideWhenEmptyPanel( { clientId, attributes, setAttributes }: PanelProps
 
 /** Subscribes to the store only while a container is selected, so other blocks pay nothing. */
 function LayoutOnlyPanel( props: PanelProps ) {
-	const isLayout = useSelect( ( select ) => select( editorStore ).getCurrentPostType() === editorData.postType, [] );
+	const isLayout = useIsLayoutEditor();
 
 	return isLayout ? <HideWhenEmptyPanel { ...props } /> : null;
 }

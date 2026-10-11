@@ -1,7 +1,7 @@
 import { InspectorControls, PanelColorSettings, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { DisclosureControls, DisclosurePreview, defaultDisclosureText, disclosureMode, type DisclosureMode } from '../shared/disclosure';
+import { DisclosureControls, DisclosurePreview, disclosureMode, type DisclosureMode } from '../shared/disclosure';
 import './editor.css';
 
 /** The key and label render.php hands Disclosure for the coupon field. */
@@ -81,7 +81,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				/>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<DisclosurePreview mode={ mode } text={ disclosureText || defaultDisclosureText( COUPON_KEY, COUPON_LABEL, mode ) }>
+				<DisclosurePreview mode={ mode } fieldKey={ COUPON_KEY } label={ COUPON_LABEL } disclosureText={ disclosureText }>
 					<div { ...innerBlocksProps }>
 						<input
 							type="text"
