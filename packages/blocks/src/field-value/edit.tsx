@@ -5,6 +5,7 @@ import { useEffect, useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { EXTRA_FIELD_BLOCK, EXTRA_FIELD_KEY_PATTERN } from '../shared/extra-field-keys';
 import { plainText } from '../shared/plain-text';
+import { type BlockEditorSelectors, sectionFields } from '../shared/section-fields';
 import './editor.css';
 
 interface FieldValueAttributes {
@@ -26,13 +27,6 @@ interface LayoutField {
 
 /** Mirrors render.php: a checkbox's value is always 1, a password must never be echoed, a hidden field holds nothing typed. */
 const UNSHOWABLE_TYPES = [ 'checkbox', 'password', 'hidden' ];
-
-interface BlockEditorSelectors {
-	getBlocksByName: ( name: string ) => string[];
-	getClientIdsOfDescendants: ( clientIds: string[] ) => string[];
-	getBlockName: ( clientId: string ) => string | null;
-	getBlockAttributes: ( clientId: string ) => Record< string, unknown > | null;
-}
 
 /** Field blocks live only inside these, and take their section from the one they sit in. */
 const ADDRESS_SECTIONS = [
@@ -58,18 +52,10 @@ function layoutFields( editor: BlockEditorSelectors ): LayoutField[] {
 	} );
 
 	ADDRESS_SECTIONS.forEach( ( [ blockName, section ] ) => {
-		editor.getBlocksByName( blockName ).forEach( ( sectionId ) => {
-			editor
-				.getClientIdsOfDescendants( [ sectionId ] )
-				.filter( ( clientId ) => editor.getBlockName( clientId ) === 'yaycheckout/field' )
-				.forEach( ( clientId ) => {
-					const attributes = attributesOf( clientId );
-					const key = String( attributes.fieldKey ?? '' ).trim();
-
-					if ( key !== '' && ! UNSHOWABLE_TYPES.includes( String( attributes.type ?? 'text' ) ) ) {
-						fields.set( key, { key, label: plainText( attributes.label ) || key, section } );
-					}
-				} );
+		sectionFields( editor, blockName ).forEach( ( { key, attributes } ) => {
+			if ( ! UNSHOWABLE_TYPES.includes( String( attributes.type ?? 'text' ) ) ) {
+				fields.set( key, { key, label: plainText( attributes.label ) || key, section } );
+			}
 		} );
 	} );
 

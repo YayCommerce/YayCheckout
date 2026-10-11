@@ -4,6 +4,7 @@ namespace YayCheckout\Blocks;
 use YayCheckout\Engine\Register\ScriptName;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
+use YayCheckout\Renderer\CheckoutDifferentAddress;
 use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Renderer\HideWhenEmpty;
 use YayCheckout\Support\Plan;
@@ -30,6 +31,9 @@ class BlockRegistry {
     /** Named by viewScript in packages/blocks/src/order-summary-items/block.json; drives the quantity stepper. */
     public const ORDER_SUMMARY_ITEMS_SCRIPT = 'yaycheckout-order-summary-items';
 
+    /** Named by viewScript in packages/blocks/src/different-address/block.json; hides and mirrors Billing when shipping is main. */
+    public const DIFFERENT_ADDRESS_SCRIPT = 'yaycheckout-different-address';
+
     /**
      * Block directories in the order a shopper meets them. The inserter lists
      * blocks in registration order; a built block missing here still
@@ -48,6 +52,7 @@ class BlockRegistry {
         'create-account',
         'billing',
         'shipping',
+        'different-address',
         'field',
         'extra-field',
         'order-note',
@@ -179,6 +184,20 @@ class BlockRegistry {
             'window.yayCheckoutCreateAccount = ' . wp_json_encode( $create_account_editor_data ) . ';',
             'before'
         );
+
+        // The different-address editor script may not run after the checkout inline
+        // script, so WooCommerce's Shipping destination is printed on its own handle.
+        $different_address_editor_data = [
+            'destination' => CheckoutDifferentAddress::destination(),
+            'copiedKeys'  => CheckoutDifferentAddress::COPIED_KEYS,
+            'settingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=shipping&section=options' ),
+        ];
+
+        wp_add_inline_script(
+            generate_block_asset_handle( 'yaycheckout/different-address', 'editorScript' ),
+            'window.yayCheckoutDifferentAddress = ' . wp_json_encode( $different_address_editor_data ) . ';',
+            'before'
+        );
     }
 
     /**
@@ -223,6 +242,25 @@ class BlockRegistry {
             [ 'jquery', 'wc-checkout' ],
             YAYCHECKOUT_VERSION,
             true
+        );
+
+        wp_register_script(
+            self::DIFFERENT_ADDRESS_SCRIPT,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-different-address.js',
+            [ 'jquery', 'wc-checkout', 'wc-address-i18n' ],
+            YAYCHECKOUT_VERSION,
+            true
+        );
+
+        wp_add_inline_script(
+            self::DIFFERENT_ADDRESS_SCRIPT,
+            'window.yayCheckoutSameBilling = ' . wp_json_encode(
+                [
+                    'field'      => CheckoutDifferentAddress::SAME_BILLING_FIELD,
+                    'copiedKeys' => CheckoutDifferentAddress::COPIED_KEYS,
+                ]
+            ) . ';',
+            'before'
         );
 
         // Enqueued by HideWhenEmpty::filter_container() for a container that watches blocks.

@@ -8,7 +8,6 @@ import { blockGapCSS, type BlockGapStyles } from './block-gap';
 export interface AddressSectionAttributes {
 	title: string;
 	showTitle: boolean;
-	shipToDifferent?: boolean;
 	style?: BlockGapStyles;
 }
 
@@ -25,7 +24,7 @@ export function AddressSectionEdit( {
 	setAttributes,
 	clientId,
 }: AddressSectionEditProps ) {
-	const { title, showTitle, shipToDifferent, style } = attributes;
+	const { title, showTitle, style } = attributes;
 	const [ viewport ] = useSettings( 'viewport' );
 	const css = blockGapCSS( `#block-${ clientId }`, style, viewport );
 	const fallbackTitle =
@@ -53,13 +52,6 @@ export function AddressSectionEdit( {
 							label={ __( 'Title', 'yaycheckout' ) }
 							value={ title }
 							onChange={ ( value ) => setAttributes( { title: value } ) }
-						/>
-					) }
-					{ section === 'shipping' && (
-						<ToggleControl
-							label={ __( 'Ship to a different address', 'yaycheckout' ) }
-							checked={ shipToDifferent !== false }
-							onChange={ ( value ) => setAttributes( { shipToDifferent: value } ) }
 						/>
 					) }
 				</PanelBody>

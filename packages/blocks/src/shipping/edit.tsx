@@ -4,7 +4,6 @@ import type { BlockGapStyles } from '../shared/block-gap';
 interface ShippingAttributes {
 	title: string;
 	showTitle: boolean;
-	shipToDifferent: boolean;
 	style?: BlockGapStyles;
 }
 

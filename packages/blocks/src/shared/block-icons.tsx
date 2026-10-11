@@ -99,6 +99,12 @@ export const blockIcons: Record< string, JSX.Element > = {
 			<circle cx="12" cy="10" r="2" />
 		</>
 	),
+	'yaycheckout/different-address': icon(
+		<>
+			<rect x="3" y="4" width="7" height="7" rx="2" />
+			<path d="m5 7.5 1.25 1.25L8.5 6.5M14 7.5h7M3 16h18M17 12.5 20.5 16 17 19.5" />
+		</>
+	),
 	'yaycheckout/field': icon(
 		<>
 			<rect x="3" y="7" width="18" height="10" rx="3" />

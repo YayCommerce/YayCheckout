@@ -10,12 +10,15 @@ defined( 'ABSPATH' ) || exit;
  */
 class LayoutMarkupReader {
 
-    private const CHECKOUT    = 'yaycheckout/checkout';
-    private const EMAIL       = 'yaycheckout/email';
-    private const FIELD       = 'yaycheckout/field';
-    private const EXTRA_FIELD = 'yaycheckout/extra-field';
-    private const ORDER_NOTE  = 'yaycheckout/order-note';
-    private const SLOT        = 'yaycheckout/slot';
+    private const CHECKOUT          = 'yaycheckout/checkout';
+    private const EMAIL             = 'yaycheckout/email';
+    private const FIELD             = 'yaycheckout/field';
+    private const EXTRA_FIELD       = 'yaycheckout/extra-field';
+    private const ORDER_NOTE        = 'yaycheckout/order-note';
+    private const SLOT              = 'yaycheckout/slot';
+    private const BILLING           = 'yaycheckout/billing';
+    private const SHIPPING          = 'yaycheckout/shipping';
+    private const DIFFERENT_ADDRESS = 'yaycheckout/different-address';
 
     /**
      * A Key is a posted field name and an order meta key. PHP rewrites spaces
@@ -31,8 +34,8 @@ class LayoutMarkupReader {
     /** Section block => slot name it occupies. */
     private const SECTION_SLOTS = [
         self::EMAIL                    => 'email',
-        'yaycheckout/billing'          => 'billing',
-        'yaycheckout/shipping'         => 'shipping',
+        self::BILLING                  => 'billing',
+        self::SHIPPING                 => 'shipping',
         'yaycheckout/shipping-methods' => 'shipping_methods',
         'yaycheckout/express-pay'      => 'express_pay',
         'yaycheckout/payment'          => 'payment',
@@ -152,6 +155,21 @@ class LayoutMarkupReader {
     /** Whether the layout has an Order note block, without parsing it. */
     public static function has_order_note( string $markup ): bool {
         return has_block( self::ORDER_NOTE, $markup );
+    }
+
+    /** Whether the layout has a Billing section, without parsing it. */
+    public static function has_billing( string $markup ): bool {
+        return has_block( self::BILLING, $markup );
+    }
+
+    /** Whether the layout has a Shipping section, without parsing it. */
+    public static function has_shipping( string $markup ): bool {
+        return has_block( self::SHIPPING, $markup );
+    }
+
+    /** Whether the layout has a Different address block, without parsing it. */
+    public static function has_different_address( string $markup ): bool {
+        return has_block( self::DIFFERENT_ADDRESS, $markup );
     }
 
     /**
