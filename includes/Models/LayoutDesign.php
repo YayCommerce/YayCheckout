@@ -33,7 +33,8 @@ final class LayoutDesign {
 
     /**
      * Fonts the merchant can pick: token slug => CSS font-family, '' for the theme's font.
-     * Google fonts that WordPress's Font Library ships, so a theme likely has them.
+     * Fonts in core's Google Fonts collection, under the same slug: picking one installs it into the
+     * Font Library (Repositories\FontRepository) unless the theme loads it already.
      */
     public const FONT_FAMILIES = [
         ''                 => '',
@@ -50,6 +51,9 @@ final class LayoutDesign {
         'playfair-display' => 'Playfair Display',
         'roboto-slab'      => 'Roboto Slab',
     ];
+
+    /** The FONT_FAMILIES keys whose fallback is a serif stack; the rest fall back to sans-serif. */
+    public const SERIF_FONTS = [ 'merriweather', 'playfair-display', 'roboto-slab' ];
 
     /**
      * Section => its full token array, every key of schema() present.

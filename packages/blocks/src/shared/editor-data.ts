@@ -20,6 +20,10 @@ export type EditorDesign = {
 	schema: Record< string, Record< string, DesignRule > >;
 	/** Slug => CSS font-family name; '' is the theme's font. */
 	fontFamilies: Record< string, string >;
+	/** The fontFamilies slugs whose fallback is a serif stack. */
+	serifFonts: string[];
+	/** The id of the canvas's printed font faces, which the sidebar rewrites when the merchant picks a font. */
+	fontStyleId: string;
 	customCssMaxBytes: number;
 };
 

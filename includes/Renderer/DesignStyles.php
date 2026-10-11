@@ -10,8 +10,8 @@ defined( 'ABSPATH' ) || exit;
  * site-wide custom CSS and the layout's. An empty token prints nothing: checkout-base.css and the blocks' CSS
  * read each property with a neutral fallback that follows the theme.
  *
- * The page rule is the only selector printed here. It sets the page's background,
- * text colour and font, which a stylesheet can't read from an unset property
+ * The page rule and, with a font, the heading rule are the only selectors printed here. The page rule sets the
+ * page's background, text colour and font, which a stylesheet can't read from an unset property
  * without resetting the theme's own (background isn't inherited, and an unset
  * inherited property on body takes html's value, not the theme's body value).
  *
@@ -21,11 +21,24 @@ defined( 'ABSPATH' ) || exit;
  */
 class DesignStyles {
 
-    /** Behind a picked font, which is named, not loaded. Mirrored by the layout editor (design-css.ts). */
+    /**
+     * Behind a picked font, for while it loads or when it couldn't be installed. Mirrored by the layout editor
+     * (design-css.ts).
+     */
     private const FONT_FALLBACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+    /** Behind a LayoutDesign::SERIF_FONTS font, the same way. */
+    private const SERIF_FONT_FALLBACK = 'Georgia, "Times New Roman", serif';
 
     /** The storefront page and the layout editor canvas. */
     private const PAGE_SELECTOR = 'body.yaycheckout-page, .editor-styles-wrapper';
+
+    /**
+     * The checkout's headings, which take the page's font instead of the theme's heading font. `inherit`, so a
+     * block's own font (its has-*-font-family class) still reaches the headings inside it, and a heading with a
+     * font of its own is left out.
+     */
+    private const HEADING_SELECTOR = 'body.yaycheckout-page :is(h1, h2, h3, h4, h5, h6):not([class*="-font-family"]), .editor-styles-wrapper :is(h1, h2, h3, h4, h5, h6):not([class*="-font-family"])';
 
     /** Page property => the token it takes, printed only when vars() set that token. */
     private const PAGE_PROPERTIES = [
@@ -71,6 +84,10 @@ class DesignStyles {
             $css .= "}\n";
         }
 
+        if ( isset( $vars['font-family'] ) ) {
+            $css .= self::HEADING_SELECTOR . " {\n\tfont-family: inherit;\n}\n";
+        }
+
         if ( ! $with_custom_css ) {
             return $css;
         }
@@ -107,8 +124,8 @@ class DesignStyles {
         );
 
         if ( '' !== $typography['font_family'] ) {
-            // TODO(fonts): a serif font falls back to sans when not loaded; add a generic family per font once the fonts are enqueued, which nothing does yet.
-            $vars['font-family'] = '"' . LayoutDesign::FONT_FAMILIES[ $typography['font_family'] ] . '", ' . self::FONT_FALLBACK;
+            $fallback            = in_array( $typography['font_family'], LayoutDesign::SERIF_FONTS, true ) ? self::SERIF_FONT_FALLBACK : self::FONT_FALLBACK;
+            $vars['font-family'] = '"' . LayoutDesign::FONT_FAMILIES[ $typography['font_family'] ] . '", ' . $fallback;
         }
 
         if ( null !== $typography['base_size'] ) {

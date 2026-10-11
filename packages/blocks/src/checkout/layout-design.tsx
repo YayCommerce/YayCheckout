@@ -1,3 +1,4 @@
+import apiFetch from '@wordpress/api-fetch';
 import {
 	__experimentalColorGradientSettingsDropdown as ColorGradientSettingsDropdown,
 	__experimentalUseMultipleOriginColorsAndGradients as useMultipleOriginColorsAndGradients,
@@ -18,6 +19,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
 import { designCss, isGradient } from '../shared/design-css';
 import { editorData, type DesignRule, type EditorDesign } from '../shared/editor-data';
+import { errorMessage } from '../shared/error-message';
 import './layout-design.css';
 
 const SIDEBAR = 'yaycheckout-layout-design';
@@ -249,12 +251,14 @@ function TokenControl( {
 	token,
 	rule,
 	value,
+	help,
 	onChange,
 }: {
 	design: EditorDesign;
 	token: string;
 	rule: DesignRule;
 	value: string | number | null;
+	help?: string;
 	onChange: ( next: string | number | null ) => void;
 } ) {
 	const label = TOKEN_LABELS[ token ] ?? token;
@@ -282,6 +286,7 @@ function TokenControl( {
 					__next40pxDefaultSize
 					__nextHasNoMarginBottom
 					label={ label }
+					help={ help }
 					value={ String( value ?? '' ) }
 					options={ rule.enum.map( ( option ) => ( {
 						value: option,
@@ -302,11 +307,14 @@ function SectionPanel( {
 	design,
 	section,
 	values,
+	fontHelp,
 	onChange,
 }: {
 	design: EditorDesign;
 	section: Section;
 	values: SectionTokens;
+	/** Under the Font control: the install in progress, or why it failed. */
+	fontHelp?: string;
 	onChange: ( next: SectionTokens ) => void;
 } ) {
 	return (
@@ -332,6 +340,7 @@ function SectionPanel( {
 								token={ token }
 								rule={ rule }
 								value={ values[ token ] }
+								help={ 'font_family' === token ? fontHelp : undefined }
 								onChange={ ( next ) => onChange( { ...values, [ token ]: next } ) }
 							/>
 						);
@@ -351,12 +360,17 @@ function canvasFrames(): Document[] {
 /**
  * Keeps the printed design style in the canvas equal to `css`. The canvas iframe is rebuilt on a device
  * preview switch or after the code editor, and comes back with the saved design, so it is watched.
+ * Null leaves the printed style as it is.
  */
-function useCanvasDesign( css: string, styleId: string ) {
+function useCanvasDesign( css: string | null, styleId: string ) {
 	const latest = useRef( css );
 	latest.current = css;
 
 	const apply = () => {
+		if ( null === latest.current ) {
+			return;
+		}
+
 		const frames = canvasFrames();
 
 		// The editor's own document holds the canvas when it isn't iframed. WordPress prints no style for an
@@ -405,6 +419,83 @@ function useCanvasDesign( css: string, styleId: string ) {
 	}, [] );
 }
 
+/** A font's `@font-face` rules by slug, once asked for, so switching back to it doesn't ask again. */
+const fontFaces = new Map< string, Promise< string > >();
+
+/**
+ * Installs the picked font into the Font Library (FontRestController) and gives its `@font-face` rules for the
+ * canvas: '' for the theme's font, or when the theme loads it. The saved font is asked for too when the editor
+ * opens, so a layout whose font was never installed (one from before fonts were installed, or a failed install)
+ * gets it. The CSS is null until the answer, so the faces WordPress printed stay meanwhile.
+ */
+function useDesignFont( slug: string ): { css: string | null; help?: string } {
+	const [ state, setState ] = useState< { slug: string; css: string | null; error?: string } >( {
+		slug,
+		css: null,
+	} );
+
+	useEffect( () => {
+		let cancelled = false;
+
+		if ( '' === slug ) {
+			setState( { slug, css: '' } );
+			return;
+		}
+
+		setState( { slug, css: null } );
+
+		if ( ! fontFaces.has( slug ) ) {
+			const install = apiFetch( { path: `/yaycheckout/v1/fonts/${ slug }`, method: 'POST' } ) as Promise< {
+				css: string;
+			} >;
+			fontFaces.set(
+				slug,
+				install.then( ( response ) => response.css )
+			);
+		}
+
+		( fontFaces.get( slug ) as Promise< string > ).then(
+			( css ) => {
+				if ( ! cancelled ) {
+					setState( { slug, css } );
+				}
+			},
+			async ( error: unknown ) => {
+				// A failed install is asked again the next time the font is picked.
+				fontFaces.delete( slug );
+				const message = await errorMessage( error, __( 'The font could not be installed.', 'yaycheckout' ) );
+
+				if ( ! cancelled ) {
+					setState( { slug, css: '', error: message } );
+				}
+			}
+		);
+
+		return () => {
+			cancelled = true;
+		};
+	}, [ slug ] );
+
+	if ( '' === slug ) {
+		return { css: '' };
+	}
+
+	if ( state.slug !== slug || null === state.css ) {
+		return { css: null, help: __( 'Installing the font…', 'yaycheckout' ) };
+	}
+
+	return {
+		css: state.css,
+		help: state.error
+			? sprintf(
+					/* translators: %s: why the install failed */
+					__( "Couldn't install this font: %s It shows only where the theme provides it.", 'yaycheckout' ),
+					state.error
+			  )
+			: undefined,
+	};
+}
+
 /** How long the sidebar waits after the last change before writing it to the post. */
 const COMMIT_DELAY = 250;
 
@@ -441,7 +532,10 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 	const cssError = customCssError( current.custom_css, design.customCssMaxBytes );
 	const { lockPostSaving, unlockPostSaving } = useDispatch( editorStore );
 
-	useCanvasDesign( designCss( current, design.fontFamilies ), design.styleId );
+	const font = useDesignFont( String( current.typography.font_family ?? '' ) );
+
+	useCanvasDesign( designCss( current, design ), design.styleId );
+	useCanvasDesign( font.css, design.fontStyleId );
 
 	// The server would skip this CSS on print without saying so, so it is never saved.
 	useEffect( () => {
@@ -472,6 +566,7 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 						design={ design }
 						section={ section }
 						values={ current[ section ] }
+						fontHelp={ 'typography' === section ? font.help : undefined }
 						onChange={ ( next ) => setCurrent( { ...current, [ section ]: next } ) }
 					/>
 				) ) }
