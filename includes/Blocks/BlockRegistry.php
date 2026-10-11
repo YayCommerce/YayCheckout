@@ -78,8 +78,8 @@ class BlockRegistry {
      * Block settings in the default origin, so a theme's own block settings and presets win:
      * - Place Order: Core Button's old 25/50/75/100% widths as presets for its Width control
      *   (Styles > Dimensions). WordPress ships no dimension sizes, so the control has none without them.
-     * - Place Order, Step and Coupon Button: padding, margin and border, and Steps: blockGap, which core's defaults
-     *   leave off, so their Styles controls show on themes that don't turn them on.
+     * - Every block in ORDER: padding, margin and border, and Steps: blockGap, which core's defaults leave off,
+     *   so their Styles controls show on themes that don't turn them on.
      *
      * @param  \WP_Theme_JSON_Data $theme_json
      * @return \WP_Theme_JSON_Data
@@ -95,53 +95,30 @@ class BlockRegistry {
             ];
         }
 
+        $blocks = [];
+
+        foreach ( self::ORDER as $block ) {
+            $blocks[ 'yaycheckout/' . $block ] = [
+                'spacing' => [
+                    'padding' => true,
+                    'margin'  => true,
+                ],
+                'border'  => [
+                    'color'  => true,
+                    'radius' => true,
+                    'style'  => true,
+                    'width'  => true,
+                ],
+            ];
+        }
+
+        $blocks['yaycheckout/place-order']['dimensions']    = [ 'dimensionSizes' => $sizes ];
+        $blocks['yaycheckout/steps']['spacing']['blockGap'] = true;
+
         return $theme_json->update_with(
             [
                 'version'  => \WP_Theme_JSON::LATEST_SCHEMA,
-                'settings' => [
-                    'blocks' => [
-                        'yaycheckout/place-order'   => [
-                            'dimensions' => [ 'dimensionSizes' => $sizes ],
-                            'spacing'    => [
-                                'padding' => true,
-                                'margin'  => true,
-                            ],
-                            'border'     => [
-                                'color'  => true,
-                                'radius' => true,
-                                'style'  => true,
-                                'width'  => true,
-                            ],
-                        ],
-                        'yaycheckout/step'          => [
-                            'spacing' => [
-                                'padding' => true,
-                                'margin'  => true,
-                            ],
-                            'border'  => [
-                                'color'  => true,
-                                'radius' => true,
-                                'style'  => true,
-                                'width'  => true,
-                            ],
-                        ],
-                        'yaycheckout/steps'         => [
-                            'spacing' => [ 'blockGap' => true ],
-                        ],
-                        'yaycheckout/coupon-button' => [
-                            'spacing' => [
-                                'padding' => true,
-                                'margin'  => true,
-                            ],
-                            'border'  => [
-                                'color'  => true,
-                                'radius' => true,
-                                'style'  => true,
-                                'width'  => true,
-                            ],
-                        ],
-                    ],
-                ],
+                'settings' => [ 'blocks' => $blocks ],
             ]
         );
     }
