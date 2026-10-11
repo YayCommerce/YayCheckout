@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. Read the spec linked below before starting; the plan argues from it.
 
-**Status:** active
+**Status:** done 2026-10-12
 **Goal:** Add a "Show step headings" switch to Steps and an arrow option to Continue and Back, sharing the arrow glyphs with Return to Cart.
 **Spec:** `docs/specs/2026-10-12-step-headings-and-nav-arrows-design.md`
 **Architecture:** Steps prints `data-headings="hidden"`, and CSS hides the non-open steps and visually hides the open step's header. Step's PHP and `steps/view.ts` don't change. Steps passes the value to Step through block context, only so the editor can fade the header. The arrows follow Return to Cart: an `arrow` enum per block, a glyph in an `aria-hidden` span, one PHP map (`ButtonArrow`) and one TypeScript mirror.
