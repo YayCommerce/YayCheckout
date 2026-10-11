@@ -34,10 +34,6 @@
     "showTitle": {
       "type": "boolean",
       "default": true
-    },
-    "shipToDifferent": {
-      "type": "boolean",
-      "default": true
     }
   },
   "supports": {

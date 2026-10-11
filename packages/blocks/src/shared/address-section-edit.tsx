@@ -7,7 +7,6 @@ import { isCheckoutSection, useBlocksAllowedExcept } from './allowed-blocks';
 export interface AddressSectionAttributes {
 	title: string;
 	showTitle: boolean;
-	shipToDifferent?: boolean;
 }
 
 interface AddressSectionEditProps {
@@ -21,7 +20,7 @@ export function AddressSectionEdit( {
 	attributes,
 	setAttributes,
 }: AddressSectionEditProps ) {
-	const { title, showTitle, shipToDifferent } = attributes;
+	const { title, showTitle } = attributes;
 	const fallbackTitle =
 		section === 'shipping' ? __( 'Shipping', 'yaycheckout' ) : __( 'Billing', 'yaycheckout' );
 	const blockProps = useBlockProps( { className: `yaycheckout-${ section }` } );
@@ -47,13 +46,6 @@ export function AddressSectionEdit( {
 							label={ __( 'Title', 'yaycheckout' ) }
 							value={ title }
 							onChange={ ( value ) => setAttributes( { title: value } ) }
-						/>
-					) }
-					{ section === 'shipping' && (
-						<ToggleControl
-							label={ __( 'Ship to a different address', 'yaycheckout' ) }
-							checked={ shipToDifferent !== false }
-							onChange={ ( value ) => setAttributes( { shipToDifferent: value } ) }
 						/>
 					) }
 				</PanelBody>

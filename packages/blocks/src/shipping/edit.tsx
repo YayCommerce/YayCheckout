@@ -3,7 +3,6 @@ import { AddressSectionEdit } from '../shared/address-section-edit';
 interface ShippingAttributes {
 	title: string;
 	showTitle: boolean;
-	shipToDifferent: boolean;
 }
 
 interface EditProps {
