@@ -23,8 +23,16 @@ $yaycheckout_title      = isset( $attributes['title'] ) && is_string( $attribute
 $yaycheckout_show_title = ! isset( $attributes['showTitle'] ) || (bool) $attributes['showTitle'];
 $yaycheckout_plan       = \YayCheckout\Renderer\CheckoutDifferentAddress::render_plan( \YayCheckout\Renderer\CheckoutPage::get_instance()->layout() );
 
+// Block spacing. Two classes, to beat the stylesheet's default.
+$yaycheckout_class     = 'yaycheckout-shipping woocommerce-shipping-fields shipping_address';
+$yaycheckout_gap_class = wp_unique_id( 'yaycheckout-shipping-gap-' );
+
+if ( \YayCheckout\Renderer\BlockGap::add_rules( $attributes['style'] ?? [], 'yaycheckout/shipping', '.yaycheckout-shipping.' . $yaycheckout_gap_class ) ) {
+    $yaycheckout_class .= ' ' . $yaycheckout_gap_class;
+}
+
 ?>
-<div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-shipping woocommerce-shipping-fields shipping_address' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+<div <?php echo get_block_wrapper_attributes( [ 'class' => $yaycheckout_class ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php if ( $yaycheckout_plan['wc_box'] ) : ?>
         <div id="ship-to-different-address" hidden>
             <input id="ship-to-different-address-checkbox" type="checkbox" name="ship_to_different_address" value="1" checked />
