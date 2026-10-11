@@ -1,3 +1,20 @@
+import billingMeta from '../billing/block.json';
+import fieldMeta from '../field/block.json';
+import shippingMeta from '../shipping/block.json';
+
+export type AddressSection = 'billing' | 'shipping';
+
+/** The Billing and Shipping block names, by the prefix of the field keys they hold. Billing first. */
+export const ADDRESS_SECTIONS: Record< AddressSection, string > = {
+	billing: billingMeta.name,
+	shipping: shippingMeta.name,
+};
+
+/** The address section a block name is, or null. */
+export function addressSectionOf( blockName: string | null ): AddressSection | null {
+	return ( Object.keys( ADDRESS_SECTIONS ) as AddressSection[] ).find( ( section ) => ADDRESS_SECTIONS[ section ] === blockName ) ?? null;
+}
+
 /** The block-editor selectors the section readers use. */
 export interface BlockEditorSelectors {
 	getBlocksByName: ( name: string ) => string[];
@@ -16,7 +33,7 @@ export function sectionFields( editor: BlockEditorSelectors, sectionBlockName: s
 	return editor.getBlocksByName( sectionBlockName ).flatMap( ( sectionId ) =>
 		editor
 			.getClientIdsOfDescendants( [ sectionId ] )
-			.filter( ( clientId ) => editor.getBlockName( clientId ) === 'yaycheckout/field' )
+			.filter( ( clientId ) => editor.getBlockName( clientId ) === fieldMeta.name )
 			.map( ( clientId ) => {
 				const attributes = editor.getBlockAttributes( clientId ) ?? {};
 

@@ -19,6 +19,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
 import { designCss, isGradient } from '../shared/design-css';
 import { editorData, type DesignRule, type EditorDesign } from '../shared/editor-data';
+import { useIsLayoutEditor } from '../shared/layout-editor';
 import { errorMessage } from '../shared/error-message';
 import './layout-design.css';
 
@@ -617,10 +618,7 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 }
 
 function LayoutDesign() {
-	const isLayout = useSelect(
-		( selectStore ) => selectStore( editorStore ).getCurrentPostType() === editorData.postType,
-		[]
-	);
+	const isLayout = useIsLayoutEditor();
 
 	if ( ! isLayout || ! editorData.design ) {
 		return null;

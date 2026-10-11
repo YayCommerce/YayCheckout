@@ -1,9 +1,9 @@
-import { InspectorControls, useBlockProps, useInnerBlocksProps, useSettings } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { addressTemplate } from './address-template';
 import { isCheckoutSection, useBlocksAllowedExcept } from './allowed-blocks';
-import { blockGapCSS, type BlockGapStyles } from './block-gap';
+import { useBlockGapCSS, type BlockGapStyles } from './block-gap';
 
 export interface AddressSectionAttributes {
 	title: string;
@@ -25,8 +25,7 @@ export function AddressSectionEdit( {
 	clientId,
 }: AddressSectionEditProps ) {
 	const { title, showTitle, style } = attributes;
-	const [ viewport ] = useSettings( 'viewport' );
-	const css = blockGapCSS( `#block-${ clientId }`, style, viewport );
+	const css = useBlockGapCSS( `#block-${ clientId }`, style );
 	const fallbackTitle =
 		section === 'shipping' ? __( 'Shipping', 'yaycheckout' ) : __( 'Billing', 'yaycheckout' );
 	const blockProps = useBlockProps( { className: `yaycheckout-${ section }` } );

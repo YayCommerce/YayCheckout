@@ -14,7 +14,7 @@ interface Props extends StepNavButtonEditProps {
 	placeholder: string;
 }
 
-/** Continue and Back. A div, not a button: typing Space inside a button would click it. */
+/** Continue, Back and Apply coupon. A div, not a button: typing Space inside a button would click it. */
 export function StepNavButtonEdit( { className, placeholder, attributes, setAttributes }: Props ) {
 	const blockProps = useBlockProps( { className } );
 

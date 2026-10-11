@@ -1,4 +1,4 @@
-import { __experimentalGetGapCSSValue as getGapCSSValue } from '@wordpress/block-editor';
+import { __experimentalGetGapCSSValue as getGapCSSValue, useSettings } from '@wordpress/block-editor';
 
 export interface BlockGapStyle {
 	spacing?: {
@@ -56,4 +56,11 @@ export function blockGapCSS( selector: string, style: BlockGapStyles | undefined
 			return viewportGap ? `${ query }{${ selector }{gap:${ viewportGap }}}` : '';
 		} ),
 	].join( '' );
+}
+
+/** blockGapCSS() with the editor's viewport setting, for a block's edit(). */
+export function useBlockGapCSS( selector: string, style: BlockGapStyles | undefined ): string {
+	const [ viewport ] = useSettings( 'viewport' );
+
+	return blockGapCSS( selector, style, viewport );
 }

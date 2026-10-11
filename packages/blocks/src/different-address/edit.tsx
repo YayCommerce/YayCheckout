@@ -3,7 +3,7 @@ import { ExternalLink, Notice, PanelBody } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __, sprintf } from '@wordpress/i18n';
 import { plainText } from '../shared/plain-text';
-import { type BlockEditorSelectors, sectionFields } from '../shared/section-fields';
+import { ADDRESS_SECTIONS, type BlockEditorSelectors, sectionFields } from '../shared/section-fields';
 import { differentAddressEditorData, type ShipToDestination } from './editor-data';
 import './editor.css';
 
@@ -23,9 +23,9 @@ interface EditProps {
  * when it is no address field, hides with Billing. Says which fields lose out.
  */
 function billingWarnings( editor: BlockEditorSelectors ): string[] {
-	const shippingKeys = new Set( sectionFields( editor, 'yaycheckout/shipping' ).map( ( field ) => field.key ) );
+	const shippingKeys = new Set( sectionFields( editor, ADDRESS_SECTIONS.shipping ).map( ( field ) => field.key ) );
 
-	return sectionFields( editor, 'yaycheckout/billing' ).flatMap( ( { key, attributes } ) => {
+	return sectionFields( editor, ADDRESS_SECTIONS.billing ).flatMap( ( { key, attributes } ) => {
 		const label = plainText( attributes.label ) || key;
 		const suffix = key.replace( /^billing_/, '' );
 
@@ -81,7 +81,7 @@ export default function Edit( { attributes, isSelected, setAttributes }: EditPro
 
 	const hasShipping = useSelect(
 		( select ) =>
-			( select( blockEditorStore ) as unknown as BlockEditorSelectors ).getBlocksByName( 'yaycheckout/shipping' )
+			( select( blockEditorStore ) as unknown as BlockEditorSelectors ).getBlocksByName( ADDRESS_SECTIONS.shipping )
 				.length > 0,
 		[]
 	);

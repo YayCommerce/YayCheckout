@@ -1,10 +1,10 @@
-import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, TextControl } from '@wordpress/components';
+import { PanelBody } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { FieldPreview } from '../shared/field-preview';
+import { FieldTextControls } from '../shared/field-text-controls';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
-import { DisclosureControls, DisclosurePreview, defaultDisclosureText, disclosureMode, type DisclosureMode } from '../shared/disclosure';
+import { DisclosureControls, DisclosurePreview, disclosureMode, type DisclosureMode } from '../shared/disclosure';
 import { ORDER_NOTE_KEY, ORDER_NOTE_LABEL, ORDER_NOTE_PLACEHOLDER } from './defaults';
 
 interface OrderNoteAttributes {
@@ -43,21 +43,11 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		<>
 			<InspectorControls>
 				<PanelBody title={ __( 'Order note', 'yaycheckout' ) }>
-					<TextControl
-						label={ __( 'Label', 'yaycheckout' ) }
-						value={ decodeEntities( label ) }
-						onChange={ ( value ) => setAttributes( { label: value } ) }
-					/>
-					<TextControl
-						label={ __( 'Placeholder', 'yaycheckout' ) }
-						value={ placeholder }
-						onChange={ ( value ) => setAttributes( { placeholder: value } ) }
-					/>
-					<TextControl
-						label={ __( 'Help text', 'yaycheckout' ) }
-						help={ __( 'Shown under the field while the shopper fills it in.', 'yaycheckout' ) }
-						value={ description }
-						onChange={ ( value ) => setAttributes( { description: value } ) }
+					<FieldTextControls
+						label={ label }
+						placeholder={ placeholder }
+						description={ description }
+						setAttributes={ setAttributes }
 					/>
 					<RequiredIndicatorControls
 						required={ required }
@@ -78,10 +68,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<DisclosurePreview
-					mode={ mode }
-					text={ disclosureText || defaultDisclosureText( ORDER_NOTE_KEY, label || labelPlaceholder, mode ) }
-				>
+				<DisclosurePreview mode={ mode } fieldKey={ ORDER_NOTE_KEY } label={ label || labelPlaceholder } disclosureText={ disclosureText }>
 					<FieldPreview
 						label={ label }
 						onLabelChange={ ( value ) => setAttributes( { label: value } ) }
