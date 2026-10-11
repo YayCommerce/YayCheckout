@@ -2,6 +2,7 @@
 namespace YayCheckout\Renderer;
 
 use YayCheckout\Models\Layout;
+use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -54,6 +55,46 @@ class CheckoutDifferentAddress {
         return ! ( function_exists( 'WC' ) && WC()->cart ) || WC()->cart->needs_shipping_address();
     }
 
+    /**
+     * What the Different address and Shipping blocks print for the served layout, decided once so
+     * WooCommerce's box is never printed twice, or not at all:
+     * - block: 'ship' (WooCommerce's "Ship to a different address?" box), 'same' ("Use same address
+     *   for billing") or '' (nothing: no Shipping section, or shipping is main with no Billing to replace);
+     * - wc_box: Shipping prints WooCommerce's box checked and hidden, because nothing else decides it;
+     * - same_marker: Shipping posts SAME_BILLING_FIELD=1, because there is no Billing section to keep.
+     * With no layout, or no shipping address needed, nothing prints.
+     *
+     * @return array{block: string, wc_box: bool, same_marker: bool}
+     */
+    public static function render_plan( ?Layout $layout ): array {
+        if ( null === $layout || ! self::needs_shipping_address() ) {
+            return [
+                'block'       => '',
+                'wc_box'      => false,
+                'same_marker' => false,
+            ];
+        }
+
+        $shipping_is_main = 'shipping' === self::destination();
+        $has_billing      = LayoutMarkupReader::has_billing( $layout->content );
+        $has_block        = LayoutMarkupReader::has_different_address( $layout->content );
+        $block            = '';
+
+        if ( $has_block && LayoutMarkupReader::has_shipping( $layout->content ) ) {
+            if ( ! $shipping_is_main ) {
+                $block = 'ship';
+            } elseif ( $has_billing ) {
+                $block = 'same';
+            }
+        }
+
+        return [
+            'block'       => $block,
+            'wc_box'      => $shipping_is_main || ! $has_block,
+            'same_marker' => $shipping_is_main && ! $has_billing,
+        ];
+    }
+
     /** A logged-in customer whose saved billing and shipping addresses are both set and differ. */
     public static function saved_addresses_differ(): bool {
         if ( ! is_user_logged_in() || ! function_exists( 'WC' ) || ! WC()->customer ) {
@@ -67,7 +108,8 @@ class CheckoutDifferentAddress {
             return false;
         }
 
-        foreach ( [ 'first_name', 'last_name', 'company', 'address_1', 'address_2', 'city', 'state', 'postcode', 'country' ] as $key ) {
+        // Phone is contact detail, not address.
+        foreach ( array_diff( self::COPIED_KEYS, [ 'phone' ] ) as $key ) {
             if ( (string) ( $billing[ $key ] ?? '' ) !== (string) ( $shipping[ $key ] ?? '' ) ) {
                 return true;
             }

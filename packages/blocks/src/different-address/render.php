@@ -15,21 +15,15 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_layout = \YayCheckout\Renderer\CheckoutPage::get_instance()->layout();
+$yaycheckout_block = \YayCheckout\Renderer\CheckoutDifferentAddress::render_plan( \YayCheckout\Renderer\CheckoutPage::get_instance()->layout() )['block'];
 
-if ( null === $yaycheckout_layout || ! \YayCheckout\Renderer\CheckoutDifferentAddress::needs_shipping_address() || ! \YayCheckout\Services\LayoutMarkupReader::has_shipping( $yaycheckout_layout->content ) ) {
-    return;
-}
-
-$yaycheckout_shipping_is_main = 'shipping' === \YayCheckout\Renderer\CheckoutDifferentAddress::destination();
-
-if ( $yaycheckout_shipping_is_main && ! \YayCheckout\Services\LayoutMarkupReader::has_billing( $yaycheckout_layout->content ) ) {
+if ( '' === $yaycheckout_block ) {
     return;
 }
 
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-different-address' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
-    <?php if ( $yaycheckout_shipping_is_main ) : ?>
+    <?php if ( 'same' === $yaycheckout_block ) : ?>
         <?php
         // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Verbatim WooCommerce string so the storefront matches WooCommerce's Checkout block when the merchant leaves the label empty.
         $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'sameLabel', __( 'Use same address for billing', 'woocommerce' ) );
@@ -46,7 +40,7 @@ if ( $yaycheckout_shipping_is_main && ! \YayCheckout\Services\LayoutMarkupReader
         ?>
         <div id="ship-to-different-address" class="form-row form-row-wide">
             <label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox">
-                <input id="ship-to-different-address-checkbox" class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" <?php checked( apply_filters( 'woocommerce_ship_to_different_address_checked', 'shipping' === get_option( 'woocommerce_ship_to_destination' ) ? 1 : 0 ), 1 ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce filter. ?> type="checkbox" name="ship_to_different_address" value="1" /> <span><?php echo esc_html( $yaycheckout_label ); ?></span>
+                <input id="ship-to-different-address-checkbox" class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" <?php checked( apply_filters( 'woocommerce_ship_to_different_address_checked', 0 ), 1 ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce filter; its default is 0 because billing is main here. ?> type="checkbox" name="ship_to_different_address" value="1" /> <span><?php echo esc_html( $yaycheckout_label ); ?></span>
             </label>
         </div>
     <?php endif; ?>

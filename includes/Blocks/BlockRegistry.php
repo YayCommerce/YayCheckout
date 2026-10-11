@@ -186,6 +186,7 @@ class BlockRegistry {
         // script, so WooCommerce's Shipping destination is printed on its own handle.
         $different_address_editor_data = [
             'destination' => CheckoutDifferentAddress::destination(),
+            'copiedKeys'  => CheckoutDifferentAddress::COPIED_KEYS,
             'settingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=shipping&section=options' ),
         ];
 
@@ -246,6 +247,17 @@ class BlockRegistry {
             [ 'jquery', 'wc-checkout', 'wc-address-i18n' ],
             YAYCHECKOUT_VERSION,
             true
+        );
+
+        wp_add_inline_script(
+            self::DIFFERENT_ADDRESS_SCRIPT,
+            'window.yayCheckoutSameBilling = ' . wp_json_encode(
+                [
+                    'field'      => CheckoutDifferentAddress::SAME_BILLING_FIELD,
+                    'copiedKeys' => CheckoutDifferentAddress::COPIED_KEYS,
+                ]
+            ) . ';',
+            'before'
         );
 
         // Enqueued by HideWhenEmpty::filter_container() for a container that watches blocks.

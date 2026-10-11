@@ -3,7 +3,8 @@ import { ExternalLink, Notice, PanelBody } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __, sprintf } from '@wordpress/i18n';
 import { plainText } from '../shared/plain-text';
-import { differentAddressEditorData } from './editor-data';
+import { type BlockEditorSelectors, sectionFields } from '../shared/section-fields';
+import { differentAddressEditorData, type ShipToDestination } from './editor-data';
 import './editor.css';
 
 interface DifferentAddressAttributes {
@@ -13,38 +14,8 @@ interface DifferentAddressAttributes {
 
 interface EditProps {
 	attributes: DifferentAddressAttributes;
+	isSelected: boolean;
 	setAttributes: ( attributes: Partial< DifferentAddressAttributes > ) => void;
-}
-
-interface BlockEditorSelectors {
-	getBlocksByName: ( name: string ) => string[];
-	getClientIdsOfDescendants: ( clientIds: string[] ) => string[];
-	getBlockName: ( clientId: string ) => string | null;
-	getBlockAttributes: ( clientId: string ) => Record< string, unknown > | null;
-}
-
-interface SectionField {
-	key: string;
-	label: string;
-}
-
-/** Mirrors CheckoutDifferentAddress::COPIED_KEYS in PHP: the billing keys copied from their shipping twins. */
-const COPIED_KEYS = [ 'first_name', 'last_name', 'company', 'address_1', 'address_2', 'city', 'state', 'postcode', 'country', 'phone' ];
-
-/** The Field blocks inside a section, with the label each prints. */
-function sectionFields( editor: BlockEditorSelectors, blockName: string ): SectionField[] {
-	return editor.getBlocksByName( blockName ).flatMap( ( sectionId ) =>
-		editor
-			.getClientIdsOfDescendants( [ sectionId ] )
-			.filter( ( clientId ) => editor.getBlockName( clientId ) === 'yaycheckout/field' )
-			.map( ( clientId ) => {
-				const attributes = editor.getBlockAttributes( clientId ) ?? {};
-				const key = String( attributes.fieldKey ?? '' ).trim();
-
-				return { key, label: plainText( attributes.label ) || key };
-			} )
-			.filter( ( field ) => field.key !== '' )
-	);
 }
 
 /**
@@ -54,10 +25,11 @@ function sectionFields( editor: BlockEditorSelectors, blockName: string ): Secti
 function billingWarnings( editor: BlockEditorSelectors ): string[] {
 	const shippingKeys = new Set( sectionFields( editor, 'yaycheckout/shipping' ).map( ( field ) => field.key ) );
 
-	return sectionFields( editor, 'yaycheckout/billing' ).flatMap( ( { key, label } ) => {
+	return sectionFields( editor, 'yaycheckout/billing' ).flatMap( ( { key, attributes } ) => {
+		const label = plainText( attributes.label ) || key;
 		const suffix = key.replace( /^billing_/, '' );
 
-		if ( ! key.startsWith( 'billing_' ) || ! COPIED_KEYS.includes( suffix ) ) {
+		if ( ! key.startsWith( 'billing_' ) || ! differentAddressEditorData.copiedKeys.includes( suffix ) ) {
 			/* translators: %s: field label. */
 			return [ sprintf( __( '%s is hidden when billing is the same as shipping; move it out of Billing.', 'yaycheckout' ), label ) ];
 		}
@@ -71,16 +43,41 @@ function billingWarnings( editor: BlockEditorSelectors ): string[] {
 	} );
 }
 
+/** What the block shows for each WooCommerce Shipping destination; render.php prints the same. */
+const MODES: Record<
+	ShipToDestination,
+	{ mainAddress: string; unprinted: string; label: keyof DifferentAddressAttributes; placeholder: string }
+> = {
+	billing: {
+		mainAddress: __( 'Billing is the main address.', 'yaycheckout' ),
+		unprinted: '',
+		label: 'shipLabel',
+		placeholder: __( 'Ship to a different address?', 'yaycheckout' ),
+	},
+	shipping: {
+		mainAddress: __( 'Shipping is the main address.', 'yaycheckout' ),
+		unprinted: '',
+		label: 'sameLabel',
+		placeholder: __( 'Use same address for billing', 'yaycheckout' ),
+	},
+	billing_only: {
+		mainAddress: __( 'Shipping is forced to the billing address.', 'yaycheckout' ),
+		unprinted: __( 'WooCommerce ships to the billing address only, so this block prints nothing.', 'yaycheckout' ),
+		label: 'shipLabel',
+		placeholder: __( 'Ship to a different address?', 'yaycheckout' ),
+	},
+};
+
 /**
  * Previews the checkbox for WooCommerce's Shipping destination: "Ship to a different address?" when
  * billing is the main address, "Use same address for billing" when shipping is. See render.php.
  * The editor never hides Billing or Shipping, so both stay editable.
  */
-export default function Edit( { attributes, setAttributes }: EditProps ) {
+export default function Edit( { attributes, isSelected, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps( { className: 'yaycheckout-different-address' } );
 	const { destination, settingsUrl } = differentAddressEditorData;
 	const shippingIsMain = destination === 'shipping';
-	const name = shippingIsMain ? 'sameLabel' : 'shipLabel';
+	const mode = MODES[ destination ];
 
 	const hasShipping = useSelect(
 		( select ) =>
@@ -88,38 +85,24 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				.length > 0,
 		[]
 	);
-	// Joined, so useSelect sees an equal value while nothing changed.
-	const warningText = useSelect(
+	// The warnings show only in the sidebar, so the fields are walked only while the block is selected.
+	const warnings = useSelect(
 		( select ) =>
-			shippingIsMain
-				? billingWarnings( select( blockEditorStore ) as unknown as BlockEditorSelectors ).join( '\n' )
-				: '',
-		[ shippingIsMain ]
+			shippingIsMain && isSelected
+				? billingWarnings( select( blockEditorStore ) as unknown as BlockEditorSelectors )
+				: [],
+		[ shippingIsMain, isSelected ]
 	);
-	const warnings = warningText === '' ? [] : warningText.split( '\n' );
-
-	let unprinted = '';
-
-	if ( destination === 'billing_only' ) {
-		unprinted = __( 'WooCommerce ships to the billing address only, so this block prints nothing.', 'yaycheckout' );
-	} else if ( ! hasShipping ) {
-		unprinted = __( 'This layout has no Shipping section, so this block prints nothing.', 'yaycheckout' );
-	}
-
-	let mainAddress = __( 'Billing is the main address.', 'yaycheckout' );
-
-	if ( shippingIsMain ) {
-		mainAddress = __( 'Shipping is the main address.', 'yaycheckout' );
-	} else if ( destination === 'billing_only' ) {
-		mainAddress = __( 'Shipping is forced to the billing address.', 'yaycheckout' );
-	}
+	const unprinted =
+		mode.unprinted ||
+		( hasShipping ? '' : __( 'This layout has no Shipping section, so this block prints nothing.', 'yaycheckout' ) );
 
 	return (
 		<>
 			<InspectorControls>
 				<PanelBody title={ __( 'Main address', 'yaycheckout' ) }>
 					<p>
-						{ mainAddress }{ ' ' }
+						{ mode.mainAddress }{ ' ' }
 						{ settingsUrl !== '' && (
 							<ExternalLink href={ settingsUrl }>
 								{ __( 'Change in WooCommerce settings', 'yaycheckout' ) }
@@ -146,13 +129,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					{ /* A span, not a label: typing Space would toggle a label's checkbox. */ }
 					<RichText
 						tagName="span"
-						value={ attributes[ name ] }
-						onChange={ ( value: string ) => setAttributes( { [ name ]: value } ) }
-						placeholder={
-							shippingIsMain
-								? __( 'Use same address for billing', 'yaycheckout' )
-								: __( 'Ship to a different address?', 'yaycheckout' )
-						}
+						value={ attributes[ mode.label ] }
+						onChange={ ( value: string ) => setAttributes( { [ mode.label ]: value } ) }
+						placeholder={ mode.placeholder }
 						allowedFormats={ [] }
 						withoutInteractiveFormatting
 					/>

@@ -1,6 +1,6 @@
 export type ShipToDestination = 'billing' | 'shipping' | 'billing_only';
 
-type DifferentAddressEditorData = { destination: ShipToDestination; settingsUrl: string };
+type DifferentAddressEditorData = { destination: ShipToDestination; copiedKeys: string[]; settingsUrl: string };
 
 declare global {
 	interface Window {
@@ -10,9 +10,10 @@ declare global {
 
 /**
  * Values BlockRegistry prints before this bundle runs.
- * destination mirrors CheckoutDifferentAddress::destination() in PHP.
+ * destination is CheckoutDifferentAddress::destination(), and copiedKeys its COPIED_KEYS.
  */
 export const differentAddressEditorData: DifferentAddressEditorData = window.yayCheckoutDifferentAddress ?? {
 	destination: 'billing',
+	copiedKeys: [],
 	settingsUrl: '',
 };
