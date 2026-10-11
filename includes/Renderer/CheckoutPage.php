@@ -40,8 +40,13 @@ class CheckoutPage {
         return $this->layout;
     }
 
+    /** True when this request is the checkout form and a layout renders it. Meaningful from `wp` on. */
+    public function takes_over(): bool {
+        return $this->on_checkout_page() && null !== $this->layout();
+    }
+
     public function maybe_take_over(): void {
-        if ( ! $this->on_checkout_page() || null === $this->layout() ) {
+        if ( ! $this->takes_over() ) {
             return;
         }
 

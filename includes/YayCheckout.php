@@ -27,6 +27,7 @@ class YayCheckout {
         \YayCheckout\Renderer\PreviewRequest::get_instance();
         \YayCheckout\Renderer\CheckoutScripts::get_instance();
         \YayCheckout\Renderer\CheckoutPage::get_instance();
+        \YayCheckout\Renderer\CheckoutAdminBar::get_instance();
         \YayCheckout\Renderer\CheckoutFragments::get_instance();
         \YayCheckout\Renderer\CartItemQuantity::get_instance();
         \YayCheckout\Renderer\HideWhenEmpty::get_instance();
