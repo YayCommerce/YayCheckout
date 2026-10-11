@@ -1,0 +1,13 @@
+/* Steps' "Show step headings" is off: the storefront hides this header, the editor fades it. */
+.editor-styles-wrapper .yaycheckout-step__header.is-hidden-on-checkout {
+	opacity: 0.5;
+}
+
+/* Where the storefront's Edit button sits. */
+.editor-styles-wrapper .yaycheckout-step__hidden-note {
+	grid-column: 3;
+	grid-row: 1;
+	color: #757575;
+	font-size: 12px;
+	font-weight: 400;
+}

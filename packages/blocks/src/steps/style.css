@@ -118,3 +118,31 @@
 .yaycheckout-steps[data-layout="single"]:not(:has(.yaycheckout-step[data-state="current"])) > .yaycheckout-step[data-state="complete"]:last-child {
 	display: block;
 }
+
+/*
+ * Headings hidden: only the open step shows, in either layout, so Back and Progress are the ways back.
+ * The open step's header stays for screen readers.
+ */
+.yaycheckout-steps[data-headings="hidden"] .yaycheckout-step:not([data-state="current"]) {
+	display: none;
+}
+
+.yaycheckout-steps[data-headings="hidden"]:not(:has(.yaycheckout-step[data-state="current"])) > .yaycheckout-step[data-state="complete"]:last-child {
+	display: block;
+}
+
+.yaycheckout-steps[data-headings="hidden"] .yaycheckout-step__header {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.yaycheckout-steps[data-headings="hidden"] .yaycheckout-step__body {
+	margin-top: 0;
+}

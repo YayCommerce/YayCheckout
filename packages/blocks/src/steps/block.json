@@ -46,7 +46,14 @@
       "type": "string",
       "default": "list",
       "enum": [ "list", "single" ]
+    },
+    "showHeadings": {
+      "type": "boolean",
+      "default": true
     }
+  },
+  "providesContext": {
+    "yaycheckout/showHeadings": "showHeadings"
   },
   "supports": {
     "html": false,

@@ -3,13 +3,14 @@ import {
 	useBlockProps,
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
-import { PanelBody, SelectControl } from '@wordpress/components';
+import { PanelBody, SelectControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import stepMeta from '../step/block.json';
 import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 
 interface StepsAttributes {
 	layout: string;
+	showHeadings: boolean;
 	style?: BlockGapStyles;
 }
 
@@ -24,7 +25,7 @@ interface EditProps {
  * can be edited; locking and Continue run on the storefront.
  */
 export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
-	const { layout, style } = attributes;
+	const { layout, showHeadings, style } = attributes;
 	const css = useBlockGapCSS( `#block-${ clientId }`, style );
 
 	const blockProps = useBlockProps( { className: 'yaycheckout-steps' } );
@@ -47,6 +48,11 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 							{ label: __( 'One step', 'yaycheckout' ), value: 'single' },
 						] }
 						onChange={ ( value ) => setAttributes( { layout: value } ) }
+					/>
+					<ToggleControl
+						label={ __( 'Show step headings', 'yaycheckout' ) }
+						checked={ showHeadings !== false }
+						onChange={ ( value: boolean ) => setAttributes( { showHeadings: value } ) }
 					/>
 				</PanelBody>
 			</InspectorControls>
