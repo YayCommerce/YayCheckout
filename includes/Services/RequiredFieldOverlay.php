@@ -11,12 +11,14 @@ class RequiredFieldOverlay {
     /**
      * Address fields required exactly when the layout says so. A field the
      * layout leaves out becomes optional; a layout field WooCommerce dropped
-     * is added back.
+     * is added back. A field the shopper's country locale hides is never
+     * required: the shopper can't see or fill it in.
      *
-     * @param  array $fields        WooCommerce checkout fields, by fieldset.
-     * @param  array $layout_fields LayoutMarkupReader::fields() map.
+     * @param  array    $fields        WooCommerce checkout fields, by fieldset.
+     * @param  array    $layout_fields LayoutMarkupReader::fields() map.
+     * @param  string[] $hidden_keys   Field keys the country locale hides, for WooCommerce versions that drop the `hidden` flag.
      */
-    public static function apply( array $fields, array $layout_fields ): array {
+    public static function apply( array $fields, array $layout_fields, array $hidden_keys = [] ): array {
         foreach ( self::ADDRESS_FIELDSETS as $fieldset ) {
             $fields[ $fieldset ] = isset( $fields[ $fieldset ] ) && is_array( $fields[ $fieldset ] ) ? $fields[ $fieldset ] : [];
 
@@ -31,6 +33,12 @@ class RequiredFieldOverlay {
 
                 if ( str_starts_with( $key, $fieldset . '_' ) && ! isset( $fields[ $fieldset ][ $key ] ) ) {
                     $fields[ $fieldset ][ $key ] = self::restore_missing_field( $key, $layout );
+                }
+            }
+
+            foreach ( $fields[ $fieldset ] as $key => $field ) {
+                if ( is_array( $field ) && ( true === ( $field['hidden'] ?? false ) || in_array( (string) $key, $hidden_keys, true ) ) ) {
+                    $fields[ $fieldset ][ $key ]['required'] = false;
                 }
             }
         }
