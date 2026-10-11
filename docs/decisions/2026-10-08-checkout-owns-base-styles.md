@@ -6,7 +6,7 @@
 
 ## Status
 
-Accepted, 2026-10-08, by Trace Bui.
+Superseded by [the base styles and heading font record](2026-10-11-checkout-base-styles-and-heading-font.md).
 
 ## Context
 

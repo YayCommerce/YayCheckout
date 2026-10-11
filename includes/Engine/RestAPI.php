@@ -2,6 +2,7 @@
 namespace YayCheckout\Engine;
 
 use YayCheckout\Controllers\CompatibilityRestController;
+use YayCheckout\Controllers\FontRestController;
 use YayCheckout\Controllers\LayoutRestController;
 use YayCheckout\Controllers\SettingsRestController;
 use YayCheckout\Controllers\SetupRestController;
@@ -21,5 +22,6 @@ class RestAPI {
         LayoutRestController::get_instance();
         CompatibilityRestController::get_instance();
         SetupRestController::get_instance();
+        FontRestController::get_instance();
     }
 }
