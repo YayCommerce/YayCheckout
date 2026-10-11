@@ -136,6 +136,13 @@ export const newLayoutFormSchema = z
 
 export type NewLayoutFormValues = z.infer<typeof newLayoutFormSchema>;
 
+/** Rename form. Mirrors LayoutRestController::name_arg(). */
+export const renameLayoutFormSchema = z.object({
+  name: z.string().trim().min(1, __('Name is required', 'yaycheckout')),
+});
+
+export type RenameLayoutForm = z.infer<typeof renameLayoutFormSchema>;
+
 export const layoutRulesWireSchema = z.object({
   rules: rulesWireSchema,
 });
