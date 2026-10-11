@@ -4,6 +4,7 @@ namespace YayCheckout\Blocks;
 use YayCheckout\Engine\Register\ScriptName;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
+use YayCheckout\Renderer\CheckoutDifferentAddress;
 use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Renderer\HideWhenEmpty;
 use YayCheckout\Support\Plan;
@@ -48,6 +49,7 @@ class BlockRegistry {
         'create-account',
         'billing',
         'shipping',
+        'different-address',
         'field',
         'extra-field',
         'order-note',
@@ -174,6 +176,19 @@ class BlockRegistry {
         wp_add_inline_script(
             generate_block_asset_handle( 'yaycheckout/create-account', 'editorScript' ),
             'window.yayCheckoutCreateAccount = ' . wp_json_encode( $create_account_editor_data ) . ';',
+            'before'
+        );
+
+        // The different-address editor script may not run after the checkout inline
+        // script, so WooCommerce's Shipping destination is printed on its own handle.
+        $different_address_editor_data = [
+            'destination' => CheckoutDifferentAddress::destination(),
+            'settingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=shipping&section=options' ),
+        ];
+
+        wp_add_inline_script(
+            generate_block_asset_handle( 'yaycheckout/different-address', 'editorScript' ),
+            'window.yayCheckoutDifferentAddress = ' . wp_json_encode( $different_address_editor_data ) . ';',
             'before'
         );
     }
