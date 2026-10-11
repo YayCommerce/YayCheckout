@@ -1,6 +1,8 @@
 <?php
 /**
  * Prints div.yaycheckout-shipping: an optional heading and its inner Field blocks.
+ * woocommerce-shipping-fields is the wrapper country-select.js searches for
+ * #shipping_state; without it the state box never repopulates.
  * shipping_address is the class WooCommerce's checkout.js shows and hides with the
  * ship_to_different_address box, and reads the rates fields from while it is checked.
  * WooCommerce's box is printed here, checked and hidden, when nothing else decides it:
@@ -26,7 +28,7 @@ $yaycheckout_always     = null !== $yaycheckout_layout && ( $yaycheckout_main ||
 $yaycheckout_copy = null !== $yaycheckout_layout && $yaycheckout_main && ! \YayCheckout\Services\LayoutMarkupReader::has_billing( $yaycheckout_layout->content );
 
 ?>
-<div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-shipping shipping_address' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+<div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-shipping woocommerce-shipping-fields shipping_address' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php if ( $yaycheckout_always ) : ?>
         <div id="ship-to-different-address" hidden>
             <input id="ship-to-different-address-checkbox" type="checkbox" name="ship_to_different_address" value="1" checked />
