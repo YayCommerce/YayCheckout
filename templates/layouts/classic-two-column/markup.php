@@ -10,6 +10,8 @@
  *
  * Billing and Shipping hold the structure packages/blocks/src/shared/address-template.ts gives a new
  * section; change both together. Their keys come from packages/blocks/src/shared/address-fields.ts.
+ * Order Summary holds the tree TEMPLATE in packages/blocks/src/order-summary/edit.tsx gives a new one,
+ * plus the Coupon Form; change both together.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -173,6 +175,15 @@ $yaycheckout_policy_links = array_filter(
 <div class="wp-block-column" style="flex-basis:40%"><!-- wp:group {"style":{"position":{"type":"sticky","top":"24px"}}} -->
 <div class="wp-block-group"><!-- wp:group {"style":{"color":{"background":"#ffffff"},"border":{"color":"#dddddd","width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"24px","right":"24px","bottom":"24px","left":"24px"}}}} -->
 <div class="wp-block-group has-border-color has-background" style="border-color:#dddddd;border-style:solid;border-width:1px;border-radius:4px;background-color:#ffffff;padding-top:24px;padding-right:24px;padding-bottom:24px;padding-left:24px"><!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>"} -->
+<!-- wp:yaycheckout/order-summary-header -->
+<!-- wp:yaycheckout/order-summary-toggle -->
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading"><?php esc_html_e( 'Order summary', 'yaycheckout' ); ?></h3>
+<!-- /wp:heading -->
+<!-- /wp:yaycheckout/order-summary-toggle -->
+<!-- /wp:yaycheckout/order-summary-header -->
+
+<!-- wp:yaycheckout/order-summary-details {"lock":{"remove":true}} -->
 <!-- wp:yaycheckout/order-summary-items {"showLabels":false,"quantityDisplay":"badge"} /-->
 
 <!-- wp:yaycheckout/coupon-form {"disclosure":"collapsible","disclosureText":"<?php esc_html_e( 'Add coupons', 'yaycheckout' ); ?>"} -->
@@ -180,6 +191,7 @@ $yaycheckout_policy_links = array_filter(
 <!-- /wp:yaycheckout/coupon-form -->
 
 <!-- wp:yaycheckout/order-summary-totals /-->
+<!-- /wp:yaycheckout/order-summary-details -->
 <!-- /wp:yaycheckout/order-summary --></div>
 <!-- /wp:group --><?php if ( $yaycheckout_policy_links ) : ?>
 
