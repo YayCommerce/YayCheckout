@@ -1,11 +1,14 @@
 import { InspectorControls, store as blockEditorStore, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
+import { cloneBlock, createBlock } from '@wordpress/blocks';
 import {
+	Notice,
 	PanelBody,
 	ToggleControl,
 	__experimentalToggleGroupControl as ToggleGroupControl,
 	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
 } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
+import { escapeHTML } from '@wordpress/escape-html';
 import { __ } from '@wordpress/i18n';
 import detailsMeta from '../order-summary-details/block.json';
 import headerMeta from '../order-summary-header/block.json';
@@ -69,7 +72,8 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		},
 		[ clientId ]
 	);
-	const { moveBlockToPosition } = useDispatch( blockEditorStore );
+	const { moveBlockToPosition, replaceInnerBlocks } = useDispatch( blockEditorStore );
+	const { getBlocks } = useSelect( blockEditorStore );
 	const blockProps = useBlockProps( {
 		className: [ 'yaycheckout-order-summary', collapsible && initialState === 'collapsed' ? 'is-preview-collapsed' : '' ]
 			.filter( Boolean )
@@ -83,6 +87,22 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	} );
 	// The block order is the direction: a Header after Details sits below them, so they open upward.
 	const opensUp = headerIndex !== -1 && detailsIndex !== -1 && headerIndex > detailsIndex;
+
+	// Opt-in, never on load: converting markup the merchant didn't touch would reach the post through autosave.
+	// The heading keeps the old one's text (plain, so escaped into rich text) and id, so a theme styling #order_review_heading still finds it.
+	const convert = () =>
+		replaceInnerBlocks( clientId, [
+			createBlock( headerMeta.name, {}, [
+				createBlock( toggleMeta.name, {}, [
+					createBlock( 'core/heading', {
+						level: 3,
+						content: escapeHTML( label || __( 'Your order', 'yaycheckout' ) ),
+						anchor: 'order_review_heading',
+					} ),
+				] ),
+			] ),
+			createBlock( detailsMeta.name, { lock: { remove: true } }, getBlocks( clientId ).map( ( block ) => cloneBlock( block ) ) ),
+		] );
 
 	return (
 		<div { ...innerBlocksProps }>
@@ -99,6 +119,22 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						: undefined
 				}
 			/>
+			{ ! newShape && (
+				<InspectorControls>
+					<PanelBody>
+						<Notice
+							status="info"
+							isDismissible={ false }
+							actions={ [ { label: __( 'Use header and details', 'yaycheckout' ), onClick: convert, variant: 'primary' } ] }
+						>
+							{ __(
+								'This summary uses the old layout. Switch to a header and a details part to make it collapsible.',
+								'yaycheckout'
+							) }
+						</Notice>
+					</PanelBody>
+				</InspectorControls>
+			) }
 			{ newShape && (
 				<InspectorControls>
 					<PanelBody title={ __( 'Collapsing', 'yaycheckout' ) }>
