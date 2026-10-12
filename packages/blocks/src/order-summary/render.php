@@ -1,6 +1,7 @@
 <?php
 /**
- * Prints the heading, then the Items and Totals blocks with the merchant's blocks around them.
+ * Prints the heading, then the Items and Totals blocks with the merchant's blocks around them. A summary
+ * split into a Summary Header and Summary Details prints no heading: the header holds the merchant's own.
  * A layout saved before Order Summary held blocks has none, and gets WooCommerce's review-order
  * table as before. Without a frontend cart (admin, REST, CLI) that table is left out: the template
  * dereferences WC()->cart.
@@ -16,11 +17,23 @@ $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes
 
 $yaycheckout_has_cart = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart;
 
+$yaycheckout_new_shape = false;
+
+foreach ( $block->parsed_block['innerBlocks'] ?? [] as $yaycheckout_child ) {
+    if ( in_array( $yaycheckout_child['blockName'] ?? '', [ 'yaycheckout/order-summary-header', 'yaycheckout/order-summary-details' ], true ) ) {
+        $yaycheckout_new_shape = true;
+        break;
+    }
+}
+
 // Block spacing.
 $yaycheckout_class = 'yaycheckout-order-summary' . \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/order-summary', 'yaycheckout-order-summary' );
 
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => $yaycheckout_class ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+<?php if ( $yaycheckout_new_shape ) : ?>
+    <?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner block markup, already rendered and escaped by core. ?>
+<?php else : ?>
     <h3 id="order_review_heading"><?php echo esc_html( $yaycheckout_label ); ?></h3>
     <?php if ( ! empty( $block->parsed_block['innerBlocks'] ) ) : ?>
         <?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner block markup, already rendered and escaped by core. ?>
@@ -29,4 +42,5 @@ $yaycheckout_class = 'yaycheckout-order-summary' . \YayCheckout\Renderer\BlockGa
             <?php woocommerce_order_review(); ?>
         </div>
     <?php endif; ?>
+<?php endif; ?>
 </div>

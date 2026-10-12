@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/order-summary-header",
+  "title": "Summary Header",
+  "category": "yaycheckout",
+  "description": "The Order Summary's top or bottom bar. Lay out any blocks in it, left and right.",
+  "textdomain": "yaycheckout",
+  "parent": [ "yaycheckout/order-summary" ],
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false,
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true,
+      "blockGap": true
+    },
+    "layout": {
+      "default": {
+        "type": "flex",
+        "justifyContent": "space-between",
+        "verticalAlignment": "center",
+        "flexWrap": "wrap"
+      },
+      "allowSwitching": false
+    }
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}
