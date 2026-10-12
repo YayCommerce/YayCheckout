@@ -17,6 +17,14 @@
     "label": {
       "type": "string",
       "default": "Shipping methods"
+    },
+    "layout": {
+      "type": "string",
+      "default": "default"
+    },
+    "style": {
+      "type": "object",
+      "default": {}
     }
   },
   "supports": {
@@ -26,7 +34,11 @@
     "reusable": false,
     "color": {
       "text": true,
-      "background": true
+      "background": true,
+      "__experimentalSkipSerialization": [ "text" ],
+      "__experimentalDefaultControls": {
+        "text": false
+      }
     },
     "__experimentalBorder": {
       "color": true,

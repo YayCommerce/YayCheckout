@@ -1,0 +1,4 @@
+/* The colour items span the panel's grid and stack like a block's Color panel, above the range controls. */
+.yaycheckout-shipping-methods-panel .yaycheckout-shipping-methods-panel__colors {
+	grid-column: 1 / -1;
+}
