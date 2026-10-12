@@ -1,6 +1,6 @@
 # Apartment field behind a link Implementation Plan
 
-**Status:** active
+**Status:** done 2026-10-07
 **Goal:** The Apartment field (`billing_address_2` / `shipping_address_2`) starts collapsed behind a "+ Add apartment, suite, etc." link, and opens when the shopper clicks it.
 **Spec:** none, planned from the request and a screenshot of the target look.
 **Branch:** `onyx/feat/apartment-reveal-link` from `dev/edd`. `field/render.php` also changes on the unmerged `onyx/feat/field-help-text`. Whichever PR merges second rebases and resolves that file.

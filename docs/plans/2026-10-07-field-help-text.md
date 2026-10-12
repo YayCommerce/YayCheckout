@@ -1,6 +1,6 @@
 # Field help text
 
-**Status:** active
+**Status:** done 2026-10-07
 **Branch:** `onyx/feat/field-help-text` from `dev/edd`
 **Tests:** none. CLAUDE.md's test rule covers publish rules, layout assignment, required fields and import review; help text is display-only, so every task ends in an exact manual check instead.
 
