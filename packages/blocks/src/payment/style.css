@@ -266,11 +266,10 @@
 .yaycheckout-checkout .yaycheckout-payment[data-layout="checkmark"] #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) > label::before {
 	background-color: var(--yaycheckout-payment-radio-selected, var(--yaycheckout-primary-color, #3858e9));
 	box-shadow: none;
-	color: #fff;
-	content: "\2713";
-	font-size: 13px;
-	font-weight: 700;
-	line-height: 1;
+	background-image: var(--yaycheckout-check-icon);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: 10px;
 }
 
 .yaycheckout-checkout .yaycheckout-payment[data-layout="checkmark"] #payment .wc_payment_methods > li > :not(label, input) {

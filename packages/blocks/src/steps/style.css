@@ -63,14 +63,13 @@
 }
 
 .yaycheckout-step[data-state="complete"] .yaycheckout-step__index::after {
-	content: "\2713";
-	color: #fff;
+	content: "";
 	position: absolute;
 	inset: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 14px;
+	background-image: var(--yaycheckout-check-icon);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: 12px;
 }
 
 .yaycheckout-step__title {

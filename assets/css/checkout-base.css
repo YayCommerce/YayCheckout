@@ -21,6 +21,8 @@
 	--yaycheckout-primary-color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
 	--yaycheckout-border-color: var(--yaycheckout-color-border, color-mix(in srgb, currentColor 45%, transparent));
 	--yaycheckout-field-radius: var(--yaycheckout-input-radius, var(--yaycheckout-neutral-radius));
+	/* White check drawn on a filled circle: Steps, Progress and the Cards with checkmark layouts. */
+	--yaycheckout-check-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
 }
 
 /* The theme's layout limits stop at the checkout: the layout's own blocks set any width. */
@@ -472,6 +474,15 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 .yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):last-child {
 	width: 40%;
 	text-align: end;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__via {
+	display: block;
+	font-size: 0.875em;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__shipping strong {
+	text-transform: uppercase;
 }
 
 /* iOS zooms into a focused field whose text is under 16px. */
