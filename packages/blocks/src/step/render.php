@@ -52,7 +52,7 @@ $yaycheckout_wrapper = get_block_wrapper_attributes(
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
-    <div class="yaycheckout-step__header">
+    <div class="yaycheckout-step__header" tabindex="-1">
         <span class="yaycheckout-step__index"><?php echo esc_html( (string) $yaycheckout_index ); ?></span>
         <span class="yaycheckout-step__title"><?php echo esc_html( $yaycheckout_title ); ?></span>
         <p class="yaycheckout-step__summary" hidden></p>

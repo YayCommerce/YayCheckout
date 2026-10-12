@@ -127,6 +127,8 @@ function reopen( step: HTMLElement ): void {
 	}
 
 	setState( step, CURRENT );
+	// The control that asked may now be disabled or hidden (Steps Progress, Go to Step, Edit), so focus follows the step.
+	step.querySelector< HTMLElement >( '.yaycheckout-step__header' )?.focus();
 }
 
 function park( step: HTMLElement ): boolean {
