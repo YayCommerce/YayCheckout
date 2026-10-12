@@ -66,6 +66,7 @@ class BlockRegistry {
         'order-summary',
         'order-summary-header',
         'order-summary-details',
+        'order-summary-toggle',
         'order-summary-items',
         'order-summary-totals',
         'field-value',
