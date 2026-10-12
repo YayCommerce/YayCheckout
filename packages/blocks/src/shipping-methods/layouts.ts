@@ -1,4 +1,5 @@
 import { __ } from '@wordpress/i18n';
+import { currentMethodLayout } from '../shared/method-layouts';
 import { COLOR_SETTING_KEYS, type ShippingSettingKey } from './setting-controls';
 
 export interface ShippingLayout {
@@ -10,7 +11,7 @@ export interface ShippingLayout {
 /** Layouts whose rows have their own outline take every colour. */
 const ROW_COLORS: ShippingSettingKey[] = [ ...COLOR_SETTING_KEYS ];
 
-/** Divided and Boxed rows share lines, so they take one border colour. */
+/** Single box and Divider lines rows share lines, so they take one border colour. */
 const SHARED_LINE_COLORS: ShippingSettingKey[] = ROW_COLORS.filter(
 	( key ) => key !== 'borderColorSelected' && key !== 'borderColorHover'
 );
@@ -18,38 +19,40 @@ const SHARED_LINE_COLORS: ShippingSettingKey[] = ROW_COLORS.filter(
 /** Mirrors CheckoutFragments::SHIPPING_LAYOUTS in PHP. */
 export const SHIPPING_LAYOUTS: ShippingLayout[] = [
 	{
-		value: 'default',
-		label: __( 'Default', 'yaycheckout' ),
+		value: 'joined',
+		label: __( 'Joined rows', 'yaycheckout' ),
 		settings: [ 'borderWidth', 'borderRadius', ...ROW_COLORS ],
 	},
 	{
-		value: 'check',
-		label: __( 'Check', 'yaycheckout' ),
+		value: 'checkmark',
+		label: __( 'Cards with checkmark', 'yaycheckout' ),
 		settings: [ 'gap', 'borderWidth', 'borderRadius', ...ROW_COLORS ],
 	},
 	{
-		value: 'boxed',
-		label: __( 'Boxed', 'yaycheckout' ),
+		value: 'box',
+		label: __( 'Single box', 'yaycheckout' ),
 		settings: [ 'borderWidth', 'borderRadius', ...SHARED_LINE_COLORS ],
 	},
 	{
-		value: 'columns',
-		label: __( 'Columns', 'yaycheckout' ),
+		value: 'grid',
+		label: __( 'Card grid', 'yaycheckout' ),
 		settings: [ 'gap', 'borderWidth', 'borderRadius', ...ROW_COLORS ],
 	},
 	{
-		value: 'stacked',
-		label: __( 'Stacked', 'yaycheckout' ),
+		value: 'cards',
+		label: __( 'Separate cards', 'yaycheckout' ),
 		settings: [ 'gap', 'borderWidth', 'borderRadius', ...ROW_COLORS ],
 	},
 	{
-		value: 'divided',
-		label: __( 'Divided', 'yaycheckout' ),
+		value: 'lines',
+		label: __( 'Divider lines', 'yaycheckout' ),
 		settings: [ 'borderWidth', ...SHARED_LINE_COLORS ],
 	},
 ];
 
-/** The layout for a stored value, or Default when missing or unknown. */
+/** The layout for a stored value (old names included), or Joined rows when missing or unknown. */
 export function layoutFor( value: string | undefined ): ShippingLayout {
-	return SHIPPING_LAYOUTS.find( ( layout ) => layout.value === value ) ?? SHIPPING_LAYOUTS[ 0 ];
+	const current = currentMethodLayout( value );
+
+	return SHIPPING_LAYOUTS.find( ( layout ) => layout.value === current ) ?? SHIPPING_LAYOUTS[ 0 ];
 }

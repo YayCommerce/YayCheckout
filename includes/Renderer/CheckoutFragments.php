@@ -22,8 +22,21 @@ class CheckoutFragments {
 
     public const ORDER_TOTALS_CLASS = 'yaycheckout-order-summary-totals';
 
-    /** Layout values the Payment block accepts; an unknown attribute falls back to default. */
-    public const PAYMENT_LAYOUTS = [ 'default', 'check', 'boxed', 'columns', 'stacked', 'divided' ];
+    /**
+     * Old Payment and Shipping Methods layout values => their current names. Saved layouts keep
+     * the old values. LEGACY_METHOD_LAYOUTS in packages/blocks/src/shared/method-layouts.ts mirrors it.
+     */
+    private const LEGACY_METHOD_LAYOUTS = [
+        'default' => 'joined',
+        'check'   => 'checkmark',
+        'boxed'   => 'box',
+        'columns' => 'grid',
+        'stacked' => 'cards',
+        'divided' => 'lines',
+    ];
+
+    /** Layout values the Payment block accepts; an unknown attribute falls back to joined. */
+    public const PAYMENT_LAYOUTS = [ 'joined', 'checkmark', 'box', 'grid', 'cards', 'lines' ];
 
     /** Length key under style.yaycheckout => the --yaycheckout-payment-* variable it sets. LENGTH_VARS in style-paths.ts mirrors it; radius stays at style.border.radius. */
     private const PAYMENT_LENGTH_VARS = [
@@ -44,8 +57,8 @@ class CheckoutFragments {
         'borderHover'        => '--yaycheckout-payment-border-hover',
     ];
 
-    /** Layout values the Shipping Methods block accepts; an unknown attribute falls back to default. */
-    public const SHIPPING_LAYOUTS = [ 'default', 'check', 'boxed', 'columns', 'stacked', 'divided' ];
+    /** Layout values the Shipping Methods block accepts; an unknown attribute falls back to joined. */
+    public const SHIPPING_LAYOUTS = [ 'joined', 'checkmark', 'box', 'grid', 'cards', 'lines' ];
 
     /** Length key under style.yaycheckout => the --yaycheckout-shipping-* variable it sets. LENGTH_VARS in style-paths.ts mirrors it. */
     private const SHIPPING_LENGTH_VARS = [
@@ -175,14 +188,15 @@ class CheckoutFragments {
     }
 
     /**
-     * The Payment layout from block attributes, or default when missing or unknown.
+     * The Payment layout from block attributes, old names mapped to current ones, or joined when missing or unknown.
      *
      * @param array $attributes Block attributes.
      */
     public static function payment_layout( array $attributes ): string {
         $layout = isset( $attributes['layout'] ) && is_string( $attributes['layout'] ) ? $attributes['layout'] : '';
+        $layout = self::LEGACY_METHOD_LAYOUTS[ $layout ] ?? $layout;
 
-        return in_array( $layout, self::PAYMENT_LAYOUTS, true ) ? $layout : 'default';
+        return in_array( $layout, self::PAYMENT_LAYOUTS, true ) ? $layout : 'joined';
     }
 
     /**
@@ -241,14 +255,15 @@ class CheckoutFragments {
     }
 
     /**
-     * The Shipping Methods layout from block attributes, or default when missing or unknown.
+     * The Shipping Methods layout from block attributes, old names mapped to current ones, or joined when missing or unknown.
      *
      * @param array $attributes Block attributes.
      */
     public static function shipping_layout( array $attributes ): string {
         $layout = isset( $attributes['layout'] ) && is_string( $attributes['layout'] ) ? $attributes['layout'] : '';
+        $layout = self::LEGACY_METHOD_LAYOUTS[ $layout ] ?? $layout;
 
-        return in_array( $layout, self::SHIPPING_LAYOUTS, true ) ? $layout : 'default';
+        return in_array( $layout, self::SHIPPING_LAYOUTS, true ) ? $layout : 'joined';
     }
 
     /**
