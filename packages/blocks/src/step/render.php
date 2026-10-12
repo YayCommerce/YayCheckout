@@ -44,7 +44,7 @@ $yaycheckout_title = \YayCheckout\Renderer\CheckoutProgress::step_title( $yayche
 
 $yaycheckout_wrapper = get_block_wrapper_attributes(
     [
-        'class'      => 'yaycheckout-step',
+        'class'      => 'yaycheckout-step' . \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/step', 'yaycheckout-step', ' > .yaycheckout-step__body' ),
         'data-state' => $yaycheckout_state,
         'data-step'  => (string) $yaycheckout_index,
     ]
