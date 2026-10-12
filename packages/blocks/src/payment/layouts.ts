@@ -1,5 +1,4 @@
 import { __ } from '@wordpress/i18n';
-import { currentMethodLayout } from '../shared/method-layouts';
 import { COLOR_SETTING_KEYS, type PaymentSettingKey } from './setting-controls';
 
 export interface PaymentLayout {
@@ -50,9 +49,7 @@ export const PAYMENT_LAYOUTS: PaymentLayout[] = [
 	},
 ];
 
-/** The layout for a stored value (old names included), or Joined rows when missing or unknown. */
+/** The layout for a stored value, or Joined rows when missing or unknown. */
 export function layoutFor( value: string | undefined ): PaymentLayout {
-	const current = currentMethodLayout( value );
-
-	return PAYMENT_LAYOUTS.find( ( layout ) => layout.value === current ) ?? PAYMENT_LAYOUTS[ 0 ];
+	return PAYMENT_LAYOUTS.find( ( layout ) => layout.value === value ) ?? PAYMENT_LAYOUTS[ 0 ];
 }

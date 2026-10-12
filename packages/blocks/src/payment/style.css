@@ -3,7 +3,7 @@
  * checkout-base.css's neutral fallbacks. Selectors start with .yaycheckout-checkout
  * .yaycheckout-payment and name WooCommerce's div#payment, so the rows outrank a classic
  * theme's own #payment rules (Storefront: #payment .payment_methods > li:not(.woocommerce-notice)).
- * data-layout: joined, cards, grid, checkmark, lines, box (CheckoutFragments maps the old names).
+ * data-layout: joined, cards, grid, checkmark, lines, box.
  * Methods styles from the Styles tab set --yaycheckout-payment-* on the wrapper: gap, radius,
  * border-width, bg, bg-selected, bg-hover, radio, radio-selected, border, border-selected and border-hover.
  * Native radios are clipped; label::before draws the indicator so Radio colours paint.

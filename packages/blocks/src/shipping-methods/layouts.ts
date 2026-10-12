@@ -1,5 +1,4 @@
 import { __ } from '@wordpress/i18n';
-import { currentMethodLayout } from '../shared/method-layouts';
 import { COLOR_SETTING_KEYS, type ShippingSettingKey } from './setting-controls';
 
 export interface ShippingLayout {
@@ -50,9 +49,7 @@ export const SHIPPING_LAYOUTS: ShippingLayout[] = [
 	},
 ];
 
-/** The layout for a stored value (old names included), or Joined rows when missing or unknown. */
+/** The layout for a stored value, or Joined rows when missing or unknown. */
 export function layoutFor( value: string | undefined ): ShippingLayout {
-	const current = currentMethodLayout( value );
-
-	return SHIPPING_LAYOUTS.find( ( layout ) => layout.value === current ) ?? SHIPPING_LAYOUTS[ 0 ];
+	return SHIPPING_LAYOUTS.find( ( layout ) => layout.value === value ) ?? SHIPPING_LAYOUTS[ 0 ];
 }

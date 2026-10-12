@@ -3,7 +3,7 @@
  * neutral fallbacks. Selectors start with .yaycheckout-checkout .yaycheckout-shipping-methods
  * so the rows outrank a classic theme's rules for ul#shipping_method. The markup still
  * keeps that id and WooCommerce's class for plugin scripts that look for them.
- * data-layout: joined, cards, grid, checkmark, lines, box (CheckoutFragments maps the old names).
+ * data-layout: joined, cards, grid, checkmark, lines, box.
  * Methods styles from the Styles tab set --yaycheckout-shipping-* on the wrapper: gap, radius,
  * border-width, bg, bg-selected, bg-hover, radio, radio-selected, border, border-selected and border-hover.
  * Cards with checkmark and Divider lines keep one background unless the merchant sets selected/hover.
