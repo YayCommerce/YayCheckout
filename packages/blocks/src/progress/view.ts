@@ -4,7 +4,7 @@
  * Steps owns the open step. This script only mirrors data-state.
  */
 
-import { CHECKOUT_SELECTOR, checkoutFor, reopenStep, stepState } from '../shared/checkout-root';
+import { CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
 import { onDomReady } from '../shared/dom-ready';
 
 const ITEM = '.yaycheckout-progress__item';
@@ -53,13 +53,26 @@ function onClick( event: MouseEvent ): void {
 	}
 
 	event.preventDefault();
-	reopenStep( checkout, item.dataset.step );
+	checkout.dispatchEvent(
+		new CustomEvent( 'yaycheckout:step-reopen', {
+			bubbles: true,
+			detail: { step: item.dataset.step },
+		} )
+	);
 }
 
 function sync( checkout: Element ): void {
+	const states = new Map< string, string >();
+
+	checkout.querySelectorAll< HTMLElement >( '.yaycheckout-step' ).forEach( ( step ) => {
+		if ( step.dataset.step && step.dataset.state && ! states.has( step.dataset.step ) ) {
+			states.set( step.dataset.step, step.dataset.state );
+		}
+	} );
+
 	// Progress may sit outside Checkout, so paint every one on the page.
 	document.querySelectorAll< HTMLElement >( ITEM ).forEach( ( item ) => {
-		paint( item, stepState( checkout, item.dataset.step ?? '' ) ?? 'locked' );
+		paint( item, states.get( item.dataset.step ?? '' ) ?? 'locked' );
 	} );
 
 	document.querySelectorAll< HTMLElement >( '.yaycheckout-progress' ).forEach( paintSummary );

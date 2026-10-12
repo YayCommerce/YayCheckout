@@ -4,8 +4,11 @@ import { useSelect } from '@wordpress/data';
 import { createInterpolateElement, type ReactNode } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __, sprintf } from '@wordpress/i18n';
-import { stepTitle, useLayoutStepIds } from '../shared/step-title';
+import { stepTitle } from '../shared/step-title';
+import stepsMeta from '../steps/block.json';
 import './editor.css';
+
+const STEPS = stepsMeta.name;
 
 type Variant = 'circles' | 'dots' | 'segments' | 'bar' | 'text';
 
@@ -76,7 +79,18 @@ function ProgressBody( { variant, total, children }: { variant: Variant; total: 
 
 // Mirrors CheckoutProgress::markup(): the same wrapper, list and items.
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const stepIds = useLayoutStepIds();
+	// The store's own order array, so typing elsewhere doesn't re-render this block.
+	const stepIds: string[] | null = useSelect(
+		( select ) => {
+			const { getBlockOrder, getBlocksByName } = select( blockEditorStore );
+
+			// Mirrors CheckoutProgress::titles_in(): the layout's first Steps block, in document order.
+			const stepsId = ( getBlocksByName( STEPS ) as string[] )[ 0 ];
+
+			return stepsId ? getBlockOrder( stepsId ) : null;
+		},
+		[]
+	);
 	// The inserter preview holds only this block, so it shows sample steps instead of the notice.
 	const isPreview: boolean = useSelect(
 		( select ) => select( blockEditorStore ).getSettings().isPreviewMode === true,

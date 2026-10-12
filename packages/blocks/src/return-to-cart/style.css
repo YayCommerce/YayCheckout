@@ -11,7 +11,7 @@
 	text-decoration: none;
 }
 
-/* Matches .yaycheckout-back-button's link look (back-button/style.css) and .yaycheckout-go-to-step (go-to-step/style.css); change them together. */
+/* Matches .yaycheckout-back-button's link look (back-button/style.css); change both together. */
 .yaycheckout-return-to-cart__link {
 	display: inline-flex;
 	align-items: center;

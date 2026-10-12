@@ -4,7 +4,7 @@
  * Steps owns the open step. This script mirrors data-state and asks Steps to reopen.
  */
 
-import { CHECKOUT_SELECTOR, checkoutFor, reopenStep, stepState } from '../shared/checkout-root';
+import { CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
 import { onDomReady } from '../shared/dom-ready';
 
 const BUTTON = 'button.yaycheckout-go-to-step__button';
@@ -26,9 +26,11 @@ function onStepChange( event: Event ): void {
 		return;
 	}
 
-	// The block may sit outside Checkout, so paint every one on the page.
+	// The block may sit outside Checkout, so paint every one on the page. The first step with that number wins, as in Progress.
 	document.querySelectorAll< HTMLButtonElement >( BUTTON ).forEach( ( button ) => {
-		button.disabled = stepState( checkout, button.dataset.step ?? '' ) !== 'complete';
+		const step = checkout.querySelector< HTMLElement >( `.yaycheckout-step[data-step="${ CSS.escape( button.dataset.step ?? '' ) }"]` );
+
+		button.disabled = step?.dataset.state !== 'complete';
 	} );
 }
 
@@ -41,7 +43,13 @@ function onClick( event: MouseEvent ): void {
 	}
 
 	event.preventDefault();
-	reopenStep( checkout, button.dataset.step ?? '' );
+	// steps/view.ts re-checks the open step first and stays on it when that fails.
+	checkout.dispatchEvent(
+		new CustomEvent( 'yaycheckout:step-reopen', {
+			bubbles: true,
+			detail: { step: button.dataset.step },
+		} )
+	);
 }
 
 onDomReady( boot );

@@ -3,7 +3,10 @@ import { Notice, PanelBody, SelectControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __, sprintf } from '@wordpress/i18n';
-import { stepTitle, useLayoutStepIds } from '../shared/step-title';
+import { stepTitle } from '../shared/step-title';
+import stepsMeta from '../steps/block.json';
+
+const STEPS = stepsMeta.name;
 
 interface GoToStepAttributes {
 	step: number;
@@ -17,16 +20,21 @@ interface EditProps {
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps( { className: 'yaycheckout-go-to-step' } );
-	const stepIds = useLayoutStepIds();
-	const titles: string[] | null = useSelect(
-		( select ) =>
-			stepIds?.map( ( id ) => {
-				const title = select( blockEditorStore ).getBlockAttributes( id )?.title;
+	// Mirrors CheckoutProgress::layout_titles(): the layout's first Steps block, in document order.
+	const titles: string[] | null = useSelect( ( select ) => {
+		const { getBlockAttributes, getBlockOrder, getBlocksByName } = select( blockEditorStore );
+		const stepsId = ( getBlocksByName( STEPS ) as string[] )[ 0 ];
 
-				return typeof title === 'string' ? title : '';
-			} ) ?? null,
-		[ stepIds ]
-	);
+		if ( ! stepsId ) {
+			return null;
+		}
+
+		return ( getBlockOrder( stepsId ) as string[] ).map( ( id ) => {
+			const title = getBlockAttributes( id )?.title;
+
+			return typeof title === 'string' ? title : '';
+		} );
+	}, [] );
 
 	return (
 		<>
