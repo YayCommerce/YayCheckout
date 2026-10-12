@@ -29,11 +29,15 @@ function colorValue( value: unknown ): string | undefined {
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label, layout, style, textColor } = attributes;
+	// Same as Step: useBlockProps owns Dimensions. Methods vars are merged after.
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-payment',
 		'data-layout': layout || 'default',
-		style: paymentStyleVars( style, textColor ),
 	} );
+	const wrapperStyle = {
+		...blockProps.style,
+		...paymentStyleVars( style, textColor ),
+	};
 	const heading = label || __( 'Payment', 'yaycheckout' );
 	const selectedLayout = layoutFor( layout );
 	const rangeKeys = selectedLayout.settings.filter(
@@ -101,7 +105,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					</PanelBody>
 				) }
 			</InspectorControls>
-			<div { ...blockProps }>
+			<div { ...blockProps } style={ wrapperStyle }>
 				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>
 				{ /* WooCommerce's list markup, so the block's own CSS draws it as on the storefront. */ }
 				<div id="payment" className="woocommerce-checkout-payment">
