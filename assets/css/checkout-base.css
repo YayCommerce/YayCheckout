@@ -358,6 +358,107 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	border-color: var(--wc-red, #cc1818);
 }
 
+/*
+ * Floating labels (the layout's inputs.label token): the label rests inside the box like a placeholder and
+ * floats to its top once the field is focused, filled or holds a select. Only rows whose visible label comes
+ * straight before a text control, a select or the editor's preview control; checkbox and radio rows and
+ * screen-reader-only labels keep the default. The Coupon form's field floats its own label, which is screen-reader-only
+ * otherwise (coupon-form/style.css). WooCommerce prints the label before the input, so the row's
+ * state picks the look: :focus-within, autofill, or is-filled from checkout-floating-labels.js.
+ */
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
+),
+.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field {
+	--yaycheckout-floating-height: max(var(--yaycheckout-input-height, 40px), 3.25em);
+	position: relative;
+}
+
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
+) > :is(label, .yaycheckout-field-preview__label),
+.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__label {
+	position: absolute;
+	z-index: 1;
+	top: calc(var(--yaycheckout-floating-height) / 2);
+	inset-inline-start: calc(var(--yaycheckout-input-padding-inline, 12px) + 1px);
+	max-width: calc(100% - 2 * var(--yaycheckout-input-padding-inline, 12px) - 2px);
+	width: auto;
+	height: auto;
+	padding: 0;
+	margin: 0;
+	overflow: hidden;
+	clip-path: none;
+	color: var(--yaycheckout-input-color, inherit);
+	font-weight: 400;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	opacity: 0.7;
+	transform: translateY(-50%);
+	transform-origin: 0 0;
+	transition: top 0.15s ease, font-size 0.15s ease, transform 0.15s ease;
+}
+
+/* The storefront label lets a click through to its input; the editor's stays clickable, to edit its text. */
+.yaycheckout-checkout--floating-labels .form-row > label,
+.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > label {
+	pointer-events: none;
+}
+
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
+) :is(.input-text, select, textarea, .select2-selection--single),
+.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__code {
+	min-height: var(--yaycheckout-floating-height);
+	padding-block: 1.375em 0.375em;
+}
+
+/* Floated: small, at the top of the box. A select always shows a value, so its label never rests. */
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
+):is(:focus-within, .is-filled, :has(select)) > :is(label, .yaycheckout-field-preview__label),
+.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field:is(:focus-within, .is-filled) > .yaycheckout-coupon-form__label {
+	top: 0.4em;
+	font-size: 0.75em;
+	transform: none;
+}
+
+/* Its own rule: a browser without :autofill would drop the whole list above. */
+.yaycheckout-checkout--floating-labels .form-row:has(> label + .woocommerce-input-wrapper :autofill) > label {
+	top: 0.4em;
+	font-size: 0.75em;
+	transform: none;
+}
+
+/* A resting label stands in for the placeholder, which shows once the label floats. */
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > .input-text),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea))
+):not(:focus-within, .is-filled) :is(.input-text, textarea)::placeholder {
+	opacity: 0;
+}
+
+/* The coupon's label is its placeholder text, so the placeholder would only repeat it. */
+.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__code::placeholder {
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.yaycheckout-checkout--floating-labels .form-row > :is(label, .yaycheckout-field-preview__label),
+	.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__label {
+		transition: none;
+	}
+}
+
 /* Notices: WooCommerce's classic list markup, and the banner markup it prints on block themes (wc-blocks-style draws its layout). */
 body.yaycheckout-page :is(.woocommerce-error, .woocommerce-message, .woocommerce-info) {
 	--yaycheckout-notice: var(--yaycheckout-primary-color);

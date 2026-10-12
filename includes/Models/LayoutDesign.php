@@ -71,7 +71,8 @@ final class LayoutDesign {
      *
      * Every default is empty: '' for a colour or an enum, null for an int. A colour is '', a hex colour or a
      * theme preset; colours.background may also be a gradient. The inputs.size token is an abstract step; the
-     * renderer decides its px.
+     * renderer decides its px. The inputs.label token prints no custom property: it is the checkout wrapper's
+     * yaycheckout-checkout--floating-labels class.
      */
     public static function schema(): array {
         return [
@@ -131,8 +132,18 @@ final class LayoutDesign {
                     'type'    => 'color',
                     'default' => '',
                 ],
+                'label'      => [
+                    'type'    => 'enum',
+                    'default' => '',
+                    'enum'    => [ '', 'floating' ],
+                ],
             ],
         ];
+    }
+
+    /** True when the inputs' labels sit inside the box and float up once the field is focused or filled. */
+    public function has_floating_labels(): bool {
+        return 'floating' === ( $this->sections['inputs']['label'] ?? '' );
     }
 
     /**
