@@ -1,10 +1,10 @@
-/** Where the edit link points; the router owns the route itself. */
-const LAYOUTS_PATH = '/layouts';
+/** The Layouts page, where the app starts and every "Back to Layouts" goes. */
+export const LAYOUTS_PATH = '/layouts';
 
 /** Search param naming the layout the embedded editor opens. */
 export const EDIT_LAYOUT_PARAM = 'edit';
 
-/** The Layouts route that opens `id` in the embedded editor. */
+/** The Layouts route that opens `id` in the embedded editor. Mirrors AdminUrlHelper::edit_layout() in PHP. */
 export function editLayoutPath(id: number): string {
   return `${LAYOUTS_PATH}?${EDIT_LAYOUT_PARAM}=${id}`;
 }

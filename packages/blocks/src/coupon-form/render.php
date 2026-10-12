@@ -20,15 +20,11 @@ if ( ! function_exists( 'WC' ) || ! WC()->cart instanceof WC_Cart || ! wc_coupon
 }
 
 // Mirrors woocommerce_checkout_coupon_form(): a guest who must log in gets no checkout form, so no coupon either.
-$yaycheckout_checkout = WC()->checkout();
-
-if ( ! is_user_logged_in() && ! $yaycheckout_checkout->is_registration_enabled() && $yaycheckout_checkout->is_registration_required() ) {
+if ( \YayCheckout\Renderer\CheckoutLogin::must_log_in() ) {
     return;
 }
 
-$yaycheckout_placeholder = isset( $attributes['placeholder'] ) && is_string( $attributes['placeholder'] ) && '' !== $attributes['placeholder']
-    ? $attributes['placeholder']
-    : __( 'Coupon code', 'yaycheckout' );
+$yaycheckout_placeholder = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'placeholder', __( 'Coupon code', 'yaycheckout' ) );
 
 // The Button colors are the Coupon Button's starting look; its own colour support wins (coupon-button/style.css).
 $yaycheckout_button_vars       = [];
@@ -70,9 +66,7 @@ $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, '
 ?>
 <div <?php echo \YayCheckout\Renderer\HideWhenEmpty::wrapper( $yaycheckout_wrapper_attrs, $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php
-    if ( \YayCheckout\Services\Disclosure::NONE !== $yaycheckout_disclosure ) {
-        echo \YayCheckout\Services\Disclosure::open( 'yaycheckout-coupon-code', \YayCheckout\Services\Disclosure::text( $attributes, 'yaycheckout-coupon-code', __( 'Coupon code', 'yaycheckout' ), $yaycheckout_disclosure ), $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
-    }
+    echo \YayCheckout\Services\Disclosure::open_if( $attributes, 'yaycheckout-coupon-code', __( 'Coupon code', 'yaycheckout' ), $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
     ?>
     <div class="yaycheckout-coupon-form__row">
         <label for="yaycheckout-coupon-code" class="screen-reader-text"><?php esc_html_e( 'Coupon:', 'yaycheckout' ); ?></label>
@@ -84,5 +78,5 @@ $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, '
         <?php echo $yaycheckout_button; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered block markup; its render.php escapes. ?>
     </div>
     <div class="yaycheckout-coupon-form__notices" aria-live="polite" data-error-text="<?php esc_attr_e( 'The coupon could not be applied. Please try again.', 'yaycheckout' ); ?>"></div>
-    <?php echo \YayCheckout\Services\Disclosure::NONE !== $yaycheckout_disclosure ? \YayCheckout\Services\Disclosure::close() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
+    <?php echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
 </div>

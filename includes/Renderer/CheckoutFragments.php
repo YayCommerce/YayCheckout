@@ -124,13 +124,9 @@ class CheckoutFragments {
 
     /** The Place order button alone (render.php prints only it during AJAX), when it shows the total. */
     private static function place_order_button_html( string $markup ): string {
-        foreach ( LayoutMarkupReader::flatten( parse_blocks( $markup ) ) as $block ) {
-            if ( 'yaycheckout/place-order' === $block['blockName'] ) {
-                return empty( $block['attrs']['showTotal'] ) ? '' : render_block( $block );
-            }
-        }
+        $block = LayoutMarkupReader::first_block( $markup, 'yaycheckout/place-order' );
 
-        return '';
+        return null === $block || empty( $block['attrs']['showTotal'] ) ? '' : render_block( $block );
     }
 
     public static function print_shipping_rates(): void {
@@ -152,13 +148,13 @@ class CheckoutFragments {
     /**
      * Inline style attribute value of --yaycheckout-shipping-* vars from the block's style object.
      * Empty when no Methods styles are set. Mirrors packages/blocks/.../style-paths.ts.
+     * Row radius and background live under style.yaycheckout: core's border and background style the wrapper.
      *
      * @param array $attributes Block attributes.
      */
     public static function shipping_methods_style_attribute( array $attributes ): string {
         $style   = isset( $attributes['style'] ) && is_array( $attributes['style'] ) ? $attributes['style'] : [];
         $spacing = isset( $style['spacing'] ) && is_array( $style['spacing'] ) ? $style['spacing'] : [];
-        $border  = isset( $style['border'] ) && is_array( $style['border'] ) ? $style['border'] : [];
         $color   = isset( $style['color'] ) && is_array( $style['color'] ) ? $style['color'] : [];
         $yay     = isset( $style['yaycheckout'] ) && is_array( $style['yaycheckout'] ) ? $style['yaycheckout'] : [];
         $decls   = [];
@@ -168,12 +164,12 @@ class CheckoutFragments {
             $decls[] = '--yaycheckout-shipping-gap:' . $gap;
         }
 
-        $radius = self::shipping_css_length( $border['radius'] ?? null );
+        $radius = self::shipping_css_length( $yay['radius'] ?? null );
         if ( '' !== $radius ) {
             $decls[] = '--yaycheckout-shipping-radius:' . $radius;
         }
 
-        $bg = self::shipping_css_color( $color['background'] ?? null );
+        $bg = self::shipping_css_color( $yay['background'] ?? null );
         if ( '' !== $bg ) {
             $decls[] = '--yaycheckout-shipping-bg:' . $bg;
         }

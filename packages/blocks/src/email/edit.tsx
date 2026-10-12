@@ -1,8 +1,9 @@
-import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, TextControl } from '@wordpress/components';
+import { PanelBody } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { FieldPreview } from '../shared/field-preview';
+import { EMAIL_LABEL } from './defaults';
+import { FieldTextControls } from '../shared/field-text-controls';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
 
 interface EmailAttributes {
@@ -30,21 +31,11 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		<>
 			<InspectorControls>
 				<PanelBody title={ __( 'Email address', 'yaycheckout' ) }>
-					<TextControl
-						label={ __( 'Label', 'yaycheckout' ) }
-						value={ decodeEntities( label ) }
-						onChange={ ( value ) => setAttributes( { label: value } ) }
-					/>
-					<TextControl
-						label={ __( 'Placeholder', 'yaycheckout' ) }
-						value={ placeholder }
-						onChange={ ( value ) => setAttributes( { placeholder: value } ) }
-					/>
-					<TextControl
-						label={ __( 'Help text', 'yaycheckout' ) }
-						help={ __( 'Shown under the field while the shopper fills it in.', 'yaycheckout' ) }
-						value={ description }
-						onChange={ ( value ) => setAttributes( { description: value } ) }
+					<FieldTextControls
+						label={ label }
+						placeholder={ placeholder }
+						description={ description }
+						setAttributes={ setAttributes }
 					/>
 					<RequiredIndicatorControls
 						required
@@ -60,7 +51,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				<FieldPreview
 					label={ label }
 					onLabelChange={ ( value ) => setAttributes( { label: value } ) }
-					labelPlaceholder={ __( 'Email address', 'yaycheckout' ) }
+					labelPlaceholder={ EMAIL_LABEL }
 					type="email"
 					required
 					requiredMark={ requiredMark }

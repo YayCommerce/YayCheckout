@@ -10,9 +10,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_label = isset( $attributes['label'] ) && is_string( $attributes['label'] ) && '' !== $attributes['label']
-    ? $attributes['label']
-    : __( 'Shipping methods', 'yaycheckout' );
+$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', __( 'Shipping methods', 'yaycheckout' ) );
 
 $yaycheckout_wrapper_base = [
     'class'       => 'yaycheckout-shipping-methods',

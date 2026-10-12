@@ -1,6 +1,6 @@
 # Address default structure Implementation Plan
 
-**Status:** active
+**Status:** done 2026-10-07
 **Goal:** New Billing and Shipping sections start with the screenshot's layout. First and last name sit side by side, then Company, Country, Address, the collapsed Apartment link, City, State and ZIP in one row, and Phone with help text.
 **Spec:** none, planned from the request and a screenshot.
 **Branch:** `trace/feat/address-default-structure` from `dev/edd`.

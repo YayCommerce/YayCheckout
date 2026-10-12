@@ -1,5 +1,6 @@
 import { InnerBlocks } from '@wordpress/block-editor';
 import { registerBlockType } from '@wordpress/blocks';
+import { decodeEntities } from '@wordpress/html-entities';
 import { blockIcons } from './block-icons';
 
 type BlockSettings = NonNullable< Parameters< typeof registerBlockType >[ 1 ] >;
@@ -11,6 +12,17 @@ type BlockMetadata = { name: string } & Record< string, unknown >;
  */
 export function saveNestedBlocks() {
 	return <InnerBlocks.Content />;
+}
+
+type NamedAttributes = { metadata?: { name?: string } };
+
+/**
+ * An __experimentalLabel for the List View only: the name the merchant gave the block, else $text,
+ * entities decoded. Undefined falls back to the block's title.
+ */
+export function listViewLabel< A >( text: ( attributes: A ) => string ) {
+	return ( attributes: A & NamedAttributes, { context }: { context: string } ): string | undefined =>
+		context === 'list-view' ? attributes.metadata?.name || decodeEntities( text( attributes ) ) || undefined : undefined;
 }
 
 /**

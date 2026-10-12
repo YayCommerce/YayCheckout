@@ -1,6 +1,6 @@
 <?php
 /**
- * Prints a named empty slot that plugins fill through the yaycheckout_slot_{name} action.
+ * Prints a named slot that plugins fill through the yaycheckout_slot_{name} action, and nothing while none does.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
@@ -13,7 +13,7 @@ $yaycheckout_slot_name = isset( $attributes['slotName'] ) && is_string( $attribu
     ? sanitize_key( $attributes['slotName'] )
     : '';
 
-// Buffered so a slot nothing hooks into marks the block empty for HideWhenEmpty.
+// Buffered so a slot nothing hooks into prints nothing.
 ob_start();
 
 if ( '' !== $yaycheckout_slot_name ) {
@@ -23,13 +23,18 @@ if ( '' !== $yaycheckout_slot_name ) {
 
 $yaycheckout_slot_content = (string) ob_get_clean();
 
+// Prints nothing when no hook printed anything, so the merchant's padding, border or background don't draw an
+// empty box. HideWhenEmpty counts a block that prints nothing as empty.
+if ( '' === trim( $yaycheckout_slot_content ) ) {
+    return;
+}
+
 $yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
     [
         'class'     => 'yaycheckout-slot',
         'data-slot' => $yaycheckout_slot_name,
     ],
-    $attributes,
-    '' === trim( $yaycheckout_slot_content )
+    $attributes
 );
 
 ?>

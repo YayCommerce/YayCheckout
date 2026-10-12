@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. There is no spec; the Requirements below are the contract.
 
-**Status:** active
+**Status:** done 2026-10-09
 **Goal:** The coupon form's Apply button becomes its own block, Coupon Button, so a merchant can style it from core's Styles panel: colour, typography, border, padding, and Fill/Outline.
 **Spec:** none, planned from the request
 **Architecture:** Coupon Button copies Place Order (`packages/blocks/src/place-order/`): the `<button>` is the block's root element, so `useBlockProps` and `get_block_wrapper_attributes()` print the style supports on it. Coupon Form becomes a parent that holds exactly one Coupon Button, locked by its template. Coupon Form's existing Background and Text colours become the button's starting look: the parent prints them as CSS custom properties, and the child reads them only while it has no colour of its own. This was chosen over adding more sidebar controls to Coupon Form (option 1) or a global Buttons section in Design (option 3). The block gets core's full style UI and theme presets, applied to each button separately.

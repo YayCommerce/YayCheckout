@@ -1,7 +1,6 @@
 <?php
 namespace YayCheckout\Controllers;
 
-use YayCheckout\Repositories\DesignRepository;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
 use YayCheckout\Utils\SingletonTrait;
@@ -14,13 +13,10 @@ class SetupRestController extends BaseRestController {
 
     private LayoutRepository $layouts;
 
-    private DesignRepository $design;
-
     private SettingsRepository $settings;
 
     protected function __construct() {
         $this->layouts  = new LayoutRepository();
-        $this->design   = new DesignRepository();
         $this->settings = new SettingsRepository();
 
         register_rest_route(
@@ -39,10 +35,6 @@ class SetupRestController extends BaseRestController {
                             return is_string( $value ) && '' !== trim( $value );
                         },
                     ],
-                    'design'        => [
-                        'required' => true,
-                        'type'     => 'object',
-                    ],
                     'rerun'         => [
                         'type'    => 'boolean',
                         'default' => false,
@@ -53,16 +45,16 @@ class SetupRestController extends BaseRestController {
     }
 
     /**
-     * Creates the wizard's draft layout, saves its design and marks setup done.
+     * Creates the wizard's draft layout from the picked template and marks setup done.
      *
-     * Everything is validated before the first write, so a refusal leaves no
-     * draft, design or setup flag behind. Once setup is done a first run refuses
+     * The template is validated before the first write, so a refusal leaves no
+     * draft or setup flag behind. Once setup is done a first run refuses
      * with 409: a retry after a lost response, or a second tab, would otherwise add
      * another draft. A re-run from Settings sends `rerun` and always adds a draft.
      *
-     * Body: { template_slug, design: { tokens, custom_css }, rerun? }.
+     * Body: { template_slug, rerun? }.
      *
-     * @return array|\WP_Error { layout, design }
+     * @return array|\WP_Error { layout }
      */
     public function complete_setup( \WP_REST_Request $request ) {
         if ( ! $request->get_param( 'rerun' ) && $this->settings->is_setup_done() ) {
@@ -70,19 +62,15 @@ class SetupRestController extends BaseRestController {
         }
 
         try {
-            LayoutTemplateCatalogue::assert_available( (string) $request->get_param( 'template_slug' ) );
-            $design = $this->design->prepare( (array) $request->get_param( 'design' ) );
-            $layout = $this->layouts->create( __( 'Checkout — draft', 'yaycheckout' ) );
+            $template_slug = (string) $request->get_param( 'template_slug' );
+            LayoutTemplateCatalogue::assert_available( $template_slug );
+            $layout = $this->layouts->create( __( 'Checkout — draft', 'yaycheckout' ), $template_slug );
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
 
-        $design = $this->design->store( $design );
         $this->settings->mark_setup_done();
 
-        return [
-            'layout' => $layout->to_array(),
-            'design' => $design->to_array(),
-        ];
+        return [ 'layout' => $layout->to_array() ];
     }
 }

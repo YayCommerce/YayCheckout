@@ -2,15 +2,15 @@ import {
 	InspectorControls,
 	useBlockProps,
 	useInnerBlocksProps,
-	useSettings,
 } from '@wordpress/block-editor';
-import { PanelBody, SelectControl } from '@wordpress/components';
+import { PanelBody, SelectControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import stepMeta from '../step/block.json';
-import { blockGapCSS, type BlockGapStyles } from '../shared/block-gap';
+import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 
 interface StepsAttributes {
 	layout: string;
+	showHeadings: boolean;
 	style?: BlockGapStyles;
 }
 
@@ -25,12 +25,10 @@ interface EditProps {
  * can be edited; locking and Continue run on the storefront.
  */
 export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
-	const { layout, style } = attributes;
-	const [ viewport ] = useSettings( 'viewport' );
+	const { layout, showHeadings, style } = attributes;
+	const css = useBlockGapCSS( `#block-${ clientId }`, style );
 
-	const css = blockGapCSS( `#block-${ clientId }`, style, viewport );
-
-	const blockProps = useBlockProps( { className: 'yaycheckout-steps' } );
+	const blockProps = useBlockProps( { className: 'yaycheckout-steps', 'data-layout': layout } );
 	const innerBlocksProps = useInnerBlocksProps( blockProps, {
 		template: [ [ stepMeta.name ], [ stepMeta.name ] ],
 		templateLock: false,
@@ -44,12 +42,18 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 				<PanelBody title={ __( 'Steps', 'yaycheckout' ) }>
 					<SelectControl
 						label={ __( 'Layout', 'yaycheckout' ) }
-						value={ layout || 'list' }
+						value={ layout || 'accordion' }
 						options={ [
-							{ label: __( 'List', 'yaycheckout' ), value: 'list' },
-							{ label: __( 'One step', 'yaycheckout' ), value: 'single' },
+							{ label: __( 'Accordion', 'yaycheckout' ), value: 'accordion' },
+							{ label: __( 'One step at a time', 'yaycheckout' ), value: 'one-at-a-time' },
+							{ label: __( 'Vertical timeline', 'yaycheckout' ), value: 'timeline' },
 						] }
 						onChange={ ( value ) => setAttributes( { layout: value } ) }
+					/>
+					<ToggleControl
+						label={ __( 'Show step headings', 'yaycheckout' ) }
+						checked={ showHeadings }
+						onChange={ ( value: boolean ) => setAttributes( { showHeadings: value } ) }
 					/>
 				</PanelBody>
 			</InspectorControls>

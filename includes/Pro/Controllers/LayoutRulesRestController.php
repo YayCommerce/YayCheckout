@@ -45,7 +45,7 @@ class LayoutRulesRestController extends BaseRestController {
         $layout = $this->layouts->find( (int) $request->get_param( 'id' ) );
 
         if ( null === $layout ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+            return $this->error_layout_not_found();
         }
 
         return [ 'rules' => $layout->rules ];
@@ -61,7 +61,7 @@ class LayoutRulesRestController extends BaseRestController {
         $input = $request->get_json_params();
 
         if ( null === $this->layouts->find( $id ) ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+            return $this->error_layout_not_found();
         }
 
         if ( ! is_array( $input ) || ! array_key_exists( 'rules', $input ) ) {

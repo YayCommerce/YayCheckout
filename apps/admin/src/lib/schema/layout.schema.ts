@@ -122,10 +122,13 @@ export type PreviewLink = {
   expiresAt: string;
 };
 
+/** A layout's name, as create and rename take it. Mirrors LayoutRestController::name_arg(). */
+export const layoutNameSchema = z.string().trim().min(1, __('Name is required', 'yaycheckout'));
+
 /** New layout form. Mirrors LayoutRestController's template_slug rule; only the server checks the slug is in the catalogue. */
 export const newLayoutFormSchema = z
   .object({
-    name: z.string().trim().min(1, __('Name is required', 'yaycheckout')),
+    name: layoutNameSchema,
     source: z.enum(['blank', 'library']),
     templateSlug: z.string().nullable(),
   })
@@ -135,6 +138,13 @@ export const newLayoutFormSchema = z
   });
 
 export type NewLayoutFormValues = z.infer<typeof newLayoutFormSchema>;
+
+/** Rename form. */
+export const renameLayoutFormSchema = z.object({
+  name: layoutNameSchema,
+});
+
+export type RenameLayoutForm = z.infer<typeof renameLayoutFormSchema>;
 
 export const layoutRulesWireSchema = z.object({
   rules: rulesWireSchema,

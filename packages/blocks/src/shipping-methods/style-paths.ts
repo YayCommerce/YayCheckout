@@ -2,10 +2,11 @@ import type { ShippingSettingKey } from './setting-controls';
 
 type StyleObject = Record< string, unknown >;
 
+/** Row radius and background sit under `yaycheckout`, because core's border and background style the wrapper. */
 const PATHS: Record< ShippingSettingKey, string[] > = {
 	gap: [ 'spacing', 'blockGap' ],
-	borderRadius: [ 'border', 'radius' ],
-	backgroundColor: [ 'color', 'background' ],
+	borderRadius: [ 'yaycheckout', 'radius' ],
+	backgroundColor: [ 'yaycheckout', 'background' ],
 	backgroundColorSelected: [ 'yaycheckout', 'backgroundSelected' ],
 	backgroundColorHover: [ 'yaycheckout', 'backgroundHover' ],
 };

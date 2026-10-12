@@ -8,6 +8,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { store as noticesStore } from '@wordpress/notices';
 import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
+import { useIsLayoutEditor } from '../shared/layout-editor';
 import { errorMessage } from '../shared/error-message';
 import type { LayoutDesignMeta } from './layout-design';
 import { filenameFromHeaders, isJsonFileName, saveFile } from '../shared/export-file';
@@ -28,7 +29,7 @@ type ImportReview = {
 	blocks: number;
 	/** The file carries assignment rules; this import leaves them behind. */
 	has_rules: boolean;
-	/** The file's design override as an import stores it; every section null when the file has none. */
+	/** The file's design as an import stores it; every token empty when the file has none. */
 	design: LayoutDesignMeta;
 };
 
@@ -198,9 +199,9 @@ function ImportModal( {
 function LayoutImportExport() {
 	const [ isImportOpen, setImportOpen ] = useState( false );
 	const [ isExporting, setExporting ] = useState( false );
-	const { postType, postId, title, hasUnsavedChanges } = useSelect(
+	const isLayout = useIsLayoutEditor();
+	const { postId, title, hasUnsavedChanges } = useSelect(
 		( select ) => ( {
-			postType: select( editorStore ).getCurrentPostType(),
 			postId: select( editorStore ).getCurrentPostId(),
 			title: select( editorStore ).getEditedPostAttribute( 'title' ),
 			hasUnsavedChanges: select( editorStore ).isEditedPostDirty() || select( editorStore ).isEditedPostNew(),
@@ -210,7 +211,7 @@ function LayoutImportExport() {
 	const { resetEditorBlocks, editPost } = useDispatch( editorStore );
 	const { createSuccessNotice, createErrorNotice } = useDispatch( noticesStore );
 
-	if ( postType !== editorData.postType ) {
+	if ( ! isLayout ) {
 		return null;
 	}
 

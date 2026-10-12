@@ -1,7 +1,6 @@
 <?php
 namespace YayCheckout\Engine;
 
-use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -23,7 +22,7 @@ class LayoutTrashSync {
     }
 
     public function keep_trashed_layout( $post_id ): void {
-        if ( Layout::POST_TYPE !== get_post_type( $post_id ) ) {
+        if ( ! LayoutRepository::is_layout( $post_id ) ) {
             return;
         }
 

@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Repositories;
 
+use YayCheckout\Controllers\LayoutTemplateCatalogue;
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
@@ -20,15 +21,20 @@ class LayoutRepository {
     public function find( int $id ): ?Layout {
         $post = get_post( $id );
 
-        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
-            return null;
+        return self::is_layout( $post ) ? $this->to_layout( $post, $this->is_active( $id ) ) : null;
+    }
+
+    /**
+     * Whether $post is a layout.
+     *
+     * @param \WP_Post|int|string|null $post A post or its id.
+     */
+    public static function is_layout( $post ): bool {
+        if ( $post instanceof \WP_Post ) {
+            return Layout::POST_TYPE === $post->post_type;
         }
 
-        return Layout::from_post(
-            $post,
-            $this->hydrate_meta( get_post_meta( $id ) ),
-            $this->is_active( $id )
-        );
+        return null !== $post && Layout::POST_TYPE === get_post_type( $post );
     }
 
     /** Whether the layout is in the active set. Cheap per row: the option is in alloptions cache. */
@@ -80,11 +86,7 @@ class LayoutRepository {
                 continue;
             }
 
-            $layouts[] = Layout::from_post(
-                $post,
-                $this->hydrate_meta( get_post_meta( $post->ID ) ),
-                $this->is_active( (int) $post->ID )
-            );
+            $layouts[] = $this->to_layout( $post, $this->is_active( (int) $post->ID ) );
         }
 
         return [
@@ -149,11 +151,7 @@ class LayoutRepository {
      * @throws \InvalidArgumentException When the layout is missing, archived, or fails LayoutMarkupReader::publish_error().
      */
     public function publish( int $id ): Layout {
-        $post = get_post( $id );
-
-        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
-            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
-        }
+        $post = $this->post_or_throw( $id );
 
         // Same refusal as activate(): the status write below would un-archive it.
         if ( LayoutStatus::ARCHIVED === $post->post_status ) {
@@ -177,11 +175,7 @@ class LayoutRepository {
      * @throws \InvalidArgumentException When the layout is missing, archived or not publishable.
      */
     public function activate( int $id ): Layout {
-        $layout = $this->find( $id );
-
-        if ( null === $layout ) {
-            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
-        }
+        $layout = $this->find_or_throw( $id );
 
         // Publishing would silently restore it from the trash and could exceed FREE_LIMIT.
         if ( LayoutStatus::ARCHIVED === $layout->post_status ) {
@@ -217,16 +211,12 @@ class LayoutRepository {
     /**
      * Stops serving the layout and returns it to draft, so a layout deactivated
      * from now on is never left published. Pending and scheduled count too.
+     * A missing layout throws \InvalidArgumentException, from post_or_throw().
      *
-     * @throws \InvalidArgumentException When the layout is missing.
-     * @throws \RuntimeException         When WordPress fails to move it to draft.
+     * @throws \RuntimeException When WordPress fails to move it to draft.
      */
     public function deactivate( int $id ): Layout {
-        $post = get_post( $id );
-
-        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
-            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
-        }
+        $post = $this->post_or_throw( $id );
 
         $this->forget_active( $id );
 
@@ -246,7 +236,7 @@ class LayoutRepository {
             $post = get_post( $id );
         }
 
-        return Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $id ) ), false );
+        return $this->to_layout( $post, false );
     }
 
     /**
@@ -264,11 +254,7 @@ class LayoutRepository {
      * @throws \RuntimeException         When WordPress refuses or fails to trash it.
      */
     public function archive( int $id ): Layout {
-        $post = get_post( $id );
-
-        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
-            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
-        }
+        $post = $this->post_or_throw( $id );
 
         if ( LayoutStatus::ARCHIVED === $post->post_status ) {
             throw new \InvalidArgumentException( __( 'This layout is already archived.', 'yaycheckout' ) );
@@ -286,7 +272,7 @@ class LayoutRepository {
         // wp_trash_post() hands back the pre-update object; only the status moved.
         $trashed->post_status = LayoutStatus::ARCHIVED;
 
-        return Layout::from_post( $trashed, $this->hydrate_meta( get_post_meta( $id ) ), false );
+        return $this->to_layout( $trashed, false );
     }
 
     /**
@@ -296,11 +282,7 @@ class LayoutRepository {
      * @throws \RuntimeException         When WordPress refuses or fails to untrash it.
      */
     public function restore( int $id ): Layout {
-        $post = get_post( $id );
-
-        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
-            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
-        }
+        $post = $this->post_or_throw( $id );
 
         if ( LayoutStatus::ARCHIVED !== $post->post_status ) {
             throw new \InvalidArgumentException( __( 'Layout is not archived.', 'yaycheckout' ) );
@@ -316,7 +298,7 @@ class LayoutRepository {
         $restored->post_status = LayoutStatus::DRAFT;
 
         // No Plan::layout_limit_reached() check: a restore may exceed the Free cap, unlike a new layout.
-        return Layout::from_post( $restored, $this->hydrate_meta( get_post_meta( $id ) ), false );
+        return $this->to_layout( $restored, false );
     }
 
     /**
@@ -340,72 +322,98 @@ class LayoutRepository {
     }
 
     /**
-     * Creates a layout draft seeded with a complete checkout, so activating it
-     * as-is lets a shopper place an order. The post type's template only
+     * Creates a layout draft from a catalogue template: its markup, which is a complete checkout, so
+     * activating it as-is lets a shopper place an order, and its design. The post type's template only
      * applies to auto-drafts, not to this insert.
      *
-     * @throws \InvalidArgumentException When the layout limit is reached or the insert fails.
+     * @throws \InvalidArgumentException When the template is not available, the layout limit is reached or the insert fails.
      */
-    public function create( string $title ): Layout {
-        return $this->insert_draft( $title, self::default_markup(), [], LayoutDesign::none() );
+    public function create( string $title, string $template_slug ): Layout {
+        return $this->insert_draft(
+            $title,
+            LayoutTemplateCatalogue::markup( $template_slug ),
+            [],
+            LayoutTemplateCatalogue::design( $template_slug ),
+            $template_slug
+        );
     }
 
     /**
-     * Copies a layout's content, assignment rules and design override into a new draft layout.
+     * Copies a layout's content, assignment rules, design and template into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
     public function duplicate( int $id ): Layout {
-        $source = $this->find( $id );
-
-        if ( null === $source ) {
-            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
-        }
+        $source = $this->find_or_throw( $id );
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template );
     }
 
     /**
-     * Creates a draft from an export file's title, markup, assignment rules and design override, verbatim.
+     * Creates a draft from an export file's title, markup, assignment rules and design, verbatim.
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
      * @param array $rules Already sanitized (Layout::sanitize_rules()); [] for none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
     public function import( string $title, string $content, array $rules, LayoutDesign $design ): Layout {
-        return $this->insert_draft( $title, $content, $rules, $design );
+        return $this->insert_draft( $title, $content, $rules, $design, '' );
     }
 
     /**
-     * Puts a layout's blocks back to the default layout. Title, status, meta and the
-     * active flag stay; WordPress stores the old markup as a revision, so the editor can undo it.
+     * Puts a layout's blocks and design back to its template's, or to the default template's when it has
+     * none still available. The plan lock is not checked: it governs creating, not the merchant's own layout.
+     * Title, status, rules, the template and the active flag stay. WordPress stores the old markup as a
+     * revision, so the editor can undo it; the design meta has no revisions.
      *
      * @throws \InvalidArgumentException When the layout is missing or the update fails.
      */
     public function reset( int $id ): Layout {
-        if ( null === $this->find( $id ) ) {
-            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
-        }
+        $layout = $this->find_or_throw( $id );
+
+        $slug = LayoutTemplateCatalogue::is_available( $layout->template ) ? $layout->template : LayoutTemplateCatalogue::DEFAULT_SLUG;
 
         // Core revisions the post after the update, so a layout never saved in the editor has no revision
         // holding the old markup. No-op when the latest revision already matches.
         wp_save_post_revision( $id );
 
-        // wp_update_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
-        $result = wp_update_post(
-            wp_slash(
-                [
-                    'ID'           => $id,
-                    'post_content' => self::default_markup(),
-                ]
-            ),
-            true
+        // Slashed by update_post(): without it block attributes lose their \uXXXX escapes.
+        $this->update_post(
+            [
+                'ID'           => $id,
+                'post_content' => LayoutTemplateCatalogue::markup( $slug ),
+            ]
         );
 
-        if ( is_wp_error( $result ) ) {
-            throw new \InvalidArgumentException( $result->get_error_message() );
+        // update_post_meta() unslashes too; a template's custom CSS may hold backslashes.
+        update_post_meta( $id, Layout::META_DESIGN, wp_slash( LayoutTemplateCatalogue::design( $slug )->to_meta() ) );
+
+        return $this->find( $id );
+    }
+
+    /**
+     * Changes a layout's title. Status, content, rules, design and the active flag stay.
+     *
+     * @param string $title Already sanitized (sanitize_text_field()).
+     * @throws \InvalidArgumentException When the layout is missing, the title is blank, or the update fails.
+     */
+    public function rename( int $id, string $title ): Layout {
+        $this->find_or_throw( $id );
+
+        $title = trim( $title );
+
+        if ( '' === $title ) {
+            throw new \InvalidArgumentException( __( 'Name is required.', 'yaycheckout' ) );
         }
+
+        // Slashed by update_post(): a title may hold backslashes.
+        $this->update_post(
+            [
+                'ID'         => $id,
+                'post_title' => $title,
+            ]
+        );
 
         return $this->find( $id );
     }
@@ -419,9 +427,7 @@ class LayoutRepository {
      * @throws \InvalidArgumentException When the layout is missing or the rules are invalid.
      */
     public function set_rules( int $id, $rules ): array {
-        if ( null === $this->find( $id ) ) {
-            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
-        }
+        $this->find_or_throw( $id );
 
         $clean = Layout::sanitize_rules( $rules );
 
@@ -437,14 +443,19 @@ class LayoutRepository {
     /**
      * The one insert path for a new draft, so the cap and slashing cannot drift.
      *
-     * @param array $rules Already sanitized; written with the post, like the design, so the draft never exists without them.
+     * @param array  $rules         Already sanitized; written with the post, like the design, so the draft never exists without them.
+     * @param string $template_slug The catalogue template it comes from; '' when none (an import).
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design ): Layout {
+    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug ): Layout {
         $meta = [ Layout::META_DESIGN => $design->to_meta() ];
 
         if ( [] !== $rules ) {
             $meta[ Layout::META_RULES ] = $rules;
+        }
+
+        if ( '' !== $template_slug ) {
+            $meta[ Layout::META_TEMPLATE ] = $template_slug;
         }
 
         // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.
@@ -481,11 +492,7 @@ class LayoutRepository {
      * @throws \RuntimeException         When WordPress refuses the delete.
      */
     public function delete( int $id ): void {
-        $post = get_post( $id );
-
-        if ( ! $post instanceof \WP_Post || Layout::POST_TYPE !== $post->post_type ) {
-            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
-        }
+        $post = $this->post_or_throw( $id );
 
         if ( LayoutStatus::ARCHIVED !== $post->post_status ) {
             throw new \InvalidArgumentException( __( 'Archive this layout before deleting it.', 'yaycheckout' ) );
@@ -498,17 +505,6 @@ class LayoutRepository {
         if ( ! wp_delete_post( $id, true ) ) {
             throw new \RuntimeException( sprintf( 'Layout %d could not be deleted.', $id ) );
         }
-    }
-
-    /**
-     * Block markup for a new layout, from templates/default-layout.php: a header, the checkout in two
-     * columns (form; order summary with coupon), a footer.
-     */
-    public static function default_markup(): string {
-        ob_start();
-        include YAYCHECKOUT_PLUGIN_DIR . 'templates/default-layout.php';
-
-        return (string) ob_get_clean();
     }
 
     /**
@@ -532,6 +528,49 @@ class LayoutRepository {
      */
     private function store_ids( array $ids ): void {
         update_option( Layout::OPTION_ACTIVE, array_values( $ids ) );
+    }
+
+    /**
+     * @throws \InvalidArgumentException When $id is not a layout.
+     */
+    private function post_or_throw( int $id ): \WP_Post {
+        $post = get_post( $id );
+
+        if ( ! self::is_layout( $post ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        return $post;
+    }
+
+    /**
+     * @throws \InvalidArgumentException When $id is not a layout.
+     */
+    private function find_or_throw( int $id ): Layout {
+        $layout = $this->find( $id );
+
+        if ( null === $layout ) {
+            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+        }
+
+        return $layout;
+    }
+
+    private function to_layout( \WP_Post $post, bool $is_active ): Layout {
+        return Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $post->ID ) ), $is_active );
+    }
+
+    /**
+     * Updates the post, slashed first because wp_update_post() unslashes its input.
+     *
+     * @throws \InvalidArgumentException With WordPress's message when the update fails.
+     */
+    private function update_post( array $fields ): void {
+        $result = wp_update_post( wp_slash( $fields ), true );
+
+        if ( is_wp_error( $result ) ) {
+            throw new \InvalidArgumentException( $result->get_error_message() );
+        }
     }
 
     /**

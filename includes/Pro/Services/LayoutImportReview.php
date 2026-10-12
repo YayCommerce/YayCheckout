@@ -3,6 +3,7 @@ namespace YayCheckout\Pro\Services;
 
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
+use YayCheckout\Services\LayoutMarkupReader;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -28,7 +29,7 @@ class LayoutImportReview {
         $layout = self::layout( $envelope );
 
         // First of LayoutMarkupReader::publish_error()'s rules; the rest wait for publish, as for any draft.
-        if ( ! has_block( 'yaycheckout/checkout', $layout['content'] ) ) {
+        if ( ! LayoutMarkupReader::has_checkout( $layout['content'] ) ) {
             throw new \InvalidArgumentException( __( 'The file does not contain a checkout layout.', 'yaycheckout' ) );
         }
 
@@ -65,9 +66,9 @@ class LayoutImportReview {
     }
 
     /**
-     * The design override is projected, never refused: a bad value only changes how the layout looks, so a missing
-     * or malformed section follows the global design and an invalid token reads as its default. A file from before
-     * design overrides has none.
+     * The design is projected, never refused: a bad value only changes how the layout looks, so a missing
+     * or malformed section imports as empty and an invalid token reads as its empty default. A file from before
+     * layout designs has none.
      *
      * @return array { title, content, rules, design }
      * @throws \InvalidArgumentException When the envelope is not a YayCheckout export.

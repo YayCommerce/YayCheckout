@@ -1,3 +1,4 @@
+import apiFetch from '@wordpress/api-fetch';
 import {
 	__experimentalColorGradientSettingsDropdown as ColorGradientSettingsDropdown,
 	__experimentalUseMultipleOriginColorsAndGradients as useMultipleOriginColorsAndGradients,
@@ -9,8 +10,6 @@ import {
 	RangeControl,
 	SelectControl,
 	TextareaControl,
-	__experimentalToggleGroupControl as ToggleGroupControl,
-	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
 	__experimentalToolsPanel as ToolsPanel,
 } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
@@ -18,25 +17,27 @@ import { PluginSidebar, PluginSidebarMoreMenuItem, store as editorStore } from '
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
+import { useCanvasStyle } from '../shared/canvas-style';
 import { designCss, isGradient } from '../shared/design-css';
-import { editorData, type DesignRule, type DesignTokens, type EditorDesign } from '../shared/editor-data';
+import { editorData, type DesignRule, type EditorDesign } from '../shared/editor-data';
+import { useIsLayoutEditor } from '../shared/layout-editor';
+import { errorMessage } from '../shared/error-message';
 import './layout-design.css';
 
 const SIDEBAR = 'yaycheckout-layout-design';
 const CSS_LOCK = 'yaycheckout-layout-design-css';
 
-type SectionTokens = Record< string, string | number | boolean >;
+type SectionTokens = Record< string, string | number | null >;
 
-/** Layout::META_DESIGN as LayoutDesign::to_meta() shapes it: null follows the global design. */
+/** Layout::META_DESIGN as LayoutDesign::to_meta() shapes it: every section present, an empty token '' or null. */
 export type LayoutDesignMeta = {
-	colours: SectionTokens | null;
-	typography: SectionTokens | null;
-	inputs: SectionTokens | null;
+	colours: SectionTokens;
+	typography: SectionTokens;
+	inputs: SectionTokens;
 	custom_css: string;
 };
 
 type Section = 'colours' | 'typography' | 'inputs';
-type Mode = 'global' | 'custom';
 
 const SECTIONS: Record< Section, string > = {
 	colours: __( 'Colours', 'yaycheckout' ),
@@ -57,6 +58,7 @@ const TOKEN_LABELS: Record< string, string > = {
 };
 
 const ENUM_LABELS: Record< string, string > = {
+	'': __( 'Theme default', 'yaycheckout' ),
 	boxed: __( 'Boxed', 'yaycheckout' ),
 	underline: __( 'Underline', 'yaycheckout' ),
 	small: __( 'Small', 'yaycheckout' ),
@@ -64,27 +66,35 @@ const ENUM_LABELS: Record< string, string > = {
 	large: __( 'Large', 'yaycheckout' ),
 };
 
-const NONE: LayoutDesignMeta = { colours: null, typography: null, inputs: null, custom_css: '' };
-
-function isTokens( value: unknown ): value is SectionTokens {
+function isTokens( value: unknown ): value is Record< string, unknown > {
 	return null !== value && 'object' === typeof value && ! Array.isArray( value );
 }
 
-/** The meta as the editor holds it, with every key present. */
-function normalize( raw: unknown ): LayoutDesignMeta {
-	if ( ! isTokens( raw ) ) {
-		return NONE;
-	}
+/** One section with every key of its rules, each from `raw` when present there and from the empty default otherwise. */
+function sectionTokens( rules: Record< string, DesignRule >, raw: unknown ): SectionTokens {
+	const values = isTokens( raw ) ? raw : {};
+
+	return Object.fromEntries(
+		Object.entries( rules ).map( ( [ token, rule ] ) => [
+			token,
+			token in values ? ( values[ token ] as string | number | null ) : rule.default,
+		] )
+	);
+}
+
+/** The meta as the editor holds it, with every key present. The server projects it on save. */
+function normalize( design: EditorDesign, raw: unknown ): LayoutDesignMeta {
+	const meta = isTokens( raw ) ? raw : {};
 
 	return {
-		colours: isTokens( raw.colours ) ? raw.colours : null,
-		typography: isTokens( raw.typography ) ? raw.typography : null,
-		inputs: isTokens( raw.inputs ) ? raw.inputs : null,
-		custom_css: 'string' === typeof raw.custom_css ? raw.custom_css : '',
+		colours: sectionTokens( design.schema.colours, meta.colours ),
+		typography: sectionTokens( design.schema.typography, meta.typography ),
+		inputs: sectionTokens( design.schema.inputs, meta.inputs ),
+		custom_css: 'string' === typeof meta.custom_css ? meta.custom_css : '',
 	};
 }
 
-/** The edited override and its setter; writing marks the post dirty, and Save stores it with the markup. */
+/** The edited design and its setter; writing marks the post dirty, and Save stores it with the markup. */
 function useLayoutDesign( design: EditorDesign ): [ LayoutDesignMeta, ( next: LayoutDesignMeta ) => void ] {
 	const raw = useSelect(
 		( selectStore ) =>
@@ -95,24 +105,10 @@ function useLayoutDesign( design: EditorDesign ): [ LayoutDesignMeta, ( next: La
 	);
 	const { editPost } = useDispatch( editorStore );
 
-	return [ normalize( raw ), ( next ) => editPost( { meta: { [ design.metaKey ]: next } } ) ];
+	return [ normalize( design, raw ), ( next ) => editPost( { meta: { [ design.metaKey ]: next } } ) ];
 }
 
-/** The global tokens with each overridden section swapped in, as LayoutDesign::tokens_over() does in PHP. */
-function effectiveTokens( tokens: DesignTokens, override: LayoutDesignMeta ): DesignTokens {
-	const effective = { ...tokens };
-
-	( Object.keys( SECTIONS ) as Section[] ).forEach( ( section ) => {
-		const values = override[ section ];
-		if ( values ) {
-			effective[ section ] = values;
-		}
-	} );
-
-	return effective;
-}
-
-/** Mirrors Design::sanitize_custom_css() in PHP: its limits and its messages. */
+/** Mirrors LayoutDesign::sanitize_custom_css() in PHP: its limits and its messages. */
 function customCssError( css: string, maxBytes: number ): string | null {
 	if ( new TextEncoder().encode( css ).length > maxBytes ) {
 		/* translators: %d: size limit in KB */
@@ -124,21 +120,6 @@ function customCssError( css: string, maxBytes: number ): string | null {
 	}
 
 	return null;
-}
-
-function modeOf( values: SectionTokens | null ): Mode {
-	return values ? 'custom' : 'global';
-}
-
-/** Where a section starts when it leaves Global design: the global values while that section is on, else the defaults. */
-function seed( design: EditorDesign, section: Section ): SectionTokens {
-	if ( design.tokens[ section ]?.enabled ) {
-		return { ...design.tokens[ section ] };
-	}
-
-	return Object.fromEntries(
-		Object.entries( design.schema[ section ] ).map( ( [ key, rule ] ) => [ key, rule.default ] )
-	);
 }
 
 type Swatch = { slug: string; color?: string; gradient?: string };
@@ -165,14 +146,14 @@ function presetOf( value: string, kind: PresetKind, origins: ColourOrigin[] | un
 }
 
 function isColourRule( rule: DesignRule ): boolean {
-	return 'hex_color' === rule.type || 'color' === rule.type || 'fill' === rule.type;
+	return 'color' === rule.type || 'fill' === rule.type;
 }
 
 /**
  * A section's colour tokens as the block editor's colour items, in a ToolsPanel styled like a block's Color panel.
  * A theme swatch is stored as its preset's custom property, so the layout follows later palette changes; a
- * custom pick is stored as written. Clicking the selected swatch again unsets the colour (''), which prints
- * nothing, so the theme's colour shows. A fill (the background) also takes gradients.
+ * custom pick is stored as written. Clear, or clicking the selected swatch again, unsets the colour (''), which
+ * prints nothing, so the theme's colour shows. A fill (the background) also takes gradients.
  */
 function ColourSettings( {
 	rules,
@@ -230,7 +211,8 @@ function ColourSettings( {
 						onGradientChange: ( next?: string, slug?: string ) => change( token, 'gradient', next, slug ),
 				  }
 				: {} ),
-			clearable: false,
+			// Clear empties the token (''), so the theme's colour shows.
+			clearable: true,
 			isShownByDefault: true,
 		};
 	} );
@@ -271,13 +253,15 @@ function TokenControl( {
 	token,
 	rule,
 	value,
+	help,
 	onChange,
 }: {
 	design: EditorDesign;
 	token: string;
 	rule: DesignRule;
-	value: string | number | boolean;
-	onChange: ( next: string | number ) => void;
+	value: string | number | null;
+	help?: string;
+	onChange: ( next: string | number | null ) => void;
 } ) {
 	const label = TOKEN_LABELS[ token ] ?? token;
 
@@ -290,9 +274,11 @@ function TokenControl( {
 					label={ label }
 					min={ rule.min }
 					max={ rule.max }
-					value={ Number( value ) }
+					// Reset empties the token (null), so the theme's value shows.
+					allowReset
+					value={ 'number' === typeof value ? value : undefined }
 					afterIcon={ <span>px</span> }
-					onChange={ ( next ) => onChange( 'number' === typeof next ? next : rule.default ) }
+					onChange={ ( next ) => onChange( 'number' === typeof next ? next : null ) }
 				/>
 			);
 
@@ -302,12 +288,13 @@ function TokenControl( {
 					__next40pxDefaultSize
 					__nextHasNoMarginBottom
 					label={ label }
-					value={ String( value ) }
+					help={ help }
+					value={ String( value ?? '' ) }
 					options={ rule.enum.map( ( option ) => ( {
 						value: option,
 						label:
 							'font_family' === token
-								? design.fontFamilies[ option ] || __( 'Theme default', 'yaycheckout' )
+								? design.fontFamilies[ option ] || ENUM_LABELS[ '' ]
 								: ENUM_LABELS[ option ] ?? option,
 					} ) ) }
 					onChange={ ( next: string ) => onChange( next ) }
@@ -322,55 +309,29 @@ function SectionPanel( {
 	design,
 	section,
 	values,
+	fontHelp,
 	onChange,
 }: {
 	design: EditorDesign;
 	section: Section;
-	values: SectionTokens | null;
-	onChange: ( next: SectionTokens | null ) => void;
+	values: SectionTokens;
+	/** Under the Font control: the install in progress, or why it failed. */
+	fontHelp?: string;
+	onChange: ( next: SectionTokens ) => void;
 } ) {
-	const mode = modeOf( values );
-
-	const setMode = ( next: Mode ) => {
-		if ( 'global' === next ) {
-			onChange( null );
-			return;
-		}
-
-		onChange( { ...( values ?? seed( design, section ) ), enabled: true } );
-	};
-
 	return (
-		<PanelBody title={ SECTIONS[ section ] } initialOpen={ 'global' !== mode }>
+		<PanelBody title={ SECTIONS[ section ] }>
 			<Flex direction="column" align="stretch" gap={ 4 }>
-				<ToggleGroupControl
-					__next40pxDefaultSize
-					__nextHasNoMarginBottom
-					isBlock
-					hideLabelFromVision
-					label={ SECTIONS[ section ] }
-					value={ mode }
-					onChange={ ( next: string | number | undefined ) => setMode( next as Mode ) }
-				>
-					<ToggleGroupControlOption value="global" label={ __( 'Global design', 'yaycheckout' ) } />
-					<ToggleGroupControlOption value="custom" label={ __( 'Custom', 'yaycheckout' ) } />
-				</ToggleGroupControl>
-				{ 'custom' === mode && values && 'colours' === section && (
+				{ 'colours' === section && (
 					<ColourSettings
 						rules={ design.schema[ section ] }
 						values={ values }
 						onChange={ onChange }
 					/>
 				) }
-				{ 'custom' === mode &&
-					values &&
-					Object.entries( design.schema[ section ] ).map( ( [ token, rule ] ) => {
-						// Enabled is the mode above, colours are in ColourSettings, and an underline input has no radius.
-						if (
-							'enabled' === token ||
-							isColourRule( rule ) ||
-							( 'radius' === token && 'underline' === values.style )
-						) {
+				{ Object.entries( design.schema[ section ] ).map( ( [ token, rule ] ) => {
+						// Colours are in ColourSettings, and an underline input has no radius.
+						if ( isColourRule( rule ) || ( 'radius' === token && 'underline' === values.style ) ) {
 							return null;
 						}
 
@@ -381,6 +342,7 @@ function SectionPanel( {
 								token={ token }
 								rule={ rule }
 								value={ values[ token ] }
+								help={ 'font_family' === token ? fontHelp : undefined }
 								onChange={ ( next ) => onChange( { ...values, [ token ]: next } ) }
 							/>
 						);
@@ -390,68 +352,104 @@ function SectionPanel( {
 	);
 }
 
-/** The canvas iframe's documents. */
-function canvasFrames(): Document[] {
-	return Array.from( document.querySelectorAll< HTMLIFrameElement >( 'iframe[name="editor-canvas"]' ) )
-		.map( ( frame ) => frame.contentDocument )
-		.filter( ( doc ): doc is Document => !! doc );
-}
-
 /**
- * Keeps the printed design style in the canvas equal to `css`. The canvas iframe is rebuilt on a device
- * preview switch or after the code editor, and comes back with the saved design, so it is watched.
+ * The picked font's `@font-face` rules for the canvas (FontRestController): '' for the theme's font or one the
+ * theme loads, the uploaded files once the font is uploaded, and Google's files as a preview until then. The
+ * font uploads when the layout is saved (Engine\DesignFontInstall), so the rules are asked for again after
+ * every save. The CSS is null until the answer, so the faces already printed stay meanwhile.
  */
-function useCanvasDesign( css: string, styleId: string ) {
-	const latest = useRef( css );
-	latest.current = css;
+function useDesignFont( design: EditorDesign, slug: string ): { css: string | null; help?: string } {
+	const { savedSlug, isDirty, isSaving, saveFailed } = useSelect(
+		( selectStore ) => {
+			const editor = selectStore( editorStore );
+			const meta = editor.getCurrentPostAttribute( 'meta' ) as Record< string, unknown > | undefined;
+			const saved = meta?.[ design.metaKey ] as LayoutDesignMeta | undefined;
 
-	const apply = () => {
-		const frames = canvasFrames();
-
-		// The editor's own document holds the canvas when it isn't iframed. WordPress prints no style for an
-		// empty design, so a canvas without one gets its own, after the base stylesheet.
-		( frames.length ? frames : [ document ] ).forEach( ( doc ) => {
-			if ( doc.head && ! doc.getElementById( styleId ) ) {
-				const created = doc.createElement( 'style' );
-				created.id = styleId;
-				doc.head.appendChild( created );
-			}
-		} );
-
-		[ document, ...frames ].forEach( ( doc ) => {
-			const style = doc.getElementById( styleId );
-			if ( style && style.textContent !== latest.current ) {
-				style.textContent = latest.current;
-			}
-		} );
-	};
-
-	useEffect( apply, [ css ] );
+			return {
+				savedSlug: String( saved?.typography?.font_family ?? '' ),
+				isDirty: editor.isEditedPostDirty(),
+				isSaving: editor.isSavingPost(),
+				saveFailed: editor.didPostSaveRequestFail(),
+			};
+		},
+		[ design.metaKey ]
+	);
+	const [ saves, setSaves ] = useState( 0 );
+	const wasSaving = useRef( isSaving );
+	const [ state, setState ] = useState< { slug: string; css: string | null; uploaded: boolean; error?: string } >( {
+		slug,
+		css: null,
+		uploaded: true,
+	} );
 
 	useEffect( () => {
-		// Only each canvas head, where the style is printed, so editing blocks doesn't wake it.
-		const observer = new MutationObserver( apply );
-		const watched = new WeakSet< Document >();
+		if ( wasSaving.current && ! isSaving && ! saveFailed ) {
+			setSaves( ( count ) => count + 1 );
+		}
+		wasSaving.current = isSaving;
+	}, [ isSaving, saveFailed ] );
 
-		const watchFrames = () => {
-			canvasFrames().forEach( ( doc ) => {
-				if ( doc.head && ! watched.has( doc ) ) {
-					watched.add( doc );
-					observer.observe( doc.head, { childList: true } );
+	useEffect( () => {
+		let cancelled = false;
+
+		if ( '' === slug ) {
+			setState( { slug, css: '', uploaded: true } );
+			return;
+		}
+
+		// After a save the same font keeps its faces until the answer, so the canvas doesn't flicker.
+		setState( ( previous ) => ( previous.slug === slug ? previous : { slug, css: null, uploaded: true } ) );
+
+		(
+			apiFetch( { path: `/yaycheckout/v1/fonts/${ slug }` } ) as Promise< { uploaded: boolean; css: string } >
+		).then(
+			( response ) => {
+				if ( ! cancelled ) {
+					setState( { slug, css: response.css, uploaded: response.uploaded } );
 				}
-			} );
-			apply();
-		};
+			},
+			async ( error: unknown ) => {
+				const message = await errorMessage( error, __( 'The font could not be loaded.', 'yaycheckout' ) );
 
-		// A rebuilt canvas iframe loads a new document; load doesn't bubble, so it is caught on the way down.
-		document.addEventListener( 'load', watchFrames, true );
-		watchFrames();
+				if ( ! cancelled ) {
+					setState( { slug, css: '', uploaded: false, error: message } );
+				}
+			}
+		);
 
 		return () => {
-			observer.disconnect();
-			document.removeEventListener( 'load', watchFrames, true );
+			cancelled = true;
 		};
-	}, [] );
+	}, [ slug, saves ] );
+
+	if ( '' === slug ) {
+		return { css: '' };
+	}
+
+	if ( state.slug !== slug || null === state.css ) {
+		return { css: null };
+	}
+
+	if ( state.error ) {
+		return { css: state.css, help: state.error };
+	}
+
+	if ( state.uploaded ) {
+		return { css: state.css };
+	}
+
+	// Saved here, yet still not uploaded: the save's upload failed. The reason is in WooCommerce → Status → Logs.
+	if ( saves > 0 && slug === savedSlug && ! isDirty ) {
+		return {
+			css: state.css,
+			help: __( "Couldn't upload this font. It shows only where the theme provides it.", 'yaycheckout' ),
+		};
+	}
+
+	return {
+		css: state.css,
+		help: __( 'Previewed from Google Fonts. Uploads to your site when you save.', 'yaycheckout' ),
+	};
 }
 
 /** How long the sidebar waits after the last change before writing it to the post. */
@@ -462,7 +460,7 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 	// Edits live here while the merchant drags or types, and reach the post once they pause: every editPost
 	// re-renders the whole editor and adds an undo step, which made a dragged colour picker crawl.
 	const [ draft, setDraft ] = useState< LayoutDesignMeta | null >( null );
-	const override = draft ?? stored;
+	const current = draft ?? stored;
 	const pending = useRef< { next: LayoutDesignMeta | null; timer?: number } >( { next: null } );
 	const storeRef = useRef( store );
 	storeRef.current = store;
@@ -478,7 +476,7 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 	const flushRef = useRef( flush );
 	flushRef.current = flush;
 
-	const setOverride = ( next: LayoutDesignMeta ) => {
+	const setCurrent = ( next: LayoutDesignMeta ) => {
 		setDraft( next );
 		pending.current.next = next;
 		window.clearTimeout( pending.current.timer );
@@ -487,10 +485,13 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 
 	// Leaving the layout editor must not drop a pending edit.
 	useEffect( () => () => flushRef.current(), [] );
-	const cssError = customCssError( override.custom_css, design.customCssMaxBytes );
+	const cssError = customCssError( current.custom_css, design.customCssMaxBytes );
 	const { lockPostSaving, unlockPostSaving } = useDispatch( editorStore );
 
-	useCanvasDesign( designCss( effectiveTokens( design.tokens, override ), design.fontFamilies ), design.styleId );
+	const font = useDesignFont( design, String( current.typography.font_family ?? '' ) );
+
+	useCanvasStyle( designCss( current, design ), design.styleId );
+	useCanvasStyle( font.css, design.fontStyleId );
 
 	// The server would skip this CSS on print without saying so, so it is never saved.
 	useEffect( () => {
@@ -510,7 +511,7 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 				<PanelBody>
 					<p className="yaycheckout-layout-design__help">
 						{ __(
-							'Override the global design for this layout only. Global design follows the Design page.',
+							"This layout's design. An empty value follows your theme.",
 							'yaycheckout'
 						) }
 					</p>
@@ -520,23 +521,27 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 						key={ section }
 						design={ design }
 						section={ section }
-						values={ override[ section ] }
-						onChange={ ( next ) => setOverride( { ...override, [ section ]: next } ) }
+						values={ current[ section ] }
+						fontHelp={ 'typography' === section ? font.help : undefined }
+						onChange={ ( next ) => setCurrent( { ...current, [ section ]: next } ) }
 					/>
 				) ) }
-				<PanelBody title={ __( 'Custom CSS', 'yaycheckout' ) } initialOpen={ '' !== override.custom_css }>
+				<PanelBody title={ __( 'Custom CSS', 'yaycheckout' ) } initialOpen={ '' !== current.custom_css }>
 					<TextareaControl
 						__nextHasNoMarginBottom
 						label={ __( 'Custom CSS', 'yaycheckout' ) }
 						hideLabelFromVision
 						className={ `yaycheckout-layout-design__css${ cssError ? ' is-invalid' : '' }` }
 						rows={ 10 }
-						value={ override.custom_css }
+						value={ current.custom_css }
 						help={
 							cssError ??
-							__( 'Printed on the checkout after the global custom CSS. Not shown in the editor.', 'yaycheckout' )
+							__(
+								'Printed on the checkout after the site-wide custom CSS (Settings → Advanced). Not shown in the editor.',
+								'yaycheckout'
+							)
 						}
-						onChange={ ( next: string ) => setOverride( { ...override, custom_css: next } ) }
+						onChange={ ( next: string ) => setCurrent( { ...current, custom_css: next } ) }
 					/>
 				</PanelBody>
 			</PluginSidebar>
@@ -545,10 +550,7 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 }
 
 function LayoutDesign() {
-	const isLayout = useSelect(
-		( selectStore ) => selectStore( editorStore ).getCurrentPostType() === editorData.postType,
-		[]
-	);
+	const isLayout = useIsLayoutEditor();
 
 	if ( ! isLayout || ! editorData.design ) {
 		return null;

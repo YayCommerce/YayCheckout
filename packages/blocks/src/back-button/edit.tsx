@@ -2,6 +2,8 @@ import { InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __ } from '@wordpress/i18n';
+import { ArrowControl } from '../shared/arrow-control';
+import { arrowGlyph, type Arrow } from '../shared/button-arrow';
 import { StepNavButtonEdit, type StepNavButtonAttributes } from '../shared/step-nav-button-edit';
 
 type FirstStep = 'cart' | 'hide';
@@ -9,6 +11,7 @@ type FirstStep = 'cart' | 'hide';
 interface BackButtonAttributes extends StepNavButtonAttributes {
 	firstStep: FirstStep;
 	cartText: string;
+	arrow: Arrow;
 }
 
 interface EditProps {
@@ -22,6 +25,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		<>
 			<InspectorControls>
 				<PanelBody title={ __( 'Previous step button', 'yaycheckout' ) }>
+					<ArrowControl direction="back" value={ attributes.arrow } onChange={ ( arrow ) => setAttributes( { arrow } ) } />
 					<SelectControl
 						label={ __( 'On the first step', 'yaycheckout' ) }
 						value={ attributes.firstStep }
@@ -46,6 +50,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				setAttributes={ setAttributes }
 				className="yaycheckout-back-button"
 				placeholder={ __( 'Back', 'yaycheckout' ) }
+				icon={ arrowGlyph( attributes.arrow, 'back' ) }
+				iconPosition="before"
 			/>
 		</>
 	);

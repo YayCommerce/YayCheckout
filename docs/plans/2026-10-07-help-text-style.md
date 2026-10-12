@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking.
 
-**Status:** active
+**Status:** done 2026-10-07
 **Goal:** Every field's help text shows inline under the field, always visible, in place of WooCommerce's focus popup.
 **Spec:** none, planned from the request. Follows [2026-10-07-field-help-text.md](2026-10-07-field-help-text.md) on the same branch, `onyx/feat/field-help-text`.
 **Architecture:** Keep WooCommerce's markup: `woocommerce_form_field()`'s `description` argument and its `span.description`. One CSS rule restyles it as inline text and neutralises WooCommerce's toggle. WooCommerce shows and hides the span with jQuery `slideDown()`/`slideUp()`, which animate inline `height`, `padding`, `margin`, `overflow` and `display`. Stylesheet rules marked `!important` beat inline styles, so the animation runs but nothing moves. The user chose this over printing our own span.

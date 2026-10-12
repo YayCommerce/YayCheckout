@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
+import { LayoutStatusBadge } from '@/components/shared/LayoutStatusBadge';
 import {
   CONDITION_TYPE_KEYS,
   groupsFromWire,
@@ -29,7 +30,6 @@ import {
   type Group,
 } from '@/pages/layouts/assignment/condition-types';
 import { AddConditionMenu, ConditionGroup, OrDivider } from '@/pages/layouts/assignment/ConditionGroup';
-import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';
 
 /**
  * Drawer where a layout's assignment rules are edited. Free gets it locked: a greyed sample

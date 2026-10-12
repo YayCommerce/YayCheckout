@@ -24,6 +24,11 @@ class SettingsRepository {
         return $this->get();
     }
 
+    /** Safe mode on: the storefront is WooCommerce's stock checkout. */
+    public function is_safe_mode(): bool {
+        return ! empty( $this->get()->general['safe_mode'] );
+    }
+
     public function is_reviewed(): bool {
         return (bool) get_option( Settings::OPTION_REVIEWED, false );
     }

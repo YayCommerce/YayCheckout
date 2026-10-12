@@ -12,14 +12,15 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_label = isset( $attributes['label'] ) && is_string( $attributes['label'] ) && '' !== $attributes['label']
-    ? $attributes['label']
-    : __( 'Your order', 'yaycheckout' );
+$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', __( 'Your order', 'yaycheckout' ) );
 
 $yaycheckout_has_cart = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart;
 
+// Block spacing.
+$yaycheckout_class = 'yaycheckout-order-summary' . \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/order-summary', 'yaycheckout-order-summary' );
+
 ?>
-<div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-order-summary' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+<div <?php echo get_block_wrapper_attributes( [ 'class' => $yaycheckout_class ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <h3 id="order_review_heading"><?php echo esc_html( $yaycheckout_label ); ?></h3>
     <?php if ( ! empty( $block->parsed_block['innerBlocks'] ) ) : ?>
         <?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner block markup, already rendered and escaped by core. ?>

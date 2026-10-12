@@ -99,6 +99,12 @@ export const blockIcons: Record< string, JSX.Element > = {
 			<circle cx="12" cy="10" r="2" />
 		</>
 	),
+	'yaycheckout/different-address': icon(
+		<>
+			<rect x="3" y="4" width="7" height="7" rx="2" />
+			<path d="m5 7.5 1.25 1.25L8.5 6.5M14 7.5h7M3 16h18M17 12.5 20.5 16 17 19.5" />
+		</>
+	),
 	'yaycheckout/field': icon(
 		<>
 			<rect x="3" y="7" width="18" height="10" rx="3" />
@@ -109,6 +115,18 @@ export const blockIcons: Record< string, JSX.Element > = {
 		<>
 			<path d="M14 17H6a3 3 0 0 1-3-3v-4a3 3 0 0 1 3-3h8" />
 			<path d="M7.5 10v4M19 9v6M16 12h6" />
+		</>
+	),
+	'yaycheckout/order-note': icon(
+		<>
+			<path d="M14 3.5H7.5a2.5 2.5 0 0 0-2.5 2.5v12a2.5 2.5 0 0 0 2.5 2.5h9a2.5 2.5 0 0 0 2.5-2.5V8.5l-5-5Z" />
+			<path d="M14 3.5v5h5M8.5 12.5h7M8.5 16h5" />
+		</>
+	),
+	'yaycheckout/additional-fields': icon(
+		<>
+			<path d="M12 20.5H7.5A2.5 2.5 0 0 1 5 18V6a2.5 2.5 0 0 1 2.5-2.5H14l5 5V12" />
+			<path d="M14 3.5v5h5M8.5 12.5h5M8.5 16h2.5M18 15v6M15 18h6" />
 		</>
 	),
 	'yaycheckout/shipping-methods': icon(

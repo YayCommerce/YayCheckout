@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router';
 import { __ } from '@wordpress/i18n';
 
-import { editLayoutPath } from '@/lib/helpers/layout.helper';
+import { editLayoutPath, LAYOUTS_PATH } from '@/lib/helpers/layout.helper';
 import { Button } from '@/components/ui/button';
 
 /** "Go to Layouts" and "Open in editor" for a just-created draft; each closes the host dialog first. */
@@ -15,7 +15,7 @@ export function LayoutDraftActions({ layoutId, onClose }: { layoutId: number; on
 
   return (
     <div className="flex gap-2">
-      <Button variant="outline" onClick={() => goTo('/layouts')}>
+      <Button variant="outline" onClick={() => goTo(LAYOUTS_PATH)}>
         {__('Go to Layouts', 'yaycheckout')}
       </Button>
       <Button onClick={() => goTo(editLayoutPath(layoutId))}>{__('Open in editor', 'yaycheckout')}</Button>

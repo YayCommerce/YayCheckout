@@ -3,25 +3,29 @@ import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { addressTemplate } from './address-template';
 import { isCheckoutSection, useBlocksAllowedExcept } from './allowed-blocks';
+import { useBlockGapCSS, type BlockGapStyles } from './block-gap';
 
 export interface AddressSectionAttributes {
 	title: string;
 	showTitle: boolean;
-	shipToDifferent?: boolean;
+	style?: BlockGapStyles;
 }
 
 interface AddressSectionEditProps {
 	section: 'billing' | 'shipping';
 	attributes: AddressSectionAttributes;
 	setAttributes: ( attributes: Partial< AddressSectionAttributes > ) => void;
+	clientId: string;
 }
 
 export function AddressSectionEdit( {
 	section,
 	attributes,
 	setAttributes,
+	clientId,
 }: AddressSectionEditProps ) {
-	const { title, showTitle, shipToDifferent } = attributes;
+	const { title, showTitle, style } = attributes;
+	const css = useBlockGapCSS( `#block-${ clientId }`, style );
 	const fallbackTitle =
 		section === 'shipping' ? __( 'Shipping', 'yaycheckout' ) : __( 'Billing', 'yaycheckout' );
 	const blockProps = useBlockProps( { className: `yaycheckout-${ section }` } );
@@ -49,16 +53,10 @@ export function AddressSectionEdit( {
 							onChange={ ( value ) => setAttributes( { title: value } ) }
 						/>
 					) }
-					{ section === 'shipping' && (
-						<ToggleControl
-							label={ __( 'Ship to a different address', 'yaycheckout' ) }
-							checked={ shipToDifferent !== false }
-							onChange={ ( value ) => setAttributes( { shipToDifferent: value } ) }
-						/>
-					) }
 				</PanelBody>
 			</InspectorControls>
 			<div { ...innerBlocksProps }>
+				{ css && <style>{ css }</style> }
 				{ showTitle && <h3>{ title || fallbackTitle }</h3> }
 				{ children }
 			</div>

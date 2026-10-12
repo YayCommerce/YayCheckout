@@ -4,16 +4,61 @@ namespace YayCheckout\Models;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * One layout's override of the global Design: per section, its own tokens or null to
- * follow the Design page, plus custom CSS printed after the global custom CSS.
+ * A layout's whole design, and the only design model: every section's tokens, plus custom CSS printed after the
+ * site-wide custom CSS. An empty token ('' or null) prints nothing, so the theme shows through.
  * Stored as Layout::META_DESIGN; to_meta() is also its wire and export shape.
  */
 final class LayoutDesign {
 
+    public const CUSTOM_CSS_MAX_BYTES = 50000;
+
+    /** Six-digit #rrggbb, no alpha. Unanchored by delimiters so a JSON Schema `pattern` can use it too. */
+    public const HEX_COLOR_PATTERN = '^#[0-9A-Fa-f]{6}$';
+
     /**
-     * Section => its full token array (including `enabled`), or null for the global design.
+     * A gradient a `fill` token may hold instead of a colour. It is printed unescaped inside a declaration,
+     * so quotes, backslashes, `*`, `;`, braces and angle brackets are refused: none can end the declaration,
+     * open a comment or close the style element.
+     */
+    public const GRADIENT_PATTERN = '^(repeating-)?(linear|radial|conic)-gradient\\([^"\'\\\\*;{}<>]*\\)$';
+
+    /** A theme colour preset, by the custom property WordPress prints for it, so the token follows the theme's palette. */
+    public const PRESET_COLOR_PATTERN = '^var\\(--wp--preset--color--[a-z0-9-]+\\)$';
+
+    /** A theme gradient preset, the same way. */
+    public const PRESET_GRADIENT_PATTERN = '^var\\(--wp--preset--gradient--[a-z0-9-]+\\)$';
+
+    /** Longest gradient a `fill` token accepts; a picked or theme gradient is far shorter. */
+    public const GRADIENT_MAX_LENGTH = 1000;
+
+    /**
+     * Fonts the merchant can pick: token slug => CSS font-family, '' for the theme's font.
+     * Fonts in core's Google Fonts collection, under the same slug: picking one installs it into the
+     * Font Library (Repositories\FontRepository) unless the theme loads it already.
+     */
+    public const FONT_FAMILIES = [
+        ''                 => '',
+        'inter'            => 'Inter',
+        'roboto'           => 'Roboto',
+        'open-sans'        => 'Open Sans',
+        'lato'             => 'Lato',
+        'montserrat'       => 'Montserrat',
+        'poppins'          => 'Poppins',
+        'nunito'           => 'Nunito',
+        'source-sans-3'    => 'Source Sans 3',
+        'manrope'          => 'Manrope',
+        'merriweather'     => 'Merriweather',
+        'playfair-display' => 'Playfair Display',
+        'roboto-slab'      => 'Roboto Slab',
+    ];
+
+    /** The FONT_FAMILIES keys whose fallback is a serif stack; the rest fall back to sans-serif. */
+    public const SERIF_FONTS = [ 'merriweather', 'playfair-display', 'roboto-slab' ];
+
+    /**
+     * Section => its full token array, every key of schema() present.
      *
-     * @var array<string, array|null>
+     * @var array<string, array>
      */
     public array $sections = [];
 
@@ -21,44 +66,79 @@ final class LayoutDesign {
     public string $custom_css = '';
 
     /**
-     * Design::schema() with its colours widened: each may be unset ('') or a theme preset, so the layout follows
-     * the theme's palette, and the background may also be a gradient. The global design's colours stay hex.
+     * Shape: section => key => [ 'type' => 'int'|'enum'|'color'|'fill', 'default' => mixed,
+     *   'enum' => array (enum only), 'min'/'max' => int (int only) ]
+     *
+     * Every default is empty: '' for a colour or an enum, null for an int. A colour is '', a hex colour or a
+     * theme preset; the background may also be a gradient. The inputs.size token is an abstract step; the
+     * renderer decides its px.
      */
     public static function schema(): array {
-        $schema = Design::schema();
-
-        foreach ( $schema['colours'] as $key => $rule ) {
-            if ( 'hex_color' === $rule['type'] ) {
-                $schema['colours'][ $key ]['type'] = 'background' === $key ? 'fill' : 'color';
-            }
-        }
-
-        return $schema;
-    }
-
-    /** No section overridden and no custom CSS. */
-    public static function none(): self {
-        $design = new self();
-
-        $design->sections = array_fill_keys( array_keys( Design::schema() ), null );
-
-        return $design;
+        return [
+            'colours'    => [
+                'primary'    => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'text'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'background' => [
+                    'type'    => 'fill',
+                    'default' => '',
+                ],
+                'border'     => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+            ],
+            'typography' => [
+                'font_family' => [
+                    'type'    => 'enum',
+                    'default' => '',
+                    'enum'    => array_keys( self::FONT_FAMILIES ),
+                ],
+                'base_size'   => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 10,
+                    'max'     => 24,
+                ],
+            ],
+            'inputs'     => [
+                'style'  => [
+                    'type'    => 'enum',
+                    'default' => '',
+                    'enum'    => [ '', 'boxed', 'underline' ],
+                ],
+                'size'   => [
+                    'type'    => 'enum',
+                    'default' => '',
+                    'enum'    => [ '', 'small', 'medium', 'large' ],
+                ],
+                'radius' => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 0,
+                    'max'     => 24,
+                ],
+            ],
+        ];
     }
 
     /**
-     * Projects a stored or imported value through schema(), as Design::from_option() does:
-     * a section that isn't an array follows the global design, and an invalid token reads as its default.
+     * Projects a stored or imported value through schema(). Every section is always present: a missing section,
+     * an invalid token or a key schema() doesn't name reads as its empty default.
      *
-     * @param mixed $value Raw meta value; anything but an array is none().
+     * @param mixed $value Raw meta value; anything but an array reads as all empty.
      */
     public static function from_meta( $value ): self {
         $value  = is_array( $value ) ? $value : [];
-        $design = self::none();
+        $design = new self();
 
         foreach ( self::schema() as $section => $rules ) {
-            if ( is_array( $value[ $section ] ?? null ) ) {
-                $design->sections[ $section ] = Design::project_section( $rules, $value[ $section ] );
-            }
+            $design->sections[ $section ] = self::project_section( $rules, $value[ $section ] ?? null );
         }
 
         $design->custom_css = is_string( $value['custom_css'] ?? null ) ? $value['custom_css'] : '';
@@ -71,15 +151,36 @@ final class LayoutDesign {
         return array_merge( $this->sections, [ 'custom_css' => $this->custom_css ] );
     }
 
-    /** The global tokens with each overridden section swapped in. */
-    public function tokens_over( array $tokens ): array {
-        foreach ( $this->sections as $section => $values ) {
-            if ( null !== $values ) {
-                $tokens[ $section ] = $values;
-            }
+    /** Whether $fill is a gradient, written out or a theme preset, rather than a colour. */
+    public static function is_gradient( string $fill ): bool {
+        return strlen( $fill ) <= self::GRADIENT_MAX_LENGTH
+            && ( self::matches( self::GRADIENT_PATTERN, $fill ) || self::matches( self::PRESET_GRADIENT_PATTERN, $fill ) );
+    }
+
+    /**
+     * Custom CSS as stored, or why it can't be. It is printed through
+     * wp_add_inline_style(), which does not escape, so a closing </style> or
+     * an opening <script> would break out of the stylesheet.
+     *
+     * @return string|\WP_Error
+     */
+    public static function sanitize_custom_css( string $css ) {
+        if ( strlen( $css ) > self::CUSTOM_CSS_MAX_BYTES ) {
+            return new \WP_Error(
+                'invalid_arguments',
+                sprintf(
+                    /* translators: %d: size limit in KB */
+                    __( 'Custom CSS must be under %d KB.', 'yaycheckout' ),
+                    (int) ( self::CUSTOM_CSS_MAX_BYTES / 1000 )
+                )
+            );
         }
 
-        return $tokens;
+        if ( false !== strpos( $css, "\0" ) || preg_match( '#</style|<script#i', $css ) ) {
+            return new \WP_Error( 'invalid_arguments', __( 'Custom CSS contains disallowed markup.', 'yaycheckout' ) );
+        }
+
+        return $css;
     }
 
     /**
@@ -96,7 +197,7 @@ final class LayoutDesign {
             }
 
             $properties[ $section ] = [
-                'type'                 => [ 'object', 'null' ],
+                'type'                 => 'object',
                 'properties'           => $tokens,
                 'required'             => array_keys( $tokens ),
                 'additionalProperties' => false,
@@ -113,6 +214,50 @@ final class LayoutDesign {
         ];
     }
 
+    /**
+     * One section's tokens, each taken from $values when valid there and from the default otherwise.
+     *
+     * @param mixed $values The section's raw tokens; anything but an array reads as all defaults.
+     */
+    private static function project_section( array $rules, $values ): array {
+        $values = is_array( $values ) ? $values : [];
+        $clean  = [];
+
+        foreach ( $rules as $key => $rule ) {
+            $value = $values[ $key ] ?? null;
+
+            $clean[ $key ] = self::is_valid( $value, $rule ) ? $value : $rule['default'];
+        }
+
+        return $clean;
+    }
+
+    private static function is_valid( $value, array $rule ): bool {
+        switch ( $rule['type'] ) {
+            // Empty is null, so 0 stays a value: a radius of 0 prints 0px.
+            case 'int':
+                return null === $value || ( is_int( $value ) && $value >= $rule['min'] && $value <= $rule['max'] );
+
+            case 'enum':
+                return in_array( $value, $rule['enum'], true );
+
+            // Unset (''), a hex colour or a theme colour preset.
+            case 'color':
+                return is_string( $value )
+                    && ( '' === $value || self::matches( self::HEX_COLOR_PATTERN, $value ) || self::matches( self::PRESET_COLOR_PATTERN, $value ) );
+
+            // Any `color`, or a gradient.
+            case 'fill':
+                return self::is_valid( $value, [ 'type' => 'color' ] ) || ( is_string( $value ) && self::is_gradient( $value ) );
+        }
+
+        return false;
+    }
+
+    private static function matches( string $pattern, string $value ): bool {
+        return 1 === preg_match( '/' . $pattern . '/D', $value );
+    }
+
     /** One pattern matching any of $patterns, each keeping its own anchors. */
     private static function any_of( array $patterns ): string {
         return '(' . implode( ')|(', $patterns ) . ')';
@@ -120,12 +265,9 @@ final class LayoutDesign {
 
     private static function token_schema( array $rule ): array {
         switch ( $rule['type'] ) {
-            case 'bool':
-                return [ 'type' => 'boolean' ];
-
             case 'int':
                 return [
-                    'type'    => 'integer',
+                    'type'    => [ 'integer', 'null' ],
                     'minimum' => $rule['min'],
                     'maximum' => $rule['max'],
                 ];
@@ -136,25 +278,19 @@ final class LayoutDesign {
                     'enum' => $rule['enum'],
                 ];
 
-            case 'hex_color':
-                return [
-                    'type'    => 'string',
-                    'pattern' => Design::HEX_COLOR_PATTERN,
-                ];
-
             case 'color':
                 return [
                     'type'    => 'string',
-                    'pattern' => self::any_of( [ '^$', Design::HEX_COLOR_PATTERN, Design::PRESET_COLOR_PATTERN ] ),
+                    'pattern' => self::any_of( [ '^$', self::HEX_COLOR_PATTERN, self::PRESET_COLOR_PATTERN ] ),
                 ];
 
             case 'fill':
                 return [
                     'type'      => 'string',
                     'pattern'   => self::any_of(
-                        [ '^$', Design::HEX_COLOR_PATTERN, Design::PRESET_COLOR_PATTERN, Design::GRADIENT_PATTERN, Design::PRESET_GRADIENT_PATTERN ]
+                        [ '^$', self::HEX_COLOR_PATTERN, self::PRESET_COLOR_PATTERN, self::GRADIENT_PATTERN, self::PRESET_GRADIENT_PATTERN ]
                     ),
-                    'maxLength' => Design::GRADIENT_MAX_LENGTH,
+                    'maxLength' => self::GRADIENT_MAX_LENGTH,
                 ];
         }
 

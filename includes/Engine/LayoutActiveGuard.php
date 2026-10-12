@@ -2,7 +2,6 @@
 namespace YayCheckout\Engine;
 
 use YayCheckout\Enums\LayoutStatus;
-use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -72,8 +71,7 @@ class LayoutActiveGuard {
     }
 
     private function is_active_layout( $post ): bool {
-        return $post instanceof \WP_Post
-            && Layout::POST_TYPE === $post->post_type
+        return LayoutRepository::is_layout( $post )
             && ( new LayoutRepository() )->is_active( (int) $post->ID );
     }
 }

@@ -1,10 +1,10 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
-import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { copyToClipboard } from '@/lib/helpers/clipboard.helper';
+import { isBlockOnly } from '@/lib/helpers/compatibility.helper';
 import type { GatewayRow } from '@/lib/schema/compatibility.schema';
+import { useCopyWithFallback } from '@/hooks/useCopyWithFallback';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 
 export function GatewaysSection({ gateways }: { gateways: GatewayRow[] }) {
-  const blockOnly = gateways.filter((gateway) => gateway.status === 'block-only').length;
+  const blockOnly = gateways.filter(isBlockOnly).length;
   const active = gateways.length - blockOnly;
 
   return (
@@ -40,7 +40,7 @@ export function GatewaysSection({ gateways }: { gateways: GatewayRow[] }) {
           </TableHeader>
           <TableBody>
             {gateways.map((gateway) =>
-              gateway.status === 'block-only' ? (
+              isBlockOnly(gateway) ? (
                 <BlockOnlyRows key={gateway.id} gateway={gateway} />
               ) : (
                 <TableRow key={gateway.id}>
@@ -76,14 +76,13 @@ function BlockOnlyRows({ gateway }: { gateway: GatewayRow }) {
   const [open, setOpen] = useState(false);
   const request = vendorRequest(gateway.title);
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { fieldRef: textareaRef, copy } = useCopyWithFallback<HTMLTextAreaElement>(
+    __('Vendor request copied.', 'yaycheckout'),
+    __('Press Ctrl+C / ⌘C to copy the request.', 'yaycheckout'),
+  );
 
-  async function onCopy() {
-    if (await copyToClipboard(request, textareaRef.current)) {
-      toast.success(__('Vendor request copied.', 'yaycheckout'));
-    } else {
-      toast.info(__('Press Ctrl+C / ⌘C to copy the request.', 'yaycheckout'));
-    }
+  function onCopy() {
+    void copy(request);
   }
 
   return (

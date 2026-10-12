@@ -2,12 +2,12 @@
 namespace YayCheckout\Blocks;
 
 use YayCheckout\Engine\Register\ScriptName;
-use YayCheckout\Models\Design;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
+use YayCheckout\Renderer\CheckoutDifferentAddress;
 use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Renderer\HideWhenEmpty;
-use YayCheckout\Repositories\DesignRepository;
+use YayCheckout\Renderer\LiveValues;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -32,6 +32,9 @@ class BlockRegistry {
     /** Named by viewScript in packages/blocks/src/order-summary-items/block.json; drives the quantity stepper. */
     public const ORDER_SUMMARY_ITEMS_SCRIPT = 'yaycheckout-order-summary-items';
 
+    /** Named by viewScript in packages/blocks/src/different-address/block.json; hides and mirrors Billing when shipping is main. */
+    public const DIFFERENT_ADDRESS_SCRIPT = 'yaycheckout-different-address';
+
     /**
      * Block directories in the order a shopper meets them. The inserter lists
      * blocks in registration order; a built block missing here still
@@ -50,8 +53,11 @@ class BlockRegistry {
         'create-account',
         'billing',
         'shipping',
+        'different-address',
         'field',
         'extra-field',
+        'order-note',
+        'additional-fields',
         'shipping-methods',
         'express-pay',
         'payment',
@@ -68,6 +74,8 @@ class BlockRegistry {
     protected function __construct() {
         add_action( 'init', [ $this, 'register_blocks' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_design_data' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_live_value_editor' ] );
+        add_action( 'enqueue_block_assets', [ $this, 'enqueue_live_value_editor_style' ] );
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
@@ -78,8 +86,8 @@ class BlockRegistry {
      * Block settings in the default origin, so a theme's own block settings and presets win:
      * - Place Order: Core Button's old 25/50/75/100% widths as presets for its Width control
      *   (Styles > Dimensions). WordPress ships no dimension sizes, so the control has none without them.
-     * - Place Order, Step and Coupon Button: padding, margin and border, and Steps: blockGap, which core's defaults
-     *   leave off, so their Styles controls show on themes that don't turn them on.
+     * - Every block in ORDER: padding, margin and border, and Steps, Step, Billing, Shipping and Order Summary: blockGap,
+     *   which core's defaults leave off, so their Styles controls show on themes that don't turn them on.
      *
      * @param  \WP_Theme_JSON_Data $theme_json
      * @return \WP_Theme_JSON_Data
@@ -95,53 +103,33 @@ class BlockRegistry {
             ];
         }
 
+        $blocks = [];
+
+        foreach ( self::ORDER as $block ) {
+            $blocks[ 'yaycheckout/' . $block ] = [
+                'spacing' => [
+                    'padding' => true,
+                    'margin'  => true,
+                ],
+                'border'  => [
+                    'color'  => true,
+                    'radius' => true,
+                    'style'  => true,
+                    'width'  => true,
+                ],
+            ];
+        }
+
+        $blocks['yaycheckout/place-order']['dimensions'] = [ 'dimensionSizes' => $sizes ];
+
+        foreach ( [ 'steps', 'step', 'billing', 'shipping', 'order-summary' ] as $gap_block ) {
+            $blocks[ 'yaycheckout/' . $gap_block ]['spacing']['blockGap'] = true;
+        }
+
         return $theme_json->update_with(
             [
                 'version'  => \WP_Theme_JSON::LATEST_SCHEMA,
-                'settings' => [
-                    'blocks' => [
-                        'yaycheckout/place-order'   => [
-                            'dimensions' => [ 'dimensionSizes' => $sizes ],
-                            'spacing'    => [
-                                'padding' => true,
-                                'margin'  => true,
-                            ],
-                            'border'     => [
-                                'color'  => true,
-                                'radius' => true,
-                                'style'  => true,
-                                'width'  => true,
-                            ],
-                        ],
-                        'yaycheckout/step'          => [
-                            'spacing' => [
-                                'padding' => true,
-                                'margin'  => true,
-                            ],
-                            'border'  => [
-                                'color'  => true,
-                                'radius' => true,
-                                'style'  => true,
-                                'width'  => true,
-                            ],
-                        ],
-                        'yaycheckout/steps'         => [
-                            'spacing' => [ 'blockGap' => true ],
-                        ],
-                        'yaycheckout/coupon-button' => [
-                            'spacing' => [
-                                'padding' => true,
-                                'margin'  => true,
-                            ],
-                            'border'  => [
-                                'color'  => true,
-                                'radius' => true,
-                                'style'  => true,
-                                'width'  => true,
-                            ],
-                        ],
-                    ],
-                ],
+                'settings' => [ 'blocks' => $blocks ],
             ]
         );
     }
@@ -168,24 +156,16 @@ class BlockRegistry {
             'upgradeUrl' => YAYCHECKOUT_UPGRADE_URL,
         ];
 
-        wp_add_inline_script(
-            generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
-            'window.yayCheckoutBlocks = ' . wp_json_encode( $editor_data ) . ';',
-            'before'
-        );
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks', $editor_data );
 
         // The login block's editor script does not run after the checkout inline
         // script, so its option flag is printed on its own handle.
         $login_editor_data = [
-            'reminderEnabled' => 'yes' === get_option( CheckoutLogin::OPTION_REMINDER ),
+            'reminderEnabled' => CheckoutLogin::reminder_enabled(),
             'settingsUrl'     => admin_url( 'admin.php?page=wc-settings&tab=account#woocommerce_enable_checkout_login_reminder' ),
         ];
 
-        wp_add_inline_script(
-            generate_block_asset_handle( 'yaycheckout/login', 'editorScript' ),
-            'window.yayCheckoutLogin = ' . wp_json_encode( $login_editor_data ) . ';',
-            'before'
-        );
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/login', 'editorScript' ), 'window.yayCheckoutLogin', $login_editor_data );
 
         // The create-account editor script may not run after the checkout inline
         // script, so its option flag is printed on its own handle.
@@ -194,35 +174,71 @@ class BlockRegistry {
             'settingsUrl'   => admin_url( 'admin.php?page=wc-settings&tab=account#woocommerce_enable_signup_and_login_from_checkout' ),
         ];
 
-        wp_add_inline_script(
-            generate_block_asset_handle( 'yaycheckout/create-account', 'editorScript' ),
-            'window.yayCheckoutCreateAccount = ' . wp_json_encode( $create_account_editor_data ) . ';',
-            'before'
-        );
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/create-account', 'editorScript' ), 'window.yayCheckoutCreateAccount', $create_account_editor_data );
+
+        // The different-address editor script may not run after the checkout inline
+        // script, so WooCommerce's Shipping destination is printed on its own handle.
+        $different_address_editor_data = [
+            'destination' => CheckoutDifferentAddress::destination(),
+            'copiedKeys'  => CheckoutDifferentAddress::COPIED_KEYS,
+            'settingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=shipping&section=options' ),
+        ];
+
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/different-address', 'editorScript' ), 'window.yayCheckoutDifferentAddress', $different_address_editor_data );
     }
 
     /**
-     * Adds `design` to window.yayCheckoutBlocks: the global design and its rules, which the Layout design
-     * sidebar edits the layout's override against. Only in the block editor, since register_blocks() runs
-     * on every request and nothing else reads it.
+     * Adds `design` to window.yayCheckoutBlocks: LayoutDesign's rules, which the Layout design sidebar edits
+     * the layout's design with. Only in the block editor, since register_blocks() runs on every request and
+     * nothing else reads it.
      */
     public function editor_design_data(): void {
         $design = [
             'metaKey'           => Layout::META_DESIGN,
             // The id WordPress gives this handle's inline style, which holds the printed design.
             'styleId'           => ScriptName::STYLE_CHECKOUT . '-inline-css',
-            'tokens'            => ( new DesignRepository() )->get()->tokens,
             'schema'            => LayoutDesign::schema(),
-            'fontFamilies'      => Design::FONT_FAMILIES,
-            'customCssMaxBytes' => Design::CUSTOM_CSS_MAX_BYTES,
+            'fontFamilies'      => LayoutDesign::FONT_FAMILIES,
+            'serifFonts'        => LayoutDesign::SERIF_FONTS,
+            // The id WordPress gives this handle's inline style, which holds the font faces.
+            'fontStyleId'       => ScriptName::STYLE_CHECKOUT_FONTS . '-inline-css',
+            'customCssMaxBytes' => LayoutDesign::CUSTOM_CSS_MAX_BYTES,
         ];
 
         // Added after register_blocks()' own inline script, so window.yayCheckoutBlocks exists.
-        wp_add_inline_script(
-            generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
-            'window.yayCheckoutBlocks.design = ' . wp_json_encode( $design ) . ';',
-            'before'
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.design', $design );
+        // The live value picker's Cart totals and Counts.
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.liveValues', LiveValues::cart_values() );
+    }
+
+    /**
+     * The live value format, in the layout editor only: a page's Paragraph never offers it. It runs after the
+     * Checkout editor script, whose inline data it reads. Skipped without a build.
+     */
+    public function enqueue_live_value_editor(): void {
+        $asset = 'layout' === $this->editor( null ) ? self::built_asset( 'live-value/index' ) : null;
+
+        if ( null === $asset ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            LiveValues::EDITOR_SCRIPT,
+            $asset['url'] . '.js',
+            array_merge( $asset['dependencies'], [ generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ) ] ),
+            $asset['version'],
+            true
         );
+        wp_set_script_translations( LiveValues::EDITOR_SCRIPT, 'yaycheckout', YAYCHECKOUT_PLUGIN_DIR . 'languages' );
+    }
+
+    /** The live value chip style, on enqueue_block_assets so it reaches the canvas iframe. Layout editor only; skipped without a build. */
+    public function enqueue_live_value_editor_style(): void {
+        $asset = is_admin() && 'layout' === $this->editor( null ) ? self::built_asset( 'live-value/index', true ) : null;
+
+        if ( null !== $asset ) {
+            wp_enqueue_style( LiveValues::EDITOR_STYLE, $asset['url'] . '.css', [], $asset['version'] );
+        }
     }
 
     /**
@@ -246,6 +262,23 @@ class BlockRegistry {
             true
         );
 
+        wp_register_script(
+            self::DIFFERENT_ADDRESS_SCRIPT,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-different-address.js',
+            [ 'jquery', 'wc-checkout', 'wc-address-i18n' ],
+            YAYCHECKOUT_VERSION,
+            true
+        );
+
+        self::inline_data(
+            self::DIFFERENT_ADDRESS_SCRIPT,
+            'window.yayCheckoutSameBilling',
+            [
+                'field'      => CheckoutDifferentAddress::SAME_BILLING_FIELD,
+                'copiedKeys' => CheckoutDifferentAddress::COPIED_KEYS,
+            ]
+        );
+
         // Enqueued by HideWhenEmpty::filter_container() for a container that watches blocks.
         wp_register_script(
             HideWhenEmpty::SCRIPT,
@@ -254,6 +287,14 @@ class BlockRegistry {
             YAYCHECKOUT_VERSION,
             true
         );
+
+        // Enqueued by LiveValues::fill() when a Paragraph or Heading holds a live value. Skipped without a build.
+        $live_value = self::built_asset( 'live-value/view', true );
+
+        if ( null !== $live_value ) {
+            wp_register_script( LiveValues::SCRIPT, $live_value['url'] . '.js', array_merge( $live_value['dependencies'], [ 'jquery' ] ), $live_value['version'], true );
+            wp_register_style( LiveValues::STYLE, $live_value['url'] . '.css', [], $live_value['version'] );
+        }
     }
 
     /** Adds the YayCheckout inserter category in the layout editor. */
@@ -328,5 +369,33 @@ class BlockRegistry {
         }
 
         return array_values( array_filter( $allowed_block_types, static fn( $name ) => ! $drop( $name ) ) );
+    }
+
+    /**
+     * A webpack entry no block.json names (packages/blocks/webpack.config.js), from its built asset file: its
+     * URL without the extension, dependencies and version. Null without a build, or without its CSS when
+     * $with_css.
+     *
+     * @return array{url: string, dependencies: string[], version: string}|null
+     */
+    private static function built_asset( string $entry, bool $with_css = false ): ?array {
+        $path = YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/' . $entry;
+
+        if ( ! is_readable( $path . '.asset.php' ) || ( $with_css && ! is_readable( $path . '.css' ) ) ) {
+            return null;
+        }
+
+        $asset = require $path . '.asset.php';
+
+        return [
+            'url'          => YAYCHECKOUT_PLUGIN_URL . 'assets/dist/blocks/' . $entry,
+            'dependencies' => $asset['dependencies'],
+            'version'      => $asset['version'],
+        ];
+    }
+
+    /** Prints $data as $variable (window.x or window.x.y) before $handle runs. */
+    private static function inline_data( string $handle, string $variable, array $data ): void {
+        wp_add_inline_script( $handle, $variable . ' = ' . wp_json_encode( $data ) . ';', 'before' );
     }
 }

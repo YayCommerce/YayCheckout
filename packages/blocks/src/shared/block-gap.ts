@@ -1,4 +1,4 @@
-import { __experimentalGetGapCSSValue as getGapCSSValue } from '@wordpress/block-editor';
+import { __experimentalGetGapCSSValue as getGapCSSValue, useSettings } from '@wordpress/block-editor';
 
 export interface BlockGapStyle {
 	spacing?: {
@@ -41,19 +41,38 @@ function gapCSS( blockGap: unknown ): string | null {
 	return getGapCSSValue( blockGap );
 }
 
+/** One gap rule, or core's flow margins: none on the children, then the gap above each one after the first. */
+function gapRules( selector: string, gap: string, flow: boolean ): string {
+	return flow
+		? `${ selector } > *{margin-block-start:0;margin-block-end:0}${ selector } > * + *{margin-block-start:${ gap }}`
+		: `${ selector }{gap:${ gap }}`;
+}
+
 /**
  * The block's own Block spacing and its Tablet / Mobile values, as BlockGap::add_rules() prints
- * them. One stylesheet, since an inline gap would beat the media queries. The Global Styles gap
- * is storefront-only: the editor keeps it behind a private API.
+ * them, with the same `flow` switch. One stylesheet, since an inline gap would beat the media
+ * queries. The Global Styles gap is storefront-only: the editor keeps it behind a private API.
  */
-export function blockGapCSS( selector: string, style: BlockGapStyles | undefined, viewport: ViewportSettings | undefined ): string {
+export function blockGapCSS(
+	selector: string,
+	style: BlockGapStyles | undefined,
+	viewport: ViewportSettings | undefined,
+	flow = false
+): string {
 	const baseGap = gapCSS( style?.spacing?.blockGap );
 
 	return [
-		baseGap ? `${ selector }{gap:${ baseGap }}` : '',
+		baseGap ? gapRules( selector, baseGap, flow ) : '',
 		...viewportMediaQueries( viewport ).map( ( [ state, query ] ) => {
 			const viewportGap = gapCSS( style?.[ state ]?.spacing?.blockGap );
-			return viewportGap ? `${ query }{${ selector }{gap:${ viewportGap }}}` : '';
+			return viewportGap ? `${ query }{${ gapRules( selector, viewportGap, flow ) }}` : '';
 		} ),
 	].join( '' );
+}
+
+/** blockGapCSS() with the editor's viewport setting, for a block's edit(). */
+export function useBlockGapCSS( selector: string, style: BlockGapStyles | undefined, flow = false ): string {
+	const [ viewport ] = useSettings( 'viewport' );
+
+	return blockGapCSS( selector, style, viewport, flow );
 }

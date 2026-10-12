@@ -1,8 +1,9 @@
 import { ComponentProps } from 'react';
-import { LayoutTemplate, Paintbrush, Plug, Wrench } from 'lucide-react';
+import { LayoutTemplate, Plug, Wrench } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { __ } from '@wordpress/i18n';
 
+import { LAYOUTS_PATH } from '@/lib/helpers/layout.helper';
 import { cn } from '@/lib/utils';
 import { HeaderNavMenuItem, HeaderNavMenuList } from '@/components/ui/navmenu-header';
 import SettingsIcon from '@/components/icons/SettingsIcon';
@@ -11,15 +12,9 @@ export function HeaderMenu() {
   return (
     <HeaderNavMenuList className="*:data-[slot=header-navigation-menu-indicator]:bg-primary">
       <CustomMenuItem asChild key="layouts">
-        <NavLink to="/layouts">
+        <NavLink to={LAYOUTS_PATH}>
           <LayoutTemplate className="stroke-2" />
           <span>{__('Layouts', 'yaycheckout')}</span>
-        </NavLink>
-      </CustomMenuItem>
-      <CustomMenuItem asChild key="design">
-        <NavLink to="/design">
-          <Paintbrush className="stroke-2" />
-          <span>{__('Design', 'yaycheckout')}</span>
         </NavLink>
       </CustomMenuItem>
       <CustomMenuItem asChild key="tools">

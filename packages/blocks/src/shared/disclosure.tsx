@@ -3,12 +3,12 @@ import { decodeEntities } from '@wordpress/html-entities';
 import { __, sprintf } from '@wordpress/i18n';
 import './disclosure.css';
 
-export type DisclosureMode = 'none' | 'link' | 'collapsible';
+export type DisclosureMode = 'none' | 'link' | 'collapsible' | 'checkbox';
 
 /** Mirrors Disclosure::APARTMENT_KEYS in PHP: behind a link unless the merchant says otherwise. */
 const APARTMENT_KEYS = [ 'billing_address_2', 'shipping_address_2' ];
 
-const MODES: DisclosureMode[] = [ 'none', 'link', 'collapsible' ];
+const MODES: DisclosureMode[] = [ 'none', 'link', 'collapsible', 'checkbox' ];
 
 export interface DisclosureAttributes {
 	disclosure?: DisclosureMode;
@@ -37,14 +37,27 @@ export function defaultDisclosureText( fieldKey: string, label: string, mode: Di
 	}
 
 	if ( APARTMENT_KEYS.includes( fieldKey ) ) {
-		return __( '+ Add apartment, suite, etc.', 'yaycheckout' );
+		return mode === 'checkbox'
+			? __( 'Add apartment, suite, etc.', 'yaycheckout' )
+			: __( '+ Add apartment, suite, etc.', 'yaycheckout' );
 	}
 
 	const lowered = /^[A-Z](?![A-Z])/.test( plain ) ? plain.charAt( 0 ).toLowerCase() + plain.slice( 1 ) : plain;
 
+	if ( mode === 'checkbox' ) {
+		/* translators: %s: field label, e.g. "company name". */
+		return sprintf( __( 'Add %s', 'yaycheckout' ), lowered );
+	}
+
 	/* translators: %s: field label, e.g. "company name". */
 	return sprintf( __( '+ Add %s', 'yaycheckout' ), lowered );
 }
+
+const TEXT_LABELS: Record< Exclude< DisclosureMode, 'none' >, string > = {
+	link: __( 'Link text', 'yaycheckout' ),
+	collapsible: __( 'Header text', 'yaycheckout' ),
+	checkbox: __( 'Checkbox label', 'yaycheckout' ),
+};
 
 interface DisclosureControlsProps extends DisclosureAttributes {
 	fieldKey: string;
@@ -74,6 +87,7 @@ export function DisclosureControls( {
 					{ label: __( 'Always', 'yaycheckout' ), value: 'none' },
 					{ label: __( 'Behind a link', 'yaycheckout' ), value: 'link' },
 					{ label: __( 'In a collapsible section', 'yaycheckout' ), value: 'collapsible' },
+					{ label: __( 'Behind a checkbox', 'yaycheckout' ), value: 'checkbox' },
 				] }
 				help={
 					required
@@ -84,7 +98,7 @@ export function DisclosureControls( {
 			/>
 			{ mode !== 'none' && (
 				<TextControl
-					label={ mode === 'link' ? __( 'Link text', 'yaycheckout' ) : __( 'Header text', 'yaycheckout' ) }
+					label={ TEXT_LABELS[ mode ] }
 					value={ disclosureText }
 					placeholder={ defaultDisclosureText( fieldKey, label, mode ) }
 					onChange={ ( value ) => setAttributes( { disclosureText: value } ) }
@@ -96,19 +110,27 @@ export function DisclosureControls( {
 
 interface DisclosurePreviewProps {
 	mode: DisclosureMode;
-	text: string;
+	fieldKey: string;
+	label: string;
+	disclosureText: string;
 	children: JSX.Element;
 }
 
-/** On the canvas a hidden field shows the shopper's link or header, then the field faded but still editable. */
-export function DisclosurePreview( { mode, text, children }: DisclosurePreviewProps ) {
+/**
+ * On the canvas a hidden field shows the shopper's link or header, then the field faded but still editable.
+ * The text is the merchant's, else defaultDisclosureText().
+ */
+export function DisclosurePreview( { mode, fieldKey, label, disclosureText, children }: DisclosurePreviewProps ) {
 	if ( mode === 'none' ) {
 		return <>{ children }</>;
 	}
 
+	const text = disclosureText || defaultDisclosureText( fieldKey, label, mode );
+
 	return (
 		<>
 			<span className="yaycheckout-disclosure__toggle" data-mode={ mode }>
+				{ mode === 'checkbox' && <input type="checkbox" className="yaycheckout-disclosure__checkbox" disabled /> }
 				<span>{ text }</span>
 				{ mode === 'collapsible' && (
 					<svg className="yaycheckout-disclosure__chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">

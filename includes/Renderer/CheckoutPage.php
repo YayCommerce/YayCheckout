@@ -40,8 +40,13 @@ class CheckoutPage {
         return $this->layout;
     }
 
+    /** True when this request is the checkout form and a layout renders it. Meaningful from `wp` on. */
+    public function takes_over(): bool {
+        return $this->on_checkout_page() && null !== $this->layout();
+    }
+
     public function maybe_take_over(): void {
-        if ( ! $this->on_checkout_page() || null === $this->layout() ) {
+        if ( ! $this->takes_over() ) {
             return;
         }
 
@@ -56,9 +61,7 @@ class CheckoutPage {
 
     /** Woo's checkout scripts, the base stylesheet and the design tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
     public function enqueue_scripts(): void {
-        wp_enqueue_script( 'wc-checkout' );
-        wp_enqueue_script( 'wc-country-select' );
-        wp_enqueue_script( 'wc-address-i18n' );
+        CheckoutScripts::enqueue_wc_scripts();
 
         // The block checkout's checkout.css styles markup our layout does not print. WooCommerce's
         // general stylesheets are replaced by checkout-base.css, which their form rules would beat
@@ -79,7 +82,7 @@ class CheckoutPage {
             return ( new LayoutRepository() )->find( $preview_id );
         }
 
-        if ( ! empty( ( new SettingsRepository() )->get()->general['safe_mode'] ) ) {
+        if ( ( new SettingsRepository() )->is_safe_mode() ) {
             return null;
         }
 

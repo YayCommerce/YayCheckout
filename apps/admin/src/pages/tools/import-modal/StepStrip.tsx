@@ -1,13 +1,6 @@
-import { Fragment } from 'react';
 import { __ } from '@wordpress/i18n';
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+import { StepBreadcrumb } from '@/components/shared/StepBreadcrumb';
 
 export type ImportStep = 'source' | 'draft';
 
@@ -20,21 +13,6 @@ const STEP_LABELS: Record<ImportStep, string> = {
 
 export function StepStrip({ current }: { current: ImportStep }) {
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        {IMPORT_STEPS.map((step, index) => (
-          <Fragment key={step}>
-            {index > 0 && <BreadcrumbSeparator />}
-            <BreadcrumbItem>
-              {step === current ? (
-                <BreadcrumbPage>{STEP_LABELS[step]}</BreadcrumbPage>
-              ) : (
-                <span>{STEP_LABELS[step]}</span>
-              )}
-            </BreadcrumbItem>
-          </Fragment>
-        ))}
-      </BreadcrumbList>
-    </Breadcrumb>
+    <StepBreadcrumb labels={IMPORT_STEPS.map((step) => STEP_LABELS[step])} current={IMPORT_STEPS.indexOf(current)} />
   );
 }
