@@ -29,7 +29,7 @@ interface EditProps {
 
 export default function Edit( { attributes, setAttributes, clientId, context }: EditProps ) {
 	const { title, style } = attributes;
-	// The storefront hides the header; here it stays, faded, so the title Progress shows can still be edited.
+	// The storefront hides the header; here it stays, faded, so the title Steps Progress shows can still be edited.
 	const hiddenOnCheckout = context[ 'yaycheckout/showHeadings' ] === false;
 	const index = useSelect( ( select ) => select( blockEditorStore ).getBlockIndex( clientId ), [ clientId ] );
 	const position = typeof index === 'number' && index >= 0 ? index + 1 : 1;

@@ -40,7 +40,7 @@ if ( ! function_exists( 'yaycheckout_step_index' ) ) {
 $yaycheckout_index = yaycheckout_step_index();
 $yaycheckout_state = 1 === $yaycheckout_index ? 'current' : 'locked';
 $yaycheckout_raw   = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'title' );
-$yaycheckout_title = \YayCheckout\Renderer\CheckoutProgress::step_title( $yaycheckout_raw );
+$yaycheckout_title = \YayCheckout\Renderer\CheckoutStepsProgress::step_title( $yaycheckout_raw );
 
 $yaycheckout_wrapper = get_block_wrapper_attributes(
     [
@@ -52,7 +52,7 @@ $yaycheckout_wrapper = get_block_wrapper_attributes(
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
-    <div class="yaycheckout-step__header">
+    <div class="yaycheckout-step__header" tabindex="-1">
         <span class="yaycheckout-step__index"><?php echo esc_html( (string) $yaycheckout_index ); ?></span>
         <span class="yaycheckout-step__title"><?php echo esc_html( $yaycheckout_title ); ?></span>
         <p class="yaycheckout-step__summary" hidden></p>

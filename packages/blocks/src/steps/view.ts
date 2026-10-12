@@ -5,7 +5,7 @@
  * and required, so a form-wide checkValidity() would block step 1.
  */
 
-import { CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
+import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
 import { onDomReady } from '../shared/dom-ready';
 import { controlsText } from '../shared/form-text';
 import type { Control } from '../shared/jquery';
@@ -70,8 +70,8 @@ function onClick( event: MouseEvent ): void {
 
 	const step = target.closest< HTMLElement >( STEP );
 
-	// Any step the shopper already opened reopens, a locked one too (the last step, left before Place order).
-	if ( ! step || step.dataset.reached !== 'true' || step.dataset.state === CURRENT || target.closest( '.yaycheckout-step__body' ) ) {
+	// Only a completed step reopens. One reached but not finished (the last step, after going back) is reached again with Next.
+	if ( ! step || ! canReopenStep( step ) || target.closest( '.yaycheckout-step__body' ) ) {
 		return;
 	}
 
@@ -127,6 +127,8 @@ function reopen( step: HTMLElement ): void {
 	}
 
 	setState( step, CURRENT );
+	// The control that asked may now be disabled or hidden (Steps Progress, Go to Step, Edit), so focus follows the step.
+	step.querySelector< HTMLElement >( '.yaycheckout-step__header' )?.focus();
 }
 
 function park( step: HTMLElement ): boolean {

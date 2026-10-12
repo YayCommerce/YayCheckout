@@ -20,7 +20,7 @@ interface EditProps {
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps( { className: 'yaycheckout-go-to-step' } );
-	// Mirrors CheckoutProgress::layout_titles(): the layout's first Steps block, in document order.
+	// Mirrors CheckoutStepsProgress::layout_titles(): the layout's first Steps block, in document order.
 	const titles: string[] | null = useSelect( ( select ) => {
 		const { getBlockAttributes, getBlockOrder, getBlocksByName } = select( blockEditorStore );
 		const stepsId = ( getBlocksByName( STEPS ) as string[] )[ 0 ];

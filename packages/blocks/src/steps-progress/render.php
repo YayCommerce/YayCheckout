@@ -1,9 +1,9 @@
 <?php
 /**
- * Server render for yaycheckout/progress.
+ * Server render for yaycheckout/steps-progress.
  *
  * WordPress includes this file on each render and prints whatever it echoes.
- * The list is built in CheckoutProgress from the layout's first Steps block.
+ * The list is built in CheckoutStepsProgress from the layout's first Steps block.
  *
  * @var array    $attributes Block attributes: `variant`. Titles live on each step.
  * @var string   $content    Unused; this block is a leaf.
@@ -14,4 +14,4 @@
 
 defined( 'ABSPATH' ) || exit;
 
-echo \YayCheckout\Renderer\CheckoutProgress::markup( $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in CheckoutProgress::markup().
+echo \YayCheckout\Renderer\CheckoutStepsProgress::markup( $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in CheckoutStepsProgress::markup().
