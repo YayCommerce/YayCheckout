@@ -144,9 +144,18 @@ class DesignStyles {
             $vars['input-height'] = self::INPUT_HEIGHTS[ $inputs['size'] ] . 'px';
         }
 
+        // An underline input with a background is a filled box, so its text keeps the side padding.
         if ( '' !== $inputs['style'] ) {
             $vars['input-border-width']   = $is_underline ? '0 0 1px' : '1px';
-            $vars['input-padding-inline'] = $is_underline ? '0' : '12px';
+            $vars['input-padding-inline'] = $is_underline && '' === $inputs['background'] ? '0' : '12px';
+        }
+
+        if ( '' !== $inputs['background'] ) {
+            $vars['input-background'] = $inputs['background'];
+        }
+
+        if ( '' !== $inputs['text'] ) {
+            $vars['input-color'] = $inputs['text'];
         }
 
         return $vars;

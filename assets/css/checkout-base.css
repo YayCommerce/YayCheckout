@@ -263,7 +263,8 @@ html.yaycheckout-has-pinned body {
 /*
  * Text inputs, selects, textareas, the coupon code and the select2 box all draw as one input.
  * A section left at theme default leaves its token unset, so the fallback applies: the theme's
- * font and text colour, a border mixed from the text colour, a transparent background.
+ * font and text colour, a border mixed from the text colour, a transparent background. The input
+ * background and text colour tokens win over the page's background and text colour.
  */
 .yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code),
 .yaycheckout-checkout .select2-container .select2-selection--single {
@@ -277,9 +278,9 @@ html.yaycheckout-has-pinned body {
 	border-width: var(--yaycheckout-input-border-width, 1px);
 	border-color: var(--yaycheckout-border-color);
 	border-radius: var(--yaycheckout-field-radius);
-	background-color: var(--yaycheckout-color-background, transparent);
+	background-color: var(--yaycheckout-input-background, var(--yaycheckout-color-background, transparent));
 	box-shadow: none;
-	color: inherit;
+	color: var(--yaycheckout-input-color, inherit);
 	font: inherit;
 	line-height: 1.4;
 }
@@ -319,8 +320,8 @@ html.yaycheckout-has-pinned body {
 body.yaycheckout-page .select2-dropdown {
 	border-color: var(--yaycheckout-border-color);
 	border-radius: var(--yaycheckout-field-radius);
-	background-color: var(--yaycheckout-color-background, #fff);
-	color: var(--yaycheckout-color-text, inherit);
+	background-color: var(--yaycheckout-input-background, var(--yaycheckout-color-background, #fff));
+	color: var(--yaycheckout-input-color, var(--yaycheckout-color-text, inherit));
 }
 
 body.yaycheckout-page .select2-search--dropdown .select2-search__field {

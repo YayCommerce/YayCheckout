@@ -70,7 +70,7 @@ final class LayoutDesign {
      *   'enum' => array (enum only), 'min'/'max' => int (int only) ]
      *
      * Every default is empty: '' for a colour or an enum, null for an int. A colour is '', a hex colour or a
-     * theme preset; the background may also be a gradient. The inputs.size token is an abstract step; the
+     * theme preset; colours.background may also be a gradient. The inputs.size token is an abstract step; the
      * renderer decides its px.
      */
     public static function schema(): array {
@@ -107,21 +107,29 @@ final class LayoutDesign {
                 ],
             ],
             'inputs'     => [
-                'style'  => [
+                'style'      => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'boxed', 'underline' ],
                 ],
-                'size'   => [
+                'size'       => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'small', 'medium', 'large' ],
                 ],
-                'radius' => [
+                'radius'     => [
                     'type'    => 'int',
                     'default' => null,
                     'min'     => 0,
                     'max'     => 24,
+                ],
+                'background' => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'text'       => [
+                    'type'    => 'color',
+                    'default' => '',
                 ],
             ],
         ];

@@ -77,11 +77,23 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts }: DesignFonts )
 		out.push( [ 'input-height', `${ INPUT_HEIGHTS[ String( inputs.size ) ] }px` ] );
 	}
 
+	const inputBackground = String( inputs.background ?? '' );
+	const inputText = String( inputs.text ?? '' );
+
+	// An underline input with a background is a filled box, so its text keeps the side padding.
 	if ( '' !== inputs.style ) {
 		out.push(
 			[ 'input-border-width', isUnderline ? '0 0 1px' : '1px' ],
-			[ 'input-padding-inline', isUnderline ? '0' : '12px' ]
+			[ 'input-padding-inline', isUnderline && '' === inputBackground ? '0' : '12px' ]
 		);
+	}
+
+	if ( '' !== inputBackground ) {
+		out.push( [ 'input-background', inputBackground ] );
+	}
+
+	if ( '' !== inputText ) {
+		out.push( [ 'input-color', inputText ] );
 	}
 
 	return out;
