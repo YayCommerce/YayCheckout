@@ -684,6 +684,11 @@ class CheckoutFragments {
                 $wrapper['class'] = $class;
             }
 
+            $badge_style = self::order_items_badge_style( $block->attributes );
+            if ( '' !== $badge_style ) {
+                $wrapper['style'] = $badge_style;
+            }
+
             $stepper = self::order_items_options( $block->attributes )['show_stepper'];
 
             if ( $stepper ) {
@@ -702,6 +707,34 @@ class CheckoutFragments {
         }
 
         echo '</div>';
+    }
+
+    /**
+     * Inline --yaycheckout-badge-* vars from the Items block's badge attributes; empty when none
+     * are set. On the wrapper, which checkout.js keeps across refreshes. Mirrors badgeStyle() in
+     * order-summary-items/edit.tsx.
+     *
+     * @param array $attributes Block attributes.
+     */
+    private static function order_items_badge_style( array $attributes ): string {
+        $decls = [];
+
+        $colors = [
+            'badgeBackgroundColor' => '--yaycheckout-badge-bg',
+            'badgeTextColor'       => '--yaycheckout-badge-text',
+        ];
+        foreach ( $colors as $key => $var ) {
+            $value = self::css_color( $attributes[ $key ] ?? null );
+            if ( '' !== $value ) {
+                $decls[] = $var . ':' . $value;
+            }
+        }
+
+        if ( isset( $attributes['badgeSize'] ) && is_numeric( $attributes['badgeSize'] ) ) {
+            $decls[] = '--yaycheckout-badge-size:' . max( 16, min( 32, (int) $attributes['badgeSize'] ) ) . 'px';
+        }
+
+        return implode( ';', $decls );
     }
 
     /**
@@ -908,7 +941,7 @@ class CheckoutFragments {
 
     /**
      * The tfoot rows of Woo's checkout/review-order.php, as the body of their own table. Shipping
-     * is one read-only row (Delivery / method name / Free); the Shipping Methods block keeps the radios.
+     * is one read-only row (method name / Free); the Shipping Methods block keeps the radios.
      *
      * @param array $attributes Unused; Totals has no attributes.
      */
@@ -969,9 +1002,8 @@ class CheckoutFragments {
     }
 
     /**
-     * One read-only shipping line for the totals table: Delivery (or the sole method name), the
-     * selected method(s) underneath when several rates exist, and Free or the shipping amount.
-     * Radios stay in the Shipping Methods block.
+     * One read-only shipping line for the totals table: the selected method name(s), and Free or
+     * the shipping amount. Radios stay in the Shipping Methods block.
      */
     private static function print_order_shipping_row(): void {
         if ( ! WC()->cart instanceof \WC_Cart || ! WC()->cart->needs_shipping() ) {
@@ -985,7 +1017,6 @@ class CheckoutFragments {
 
         $selected_names  = array();
         $available_names = array();
-        $selected_rates  = array();
         $has_selected    = false;
 
         foreach ( $packages as $index => $package ) {
@@ -1007,8 +1038,7 @@ class CheckoutFragments {
                 }
 
                 if ( '' !== $chosen_id && $method->id === $chosen_id ) {
-                    $has_selected     = true;
-                    $selected_rates[] = $method;
+                    $has_selected = true;
                     if ( is_string( $name ) && '' !== $name && ! in_array( $name, $selected_names, true ) ) {
                         $selected_names[] = $name;
                     }
@@ -1016,32 +1046,14 @@ class CheckoutFragments {
             }
         }
 
-        // One selected name, or the only available rate when none is chosen, becomes the label.
-        $names = array();
-        if ( array() !== $selected_names ) {
-            $names = $selected_names;
-        } elseif ( 1 === count( $available_names ) ) {
-            $names = $available_names;
-        }
-
-        $has_multiple = count( $selected_names ) > 1 || count( $available_names ) > 1;
-        $all_pickup   = array() !== $selected_rates;
-        foreach ( $selected_rates as $rate ) {
-            if ( 'local_pickup' !== $rate->get_method_id() ) {
-                $all_pickup = false;
-                break;
-            }
-        }
-
         // phpcs:disable WordPress.WP.I18n.TextDomainMismatch -- Woo's strings, so its translation still applies.
-        if ( array() === $names || $has_multiple ) {
-            $label = $all_pickup
-                ? __( 'Pickup', 'woocommerce' )
-                : __( 'Delivery', 'woocommerce' );
-            $via   = $has_multiple && array() !== $selected_names ? implode( ', ', $selected_names ) : '';
+        // The selected method(s), else the only available rate, else plain Shipping.
+        if ( array() !== $selected_names ) {
+            $label = implode( ', ', $selected_names );
+        } elseif ( 1 === count( $available_names ) ) {
+            $label = $available_names[0];
         } else {
-            $label = $names[0];
-            $via   = '';
+            $label = __( 'Shipping', 'woocommerce' );
         }
 
         if ( $has_selected ) {
@@ -1063,12 +1075,7 @@ class CheckoutFragments {
         // phpcs:enable WordPress.WP.I18n.TextDomainMismatch
         ?>
         <tr class="yaycheckout-order-summary-totals__shipping">
-            <th>
-                <?php echo esc_html( $label ); ?>
-                <?php if ( '' !== $via ) : ?>
-                <span class="yaycheckout-order-summary-totals__via"><?php echo esc_html( $via ); ?></span>
-                <?php endif; ?>
-            </th>
+            <th><?php echo esc_html( $label ); ?></th>
             <td><?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above or wc_price() HTML. ?></td>
         </tr>
         <?php

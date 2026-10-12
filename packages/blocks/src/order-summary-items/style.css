@@ -83,23 +83,26 @@
 	content: ",";
 }
 
+/* Size, background and text come from the block's badge settings (CheckoutFragments::order_items_badge_style()). */
 .yaycheckout-order-summary-items__badge {
+	--yaycheckout-badge-size-resolved: var(--yaycheckout-badge-size, 20px);
+
 	position: absolute;
 	inset-block-start: -6px;
 	inset-inline-end: -6px;
 	box-sizing: border-box;
-	min-width: 20px;
-	height: 20px;
-	padding: 0 6px;
-	border-radius: 10px;
-	background: color-mix(in srgb, currentColor 70%, transparent);
-	font-size: 12px;
-	line-height: 20px;
+	min-width: var(--yaycheckout-badge-size-resolved);
+	height: var(--yaycheckout-badge-size-resolved);
+	padding: 0 calc(var(--yaycheckout-badge-size-resolved) * 0.3);
+	border-radius: calc(var(--yaycheckout-badge-size-resolved) / 2);
+	background: var(--yaycheckout-badge-bg, color-mix(in srgb, currentColor 70%, transparent));
+	font-size: calc(var(--yaycheckout-badge-size-resolved) * 0.6);
+	line-height: var(--yaycheckout-badge-size-resolved);
 	text-align: center;
 }
 
 .yaycheckout-order-summary-items__badge > [aria-hidden] {
-	color: #fff;
+	color: var(--yaycheckout-badge-text, #fff);
 }
 
 /* The same declarations as WordPress's .screen-reader-text, which not every theme defines. */

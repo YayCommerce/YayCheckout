@@ -648,9 +648,13 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	text-align: end;
 }
 
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__via {
-	display: block;
-	font-size: 0.875em;
+/* Labels read as plain text; only the Total stands out. */
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals th {
+	font-weight: normal;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals tr.order-total th {
+	font-weight: bold;
 }
 
 .yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__shipping strong {
