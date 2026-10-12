@@ -19,6 +19,8 @@ class LayoutMarkupReader {
     private const BILLING           = 'yaycheckout/billing';
     private const SHIPPING          = 'yaycheckout/shipping';
     private const DIFFERENT_ADDRESS = 'yaycheckout/different-address';
+    private const STEPS             = 'yaycheckout/steps';
+    private const STEP              = 'yaycheckout/step';
 
     /**
      * A Key is a posted field name and an order meta key. PHP rewrites spaces
@@ -163,6 +165,25 @@ class LayoutMarkupReader {
         }
 
         return null;
+    }
+
+    /**
+     * Saved titles of the first Steps block's Step children, in order; '' for a step left untitled.
+     * Empty without a Steps block. A layout holds one Checkout, so that is also the first Steps block inside it.
+     *
+     * @return string[]
+     */
+    public static function step_titles( string $markup ): array {
+        $steps  = self::first_block( $markup, self::STEPS );
+        $titles = [];
+
+        foreach ( null !== $steps ? $steps['innerBlocks'] : [] as $child ) {
+            if ( self::STEP === ( $child['blockName'] ?? '' ) ) {
+                $titles[] = self::plain_text( is_array( $child['attrs'] ?? null ) ? $child['attrs'] : [], 'title' );
+            }
+        }
+
+        return $titles;
     }
 
     /** Whether the layout has a Checkout block, without parsing it. */

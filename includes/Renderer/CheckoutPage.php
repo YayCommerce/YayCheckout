@@ -5,6 +5,7 @@ use YayCheckout\Enums\ConditionType;
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
+use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -27,6 +28,9 @@ class CheckoutPage {
     /** @var Layout|null|false false until first resolved. */
     private $layout = false;
 
+    /** @var string[]|null Memoised step_titles(); null until first read. */
+    private $step_titles = null;
+
     protected function __construct() {
         add_action( 'wp', [ $this, 'maybe_take_over' ] );
     }
@@ -38,6 +42,21 @@ class CheckoutPage {
         }
 
         return $this->layout;
+    }
+
+    /**
+     * Saved step titles of the layout to render (LayoutMarkupReader::step_titles()); empty without a layout.
+     * Progress and Go to Step read it, so the layout is parsed once per request.
+     *
+     * @return string[]
+     */
+    public function step_titles(): array {
+        if ( null === $this->step_titles ) {
+            $layout            = $this->layout();
+            $this->step_titles = null !== $layout ? LayoutMarkupReader::step_titles( $layout->content ) : [];
+        }
+
+        return $this->step_titles;
     }
 
     /** True when this request is the checkout form and a layout renders it. Meaningful from `wp` on. */
