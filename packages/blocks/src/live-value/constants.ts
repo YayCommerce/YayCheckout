@@ -7,6 +7,9 @@ export const KEY_ATTR = 'data-yaycheckout-value';
 /** Mirrors LiveValues::FALLBACK_ATTR in PHP. */
 export const FALLBACK_ATTR = 'data-fallback';
 
+/** Mirrors LiveValues::EMPTY_CLASS in PHP: on a span whose value is empty or unknown. */
+export const EMPTY_CLASS = 'is-empty';
+
 /** Mirrors LiveValues::FIELD_PREFIX in PHP: a key naming a layout field rather than a cart value. */
 export const FIELD_PREFIX = 'field:';
 

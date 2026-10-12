@@ -1,17 +1,19 @@
-import { store as blockEditorStore } from '@wordpress/block-editor';
 import { Button, Flex, Popover, SelectControl, TextControl } from '@wordpress/components';
-import { useSelect } from '@wordpress/data';
 import { useMemo, useState } from '@wordpress/element';
 import { escapeHTML } from '@wordpress/escape-html';
 import { __ } from '@wordpress/i18n';
 import { insertObject, remove, useAnchor, type RichTextValue } from '@wordpress/rich-text';
 import { editorData } from '../shared/editor-data';
-import type { BlockEditorSelectors } from '../shared/section-fields';
-import { fieldNames, showableFields, type ShowableField } from '../shared/showable-fields';
+import { fieldNames, useShowableFields } from '../shared/showable-fields';
 import { FIELD_PREFIX, LIVE_VALUE_CLASS, LIVE_VALUE_FORMAT } from './constants';
 
 /** LiveValues::cart_values() keys ending in this are counts; the rest are money. */
 const COUNT_SUFFIX = '_count';
+
+const CART_GROUPS = [
+	{ label: __( 'Cart totals', 'yaycheckout' ), counts: false },
+	{ label: __( 'Counts', 'yaycheckout' ), counts: true },
+];
 
 interface LiveValuePopoverProps {
 	value: RichTextValue;
@@ -28,12 +30,8 @@ export default function LiveValuePopover( { value, onChange, contentRef, editing
 	const [ key, setKey ] = useState( editing?.value ?? '' );
 	const [ fallback, setFallback ] = useState( editing?.fallback ?? '' );
 	const anchor = useAnchor( { editableContentElement: contentRef.current, settings: ANCHOR_SETTINGS } );
-	// A string, so the popover re-renders only when the layout's fields change, not on every store change.
-	const fieldsJson = useSelect(
-		( select ) => JSON.stringify( showableFields( select( blockEditorStore ) as BlockEditorSelectors ) ),
-		[]
-	);
-	const names = useMemo( () => fieldNames( JSON.parse( fieldsJson ) as ShowableField[] ), [ fieldsJson ] );
+	const fields = useShowableFields();
+	const names = useMemo( () => fieldNames( fields ), [ fields ] );
 	const cart = Object.entries( editorData.liveValues );
 
 	const labelOf = ( picked: string ): string =>
@@ -70,24 +68,17 @@ export default function LiveValuePopover( { value, onChange, contentRef, editing
 					<option value="" disabled>
 						{ __( 'Select a value', 'yaycheckout' ) }
 					</option>
-					<optgroup label={ __( 'Cart totals', 'yaycheckout' ) }>
-						{ cart
-							.filter( ( [ cartKey ] ) => ! cartKey.endsWith( COUNT_SUFFIX ) )
-							.map( ( [ cartKey, label ] ) => (
-								<option key={ cartKey } value={ cartKey }>
-									{ label }
-								</option>
-							) ) }
-					</optgroup>
-					<optgroup label={ __( 'Counts', 'yaycheckout' ) }>
-						{ cart
-							.filter( ( [ cartKey ] ) => cartKey.endsWith( COUNT_SUFFIX ) )
-							.map( ( [ cartKey, label ] ) => (
-								<option key={ cartKey } value={ cartKey }>
-									{ label }
-								</option>
-							) ) }
-					</optgroup>
+					{ CART_GROUPS.map( ( { label, counts } ) => (
+						<optgroup key={ label } label={ label }>
+							{ cart
+								.filter( ( [ cartKey ] ) => cartKey.endsWith( COUNT_SUFFIX ) === counts )
+								.map( ( [ cartKey, cartLabel ] ) => (
+									<option key={ cartKey } value={ cartKey }>
+										{ cartLabel }
+									</option>
+								) ) }
+						</optgroup>
+					) ) }
 					{ names.size > 0 && (
 						<optgroup label={ __( 'Fields', 'yaycheckout' ) }>
 							{ [ ...names ].map( ( [ fieldKey, name ] ) => (

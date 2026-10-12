@@ -33,6 +33,9 @@ class LiveValues {
     /** Mirrored by FIELD_PREFIX in packages/blocks/src/live-value/constants.ts: a key naming a layout field rather than a cart value. */
     public const FIELD_PREFIX = 'field:';
 
+    /** On a span whose value is empty or unknown. Mirrored by EMPTY_CLASS in packages/blocks/src/live-value/constants.ts. */
+    public const EMPTY_CLASS = 'is-empty';
+
     /** The layout editor's format script, packages/blocks/src/live-value/index.ts. */
     public const EDITOR_SCRIPT = 'yaycheckout-live-value-editor';
 
@@ -96,6 +99,7 @@ class LiveValues {
         $cart = WC()->cart;
         $tax  = $cart->display_prices_including_tax();
 
+        // The keys cart_values() names; one missing here prints only its fallback.
         $money = [
             'cart_total'          => (float) $cart->get_total( 'edit' ),
             'cart_subtotal'       => (float) $cart->get_subtotal() + ( $tax ? (float) $cart->get_subtotal_tax() : 0.0 ),
@@ -200,19 +204,18 @@ class LiveValues {
         $fallback = is_string( $fallback ) ? $fallback : '';
         $value    = $this->resolve( is_string( $key ) ? $key : '', $markup );
 
-        if ( ! $value['known'] || false !== strpos( $inner, '<' ) ) {
-            $text = $fallback;
+        $unfillable = ! $value['known'] || false !== strpos( $inner, '<' );
+
+        if ( $unfillable ) {
             // view.ts fills only spans with a key, so this one stays as printed: a key the layout can't show
             // could otherwise read a form field it was never meant to show, such as a password.
             $tags->remove_attribute( self::KEY_ATTR );
-        } elseif ( $value['empty'] && '' !== $fallback ) {
-            $text = $fallback;
-        } else {
-            $text = $value['text'];
         }
 
+        $text = $unfillable || ( $value['empty'] && '' !== $fallback ) ? $fallback : $value['text'];
+
         if ( $value['empty'] || ! $value['known'] ) {
-            $tags->add_class( 'is-empty' );
+            $tags->add_class( self::EMPTY_CLASS );
         }
 
         $this->rendered = true;

@@ -216,17 +216,15 @@ class BlockRegistry {
      * Checkout editor script, whose inline data it reads. Skipped without a build.
      */
     public function enqueue_live_value_editor(): void {
-        $asset = YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/live-value/index.asset.php';
+        $asset = 'layout' === $this->editor( null ) ? self::built_asset( 'live-value/index' ) : null;
 
-        if ( 'layout' !== $this->editor( null ) || ! is_readable( $asset ) ) {
+        if ( null === $asset ) {
             return;
         }
 
-        $asset = require $asset;
-
         wp_enqueue_script(
             LiveValues::EDITOR_SCRIPT,
-            YAYCHECKOUT_PLUGIN_URL . 'assets/dist/blocks/live-value/index.js',
+            $asset['url'] . '.js',
             array_merge( $asset['dependencies'], [ generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ) ] ),
             $asset['version'],
             true
@@ -236,15 +234,11 @@ class BlockRegistry {
 
     /** The live value chip style, on enqueue_block_assets so it reaches the canvas iframe. Layout editor only; skipped without a build. */
     public function enqueue_live_value_editor_style(): void {
-        $asset = YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/live-value/index.asset.php';
+        $asset = is_admin() && 'layout' === $this->editor( null ) ? self::built_asset( 'live-value/index', true ) : null;
 
-        if ( ! is_admin() || 'layout' !== $this->editor( null ) || ! is_readable( YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/live-value/index.css' ) || ! is_readable( $asset ) ) {
-            return;
+        if ( null !== $asset ) {
+            wp_enqueue_style( LiveValues::EDITOR_STYLE, $asset['url'] . '.css', [], $asset['version'] );
         }
-
-        $asset = require $asset;
-
-        wp_enqueue_style( LiveValues::EDITOR_STYLE, YAYCHECKOUT_PLUGIN_URL . 'assets/dist/blocks/live-value/index.css', [], $asset['version'] );
     }
 
     /**
@@ -295,19 +289,11 @@ class BlockRegistry {
         );
 
         // Enqueued by LiveValues::fill() when a Paragraph or Heading holds a live value. Skipped without a build.
-        $live_value = YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/live-value/view.asset.php';
+        $live_value = self::built_asset( 'live-value/view', true );
 
-        if ( is_readable( $live_value ) && is_readable( YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/live-value/view.css' ) ) {
-            $live_value = require $live_value;
-
-            wp_register_script(
-                LiveValues::SCRIPT,
-                YAYCHECKOUT_PLUGIN_URL . 'assets/dist/blocks/live-value/view.js',
-                array_merge( $live_value['dependencies'], [ 'jquery' ] ),
-                $live_value['version'],
-                true
-            );
-            wp_register_style( LiveValues::STYLE, YAYCHECKOUT_PLUGIN_URL . 'assets/dist/blocks/live-value/view.css', [], $live_value['version'] );
+        if ( null !== $live_value ) {
+            wp_register_script( LiveValues::SCRIPT, $live_value['url'] . '.js', array_merge( $live_value['dependencies'], [ 'jquery' ] ), $live_value['version'], true );
+            wp_register_style( LiveValues::STYLE, $live_value['url'] . '.css', [], $live_value['version'] );
         }
     }
 
@@ -383,6 +369,29 @@ class BlockRegistry {
         }
 
         return array_values( array_filter( $allowed_block_types, static fn( $name ) => ! $drop( $name ) ) );
+    }
+
+    /**
+     * A webpack entry no block.json names (packages/blocks/webpack.config.js), from its built asset file: its
+     * URL without the extension, dependencies and version. Null without a build, or without its CSS when
+     * $with_css.
+     *
+     * @return array{url: string, dependencies: string[], version: string}|null
+     */
+    private static function built_asset( string $entry, bool $with_css = false ): ?array {
+        $path = YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/' . $entry;
+
+        if ( ! is_readable( $path . '.asset.php' ) || ( $with_css && ! is_readable( $path . '.css' ) ) ) {
+            return null;
+        }
+
+        $asset = require $path . '.asset.php';
+
+        return [
+            'url'          => YAYCHECKOUT_PLUGIN_URL . 'assets/dist/blocks/' . $entry,
+            'dependencies' => $asset['dependencies'],
+            'version'      => $asset['version'],
+        ];
     }
 
     /** Prints $data as $variable (window.x or window.x.y) before $handle runs. */

@@ -1,16 +1,13 @@
-import { store as blockEditorStore } from '@wordpress/block-editor';
-import { useSelect } from '@wordpress/data';
 import { useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
 import { useCanvasStyle } from '../shared/canvas-style';
-import type { BlockEditorSelectors } from '../shared/section-fields';
-import { showableFields } from '../shared/showable-fields';
+import { useShowableFields } from '../shared/showable-fields';
 import { FIELD_PREFIX, KEY_ATTR, LIVE_VALUE_CLASS } from './constants';
 
 const STYLE_ID = 'yaycheckout-live-value-missing';
 
-/** text as a double-quoted CSS string. */
+/** text as a double-quoted CSS string, for `content`. */
 function cssString( text: string ): string {
 	return `"${ text.replace( /[\\"]/g, '\\$&' ).replace( /\n/g, '\\a ' ) }"`;
 }
@@ -22,17 +19,11 @@ function cssString( text: string ): string {
  * each current field's chips are unmarked.
  */
 function MissingFields() {
-	// A string, so the style is rebuilt only when the layout's fields change, not on every store change.
-	const keysJson = useSelect(
-		( select ) =>
-			JSON.stringify( showableFields( select( blockEditorStore ) as BlockEditorSelectors ).map( ( field ) => field.key ) ),
-		[]
-	);
+	const fields = useShowableFields();
 
 	const css = useMemo( () => {
 		const chip = `.${ LIVE_VALUE_CLASS }[${ KEY_ATTR }`;
-		const keys = JSON.parse( keysJson ) as string[];
-		const current = keys.map( ( key ) => `${ chip }=${ cssString( FIELD_PREFIX + key ) }]` );
+		const current = fields.map( ( { key } ) => `${ chip }="${ CSS.escape( FIELD_PREFIX + key ) }"]` );
 		/* translators: Shown after a live value whose field is no longer in the layout. */
 		const missing = cssString( ` – ${ __( 'Missing field', 'yaycheckout' ) }` );
 
@@ -46,7 +37,7 @@ function MissingFields() {
 				  ]
 				: [] ),
 		].join( '\n' );
-	}, [ keysJson ] );
+	}, [ fields ] );
 
 	useCanvasStyle( css, STYLE_ID );
 

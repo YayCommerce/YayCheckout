@@ -8,7 +8,7 @@
 import { onDomReady } from '../shared/dom-ready';
 import { fieldText } from '../shared/form-text';
 import { jquery } from '../shared/jquery';
-import { FALLBACK_ATTR, FIELD_PREFIX, KEY_ATTR, LIVE_VALUE_CLASS, VALUES_ID } from './constants';
+import { EMPTY_CLASS, FALLBACK_ATTR, FIELD_PREFIX, KEY_ATTR, LIVE_VALUE_CLASS, VALUES_ID } from './constants';
 import './view.css';
 
 interface CartValue {
@@ -29,7 +29,7 @@ function show( span: HTMLElement, text: string, empty: boolean ): void {
 		span.textContent = shown;
 	}
 
-	span.classList.toggle( 'is-empty', empty );
+	span.classList.toggle( EMPTY_CLASS, empty );
 }
 
 /** The cart's values from the footer's JSON element; null when it is missing or unreadable. */

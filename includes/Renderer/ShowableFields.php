@@ -104,9 +104,9 @@ final class ShowableFields {
         $in_section = [];
 
         foreach ( LayoutMarkupReader::flatten( parse_blocks( $markup ) ) as $section ) {
-            if ( in_array( $section['blockName'], [ 'yaycheckout/billing', 'yaycheckout/shipping' ], true ) ) {
+            if ( in_array( $section['blockName'], [ LayoutMarkupReader::BILLING, LayoutMarkupReader::SHIPPING ], true ) ) {
                 foreach ( LayoutMarkupReader::flatten( $section['innerBlocks'] ) as $inner ) {
-                    if ( 'yaycheckout/field' === $inner['blockName'] && isset( $inner['attrs']['fieldKey'] ) && is_string( $inner['attrs']['fieldKey'] ) ) {
+                    if ( LayoutMarkupReader::FIELD === $inner['blockName'] && isset( $inner['attrs']['fieldKey'] ) && is_string( $inner['attrs']['fieldKey'] ) ) {
                         $in_section[ trim( $inner['attrs']['fieldKey'] ) ] = true;
                     }
                 }

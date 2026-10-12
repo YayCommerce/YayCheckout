@@ -3,6 +3,9 @@
  * picker and the live value format's picker list the same fields under the same names.
  */
 
+import { store as blockEditorStore } from '@wordpress/block-editor';
+import { useSelect } from '@wordpress/data';
+import { useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import emailMeta from '../email/block.json';
 import { EMAIL_LABEL } from '../email/defaults';
@@ -58,6 +61,16 @@ export function showableFields( editor: BlockEditorSelectors ): ShowableField[] 
 	} );
 
 	return [ ...fields.values() ];
+}
+
+/** showableFields() for a component, which re-renders only when the layout's fields change, not on every store change. */
+export function useShowableFields(): ShowableField[] {
+	const fieldsJson = useSelect(
+		( select ) => JSON.stringify( showableFields( select( blockEditorStore ) as BlockEditorSelectors ) ),
+		[]
+	);
+
+	return useMemo( (): ShowableField[] => JSON.parse( fieldsJson ), [ fieldsJson ] );
 }
 
 export const SECTION_LABELS = {

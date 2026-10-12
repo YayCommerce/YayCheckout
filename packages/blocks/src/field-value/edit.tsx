@@ -1,10 +1,9 @@
 import { InspectorControls, RichText, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { FormTokenField, PanelBody, TextControl } from '@wordpress/components';
-import { useDispatch, useSelect } from '@wordpress/data';
+import { useDispatch } from '@wordpress/data';
 import { useEffect, useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import type { BlockEditorSelectors } from '../shared/section-fields';
-import { fieldNames, showableFields, type ShowableField } from '../shared/showable-fields';
+import { fieldNames, useShowableFields, type ShowableField } from '../shared/showable-fields';
 import './editor.css';
 
 interface FieldValueAttributes {
@@ -21,12 +20,7 @@ interface EditProps {
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { fieldKeys, separator, placeholder } = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-field-value' } );
-	// A string, so the block re-renders only when the layout's fields change, not on every store change.
-	const fieldsJson = useSelect(
-		( select ) => JSON.stringify( showableFields( select( blockEditorStore ) as BlockEditorSelectors ) ),
-		[]
-	);
-	const fields = useMemo( (): ShowableField[] => JSON.parse( fieldsJson ), [ fieldsJson ] );
+	const fields = useShowableFields();
 	const picked = fieldKeys
 		.map( ( key ) => fields.find( ( candidate ) => candidate.key === key ) )
 		.filter( ( field ): field is ShowableField => field !== undefined );

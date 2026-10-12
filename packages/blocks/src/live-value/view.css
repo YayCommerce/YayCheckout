@@ -1,4 +1,5 @@
-/* A field's live value still waiting for the shopper: its fallback, muted. Cart values print theirs as is. */
+/* A field's live value still waiting for the shopper: its fallback, muted. Cart values print theirs as is.
+   Mirrors LiveValues::CLASS_NAME, ::EMPTY_CLASS, ::KEY_ATTR and ::FIELD_PREFIX in PHP. */
 .yaycheckout-live-value.is-empty[data-yaycheckout-value^="field:"] {
 	opacity: 0.5;
 }

@@ -1,4 +1,5 @@
-/* A live value in the layout editor: a tinted chip showing the value's name, which the storefront fills in. */
+/* A live value in the layout editor: a tinted chip showing the value's name, which the storefront fills in.
+   Mirrors LiveValues::CLASS_NAME in PHP. */
 .editor-styles-wrapper .yaycheckout-live-value {
 	--yaycheckout-live-value-warning: #cc1818;
 	display: inline-block;
