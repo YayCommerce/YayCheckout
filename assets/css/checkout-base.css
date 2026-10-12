@@ -58,6 +58,69 @@ body.yaycheckout-page > .wp-site-blocks,
 }
 
 /*
+ * A Group pinned to the bottom of the screen (PinToBottom::PINNED_CLASS), on mobile only with
+ * PinToBottom::MOBILE_CLASS. Only the storefront render adds the class, so the editor shows it in place.
+ * The !important beats core's sticky container class, which may print after this file.
+ */
+.yaycheckout-pinned:not(.yaycheckout-pinned--mobile) {
+	position: fixed !important;
+	top: auto !important;
+	bottom: 0 !important;
+	left: 0 !important;
+	right: 0 !important;
+	z-index: 100;
+	margin: 0 !important;
+	max-width: none !important;
+	max-height: 100dvh;
+	overflow-y: auto;
+	box-shadow: 0 -2px 3px rgba(0, 0, 0, .05);
+}
+
+.yaycheckout-pinned:not(.yaycheckout-pinned--mobile):not(.has-background) {
+	background-color: #fff;
+}
+
+@media (max-width: 781px) {
+	.yaycheckout-pinned.yaycheckout-pinned--mobile {
+		position: fixed !important;
+		top: auto !important;
+		bottom: 0 !important;
+		left: 0 !important;
+		right: 0 !important;
+		z-index: 100;
+		margin: 0 !important;
+		max-width: none !important;
+		max-height: 100dvh;
+		overflow-y: auto;
+		box-shadow: 0 -2px 3px rgba(0, 0, 0, .05);
+	}
+
+	.yaycheckout-pinned.yaycheckout-pinned--mobile:not(.has-background) {
+		background-color: #fff;
+	}
+}
+
+/* The bar keeps its header in view: an Order Summary's details scroll inside it. */
+.yaycheckout-pinned .yaycheckout-order-summary-details {
+	max-height: 50vh;
+	overflow-y: auto;
+}
+
+/* checkout-pin-to-bottom.js KEYBOARD_HIDDEN, set while a touch keyboard is up; the height stays, so nothing shifts. */
+.yaycheckout-pinned.is-keyboard-hidden {
+	visibility: hidden;
+}
+
+/* checkout-pin-to-bottom.js HAS_PINNED and HEIGHT_VAR, set while a bar is fixed. */
+html.yaycheckout-has-pinned {
+	scroll-padding-bottom: var(--yaycheckout-pinned-height, 0px);
+}
+
+html.yaycheckout-has-pinned body {
+	padding-bottom: var(--yaycheckout-pinned-height, 0px);
+}
+
+/*
  * Classic themes (Storefront) float WooCommerce's order review into a right-hand column of
  * their own; the layout places it. No block setting can undo a theme's float. Their margins are 0 too,
  * since Order Summary's Block spacing places them and themes style them by id.
@@ -69,20 +132,7 @@ body.yaycheckout-page > .wp-site-blocks,
 	margin-block: 0;
 }
 
-/*
- * Field rows. A Field or Email block wraps WooCommerce's p.form-row in a div.form-row of its
- * own, so the gap goes on the outer row only. Classic themes float the half-width rows; the
- * layout's Columns place fields side by side instead.
- */
-.yaycheckout-checkout .form-row {
-	margin-block: 0 12px;
-	padding: 0;
-}
-
-.yaycheckout-checkout .form-row .form-row {
-	margin: 0;
-}
-
+/* Field rows. Classic themes float the half-width rows; the layout's Columns place fields side by side instead. */
 .yaycheckout-checkout :is(.form-row-first, .form-row-last, .form-row-wide) {
 	float: none;
 	width: auto;

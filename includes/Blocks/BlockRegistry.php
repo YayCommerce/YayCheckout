@@ -8,6 +8,7 @@ use YayCheckout\Renderer\CheckoutDifferentAddress;
 use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Renderer\HideWhenEmpty;
 use YayCheckout\Renderer\LiveValues;
+use YayCheckout\Renderer\PinToBottom;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -291,6 +292,9 @@ class BlockRegistry {
             YAYCHECKOUT_VERSION,
             true
         );
+
+        // Enqueued by PinToBottom::filter_group() for a pinned Group.
+        wp_register_script( PinToBottom::SCRIPT, YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-pin-to-bottom.js', [], YAYCHECKOUT_VERSION, true );
 
         // Enqueued by LiveValues::fill() when a Paragraph or Heading holds a live value. Skipped without a build.
         $live_value = self::built_asset( 'live-value/view', true );
