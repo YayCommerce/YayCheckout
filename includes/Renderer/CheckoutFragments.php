@@ -907,8 +907,8 @@ class CheckoutFragments {
     }
 
     /**
-     * The tfoot rows of Woo's checkout/review-order.php, as the body of their own table, without
-     * the shipping rates: the Shipping Methods block offers those, and Total still counts them.
+     * The tfoot rows of Woo's checkout/review-order.php, as the body of their own table. Shipping
+     * is one read-only row (Delivery / method name / Free); the Shipping Methods block keeps the radios.
      *
      * @param array $attributes Unused; Totals has no attributes.
      */
@@ -932,6 +932,7 @@ class CheckoutFragments {
             <td><?php wc_cart_totals_coupon_html( $coupon ); ?></td>
         </tr>
         <?php endforeach; ?>
+        <?php self::print_order_shipping_row(); ?>
         <?php foreach ( WC()->cart->get_fees() as $fee ) : ?>
         <tr class="fee">
             <th><?php echo esc_html( $fee->name ); ?></th>
@@ -965,5 +966,111 @@ class CheckoutFragments {
         // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch
 
         return (string) ob_get_clean();
+    }
+
+    /**
+     * One read-only shipping line for the totals table: Delivery (or the sole method name), the
+     * selected method(s) underneath when several rates exist, and Free or the shipping amount.
+     * Radios stay in the Shipping Methods block.
+     */
+    private static function print_order_shipping_row(): void {
+        if ( ! WC()->cart instanceof \WC_Cart || ! WC()->cart->needs_shipping() ) {
+            return;
+        }
+
+        $packages = WC()->shipping()->get_packages();
+        $packages = is_array( $packages ) ? $packages : array();
+        $chosen   = WC()->session ? WC()->session->get( 'chosen_shipping_methods', array() ) : array();
+        $chosen   = is_array( $chosen ) ? $chosen : array();
+
+        $selected_names  = array();
+        $available_names = array();
+        $selected_rates  = array();
+        $has_selected    = false;
+
+        foreach ( $packages as $index => $package ) {
+            if ( ! is_array( $package ) ) {
+                continue;
+            }
+
+            $methods   = isset( $package['rates'] ) && is_array( $package['rates'] ) ? $package['rates'] : array();
+            $chosen_id = isset( $chosen[ $index ] ) ? $chosen[ $index ] : '';
+
+            foreach ( $methods as $method ) {
+                if ( ! $method instanceof \WC_Shipping_Rate ) {
+                    continue;
+                }
+
+                $name = $method->get_label();
+                if ( is_string( $name ) && '' !== $name && ! in_array( $name, $available_names, true ) ) {
+                    $available_names[] = $name;
+                }
+
+                if ( '' !== $chosen_id && $method->id === $chosen_id ) {
+                    $has_selected     = true;
+                    $selected_rates[] = $method;
+                    if ( is_string( $name ) && '' !== $name && ! in_array( $name, $selected_names, true ) ) {
+                        $selected_names[] = $name;
+                    }
+                }
+            }
+        }
+
+        // One selected name, or the only available rate when none is chosen, becomes the label.
+        $names = array();
+        if ( array() !== $selected_names ) {
+            $names = $selected_names;
+        } elseif ( 1 === count( $available_names ) ) {
+            $names = $available_names;
+        }
+
+        $has_multiple = count( $selected_names ) > 1 || count( $available_names ) > 1;
+        $all_pickup   = array() !== $selected_rates;
+        foreach ( $selected_rates as $rate ) {
+            if ( 'local_pickup' !== $rate->get_method_id() ) {
+                $all_pickup = false;
+                break;
+            }
+        }
+
+        // phpcs:disable WordPress.WP.I18n.TextDomainMismatch -- Woo's strings, so its translation still applies.
+        if ( array() === $names || $has_multiple ) {
+            $label = $all_pickup
+                ? __( 'Pickup', 'woocommerce' )
+                : __( 'Delivery', 'woocommerce' );
+            $via   = $has_multiple && array() !== $selected_names ? implode( ', ', $selected_names ) : '';
+        } else {
+            $label = $names[0];
+            $via   = '';
+        }
+
+        if ( $has_selected ) {
+            $amount = (float) WC()->cart->get_shipping_total();
+            if ( WC()->cart->display_prices_including_tax() ) {
+                $amount += (float) WC()->cart->get_shipping_tax();
+            }
+
+            if ( 0.0 === round( $amount, wc_get_price_decimals() ) ) {
+                $value = '<strong>' . esc_html__( 'Free', 'woocommerce' ) . '</strong>';
+            } else {
+                $value = wc_price( $amount );
+            }
+        } elseif ( WC()->customer && WC()->customer->has_calculated_shipping() ) {
+            $value = esc_html__( 'No available delivery option', 'woocommerce' );
+        } else {
+            $value = esc_html__( 'Enter address to calculate', 'woocommerce' );
+        }
+        // phpcs:enable WordPress.WP.I18n.TextDomainMismatch
+        ?>
+        <tr class="yaycheckout-order-summary-totals__shipping">
+            <th>
+                <?php echo esc_html( $label ); ?>
+                <?php if ( '' !== $via ) : ?>
+                <span class="yaycheckout-order-summary-totals__via"><?php echo esc_html( $via ); ?></span>
+                <?php endif; ?>
+            </th>
+            <td><?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above or wc_price() HTML. ?></td>
+        </tr>
+        <?php
     }
 }

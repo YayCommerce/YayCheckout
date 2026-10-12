@@ -474,6 +474,15 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	text-align: end;
 }
 
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__via {
+	display: block;
+	font-size: 0.875em;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__shipping strong {
+	text-transform: uppercase;
+}
+
 /* iOS zooms into a focused field whose text is under 16px. */
 @media (pointer: coarse) {
 	.yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code) {
