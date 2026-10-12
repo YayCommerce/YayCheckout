@@ -1,5 +1,6 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { layoutFor, SHIPPING_LAYOUTS } from './layouts';
 import { StylePanels } from './style-panels';
@@ -21,6 +22,8 @@ interface EditProps {
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label, layout, style, textColor } = attributes;
 	const selectedLayout = layoutFor( layout );
+	// Preview only: which row looks selected. Never stored.
+	const [ selectedRow, setSelectedRow ] = useState( 0 );
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-shipping-methods',
 		'data-layout': selectedLayout.value,
@@ -59,8 +62,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>
 				{ /* Same row markup the storefront prints, so the block CSS draws it the same way. */ }
 				<ul id="shipping_method" className="woocommerce-shipping-methods yaycheckout-shipping-methods__list">
-					<li className="yaycheckout-shipping-methods__option">
-						<input type="radio" className="shipping_method" disabled defaultChecked />
+					<li className="yaycheckout-shipping-methods__option" onClick={ () => setSelectedRow( 0 ) }>
+						<input type="radio" className="shipping_method" disabled readOnly checked={ selectedRow === 0 } />
 						<label>
 							<span className="yaycheckout-shipping-methods__indicator" aria-hidden="true" />
 							<span className="yaycheckout-shipping-methods__body">
@@ -69,8 +72,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							<span className="yaycheckout-shipping-methods__price">{ __( '$5.00', 'yaycheckout' ) }</span>
 						</label>
 					</li>
-					<li className="yaycheckout-shipping-methods__option">
-						<input type="radio" className="shipping_method" disabled />
+					<li className="yaycheckout-shipping-methods__option" onClick={ () => setSelectedRow( 1 ) }>
+						<input type="radio" className="shipping_method" disabled readOnly checked={ selectedRow === 1 } />
 						<label>
 							<span className="yaycheckout-shipping-methods__indicator" aria-hidden="true" />
 							<span className="yaycheckout-shipping-methods__body">
