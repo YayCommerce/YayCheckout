@@ -9,6 +9,8 @@ defined( 'ABSPATH' ) || exit;
  * Prints the layout's design as `--yaycheckout-*` custom properties on :root, then the page rule, then the
  * site-wide custom CSS and the layout's. An empty token prints nothing: checkout-base.css and the blocks' CSS
  * read each property with a neutral fallback that follows the theme.
+ * inputs.label is the one token with no property here: it switches a layout of rules on, so it is a class on the
+ * checkout wrapper (checkout/render.php, and checkout/edit.tsx on the canvas).
  *
  * The page rule and, with a font, the heading rule are the only selectors printed here. The page rule sets the
  * page's background, text colour and font, which a stylesheet can't read from an unset property
