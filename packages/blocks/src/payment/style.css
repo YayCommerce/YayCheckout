@@ -1,12 +1,15 @@
 /*
- * The gateways as one bordered group of rows, the checked row edged in the primary colour.
- * A single gateway prints no radio, so a lone row counts as checked. Colours and corners come
- * from checkout-base.css's neutral fallbacks (--yaycheckout-primary-color,
- * --yaycheckout-border-color, --yaycheckout-field-radius).
- * Selectors start with .yaycheckout-checkout .yaycheckout-payment, because block styles print
- * before checkout-base.css on the storefront, and name WooCommerce's div#payment, so the rows
- * outrank a classic theme's own #payment rules (Storefront: #payment .payment_methods > li:not(.woocommerce-notice)).
+ * Payment method layouts on WooCommerce's gateway list. Colours and corners come from
+ * checkout-base.css's neutral fallbacks. Selectors start with .yaycheckout-checkout
+ * .yaycheckout-payment and name WooCommerce's div#payment, so the rows outrank a classic
+ * theme's own #payment rules (Storefront: #payment .payment_methods > li:not(.woocommerce-notice)).
+ * data-layout: default, stacked, columns, check, divided, boxed.
+ * Methods styles from the Styles tab set --yaycheckout-payment-* on the wrapper.
+ * Native radios stay visible (no custom indicator). Check and divided keep one background
+ * unless the merchant sets selected/hover.
  */
+
+/* Shared */
 .yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods {
 	margin: 0;
 	padding: 0;
@@ -15,41 +18,11 @@
 
 .yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li {
 	position: relative;
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 0 12px;
-	margin: 0;
-	padding: 14px 16px;
-	border: 1px solid var(--yaycheckout-border-color);
-	background-color: var(--yaycheckout-color-background, transparent);
 	list-style: none;
 }
 
-.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li + li {
-	margin-top: -1px;
-}
-
-.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li:first-child {
-	border-start-start-radius: var(--yaycheckout-field-radius);
-	border-start-end-radius: var(--yaycheckout-field-radius);
-}
-
-.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li:last-child {
-	/* Storefront's #payment .payment_methods li:last-child drops the last row's bottom edge. */
-	padding-bottom: 14px;
-	border-bottom: 1px solid var(--yaycheckout-border-color);
-	border-end-start-radius: var(--yaycheckout-field-radius);
-	border-end-end-radius: var(--yaycheckout-field-radius);
-}
-
-/* Above its neighbours, so its whole edge shows where the rows overlap. */
-.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) {
-	z-index: 1;
-	border-color: var(--yaycheckout-primary-color, #3858e9);
-}
-
 .yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li > label {
+	display: flex;
 	flex: 1;
 	margin: 0;
 	padding: 0;
@@ -63,7 +36,11 @@
 	vertical-align: middle;
 }
 
-/* The checked gateway's description and fields; WooCommerce slides it open and shut inline. */
+/* Gateway description/fields and any sibling after the radio/label span the full row. */
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li > :not(label, input) {
+	flex-basis: 100%;
+}
+
 .yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods .payment_box {
 	flex-basis: 100%;
 	margin: 0;
@@ -85,7 +62,220 @@
 	margin-bottom: 0;
 }
 
-/* WooCommerce's "no available payment methods" notice when the list is empty. */
 .yaycheckout-checkout .yaycheckout-payment .woocommerce-notice {
 	margin: 0;
+}
+
+/*
+ * Default: joined bordered rows, radio left.
+ * A lone row counts as checked (:only-child) when checkout.js hides the single radio.
+ */
+.yaycheckout-checkout .yaycheckout-payment:is(:not([data-layout]), [data-layout="default"]) #payment .wc_payment_methods > li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0 12px;
+	margin: 0;
+	padding: 14px 16px;
+	border: 1px solid var(--yaycheckout-border-color);
+	background-color: var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, transparent));
+}
+
+.yaycheckout-checkout .yaycheckout-payment:is(:not([data-layout]), [data-layout="default"]) #payment .wc_payment_methods > li + li {
+	margin-top: -1px;
+}
+
+.yaycheckout-checkout .yaycheckout-payment:is(:not([data-layout]), [data-layout="default"]) #payment .wc_payment_methods > li:first-child {
+	border-start-start-radius: var(--yaycheckout-payment-radius, var(--yaycheckout-field-radius));
+	border-start-end-radius: var(--yaycheckout-payment-radius, var(--yaycheckout-field-radius));
+}
+
+.yaycheckout-checkout .yaycheckout-payment:is(:not([data-layout]), [data-layout="default"]) #payment .wc_payment_methods > li:last-child {
+	/* Storefront's #payment .payment_methods li:last-child drops the last row's bottom edge. */
+	padding-bottom: 14px;
+	border-bottom: 1px solid var(--yaycheckout-border-color);
+	border-end-start-radius: var(--yaycheckout-payment-radius, var(--yaycheckout-field-radius));
+	border-end-end-radius: var(--yaycheckout-payment-radius, var(--yaycheckout-field-radius));
+}
+
+.yaycheckout-checkout .yaycheckout-payment:is(:not([data-layout]), [data-layout="default"]) #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) {
+	z-index: 1;
+	border-color: var(--yaycheckout-primary-color, #3858e9);
+	background-color: var(--yaycheckout-payment-bg-selected, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, transparent)));
+}
+
+.yaycheckout-checkout .yaycheckout-payment:is(:not([data-layout]), [data-layout="default"]) #payment .wc_payment_methods > li:hover:not(:has(input:checked)):not(:only-child) {
+	background-color: var(--yaycheckout-payment-bg-hover, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, transparent)));
+}
+
+.yaycheckout-checkout .yaycheckout-payment:is(:not([data-layout]), [data-layout="default"]) #payment .wc_payment_methods > li > label {
+	align-items: center;
+	gap: 12px;
+}
+
+/* Stacked: separate cards, radio left, selected tint. */
+.yaycheckout-checkout .yaycheckout-payment[data-layout="stacked"] #payment .wc_payment_methods {
+	display: flex;
+	flex-direction: column;
+	gap: var(--yaycheckout-payment-gap, 10px);
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="stacked"] #payment .wc_payment_methods > li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	padding: 14px 16px;
+	border: 1.5px solid var(--yaycheckout-border-color);
+	border-radius: var(--yaycheckout-payment-radius, 12px);
+	background-color: var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="stacked"] #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) {
+	border-color: var(--yaycheckout-primary-color, #3858e9);
+	background-color: var(--yaycheckout-payment-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff))));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="stacked"] #payment .wc_payment_methods > li:hover:not(:has(input:checked)):not(:only-child) {
+	background-color: var(--yaycheckout-payment-bg-hover, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff)));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="stacked"] #payment .wc_payment_methods > li > label {
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+}
+
+/* Columns: cards in a row; .payment_box stays inside the selected card. */
+.yaycheckout-checkout .yaycheckout-payment[data-layout="columns"] #payment .wc_payment_methods {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: var(--yaycheckout-payment-gap, 10px);
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="columns"] #payment .wc_payment_methods > li {
+	display: flex;
+	flex-wrap: wrap;
+	padding: 14px 16px;
+	border: 1.5px solid var(--yaycheckout-border-color);
+	border-radius: var(--yaycheckout-payment-radius, 12px);
+	background-color: var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="columns"] #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) {
+	border-color: var(--yaycheckout-primary-color, #3858e9);
+	background-color: var(--yaycheckout-payment-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff))));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="columns"] #payment .wc_payment_methods > li:hover:not(:has(input:checked)):not(:only-child) {
+	background-color: var(--yaycheckout-payment-bg-hover, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff)));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="columns"] #payment .wc_payment_methods > li > label {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	width: 100%;
+}
+
+/* Check: soft cards; select = primary border. Native radio stays visible. */
+.yaycheckout-checkout .yaycheckout-payment[data-layout="check"] #payment .wc_payment_methods {
+	display: flex;
+	flex-direction: column;
+	gap: var(--yaycheckout-payment-gap, 10px);
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="check"] #payment .wc_payment_methods > li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	padding: 16px 18px;
+	border: 2px solid transparent;
+	border-radius: var(--yaycheckout-payment-radius, 16px);
+	background-color: var(--yaycheckout-payment-bg, color-mix(in srgb, currentColor 6%, var(--yaycheckout-color-background, #fff)));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="check"] #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) {
+	border-color: var(--yaycheckout-primary-color, #3858e9);
+	background-color: var(--yaycheckout-payment-bg-selected, var(--yaycheckout-payment-bg, color-mix(in srgb, currentColor 6%, var(--yaycheckout-color-background, #fff))));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="check"] #payment .wc_payment_methods > li:hover:not(:has(input:checked)):not(:only-child) {
+	background-color: var(--yaycheckout-payment-bg-hover, var(--yaycheckout-payment-bg, color-mix(in srgb, currentColor 6%, var(--yaycheckout-color-background, #fff))));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="check"] #payment .wc_payment_methods > li > label {
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+}
+
+/* Divided: rules between rows, radio left. */
+.yaycheckout-checkout .yaycheckout-payment[data-layout="divided"] #payment .wc_payment_methods {
+	border-block: 1px solid currentColor;
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="divided"] #payment .wc_payment_methods > li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	padding: 16px 0;
+	border: 0;
+	border-bottom: 1px solid currentColor;
+	background-color: var(--yaycheckout-payment-bg, transparent);
+	border-radius: 0;
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="divided"] #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) {
+	background-color: var(--yaycheckout-payment-bg-selected, var(--yaycheckout-payment-bg, transparent));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="divided"] #payment .wc_payment_methods > li:hover:not(:has(input:checked)):not(:only-child) {
+	background-color: var(--yaycheckout-payment-bg-hover, var(--yaycheckout-payment-bg, transparent));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="divided"] #payment .wc_payment_methods > li:last-child {
+	border-bottom: 0;
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="divided"] #payment .wc_payment_methods > li > label {
+	align-items: center;
+	gap: 14px;
+	width: 100%;
+}
+
+/* Boxed: one outline around the list; selected row gets a tint, outer border stays. */
+.yaycheckout-checkout .yaycheckout-payment[data-layout="boxed"] #payment .wc_payment_methods {
+	overflow: hidden;
+	border: 1px solid var(--yaycheckout-border-color);
+	border-radius: var(--yaycheckout-payment-radius, 12px);
+	background-color: var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="boxed"] #payment .wc_payment_methods > li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	padding: 14px 16px;
+	border: 0;
+	border-bottom: 1px solid var(--yaycheckout-border-color);
+	border-radius: 0;
+	background-color: transparent;
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="boxed"] #payment .wc_payment_methods > li:last-child {
+	border-bottom: 0;
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="boxed"] #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) {
+	background-color: var(--yaycheckout-payment-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff))));
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="boxed"] #payment .wc_payment_methods > li:hover:not(:has(input:checked)):not(:only-child) {
+	background-color: var(--yaycheckout-payment-bg-hover, transparent);
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="boxed"] #payment .wc_payment_methods > li > label {
+	align-items: center;
+	gap: 12px;
+	width: 100%;
 }
