@@ -12,10 +12,9 @@ export interface StepNavButtonEditProps {
 interface Props extends StepNavButtonEditProps {
 	className: string;
 	placeholder: string;
-	/** An arrow glyph shown beside the label, as render.php prints it. Empty or missing shows none. */
+	/** An arrow glyph shown beside the label in a `${ className }__icon` span, as render.php prints it. Empty or missing shows none. */
 	icon?: string;
 	iconPosition?: 'before' | 'after';
-	iconClassName?: string;
 }
 
 /** Continue, Back and Apply coupon. A div, not a button: typing Space inside a button would click it. */
@@ -26,7 +25,6 @@ export function StepNavButtonEdit( {
 	setAttributes,
 	icon,
 	iconPosition = 'after',
-	iconClassName,
 }: Props ) {
 	const blockProps = useBlockProps( { className } );
 	const richTextProps = {
@@ -42,7 +40,7 @@ export function StepNavButtonEdit( {
 	}
 
 	const iconSpan = (
-		<span className={ iconClassName } aria-hidden="true">
+		<span className={ `${ className }__icon` } aria-hidden="true">
 			{ icon }
 		</span>
 	);

@@ -32,13 +32,10 @@ $yaycheckout_wrapper = get_block_wrapper_attributes(
 );
 
 $yaycheckout_cart_text = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'cartText', __( 'Return to cart', 'yaycheckout' ) );
-
-// A layout saved before the setting has no value: no arrow.
-$yaycheckout_icon      = \YayCheckout\Renderer\ButtonArrow::glyph( isset( $attributes['arrow'] ) ? (string) $attributes['arrow'] : 'none', 'back' );
-$yaycheckout_icon_html = '' !== $yaycheckout_icon ? '<span class="yaycheckout-back-button__icon" aria-hidden="true">' . esc_html( $yaycheckout_icon ) . '</span>' : '';
+$yaycheckout_icon      = \YayCheckout\Renderer\ButtonArrow::html( $attributes, 'back', 'yaycheckout-back-button__icon' );
 
 ?>
-<button <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?> hidden><?php echo $yaycheckout_icon_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where it is built above. ?><?php echo esc_html( $yaycheckout_label ); ?></button>
+<button <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?> hidden><?php echo $yaycheckout_icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ButtonArrow::html() escapes it. ?><?php echo esc_html( $yaycheckout_label ); ?></button>
 <?php if ( '' !== $yaycheckout_cart_url ) : ?>
-<a <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-back-button yaycheckout-back-button--cart' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?> href="<?php echo esc_url( $yaycheckout_cart_url ); ?>"><?php echo $yaycheckout_icon_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where it is built above. ?><?php echo esc_html( $yaycheckout_cart_text ); ?></a>
+<a <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-back-button yaycheckout-back-button--cart' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?> href="<?php echo esc_url( $yaycheckout_cart_url ); ?>"><?php echo $yaycheckout_icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ButtonArrow::html() escapes it. ?><?php echo esc_html( $yaycheckout_cart_text ); ?></a>
 <?php endif; ?>

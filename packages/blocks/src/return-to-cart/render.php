@@ -18,8 +18,8 @@
 defined( 'ABSPATH' ) || exit;
 
 $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'buttonText', __( 'Return to cart', 'yaycheckout' ) );
-// Core fills in block.json's default and swaps any value outside its enum for it.
-$yaycheckout_icon = \YayCheckout\Renderer\ButtonArrow::glyph( (string) $attributes['arrow'], 'back' );
+// A layout saved before the attribute existed has no value: the block.json default applies.
+$yaycheckout_icon = \YayCheckout\Renderer\ButtonArrow::glyph( (string) ( $attributes['arrow'] ?? 'chevron' ), 'back' );
 
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-return-to-cart' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>

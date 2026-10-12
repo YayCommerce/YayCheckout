@@ -51,7 +51,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					/>
 					<ToggleControl
 						label={ __( 'Show step headings', 'yaycheckout' ) }
-						checked={ showHeadings !== false }
+						checked={ showHeadings }
 						onChange={ ( value: boolean ) => setAttributes( { showHeadings: value } ) }
 					/>
 				</PanelBody>

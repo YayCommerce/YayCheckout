@@ -31,4 +31,18 @@ final class ButtonArrow {
     public static function glyph( string $style, string $direction ): string {
         return self::GLYPHS[ $direction ][ $style ] ?? '';
     }
+
+    /**
+     * The glyph in an escaped span hidden from screen readers, from the block's `arrow` attribute; empty when there is none.
+     * A layout saved before the block had the attribute has no value, so it gets no arrow.
+     *
+     * @param array  $attributes Block attributes.
+     * @param string $direction  `back` or `forward`.
+     * @param string $class_name The span's class.
+     */
+    public static function html( array $attributes, string $direction, string $class_name ): string {
+        $glyph = self::glyph( (string) ( $attributes['arrow'] ?? 'none' ), $direction );
+
+        return '' !== $glyph ? '<span class="' . esc_attr( $class_name ) . '" aria-hidden="true">' . esc_html( $glyph ) . '</span>' : '';
+    }
 }

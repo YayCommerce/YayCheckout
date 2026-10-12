@@ -1,7 +1,8 @@
 import { InspectorControls } from '@wordpress/block-editor';
-import { PanelBody, SelectControl } from '@wordpress/components';
+import { PanelBody } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { arrowGlyph, arrowOptions, type Arrow } from '../shared/button-arrow';
+import { ArrowControl } from '../shared/arrow-control';
+import { arrowGlyph, type Arrow } from '../shared/button-arrow';
 import { StepNavButtonEdit, type StepNavButtonAttributes } from '../shared/step-nav-button-edit';
 
 interface StepButtonAttributes extends StepNavButtonAttributes {
@@ -19,12 +20,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		<>
 			<InspectorControls>
 				<PanelBody title={ __( 'Continue button', 'yaycheckout' ) }>
-					<SelectControl
-						label={ __( 'Icon', 'yaycheckout' ) }
-						value={ attributes.arrow }
-						options={ arrowOptions( 'forward' ) }
-						onChange={ ( value: string ) => setAttributes( { arrow: value as Arrow } ) }
-					/>
+					<ArrowControl direction="forward" value={ attributes.arrow } onChange={ ( arrow ) => setAttributes( { arrow } ) } />
 				</PanelBody>
 			</InspectorControls>
 			<StepNavButtonEdit
@@ -33,8 +29,6 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				className="yaycheckout-step-button"
 				placeholder={ __( 'Continue', 'yaycheckout' ) }
 				icon={ arrowGlyph( attributes.arrow, 'forward' ) }
-				iconPosition="after"
-				iconClassName="yaycheckout-step-button__icon"
 			/>
 		</>
 	);

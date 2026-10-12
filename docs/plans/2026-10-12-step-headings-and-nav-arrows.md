@@ -11,9 +11,11 @@
 - `packages/blocks/src/step-button/`, `packages/blocks/src/back-button/` and `packages/blocks/src/return-to-cart/`.
 - New `includes/Renderer/ButtonArrow.php`. Consumers: `step-button/render.php`, `back-button/render.php`, `return-to-cart/render.php`.
 - New `packages/blocks/src/shared/button-arrow.ts` (shared; also the SPA's `@blocks-shared`). Consumers: `step-button/edit.tsx`, `back-button/edit.tsx`, `return-to-cart/edit.tsx`.
+- New `packages/blocks/src/shared/arrow-control.tsx` (shared). Consumers: `step-button/edit.tsx`, `back-button/edit.tsx`, `return-to-cart/edit.tsx`.
 - `packages/blocks/src/shared/step-nav-button-edit.tsx` (shared). Consumers: `step-button/edit.tsx`, `back-button/edit.tsx`, `coupon-button/edit.tsx`.
 - `docs/conventions.md`.
 
+**Revised after /yaytidy (2026-10-12):** the icon span moved into `ButtonArrow::html()`, the Icon select into `ArrowControl`, the icon class is derived from `className`, and the hidden-headings CSS reuses the `single` rules. Tasks 1–3 below describe the code as it now stands.
 **Tests:** none. The change is block options and CSS, and none of it is logic the CLAUDE.md test rule lists. Each task has an exact manual check instead.
 
 ## Global constraints
@@ -60,21 +62,19 @@ Add `"showHeadings": { "type": "boolean", "default": true }` to `attributes`, an
 
 - [ ] **Step 2: Print `data-headings="hidden"` in `steps/render.php`**
 
-Read the value as `! isset( $attributes['showHeadings'] ) || false !== $attributes['showHeadings']`, so a missing value means shown. Add `'data-headings' => 'hidden'` to `$yaycheckout_wrapper_attrs` only when it is `false`.
+Read the value as `$attributes['showHeadings'] ?? true`, so a missing value means shown. Add `'data-headings' => 'hidden'` to `$yaycheckout_wrapper_attrs` only when it is `false`.
 
 - [ ] **Step 3: Add the hidden-headings rules to `steps/style.css`**
 
-Under `.yaycheckout-steps[data-headings="hidden"]`:
-- `.yaycheckout-step:not([data-state="current"])` gets `display: none`.
-- Once nothing is current, keep the finished last step visible. Copy the selector at line 118 and replace `[data-layout="single"]` with `[data-headings="hidden"]`.
-- `.yaycheckout-step__header` is visually hidden: `position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0`.
-- `.yaycheckout-step__body` gets `margin-top: 0`.
+- Widen the two `single` rules at lines 113–120 (non-current steps hidden; the finished last step kept on screen) to `.yaycheckout-steps:is([data-layout="single"], [data-headings="hidden"])`, so one rule serves both.
+- `.yaycheckout-steps[data-headings="hidden"] .yaycheckout-step__header` is visually hidden with the same declarations as `progress/style.css` (WordPress's `.screen-reader-text`): `position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap`.
+- `.yaycheckout-steps[data-headings="hidden"] .yaycheckout-step__body` gets `margin-top: 0`.
 
 Add a one-line comment saying the header stays for screen readers and that Back and Progress are the ways back.
 
 - [ ] **Step 4: Add the "Show step headings" toggle in `steps/edit.tsx`**
 
-Add `showHeadings: boolean` to `StepsAttributes`. Add a `ToggleControl` labelled `__( 'Show step headings', 'yaycheckout' )` under the Layout select in the existing Steps panel, with `checked={ showHeadings !== false }`, setting `showHeadings`. Show it for both layouts.
+Add `showHeadings: boolean` to `StepsAttributes`. Add a `ToggleControl` labelled `__( 'Show step headings', 'yaycheckout' )` under the Layout select in the existing Steps panel, with `checked={ showHeadings }`, setting `showHeadings`. Show it for both layouts.
 
 - [ ] **Step 5: Fade the header in the Step editor**
 
@@ -114,6 +114,7 @@ Message: `feat(blocks): let Steps hide step headings`
 **Files:**
 - Create: `includes/Renderer/ButtonArrow.php`
 - Create: `packages/blocks/src/shared/button-arrow.ts`
+- Create: `packages/blocks/src/shared/arrow-control.tsx`
 - Modify: `packages/blocks/src/return-to-cart/render.php` (the `$yaycheckout_icons` map)
 - Modify: `packages/blocks/src/return-to-cart/edit.tsx` (`ICONS`, the `Arrow` type and the select options)
 - Modify: `docs/conventions.md` (the "In code" list of mirrors)
@@ -123,6 +124,8 @@ Message: `feat(blocks): let Steps hide step headings`
   - `$direction` is `'back'` or `'forward'`.
   - `back`: `arrow` → `←`, `chevron` → `‹`. `forward`: `arrow` → `→`, `chevron` → `›`.
   - `none`, an unknown style or an unknown direction returns `''`.
+- Produces: `YayCheckout\Renderer\ButtonArrow::html( array $attributes, string $direction, string $class_name ): string`. It reads `arrow` as `$attributes['arrow'] ?? 'none'` and returns `<span class="<class_name>" aria-hidden="true"><glyph></span>`, escaped, or `''` when there is no glyph. Task 3's renders use it; Return to Cart keeps its own span so its output stays byte-identical.
+- Produces, in `packages/blocks/src/shared/arrow-control.tsx`: `export function ArrowControl( { direction, value, onChange }: { direction: ArrowDirection; value: Arrow; onChange: ( arrow: Arrow ) => void } )`, the "Icon" `SelectControl` with `arrowOptions( direction )`.
 - Produces, in `packages/blocks/src/shared/button-arrow.ts`:
   - `export type Arrow = 'none' | 'arrow' | 'chevron'`
   - `export type ArrowDirection = 'back' | 'forward'`
@@ -143,8 +146,8 @@ Start it with `/** Mirrors ButtonArrow::glyph() in PHP. */`.
 
 - [ ] **Step 4: Switch Return to Cart to the helpers**
 
-- `return-to-cart/render.php`: replace `$yaycheckout_icons` and its lookup with `$yaycheckout_icon = \YayCheckout\Renderer\ButtonArrow::glyph( (string) $attributes['arrow'], 'back' );`.
-- `return-to-cart/edit.tsx`: delete the local `Arrow` type and `ICONS`. Use `arrowGlyph( attributes.arrow, 'back' )` and `options={ arrowOptions( 'back' ) }`. Keep the comment that the values mirror block.json's enum, pointing at `ButtonArrow` as well.
+- `return-to-cart/render.php`: replace `$yaycheckout_icons` and its lookup with `$yaycheckout_icon = \YayCheckout\Renderer\ButtonArrow::glyph( (string) ( $attributes['arrow'] ?? 'chevron' ), 'back' );`.
+- `return-to-cart/edit.tsx`: delete the local `Arrow` type and `ICONS`. Use `arrowGlyph( attributes.arrow, 'back' )`, and replace its select with `<ArrowControl direction="back" … />`. Keep the comment that the values mirror block.json's enum, pointing at `ButtonArrow` as well.
 - `docs/conventions.md`: add `packages/blocks/src/shared/button-arrow.ts` (`ButtonArrow::glyph()`) to the "In code" list of mirrors.
 
 - [ ] **Step 5: Verify**
@@ -172,9 +175,9 @@ Message: `refactor(blocks): share the button arrow glyphs`
 - Modify: `packages/blocks/src/back-button/block.json`, `render.php`, `style.css`, `edit.tsx`
 
 **Interfaces:**
-- Consumes: `ButtonArrow::glyph()`, `arrowGlyph()` and `arrowOptions()` from Task 2.
+- Consumes: `ButtonArrow::html()`, `arrowGlyph()` and `ArrowControl` from Task 2.
 - Produces: the attribute `arrow` on `yaycheckout/step-button` and on `yaycheckout/back-button` (`string`, enum `none` | `arrow` | `chevron`, default `none`).
-- Produces: the props `icon?: string`, `iconPosition?: 'before' | 'after'` (default `'after'`) and `iconClassName?: string` on `StepNavButtonEdit`.
+- Produces: the props `icon?: string` and `iconPosition?: 'before' | 'after'` (default `'after'`) on `StepNavButtonEdit`. The icon span's class is `${ className }__icon`.
 - Produces: the class names `yaycheckout-step-button__icon` and `yaycheckout-back-button__icon`.
 
 - [ ] **Step 1: Add the `arrow` attribute to both block.json files**
@@ -183,10 +186,8 @@ Add `"arrow": { "type": "string", "default": "none", "enum": [ "none", "arrow", 
 
 - [ ] **Step 2: Print the glyph in both renders**
 
-In both, read the style as `isset( $attributes['arrow'] ) ? (string) $attributes['arrow'] : 'none'`.
-
-- `step-button/render.php`: call `ButtonArrow::glyph( $style, 'forward' )`. When it isn't empty, print `<span class="yaycheckout-step-button__icon" aria-hidden="true">` + `esc_html( glyph )` + `</span>` after the label, inside the `<button>`.
-- `back-button/render.php`: call `ButtonArrow::glyph( $style, 'back' )`. When it isn't empty, print `<span class="yaycheckout-back-button__icon" aria-hidden="true">` + `esc_html( glyph )` + `</span>` before the label, in both the `<button>` and the cart `<a>`.
+- `step-button/render.php`: print `ButtonArrow::html( $attributes, 'forward', 'yaycheckout-step-button__icon' )` after the label, inside the `<button>`.
+- `back-button/render.php`: print `ButtonArrow::html( $attributes, 'back', 'yaycheckout-back-button__icon' )` before the label, in both the `<button>` and the cart `<a>`.
 
 With `none`, the HTML must match today's exactly.
 
@@ -198,14 +199,14 @@ In `step-button/style.css` and `back-button/style.css`, change `display: block` 
 
 Add the props from this task's Interfaces.
 - Without `icon`, return exactly today's RichText with the block props.
-- With `icon`, render a `div` with the block props holding a RichText `span` (same RichText props as today) and `<span className={ iconClassName } aria-hidden="true">{ icon }</span>` on the `iconPosition` side.
+- With `icon`, render a `div` with the block props holding a RichText `span` (same RichText props as today) and `<span className={ `${ className }__icon` } aria-hidden="true">{ icon }</span>` on the `iconPosition` side.
 
 Keep the comment explaining why the root is a `div` and not a `button`.
 
 - [ ] **Step 5: Add the "Icon" select to both editors**
 
-- `step-button/edit.tsx`: add a new `PanelBody` titled `__( 'Continue button', 'yaycheckout' )` with a `SelectControl` labelled `__( 'Icon', 'yaycheckout' )`, `options={ arrowOptions( 'forward' ) }`, setting `arrow`. Pass `icon={ arrowGlyph( arrow, 'forward' ) }`, `iconPosition="after"` and `iconClassName="yaycheckout-step-button__icon"`.
-- `back-button/edit.tsx`: add the same `SelectControl` to the existing "Previous step button" panel, with `arrowOptions( 'back' )`. Pass `icon={ arrowGlyph( arrow, 'back' ) }`, `iconPosition="before"` and `iconClassName="yaycheckout-back-button__icon"`.
+- `step-button/edit.tsx`: add a new `PanelBody` titled `__( 'Continue button', 'yaycheckout' )` holding `<ArrowControl direction="forward" … />`, setting `arrow`. Pass `icon={ arrowGlyph( arrow, 'forward' ) }` (the position defaults to `after`).
+- `back-button/edit.tsx`: add `<ArrowControl direction="back" … />` to the existing "Previous step button" panel. Pass `icon={ arrowGlyph( arrow, 'back' ) }` and `iconPosition="before"`.
 
 - [ ] **Step 6: Verify the editor**
 

@@ -26,7 +26,7 @@ $yaycheckout_wrapper_attrs = [
 ];
 
 // A layout saved before the setting has no value: headings show.
-if ( isset( $attributes['showHeadings'] ) && false === $attributes['showHeadings'] ) {
+if ( false === ( $attributes['showHeadings'] ?? true ) ) {
     $yaycheckout_wrapper_attrs['data-headings'] = 'hidden';
 }
 
