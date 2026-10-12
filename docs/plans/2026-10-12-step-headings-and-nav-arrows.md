@@ -56,15 +56,15 @@
 - Produces: the block context key `yaycheckout/showHeadings`.
 - Produces: the wrapper attribute `data-headings="hidden"`, printed only when `showHeadings` is `false`.
 
-- [ ] **Step 1: Add the attribute and context to `steps/block.json`**
+- [x] **Step 1: Add the attribute and context to `steps/block.json`**
 
 Add `"showHeadings": { "type": "boolean", "default": true }` to `attributes`, and `"providesContext": { "yaycheckout/showHeadings": "showHeadings" }`.
 
-- [ ] **Step 2: Print `data-headings="hidden"` in `steps/render.php`**
+- [x] **Step 2: Print `data-headings="hidden"` in `steps/render.php`**
 
 Read the value as `$attributes['showHeadings'] ?? true`, so a missing value means shown. Add `'data-headings' => 'hidden'` to `$yaycheckout_wrapper_attrs` only when it is `false`.
 
-- [ ] **Step 3: Add the hidden-headings rules to `steps/style.css`**
+- [x] **Step 3: Add the hidden-headings rules to `steps/style.css`**
 
 - Widen the two `single` rules at lines 113–120 (non-current steps hidden; the finished last step kept on screen) to `.yaycheckout-steps:is([data-layout="single"], [data-headings="hidden"])`, so one rule serves both.
 - `.yaycheckout-steps[data-headings="hidden"] .yaycheckout-step__header` is visually hidden with the same declarations as `progress/style.css` (WordPress's `.screen-reader-text`): `position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap`.
@@ -72,11 +72,11 @@ Read the value as `$attributes['showHeadings'] ?? true`, so a missing value mean
 
 Add a one-line comment saying the header stays for screen readers and that Back and Progress are the ways back.
 
-- [ ] **Step 4: Add the "Show step headings" toggle in `steps/edit.tsx`**
+- [x] **Step 4: Add the "Show step headings" toggle in `steps/edit.tsx`**
 
 Add `showHeadings: boolean` to `StepsAttributes`. Add a `ToggleControl` labelled `__( 'Show step headings', 'yaycheckout' )` under the Layout select in the existing Steps panel, with `checked={ showHeadings }`, setting `showHeadings`. Show it for both layouts.
 
-- [ ] **Step 5: Fade the header in the Step editor**
+- [x] **Step 5: Fade the header in the Step editor**
 
 - `step/block.json`: add `"usesContext": [ "yaycheckout/showHeadings" ]` and `"editorStyle": "file:./index.css"`.
 - `step/edit.tsx`:
@@ -87,7 +87,7 @@ Add `showHeadings: boolean` to `StepsAttributes`. Add a `ToggleControl` labelled
   - `.yaycheckout-step__header.is-hidden-on-checkout { opacity: .5 }`.
   - `.yaycheckout-step__hidden-note`: 12px, normal weight, `#757575`.
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
 Run `pnpm build:blocks`. Expected: the build finishes with no errors.
 
@@ -104,7 +104,7 @@ Then check by hand:
 - **Storefront, `list`.** Switch Steps to List and repeat the storefront walk. Expected: the same results.
 - **Headings back on.** Turn the toggle on again and preview. Expected: the wrapper has no `data-headings` attribute, and headers show as today.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 Stage: `packages/blocks/src/steps/block.json`, `packages/blocks/src/steps/render.php`, `packages/blocks/src/steps/style.css`, `packages/blocks/src/steps/edit.tsx`, `packages/blocks/src/step/block.json`, `packages/blocks/src/step/edit.tsx`, `packages/blocks/src/step/editor.css`
 Message: `feat(blocks): let Steps hide step headings`
@@ -125,32 +125,32 @@ Message: `feat(blocks): let Steps hide step headings`
   - `back`: `arrow` → `←`, `chevron` → `‹`. `forward`: `arrow` → `→`, `chevron` → `›`.
   - `none`, an unknown style or an unknown direction returns `''`.
 - Produces: `YayCheckout\Renderer\ButtonArrow::html( array $attributes, string $direction, string $class_name ): string`. It reads `arrow` as `$attributes['arrow'] ?? 'none'` and returns `<span class="<class_name>" aria-hidden="true"><glyph></span>`, escaped, or `''` when there is no glyph. Task 3's renders use it; Return to Cart keeps its own span so its output stays byte-identical.
-- Produces, in `packages/blocks/src/shared/arrow-control.tsx`: `export function ArrowControl( { direction, value, onChange }: { direction: ArrowDirection; value: Arrow; onChange: ( arrow: Arrow ) => void } )`, the "Icon" `SelectControl` with `arrowOptions( direction )`.
+- Produces, in `packages/blocks/src/shared/arrow-control.tsx`: `export function ArrowControl( { direction, value, onChange }: Props )`, with `interface Props { direction: ArrowDirection; value: Arrow; onChange: ( arrow: Arrow ) => void }`, the "Icon" `SelectControl` with `arrowOptions( direction )`.
 - Produces, in `packages/blocks/src/shared/button-arrow.ts`:
   - `export type Arrow = 'none' | 'arrow' | 'chevron'`
   - `export type ArrowDirection = 'back' | 'forward'`
   - `export function arrowGlyph( style: Arrow, direction: ArrowDirection ): string`
   - `export function arrowOptions( direction: ArrowDirection ): { label: string; value: Arrow }[]`, which returns `None`, `Arrow (←)` or `Arrow (→)`, and `Chevron (‹)` or `Chevron (›)`, translated with the `yaycheckout` domain.
 
-- [ ] **Step 1: Record Return to Cart's current HTML**
+- [x] **Step 1: Record Return to Cart's current HTML**
 
 On `dev/edd` with the blocks built, preview a new draft layout as a shopper. It must have three Return to Cart blocks, with `arrow` set to `none`, `arrow` and `chevron`. In DevTools, run `[...document.querySelectorAll('.yaycheckout-return-to-cart')].map(e => e.outerHTML).join('\n')` and save the output to a scratch file.
 
-- [ ] **Step 2: Create `includes/Renderer/ButtonArrow.php` with `glyph()` (see Interfaces)**
+- [x] **Step 2: Create `includes/Renderer/ButtonArrow.php` with `glyph()` (see Interfaces)**
 
 Use a private constant map keyed by direction, then style. Add a class docblock saying the map is mirrored by `packages/blocks/src/shared/button-arrow.ts`.
 
-- [ ] **Step 3: Create `packages/blocks/src/shared/button-arrow.ts` (see Interfaces)**
+- [x] **Step 3: Create `packages/blocks/src/shared/button-arrow.ts` (see Interfaces)**
 
 Start it with `/** Mirrors ButtonArrow::glyph() in PHP. */`.
 
-- [ ] **Step 4: Switch Return to Cart to the helpers**
+- [x] **Step 4: Switch Return to Cart to the helpers**
 
 - `return-to-cart/render.php`: replace `$yaycheckout_icons` and its lookup with `$yaycheckout_icon = \YayCheckout\Renderer\ButtonArrow::glyph( (string) ( $attributes['arrow'] ?? 'chevron' ), 'back' );`.
 - `return-to-cart/edit.tsx`: delete the local `Arrow` type and `ICONS`. Use `arrowGlyph( attributes.arrow, 'back' )`, and replace its select with `<ArrowControl direction="back" … />`. Keep the comment that the values mirror block.json's enum, pointing at `ButtonArrow` as well.
 - `docs/conventions.md`: add `packages/blocks/src/shared/button-arrow.ts` (`ButtonArrow::glyph()`) to the "In code" list of mirrors.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run `pnpm build:blocks`. Expected: the build finishes with no errors.
 
@@ -162,7 +162,7 @@ Reload the preview from Step 1 and run the same DevTools line. Expected: the out
 
 In the editor, Return to Cart's "Icon" select still lists None, Arrow (←), Chevron (‹), and the canvas shows the chosen glyph.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Stage: `includes/Renderer/ButtonArrow.php`, `packages/blocks/src/shared/button-arrow.ts`, `packages/blocks/src/return-to-cart/render.php`, `packages/blocks/src/return-to-cart/edit.tsx`, `docs/conventions.md`
 Message: `refactor(blocks): share the button arrow glyphs`
@@ -180,22 +180,22 @@ Message: `refactor(blocks): share the button arrow glyphs`
 - Produces: the props `icon?: string` and `iconPosition?: 'before' | 'after'` (default `'after'`) on `StepNavButtonEdit`. The icon span's class is `${ className }__icon`.
 - Produces: the class names `yaycheckout-step-button__icon` and `yaycheckout-back-button__icon`.
 
-- [ ] **Step 1: Add the `arrow` attribute to both block.json files**
+- [x] **Step 1: Add the `arrow` attribute to both block.json files**
 
 Add `"arrow": { "type": "string", "default": "none", "enum": [ "none", "arrow", "chevron" ] }` to `step-button/block.json` and to `back-button/block.json`.
 
-- [ ] **Step 2: Print the glyph in both renders**
+- [x] **Step 2: Print the glyph in both renders**
 
 - `step-button/render.php`: print `ButtonArrow::html( $attributes, 'forward', 'yaycheckout-step-button__icon' )` after the label, inside the `<button>`.
 - `back-button/render.php`: print `ButtonArrow::html( $attributes, 'back', 'yaycheckout-back-button__icon' )` before the label, in both the `<button>` and the cart `<a>`.
 
 With `none`, the HTML must match today's exactly.
 
-- [ ] **Step 3: Lay out the icon in both stylesheets**
+- [x] **Step 3: Lay out the icon in both stylesheets**
 
 In `step-button/style.css` and `back-button/style.css`, change `display: block` to `display: flex; align-items: center; gap: 6px`. Keep `width: fit-content`. In `back-button/style.css`, `.yaycheckout-back-button[hidden] { display: none; }` must still come after the base rule.
 
-- [ ] **Step 4: Let `StepNavButtonEdit` show an icon**
+- [x] **Step 4: Let `StepNavButtonEdit` show an icon**
 
 Add the props from this task's Interfaces.
 - Without `icon`, return exactly today's RichText with the block props.
@@ -203,12 +203,12 @@ Add the props from this task's Interfaces.
 
 Keep the comment explaining why the root is a `div` and not a `button`.
 
-- [ ] **Step 5: Add the "Icon" select to both editors**
+- [x] **Step 5: Add the "Icon" select to both editors**
 
 - `step-button/edit.tsx`: add a new `PanelBody` titled `__( 'Continue button', 'yaycheckout' )` holding `<ArrowControl direction="forward" … />`, setting `arrow`. Pass `icon={ arrowGlyph( arrow, 'forward' ) }` (the position defaults to `after`).
 - `back-button/edit.tsx`: add `<ArrowControl direction="back" … />` to the existing "Previous step button" panel. Pass `icon={ arrowGlyph( arrow, 'back' ) }` and `iconPosition="before"`.
 
-- [ ] **Step 6: Verify the editor**
+- [x] **Step 6: Verify the editor**
 
 Run `pnpm build:blocks`. Expected: the build finishes with no errors.
 
@@ -220,7 +220,7 @@ In a new draft layout:
 - With Icon None, both look as they do on `dev/edd`.
 - An Apply coupon button inside a Coupon form looks and edits as on `dev/edd`.
 
-- [ ] **Step 7: Verify the storefront**
+- [x] **Step 7: Verify the storefront**
 
 Preview the layout with Continue and Back set to `chevron`. Expected:
 - Step 1 shows `<a class="… yaycheckout-back-button yaycheckout-back-button--cart" …><span class="yaycheckout-back-button__icon" aria-hidden="true">‹</span>Return to cart</a>`.
@@ -235,7 +235,7 @@ Set Back's `firstStep` to Hide. Expected: nothing from Back shows on step 1.
 
 Set both to None. Expected: no `__icon` span in either block.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 Stage: `packages/blocks/src/shared/step-nav-button-edit.tsx`, `packages/blocks/src/step-button/block.json`, `packages/blocks/src/step-button/render.php`, `packages/blocks/src/step-button/style.css`, `packages/blocks/src/step-button/edit.tsx`, `packages/blocks/src/back-button/block.json`, `packages/blocks/src/back-button/render.php`, `packages/blocks/src/back-button/style.css`, `packages/blocks/src/back-button/edit.tsx`
 Message: `feat(blocks): add an arrow option to Continue and Back`
@@ -248,14 +248,14 @@ Message: `feat(blocks): add an arrow option to Continue and Back`
 **Interfaces:**
 - Consumes: everything from Tasks 1–3.
 
-- [ ] **Step 1: Check a saved layout is unchanged (spec criterion 1)**
+- [x] **Step 1: Check a saved layout is unchanged (spec criterion 1)**
 
 Preview an existing layout that has Steps, Continue and Back and was saved before this branch. Don't edit it. Expected:
 - No `data-headings` attribute and no `__icon` span.
 - The headers show as on `dev/edd`.
 - The buttons look the same, apart from now being flex boxes.
 
-- [ ] **Step 2: Run the spec's end-to-end check (criterion 11)**
+- [x] **Step 2: Run the spec's end-to-end check (criterion 11)**
 
 Run `pnpm build:blocks`. Then, in a new draft layout:
 1. Add Steps with three Steps titled Information, Shipping, Payment, and add a Progress (segments).
@@ -274,11 +274,11 @@ Switch Steps to List and repeat the walk. Expected: the same behaviour.
 
 Place an order with a test gateway. Expected: the order succeeds.
 
-- [ ] **Step 3: Run the full lint**
+- [x] **Step 3: Run the full lint**
 
 Run `composer lint`. Expected: no errors, the same result as `dev/edd`.
 
-- [ ] **Step 4: Close the plan**
+- [x] **Step 4: Close the plan**
 
 Set this plan's `**Status:**` to `done YYYY-MM-DD`.
 

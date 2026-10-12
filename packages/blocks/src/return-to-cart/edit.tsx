@@ -14,7 +14,7 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< ReturnToCartAttributes > ) => void;
 }
 
-// The placeholder mirrors return-to-cart/render.php; the icons come from ButtonArrow through shared/button-arrow.ts.
+// The placeholder mirrors return-to-cart/render.php. The Arrow values mirror block.json's arrow enum, and the icons come from ButtonArrow through shared/button-arrow.ts.
 
 /** A div, not a link: clicking the label edits it instead of leaving the editor. */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
