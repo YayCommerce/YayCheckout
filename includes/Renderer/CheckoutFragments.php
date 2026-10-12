@@ -25,6 +25,25 @@ class CheckoutFragments {
     /** Layout values the Payment block accepts; an unknown attribute falls back to default. */
     public const PAYMENT_LAYOUTS = [ 'default', 'check', 'boxed', 'columns', 'stacked', 'divided' ];
 
+    /** Length key under style.yaycheckout => the --yaycheckout-payment-* variable it sets. LENGTH_VARS in style-paths.ts mirrors it; radius stays at style.border.radius. */
+    private const PAYMENT_LENGTH_VARS = [
+        'borderWidth' => '--yaycheckout-payment-border-width',
+    ];
+
+    /**
+     * Colour key under style.yaycheckout => the --yaycheckout-payment-* variable it sets.
+     * Idle background stays at style.color.background. COLOR_VARS in style-paths.ts mirrors both.
+     */
+    private const PAYMENT_COLOR_VARS = [
+        'backgroundSelected' => '--yaycheckout-payment-bg-selected',
+        'backgroundHover'    => '--yaycheckout-payment-bg-hover',
+        'radio'              => '--yaycheckout-payment-radio',
+        'radioSelected'      => '--yaycheckout-payment-radio-selected',
+        'border'             => '--yaycheckout-payment-border',
+        'borderSelected'     => '--yaycheckout-payment-border-selected',
+        'borderHover'        => '--yaycheckout-payment-border-hover',
+    ];
+
     /** Layout slot => [ selector WooCommerce's checkout.js replaces, method building its HTML ]. */
     private const FRAGMENTS = [
         'payment'          => [ '.woocommerce-checkout-payment', 'payment_methods_html' ],
@@ -169,19 +188,23 @@ class CheckoutFragments {
             $decls[] = '--yaycheckout-payment-radius:' . $radius;
         }
 
+        foreach ( self::PAYMENT_LENGTH_VARS as $key => $var ) {
+            $length = self::payment_css_length( $yay[ $key ] ?? null );
+            if ( '' !== $length ) {
+                $decls[] = $var . ':' . $length;
+            }
+        }
+
         $bg = self::payment_css_color( $color['background'] ?? null );
         if ( '' !== $bg ) {
             $decls[] = '--yaycheckout-payment-bg:' . $bg;
         }
 
-        $bg_selected = self::payment_css_color( $yay['backgroundSelected'] ?? null );
-        if ( '' !== $bg_selected ) {
-            $decls[] = '--yaycheckout-payment-bg-selected:' . $bg_selected;
-        }
-
-        $bg_hover = self::payment_css_color( $yay['backgroundHover'] ?? null );
-        if ( '' !== $bg_hover ) {
-            $decls[] = '--yaycheckout-payment-bg-hover:' . $bg_hover;
+        foreach ( self::PAYMENT_COLOR_VARS as $key => $var ) {
+            $value = self::payment_css_color( $yay[ $key ] ?? null );
+            if ( '' !== $value ) {
+                $decls[] = $var . ':' . $value;
+            }
         }
 
         // Text colour from color.text or the textColor preset slug (skipSerialization).

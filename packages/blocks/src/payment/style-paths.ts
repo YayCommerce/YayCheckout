@@ -1,13 +1,41 @@
-import type { PaymentSettingKey } from './setting-controls';
+import type { ColorSettingKey, PaymentSettingKey } from './setting-controls';
 
 type StyleObject = Record< string, unknown >;
 
+/**
+ * Gap and idle background sit under core style keys; radius under core's border.
+ * The rest sit under `yaycheckout`, because Payment does not enable core background or border.
+ */
 const PATHS: Record< PaymentSettingKey, string[] > = {
 	gap: [ 'spacing', 'blockGap' ],
+	borderWidth: [ 'yaycheckout', 'borderWidth' ],
 	borderRadius: [ 'border', 'radius' ],
 	backgroundColor: [ 'color', 'background' ],
 	backgroundColorSelected: [ 'yaycheckout', 'backgroundSelected' ],
 	backgroundColorHover: [ 'yaycheckout', 'backgroundHover' ],
+	borderColor: [ 'yaycheckout', 'border' ],
+	borderColorSelected: [ 'yaycheckout', 'borderSelected' ],
+	borderColorHover: [ 'yaycheckout', 'borderHover' ],
+	radioColor: [ 'yaycheckout', 'radio' ],
+	radioColorSelected: [ 'yaycheckout', 'radioSelected' ],
+};
+
+/** Length setting => the variable it sets. Mirrors CheckoutFragments length printing (radius plus PAYMENT_LENGTH_VARS). */
+const LENGTH_VARS: Partial< Record< PaymentSettingKey, string > > = {
+	borderWidth: '--yaycheckout-payment-border-width',
+	borderRadius: '--yaycheckout-payment-radius',
+};
+
+/** Colour setting => the variable it sets, in the order PHP prints them. Mirrors CheckoutFragments colour printing. */
+const COLOR_VARS: Record< ColorSettingKey, string > = {
+	backgroundColor: '--yaycheckout-payment-bg',
+	backgroundColorSelected: '--yaycheckout-payment-bg-selected',
+	backgroundColorHover: '--yaycheckout-payment-bg-hover',
+	radioColor: '--yaycheckout-payment-radio',
+	radioColorSelected: '--yaycheckout-payment-radio-selected',
+	borderColor: '--yaycheckout-payment-border',
+	borderColorSelected: '--yaycheckout-payment-border-selected',
+	borderColorHover: '--yaycheckout-payment-border-hover',
 };
 
 function isPlainObject( value: unknown ): value is StyleObject {
@@ -94,28 +122,24 @@ export function paymentStyleVars(
 ): Record< string, string > {
 	const vars: Record< string, string > = {};
 	const gap = getStyleSetting( style, 'gap' );
-	const radius = getStyleSetting( style, 'borderRadius' );
-	const bg = getStyleSetting( style, 'backgroundColor' );
-	const bgSelected = getStyleSetting( style, 'backgroundColorSelected' );
-	const bgHover = getStyleSetting( style, 'backgroundColorHover' );
 	const text = cssColor( getAt( style, [ 'color', 'text' ] ), textColor );
 
 	if ( typeof gap === 'string' && gap !== '' ) {
 		vars[ '--yaycheckout-payment-gap' ] = gap;
 	}
-	if ( typeof radius === 'string' && radius !== '' ) {
-		vars[ '--yaycheckout-payment-radius' ] = radius;
-	} else if ( typeof radius === 'number' && Number.isFinite( radius ) ) {
-		vars[ '--yaycheckout-payment-radius' ] = `${ radius }px`;
+	for ( const [ key, name ] of Object.entries( LENGTH_VARS ) as [ PaymentSettingKey, string ][] ) {
+		const length = getStyleSetting( style, key );
+		if ( typeof length === 'string' && length !== '' ) {
+			vars[ name ] = length;
+		} else if ( typeof length === 'number' && Number.isFinite( length ) ) {
+			vars[ name ] = `${ length }px`;
+		}
 	}
-	if ( typeof bg === 'string' && bg !== '' ) {
-		vars[ '--yaycheckout-payment-bg' ] = bg;
-	}
-	if ( typeof bgSelected === 'string' && bgSelected !== '' ) {
-		vars[ '--yaycheckout-payment-bg-selected' ] = bgSelected;
-	}
-	if ( typeof bgHover === 'string' && bgHover !== '' ) {
-		vars[ '--yaycheckout-payment-bg-hover' ] = bgHover;
+	for ( const [ key, name ] of Object.entries( COLOR_VARS ) as [ ColorSettingKey, string ][] ) {
+		const value = cssColor( getStyleSetting( style, key ) );
+		if ( value ) {
+			vars[ name ] = value;
+		}
 	}
 	if ( text ) {
 		vars.color = text;

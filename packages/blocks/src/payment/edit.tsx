@@ -1,14 +1,9 @@
-import { InspectorControls, PanelColorSettings, useBlockProps } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { layoutFor, PAYMENT_LAYOUTS } from './layouts';
-import {
-	BACKGROUND_SETTING_LABELS,
-	isBackgroundSetting,
-	SETTING_CONTROLS,
-	type PaymentSettingKey,
-} from './setting-controls';
-import { getStyleSetting, setStyleSetting, paymentStyleVars } from './style-paths';
+import { StylePanels } from './style-panels';
+import { paymentStyleVars } from './style-paths';
 import '../shared/section-preview.css';
 
 interface PaymentAttributes {
@@ -21,10 +16,6 @@ interface PaymentAttributes {
 interface EditProps {
 	attributes: PaymentAttributes;
 	setAttributes: ( attributes: Partial< PaymentAttributes > ) => void;
-}
-
-function colorValue( value: unknown ): string | undefined {
-	return typeof value === 'string' && value !== '' ? value : undefined;
 }
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
@@ -40,11 +31,6 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	};
 	const heading = label || __( 'Payment', 'yaycheckout' );
 	const selectedLayout = layoutFor( layout );
-	const rangeKeys = selectedLayout.settings.filter(
-		( key ): key is PaymentSettingKey => ! isBackgroundSetting( key ) && Boolean( SETTING_CONTROLS[ key ] )
-	);
-	const colorKeys = selectedLayout.settings.filter( isBackgroundSetting );
-	const showMethods = rangeKeys.length > 0 || colorKeys.length > 0;
 
 	return (
 		<>
@@ -67,43 +53,11 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<InspectorControls group="styles">
-				{ showMethods && (
-					<PanelBody title={ __( 'Methods', 'yaycheckout' ) }>
-						{ rangeKeys.map( ( key ) => {
-							const Control = SETTING_CONTROLS[ key ];
-							if ( ! Control ) {
-								return null;
-							}
-
-							return (
-								<Control
-									key={ key }
-									value={ getStyleSetting( style, key ) }
-									onChange={ ( value ) =>
-										setAttributes( {
-											style: setStyleSetting( style, key, value ),
-										} )
-									}
-								/>
-							);
-						} ) }
-						{ colorKeys.length > 0 && (
-							<PanelColorSettings
-								title={ __( 'Background', 'yaycheckout' ) }
-								showTitle={ false }
-								__experimentalIsRenderedInSidebar
-								colorSettings={ colorKeys.map( ( key ) => ( {
-									label: BACKGROUND_SETTING_LABELS[ key ],
-									value: colorValue( getStyleSetting( style, key ) ),
-									onChange: ( value: string | undefined ) =>
-										setAttributes( {
-											style: setStyleSetting( style, key, value || undefined ),
-										} ),
-								} ) ) }
-							/>
-						) }
-					</PanelBody>
-				) }
+				<StylePanels
+					keys={ selectedLayout.settings }
+					style={ style }
+					onChange={ ( next ) => setAttributes( { style: next } ) }
+				/>
 			</InspectorControls>
 			<div { ...blockProps } style={ wrapperStyle }>
 				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>
