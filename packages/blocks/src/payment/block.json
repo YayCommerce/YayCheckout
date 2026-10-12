@@ -17,6 +17,14 @@
     "label": {
       "type": "string",
       "default": "Payment"
+    },
+    "layout": {
+      "type": "string",
+      "default": "default"
+    },
+    "style": {
+      "type": "object",
+      "default": {}
     }
   },
   "supports": {
@@ -26,13 +34,11 @@
     "reusable": false,
     "color": {
       "text": true,
-      "background": true
-    },
-    "__experimentalBorder": {
-      "color": true,
-      "radius": true,
-      "style": true,
-      "width": true
+      "background": false,
+      "__experimentalSkipSerialization": true,
+      "__experimentalDefaultControls": {
+        "text": false
+      }
     },
     "spacing": {
       "margin": true,
