@@ -7,6 +7,7 @@ use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutDifferentAddress;
 use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Renderer\HideWhenEmpty;
+use YayCheckout\Renderer\LiveValues;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -73,6 +74,8 @@ class BlockRegistry {
     protected function __construct() {
         add_action( 'init', [ $this, 'register_blocks' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_design_data' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_live_value_editor' ] );
+        add_action( 'enqueue_block_assets', [ $this, 'enqueue_live_value_editor_style' ] );
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
@@ -204,6 +207,38 @@ class BlockRegistry {
 
         // Added after register_blocks()' own inline script, so window.yayCheckoutBlocks exists.
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.design', $design );
+        // The live value picker's Cart totals and Counts.
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.liveValues', LiveValues::cart_values() );
+    }
+
+    /**
+     * The live value format, in the layout editor only: a page's Paragraph never offers it. It runs after the
+     * Checkout editor script, whose inline data it reads. Skipped without a build.
+     */
+    public function enqueue_live_value_editor(): void {
+        $asset = 'layout' === $this->editor( null ) ? self::built_asset( 'live-value/index' ) : null;
+
+        if ( null === $asset ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            LiveValues::EDITOR_SCRIPT,
+            $asset['url'] . '.js',
+            array_merge( $asset['dependencies'], [ generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ) ] ),
+            $asset['version'],
+            true
+        );
+        wp_set_script_translations( LiveValues::EDITOR_SCRIPT, 'yaycheckout', YAYCHECKOUT_PLUGIN_DIR . 'languages' );
+    }
+
+    /** The live value chip style, on enqueue_block_assets so it reaches the canvas iframe. Layout editor only; skipped without a build. */
+    public function enqueue_live_value_editor_style(): void {
+        $asset = is_admin() && 'layout' === $this->editor( null ) ? self::built_asset( 'live-value/index', true ) : null;
+
+        if ( null !== $asset ) {
+            wp_enqueue_style( LiveValues::EDITOR_STYLE, $asset['url'] . '.css', [], $asset['version'] );
+        }
     }
 
     /**
@@ -252,6 +287,14 @@ class BlockRegistry {
             YAYCHECKOUT_VERSION,
             true
         );
+
+        // Enqueued by LiveValues::fill() when a Paragraph or Heading holds a live value. Skipped without a build.
+        $live_value = self::built_asset( 'live-value/view', true );
+
+        if ( null !== $live_value ) {
+            wp_register_script( LiveValues::SCRIPT, $live_value['url'] . '.js', array_merge( $live_value['dependencies'], [ 'jquery' ] ), $live_value['version'], true );
+            wp_register_style( LiveValues::STYLE, $live_value['url'] . '.css', [], $live_value['version'] );
+        }
     }
 
     /** Adds the YayCheckout inserter category in the layout editor. */
@@ -326,6 +369,29 @@ class BlockRegistry {
         }
 
         return array_values( array_filter( $allowed_block_types, static fn( $name ) => ! $drop( $name ) ) );
+    }
+
+    /**
+     * A webpack entry no block.json names (packages/blocks/webpack.config.js), from its built asset file: its
+     * URL without the extension, dependencies and version. Null without a build, or without its CSS when
+     * $with_css.
+     *
+     * @return array{url: string, dependencies: string[], version: string}|null
+     */
+    private static function built_asset( string $entry, bool $with_css = false ): ?array {
+        $path = YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/' . $entry;
+
+        if ( ! is_readable( $path . '.asset.php' ) || ( $with_css && ! is_readable( $path . '.css' ) ) ) {
+            return null;
+        }
+
+        $asset = require $path . '.asset.php';
+
+        return [
+            'url'          => YAYCHECKOUT_PLUGIN_URL . 'assets/dist/blocks/' . $entry,
+            'dependencies' => $asset['dependencies'],
+            'version'      => $asset['version'],
+        ];
     }
 
     /** Prints $data as $variable (window.x or window.x.y) before $handle runs. */

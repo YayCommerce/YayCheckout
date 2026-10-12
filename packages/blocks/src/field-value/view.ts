@@ -6,8 +6,8 @@
  */
 
 import { onDomReady } from '../shared/dom-ready';
-import { controlsText, labelText } from '../shared/form-text';
-import { jquery, type Control } from '../shared/jquery';
+import { fieldText, labelText } from '../shared/form-text';
+import { jquery } from '../shared/jquery';
 
 const VALUE = '.yaycheckout-field-value__value[data-field-keys]';
 
@@ -24,22 +24,6 @@ interface Source {
 
 /** What render.php printed on each value element, parsed once rather than on every keystroke. */
 const sources = new WeakMap< HTMLElement, Source >();
-
-function text( form: Element | null, key: string ): string {
-	// A radio group, or an Extra field's checkboxes posted as key[], is several controls under one name.
-	const controls = [ ...( form?.querySelectorAll< Control >( `[name="${ key }"], [name="${ key }[]"]` ) ?? [] ) ];
-	const field = controls[ 0 ];
-	const row = form?.querySelector< HTMLElement >( `#${ key }_field` );
-
-	// WooCommerce hides the state field for a country without states, and address-i18n.js hides the row of a
-	// field the country's locale hides; a leftover value there means nothing. Mirrors syncLocaleMarkers() in
-	// checkout-hide-when-empty.js, which follows CheckoutFieldDefaults::hidden_for_country().
-	if ( ! field || ( field instanceof HTMLInputElement && field.type === 'hidden' ) || ( row && getComputedStyle( row ).display === 'none' ) ) {
-		return '';
-	}
-
-	return controlsText( controls );
-}
 
 /** The field's label as the form shows it now, without the required or optional mark. */
 function formLabel( key: string ): string {
@@ -82,7 +66,7 @@ function sync(): void {
 		const { keys, serverLabels, separator } = source( element );
 		// Empty values are skipped, as render.php does, so a half-filled block shows no dangling separator.
 		const value = keys
-			.map( ( key ) => text( form, key ) )
+			.map( ( key ) => fieldText( form, key ) )
 			.filter( ( part ) => part !== '' )
 			.join( separator );
 		// render.php sets data-placeholder only for a typed placeholder; otherwise the labels stand in.
