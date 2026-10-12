@@ -51,11 +51,17 @@ class DesignStyles {
         'font-size'        => 'font-size-base',
     ];
 
-    /** Pixel height per inputs.size step. Mirrored by the layout editor (design-css.ts). */
-    private const INPUT_HEIGHTS = [
-        'small'  => 32,
-        'medium' => 40,
-        'large'  => 48,
+    /** The page's font size in px while typography.base_size is empty, so a layout doesn't take the theme's. Mirrored by design-css.ts. */
+    public const DEFAULT_BASE_SIZE = 16;
+
+    /**
+     * Per inputs.size step: the field's height, then its height with floating labels. In em, so a field grows with
+     * the layout's font. Mirrored by the layout editor (design-css.ts).
+     */
+    private const INPUT_SIZES = [
+        'small'  => [ '2.5em', '3em' ],
+        'medium' => [ '2.75em', '3.25em' ],
+        'large'  => [ '3em', '3.5em' ],
     ];
 
     /**
@@ -105,7 +111,7 @@ class DesignStyles {
         return $css;
     }
 
-    /** Custom property values by name (without the `--yaycheckout-` prefix), for the tokens that aren't empty. */
+    /** Custom property values by name (without the `--yaycheckout-` prefix), for the tokens that aren't empty, and always the font size. */
     private function vars( array $sections ): array {
         $colours    = $sections['colours'];
         $typography = $sections['typography'];
@@ -131,9 +137,7 @@ class DesignStyles {
             $vars['font-family'] = '"' . LayoutDesign::FONT_FAMILIES[ $typography['font_family'] ] . '", ' . $fallback;
         }
 
-        if ( null !== $typography['base_size'] ) {
-            $vars['font-size-base'] = $typography['base_size'] . 'px';
-        }
+        $vars['font-size-base'] = ( $typography['base_size'] ?? self::DEFAULT_BASE_SIZE ) . 'px';
 
         $is_underline = 'underline' === $inputs['style'];
 
@@ -143,8 +147,11 @@ class DesignStyles {
             $vars['input-radius'] = $inputs['radius'] . 'px';
         }
 
+        // The box is the chosen height: no vertical padding for the text to push past it.
         if ( '' !== $inputs['size'] ) {
-            $vars['input-height'] = self::INPUT_HEIGHTS[ $inputs['size'] ] . 'px';
+            $vars['input-height']          = self::INPUT_SIZES[ $inputs['size'] ][0];
+            $vars['input-floating-height'] = self::INPUT_SIZES[ $inputs['size'] ][1];
+            $vars['input-padding-block']   = '0';
         }
 
         if ( '' !== $inputs['style'] ) {

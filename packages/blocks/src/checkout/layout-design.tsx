@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
 import { useCanvasStyle } from '../shared/canvas-style';
-import { designCss, isGradient } from '../shared/design-css';
+import { DEFAULT_BASE_SIZE, designCss, isGradient } from '../shared/design-css';
 import { editorData, type DesignRule, type EditorDesign } from '../shared/editor-data';
 import { useIsLayoutEditor } from '../shared/layout-editor';
 import { errorMessage } from '../shared/error-message';
@@ -283,9 +283,9 @@ function TokenControl( {
 					label={ label }
 					min={ rule.min }
 					max={ rule.max }
-					// Reset empties the token (null), so the theme's value shows.
+					// Reset empties the token (null): the theme's value shows, or for the base size DEFAULT_BASE_SIZE.
 					allowReset
-					value={ 'number' === typeof value ? value : undefined }
+					value={ 'number' === typeof value ? value : ( 'base_size' === token ? DEFAULT_BASE_SIZE : undefined ) }
 					afterIcon={ <span>px</span> }
 					onChange={ ( next ) => onChange( 'number' === typeof next ? next : null ) }
 				/>
