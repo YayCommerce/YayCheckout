@@ -54,17 +54,16 @@ class CheckoutStepsProgress {
         }
 
         $variant = self::variant( $attributes );
-        // Reached steps are buttons, except in bar and text, which show a summary and hide the list.
+        // Steps are buttons, except in bar and text, which show a summary and hide the list.
         $has_summary = 'bar' === $variant || 'text' === $variant;
-        $jump        = ! $has_summary;
-        $tag         = $jump ? 'button' : 'span';
+        $tag         = $has_summary ? 'span' : 'button';
         $items       = '';
 
         foreach ( $titles as $position => $label ) {
             $number = (int) $position + 1;
             $first  = 1 === $number;
             $items .= '<li class="yaycheckout-steps-progress__item" data-state="' . ( $first ? 'current' : 'locked' ) . '" data-step="' . esc_attr( (string) $number ) . '"' . ( $first ? ' aria-current="step"' : '' ) . '>';
-            $items .= '<' . $tag . ' class="yaycheckout-steps-progress__jump"' . ( $jump ? ' type="button" disabled' : '' ) . '>';
+            $items .= '<' . $tag . ' class="yaycheckout-steps-progress__jump"' . ( $has_summary ? '' : ' type="button" disabled' ) . '>';
             $items .= '<span class="yaycheckout-steps-progress__marker">' . esc_html( (string) $number ) . '</span>';
             $items .= '<span class="yaycheckout-steps-progress__title">' . esc_html( (string) $label ) . '</span>';
             $items .= '</' . $tag . '></li>';
@@ -78,7 +77,7 @@ class CheckoutStepsProgress {
             $summary = self::summary( $total, 'bar' === $variant );
 
             if ( 'bar' === $variant ) {
-                $args['style'] = '--yaycheckout-steps-progress-value:' . round( 1 / $total, 3 ) . ';';
+                $args['style'] = '--yaycheckout-steps-progress-value:' . number_format( 1 / $total, 3, '.', '' ) . ';';
             }
         }
 

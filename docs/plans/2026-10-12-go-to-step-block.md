@@ -8,11 +8,11 @@
 **Architecture:** A leaf dynamic block shaped like Progress. `render.php` prints a disabled `<button data-step="N">`; its own `view.ts` mirrors the target step's `data-state` onto `disabled` on `yaycheckout:step-change` and turns a click into `yaycheckout:step-reopen`, which `steps/view.ts` already handles. Steps code does not change.
 **Touches:**
 - New `packages/blocks/src/go-to-step/` (`block.json`, `index.ts`, `edit.tsx`, `render.php`, `style.css`, `view.ts`).
-- `includes/Renderer/CheckoutStepsProgress.php`: `layout_titles()` becomes public. Consumers: `CheckoutStepsProgress::markup()` (unchanged), new `go-to-step/render.php`.
+- `includes/Renderer/CheckoutProgress.php`: `layout_titles()` becomes public. Consumers: `CheckoutProgress::markup()` (unchanged), new `go-to-step/render.php`.
 - `includes/Blocks/BlockRegistry.php`: `ORDER`.
 - `packages/blocks/src/shared/block-icons.tsx` (shared; also the SPA's `@blocks-shared`): one new key. Consumers: `register-dynamic-block.tsx` and any SPA import of `blockIcons`; adding a key changes nothing for them.
 
-**Revised after /yaytidy (2026-10-12):** the block's markup is a block-level `div` wrapper holding `button.yaycheckout-go-to-step__button`, as in Return to Cart, so it aligns with the content in the editor and on the storefront. Moving the step list out of `CheckoutStepsProgress` and sharing the step code with Progress was built, then taken out of this PR to keep it to the new block; it is `docs/backlog/2026-10-12-step-list-owned-by-progress.md`.
+**Revised after /yaytidy (2026-10-12):** the block's markup is a block-level `div` wrapper holding `button.yaycheckout-go-to-step__button`, as in Return to Cart, so it aligns with the content in the editor and on the storefront. Moving the step list out of `CheckoutProgress` and sharing the step code with Progress was built, then taken out of this PR to keep it to the new block; it is `docs/backlog/2026-10-12-step-list-owned-by-progress.md`.
 **Tests:** none. A disabled/enabled button driven by an existing event is not logic the CLAUDE.md test rule lists; each task has an exact manual check instead.
 
 ## Global constraints
@@ -45,15 +45,15 @@
 - Create: `packages/blocks/src/go-to-step/edit.tsx`
 - Create: `packages/blocks/src/go-to-step/render.php`
 - Create: `packages/blocks/src/go-to-step/style.css`
-- Modify: `includes/Renderer/CheckoutStepsProgress.php` (`layout_titles()` visibility and docblock)
+- Modify: `includes/Renderer/CheckoutProgress.php` (`layout_titles()` visibility and docblock)
 - Modify: `includes/Blocks/BlockRegistry.php` (`ORDER`)
 - Modify: `packages/blocks/src/shared/block-icons.tsx`
 
 **Interfaces:**
-- Consumes: `CheckoutStepsProgress::layout_titles(): array` (string[]), `LayoutMarkupReader::plain_text( array $attributes, string $key, string $fallback ): string`, `stepTitle()` (`shared/step-title.ts`), `registerDynamicBlock()`.
+- Consumes: `CheckoutProgress::layout_titles(): array` (string[]), `LayoutMarkupReader::plain_text( array $attributes, string $key, string $fallback ): string`, `stepTitle()` (`shared/step-title.ts`), `registerDynamicBlock()`.
 - Produces: block `yaycheckout/go-to-step` with attributes `step` (integer, default `1`) and `buttonText` (string, default `""`); storefront markup `<div class="wp-block-yaycheckout-go-to-step yaycheckout-go-to-step …"><button type="button" class="yaycheckout-go-to-step__button" data-step="N" disabled>label</button></div>`, consumed by Task 2.
 
-- [ ] **Step 1: Make `CheckoutStepsProgress::layout_titles()` public**
+- [ ] **Step 1: Make `CheckoutProgress::layout_titles()` public**
 
 `private static function layout_titles(): array` → `public static`. Add to its docblock that Go to Step reads it to count steps.
 
@@ -70,7 +70,7 @@ Same three lines as `progress/index.ts`: import `./block.json`, `./edit`, `./sty
 - [ ] **Step 4: Create `go-to-step/edit.tsx`**
 
 `export default function Edit( { attributes, setAttributes }: EditProps )` with `attributes: { step: number; buttonText: string }`.
-- Step ids: the same `useSelect` as `progress/edit.tsx` (`getBlocksByName( STEPS )[ 0 ]` → `getBlockOrder( stepsId )`, `null` without Steps), with the comment `Mirrors CheckoutStepsProgress::layout_titles(): the layout's first Steps block, in document order.` Titles: one `useSelect` mapping those ids to `getBlockAttributes( id )?.title` strings.
+- Step ids: the same `useSelect` as `progress/edit.tsx` (`getBlocksByName( STEPS )[ 0 ]` → `getBlockOrder( stepsId )`, `null` without Steps), with the comment `Mirrors CheckoutProgress::layout_titles(): the layout's first Steps block, in document order.` Titles: one `useSelect` mapping those ids to `getBlockAttributes( id )?.title` strings.
 - Sidebar: `InspectorControls` → `PanelBody` title `__( 'Go to step', 'yaycheckout' )`. With steps: `SelectControl` label `__( 'Step', 'yaycheckout' )`, value `String( attributes.step )`, options `{ label: \`${ n }. ${ stepTitle( decodeEntities( title ) ) }\`, value: String( n ) }` for n = 1…count, `onChange` → `setAttributes( { step: Number( value ) } )`.
 - Notices (`<Notice status="warning" isDismissible={ false }>`, in the panel): no Steps → `__( 'Add a Steps block to use Go to Step.', 'yaycheckout' )` (no select); `attributes.step > count` → `sprintf( __( 'Step %d no longer exists. Pick another step.', 'yaycheckout' ), attributes.step )` with a `/* translators: %d: saved step number. */` comment, shown below the select.
 - Canvas: `<div { ...useBlockProps( { className: 'yaycheckout-go-to-step' } ) }>` holding `<RichText tagName="div" className="yaycheckout-go-to-step__button" placeholder={ __( 'Edit', 'yaycheckout' ) } allowedFormats={ [] } withoutInteractiveFormatting … />`, as `return-to-cart/edit.tsx` does, with a comment that the placeholder mirrors the fallback in `go-to-step/render.php`.
@@ -79,7 +79,7 @@ Same three lines as `progress/index.ts`: import `./block.json`, `./edit`, `./sty
 
 Header docblock in the style of `step-button/render.php` (what the script does, `@var` lines, `@package yaycommerce/yaycheckout`), then `defined( 'ABSPATH' ) || exit;`.
 - `$yaycheckout_step = (int) ( $attributes['step'] ?? 1 );`
-- If `$yaycheckout_step < 1 || $yaycheckout_step > count( \YayCheckout\Renderer\CheckoutStepsProgress::layout_titles() )`: `return;` (prints nothing).
+- If `$yaycheckout_step < 1 || $yaycheckout_step > count( \YayCheckout\Renderer\CheckoutProgress::layout_titles() )`: `return;` (prints nothing).
 - Label: `\YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'buttonText', __( 'Edit', 'yaycheckout' ) )`.
 - Print `<div class="wp-block-yaycheckout-go-to-step yaycheckout-go-to-step …"><button type="button" class="yaycheckout-go-to-step__button" data-step="N" disabled>label</button></div>`: `get_block_wrapper_attributes( [ 'class' => 'yaycheckout-go-to-step' ] )` on the div with the same phpcs:ignore comment as `return-to-cart/render.php`, `esc_attr()` on `data-step`, `esc_html()` on the label. The wrapper is block-level, as in Return to Cart, so a constrained layout aligns it with the content in the editor and on the storefront; a `fit-content` button as the wrapper was centred by the editor's auto margins only.
 
@@ -98,7 +98,7 @@ Its `:disabled`: `opacity: .5; cursor: not-allowed;`
 - [ ] **Step 8: Build and lint**
 
 Run `pnpm build:blocks`. Expected: the build finishes with no errors and `assets/dist/blocks/go-to-step/` holds `block.json`, `index.js`, `view.js`, `style-index.css`, `render.php`.
-Run `composer lint -- includes/Renderer/CheckoutStepsProgress.php includes/Blocks/BlockRegistry.php packages/blocks/src/go-to-step/render.php`. Expected: no errors.
+Run `composer lint -- includes/Renderer/CheckoutProgress.php includes/Blocks/BlockRegistry.php packages/blocks/src/go-to-step/render.php`. Expected: no errors.
 Run `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit`. Expected: no new errors compared with `dev/edd` (`block-icons.tsx` is shared).
 
 - [ ] **Step 9: Verify in the editor (new draft layout with Steps "Information", "Shipping", "Payment")**
@@ -117,7 +117,7 @@ Edit the layout so a block's `step` is `4` (pick 3, delete step 3, preview). Exp
 
 - [ ] **Step 11: Commit**
 
-Stage: `packages/blocks/src/go-to-step/block.json`, `packages/blocks/src/go-to-step/index.ts`, `packages/blocks/src/go-to-step/edit.tsx`, `packages/blocks/src/go-to-step/render.php`, `packages/blocks/src/go-to-step/style.css`, `packages/blocks/src/go-to-step/view.ts`, `includes/Renderer/CheckoutStepsProgress.php`, `includes/Blocks/BlockRegistry.php`, `packages/blocks/src/shared/block-icons.tsx`
+Stage: `packages/blocks/src/go-to-step/block.json`, `packages/blocks/src/go-to-step/index.ts`, `packages/blocks/src/go-to-step/edit.tsx`, `packages/blocks/src/go-to-step/render.php`, `packages/blocks/src/go-to-step/style.css`, `packages/blocks/src/go-to-step/view.ts`, `includes/Renderer/CheckoutProgress.php`, `includes/Blocks/BlockRegistry.php`, `packages/blocks/src/shared/block-icons.tsx`
 Message: `feat(blocks): add Go to Step button block`
 
 ### Task 2: Storefront enable and jump
