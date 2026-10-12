@@ -153,14 +153,14 @@ Message: `feat(renderer): pin a group to the bottom of the checkout`
 - Consumes: `PinToBottom::ATTRIBUTE`, `ALL`, `MOBILE` (Task 1), and `useIsLayoutEditor()` from `shared/layout-editor.ts`.
 - Produces: `core/group` attribute `yaycheckoutPinToBottom: { type: 'string', default: '' }`, registered in every editor the way Hide When Empty's is.
 
-- [ ] **Step 1: Register the attribute and panel in `pin-to-bottom.tsx`**
+- [x] **Step 1: Register the attribute and panel in `pin-to-bottom.tsx`**
 
 - Add a `blocks.registerBlockType` filter (`yaycheckout/pin-to-bottom/attribute`) for `core/group` only.
 - Add an `editor.BlockEdit` higher-order component (`yaycheckout/pin-to-bottom/panel`) that renders only while a Group is selected and `useIsLayoutEditor()` is true. That keeps the same `LayoutOnlyPanel` split as `hide-when-empty.tsx`.
 - **Panel:** `<InspectorControls>` › `<PanelBody title="Pin to bottom" initialOpen={ value !== '' }>` holding a `SelectControl` with Off (`''`), All screens (`all`) and "Mobile only (below 782px)" (`mobile`).
 - **Help text:** "On the checkout this block stays at the bottom of the screen. The editor shows it in place."
 
-- [ ] **Step 2: Warn about sticky and about a second pin**
+- [x] **Step 2: Warn about sticky and about a second pin**
 
 Add a `Notice status="warning" isDismissible={ false }` in two cases:
 
@@ -169,7 +169,7 @@ Add a `Notice status="warning" isDismissible={ false }` in two cases:
 
 The second check is a `useSelect` that runs only while the panel is mounted.
 
-- [ ] **Step 3: Build and verify (criterion 1)**
+- [x] **Step 3: Build and verify (criterion 1)**
 
 Run: `pnpm build:blocks` then `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit`
 Expected: the build succeeds, and tsc shows no new errors.
@@ -182,7 +182,7 @@ Expected:
 - Pinning a second Group shows the overlap notice on both.
 - In a regular post (`/wp-admin/post-new.php`), a Group has no Pin to bottom panel.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Stage: `packages/blocks/src/shared/pin-to-bottom.tsx`, `packages/blocks/src/checkout/index.ts`
 Message: `feat(blocks): add pin to bottom setting to group`

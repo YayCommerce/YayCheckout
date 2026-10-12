@@ -7,5 +7,6 @@ import './layout-actions';
 import './layout-design';
 import './publish-guard';
 import '../shared/hide-when-empty';
+import '../shared/pin-to-bottom';
 
 registerDynamicBlock( metadata, Edit, saveNestedBlocks );
