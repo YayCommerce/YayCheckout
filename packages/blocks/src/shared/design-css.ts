@@ -38,10 +38,17 @@ export function isGradient( fill: unknown ): boolean {
 	return 'string' === typeof fill && ( fill.includes( '-gradient(' ) || fill.startsWith( 'var(--wp--preset--gradient--' ) );
 }
 
-/** Mirrors DesignStyles::INPUT_HEIGHTS in PHP. */
-const INPUT_HEIGHTS: Record< string, number > = { small: 32, medium: 40, large: 48 };
+/** Mirrors DesignStyles::DEFAULT_BASE_SIZE in PHP: the page's font size in px while typography.base_size is empty. */
+export const DEFAULT_BASE_SIZE = 16;
 
-/** Mirrors DesignStyles::vars() in PHP: custom property values by name, for the tokens that aren't empty. */
+/** Mirrors DesignStyles::INPUT_SIZES in PHP: the height, then the height with floating labels. */
+const INPUT_SIZES: Record< string, [ string, string ] > = {
+	small: [ '2.5em', '3em' ],
+	medium: [ '2.75em', '3.25em' ],
+	large: [ '3em', '3.5em' ],
+};
+
+/** Mirrors DesignStyles::vars() in PHP: custom property values by name, for the tokens that aren't empty, and always the font size. */
 function vars( tokens: DesignTokens, { fontFamilies, serifFonts }: DesignFonts ): [ string, string ][] {
 	const { colours, typography, inputs } = tokens;
 	const background = String( colours.background ?? '' );
@@ -62,9 +69,7 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts }: DesignFonts )
 		out.push( [ 'font-family', `"${ fontFamilies[ font ] }", ${ fallback }` ] );
 	}
 
-	if ( null !== typography.base_size ) {
-		out.push( [ 'font-size-base', `${ typography.base_size }px` ] );
-	}
+	out.push( [ 'font-size-base', `${ typography.base_size ?? DEFAULT_BASE_SIZE }px` ] );
 
 	const isUnderline = 'underline' === inputs.style;
 
@@ -74,8 +79,10 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts }: DesignFonts )
 		out.push( [ 'input-radius', `${ inputs.radius }px` ] );
 	}
 
+	// The box is the chosen height: no vertical padding for the text to push past it.
 	if ( '' !== inputs.size ) {
-		out.push( [ 'input-height', `${ INPUT_HEIGHTS[ String( inputs.size ) ] }px` ] );
+		const [ height, floatingHeight ] = INPUT_SIZES[ String( inputs.size ) ];
+		out.push( [ 'input-height', height ], [ 'input-floating-height', floatingHeight ], [ 'input-padding-block', '0' ] );
 	}
 
 	const inputBackground = String( inputs.background ?? '' );

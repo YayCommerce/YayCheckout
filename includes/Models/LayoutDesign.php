@@ -70,9 +70,10 @@ final class LayoutDesign {
      *   'enum' => array (enum only), 'min'/'max' => int (int only) ]
      *
      * Every default is empty: '' for a colour or an enum, null for an int. A colour is '', a hex colour or a
-     * theme preset; colours.background may also be a gradient. The inputs.size token is an abstract step; the
-     * renderer decides its px. The inputs.label token prints no custom property: it is the checkout wrapper's
-     * yaycheckout-checkout--floating-labels class.
+     * theme preset; colours.background may also be a gradient. An empty typography.base_size prints
+     * DesignStyles::DEFAULT_BASE_SIZE, not the theme's size. The inputs.size token is an abstract step; the
+     * renderer decides its height, in em. The inputs.label token prints no custom property: it is the checkout
+     * wrapper's yaycheckout-checkout--floating-labels class.
      */
     public static function schema(): array {
         return [
