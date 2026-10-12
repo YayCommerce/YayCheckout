@@ -20,32 +20,32 @@ export const SHIPPING_LAYOUTS: ShippingLayout[] = [
 	{
 		value: 'default',
 		label: __( 'Default', 'yaycheckout' ),
-		settings: [ 'borderRadius', ...ROW_COLORS ],
+		settings: [ 'borderWidth', 'borderRadius', ...ROW_COLORS ],
 	},
 	{
 		value: 'check',
 		label: __( 'Check', 'yaycheckout' ),
-		settings: [ 'gap', 'borderRadius', ...ROW_COLORS ],
+		settings: [ 'gap', 'borderWidth', 'borderRadius', ...ROW_COLORS ],
 	},
 	{
 		value: 'boxed',
 		label: __( 'Boxed', 'yaycheckout' ),
-		settings: [ 'borderRadius', ...SHARED_LINE_COLORS ],
+		settings: [ 'borderWidth', 'borderRadius', ...SHARED_LINE_COLORS ],
 	},
 	{
 		value: 'columns',
 		label: __( 'Columns', 'yaycheckout' ),
-		settings: [ 'gap', 'borderRadius', ...ROW_COLORS ],
+		settings: [ 'gap', 'borderWidth', 'borderRadius', ...ROW_COLORS ],
 	},
 	{
 		value: 'stacked',
 		label: __( 'Stacked', 'yaycheckout' ),
-		settings: [ 'gap', 'borderRadius', ...ROW_COLORS ],
+		settings: [ 'gap', 'borderWidth', 'borderRadius', ...ROW_COLORS ],
 	},
 	{
 		value: 'divided',
 		label: __( 'Divided', 'yaycheckout' ),
-		settings: [ ...SHARED_LINE_COLORS ],
+		settings: [ 'borderWidth', ...SHARED_LINE_COLORS ],
 	},
 ];
 

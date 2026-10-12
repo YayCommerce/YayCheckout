@@ -25,6 +25,12 @@ class CheckoutFragments {
     /** Layout values the Shipping Methods block accepts; an unknown attribute falls back to default. */
     public const SHIPPING_LAYOUTS = [ 'default', 'check', 'boxed', 'columns', 'stacked', 'divided' ];
 
+    /** Length key under style.yaycheckout => the --yaycheckout-shipping-* variable it sets. LENGTH_VARS in style-paths.ts mirrors it. */
+    private const SHIPPING_LENGTH_VARS = [
+        'borderWidth' => '--yaycheckout-shipping-border-width',
+        'radius'      => '--yaycheckout-shipping-radius',
+    ];
+
     /** Colour key under style.yaycheckout => the --yaycheckout-shipping-* variable it sets. COLOR_VARS in style-paths.ts mirrors it. */
     private const SHIPPING_COLOR_VARS = [
         'background'         => '--yaycheckout-shipping-bg',
@@ -176,9 +182,11 @@ class CheckoutFragments {
             $decls[] = '--yaycheckout-shipping-gap:' . $gap;
         }
 
-        $radius = self::shipping_css_length( $yay['radius'] ?? null );
-        if ( '' !== $radius ) {
-            $decls[] = '--yaycheckout-shipping-radius:' . $radius;
+        foreach ( self::SHIPPING_LENGTH_VARS as $key => $var ) {
+            $length = self::shipping_css_length( $yay[ $key ] ?? null );
+            if ( '' !== $length ) {
+                $decls[] = $var . ':' . $length;
+            }
         }
 
         foreach ( self::SHIPPING_COLOR_VARS as $key => $var ) {

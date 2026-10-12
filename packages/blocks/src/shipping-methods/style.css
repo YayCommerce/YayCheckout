@@ -5,7 +5,7 @@
  * keeps that id and WooCommerce's class for plugin scripts that look for them.
  * data-layout: default, stacked, columns, check, divided, boxed.
  * Methods styles from the Styles tab set --yaycheckout-shipping-* on the wrapper: gap, radius,
- * bg, bg-selected, bg-hover, radio, radio-selected, border, border-selected and border-hover.
+ * border-width, bg, bg-selected, bg-hover, radio, radio-selected, border, border-selected and border-hover.
  * Check and divided keep one background unless the merchant sets selected/hover.
  */
 
@@ -118,12 +118,12 @@
 	gap: 0 12px;
 	margin: 0;
 	padding: 14px 16px;
-	border: 1px solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
+	border: var(--yaycheckout-shipping-border-width, 1px) solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
 	background-color: var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, transparent));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="default"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option + .yaycheckout-shipping-methods__option {
-	margin-top: -1px;
+	margin-top: calc(-1 * var(--yaycheckout-shipping-border-width, 1px));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="default"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:first-child {
@@ -174,7 +174,7 @@
 	flex-wrap: wrap;
 	align-items: center;
 	padding: 14px 16px;
-	border: 1.5px solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
+	border: var(--yaycheckout-shipping-border-width, 1.5px) solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
 	border-radius: var(--yaycheckout-shipping-radius, 12px);
 	background-color: var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff));
 }
@@ -215,7 +215,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	padding: 14px 16px;
-	border: 1.5px solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
+	border: var(--yaycheckout-shipping-border-width, 1.5px) solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
 	border-radius: var(--yaycheckout-shipping-radius, 12px);
 	background-color: var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff));
 }
@@ -270,7 +270,7 @@
 	flex-wrap: wrap;
 	align-items: center;
 	padding: 16px 18px;
-	border: 2px solid var(--yaycheckout-shipping-border, transparent);
+	border: var(--yaycheckout-shipping-border-width, 2px) solid var(--yaycheckout-shipping-border, transparent);
 	border-radius: var(--yaycheckout-shipping-radius, 16px);
 	background-color: var(--yaycheckout-shipping-bg, color-mix(in srgb, currentColor 6%, var(--yaycheckout-color-background, #fff)));
 }
@@ -327,7 +327,7 @@
 
 /* Divided: rules between rows, radio left. */
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="divided"] .yaycheckout-shipping-methods__list {
-	border-block: 1px solid var(--yaycheckout-shipping-border, currentColor);
+	border-block: var(--yaycheckout-shipping-border-width, 1px) solid var(--yaycheckout-shipping-border, currentColor);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="divided"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option {
@@ -336,7 +336,7 @@
 	align-items: center;
 	padding: 16px 0;
 	border: 0;
-	border-bottom: 1px solid var(--yaycheckout-shipping-border, currentColor);
+	border-bottom: var(--yaycheckout-shipping-border-width, 1px) solid var(--yaycheckout-shipping-border, currentColor);
 	background-color: var(--yaycheckout-shipping-bg, transparent);
 	border-radius: 0;
 }
@@ -374,7 +374,7 @@
 /* Boxed: one outline around the list; selected row gets a tint, outer border stays. */
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="boxed"] .yaycheckout-shipping-methods__list {
 	overflow: hidden;
-	border: 1px solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
+	border: var(--yaycheckout-shipping-border-width, 1px) solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
 	border-radius: var(--yaycheckout-shipping-radius, 12px);
 	background-color: var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff));
 }
@@ -385,7 +385,7 @@
 	align-items: center;
 	padding: 14px 16px;
 	border: 0;
-	border-bottom: 1px solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
+	border-bottom: var(--yaycheckout-shipping-border-width, 1px) solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
 	border-radius: 0;
 	background-color: transparent;
 }

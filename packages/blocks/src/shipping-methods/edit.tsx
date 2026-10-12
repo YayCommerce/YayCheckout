@@ -1,15 +1,9 @@
-import { InspectorControls, PanelColorSettings, useBlockProps } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { layoutFor, SHIPPING_LAYOUTS } from './layouts';
-import {
-	COLOR_SETTING_KEYS,
-	COLOR_SETTING_LABELS,
-	isColorSetting,
-	SETTING_CONTROLS,
-	type ShippingSettingKey,
-} from './setting-controls';
-import { getStyleSetting, setStyleSetting, shippingStyleVars } from './style-paths';
+import { StylePanels } from './style-panels';
+import { shippingStyleVars } from './style-paths';
 import '../shared/section-preview.css';
 
 interface ShippingMethodsAttributes {
@@ -24,10 +18,6 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< ShippingMethodsAttributes > ) => void;
 }
 
-function colorValue( value: unknown ): string | undefined {
-	return typeof value === 'string' && value !== '' ? value : undefined;
-}
-
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label, layout, style, textColor } = attributes;
 	const blockProps = useBlockProps( {
@@ -37,11 +27,6 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	} );
 	const heading = label || __( 'Shipping methods', 'yaycheckout' );
 	const selectedLayout = layoutFor( layout );
-	const rangeKeys = selectedLayout.settings.filter(
-		( key ): key is ShippingSettingKey => ! isColorSetting( key ) && Boolean( SETTING_CONTROLS[ key ] )
-	);
-	const colorKeys = COLOR_SETTING_KEYS.filter( ( key ) => selectedLayout.settings.includes( key ) );
-	const showMethods = rangeKeys.length > 0 || colorKeys.length > 0;
 
 	return (
 		<>
@@ -64,43 +49,11 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<InspectorControls group="styles">
-				{ showMethods && (
-					<PanelBody title={ __( 'Methods', 'yaycheckout' ) }>
-						{ rangeKeys.map( ( key ) => {
-							const Control = SETTING_CONTROLS[ key ];
-							if ( ! Control ) {
-								return null;
-							}
-
-							return (
-								<Control
-									key={ key }
-									value={ getStyleSetting( style, key ) }
-									onChange={ ( value ) =>
-										setAttributes( {
-											style: setStyleSetting( style, key, value ),
-										} )
-									}
-								/>
-							);
-						} ) }
-						{ colorKeys.length > 0 && (
-							<PanelColorSettings
-								title={ __( 'Colors', 'yaycheckout' ) }
-								showTitle={ false }
-								__experimentalIsRenderedInSidebar
-								colorSettings={ colorKeys.map( ( key ) => ( {
-									label: COLOR_SETTING_LABELS[ key ],
-									value: colorValue( getStyleSetting( style, key ) ),
-									onChange: ( value: string | undefined ) =>
-										setAttributes( {
-											style: setStyleSetting( style, key, value || undefined ),
-										} ),
-								} ) ) }
-							/>
-						) }
-					</PanelBody>
-				) }
+				<StylePanels
+					keys={ selectedLayout.settings }
+					style={ style }
+					onChange={ ( next ) => setAttributes( { style: next } ) }
+				/>
 			</InspectorControls>
 			<div { ...blockProps }>
 				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>

@@ -5,6 +5,7 @@ type StyleObject = Record< string, unknown >;
 /** Row radius and background sit under `yaycheckout`, because core's border and background style the wrapper. */
 const PATHS: Record< ShippingSettingKey, string[] > = {
 	gap: [ 'spacing', 'blockGap' ],
+	borderWidth: [ 'yaycheckout', 'borderWidth' ],
 	borderRadius: [ 'yaycheckout', 'radius' ],
 	backgroundColor: [ 'yaycheckout', 'background' ],
 	backgroundColorSelected: [ 'yaycheckout', 'backgroundSelected' ],
@@ -14,6 +15,12 @@ const PATHS: Record< ShippingSettingKey, string[] > = {
 	borderColorHover: [ 'yaycheckout', 'borderHover' ],
 	radioColor: [ 'yaycheckout', 'radio' ],
 	radioColorSelected: [ 'yaycheckout', 'radioSelected' ],
+};
+
+/** Length setting => the variable it sets. Mirrors CheckoutFragments::SHIPPING_LENGTH_VARS. */
+const LENGTH_VARS: Partial< Record< ShippingSettingKey, string > > = {
+	borderWidth: '--yaycheckout-shipping-border-width',
+	borderRadius: '--yaycheckout-shipping-radius',
 };
 
 /** Colour setting => the variable it sets, in the order PHP prints them. Mirrors CheckoutFragments::SHIPPING_COLOR_VARS. */
@@ -112,16 +119,18 @@ export function shippingStyleVars(
 ): Record< string, string > {
 	const vars: Record< string, string > = {};
 	const gap = getStyleSetting( style, 'gap' );
-	const radius = getStyleSetting( style, 'borderRadius' );
 	const text = cssColor( getAt( style, [ 'color', 'text' ] ), textColor );
 
 	if ( typeof gap === 'string' && gap !== '' ) {
 		vars[ '--yaycheckout-shipping-gap' ] = gap;
 	}
-	if ( typeof radius === 'string' && radius !== '' ) {
-		vars[ '--yaycheckout-shipping-radius' ] = radius;
-	} else if ( typeof radius === 'number' && Number.isFinite( radius ) ) {
-		vars[ '--yaycheckout-shipping-radius' ] = `${ radius }px`;
+	for ( const [ key, name ] of Object.entries( LENGTH_VARS ) as [ ShippingSettingKey, string ][] ) {
+		const length = getStyleSetting( style, key );
+		if ( typeof length === 'string' && length !== '' ) {
+			vars[ name ] = length;
+		} else if ( typeof length === 'number' && Number.isFinite( length ) ) {
+			vars[ name ] = `${ length }px`;
+		}
 	}
 	for ( const [ key, name ] of Object.entries( COLOR_VARS ) as [ ColorSettingKey, string ][] ) {
 		const value = cssColor( getStyleSetting( style, key ) );
