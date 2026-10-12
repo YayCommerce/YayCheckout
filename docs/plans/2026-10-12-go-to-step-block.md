@@ -8,15 +8,11 @@
 **Architecture:** A leaf dynamic block shaped like Progress. `render.php` prints a disabled `<button data-step="N">`; its own `view.ts` mirrors the target step's `data-state` onto `disabled` on `yaycheckout:step-change` and turns a click into `yaycheckout:step-reopen`, which `steps/view.ts` already handles. Steps code does not change.
 **Touches:**
 - New `packages/blocks/src/go-to-step/` (`block.json`, `index.ts`, `edit.tsx`, `render.php`, `style.css`, `view.ts`).
-- `includes/Services/LayoutMarkupReader.php`: new `step_titles( string $markup ): string[]`. `includes/Renderer/CheckoutPage.php`: new memoised `step_titles(): string[]`. Consumers: `CheckoutProgress::markup()`, `go-to-step/render.php`.
-- `includes/Renderer/CheckoutProgress.php`: its private `layout_titles()` / `titles_in()` and the `STEPS`/`STEP` constants move to the two methods above.
-- `packages/blocks/src/shared/checkout-root.ts` (shared): new `stepState()` and `reopenStep()`. Consumers: `progress/view.ts`, `go-to-step/view.ts`.
-- `packages/blocks/src/shared/step-title.ts` (shared): new `useLayoutStepIds()`. Consumers: `progress/edit.tsx`, `go-to-step/edit.tsx`. Not imported by the SPA.
-- `packages/blocks/src/return-to-cart/style.css`: comment only.
+- `includes/Renderer/CheckoutProgress.php`: `layout_titles()` becomes public. Consumers: `CheckoutProgress::markup()` (unchanged), new `go-to-step/render.php`.
 - `includes/Blocks/BlockRegistry.php`: `ORDER`.
-- `packages/blocks/src/shared/block-icons.tsx` (shared; also the SPA's `@blocks-shared`): one new key.
+- `packages/blocks/src/shared/block-icons.tsx` (shared; also the SPA's `@blocks-shared`): one new key. Consumers: `register-dynamic-block.tsx` and any SPA import of `blockIcons`; adding a key changes nothing for them.
 
-**Revised after /yaytidy (2026-10-12):** the first-Steps-block rule moved from `CheckoutProgress` into `LayoutMarkupReader::step_titles()`, memoised per request by `CheckoutPage::step_titles()`. Go to Step reads that instead of a public `CheckoutProgress::layout_titles()`. Progress's and Go to Step's view scripts share `stepState()` / `reopenStep()`, and their editors share `useLayoutStepIds()`. The block's markup is a block-level `div` wrapper holding the button, as in Return to Cart. Task 1 and Task 2 below are the original steps; where they name `layout_titles()`, read `CheckoutPage::get_instance()->step_titles()`.
+**Revised after /yaytidy (2026-10-12):** the block's markup is a block-level `div` wrapper holding `button.yaycheckout-go-to-step__button`, as in Return to Cart, so it aligns with the content in the editor and on the storefront. Moving the step list out of `CheckoutProgress` and sharing the step code with Progress was built, then taken out of this PR to keep it to the new block; it is `docs/backlog/2026-10-12-step-list-owned-by-progress.md`.
 **Tests:** none. A disabled/enabled button driven by an existing event is not logic the CLAUDE.md test rule lists; each task has an exact manual check instead.
 
 ## Global constraints
