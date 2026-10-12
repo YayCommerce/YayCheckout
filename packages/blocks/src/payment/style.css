@@ -145,7 +145,7 @@
 	width: 100%;
 }
 
-/* Columns: cards in a row; .payment_box stays inside the selected card. */
+/* Columns: cards in a row, radio top-right; .payment_box stays inside the selected card. */
 .yaycheckout-checkout .yaycheckout-payment[data-layout="columns"] #payment .wc_payment_methods {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -170,14 +170,22 @@
 	background-color: var(--yaycheckout-payment-bg-hover, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff)));
 }
 
+.yaycheckout-checkout .yaycheckout-payment[data-layout="columns"] #payment .wc_payment_methods > li > input {
+	position: absolute;
+	inset-block-start: 14px;
+	inset-inline-end: 16px;
+	margin: 0;
+}
+
 .yaycheckout-checkout .yaycheckout-payment[data-layout="columns"] #payment .wc_payment_methods > li > label {
 	flex-direction: column;
 	align-items: flex-start;
 	gap: 8px;
 	width: 100%;
+	padding-inline-end: 28px;
 }
 
-/* Check: soft cards; select = primary border. Native radio stays visible. */
+/* Check: soft cards, radio on the right; select = primary border. */
 .yaycheckout-checkout .yaycheckout-payment[data-layout="check"] #payment .wc_payment_methods {
 	display: flex;
 	flex-direction: column;
@@ -203,10 +211,22 @@
 	background-color: var(--yaycheckout-payment-bg-hover, var(--yaycheckout-payment-bg, color-mix(in srgb, currentColor 6%, var(--yaycheckout-color-background, #fff))));
 }
 
+.yaycheckout-checkout .yaycheckout-payment[data-layout="check"] #payment .wc_payment_methods > li > input {
+	order: 2;
+	margin: 0;
+	margin-inline-start: auto;
+}
+
 .yaycheckout-checkout .yaycheckout-payment[data-layout="check"] #payment .wc_payment_methods > li > label {
+	order: 1;
+	flex: 1;
 	align-items: center;
 	gap: 12px;
-	width: 100%;
+	width: auto;
+}
+
+.yaycheckout-checkout .yaycheckout-payment[data-layout="check"] #payment .wc_payment_methods > li > :not(label, input) {
+	order: 3;
 }
 
 /* Divided: rules between rows, radio left. */
