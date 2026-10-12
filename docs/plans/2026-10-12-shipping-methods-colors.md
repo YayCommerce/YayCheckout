@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. Read the spec linked below before starting; the plan argues from it.
 
-**Status:** active
+**Status:** done 2026-10-12
 **Goal:** Five per-block colour settings for Shipping Methods (Radio, Radio (selected), Border, Border (selected), Border (hover)) in Styles → Methods, drawn the same in the editor and on the storefront.
 **Spec:** [docs/specs/2026-10-12-shipping-methods-colors-design.md](../specs/2026-10-12-shipping-methods-colors-design.md)
 **Architecture:** Same pipeline as the existing Methods backgrounds: keys on `style.yaycheckout.*` → `--yaycheckout-shipping-*` variables on the wrapper (editor: `shippingStyleVars()`, storefront: `CheckoutFragments::shipping_methods_style_attribute()`) → `style.css` reads each variable with today's colour as fallback. CSS lands first so it can be checked as a no-op before any control writes a value.
