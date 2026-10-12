@@ -12,9 +12,16 @@ const STEPS = stepsMeta.name;
 
 type Variant = 'circles' | 'dots' | 'segments' | 'bar' | 'text';
 
+// Mirrors CheckoutStepsProgress::markup(): bar and text show a summary and hide the list.
+const hasSummary = ( variant: Variant ) => variant === 'bar' || variant === 'text';
+
+interface Attributes {
+	variant: Variant;
+}
+
 interface EditProps {
-	attributes: { variant: Variant };
-	setAttributes: ( attributes: { variant: Variant } ) => void;
+	attributes: Attributes;
+	setAttributes: ( attributes: Partial< Attributes > ) => void;
 }
 
 function ProgressItem( { title, position }: { title: string; position: number } ) {
@@ -22,13 +29,13 @@ function ProgressItem( { title, position }: { title: string; position: number } 
 
 	return (
 		<li
-			className="yaycheckout-progress__item"
+			className="yaycheckout-steps-progress__item"
 			data-state={ state }
 			data-step={ position }
 			aria-current={ state === 'current' ? 'step' : undefined }
 		>
-			<span className="yaycheckout-progress__marker">{ position }</span>
-			<span className="yaycheckout-progress__title">{ stepTitle( decodeEntities( title ) ) }</span>
+			<span className="yaycheckout-steps-progress__marker">{ position }</span>
+			<span className="yaycheckout-steps-progress__title">{ stepTitle( decodeEntities( title ) ) }</span>
 		</li>
 	);
 }
@@ -46,20 +53,20 @@ function StepProgressItem( { stepId, position }: { stepId: string; position: num
 	return <ProgressItem title={ title } position={ position } />;
 }
 
-// Mirrors CheckoutProgress::summary(), with step 1 open.
+// Mirrors CheckoutStepsProgress::summary(), with step 1 open.
 function Summary( { total, withTrack }: { total: number; withTrack: boolean } ) {
 	return (
-		<div className="yaycheckout-progress__summary">
+		<div className="yaycheckout-steps-progress__summary">
 			{ withTrack && (
-				<div className="yaycheckout-progress__track">
-					<span className="yaycheckout-progress__fill" style={ { width: `${ ( 1 / Math.max( total, 1 ) ) * 100 }%` } } />
+				<div className="yaycheckout-steps-progress__track">
+					<span className="yaycheckout-steps-progress__fill" style={ { width: `${ ( 1 / Math.max( total, 1 ) ) * 100 }%` } } />
 				</div>
 			) }
-			<p className="yaycheckout-progress__count">
+			<p className="yaycheckout-steps-progress__count">
 				{ createInterpolateElement(
 					/* translators: 1: number of the open step, 2: number of steps. */
 					sprintf( __( 'Step %1$s of %2$s', 'yaycheckout' ), '<current />', String( total ) ),
-					{ current: <span className="yaycheckout-progress__current">1</span> }
+					{ current: <span className="yaycheckout-steps-progress__current">1</span> }
 				) }
 			</p>
 		</div>
@@ -69,22 +76,22 @@ function Summary( { total, withTrack }: { total: number; withTrack: boolean } ) 
 function ProgressBody( { variant, total, children }: { variant: Variant; total: number; children: ReactNode } ) {
 	return (
 		<>
-			{ ( variant === 'bar' || variant === 'text' ) && (
+			{ hasSummary( variant ) && (
 				<Summary total={ total } withTrack={ variant === 'bar' } />
 			) }
-			<ol className="yaycheckout-progress__list">{ children }</ol>
+			<ol className="yaycheckout-steps-progress__list">{ children }</ol>
 		</>
 	);
 }
 
-// Mirrors CheckoutProgress::markup(): the same wrapper, list and items.
+// Mirrors CheckoutStepsProgress::markup(): the same wrapper, list and items.
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	// The store's own order array, so typing elsewhere doesn't re-render this block.
 	const stepIds: string[] | null = useSelect(
 		( select ) => {
 			const { getBlockOrder, getBlocksByName } = select( blockEditorStore );
 
-			// Mirrors CheckoutProgress::titles_in(): the layout's first Steps block, in document order.
+			// Mirrors CheckoutStepsProgress::titles_in(): the layout's first Steps block, in document order.
 			const stepsId = ( getBlocksByName( STEPS ) as string[] )[ 0 ];
 
 			return stepsId ? getBlockOrder( stepsId ) : null;
@@ -97,7 +104,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		[]
 	);
 	const blockProps = useBlockProps( {
-		className: `yaycheckout-progress is-variant-${ attributes.variant }`,
+		className: `yaycheckout-steps-progress is-variant-${ attributes.variant }`,
 	} );
 
 	if ( isPreview && stepIds === null ) {
@@ -123,7 +130,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		return (
 			<div { ...blockProps }>
 				<Notice status="warning" isDismissible={ false }>
-					{ __( 'Add a Steps block to use Progress.', 'yaycheckout' ) }
+					{ __( 'Add a Steps block to use Steps Progress.', 'yaycheckout' ) }
 				</Notice>
 			</div>
 		);
@@ -132,7 +139,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Progress', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Steps Progress', 'yaycheckout' ) }>
 					<SelectControl
 						label={ __( 'Style', 'yaycheckout' ) }
 						value={ attributes.variant }

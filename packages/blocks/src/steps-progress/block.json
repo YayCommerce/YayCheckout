@@ -1,12 +1,12 @@
 {
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
-  "name": "yaycheckout/progress",
-  "title": "Progress",
+  "name": "yaycheckout/steps-progress",
+  "title": "Steps Progress",
   "category": "yaycheckout",
   "description": "Shows which checkout step is open, in one of several styles. Titles come from the Steps block.",
   "textdomain": "yaycheckout",
-  "keywords": [ "steps", "indicator" ],
+  "keywords": [ "steps", "progress", "indicator" ],
   "example": {},
   "attributes": {
     "variant": {
