@@ -1,0 +1,4 @@
+/* A field's live value still waiting for the shopper: its fallback, muted. Cart values print theirs as is. */
+.yaycheckout-live-value.is-empty[data-yaycheckout-value^="field:"] {
+	opacity: 0.5;
+}

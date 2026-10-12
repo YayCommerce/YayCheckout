@@ -293,6 +293,22 @@ class BlockRegistry {
             YAYCHECKOUT_VERSION,
             true
         );
+
+        // Enqueued by LiveValues::fill() when a Paragraph or Heading holds a live value. Skipped without a build.
+        $live_value = YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/live-value/view.asset.php';
+
+        if ( is_readable( $live_value ) && is_readable( YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/live-value/view.css' ) ) {
+            $live_value = require $live_value;
+
+            wp_register_script(
+                LiveValues::SCRIPT,
+                YAYCHECKOUT_PLUGIN_URL . 'assets/dist/blocks/live-value/view.js',
+                array_merge( $live_value['dependencies'], [ 'jquery' ] ),
+                $live_value['version'],
+                true
+            );
+            wp_register_style( LiveValues::STYLE, YAYCHECKOUT_PLUGIN_URL . 'assets/dist/blocks/live-value/view.css', [], $live_value['version'] );
+        }
     }
 
     /** Adds the YayCheckout inserter category in the layout editor. */
