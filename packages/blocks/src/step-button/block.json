@@ -16,6 +16,11 @@
     "buttonText": {
       "type": "string",
       "default": ""
+    },
+    "arrow": {
+      "type": "string",
+      "default": "none",
+      "enum": [ "none", "arrow", "chevron" ]
     }
   },
   "supports": {

@@ -5,10 +5,12 @@ import {
 	store as blockEditorStore,
 } from '@wordpress/block-editor';
 import { useSelect } from '@wordpress/data';
+import { __ } from '@wordpress/i18n';
 import { useBlocksAllowedExcept } from '../shared/allowed-blocks';
 import { stepTitle } from '../shared/step-title';
 import stepButtonMeta from '../step-button/block.json';
 import stepsMeta from '../steps/block.json';
+import './editor.css';
 
 const isSteps = ( type: { name: string } ) => type.name === stepsMeta.name;
 
@@ -20,10 +22,13 @@ interface EditProps {
 	attributes: StepAttributes;
 	setAttributes: ( attributes: Partial< StepAttributes > ) => void;
 	clientId: string;
+	context: { 'yaycheckout/showHeadings'?: boolean };
 }
 
-export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
+export default function Edit( { attributes, setAttributes, clientId, context }: EditProps ) {
 	const { title } = attributes;
+	// The storefront hides the header; here it stays, faded, so the title Progress shows can still be edited.
+	const hiddenOnCheckout = context[ 'yaycheckout/showHeadings' ] === false;
 	const index = useSelect( ( select ) => select( blockEditorStore ).getBlockIndex( clientId ), [ clientId ] );
 	const position = typeof index === 'number' && index >= 0 ? index + 1 : 1;
 	const blockProps = useBlockProps( { className: 'yaycheckout-step' } );
@@ -39,7 +44,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 
 	return (
 		<div { ...blockProps }>
-			<div className="yaycheckout-step__header">
+			<div className={ hiddenOnCheckout ? 'yaycheckout-step__header is-hidden-on-checkout' : 'yaycheckout-step__header' }>
 				<span className="yaycheckout-step__index">{ position }</span>
 				<RichText
 					tagName="span"
@@ -50,6 +55,9 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					allowedFormats={ [] }
 					withoutInteractiveFormatting
 				/>
+				{ hiddenOnCheckout && (
+					<span className="yaycheckout-step__hidden-note">{ __( 'Hidden on the checkout', 'yaycheckout' ) }</span>
+				) }
 			</div>
 			<div { ...bodyProps } />
 		</div>

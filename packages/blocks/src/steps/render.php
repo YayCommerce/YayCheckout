@@ -25,6 +25,11 @@ $yaycheckout_wrapper_attrs = [
     'data-select-message'   => __( 'Please choose an option.', 'yaycheckout' ),
 ];
 
+// A layout saved before the setting has no value: headings show.
+if ( false === ( $attributes['showHeadings'] ?? true ) ) {
+    $yaycheckout_wrapper_attrs['data-headings'] = 'hidden';
+}
+
 // Block spacing.
 $yaycheckout_wrapper_attrs['class'] .= \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/steps', 'yaycheckout-steps' );
 
