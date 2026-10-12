@@ -31,7 +31,7 @@ export const blockIcons: Record< string, JSX.Element > = {
 			<rect x="4" y="16" width="16" height="4" rx="1.5" />
 		</>
 	),
-	'yaycheckout/progress': icon(
+	'yaycheckout/steps-progress': icon(
 		<>
 			<circle cx="5" cy="12" r="2" />
 			<circle cx="12" cy="12" r="2" />

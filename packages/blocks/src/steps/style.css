@@ -120,7 +120,7 @@
 	display: block;
 }
 
-/* Headings hidden: the open step's header stays for screen readers. The same declarations as WordPress's .screen-reader-text and progress/style.css. */
+/* Headings hidden: the open step's header stays for screen readers. The same declarations as WordPress's .screen-reader-text and steps-progress/style.css. */
 .yaycheckout-steps[data-headings="hidden"] .yaycheckout-step__header {
 	position: absolute;
 	width: 1px;

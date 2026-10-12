@@ -43,7 +43,7 @@ class BlockRegistry {
     private const ORDER = [
         'checkout',
         'login',
-        'progress',
+        'steps-progress',
         'steps',
         'step',
         'step-button',

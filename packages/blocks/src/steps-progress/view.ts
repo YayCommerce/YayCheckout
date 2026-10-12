@@ -1,5 +1,5 @@
 /**
- * Storefront paint for yaycheckout/progress.
+ * Storefront paint for yaycheckout/steps-progress.
  *
  * Steps owns the open step. This script only mirrors data-state.
  */
@@ -7,14 +7,14 @@
 import { CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
 import { onDomReady } from '../shared/dom-ready';
 
-const ITEM = '.yaycheckout-progress__item';
+const ITEM = '.yaycheckout-steps-progress__item';
 
 function boot(): void {
-	if ( document.documentElement.hasAttribute( 'data-yaycheckout-progress-bound' ) ) {
+	if ( document.documentElement.hasAttribute( 'data-yaycheckout-steps-progress-bound' ) ) {
 		return;
 	}
 
-	document.documentElement.setAttribute( 'data-yaycheckout-progress-bound', '' );
+	document.documentElement.setAttribute( 'data-yaycheckout-steps-progress-bound', '' );
 	document.addEventListener( 'yaycheckout:step-change', onStepChange );
 	document.addEventListener( 'click', onClick );
 }
@@ -38,7 +38,7 @@ function onClick( event: MouseEvent ): void {
 		return;
 	}
 
-	const button = target.closest< HTMLButtonElement >( '.yaycheckout-progress__jump' );
+	const button = target.closest< HTMLButtonElement >( 'button.yaycheckout-steps-progress__jump' );
 
 	if ( ! button || button.disabled ) {
 		return;
@@ -47,7 +47,6 @@ function onClick( event: MouseEvent ): void {
 	const item = button.closest< HTMLElement >( ITEM );
 	const checkout = checkoutFor( button );
 
-	// paint() keeps the button disabled unless its step is complete.
 	if ( ! item || ! checkout || ! item.dataset.step ) {
 		return;
 	}
@@ -62,26 +61,26 @@ function onClick( event: MouseEvent ): void {
 }
 
 function sync( checkout: Element ): void {
-	const states = new Map< string, string >();
+	const steps = new Map< string, HTMLElement >();
 
 	checkout.querySelectorAll< HTMLElement >( '.yaycheckout-step' ).forEach( ( step ) => {
-		if ( step.dataset.step && step.dataset.state && ! states.has( step.dataset.step ) ) {
-			states.set( step.dataset.step, step.dataset.state );
+		if ( step.dataset.step && step.dataset.state && ! steps.has( step.dataset.step ) ) {
+			steps.set( step.dataset.step, step );
 		}
 	} );
 
-	// Progress may sit outside Checkout, so paint every one on the page.
+	// Steps Progress may sit outside Checkout, so paint every one on the page.
 	document.querySelectorAll< HTMLElement >( ITEM ).forEach( ( item ) => {
-		paint( item, states.get( item.dataset.step ?? '' ) ?? 'locked' );
+		paint( item, steps.get( item.dataset.step ?? '' ) );
 	} );
 
-	document.querySelectorAll< HTMLElement >( '.yaycheckout-progress' ).forEach( paintSummary );
+	document.querySelectorAll< HTMLElement >( '.yaycheckout-steps-progress' ).forEach( paintSummary );
 }
 
 // The bar style's fill and "Step N of M". Other styles have no summary.
 function paintSummary( root: HTMLElement ): void {
 	const current = root.querySelector< HTMLElement >( `${ ITEM }[data-state="current"]` );
-	const label = root.querySelector( '.yaycheckout-progress__current' );
+	const label = root.querySelector( '.yaycheckout-steps-progress__current' );
 	const total = root.querySelectorAll( ITEM ).length;
 	const step = Number( current?.dataset.step );
 
@@ -90,16 +89,19 @@ function paintSummary( root: HTMLElement ): void {
 	}
 
 	label.textContent = String( step );
-	root.style.setProperty( '--yaycheckout-progress-value', String( step / total ) );
+	root.style.setProperty( '--yaycheckout-steps-progress-value', String( step / total ) );
 }
 
-function paint( item: HTMLElement, state: string ): void {
+function paint( item: HTMLElement, step: HTMLElement | undefined ): void {
+	const state = step?.dataset.state ?? 'locked';
 	item.dataset.state = state;
 
-	const button = item.querySelector< HTMLButtonElement >( '.yaycheckout-progress__jump' );
+	// A span when the merchant turned clicking off.
+	const button = item.querySelector< HTMLButtonElement >( 'button.yaycheckout-steps-progress__jump' );
 
 	if ( button ) {
-		button.disabled = state !== 'complete';
+		// Mirrors steps/view.ts onClick(): a step the shopper reached reopens unless it is open.
+		button.disabled = step?.dataset.reached !== 'true' || state === 'current';
 	}
 
 	if ( state === 'current' ) {
