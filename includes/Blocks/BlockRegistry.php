@@ -7,6 +7,7 @@ use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutDifferentAddress;
 use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Renderer\HideWhenEmpty;
+use YayCheckout\Renderer\LiveValues;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -73,6 +74,8 @@ class BlockRegistry {
     protected function __construct() {
         add_action( 'init', [ $this, 'register_blocks' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_design_data' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_live_value_editor' ] );
+        add_action( 'enqueue_block_assets', [ $this, 'enqueue_live_value_editor_style' ] );
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
@@ -204,6 +207,44 @@ class BlockRegistry {
 
         // Added after register_blocks()' own inline script, so window.yayCheckoutBlocks exists.
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.design', $design );
+        // The live value picker's Cart totals and Counts.
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.liveValues', LiveValues::cart_values() );
+    }
+
+    /**
+     * The live value format, in the layout editor only: a page's Paragraph never offers it. It runs after the
+     * Checkout editor script, whose inline data it reads. Skipped without a build.
+     */
+    public function enqueue_live_value_editor(): void {
+        $asset = YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/live-value/index.asset.php';
+
+        if ( 'layout' !== $this->editor( null ) || ! is_readable( $asset ) ) {
+            return;
+        }
+
+        $asset = require $asset;
+
+        wp_enqueue_script(
+            LiveValues::EDITOR_SCRIPT,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/dist/blocks/live-value/index.js',
+            array_merge( $asset['dependencies'], [ generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ) ] ),
+            $asset['version'],
+            true
+        );
+        wp_set_script_translations( LiveValues::EDITOR_SCRIPT, 'yaycheckout', YAYCHECKOUT_PLUGIN_DIR . 'languages' );
+    }
+
+    /** The live value chip style, on enqueue_block_assets so it reaches the canvas iframe. Layout editor only; skipped without a build. */
+    public function enqueue_live_value_editor_style(): void {
+        $asset = YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/live-value/index.asset.php';
+
+        if ( ! is_admin() || 'layout' !== $this->editor( null ) || ! is_readable( YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/live-value/index.css' ) || ! is_readable( $asset ) ) {
+            return;
+        }
+
+        $asset = require $asset;
+
+        wp_enqueue_style( LiveValues::EDITOR_STYLE, YAYCHECKOUT_PLUGIN_URL . 'assets/dist/blocks/live-value/index.css', [], $asset['version'] );
     }
 
     /**

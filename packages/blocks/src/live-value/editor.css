@@ -1,0 +1,14 @@
+/* A live value in the layout editor: a tinted chip showing the value's name, which the storefront fills in. */
+.editor-styles-wrapper .yaycheckout-live-value {
+	--yaycheckout-live-value-warning: #cc1818;
+	display: inline-block;
+	border-radius: 4px;
+	padding: 0 0.3em;
+	background: color-mix(in srgb, currentColor 12%, transparent);
+	cursor: pointer;
+}
+
+.yaycheckout-live-value-popover__body {
+	padding: 16px;
+	min-width: 260px;
+}

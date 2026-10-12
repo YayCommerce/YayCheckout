@@ -17,6 +17,7 @@ import { PluginSidebar, PluginSidebarMoreMenuItem, store as editorStore } from '
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
+import { useCanvasStyle } from '../shared/canvas-style';
 import { designCss, isGradient } from '../shared/design-css';
 import { editorData, type DesignRule, type EditorDesign } from '../shared/editor-data';
 import { useIsLayoutEditor } from '../shared/layout-editor';
@@ -351,75 +352,6 @@ function SectionPanel( {
 	);
 }
 
-/** The canvas iframe's documents. */
-function canvasFrames(): Document[] {
-	return Array.from( document.querySelectorAll< HTMLIFrameElement >( 'iframe[name="editor-canvas"]' ) )
-		.map( ( frame ) => frame.contentDocument )
-		.filter( ( doc ): doc is Document => !! doc );
-}
-
-/**
- * Keeps the printed design style in the canvas equal to `css`. The canvas iframe is rebuilt on a device
- * preview switch or after the code editor, and comes back with the saved design, so it is watched.
- * Null leaves the printed style as it is.
- */
-function useCanvasDesign( css: string | null, styleId: string ) {
-	const latest = useRef( css );
-	latest.current = css;
-
-	const apply = () => {
-		if ( null === latest.current ) {
-			return;
-		}
-
-		const frames = canvasFrames();
-
-		// The editor's own document holds the canvas when it isn't iframed. WordPress prints no style for an
-		// empty design, so a canvas without one gets its own, after the base stylesheet.
-		( frames.length ? frames : [ document ] ).forEach( ( doc ) => {
-			if ( doc.head && ! doc.getElementById( styleId ) ) {
-				const created = doc.createElement( 'style' );
-				created.id = styleId;
-				doc.head.appendChild( created );
-			}
-		} );
-
-		[ document, ...frames ].forEach( ( doc ) => {
-			const style = doc.getElementById( styleId );
-			if ( style && style.textContent !== latest.current ) {
-				style.textContent = latest.current;
-			}
-		} );
-	};
-
-	useEffect( apply, [ css ] );
-
-	useEffect( () => {
-		// Only each canvas head, where the style is printed, so editing blocks doesn't wake it.
-		const observer = new MutationObserver( apply );
-		const watched = new WeakSet< Document >();
-
-		const watchFrames = () => {
-			canvasFrames().forEach( ( doc ) => {
-				if ( doc.head && ! watched.has( doc ) ) {
-					watched.add( doc );
-					observer.observe( doc.head, { childList: true } );
-				}
-			} );
-			apply();
-		};
-
-		// A rebuilt canvas iframe loads a new document; load doesn't bubble, so it is caught on the way down.
-		document.addEventListener( 'load', watchFrames, true );
-		watchFrames();
-
-		return () => {
-			observer.disconnect();
-			document.removeEventListener( 'load', watchFrames, true );
-		};
-	}, [] );
-}
-
 /**
  * The picked font's `@font-face` rules for the canvas (FontRestController): '' for the theme's font or one the
  * theme loads, the uploaded files once the font is uploaded, and Google's files as a preview until then. The
@@ -558,8 +490,8 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 
 	const font = useDesignFont( design, String( current.typography.font_family ?? '' ) );
 
-	useCanvasDesign( designCss( current, design ), design.styleId );
-	useCanvasDesign( font.css, design.fontStyleId );
+	useCanvasStyle( designCss( current, design ), design.styleId );
+	useCanvasStyle( font.css, design.fontStyleId );
 
 	// The server would skip this CSS on print without saying so, so it is never saved.
 	useEffect( () => {
