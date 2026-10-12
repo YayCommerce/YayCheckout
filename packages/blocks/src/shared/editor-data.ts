@@ -27,18 +27,27 @@ export type EditorDesign = {
 	customCssMaxBytes: number;
 };
 
-type EditorData = { isPro: boolean; postType: string; upgradeUrl: string; design: EditorDesign | null };
+type EditorData = {
+	isPro: boolean;
+	postType: string;
+	upgradeUrl: string;
+	design: EditorDesign | null;
+	/** Cart value key => label, from LiveValues::cart_values(); printed in the block editor only. */
+	liveValues: Record< string, string >;
+};
 
 declare global {
 	interface Window {
-		yayCheckoutBlocks?: EditorData;
+		yayCheckoutBlocks?: Partial< EditorData >;
 	}
 }
 
 /** Values BlockRegistry prints before this bundle runs; PHP owns every one of them. */
-export const editorData: EditorData = window.yayCheckoutBlocks ?? {
+export const editorData: EditorData = {
 	isPro: false,
 	postType: '',
 	upgradeUrl: '',
 	design: null,
+	liveValues: {},
+	...window.yayCheckoutBlocks,
 };
