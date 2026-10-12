@@ -13,10 +13,6 @@
       "type": "string",
       "default": "circles",
       "enum": [ "circles", "dots", "segments", "bar", "text" ]
-    },
-    "clickable": {
-      "type": "boolean",
-      "default": true
     }
   },
   "supports": {

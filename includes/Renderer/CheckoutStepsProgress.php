@@ -54,9 +54,9 @@ class CheckoutStepsProgress {
         }
 
         $variant = self::variant( $attributes );
-        // Bar and text show a summary and hide the list, so their steps have nothing to click.
+        // Reached steps are buttons, except in bar and text, which show a summary and hide the list.
         $has_summary = 'bar' === $variant || 'text' === $variant;
-        $jump        = ! $has_summary && false !== ( $attributes['clickable'] ?? true );
+        $jump        = ! $has_summary;
         $tag         = $jump ? 'button' : 'span';
         $items       = '';
 

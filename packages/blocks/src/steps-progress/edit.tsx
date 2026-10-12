@@ -1,5 +1,5 @@
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { Notice, PanelBody, SelectControl, ToggleControl } from '@wordpress/components';
+import { Notice, PanelBody, SelectControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { createInterpolateElement, type ReactNode } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
@@ -17,7 +17,6 @@ const hasSummary = ( variant: Variant ) => variant === 'bar' || variant === 'tex
 
 interface Attributes {
 	variant: Variant;
-	clickable: boolean;
 }
 
 interface EditProps {
@@ -153,15 +152,6 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						] }
 						onChange={ ( value: string ) => setAttributes( { variant: value as Variant } ) }
 					/>
-					{ ! hasSummary( attributes.variant ) && (
-						<ToggleControl
-							__nextHasNoMarginBottom
-							label={ __( 'Make progress steps clickable', 'yaycheckout' ) }
-							help={ __( 'Shoppers can click a step they already reached to go back to it.', 'yaycheckout' ) }
-							checked={ attributes.clickable }
-							onChange={ ( clickable: boolean ) => setAttributes( { clickable } ) }
-						/>
-					) }
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
