@@ -1,4 +1,4 @@
-import type { ShippingSettingKey } from './setting-controls';
+import type { ColorSettingKey, ShippingSettingKey } from './setting-controls';
 
 type StyleObject = Record< string, unknown >;
 
@@ -16,14 +16,17 @@ const PATHS: Record< ShippingSettingKey, string[] > = {
 	radioColorSelected: [ 'yaycheckout', 'radioSelected' ],
 };
 
-/** Colour settings printed as-is (after preset resolution), in the order PHP prints them. */
-const COLOR_VARS: [ ShippingSettingKey, string ][] = [
-	[ 'radioColor', '--yaycheckout-shipping-radio' ],
-	[ 'radioColorSelected', '--yaycheckout-shipping-radio-selected' ],
-	[ 'borderColor', '--yaycheckout-shipping-border' ],
-	[ 'borderColorSelected', '--yaycheckout-shipping-border-selected' ],
-	[ 'borderColorHover', '--yaycheckout-shipping-border-hover' ],
-];
+/** Colour setting => the variable it sets, in the order PHP prints them. Mirrors CheckoutFragments::SHIPPING_COLOR_VARS. */
+const COLOR_VARS: Record< ColorSettingKey, string > = {
+	backgroundColor: '--yaycheckout-shipping-bg',
+	backgroundColorSelected: '--yaycheckout-shipping-bg-selected',
+	backgroundColorHover: '--yaycheckout-shipping-bg-hover',
+	radioColor: '--yaycheckout-shipping-radio',
+	radioColorSelected: '--yaycheckout-shipping-radio-selected',
+	borderColor: '--yaycheckout-shipping-border',
+	borderColorSelected: '--yaycheckout-shipping-border-selected',
+	borderColorHover: '--yaycheckout-shipping-border-hover',
+};
 
 function isPlainObject( value: unknown ): value is StyleObject {
 	return typeof value === 'object' && value !== null && ! Array.isArray( value );
@@ -110,9 +113,6 @@ export function shippingStyleVars(
 	const vars: Record< string, string > = {};
 	const gap = getStyleSetting( style, 'gap' );
 	const radius = getStyleSetting( style, 'borderRadius' );
-	const bg = getStyleSetting( style, 'backgroundColor' );
-	const bgSelected = getStyleSetting( style, 'backgroundColorSelected' );
-	const bgHover = getStyleSetting( style, 'backgroundColorHover' );
 	const text = cssColor( getAt( style, [ 'color', 'text' ] ), textColor );
 
 	if ( typeof gap === 'string' && gap !== '' ) {
@@ -123,16 +123,7 @@ export function shippingStyleVars(
 	} else if ( typeof radius === 'number' && Number.isFinite( radius ) ) {
 		vars[ '--yaycheckout-shipping-radius' ] = `${ radius }px`;
 	}
-	if ( typeof bg === 'string' && bg !== '' ) {
-		vars[ '--yaycheckout-shipping-bg' ] = bg;
-	}
-	if ( typeof bgSelected === 'string' && bgSelected !== '' ) {
-		vars[ '--yaycheckout-shipping-bg-selected' ] = bgSelected;
-	}
-	if ( typeof bgHover === 'string' && bgHover !== '' ) {
-		vars[ '--yaycheckout-shipping-bg-hover' ] = bgHover;
-	}
-	for ( const [ key, name ] of COLOR_VARS ) {
+	for ( const [ key, name ] of Object.entries( COLOR_VARS ) as [ ColorSettingKey, string ][] ) {
 		const value = cssColor( getStyleSetting( style, key ) );
 		if ( value ) {
 			vars[ name ] = value;

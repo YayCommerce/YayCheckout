@@ -1,5 +1,5 @@
 import { __ } from '@wordpress/i18n';
-import type { ShippingSettingKey } from './setting-controls';
+import { COLOR_SETTING_KEYS, type ShippingSettingKey } from './setting-controls';
 
 export interface ShippingLayout {
 	value: string;
@@ -7,25 +7,13 @@ export interface ShippingLayout {
 	settings: ShippingSettingKey[];
 }
 
-const BACKGROUNDS: ShippingSettingKey[] = [
-	'backgroundColor',
-	'backgroundColorSelected',
-	'backgroundColorHover',
-];
-
-const RADIOS: ShippingSettingKey[] = [ 'radioColor', 'radioColorSelected' ];
-
-/** Layouts whose rows have their own outline also take selected and hover borders. */
-const ROW_COLORS: ShippingSettingKey[] = [
-	...BACKGROUNDS,
-	'borderColor',
-	'borderColorSelected',
-	'borderColorHover',
-	...RADIOS,
-];
+/** Layouts whose rows have their own outline take every colour. */
+const ROW_COLORS: ShippingSettingKey[] = [ ...COLOR_SETTING_KEYS ];
 
 /** Divided and Boxed rows share lines, so they take one border colour. */
-const SHARED_LINE_COLORS: ShippingSettingKey[] = [ ...BACKGROUNDS, 'borderColor', ...RADIOS ];
+const SHARED_LINE_COLORS: ShippingSettingKey[] = ROW_COLORS.filter(
+	( key ) => key !== 'borderColorSelected' && key !== 'borderColorHover'
+);
 
 /** Mirrors CheckoutFragments::SHIPPING_LAYOUTS in PHP. */
 export const SHIPPING_LAYOUTS: ShippingLayout[] = [

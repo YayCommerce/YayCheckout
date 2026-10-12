@@ -25,6 +25,18 @@ class CheckoutFragments {
     /** Layout values the Shipping Methods block accepts; an unknown attribute falls back to default. */
     public const SHIPPING_LAYOUTS = [ 'default', 'check', 'boxed', 'columns', 'stacked', 'divided' ];
 
+    /** Colour key under style.yaycheckout => the --yaycheckout-shipping-* variable it sets. COLOR_VARS in style-paths.ts mirrors it. */
+    private const SHIPPING_COLOR_VARS = [
+        'background'         => '--yaycheckout-shipping-bg',
+        'backgroundSelected' => '--yaycheckout-shipping-bg-selected',
+        'backgroundHover'    => '--yaycheckout-shipping-bg-hover',
+        'radio'              => '--yaycheckout-shipping-radio',
+        'radioSelected'      => '--yaycheckout-shipping-radio-selected',
+        'border'             => '--yaycheckout-shipping-border',
+        'borderSelected'     => '--yaycheckout-shipping-border-selected',
+        'borderHover'        => '--yaycheckout-shipping-border-hover',
+    ];
+
     /** Layout slot => [ selector WooCommerce's checkout.js replaces, method building its HTML ]. */
     private const FRAGMENTS = [
         'payment'          => [ '.woocommerce-checkout-payment', 'payment_methods_html' ],
@@ -149,7 +161,6 @@ class CheckoutFragments {
      * Inline style attribute value of --yaycheckout-shipping-* vars from the block's style object.
      * Empty when no Methods styles are set. Mirrors packages/blocks/.../style-paths.ts.
      * Row radius and background live under style.yaycheckout: core's border and background style the wrapper.
-     * Radio and border colours: style.yaycheckout.radio, radioSelected, border, borderSelected, borderHover.
      *
      * @param array $attributes Block attributes.
      */
@@ -170,29 +181,7 @@ class CheckoutFragments {
             $decls[] = '--yaycheckout-shipping-radius:' . $radius;
         }
 
-        $bg = self::shipping_css_color( $yay['background'] ?? null );
-        if ( '' !== $bg ) {
-            $decls[] = '--yaycheckout-shipping-bg:' . $bg;
-        }
-
-        $bg_selected = self::shipping_css_color( $yay['backgroundSelected'] ?? null );
-        if ( '' !== $bg_selected ) {
-            $decls[] = '--yaycheckout-shipping-bg-selected:' . $bg_selected;
-        }
-
-        $bg_hover = self::shipping_css_color( $yay['backgroundHover'] ?? null );
-        if ( '' !== $bg_hover ) {
-            $decls[] = '--yaycheckout-shipping-bg-hover:' . $bg_hover;
-        }
-
-        $color_vars = [
-            'radio'          => '--yaycheckout-shipping-radio',
-            'radioSelected'  => '--yaycheckout-shipping-radio-selected',
-            'border'         => '--yaycheckout-shipping-border',
-            'borderSelected' => '--yaycheckout-shipping-border-selected',
-            'borderHover'    => '--yaycheckout-shipping-border-hover',
-        ];
-        foreach ( $color_vars as $key => $var ) {
+        foreach ( self::SHIPPING_COLOR_VARS as $key => $var ) {
             $value = self::shipping_css_color( $yay[ $key ] ?? null );
             if ( '' !== $value ) {
                 $decls[] = $var . ':' . $value;
