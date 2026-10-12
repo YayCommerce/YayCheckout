@@ -1,12 +1,10 @@
 import { InspectorControls, store as blockEditorStore } from '@wordpress/block-editor';
 import { getBlockType, getBlockTypes, hasBlockSupport } from '@wordpress/blocks';
 import { CheckboxControl, Notice, PanelBody } from '@wordpress/components';
-import { createHigherOrderComponent } from '@wordpress/compose';
 import { select as selectNow, useDispatch, useSelect } from '@wordpress/data';
 import { useEffect } from '@wordpress/element';
-import { addFilter } from '@wordpress/hooks';
 import { __, sprintf } from '@wordpress/i18n';
-import { useIsLayoutEditor } from './layout-editor';
+import { addLayoutPanel, type LayoutPanelProps } from './layout-panel';
 import { plainText } from './plain-text';
 
 /** Mirrors HideWhenEmpty::ATTRIBUTE in PHP. */
@@ -28,30 +26,7 @@ function newBlockId(): string {
 
 type Watchable = { clientId: string; blockId: string; label: string };
 
-type BlockSettings = { name?: string; attributes?: Record< string, unknown > };
-
-addFilter(
-	'blocks.registerBlockType',
-	'yaycheckout/hide-when-empty/attribute',
-	( settings: BlockSettings, name: string ) =>
-		CONTAINERS.includes( name )
-			? {
-					...settings,
-					attributes: {
-						...settings.attributes,
-						[ ATTRIBUTE ]: { type: 'array', items: { type: 'string' }, default: [] },
-					},
-			  }
-			: settings
-);
-
-type PanelProps = {
-	clientId: string;
-	attributes: Record< string, unknown >;
-	setAttributes: ( attributes: Record< string, unknown > ) => void;
-};
-
-function HideWhenEmptyPanel( { clientId, attributes, setAttributes }: PanelProps ) {
+function HideWhenEmptyPanel( { clientId, attributes, setAttributes }: LayoutPanelProps ) {
 	const watched = Array.isArray( attributes[ ATTRIBUTE ] ) ? ( attributes[ ATTRIBUTE ] as string[] ) : [];
 
 	const { watchable, renames, sharedIds, hasRequiredField } = useSelect(
@@ -230,24 +205,10 @@ function HideWhenEmptyPanel( { clientId, attributes, setAttributes }: PanelProps
 	);
 }
 
-/** Subscribes to the store only while a container is selected, so other blocks pay nothing. */
-function LayoutOnlyPanel( props: PanelProps ) {
-	const isLayout = useIsLayoutEditor();
-
-	return isLayout ? <HideWhenEmptyPanel { ...props } /> : null;
-}
-
-const withHideWhenEmptyPanel = createHigherOrderComponent(
-	( BlockEdit ) =>
-		function HideWhenEmptyBlockEdit( props: PanelProps & { name: string; isSelected: boolean } ) {
-			return (
-				<>
-					<BlockEdit { ...props } />
-					{ CONTAINERS.includes( props.name ) && props.isSelected && <LayoutOnlyPanel { ...props } /> }
-				</>
-			);
-		},
-	'withHideWhenEmptyPanel'
+addLayoutPanel(
+	'yaycheckout/hide-when-empty',
+	CONTAINERS,
+	ATTRIBUTE,
+	{ type: 'array', items: { type: 'string' }, default: [] },
+	HideWhenEmptyPanel
 );
-
-addFilter( 'editor.BlockEdit', 'yaycheckout/hide-when-empty/panel', withHideWhenEmptyPanel );

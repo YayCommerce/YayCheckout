@@ -21,7 +21,7 @@ class PinToBottom {
 
     public const ALL = 'all';
 
-    /** Pinned only below 782px; wider screens show the Group in its place. */
+    /** Pinned only below 782px, the breakpoint checkout-base.css owns; wider screens show the Group in its place. */
     public const MOBILE = 'mobile';
 
     public const PINNED_CLASS = 'yaycheckout-pinned';

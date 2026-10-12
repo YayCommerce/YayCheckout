@@ -106,12 +106,12 @@ body.yaycheckout-page > .wp-site-blocks,
 	overflow-y: auto;
 }
 
-/* Set by checkout-pin-to-bottom.js while a touch keyboard is up; the height stays, so nothing shifts. */
+/* checkout-pin-to-bottom.js KEYBOARD_HIDDEN, set while a touch keyboard is up; the height stays, so nothing shifts. */
 .yaycheckout-pinned.is-keyboard-hidden {
 	visibility: hidden;
 }
 
-/* checkout-pin-to-bottom.js sets the height while a bar is fixed. */
+/* checkout-pin-to-bottom.js HAS_PINNED and HEIGHT_VAR, set while a bar is fixed. */
 html.yaycheckout-has-pinned {
 	scroll-padding-bottom: var(--yaycheckout-pinned-height, 0px);
 }
@@ -132,12 +132,7 @@ html.yaycheckout-has-pinned body {
 	margin-block: 0;
 }
 
-/*
- * Field rows. A Field or Email block wraps WooCommerce's p.form-row in a div.form-row of its
- * own, so the gap goes on the outer row only. Classic themes float the half-width rows; the
- * layout's Columns place fields side by side instead.
- */
-
+/* Field rows. Classic themes float the half-width rows; the layout's Columns place fields side by side instead. */
 .yaycheckout-checkout :is(.form-row-first, .form-row-last, .form-row-wide) {
 	float: none;
 	width: auto;

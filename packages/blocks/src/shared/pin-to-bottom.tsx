@@ -1,10 +1,8 @@
 import { InspectorControls, store as blockEditorStore } from '@wordpress/block-editor';
 import { Notice, PanelBody, SelectControl } from '@wordpress/components';
-import { createHigherOrderComponent } from '@wordpress/compose';
 import { useSelect } from '@wordpress/data';
-import { addFilter } from '@wordpress/hooks';
 import { __ } from '@wordpress/i18n';
-import { useIsLayoutEditor } from './layout-editor';
+import { addLayoutPanel, type LayoutPanelProps } from './layout-panel';
 
 /** Mirrors PinToBottom::ATTRIBUTE in PHP. */
 const ATTRIBUTE = 'yaycheckoutPinToBottom';
@@ -17,41 +15,18 @@ const MOBILE = 'mobile';
 
 const GROUP = 'core/group';
 
-type BlockSettings = { name?: string; attributes?: Record< string, unknown > };
+/** Mirrors PinToBottom::filter_group() in PHP: any other value is off. */
+const isPinned = ( value: unknown ): boolean => value === ALL || value === MOBILE;
 
-addFilter(
-	'blocks.registerBlockType',
-	'yaycheckout/pin-to-bottom/attribute',
-	( settings: BlockSettings, name: string ) =>
-		name === GROUP
-			? {
-					...settings,
-					attributes: {
-						...settings.attributes,
-						[ ATTRIBUTE ]: { type: 'string', default: '' },
-					},
-			  }
-			: settings
-);
-
-type PanelProps = {
-	clientId: string;
-	attributes: Record< string, unknown > & { style?: { position?: { type?: string } } };
-	setAttributes: ( attributes: Record< string, unknown > ) => void;
-};
-
-function PinToBottomPanel( { clientId, attributes, setAttributes }: PanelProps ) {
+function PinToBottomPanel( { clientId, attributes, setAttributes }: LayoutPanelProps ) {
 	const value = typeof attributes[ ATTRIBUTE ] === 'string' ? ( attributes[ ATTRIBUTE ] as string ) : '';
 
 	const otherPinned = useSelect(
 		( select ) => {
-			const { getBlockName, getBlockAttributes, getClientIdsWithDescendants } = select( blockEditorStore );
+			const { getBlockAttributes, getBlocksByName } = select( blockEditorStore );
 
-			return ( getClientIdsWithDescendants() as string[] ).some(
-				( id ) =>
-					id !== clientId &&
-					getBlockName( id ) === GROUP &&
-					[ ALL, MOBILE ].includes( getBlockAttributes( id )?.[ ATTRIBUTE ] )
+			return ( getBlocksByName( GROUP ) as string[] ).some(
+				( id ) => id !== clientId && isPinned( getBlockAttributes( id )?.[ ATTRIBUTE ] )
 			);
 		},
 		[ clientId ]
@@ -59,13 +34,14 @@ function PinToBottomPanel( { clientId, attributes, setAttributes }: PanelProps )
 
 	return (
 		<InspectorControls>
-			<PanelBody title={ __( 'Pin to bottom', 'yaycheckout' ) } initialOpen={ value !== '' }>
+			<PanelBody title={ __( 'Pin to bottom', 'yaycheckout' ) } initialOpen={ isPinned( value ) }>
 				<SelectControl
 					label={ __( 'Pin to the bottom of the screen', 'yaycheckout' ) }
 					value={ value }
 					options={ [
 						{ label: __( 'Off', 'yaycheckout' ), value: '' },
 						{ label: __( 'All screens', 'yaycheckout' ), value: ALL },
+						// The breakpoint matches checkout-base.css's @media (max-width: 781px).
 						{ label: __( 'Mobile only (below 782px)', 'yaycheckout' ), value: MOBILE },
 					] }
 					onChange={ ( next: string ) => setAttributes( { [ ATTRIBUTE ]: next } ) }
@@ -74,12 +50,12 @@ function PinToBottomPanel( { clientId, attributes, setAttributes }: PanelProps )
 						'yaycheckout'
 					) }
 				/>
-				{ value === ALL && attributes.style?.position?.type === 'sticky' && (
+				{ value === ALL && ( attributes.style as { position?: { type?: string } } | undefined )?.position?.type === 'sticky' && (
 					<Notice status="warning" isDismissible={ false }>
 						{ __( 'Pinned to the bottom, this block ignores its sticky position.', 'yaycheckout' ) }
 					</Notice>
 				) }
-				{ value !== '' && otherPinned && (
+				{ isPinned( value ) && otherPinned && (
 					<Notice status="warning" isDismissible={ false }>
 						{ __( 'Another block is already pinned to the bottom. They will overlap.', 'yaycheckout' ) }
 					</Notice>
@@ -89,24 +65,4 @@ function PinToBottomPanel( { clientId, attributes, setAttributes }: PanelProps )
 	);
 }
 
-/** Subscribes to the store only while a Group is selected in the layout editor. */
-function LayoutOnlyPanel( props: PanelProps ) {
-	const isLayout = useIsLayoutEditor();
-
-	return isLayout ? <PinToBottomPanel { ...props } /> : null;
-}
-
-const withPinToBottomPanel = createHigherOrderComponent(
-	( BlockEdit ) =>
-		function PinToBottomBlockEdit( props: PanelProps & { name: string; isSelected: boolean } ) {
-			return (
-				<>
-					<BlockEdit { ...props } />
-					{ props.name === GROUP && props.isSelected && <LayoutOnlyPanel { ...props } /> }
-				</>
-			);
-		},
-	'withPinToBottomPanel'
-);
-
-addFilter( 'editor.BlockEdit', 'yaycheckout/pin-to-bottom/panel', withPinToBottomPanel );
+addLayoutPanel( 'yaycheckout/pin-to-bottom', [ GROUP ], ATTRIBUTE, { type: 'string', default: '' }, PinToBottomPanel );
