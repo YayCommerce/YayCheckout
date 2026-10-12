@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. This plan has no spec; `## Requirements` is the contract.
 
-**Status:** active
+**Status:** done 2026-10-12
 **Goal:** A merchant can pin a core Group in a checkout layout to the bottom of the shopper's screen, on all screens or on mobile only, so template 04's summary and action bar can be built.
 **Spec:** none, planned from the request
 **Architecture:** This copies Hide When Empty (`shared/hide-when-empty.tsx` + `Renderer\HideWhenEmpty`). The editor adds one attribute to `core/group` and a panel that shows only in the layout editor. A `render_block_core/group` filter adds a class, and storefront CSS makes that class `position: fixed`. A small jQuery-free script keeps the page's bottom clearance equal to the bar's height. Core's Position support was not used: it offers only sticky, its control shows only when the theme enables `position.sticky`, and a new core position type can't be added from a plugin. In the editor the Group stays in place, because the class is added only on render. A fixed bar inside the iframe would cover the blocks being edited.
@@ -192,9 +192,9 @@ Message: `feat(blocks): add pin to bottom setting to group`
 **Files:**
 - Modify: `docs/architecture.md`. In the layouts/blocks section, beside the Hide When Empty description, add one sentence: a Group's `yaycheckoutPinToBottom` is applied only on render by `Renderer\PinToBottom`, so the editor shows it in place, and `checkout-pin-to-bottom.js` reserves the bar's height.
 
-- [ ] **Step 1: Update `docs/architecture.md` as above**
+- [x] **Step 1: Update `docs/architecture.md` as above**
 
-- [ ] **Step 2: End-to-end check (criterion 10)**
+- [x] **Step 2: End-to-end check (criterion 10)**
 
 1. In a new layout from template 01, add a Group after the Checkout block's Columns, inside `yaycheckout/checkout`, and pin it All screens.
 2. Move into it an Order Summary with Collapsible on, Starts Collapsed and Opens Up, whose header holds a Paragraph with the live Order total.
@@ -210,7 +210,7 @@ Expected:
 
 5. Delete the throwaway layouts, with the user's OK.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 Stage: `docs/architecture.md`, and `docs/plans/2026-10-12-group-pin-to-bottom.md` with its Status set to `done YYYY-MM-DD`
 Message: `docs(architecture): describe group pin to bottom`
