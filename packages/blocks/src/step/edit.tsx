@@ -33,7 +33,8 @@ export default function Edit( { attributes, setAttributes, clientId, context }: 
 	const hiddenOnCheckout = context[ 'yaycheckout/showHeadings' ] === false;
 	const index = useSelect( ( select ) => select( blockEditorStore ).getBlockIndex( clientId ), [ clientId ] );
 	const position = typeof index === 'number' && index >= 0 ? index + 1 : 1;
-	const css = useBlockGapCSS( `#block-${ clientId } > .yaycheckout-step__body`, style );
+	// Margins, as core's flow layout prints Block spacing, so a child's own Margin setting wins.
+	const css = useBlockGapCSS( `#block-${ clientId } > .yaycheckout-step__body`, style, true );
 	const blockProps = useBlockProps( { className: 'yaycheckout-step' } );
 	const allowedBlocks = useBlocksAllowedExcept( isSteps );
 	const bodyProps = useInnerBlocksProps(
