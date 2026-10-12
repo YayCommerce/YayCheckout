@@ -13,6 +13,10 @@
       "type": "string",
       "default": "circles",
       "enum": [ "circles", "dots", "segments", "bar", "text" ]
+    },
+    "showCount": {
+      "type": "boolean",
+      "default": true
     }
   },
   "supports": {

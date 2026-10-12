@@ -72,18 +72,21 @@ function sync( checkout: Element ): void {
 	document.querySelectorAll< HTMLElement >( '.yaycheckout-steps-progress' ).forEach( paintSummary );
 }
 
-// The bar style's fill and "Step N of M". Other styles have no summary.
+// The bar's fill and the "Step N of M" of bar and text. A bar may print no count; other styles have no summary.
 function paintSummary( root: HTMLElement ): void {
 	const current = root.querySelector< HTMLElement >( `${ ITEM }[data-state="current"]` );
 	const label = root.querySelector( '.yaycheckout-steps-progress__current' );
 	const total = root.querySelectorAll( ITEM ).length;
 	const step = Number( current?.dataset.step );
 
-	if ( ! label || ! current || ! step || ! total ) {
+	if ( ! current || ! step || ! total ) {
 		return;
 	}
 
-	label.textContent = String( step );
+	if ( label ) {
+		label.textContent = String( step );
+	}
+
 	root.style.setProperty( '--yaycheckout-steps-progress-value', String( step / total ) );
 }
 

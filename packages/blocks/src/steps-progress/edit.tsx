@@ -1,5 +1,5 @@
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { Notice, PanelBody, SelectControl } from '@wordpress/components';
+import { Notice, PanelBody, SelectControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { createInterpolateElement, type ReactNode } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
@@ -17,6 +17,7 @@ const hasSummary = ( variant: Variant ) => variant === 'bar' || variant === 'tex
 
 interface Attributes {
 	variant: Variant;
+	showCount: boolean;
 }
 
 interface EditProps {
@@ -54,7 +55,7 @@ function StepProgressItem( { stepId, position }: { stepId: string; position: num
 }
 
 // Mirrors CheckoutStepsProgress::summary(), with step 1 open.
-function Summary( { total, withTrack }: { total: number; withTrack: boolean } ) {
+function Summary( { total, withTrack, withCount }: { total: number; withTrack: boolean; withCount: boolean } ) {
 	return (
 		<div className="yaycheckout-steps-progress__summary">
 			{ withTrack && (
@@ -62,22 +63,27 @@ function Summary( { total, withTrack }: { total: number; withTrack: boolean } ) 
 					<span className="yaycheckout-steps-progress__fill" style={ { width: `${ ( 1 / Math.max( total, 1 ) ) * 100 }%` } } />
 				</div>
 			) }
-			<p className="yaycheckout-steps-progress__count">
-				{ createInterpolateElement(
-					/* translators: 1: number of the open step, 2: number of steps. */
-					sprintf( __( 'Step %1$s of %2$s', 'yaycheckout' ), '<current />', String( total ) ),
-					{ current: <span className="yaycheckout-steps-progress__current">1</span> }
-				) }
-			</p>
+			{ withCount && (
+				<p className="yaycheckout-steps-progress__count">
+					{ createInterpolateElement(
+						/* translators: 1: number of the open step, 2: number of steps. */
+						sprintf( __( 'Step %1$s of %2$s', 'yaycheckout' ), '<current />', String( total ) ),
+						{ current: <span className="yaycheckout-steps-progress__current">1</span> }
+					) }
+				</p>
+			) }
 		</div>
 	);
 }
 
-function ProgressBody( { variant, total, children }: { variant: Variant; total: number; children: ReactNode } ) {
+function ProgressBody( { attributes, total, children }: { attributes: Attributes; total: number; children: ReactNode } ) {
+	const { variant } = attributes;
+
 	return (
 		<>
 			{ hasSummary( variant ) && (
-				<Summary total={ total } withTrack={ variant === 'bar' } />
+				// Mirrors CheckoutStepsProgress::markup(): only the bar can leave the count out.
+				<Summary total={ total } withTrack={ variant === 'bar' } withCount={ variant !== 'bar' || attributes.showCount !== false } />
 			) }
 			<ol className="yaycheckout-steps-progress__list">{ children }</ol>
 		</>
@@ -116,7 +122,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 
 		return (
 			<div { ...blockProps }>
-				<ProgressBody variant={ attributes.variant } total={ titles.length }>
+				<ProgressBody attributes={ attributes } total={ titles.length }>
 					{ titles.map( ( title, index ) => (
 						<ProgressItem key={ title } title={ title } position={ index + 1 } />
 					) ) }
@@ -152,10 +158,19 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						] }
 						onChange={ ( value: string ) => setAttributes( { variant: value as Variant } ) }
 					/>
+					{ attributes.variant === 'bar' && (
+						<ToggleControl
+							label={ __( 'Show step count', 'yaycheckout' ) }
+							help={ __( 'Turn off to show the bar alone. A Text only Steps Progress can show the count elsewhere.', 'yaycheckout' ) }
+							checked={ attributes.showCount !== false }
+							onChange={ ( showCount: boolean ) => setAttributes( { showCount } ) }
+							__nextHasNoMarginBottom
+						/>
+					) }
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<ProgressBody variant={ attributes.variant } total={ stepIds.length }>
+				<ProgressBody attributes={ attributes } total={ stepIds.length }>
 					{ stepIds.map( ( stepId, index ) => (
 						<StepProgressItem key={ stepId } stepId={ stepId } position={ index + 1 } />
 					) ) }
