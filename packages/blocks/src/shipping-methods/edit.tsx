@@ -20,13 +20,13 @@ interface EditProps {
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label, layout, style, textColor } = attributes;
+	const selectedLayout = layoutFor( layout );
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-shipping-methods',
-		'data-layout': layout || 'default',
+		'data-layout': selectedLayout.value,
 		style: shippingStyleVars( style, textColor ),
 	} );
 	const heading = label || __( 'Shipping methods', 'yaycheckout' );
-	const selectedLayout = layoutFor( layout );
 
 	return (
 		<>

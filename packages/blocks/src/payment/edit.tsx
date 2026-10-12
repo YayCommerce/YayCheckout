@@ -20,17 +20,17 @@ interface EditProps {
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label, layout, style, textColor } = attributes;
+	const selectedLayout = layoutFor( layout );
 	// Same as Step: useBlockProps owns Dimensions. Methods vars are merged after.
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-payment',
-		'data-layout': layout || 'default',
+		'data-layout': selectedLayout.value,
 	} );
 	const wrapperStyle = {
 		...blockProps.style,
 		...paymentStyleVars( style, textColor ),
 	};
 	const heading = label || __( 'Payment', 'yaycheckout' );
-	const selectedLayout = layoutFor( layout );
 
 	return (
 		<>

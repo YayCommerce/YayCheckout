@@ -20,7 +20,7 @@
     },
     "layout": {
       "type": "string",
-      "default": "default"
+      "default": "joined"
     },
     "style": {
       "type": "object",
