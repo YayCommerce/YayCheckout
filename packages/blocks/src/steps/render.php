@@ -16,7 +16,8 @@ if ( function_exists( 'yaycheckout_step_index' ) ) {
     yaycheckout_step_index( true );
 }
 
-$yaycheckout_layout = isset( $attributes['layout'] ) && 'single' === $attributes['layout'] ? 'single' : 'list';
+// Mirrors steps/block.json "layout" enum; anything else is the default, list.
+$yaycheckout_layout = in_array( $attributes['layout'] ?? '', [ 'list', 'single', 'stepper' ], true ) ? $attributes['layout'] : 'list';
 
 $yaycheckout_wrapper_attrs = [
     'class'                 => 'yaycheckout-steps',
