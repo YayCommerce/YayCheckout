@@ -110,13 +110,13 @@
 	display: none;
 }
 
-/* One step at a time: the single layout, and any layout with headings hidden, where Back and Progress are the ways back. */
-.yaycheckout-steps:is([data-layout="single"], [data-headings="hidden"]) .yaycheckout-step[data-state]:not([data-state="current"]) {
+/* One step at a time: the one-at-a-time layout, and any layout with headings hidden, where Back and Progress are the ways back. */
+.yaycheckout-steps:is([data-layout="one-at-a-time"], [data-headings="hidden"]) .yaycheckout-step[data-state]:not([data-state="current"]) {
 	display: none;
 }
 
 /* Continue on the last step leaves nothing current. Keep that finished step on screen. */
-.yaycheckout-steps:is([data-layout="single"], [data-headings="hidden"]):not(:has(.yaycheckout-step[data-state="current"])) > .yaycheckout-step[data-state="complete"]:last-child {
+.yaycheckout-steps:is([data-layout="one-at-a-time"], [data-headings="hidden"]):not(:has(.yaycheckout-step[data-state="current"])) > .yaycheckout-step[data-state="complete"]:last-child {
 	display: block;
 }
 
@@ -135,8 +135,8 @@
 	margin-top: 0;
 }
 
-/* Vertical stepper: no card per step, a line joins the badges, and the body lines up with the title. */
-:where(.yaycheckout-steps[data-layout="stepper"] .yaycheckout-step) {
+/* Vertical timeline: no card per step, a line joins the badges, and the body lines up with the title. */
+:where(.yaycheckout-steps[data-layout="timeline"] .yaycheckout-step) {
 	border: 0;
 	border-radius: 0;
 	background: none;
@@ -148,7 +148,7 @@
  * From this badge's centre, through the gap, to the next badge's centre; the badges hide the overlap.
  * ponytail: -26px assumes the default 12px gap, so a larger Block spacing breaks the line. Have BlockGap print a gap variable if that matters.
  */
-.yaycheckout-steps[data-layout="stepper"] .yaycheckout-step::before {
+.yaycheckout-steps[data-layout="timeline"] .yaycheckout-step::before {
 	content: "";
 	position: absolute;
 	inset-inline-start: 13.5px;
@@ -159,20 +159,20 @@
 }
 
 /* :has(), not :last-child: the editor's appender follows the last step. */
-.yaycheckout-steps[data-layout="stepper"] .yaycheckout-step:not(:has(~ .yaycheckout-step))::before,
-.yaycheckout-steps[data-layout="stepper"][data-headings="hidden"] .yaycheckout-step::before {
+.yaycheckout-steps[data-layout="timeline"] .yaycheckout-step:not(:has(~ .yaycheckout-step))::before,
+.yaycheckout-steps[data-layout="timeline"][data-headings="hidden"] .yaycheckout-step::before {
 	content: none;
 }
 
-.yaycheckout-steps[data-layout="stepper"] .yaycheckout-step__index {
+.yaycheckout-steps[data-layout="timeline"] .yaycheckout-step__index {
 	z-index: 1;
 }
 
 /* The page's colour, so the fill that hides the line doesn't show as a disc. */
-.yaycheckout-steps[data-layout="stepper"] .yaycheckout-step[data-state="locked"] .yaycheckout-step__index {
+.yaycheckout-steps[data-layout="timeline"] .yaycheckout-step[data-state="locked"] .yaycheckout-step__index {
 	background: var(--yaycheckout-color-background, #fff);
 }
 
-.yaycheckout-steps[data-layout="stepper"] .yaycheckout-step__body {
+.yaycheckout-steps[data-layout="timeline"] .yaycheckout-step__body {
 	margin-inline-start: 40px;
 }

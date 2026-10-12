@@ -42,11 +42,11 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 				<PanelBody title={ __( 'Steps', 'yaycheckout' ) }>
 					<SelectControl
 						label={ __( 'Layout', 'yaycheckout' ) }
-						value={ layout || 'list' }
+						value={ layout || 'accordion' }
 						options={ [
-							{ label: __( 'List', 'yaycheckout' ), value: 'list' },
-							{ label: __( 'One step', 'yaycheckout' ), value: 'single' },
-							{ label: __( 'Vertical stepper', 'yaycheckout' ), value: 'stepper' },
+							{ label: __( 'Accordion', 'yaycheckout' ), value: 'accordion' },
+							{ label: __( 'One step at a time', 'yaycheckout' ), value: 'one-at-a-time' },
+							{ label: __( 'Vertical timeline', 'yaycheckout' ), value: 'timeline' },
 						] }
 						onChange={ ( value ) => setAttributes( { layout: value } ) }
 					/>

@@ -44,8 +44,8 @@
   "attributes": {
     "layout": {
       "type": "string",
-      "default": "list",
-      "enum": [ "list", "single", "stepper" ]
+      "default": "accordion",
+      "enum": [ "accordion", "one-at-a-time", "timeline" ]
     },
     "showHeadings": {
       "type": "boolean",
