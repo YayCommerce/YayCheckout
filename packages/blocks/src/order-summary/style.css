@@ -28,6 +28,11 @@
 	z-index: 1;
 }
 
+/* The details' flex column (checkout-base.css), or a theme's div rule, would otherwise beat the hidden attribute. */
+.yaycheckout-order-summary-details[hidden] {
+	display: none;
+}
+
 [data-yaycheckout-summary-toggle] {
 	cursor: pointer;
 }
