@@ -4,7 +4,8 @@
  * so the rows outrank a classic theme's rules for ul#shipping_method. The markup still
  * keeps that id and WooCommerce's class for plugin scripts that look for them.
  * data-layout: default, stacked, columns, check, divided, boxed.
- * Methods styles from the Styles tab set --yaycheckout-shipping-* on the wrapper.
+ * Methods styles from the Styles tab set --yaycheckout-shipping-* on the wrapper: gap, radius,
+ * bg, bg-selected, bg-hover, radio, radio-selected, border, border-selected and border-hover.
  * Check and divided keep one background unless the merchant sets selected/hover.
  */
 
@@ -51,7 +52,7 @@
 	width: 18px;
 	height: 18px;
 	border-radius: 999px;
-	box-shadow: inset 0 0 0 1.5px var(--yaycheckout-border-color);
+	box-shadow: inset 0 0 0 1.5px var(--yaycheckout-shipping-radio, var(--yaycheckout-border-color));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__body {
@@ -117,7 +118,7 @@
 	gap: 0 12px;
 	margin: 0;
 	padding: 14px 16px;
-	border: 1px solid var(--yaycheckout-border-color);
+	border: 1px solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
 	background-color: var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, transparent));
 }
 
@@ -136,12 +137,14 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="default"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
-	z-index: 1;
-	border-color: var(--yaycheckout-primary-color, #3858e9);
+	z-index: 2;
+	border-color: var(--yaycheckout-shipping-border-selected, var(--yaycheckout-primary-color, #3858e9));
 	background-color: var(--yaycheckout-shipping-bg-selected, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, transparent)));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="default"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
+	z-index: 1;
+	border-color: var(--yaycheckout-shipping-border-hover, var(--yaycheckout-shipping-border, var(--yaycheckout-border-color)));
 	background-color: var(--yaycheckout-shipping-bg-hover, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, transparent)));
 }
 
@@ -152,7 +155,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="default"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 5px var(--yaycheckout-primary-color, #3858e9);
+	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="default"]) .yaycheckout-shipping-methods__price {
@@ -171,17 +174,18 @@
 	flex-wrap: wrap;
 	align-items: center;
 	padding: 14px 16px;
-	border: 1.5px solid var(--yaycheckout-border-color);
+	border: 1.5px solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
 	border-radius: var(--yaycheckout-shipping-radius, 12px);
 	background-color: var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="stacked"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
-	border-color: var(--yaycheckout-primary-color, #3858e9);
+	border-color: var(--yaycheckout-shipping-border-selected, var(--yaycheckout-primary-color, #3858e9));
 	background-color: var(--yaycheckout-shipping-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff))));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="stacked"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
+	border-color: var(--yaycheckout-shipping-border-hover, var(--yaycheckout-shipping-border, var(--yaycheckout-border-color)));
 	background-color: var(--yaycheckout-shipping-bg-hover, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff)));
 }
 
@@ -192,7 +196,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="stacked"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 5px var(--yaycheckout-primary-color, #3858e9);
+	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="stacked"] .yaycheckout-shipping-methods__price {
@@ -211,17 +215,18 @@
 	display: flex;
 	flex-wrap: wrap;
 	padding: 14px 16px;
-	border: 1.5px solid var(--yaycheckout-border-color);
+	border: 1.5px solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
 	border-radius: var(--yaycheckout-shipping-radius, 12px);
 	background-color: var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="columns"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
-	border-color: var(--yaycheckout-primary-color, #3858e9);
+	border-color: var(--yaycheckout-shipping-border-selected, var(--yaycheckout-primary-color, #3858e9));
 	background-color: var(--yaycheckout-shipping-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff))));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="columns"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
+	border-color: var(--yaycheckout-shipping-border-hover, var(--yaycheckout-shipping-border, var(--yaycheckout-border-color)));
 	background-color: var(--yaycheckout-shipping-bg-hover, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff)));
 }
 
@@ -241,7 +246,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="columns"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 5px var(--yaycheckout-primary-color, #3858e9);
+	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="columns"] .yaycheckout-shipping-methods__body {
@@ -265,17 +270,18 @@
 	flex-wrap: wrap;
 	align-items: center;
 	padding: 16px 18px;
-	border: 2px solid transparent;
+	border: 2px solid var(--yaycheckout-shipping-border, transparent);
 	border-radius: var(--yaycheckout-shipping-radius, 16px);
 	background-color: var(--yaycheckout-shipping-bg, color-mix(in srgb, currentColor 6%, var(--yaycheckout-color-background, #fff)));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="check"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
-	border-color: var(--yaycheckout-primary-color, #3858e9);
+	border-color: var(--yaycheckout-shipping-border-selected, var(--yaycheckout-primary-color, #3858e9));
 	background-color: var(--yaycheckout-shipping-bg-selected, var(--yaycheckout-shipping-bg, color-mix(in srgb, currentColor 6%, var(--yaycheckout-color-background, #fff))));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="check"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
+	border-color: var(--yaycheckout-shipping-border-hover, var(--yaycheckout-shipping-border, transparent));
 	background-color: var(--yaycheckout-shipping-bg-hover, var(--yaycheckout-shipping-bg, color-mix(in srgb, currentColor 6%, var(--yaycheckout-color-background, #fff))));
 }
 
@@ -293,11 +299,11 @@
 	justify-content: center;
 	width: 22px;
 	height: 22px;
-	box-shadow: inset 0 0 0 1.5px color-mix(in srgb, currentColor 35%, transparent);
+	box-shadow: inset 0 0 0 1.5px var(--yaycheckout-shipping-radio, color-mix(in srgb, currentColor 35%, transparent));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="check"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
-	background-color: var(--yaycheckout-primary-color, #3858e9);
+	background-color: var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
 	box-shadow: none;
 	color: #fff;
 }
@@ -321,7 +327,7 @@
 
 /* Divided: rules between rows, radio left. */
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="divided"] .yaycheckout-shipping-methods__list {
-	border-block: 1px solid currentColor;
+	border-block: 1px solid var(--yaycheckout-shipping-border, currentColor);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="divided"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option {
@@ -330,7 +336,7 @@
 	align-items: center;
 	padding: 16px 0;
 	border: 0;
-	border-bottom: 1px solid currentColor;
+	border-bottom: 1px solid var(--yaycheckout-shipping-border, currentColor);
 	background-color: var(--yaycheckout-shipping-bg, transparent);
 	border-radius: 0;
 }
@@ -354,11 +360,11 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="divided"] .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 1.5px currentColor;
+	box-shadow: inset 0 0 0 1.5px var(--yaycheckout-shipping-radio, currentColor);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="divided"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 5px var(--yaycheckout-primary-color, #3858e9);
+	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="divided"] .yaycheckout-shipping-methods__price {
@@ -368,7 +374,7 @@
 /* Boxed: one outline around the list; selected row gets a tint, outer border stays. */
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="boxed"] .yaycheckout-shipping-methods__list {
 	overflow: hidden;
-	border: 1px solid var(--yaycheckout-border-color);
+	border: 1px solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
 	border-radius: var(--yaycheckout-shipping-radius, 12px);
 	background-color: var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff));
 }
@@ -379,7 +385,7 @@
 	align-items: center;
 	padding: 14px 16px;
 	border: 0;
-	border-bottom: 1px solid var(--yaycheckout-border-color);
+	border-bottom: 1px solid var(--yaycheckout-shipping-border, var(--yaycheckout-border-color));
 	border-radius: 0;
 	background-color: transparent;
 }
@@ -403,7 +409,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="boxed"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 5px var(--yaycheckout-primary-color, #3858e9);
+	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="boxed"] .yaycheckout-shipping-methods__price {
