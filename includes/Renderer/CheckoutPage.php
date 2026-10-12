@@ -24,6 +24,8 @@ class CheckoutPage {
     /** After WC_Frontend_Scripts registers its handles at priority 10. */
     private const SCRIPTS_PRIORITY = 20;
 
+    private const FLOATING_LABELS_SCRIPT = 'yaycheckout-floating-labels';
+
     /** @var Layout|null|false false until first resolved. */
     private $layout = false;
 
@@ -59,7 +61,7 @@ class CheckoutPage {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php';
     }
 
-    /** Woo's checkout scripts, the base stylesheet and the design tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
+    /** Woo's checkout scripts, the base stylesheet, the design tokens and, for floating labels, their script. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
     public function enqueue_scripts(): void {
         CheckoutScripts::enqueue_wc_scripts();
 
@@ -72,6 +74,16 @@ class CheckoutPage {
         }
 
         ( new CheckoutBaseStyles() )->enqueue( true, $this->layout()->design );
+
+        if ( $this->layout()->design->has_floating_labels() ) {
+            wp_enqueue_script(
+                self::FLOATING_LABELS_SCRIPT,
+                YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-floating-labels.js',
+                [ 'jquery' ],
+                YAYCHECKOUT_VERSION,
+                true
+            );
+        }
     }
 
     private function resolve(): ?Layout {

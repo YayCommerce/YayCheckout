@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
 import { useCanvasStyle } from '../shared/canvas-style';
-import { designCss, isGradient } from '../shared/design-css';
+import { DEFAULT_BASE_SIZE, designCss, isGradient } from '../shared/design-css';
 import { editorData, type DesignRule, type EditorDesign } from '../shared/editor-data';
 import { useIsLayoutEditor } from '../shared/layout-editor';
 import { errorMessage } from '../shared/error-message';
@@ -55,6 +55,7 @@ const TOKEN_LABELS: Record< string, string > = {
 	style: __( 'Style', 'yaycheckout' ),
 	size: __( 'Size', 'yaycheckout' ),
 	radius: __( 'Radius', 'yaycheckout' ),
+	label: __( 'Label', 'yaycheckout' ),
 };
 
 const ENUM_LABELS: Record< string, string > = {
@@ -64,6 +65,7 @@ const ENUM_LABELS: Record< string, string > = {
 	small: __( 'Small', 'yaycheckout' ),
 	medium: __( 'Medium', 'yaycheckout' ),
 	large: __( 'Large', 'yaycheckout' ),
+	floating: __( 'Floating', 'yaycheckout' ),
 };
 
 function isTokens( value: unknown ): value is Record< string, unknown > {
@@ -156,10 +158,13 @@ function isColourRule( rule: DesignRule ): boolean {
  * prints nothing, so the theme's colour shows. A fill (the background) also takes gradients.
  */
 function ColourSettings( {
+	panelId,
 	rules,
 	values,
 	onChange,
 }: {
+	/** One per panel, so each panel's colour items register with its own ToolsPanel. */
+	panelId: string;
 	rules: Record< string, DesignRule >;
 	values: SectionTokens;
 	onChange: ( next: SectionTokens ) => void;
@@ -192,6 +197,10 @@ function ColourSettings( {
 
 	const tokens = Object.entries( rules ).filter( ( [ , rule ] ) => isColourRule( rule ) );
 
+	if ( ! tokens.length ) {
+		return null;
+	}
+
 	const settings = tokens.map( ( [ token, rule ] ) => {
 		const value = String( values[ token ] ?? '' );
 		const isFill = 'fill' === rule.type;
@@ -220,7 +229,7 @@ function ColourSettings( {
 	return (
 		<ToolsPanel
 			label={ __( 'Custom colours', 'yaycheckout' ) }
-			panelId={ SIDEBAR }
+			panelId={ panelId }
 			hasInnerWrapper
 			className="color-block-support-panel"
 			__experimentalFirstVisibleItemClass="first"
@@ -235,7 +244,7 @@ function ColourSettings( {
 			<div className="color-block-support-panel__inner-wrapper">
 				<ColorGradientSettingsDropdown
 					__experimentalIsRenderedInSidebar
-					panelId={ SIDEBAR }
+					panelId={ panelId }
 					settings={ settings }
 					colors={ palettes.colors }
 					gradients={ palettes.gradients }
@@ -274,9 +283,9 @@ function TokenControl( {
 					label={ label }
 					min={ rule.min }
 					max={ rule.max }
-					// Reset empties the token (null), so the theme's value shows.
+					// Reset empties the token (null): the theme's value shows, or for the base size DEFAULT_BASE_SIZE.
 					allowReset
-					value={ 'number' === typeof value ? value : undefined }
+					value={ 'number' === typeof value ? value : ( 'base_size' === token ? DEFAULT_BASE_SIZE : undefined ) }
 					afterIcon={ <span>px</span> }
 					onChange={ ( next ) => onChange( 'number' === typeof next ? next : null ) }
 				/>
@@ -322,13 +331,12 @@ function SectionPanel( {
 	return (
 		<PanelBody title={ SECTIONS[ section ] }>
 			<Flex direction="column" align="stretch" gap={ 4 }>
-				{ 'colours' === section && (
-					<ColourSettings
-						rules={ design.schema[ section ] }
-						values={ values }
-						onChange={ onChange }
-					/>
-				) }
+				<ColourSettings
+					panelId={ `${ SIDEBAR }-${ section }` }
+					rules={ design.schema[ section ] }
+					values={ values }
+					onChange={ onChange }
+				/>
 				{ Object.entries( design.schema[ section ] ).map( ( [ token, rule ] ) => {
 						// Colours are in ColourSettings, and an underline input has no radius.
 						if ( isColourRule( rule ) || ( 'radius' === token && 'underline' === values.style ) ) {

@@ -6,7 +6,7 @@
 
 ## Status
 
-Accepted, 2026-10-10, by Trace Bui.
+Superseded by [2026-10-12-empty-base-size-prints-16px.md](2026-10-12-empty-base-size-prints-16px.md).
 
 ## Context
 

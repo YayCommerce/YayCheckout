@@ -69,12 +69,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							</tr>
 						) }
 						<tr className="yaycheckout-order-summary-totals__shipping">
-							<th>
-								{ __( 'Delivery', 'yaycheckout' ) }
-								<span className="yaycheckout-order-summary-totals__via">
-									{ __( 'Free shipping', 'yaycheckout' ) }
-								</span>
-							</th>
+							<th>{ __( 'Free shipping', 'yaycheckout' ) }</th>
 							<td>
 								<strong>{ __( 'Free', 'yaycheckout' ) }</strong>
 							</td>
