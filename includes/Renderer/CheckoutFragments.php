@@ -22,6 +22,9 @@ class CheckoutFragments {
 
     public const ORDER_TOTALS_CLASS = 'yaycheckout-order-summary-totals';
 
+    /** Layout values the Payment block accepts; an unknown attribute falls back to default. */
+    public const PAYMENT_LAYOUTS = [ 'default', 'check', 'boxed', 'columns', 'stacked', 'divided' ];
+
     /** Layout slot => [ selector WooCommerce's checkout.js replaces, method building its HTML ]. */
     private const FRAGMENTS = [
         'payment'          => [ '.woocommerce-checkout-payment', 'payment_methods_html' ],
@@ -129,6 +132,140 @@ class CheckoutFragments {
     public static function print_shipping_rates(): void {
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Same HTML Woo prints for rate radios.
         echo self::shipping_rates_html();
+    }
+
+    /**
+     * The Payment layout from block attributes, or default when missing or unknown.
+     *
+     * @param array $attributes Block attributes.
+     */
+    public static function payment_layout( array $attributes ): string {
+        $layout = isset( $attributes['layout'] ) && is_string( $attributes['layout'] ) ? $attributes['layout'] : '';
+
+        return in_array( $layout, self::PAYMENT_LAYOUTS, true ) ? $layout : 'default';
+    }
+
+    /**
+     * Inline style attribute value of --yaycheckout-payment-* vars from the block's style object.
+     * Empty when no Methods styles are set. Mirrors packages/blocks/.../style-paths.ts.
+     *
+     * @param array $attributes Block attributes.
+     */
+    public static function payment_methods_style_attribute( array $attributes ): string {
+        $style   = isset( $attributes['style'] ) && is_array( $attributes['style'] ) ? $attributes['style'] : [];
+        $spacing = isset( $style['spacing'] ) && is_array( $style['spacing'] ) ? $style['spacing'] : [];
+        $border  = isset( $style['border'] ) && is_array( $style['border'] ) ? $style['border'] : [];
+        $color   = isset( $style['color'] ) && is_array( $style['color'] ) ? $style['color'] : [];
+        $yay     = isset( $style['yaycheckout'] ) && is_array( $style['yaycheckout'] ) ? $style['yaycheckout'] : [];
+        $decls   = [];
+
+        $gap = self::payment_css_gap( $spacing['blockGap'] ?? null );
+        if ( '' !== $gap ) {
+            $decls[] = '--yaycheckout-payment-gap:' . $gap;
+        }
+
+        $radius = self::payment_css_length( $border['radius'] ?? null );
+        if ( '' !== $radius ) {
+            $decls[] = '--yaycheckout-payment-radius:' . $radius;
+        }
+
+        $bg = self::payment_css_color( $color['background'] ?? null );
+        if ( '' !== $bg ) {
+            $decls[] = '--yaycheckout-payment-bg:' . $bg;
+        }
+
+        $bg_selected = self::payment_css_color( $yay['backgroundSelected'] ?? null );
+        if ( '' !== $bg_selected ) {
+            $decls[] = '--yaycheckout-payment-bg-selected:' . $bg_selected;
+        }
+
+        $bg_hover = self::payment_css_color( $yay['backgroundHover'] ?? null );
+        if ( '' !== $bg_hover ) {
+            $decls[] = '--yaycheckout-payment-bg-hover:' . $bg_hover;
+        }
+
+        // Text colour from color.text or the textColor preset slug (skipSerialization).
+        $text = self::payment_css_color( $color['text'] ?? null );
+        if ( '' === $text && isset( $attributes['textColor'] ) && is_string( $attributes['textColor'] ) && '' !== $attributes['textColor'] ) {
+            $text = 'var(--wp--preset--color--' . sanitize_title( $attributes['textColor'] ) . ')';
+        }
+        if ( '' !== $text ) {
+            $decls[] = 'color:' . $text;
+        }
+
+        return implode( ';', $decls );
+    }
+
+    /**
+     * @param mixed $gap Block style spacing.blockGap.
+     */
+    private static function payment_css_gap( $gap ): string {
+        if ( ! is_string( $gap ) && ! is_numeric( $gap ) ) {
+            return '';
+        }
+
+        $raw = is_string( $gap ) ? $gap : (string) $gap;
+        if ( function_exists( 'wp_sanitize_block_gap_value' ) ) {
+            $raw = wp_sanitize_block_gap_value( $raw );
+        }
+
+        if ( ! is_string( $raw ) || '' === $raw ) {
+            return '';
+        }
+
+        if ( false !== strpos( $raw, 'var:preset|spacing|' ) ) {
+            $slug = substr( $raw, strrpos( $raw, '|' ) + 1 );
+
+            return 'var(--wp--preset--spacing--' . _wp_to_kebab_case( $slug ) . ')';
+        }
+
+        return self::payment_css_safe_token( $raw );
+    }
+
+    /**
+     * @param mixed $value Border radius string, number, or corner object (ignored).
+     */
+    private static function payment_css_length( $value ): string {
+        if ( is_numeric( $value ) ) {
+            return absint( $value ) . 'px';
+        }
+
+        if ( ! is_string( $value ) || '' === $value ) {
+            return '';
+        }
+
+        return self::payment_css_safe_token( $value );
+    }
+
+    /**
+     * @param mixed $value A CSS colour string or var:preset|color|slug.
+     */
+    private static function payment_css_color( $value ): string {
+        if ( ! is_string( $value ) || '' === $value ) {
+            return '';
+        }
+
+        if ( 0 === strpos( $value, 'var:preset|color|' ) ) {
+            $slug = substr( $value, strlen( 'var:preset|color|' ) );
+
+            return '' !== $slug ? 'var(--wp--preset--color--' . _wp_to_kebab_case( $slug ) . ')' : '';
+        }
+
+        $hex = sanitize_hex_color( $value );
+        if ( $hex ) {
+            return $hex;
+        }
+
+        return self::payment_css_safe_token( $value );
+    }
+
+    /** Rejects values that could break out of a CSS custom-property declaration. */
+    private static function payment_css_safe_token( string $value ): string {
+        if ( preg_match( '/[=<>{}]|\/\*/', $value ) ) {
+            return '';
+        }
+
+        return $value;
     }
 
     public static function print_payment_methods(): void {
