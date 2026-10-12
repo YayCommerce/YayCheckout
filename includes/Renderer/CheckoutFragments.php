@@ -907,25 +907,51 @@ class CheckoutFragments {
     }
 
     /**
+     * The Totals block's attributes with their defaults. During AJAX they come from the parsed
+     * layout, where an untouched attribute is missing, so each default matches block.json's.
+     *
+     * @return array{show_currency_code: bool, show_subtotal: bool, show_total: bool, subtotal_label: string, total_label: string}
+     */
+    public static function order_totals_options( array $attributes ): array {
+        $bool = static function ( string $name, bool $fallback ) use ( $attributes ): bool {
+            return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
+        };
+
+        return [
+            'show_currency_code' => $bool( 'showCurrencyCode', false ),
+            'show_subtotal'      => $bool( 'showSubtotal', true ),
+            'show_total'         => $bool( 'showTotal', true ),
+            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
+            'subtotal_label'     => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
+            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
+            'total_label'        => LayoutMarkupReader::plain_text( $attributes, 'totalLabel', __( 'Total', 'woocommerce' ) ),
+        ];
+    }
+
+    /**
      * The tfoot rows of Woo's checkout/review-order.php, as the body of their own table. Shipping
      * is one read-only row (Delivery / method name / Free); the Shipping Methods block keeps the radios.
      *
-     * @param array $attributes Unused; Totals has no attributes.
+     * @param array $attributes Totals block attributes; see order_totals_options().
      */
-    public static function order_totals_html( array $attributes = [] ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- fragments() passes every summary builder its attrs.
+    public static function order_totals_html( array $attributes = [] ): string {
         if ( ! WC()->cart instanceof \WC_Cart ) {
             return '';
         }
+
+        $options = self::order_totals_options( $attributes );
 
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Woo's review-order hooks and strings, so its translation still applies.
         ob_start();
         ?>
 <table class="shop_table <?php echo esc_attr( self::ORDER_TOTALS_CLASS ); ?>">
     <tbody>
+        <?php if ( $options['show_subtotal'] ) : ?>
         <tr class="cart-subtotal">
-            <th><?php esc_html_e( 'Subtotal', 'woocommerce' ); ?></th>
+            <th><?php echo esc_html( $options['subtotal_label'] ); ?></th>
             <td><?php wc_cart_totals_subtotal_html(); ?></td>
         </tr>
+        <?php endif; ?>
         <?php foreach ( WC()->cart->get_coupons() as $code => $coupon ) : ?>
         <tr class="cart-discount coupon-<?php echo esc_attr( sanitize_title( $code ) ); ?>">
             <th><?php wc_cart_totals_coupon_label( $coupon ); ?></th>
@@ -955,10 +981,17 @@ class CheckoutFragments {
             <?php endif; ?>
         <?php endif; ?>
         <?php do_action( 'woocommerce_review_order_before_order_total' ); ?>
+        <?php if ( $options['show_total'] ) : ?>
         <tr class="order-total">
-            <th><?php esc_html_e( 'Total', 'woocommerce' ); ?></th>
-            <td><?php wc_cart_totals_order_total_html(); ?></td>
+            <th><?php echo esc_html( $options['total_label'] ); ?></th>
+            <td>
+                <?php if ( $options['show_currency_code'] ) : ?>
+                <span class="<?php echo esc_attr( self::ORDER_TOTALS_CLASS . '__currency' ); ?>"><?php echo esc_html( get_woocommerce_currency() ); ?></span>
+                <?php endif; ?>
+                <?php wc_cart_totals_order_total_html(); ?>
+            </td>
         </tr>
+        <?php endif; ?>
         <?php do_action( 'woocommerce_review_order_after_order_total' ); ?>
     </tbody>
 </table>

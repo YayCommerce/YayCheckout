@@ -485,6 +485,11 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	text-transform: uppercase;
 }
 
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__currency {
+	margin-inline-end: 0.35em;
+	font-weight: 400;
+}
+
 /* iOS zooms into a focused field whose text is under 16px. */
 @media (pointer: coarse) {
 	.yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code) {
