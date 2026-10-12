@@ -51,7 +51,8 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts }: DesignFonts )
 		[ isGradient( background ) ? 'background-gradient' : 'color-background', background ],
 		[ 'color-border', String( colours.border ?? '' ) ],
 	];
-	const out = pairs.filter( ( [ , value ] ) => '' !== value );
+	const notEmpty = ( [ , value ]: [ string, string ] ) => '' !== value;
+	const out = pairs.filter( notEmpty );
 
 	const font = String( typography.font_family ?? '' );
 
@@ -78,25 +79,21 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts }: DesignFonts )
 	}
 
 	const inputBackground = String( inputs.background ?? '' );
-	const inputText = String( inputs.text ?? '' );
 
-	// An underline input with a background is a filled box, so its text keeps the side padding.
 	if ( '' !== inputs.style ) {
 		out.push(
 			[ 'input-border-width', isUnderline ? '0 0 1px' : '1px' ],
+			// An underline input with a background is a filled box, so its text keeps the side padding.
 			[ 'input-padding-inline', isUnderline && '' === inputBackground ? '0' : '12px' ]
 		);
 	}
 
-	if ( '' !== inputBackground ) {
-		out.push( [ 'input-background', inputBackground ] );
-	}
+	const inputColours: [ string, string ][] = [
+		[ 'input-background', inputBackground ],
+		[ 'input-color', String( inputs.text ?? '' ) ],
+	];
 
-	if ( '' !== inputText ) {
-		out.push( [ 'input-color', inputText ] );
-	}
-
-	return out;
+	return [ ...out, ...inputColours.filter( notEmpty ) ];
 }
 
 /** Mirrors DesignStyles::css() in PHP, without custom CSS: the same text for the same tokens. */

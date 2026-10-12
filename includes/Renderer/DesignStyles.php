@@ -109,6 +109,9 @@ class DesignStyles {
         $typography = $sections['typography'];
         $inputs     = $sections['inputs'];
         $background = $colours['background'];
+        $not_empty  = static function ( $value ) {
+            return '' !== $value;
+        };
 
         // A gradient fills only the page: inputs and rows read color-background as a colour, so they keep their fallback.
         $vars = array_filter(
@@ -118,9 +121,7 @@ class DesignStyles {
                 LayoutDesign::is_gradient( $background ) ? 'background-gradient' : 'color-background' => $background,
                 'color-border'  => $colours['border'],
             ],
-            static function ( $value ) {
-                return '' !== $value;
-            }
+            $not_empty
         );
 
         if ( '' !== $typography['font_family'] ) {
@@ -144,20 +145,21 @@ class DesignStyles {
             $vars['input-height'] = self::INPUT_HEIGHTS[ $inputs['size'] ] . 'px';
         }
 
-        // An underline input with a background is a filled box, so its text keeps the side padding.
         if ( '' !== $inputs['style'] ) {
-            $vars['input-border-width']   = $is_underline ? '0 0 1px' : '1px';
+            $vars['input-border-width'] = $is_underline ? '0 0 1px' : '1px';
+            // An underline input with a background is a filled box, so its text keeps the side padding.
             $vars['input-padding-inline'] = $is_underline && '' === $inputs['background'] ? '0' : '12px';
         }
 
-        if ( '' !== $inputs['background'] ) {
-            $vars['input-background'] = $inputs['background'];
-        }
-
-        if ( '' !== $inputs['text'] ) {
-            $vars['input-color'] = $inputs['text'];
-        }
-
-        return $vars;
+        return array_merge(
+            $vars,
+            array_filter(
+                [
+                    'input-background' => $inputs['background'],
+                    'input-color'      => $inputs['text'],
+                ],
+                $not_empty
+            )
+        );
     }
 }

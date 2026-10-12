@@ -195,6 +195,10 @@ function ColourSettings( {
 
 	const tokens = Object.entries( rules ).filter( ( [ , rule ] ) => isColourRule( rule ) );
 
+	if ( ! tokens.length ) {
+		return null;
+	}
+
 	const settings = tokens.map( ( [ token, rule ] ) => {
 		const value = String( values[ token ] ?? '' );
 		const isFill = 'fill' === rule.type;
@@ -325,14 +329,12 @@ function SectionPanel( {
 	return (
 		<PanelBody title={ SECTIONS[ section ] }>
 			<Flex direction="column" align="stretch" gap={ 4 }>
-				{ Object.values( design.schema[ section ] ).some( isColourRule ) && (
-					<ColourSettings
-						panelId={ `${ SIDEBAR }-${ section }` }
-						rules={ design.schema[ section ] }
-						values={ values }
-						onChange={ onChange }
-					/>
-				) }
+				<ColourSettings
+					panelId={ `${ SIDEBAR }-${ section }` }
+					rules={ design.schema[ section ] }
+					values={ values }
+					onChange={ onChange }
+				/>
 				{ Object.entries( design.schema[ section ] ).map( ( [ token, rule ] ) => {
 						// Colours are in ColourSettings, and an underline input has no radius.
 						if ( isColourRule( rule ) || ( 'radius' === token && 'underline' === values.style ) ) {
