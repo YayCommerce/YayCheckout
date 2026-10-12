@@ -1,10 +1,10 @@
 /**
  * Storefront paint for yaycheckout/steps-progress.
  *
- * Steps owns the open step. This script only mirrors data-state.
+ * Steps owns the open step. This script mirrors each step's state and asks Steps to reopen one.
  */
 
-import { CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
+import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor, reopenStep } from '../shared/checkout-root';
 import { onDomReady } from '../shared/dom-ready';
 
 const ITEM = '.yaycheckout-steps-progress__item';
@@ -52,12 +52,7 @@ function onClick( event: MouseEvent ): void {
 	}
 
 	event.preventDefault();
-	checkout.dispatchEvent(
-		new CustomEvent( 'yaycheckout:step-reopen', {
-			bubbles: true,
-			detail: { step: item.dataset.step },
-		} )
-	);
+	reopenStep( checkout, item.dataset.step );
 }
 
 function sync( checkout: Element ): void {
@@ -96,12 +91,11 @@ function paint( item: HTMLElement, step: HTMLElement | undefined ): void {
 	const state = step?.dataset.state ?? 'locked';
 	item.dataset.state = state;
 
-	// A span when the merchant turned clicking off.
+	// Bar and text print spans: they hide the list.
 	const button = item.querySelector< HTMLButtonElement >( 'button.yaycheckout-steps-progress__jump' );
 
 	if ( button ) {
-		// Mirrors steps/view.ts onClick(): a step the shopper reached reopens unless it is open.
-		button.disabled = step?.dataset.reached !== 'true' || state === 'current';
+		button.disabled = ! canReopenStep( step );
 	}
 
 	if ( state === 'current' ) {

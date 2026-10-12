@@ -27,7 +27,7 @@
 	align-items: center;
 }
 
-.yaycheckout-step[data-reached="true"]:not([data-state="current"]) .yaycheckout-step__header {
+.yaycheckout-step[data-state="complete"] .yaycheckout-step__header {
 	cursor: pointer;
 }
 
@@ -109,7 +109,7 @@
 	display: none;
 }
 
-/* One step at a time: the one-at-a-time layout, and any layout with headings hidden, where Back and Progress are the ways back. */
+/* One step at a time: the one-at-a-time layout, and any layout with headings hidden, where Back and Steps Progress are the ways back. */
 .yaycheckout-steps:is([data-layout="one-at-a-time"], [data-headings="hidden"]) .yaycheckout-step[data-state]:not([data-state="current"]) {
 	display: none;
 }
