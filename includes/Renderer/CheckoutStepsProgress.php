@@ -73,8 +73,10 @@ class CheckoutStepsProgress {
         $summary = '';
 
         if ( $has_summary ) {
-            $total   = count( $titles );
-            $summary = self::summary( $total, 'bar' === $variant );
+            $total = count( $titles );
+            // Only the bar can leave the count out. Layouts saved before showCount existed lack the key and keep it.
+            $with_count = 'bar' !== $variant || false !== ( $attributes['showCount'] ?? true );
+            $summary    = self::summary( $total, 'bar' === $variant, $with_count );
 
             if ( 'bar' === $variant ) {
                 $args['style'] = '--yaycheckout-steps-progress-value:' . number_format( 1 / $total, 3, '.', '' ) . ';';
@@ -87,15 +89,19 @@ class CheckoutStepsProgress {
     }
 
     /**
-     * "Step 1 of N", with the track for the bar style. view.ts rewrites the current span and the fill.
+     * "Step 1 of N", with the track for the bar style, which may leave the count out. view.ts rewrites the current span and the fill.
      */
-    private static function summary( int $total, bool $with_track ): string {
-        /* translators: 1: number of the open step, 2: number of steps. */
-        $count = sprintf( esc_html__( 'Step %1$s of %2$s', 'yaycheckout' ), '<span class="yaycheckout-steps-progress__current">1</span>', (string) $total );
+    private static function summary( int $total, bool $with_track, bool $with_count ): string {
+        $count = '';
+
+        if ( $with_count ) {
+            /* translators: 1: number of the open step, 2: number of steps. */
+            $count = '<p class="yaycheckout-steps-progress__count">' . sprintf( esc_html__( 'Step %1$s of %2$s', 'yaycheckout' ), '<span class="yaycheckout-steps-progress__current">1</span>', (string) $total ) . '</p>';
+        }
 
         $track = $with_track ? '<div class="yaycheckout-steps-progress__track"><span class="yaycheckout-steps-progress__fill"></span></div>' : '';
 
-        return '<div class="yaycheckout-steps-progress__summary">' . $track . '<p class="yaycheckout-steps-progress__count">' . $count . '</p></div>';
+        return '<div class="yaycheckout-steps-progress__summary">' . $track . $count . '</div>';
     }
 
     /**

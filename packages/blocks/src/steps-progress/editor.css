@@ -3,7 +3,7 @@
 	display: grid;
 	grid-template-columns: auto 1fr;
 	align-items: center;
-	column-gap: 8px;
+	column-gap: 6px;
 }
 
 .editor-styles-wrapper .is-variant-segments .yaycheckout-steps-progress__item::before {
