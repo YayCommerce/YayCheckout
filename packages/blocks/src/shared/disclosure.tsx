@@ -132,13 +132,18 @@ export function DisclosurePreview( { mode, fieldKey, label, disclosureText, chil
 			<span className="yaycheckout-disclosure__toggle" data-mode={ mode }>
 				{ mode === 'checkbox' && <input type="checkbox" className="yaycheckout-disclosure__checkbox" disabled /> }
 				<span>{ text }</span>
-				{ mode === 'collapsible' && (
-					<svg className="yaycheckout-disclosure__chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-						<path d="M17.5 11.6 12 16l-5.5-4.4.9-1.2L12 14l4.5-3.6 1 1.2Z" />
-					</svg>
-				) }
+				{ mode === 'collapsible' && <Chevron className="yaycheckout-disclosure__chevron" /> }
 			</span>
 			<div className="yaycheckout-disclosure__preview">{ children }</div>
 		</>
+	);
+}
+
+/** The down chevron a collapsible toggle shows. A copy of Disclosure::chevron(). */
+export function Chevron( { className }: { className: string } ) {
+	return (
+		<svg className={ className } viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+			<path d="M17.5 11.6 12 16l-5.5-4.4.9-1.2L12 14l4.5-3.6 1 1.2Z" />
+		</svg>
 	);
 }

@@ -9,10 +9,20 @@ interface SectionLabelProps {
 	/** The heading while the label is empty, as render.php prints it. */
 	defaultLabel: string;
 	setAttributes: ( attributes: { label: string } ) => void;
+	/** False when render.php prints no heading, so only the sidebar field shows. */
+	showHeading?: boolean;
+	help?: string;
 }
 
 /** A section's heading on the canvas and its Label field in the sidebar. */
-export function SectionLabel( { panelTitle, label, defaultLabel, setAttributes }: SectionLabelProps ) {
+export function SectionLabel( {
+	panelTitle,
+	label,
+	defaultLabel,
+	setAttributes,
+	showHeading = true,
+	help,
+}: SectionLabelProps ) {
 	return (
 		<>
 			<InspectorControls>
@@ -20,11 +30,12 @@ export function SectionLabel( { panelTitle, label, defaultLabel, setAttributes }
 					<TextControl
 						label={ __( 'Label', 'yaycheckout' ) }
 						value={ label }
+						help={ help }
 						onChange={ ( value ) => setAttributes( { label: value } ) }
 					/>
 				</PanelBody>
 			</InspectorControls>
-			<h3 className="yaycheckout-section-preview__heading">{ label || defaultLabel }</h3>
+			{ showHeading && <h3 className="yaycheckout-section-preview__heading">{ label || defaultLabel }</h3> }
 		</>
 	);
 }

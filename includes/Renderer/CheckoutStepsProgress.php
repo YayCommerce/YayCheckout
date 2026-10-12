@@ -101,10 +101,11 @@ class CheckoutStepsProgress {
 
     /**
      * Titles of the rendered layout's first Steps block; empty without a layout or a Steps block.
+     * Go to Step reads it too, to count the steps.
      *
      * @return string[]
      */
-    private static function layout_titles(): array {
+    public static function layout_titles(): array {
         if ( null === self::$titles ) {
             $layout       = CheckoutPage::get_instance()->layout();
             self::$titles = null !== $layout ? self::titles_in( $layout->content ) : [];

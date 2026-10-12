@@ -74,9 +74,7 @@ class Disclosure {
             );
         }
 
-        $chevron = self::COLLAPSIBLE === $mode
-            ? '<svg class="yaycheckout-disclosure__chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17.5 11.6 12 16l-5.5-4.4.9-1.2L12 14l4.5-3.6 1 1.2Z"/></svg>'
-            : '';
+        $chevron = self::COLLAPSIBLE === $mode ? self::chevron( 'yaycheckout-disclosure__chevron' ) : '';
 
         return sprintf(
             '<button type="button" class="yaycheckout-disclosure__toggle" data-mode="%1$s" aria-expanded="false" aria-controls="%2$s"><span>%3$s</span>%4$s</button><div class="yaycheckout-disclosure__panel" id="%2$s" hidden>',
@@ -85,6 +83,11 @@ class Disclosure {
             esc_html( $text ),
             $chevron
         );
+    }
+
+    /** The down chevron a collapsible toggle prints, hidden from screen readers; shared/disclosure.tsx's Chevron copies it. */
+    public static function chevron( string $class_name ): string {
+        return '<svg class="' . esc_attr( $class_name ) . '" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17.5 11.6 12 16l-5.5-4.4.9-1.2L12 14l4.5-3.6 1 1.2Z"/></svg>';
     }
 
     /** Closes the panel open() started. */

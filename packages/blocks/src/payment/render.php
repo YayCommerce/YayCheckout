@@ -12,7 +12,21 @@ defined( 'ABSPATH' ) || exit;
 
 $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', __( 'Payment', 'yaycheckout' ) );
 
-$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper( [ 'class' => 'yaycheckout-payment' ], $attributes, \YayCheckout\Renderer\CheckoutFragments::payment_empty() );
+$yaycheckout_wrapper_base = [
+    'class'       => 'yaycheckout-payment',
+    'data-layout' => \YayCheckout\Renderer\CheckoutFragments::payment_layout( $attributes ),
+];
+
+$yaycheckout_style = \YayCheckout\Renderer\CheckoutFragments::payment_methods_style_attribute( $attributes );
+if ( '' !== $yaycheckout_style ) {
+    $yaycheckout_wrapper_base['style'] = $yaycheckout_style;
+}
+
+$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
+    $yaycheckout_wrapper_base,
+    $attributes,
+    \YayCheckout\Renderer\CheckoutFragments::payment_empty()
+);
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>

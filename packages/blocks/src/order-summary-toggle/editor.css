@@ -1,0 +1,4 @@
+/* The canvas has no aria-expanded to rotate on, so the chevron follows Starts through a class. */
+.editor-styles-wrapper .yaycheckout-order-summary-toggle__chevron.is-open {
+	transform: rotate(180deg);
+}

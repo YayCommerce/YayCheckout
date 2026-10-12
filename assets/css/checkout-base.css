@@ -413,18 +413,18 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 }
 
 /*
- * Billing, Shipping and Order Summary space their children with Block spacing, as core's layouts do: a flex
+ * Billing, Shipping, Order Summary and Summary Details space their children with Block spacing, as core's layouts do: a flex
  * column whose gap (12px, or the block's Block spacing, printed by BlockGap) replaces the children's own block
  * margins. A hidden child (display:none, or the editor's <style>) takes no gap. A child's own margin setting is
  * inline, so it still wins.
  */
-:is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary) {
+:is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary, .yaycheckout-order-summary-details) {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
 }
 
-.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary) > * {
+.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary, .yaycheckout-order-summary-details) > * {
 	margin-block: 0;
 }
 
@@ -433,7 +433,7 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
  * .is-layout-flex, which these sections aren't; in their flex column that shrinks each child to its content.
  * Core's Columns undoes it the same way.
  */
-.editor-styles-wrapper .yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary) > .wp-block {
+.editor-styles-wrapper .yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary, .yaycheckout-order-summary-details) > .wp-block {
 	margin-inline: 0;
 	max-width: none;
 }
