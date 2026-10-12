@@ -8,7 +8,7 @@
 
 ## Today
 
-- The rule "the layout's steps are the Step children of its first Steps block" lives in `Renderer\CheckoutProgress::titles_in()`, memoised per request by `CheckoutProgress::layout_titles()`. `layout_titles()` was made public so `packages/blocks/src/go-to-step/render.php` can count the steps.
+- The rule "the layout's steps are the Step children of its first Steps block" lives in `Renderer\CheckoutStepsProgress::titles_in()`, memoised per request by `CheckoutStepsProgress::layout_titles()`. `layout_titles()` was made public so `packages/blocks/src/go-to-step/render.php` can count the steps.
 - In the editor, `packages/blocks/src/progress/edit.tsx` (`Edit`) and `packages/blocks/src/go-to-step/edit.tsx` (`Edit`) each find the first Steps block with `getBlocksByName()` and read its children. Their comments name different PHP owners (`titles_in()` and `layout_titles()`).
 - On the storefront, `packages/blocks/src/progress/view.ts` (`sync()`, `onClick()`) and `packages/blocks/src/go-to-step/view.ts` (`onStepChange()`, `onClick()`) each read a step's `data-state` by its `data-step` and each dispatch `yaycheckout:step-reopen`, the event `packages/blocks/src/steps/view.ts` owns.
 - `packages/blocks/src/go-to-step/style.css` says it matches `.yaycheckout-return-to-cart`'s link look, but `packages/blocks/src/return-to-cart/style.css` names only back-button as the copy to change together.
@@ -19,7 +19,7 @@ If Steps changes how it marks steps (`data-step`, `data-state`, the event's `det
 
 ## Suggested fix
 
-- Move `titles_in()` to a pure `LayoutMarkupReader::step_titles( string $markup ): array` (raw titles, `''` when untitled), memoise it for the rendered layout in `CheckoutPage::step_titles(): array` (CheckoutPage already owns `layout()`), and have `CheckoutProgress::markup()` and `go-to-step/render.php` read that. `CheckoutProgress::layout_titles()` then goes away.
+- Move `titles_in()` to a pure `LayoutMarkupReader::step_titles( string $markup ): array` (raw titles, `''` when untitled), memoise it for the rendered layout in `CheckoutPage::step_titles(): array` (CheckoutPage already owns `layout()`), and have `CheckoutStepsProgress::markup()` and `go-to-step/render.php` read that. `CheckoutStepsProgress::layout_titles()` then goes away.
 - Add `stepState( checkout, step )` and `reopenStep( checkout, step )` to `packages/blocks/src/shared/checkout-root.ts` and use them in both view scripts.
 - Add `useLayoutStepIds()` to `packages/blocks/src/shared/step-title.ts`, commented as mirroring `LayoutMarkupReader::step_titles()`, and use it in both editors.
 - Name `go-to-step/style.css` in `return-to-cart/style.css`'s "change both together" comment.
