@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. Read the spec linked below before starting; the plan argues from it.
 
-**Status:** active
+**Status:** done 2026-10-12
 **Goal:** Merchants insert live cart totals, cart counts and shopper fields as chips inside Paragraph and Heading text in the layout editor. The storefront fills them and keeps them current.
 **Spec:** [docs/specs/2026-10-12-live-value-text-design.md](../specs/2026-10-12-live-value-text-design.md)
 **Architecture:** A non-editable RichText object format (`contentEditable: false`, inserted with `insertObject()` as core's footnote format does) saves a tagged span. `Renderer\LiveValues` fills each span in the allow-listed blocks' rendered HTML. A JSON element, printed in the footer and swapped as an `update_order_review` fragment, carries cart values to `live-value/view.ts`; field values are read from the form as Field Value does. Field Value's field logic moves into shared helpers so both features use one copy.
