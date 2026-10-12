@@ -60,6 +60,8 @@ class LiveValues {
         }
 
         add_action( 'wp_footer', [ $this, 'print_values' ] );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's AJAX fragment filter.
+        add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'fragments' ], 20 );
     }
 
     /**
@@ -161,6 +163,19 @@ class LiveValues {
         }
     }
 
+    /** Swaps the footer's values for the recalculated cart's, when the served layout holds a live value. */
+    public function fragments( $fragments ) {
+        $layout = CheckoutPage::get_instance()->layout();
+
+        if ( ! is_array( $fragments ) || null === $layout || false === strpos( $layout->content, self::CLASS_NAME ) ) {
+            return $fragments;
+        }
+
+        $fragments[ '#' . self::VALUES_ID ] = self::values_element();
+
+        return $fragments;
+    }
+
     /** The cart's values as a JSON element; `<` and `&` are escaped, so no value can close it. */
     public static function values_element(): string {
         return '<script type="application/json" id="' . esc_attr( self::VALUES_ID ) . '">'
@@ -187,6 +202,9 @@ class LiveValues {
 
         if ( ! $value['known'] || false !== strpos( $inner, '<' ) ) {
             $text = $fallback;
+            // view.ts fills only spans with a key, so this one stays as printed: a key the layout can't show
+            // could otherwise read a form field it was never meant to show, such as a password.
+            $tags->remove_attribute( self::KEY_ATTR );
         } elseif ( $value['empty'] && '' !== $fallback ) {
             $text = $fallback;
         } else {
