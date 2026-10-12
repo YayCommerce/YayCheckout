@@ -13,37 +13,51 @@ const BACKGROUNDS: ShippingSettingKey[] = [
 	'backgroundColorHover',
 ];
 
+const RADIOS: ShippingSettingKey[] = [ 'radioColor', 'radioColorSelected' ];
+
+/** Layouts whose rows have their own outline also take selected and hover borders. */
+const ROW_COLORS: ShippingSettingKey[] = [
+	...BACKGROUNDS,
+	'borderColor',
+	'borderColorSelected',
+	'borderColorHover',
+	...RADIOS,
+];
+
+/** Divided and Boxed rows share lines, so they take one border colour. */
+const SHARED_LINE_COLORS: ShippingSettingKey[] = [ ...BACKGROUNDS, 'borderColor', ...RADIOS ];
+
 /** Mirrors CheckoutFragments::SHIPPING_LAYOUTS in PHP. */
 export const SHIPPING_LAYOUTS: ShippingLayout[] = [
 	{
 		value: 'default',
 		label: __( 'Default', 'yaycheckout' ),
-		settings: [ 'borderRadius', ...BACKGROUNDS ],
+		settings: [ 'borderRadius', ...ROW_COLORS ],
 	},
 	{
 		value: 'check',
 		label: __( 'Check', 'yaycheckout' ),
-		settings: [ 'gap', 'borderRadius', ...BACKGROUNDS ],
+		settings: [ 'gap', 'borderRadius', ...ROW_COLORS ],
 	},
 	{
 		value: 'boxed',
 		label: __( 'Boxed', 'yaycheckout' ),
-		settings: [ 'borderRadius', ...BACKGROUNDS ],
+		settings: [ 'borderRadius', ...SHARED_LINE_COLORS ],
 	},
 	{
 		value: 'columns',
 		label: __( 'Columns', 'yaycheckout' ),
-		settings: [ 'gap', 'borderRadius', ...BACKGROUNDS ],
+		settings: [ 'gap', 'borderRadius', ...ROW_COLORS ],
 	},
 	{
 		value: 'stacked',
 		label: __( 'Stacked', 'yaycheckout' ),
-		settings: [ 'gap', 'borderRadius', ...BACKGROUNDS ],
+		settings: [ 'gap', 'borderRadius', ...ROW_COLORS ],
 	},
 	{
 		value: 'divided',
 		label: __( 'Divided', 'yaycheckout' ),
-		settings: [ ...BACKGROUNDS ],
+		settings: [ ...SHARED_LINE_COLORS ],
 	},
 ];
 

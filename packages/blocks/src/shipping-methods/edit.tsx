@@ -3,8 +3,9 @@ import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { layoutFor, SHIPPING_LAYOUTS } from './layouts';
 import {
-	BACKGROUND_SETTING_LABELS,
-	isBackgroundSetting,
+	COLOR_SETTING_KEYS,
+	COLOR_SETTING_LABELS,
+	isColorSetting,
 	SETTING_CONTROLS,
 	type ShippingSettingKey,
 } from './setting-controls';
@@ -37,9 +38,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const heading = label || __( 'Shipping methods', 'yaycheckout' );
 	const selectedLayout = layoutFor( layout );
 	const rangeKeys = selectedLayout.settings.filter(
-		( key ): key is ShippingSettingKey => ! isBackgroundSetting( key ) && Boolean( SETTING_CONTROLS[ key ] )
+		( key ): key is ShippingSettingKey => ! isColorSetting( key ) && Boolean( SETTING_CONTROLS[ key ] )
 	);
-	const colorKeys = selectedLayout.settings.filter( isBackgroundSetting );
+	const colorKeys = COLOR_SETTING_KEYS.filter( ( key ) => selectedLayout.settings.includes( key ) );
 	const showMethods = rangeKeys.length > 0 || colorKeys.length > 0;
 
 	return (
@@ -85,11 +86,11 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						} ) }
 						{ colorKeys.length > 0 && (
 							<PanelColorSettings
-								title={ __( 'Background', 'yaycheckout' ) }
+								title={ __( 'Colors', 'yaycheckout' ) }
 								showTitle={ false }
 								__experimentalIsRenderedInSidebar
 								colorSettings={ colorKeys.map( ( key ) => ( {
-									label: BACKGROUND_SETTING_LABELS[ key ],
+									label: COLOR_SETTING_LABELS[ key ],
 									value: colorValue( getStyleSetting( style, key ) ),
 									onChange: ( value: string | undefined ) =>
 										setAttributes( {

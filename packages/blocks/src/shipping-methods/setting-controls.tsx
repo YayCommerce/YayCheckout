@@ -7,25 +7,40 @@ export type ShippingSettingKey =
 	| 'borderRadius'
 	| 'backgroundColor'
 	| 'backgroundColorSelected'
-	| 'backgroundColorHover';
+	| 'backgroundColorHover'
+	| 'borderColor'
+	| 'borderColorSelected'
+	| 'borderColorHover'
+	| 'radioColor'
+	| 'radioColorSelected';
 
-export const BACKGROUND_SETTING_KEYS: ShippingSettingKey[] = [
+/** Colour keys in the order the Methods panel lists them. */
+export const COLOR_SETTING_KEYS = [
 	'backgroundColor',
 	'backgroundColorSelected',
 	'backgroundColorHover',
-];
+	'borderColor',
+	'borderColorSelected',
+	'borderColorHover',
+	'radioColor',
+	'radioColorSelected',
+] as const satisfies readonly ShippingSettingKey[];
 
-export const BACKGROUND_SETTING_LABELS: Record<
-	( typeof BACKGROUND_SETTING_KEYS )[ number ],
-	string
-> = {
+export type ColorSettingKey = ( typeof COLOR_SETTING_KEYS )[ number ];
+
+export const COLOR_SETTING_LABELS: Record< ColorSettingKey, string > = {
 	backgroundColor: __( 'Background', 'yaycheckout' ),
 	backgroundColorSelected: __( 'Background (selected)', 'yaycheckout' ),
 	backgroundColorHover: __( 'Background (hover)', 'yaycheckout' ),
+	borderColor: __( 'Border', 'yaycheckout' ),
+	borderColorSelected: __( 'Border (selected)', 'yaycheckout' ),
+	borderColorHover: __( 'Border (hover)', 'yaycheckout' ),
+	radioColor: __( 'Radio', 'yaycheckout' ),
+	radioColorSelected: __( 'Radio (selected)', 'yaycheckout' ),
 };
 
-export function isBackgroundSetting( key: ShippingSettingKey ): boolean {
-	return ( BACKGROUND_SETTING_KEYS as string[] ).includes( key );
+export function isColorSetting( key: ShippingSettingKey ): key is ColorSettingKey {
+	return ( COLOR_SETTING_KEYS as readonly string[] ).includes( key );
 }
 
 export interface SettingControlProps {
@@ -75,7 +90,7 @@ function BorderRadiusControl( { value, onChange }: SettingControlProps ) {
 }
 
 /**
- * Range controls for Shipping Methods layouts. Background colours use
+ * Range controls for Shipping Methods layouts. Colours use
  * PanelColorSettings in edit.tsx so they match Gutenberg's Styles UI.
  */
 export const SETTING_CONTROLS: Partial<

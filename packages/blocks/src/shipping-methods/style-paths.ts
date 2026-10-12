@@ -9,7 +9,21 @@ const PATHS: Record< ShippingSettingKey, string[] > = {
 	backgroundColor: [ 'yaycheckout', 'background' ],
 	backgroundColorSelected: [ 'yaycheckout', 'backgroundSelected' ],
 	backgroundColorHover: [ 'yaycheckout', 'backgroundHover' ],
+	borderColor: [ 'yaycheckout', 'border' ],
+	borderColorSelected: [ 'yaycheckout', 'borderSelected' ],
+	borderColorHover: [ 'yaycheckout', 'borderHover' ],
+	radioColor: [ 'yaycheckout', 'radio' ],
+	radioColorSelected: [ 'yaycheckout', 'radioSelected' ],
 };
+
+/** Colour settings printed as-is (after preset resolution), in the order PHP prints them. */
+const COLOR_VARS: [ ShippingSettingKey, string ][] = [
+	[ 'radioColor', '--yaycheckout-shipping-radio' ],
+	[ 'radioColorSelected', '--yaycheckout-shipping-radio-selected' ],
+	[ 'borderColor', '--yaycheckout-shipping-border' ],
+	[ 'borderColorSelected', '--yaycheckout-shipping-border-selected' ],
+	[ 'borderColorHover', '--yaycheckout-shipping-border-hover' ],
+];
 
 function isPlainObject( value: unknown ): value is StyleObject {
 	return typeof value === 'object' && value !== null && ! Array.isArray( value );
@@ -117,6 +131,12 @@ export function shippingStyleVars(
 	}
 	if ( typeof bgHover === 'string' && bgHover !== '' ) {
 		vars[ '--yaycheckout-shipping-bg-hover' ] = bgHover;
+	}
+	for ( const [ key, name ] of COLOR_VARS ) {
+		const value = cssColor( getStyleSetting( style, key ) );
+		if ( value ) {
+			vars[ name ] = value;
+		}
 	}
 	if ( text ) {
 		vars.color = text;
