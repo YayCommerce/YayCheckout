@@ -1,7 +1,8 @@
 <?php
 /**
  * Prints the heading, then the Items and Totals blocks with the merchant's blocks around them. A summary
- * split into a Summary Header and Summary Details prints no heading: the header holds the merchant's own.
+ * split into a Summary Header and Summary Details prints no heading: the header holds the merchant's own,
+ * and the wrapper says whether the details collapse and start open.
  * A layout saved before Order Summary held blocks has none, and gets WooCommerce's review-order
  * table as before. Without a frontend cart (admin, REST, CLI) that table is left out: the template
  * dereferences WC()->cart.
@@ -28,6 +29,14 @@ foreach ( $block->parsed_block['innerBlocks'] ?? [] as $yaycheckout_child ) {
 
 // Block spacing.
 $yaycheckout_class = 'yaycheckout-order-summary' . \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/order-summary', 'yaycheckout-order-summary' );
+
+if ( $yaycheckout_new_shape ) {
+    $yaycheckout_collapse = \YayCheckout\Services\OrderSummaryCollapse::of_layout( \YayCheckout\Renderer\CheckoutPage::get_instance()->layout() );
+
+    if ( $yaycheckout_collapse['collapsible'] ) {
+        $yaycheckout_class .= $yaycheckout_collapse['open'] ? ' is-collapsible is-open' : ' is-collapsible';
+    }
+}
 
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => $yaycheckout_class ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>

@@ -13,7 +13,19 @@
     "label": {
       "type": "string",
       "default": "Your order"
+    },
+    "collapsible": {
+      "type": "boolean",
+      "default": false
+    },
+    "initialState": {
+      "type": "string",
+      "enum": [ "collapsed", "open" ],
+      "default": "collapsed"
     }
+  },
+  "providesContext": {
+    "yaycheckout/orderSummaryLabel": "label"
   },
   "supports": {
     "html": false,
@@ -37,5 +49,7 @@
   },
   "editorScript": "file:./index.js",
   "editorStyle": "file:./index.css",
+  "viewScript": "file:./view.js",
+  "style": "file:./style-index.css",
   "render": "file:./render.php"
 }

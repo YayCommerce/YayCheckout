@@ -7,6 +7,7 @@
   "description": "The Order Summary's top or bottom bar. Lay out any blocks in it, left and right.",
   "textdomain": "yaycheckout",
   "parent": [ "yaycheckout/order-summary" ],
+  "usesContext": [ "yaycheckout/orderSummaryLabel" ],
   "supports": {
     "html": false,
     "multiple": false,

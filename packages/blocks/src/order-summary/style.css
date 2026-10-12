@@ -1,0 +1,37 @@
+/*
+ * A collapsible header is a click target as a whole: an empty button covers it, under the header's own
+ * controls, which keep their action.
+ */
+.is-collapsible .yaycheckout-order-summary-header {
+	position: relative;
+	cursor: pointer;
+}
+
+.yaycheckout-order-summary__header-button {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+}
+
+.yaycheckout-order-summary__header-button:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+.is-collapsible .yaycheckout-order-summary-header :is(a, button:not(.yaycheckout-order-summary__header-button), input, select, textarea, label, [role="button"], [tabindex]) {
+	position: relative;
+	z-index: 1;
+}
+
+[data-yaycheckout-summary-toggle] {
+	cursor: pointer;
+}
+
+[aria-expanded="true"] > .yaycheckout-order-summary-toggle__chevron {
+	transform: rotate(180deg);
+}

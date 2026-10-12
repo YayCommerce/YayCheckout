@@ -1,0 +1,4 @@
+/* The details stay editable while the summary starts collapsed, dimmed to show the shopper won't see them. */
+.editor-styles-wrapper .yaycheckout-order-summary.is-preview-collapsed .yaycheckout-order-summary-details {
+	opacity: 0.5;
+}
