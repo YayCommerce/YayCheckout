@@ -91,11 +91,30 @@ function advance( step: HTMLElement ): void {
 	revealStep( next );
 }
 
-/** Scrolls the step Next or Back opened to the top of the viewport. Focus stays where it is. */
+/**
+ * Scrolls an opened step to the top of the visible area, but only when its header is off-screen.
+ * The step's scroll-margin-top keeps a gap above it. Focus stays where it is.
+ */
 function revealStep( step: HTMLElement ): void {
+	if ( stepIsInView( step ) ) {
+		return;
+	}
+
 	const reduced = window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
 
 	step.scrollIntoView( { block: 'start', behavior: reduced ? 'auto' : 'smooth' } );
+}
+
+/** Whether the step's header is fully inside the viewport, less a sticky header's or pinned bar's scroll padding. */
+function stepIsInView( step: HTMLElement ): boolean {
+	const root = getComputedStyle( document.documentElement );
+	const topInset = parseFloat( root.scrollPaddingTop ) || 0;
+	const bottomInset = parseFloat( root.scrollPaddingBottom ) || 0;
+	const top = step.getBoundingClientRect().top;
+	// With headings hidden the header is a 1px clipped box, so the step's top edge stands in for it.
+	const headerHeight = step.querySelector( '.yaycheckout-step__header' )?.getBoundingClientRect().height ?? 0;
+
+	return top >= topInset && top + headerHeight <= window.innerHeight - bottomInset;
 }
 
 /** Checks the step and, when it passes, marks it complete with its summary. */
@@ -128,7 +147,8 @@ function reopen( step: HTMLElement ): void {
 
 	setState( step, CURRENT );
 	// The control that asked may now be disabled or hidden (Steps Progress, Go to Step, Edit), so focus follows the step.
-	step.querySelector< HTMLElement >( '.yaycheckout-step__header' )?.focus();
+	step.querySelector< HTMLElement >( '.yaycheckout-step__header' )?.focus( { preventScroll: true } );
+	revealStep( step );
 }
 
 function park( step: HTMLElement ): boolean {
