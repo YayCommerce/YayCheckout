@@ -28,7 +28,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	const { layout, showHeadings, style } = attributes;
 	const css = useBlockGapCSS( `#block-${ clientId }`, style );
 
-	const blockProps = useBlockProps( { className: 'yaycheckout-steps' } );
+	const blockProps = useBlockProps( { className: 'yaycheckout-steps', 'data-layout': layout } );
 	const innerBlocksProps = useInnerBlocksProps( blockProps, {
 		template: [ [ stepMeta.name ], [ stepMeta.name ] ],
 		templateLock: false,
@@ -42,10 +42,11 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 				<PanelBody title={ __( 'Steps', 'yaycheckout' ) }>
 					<SelectControl
 						label={ __( 'Layout', 'yaycheckout' ) }
-						value={ layout || 'list' }
+						value={ layout || 'accordion' }
 						options={ [
-							{ label: __( 'List', 'yaycheckout' ), value: 'list' },
-							{ label: __( 'One step', 'yaycheckout' ), value: 'single' },
+							{ label: __( 'Accordion', 'yaycheckout' ), value: 'accordion' },
+							{ label: __( 'One step at a time', 'yaycheckout' ), value: 'one-at-a-time' },
+							{ label: __( 'Vertical timeline', 'yaycheckout' ), value: 'timeline' },
 						] }
 						onChange={ ( value ) => setAttributes( { layout: value } ) }
 					/>

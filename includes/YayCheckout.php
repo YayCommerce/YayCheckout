@@ -31,6 +31,7 @@ class YayCheckout {
         \YayCheckout\Renderer\CheckoutFragments::get_instance();
         \YayCheckout\Renderer\CartItemQuantity::get_instance();
         \YayCheckout\Renderer\HideWhenEmpty::get_instance();
+        \YayCheckout\Renderer\LiveValues::get_instance();
         \YayCheckout\Renderer\CheckoutExtraFields::get_instance();
         \YayCheckout\Renderer\CheckoutRequiredFields::get_instance();
         \YayCheckout\Renderer\CheckoutLogin::get_instance();

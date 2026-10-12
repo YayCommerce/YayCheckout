@@ -12,12 +12,12 @@ class LayoutMarkupReader {
 
     private const CHECKOUT          = 'yaycheckout/checkout';
     private const EMAIL             = 'yaycheckout/email';
-    private const FIELD             = 'yaycheckout/field';
+    public const FIELD              = 'yaycheckout/field';
     private const EXTRA_FIELD       = 'yaycheckout/extra-field';
     private const ORDER_NOTE        = 'yaycheckout/order-note';
     private const SLOT              = 'yaycheckout/slot';
-    private const BILLING           = 'yaycheckout/billing';
-    private const SHIPPING          = 'yaycheckout/shipping';
+    public const BILLING            = 'yaycheckout/billing';
+    public const SHIPPING           = 'yaycheckout/shipping';
     private const DIFFERENT_ADDRESS = 'yaycheckout/different-address';
 
     /**

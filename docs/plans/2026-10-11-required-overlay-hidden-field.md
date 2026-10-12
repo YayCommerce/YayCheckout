@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. Read the backlog item before starting.
 
-**Status:** active
+**Status:** done 2026-10-11
 **Goal:** A field that WooCommerce's country locale hides is never required at checkout, even when the layout marks it required. Every visible field keeps the layout's required setting.
 **Spec:** none, planned from `docs/backlog/2026-10-07-required-overlay-hidden-locale-field.md`
 **Architecture:** The server overlay `RequiredFieldOverlay::apply()` gets a list of locale-hidden keys and gives those keys `required => false`. It also does this for any field whose WooCommerce definition has `hidden === true`. `CheckoutRequiredFields::filter_fields()` builds the list from the country WooCommerce built the fields for. On the client, `applyRequired()` skips a row that `address-i18n.js` hid. That is the same row-display test `checkout-hide-when-empty.js` already uses.
