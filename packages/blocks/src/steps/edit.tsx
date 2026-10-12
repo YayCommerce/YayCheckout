@@ -28,7 +28,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	const { layout, showHeadings, style } = attributes;
 	const css = useBlockGapCSS( `#block-${ clientId }`, style );
 
-	const blockProps = useBlockProps( { className: 'yaycheckout-steps' } );
+	const blockProps = useBlockProps( { className: 'yaycheckout-steps', 'data-layout': layout } );
 	const innerBlocksProps = useInnerBlocksProps( blockProps, {
 		template: [ [ stepMeta.name ], [ stepMeta.name ] ],
 		templateLock: false,
@@ -46,6 +46,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						options={ [
 							{ label: __( 'List', 'yaycheckout' ), value: 'list' },
 							{ label: __( 'One step', 'yaycheckout' ), value: 'single' },
+							{ label: __( 'Vertical stepper', 'yaycheckout' ), value: 'stepper' },
 						] }
 						onChange={ ( value ) => setAttributes( { layout: value } ) }
 					/>

@@ -45,7 +45,7 @@
     "layout": {
       "type": "string",
       "default": "list",
-      "enum": [ "list", "single" ]
+      "enum": [ "list", "single", "stepper" ]
     },
     "showHeadings": {
       "type": "boolean",

@@ -70,7 +70,8 @@ function onClick( event: MouseEvent ): void {
 
 	const step = target.closest< HTMLElement >( STEP );
 
-	if ( ! step || step.dataset.state !== COMPLETE || target.closest( '.yaycheckout-step__body' ) ) {
+	// Any step the shopper already opened reopens, a locked one too (the last step, left before Place order).
+	if ( ! step || step.dataset.reached !== 'true' || step.dataset.state === CURRENT || target.closest( '.yaycheckout-step__body' ) ) {
 		return;
 	}
 
@@ -145,6 +146,11 @@ function setState( step: HTMLElement, state: StepState ): void {
 
 	if ( done ) {
 		step.dataset.completed = 'true';
+	}
+
+	// Not on CURRENT alone: step 1 starts current from the server, so it is first marked when it completes.
+	if ( state !== LOCKED ) {
+		step.dataset.reached = 'true';
 	}
 
 	const summary = step.querySelector< HTMLElement >( '.yaycheckout-step__summary' );
