@@ -3,7 +3,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. There is no spec: the requirements below are the brief. On approval, save this plan as `docs/plans/2026-10-07-create-account-block.md` before Task 1.
 
-**Status:** active
+**Status:** done 2026-10-07
 **Goal:** a merchant adds a "Create account" block to a layout, and the storefront shows WooCommerce's account-creation UI exactly when and how WooCommerce's settings say.
 **Spec:** none, planned from the request
 **Architecture:**

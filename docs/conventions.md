@@ -24,7 +24,7 @@
 
 ## Wire casing
 
-- **Rule:** everything on the wire is snake_case: query parameters, request bodies and every field PHP's `to_array()` emits. Everything in the SPA's TypeScript is camelCase; the blocks package calls only a few routes through `apiFetch` and reads their fields as sent. They meet only in `apps/admin/src/lib/api/<resource>.api.ts`, which parses each response with a strict `*WireSchema` from `apps/admin/src/lib/schema/` and converts it (`summaryFromWire`, `tokensFromWire`), and converts request bodies on the way out.
+- **Rule:** everything on the wire is snake_case: query parameters, request bodies and every field PHP's `to_array()` emits. Everything in the SPA's TypeScript is camelCase; the blocks package calls only a few routes through `apiFetch` and reads their fields as sent. They meet only in `apps/admin/src/lib/api/<resource>.api.ts`, which parses each response with a strict `*WireSchema` from `apps/admin/src/lib/schema/` and converts it (`summaryFromWire`, `layoutFromWire`), and converts request bodies on the way out.
 - **Why:** pages and hooks never see a snake_case key, and PHP never learns how the SPA spells one. A strict wire schema makes a renamed PHP key fail loudly instead of parsing to `undefined`.
 - **In code:** `apps/admin/src/lib/api/`, `apps/admin/src/lib/schema/`. Data printed for scripts keeps camelCase keys (`window.yayCheckoutMeta` from `Helpers\LocalizeHelper`, `window.yayCheckoutBlocks`, `window.yayCheckoutRequired`), except the `to_array()` payloads inside `window.yayCheckoutAdmin`, which stay snake_case and go through their wire schemas like any response.
 
