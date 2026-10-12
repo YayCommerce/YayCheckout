@@ -32,22 +32,14 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						onChange={ ( value ) => setAttributes( { showCurrencyCode: value } ) }
 					/>
 					<ToggleControl
-						label={ __( 'Show subtotal', 'yaycheckout' ) }
-						checked={ showSubtotal }
-						onChange={ ( value ) => setAttributes( { showSubtotal: value } ) }
-					/>
-					{ showSubtotal && (
-						<TextControl
-							label={ __( 'Subtotal label', 'yaycheckout' ) }
-							value={ subtotalLabel ?? '' }
-							placeholder={ subtotalPlaceholder }
-							onChange={ ( value ) => setAttributes( { subtotalLabel: value } ) }
-						/>
-					) }
-					<ToggleControl
 						label={ __( 'Show total', 'yaycheckout' ) }
 						checked={ showTotal }
 						onChange={ ( value ) => setAttributes( { showTotal: value } ) }
+					/>
+					<ToggleControl
+						label={ __( 'Show subtotal', 'yaycheckout' ) }
+						checked={ showSubtotal }
+						onChange={ ( value ) => setAttributes( { showSubtotal: value } ) }
 					/>
 					{ showTotal && (
 						<TextControl
@@ -55,6 +47,14 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							value={ totalLabel ?? '' }
 							placeholder={ totalPlaceholder }
 							onChange={ ( value ) => setAttributes( { totalLabel: value } ) }
+						/>
+					) }
+					{ showSubtotal && (
+						<TextControl
+							label={ __( 'Subtotal label', 'yaycheckout' ) }
+							value={ subtotalLabel ?? '' }
+							placeholder={ subtotalPlaceholder }
+							onChange={ ( value ) => setAttributes( { subtotalLabel: value } ) }
 						/>
 					) }
 				</PanelBody>
