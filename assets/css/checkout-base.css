@@ -137,14 +137,6 @@ html.yaycheckout-has-pinned body {
  * own, so the gap goes on the outer row only. Classic themes float the half-width rows; the
  * layout's Columns place fields side by side instead.
  */
-.yaycheckout-checkout .form-row {
-	margin-block: 0 12px;
-	padding: 0;
-}
-
-.yaycheckout-checkout .form-row .form-row {
-	margin: 0;
-}
 
 .yaycheckout-checkout :is(.form-row-first, .form-row-last, .form-row-wide) {
 	float: none;
