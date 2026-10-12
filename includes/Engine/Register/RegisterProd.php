@@ -17,8 +17,7 @@ class RegisterProd {
     }
 
     public function register_all_scripts() {
-        $deps = [ 'react', 'react-dom', 'wp-element', 'wp-components', 'wp-hooks', 'wp-i18n', 'wp-date' ];
-        wp_register_script( ScriptName::PAGE_SETTINGS, YAYCHECKOUT_PLUGIN_URL . 'assets/dist/admin/js/main.js', $deps, YAYCHECKOUT_VERSION, true );
+        wp_register_script( ScriptName::PAGE_SETTINGS, YAYCHECKOUT_PLUGIN_URL . 'assets/dist/admin/js/main.js', ScriptName::PAGE_SETTINGS_DEPS, YAYCHECKOUT_VERSION, true );
         wp_set_script_translations( ScriptName::PAGE_SETTINGS, 'yaycheckout', YAYCHECKOUT_PLUGIN_DIR . 'languages' );
     }
 }

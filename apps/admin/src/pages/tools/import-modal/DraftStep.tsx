@@ -1,4 +1,4 @@
-import { Check, TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 import { __, sprintf } from '@wordpress/i18n';
 
 import type { Layout } from '@/lib/schema/layout.schema';
@@ -6,6 +6,7 @@ import type { RulesImport } from '@/lib/schema/tools.schema';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DialogFooter } from '@/components/ui/dialog';
 import { LayoutDraftActions } from '@/components/shared/LayoutDraftActions';
+import { SuccessHeader } from '@/components/shared/SuccessHeader';
 import { SummaryStrip } from '@/components/shared/SummaryStrip';
 
 export function DraftStep({
@@ -19,28 +20,19 @@ export function DraftStep({
 }) {
   return (
     <>
-      <div className="flex gap-3">
-        <span className="bg-success/10 text-success flex size-8 shrink-0 items-center justify-center rounded-full">
-          <Check className="size-4" />
-        </span>
-        <div className="space-y-1">
-          <h3 className="text-base/snug font-semibold">
-            {sprintf(
-              /* translators: %s: layout title */
-              __('Draft "%s" created — nothing is live', 'yaycheckout'),
-              layout.title,
-            )}
-          </h3>
-          <p className="text-muted-foreground text-sm">
-            {__('Your active layout is still serving checkout.', 'yaycheckout')}
-          </p>
-        </div>
-      </div>
+      <SuccessHeader
+        title={sprintf(
+          /* translators: %s: layout title */
+          __('Draft "%s" created — nothing is live', 'yaycheckout'),
+          layout.title,
+        )}
+        description={__('Your active layout is still serving checkout.', 'yaycheckout')}
+      />
 
       <SummaryStrip
         items={[
           [__('Layout', 'yaycheckout'), layout.title],
-          [__('Status', 'yaycheckout'), __('Draft', 'yaycheckout')],
+          [__('Status', 'yaycheckout'), __('Inactive', 'yaycheckout')],
           [__('Assignment rules', 'yaycheckout'), RULES_STATUS_LABELS[rulesImport.status]],
         ]}
       />
@@ -58,9 +50,7 @@ export function DraftStep({
       )}
 
       <DialogFooter className="items-center border-t pt-4 sm:justify-between">
-        <p className="text-muted-foreground text-sm">
-          {__('Publish and set active when you are happy with it.', 'yaycheckout')}
-        </p>
+        <p className="text-muted-foreground text-sm">{__('Activate it when you are happy with it.', 'yaycheckout')}</p>
         <LayoutDraftActions layoutId={layout.id} onClose={onClose} />
       </DialogFooter>
     </>

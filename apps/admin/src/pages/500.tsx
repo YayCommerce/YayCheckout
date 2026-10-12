@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useRouteError } from 'react-router';
 import { __ } from '@wordpress/i18n';
 
+import { LAYOUTS_PATH } from '@/lib/helpers/layout.helper';
 import { logger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 
@@ -23,7 +24,7 @@ export default function ErrorPage() {
         </p>
       </div>
 
-      <Button variant="primary" onClick={() => navigate('/layouts')}>
+      <Button variant="primary" onClick={() => navigate(LAYOUTS_PATH)}>
         {__('Back to Layouts', 'yaycheckout')}
       </Button>
     </div>

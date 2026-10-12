@@ -5,7 +5,10 @@
  * and required, so a form-wide checkValidity() would block step 1.
  */
 
-import { checkoutFor } from '../shared/checkout-root';
+import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
+import { onDomReady } from '../shared/dom-ready';
+import { controlsText } from '../shared/form-text';
+import type { Control } from '../shared/jquery';
 
 const STEP = '.yaycheckout-step';
 const CURRENT = 'current';
@@ -13,7 +16,6 @@ const LOCKED = 'locked';
 const COMPLETE = 'complete';
 
 type StepState = typeof CURRENT | typeof LOCKED | typeof COMPLETE;
-type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
 function boot(): void {
 	if ( document.documentElement.hasAttribute( 'data-yaycheckout-steps-bound' ) ) {
@@ -38,7 +40,7 @@ function onReopen( event: Event ): void {
 		return;
 	}
 
-	const checkout = event.target.closest( '.yaycheckout-checkout' );
+	const checkout = event.target.closest( CHECKOUT_SELECTOR );
 	const step = checkout?.querySelector< HTMLElement >( `${ STEP }[data-step="${ CSS.escape( stepNumber ) }"]` );
 
 	if ( step ) {
@@ -68,7 +70,8 @@ function onClick( event: MouseEvent ): void {
 
 	const step = target.closest< HTMLElement >( STEP );
 
-	if ( ! step || step.dataset.state !== COMPLETE || target.closest( '.yaycheckout-step__body' ) ) {
+	// Only a completed step reopens. One reached but not finished (the last step, after going back) is reached again with Next.
+	if ( ! step || ! canReopenStep( step ) || target.closest( '.yaycheckout-step__body' ) ) {
 		return;
 	}
 
@@ -103,7 +106,7 @@ function complete( step: HTMLElement ): boolean {
 		return false;
 	}
 
-	writeSummary( step, summaryText( controls ) );
+	writeSummary( step, controlsText( controls ) );
 	setState( step, COMPLETE );
 	return true;
 }
@@ -124,6 +127,8 @@ function reopen( step: HTMLElement ): void {
 	}
 
 	setState( step, CURRENT );
+	// The control that asked may now be disabled or hidden (Steps Progress, Go to Step, Edit), so focus follows the step.
+	step.querySelector< HTMLElement >( '.yaycheckout-step__header' )?.focus();
 }
 
 function park( step: HTMLElement ): boolean {
@@ -143,6 +148,11 @@ function setState( step: HTMLElement, state: StepState ): void {
 
 	if ( done ) {
 		step.dataset.completed = 'true';
+	}
+
+	// Not on CURRENT alone: step 1 starts current from the server, so it is first marked when it completes.
+	if ( state !== LOCKED ) {
+		step.dataset.reached = 'true';
 	}
 
 	const summary = step.querySelector< HTMLElement >( '.yaycheckout-step__summary' );
@@ -310,64 +320,4 @@ function message( step: HTMLElement, key: 'requiredMessage' | 'selectMessage' ):
 	return steps?.dataset[ key ] ?? '';
 }
 
-function summaryText( controls: Control[] ): string {
-	const values: string[] = [];
-
-	for ( const control of controls ) {
-		if ( control instanceof HTMLInputElement && ( control.type === 'radio' || control.type === 'checkbox' ) && ! control.checked ) {
-			continue;
-		}
-
-		const value = textOf( control );
-
-		if ( value !== '' ) {
-			values.push( value );
-		}
-	}
-
-	return values.join( ', ' );
-}
-
-function textOf( control: Control ): string {
-	if ( control instanceof HTMLSelectElement ) {
-		return control.value.trim() === '' ? '' : control.selectedOptions[ 0 ]?.text.trim() ?? '';
-	}
-
-	if ( control instanceof HTMLInputElement && ( control.type === 'radio' || control.type === 'checkbox' ) ) {
-		return labelFor( control );
-	}
-
-	return control.value.trim();
-}
-
-function labelFor( control: HTMLInputElement ): string {
-	const label = optionLabel( control );
-
-	if ( ! label ) {
-		return control.value.trim();
-	}
-
-	// Woo puts the required * and "(optional)" inside the option label.
-	const copy = label.cloneNode( true ) as HTMLElement;
-	copy.querySelectorAll( '.required, .optional, abbr, input' ).forEach( ( mark ) => mark.remove() );
-
-	return ( copy.textContent ?? '' ).replace( /\s+/g, ' ' ).trim();
-}
-
-function optionLabel( control: HTMLInputElement ): Element | null {
-	const wrapping = control.closest( 'label' );
-
-	if ( wrapping ) {
-		return wrapping;
-	}
-
-	const labels = [ ...( control.labels ?? [] ) ];
-
-	return labels.find( ( label ) => label.classList.contains( 'radio' ) || label.classList.contains( 'checkbox' ) ) ?? labels[ 0 ] ?? null;
-}
-
-if ( document.readyState === 'loading' ) {
-	document.addEventListener( 'DOMContentLoaded', boot );
-} else {
-	boot();
-}
+onDomReady( boot );

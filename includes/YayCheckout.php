@@ -20,17 +20,22 @@ class YayCheckout {
         \YayCheckout\PostTypes\LayoutPostType::get_instance();
         \YayCheckout\Engine\LayoutCapGuard::get_instance();
         \YayCheckout\Engine\LayoutTrashSync::get_instance();
+        \YayCheckout\Engine\DesignFontInstall::get_instance();
         \YayCheckout\Engine\LayoutActiveGuard::get_instance();
         \YayCheckout\Engine\Admin\LayoutEditorEmbed::get_instance();
         \YayCheckout\Engine\Admin\LayoutEditorCanvas::get_instance();
         \YayCheckout\Renderer\PreviewRequest::get_instance();
         \YayCheckout\Renderer\CheckoutScripts::get_instance();
-        \YayCheckout\Renderer\CheckoutColour::get_instance();
         \YayCheckout\Renderer\CheckoutPage::get_instance();
+        \YayCheckout\Renderer\CheckoutAdminBar::get_instance();
         \YayCheckout\Renderer\CheckoutFragments::get_instance();
+        \YayCheckout\Renderer\CartItemQuantity::get_instance();
+        \YayCheckout\Renderer\HideWhenEmpty::get_instance();
+        \YayCheckout\Renderer\LiveValues::get_instance();
         \YayCheckout\Renderer\CheckoutExtraFields::get_instance();
         \YayCheckout\Renderer\CheckoutRequiredFields::get_instance();
         \YayCheckout\Renderer\CheckoutLogin::get_instance();
+        \YayCheckout\Renderer\CheckoutDifferentAddress::get_instance();
     }
 
     public static function initialize() {

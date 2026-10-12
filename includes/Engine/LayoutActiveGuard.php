@@ -2,7 +2,6 @@
 namespace YayCheckout\Engine;
 
 use YayCheckout\Enums\LayoutStatus;
-use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -31,12 +30,13 @@ class LayoutActiveGuard {
     public function deactivate_when_unpublished( $new_status, $old_status, $post ): void {
         unset( $old_status );
 
-        if ( in_array( $new_status, [ LayoutStatus::PUBLISHED, LayoutStatus::SCHEDULED ], true ) ) {
+        if ( in_array( $new_status, LayoutStatus::live(), true ) ) {
             return;
         }
 
         if ( $this->is_active_layout( $post ) ) {
-            ( new LayoutRepository() )->deactivate( (int) $post->ID );
+            // The status already moved; deactivate() would move it again and re-enter this hook.
+            ( new LayoutRepository() )->forget_active( (int) $post->ID );
         }
     }
 
@@ -71,8 +71,7 @@ class LayoutActiveGuard {
     }
 
     private function is_active_layout( $post ): bool {
-        return $post instanceof \WP_Post
-            && Layout::POST_TYPE === $post->post_type
+        return LayoutRepository::is_layout( $post )
             && ( new LayoutRepository() )->is_active( (int) $post->ID );
     }
 }

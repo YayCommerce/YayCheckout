@@ -97,6 +97,10 @@ export async function duplicateLayout(id: number): Promise<Layout> {
   return parseLayout(await api.post(`layouts/${id}/duplicate`).json());
 }
 
+export async function renameLayout(id: number, name: string): Promise<Layout> {
+  return parseLayout(await api.put(`layouts/${id}`, { json: { name } }).json());
+}
+
 export async function resetLayout(id: number): Promise<Layout> {
   return parseLayout(await api.post(`layouts/${id}/reset`).json());
 }

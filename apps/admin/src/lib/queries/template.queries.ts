@@ -16,6 +16,11 @@ export function useTemplateLibraryQuery() {
   return useQuery(TEMPLATE_QUERIES.library());
 }
 
+/** Mirrors LayoutTemplateCatalogue::assert_available(): unlocked on this plan and not Coming soon. */
+export function isPickable(template: Template): boolean {
+  return !template.locked && template.available;
+}
+
 /** The catalogue row for `slug`; undefined while the library loads or when no template has that slug. */
 export function useTemplate(slug: string | null | undefined): Template | undefined {
   const { data } = useTemplateLibraryQuery();

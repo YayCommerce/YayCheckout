@@ -1,11 +1,9 @@
-import { useRef } from 'react';
 import { ExternalLink } from 'lucide-react';
-import { toast } from 'sonner';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { copyToClipboard } from '@/lib/helpers/clipboard.helper';
 import { formatRelative } from '@/lib/helpers/date.helper';
 import type { LayoutSummary, PreviewLink } from '@/lib/schema/layout.schema';
+import { useCopyWithFallback } from '@/hooks/useCopyWithFallback';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -20,16 +18,13 @@ export function PreviewLinkModal({
   link: PreviewLink | null;
   onOpenChange: (open: boolean) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const { fieldRef: inputRef, copy } = useCopyWithFallback<HTMLInputElement>(
+    __('Link copied.', 'yaycheckout'),
+    __('Press Ctrl+C / ⌘C to copy the link.', 'yaycheckout'),
+  );
 
-  async function onCopy() {
-    if (!link) return;
-
-    if (await copyToClipboard(link.url, inputRef.current)) {
-      toast.success(__('Link copied.', 'yaycheckout'));
-    } else {
-      toast.info(__('Press Ctrl+C / ⌘C to copy the link.', 'yaycheckout'));
-    }
+  function onCopy() {
+    if (link) void copy(link.url);
   }
 
   return (

@@ -1,4 +1,4 @@
-import { initRevealLinks } from '../shared/reveal-link-view';
+import { initDisclosures } from '../shared/disclosure-view';
 
 /** Wrapper of an Extra field with Remember value on; render.php sets it. */
 const REMEMBER = '.yaycheckout-extra-field[data-yaycheckout-remember]';
@@ -33,5 +33,5 @@ function initRememberedValues(): void {
 	} );
 }
 
-initRevealLinks();
+initDisclosures();
 initRememberedValues();

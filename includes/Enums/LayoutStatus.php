@@ -34,17 +34,14 @@ final class LayoutStatus {
         return [ self::DRAFT, self::PENDING, self::SCHEDULED, self::PUBLISHED ];
     }
 
-    /** Human label for a status; the raw value for anything unknown. */
-    public static function label( string $status ): string {
-        $labels = [
-            self::DRAFT     => __( 'Draft', 'yaycheckout' ),
-            self::PENDING   => __( 'Pending review', 'yaycheckout' ),
-            self::SCHEDULED => __( 'Scheduled', 'yaycheckout' ),
-            self::PUBLISHED => __( 'Published', 'yaycheckout' ),
-            self::ARCHIVED  => __( 'Archived', 'yaycheckout' ),
-        ];
-
-        return $labels[ $status ] ?? $status;
+    /**
+     * Statuses shoppers may see: the ones the publish rules guard and an active layout may hold.
+     * packages/blocks/src/checkout/publish-guard.ts copies it as LIVE_STATUSES.
+     *
+     * @return string[]
+     */
+    public static function live(): array {
+        return [ self::PUBLISHED, self::SCHEDULED ];
     }
 
     public static function is_valid( $value ): bool {

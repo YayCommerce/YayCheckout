@@ -5,27 +5,36 @@ import {
 	store as blockEditorStore,
 } from '@wordpress/block-editor';
 import { useSelect } from '@wordpress/data';
+import { __ } from '@wordpress/i18n';
 import { useBlocksAllowedExcept } from '../shared/allowed-blocks';
+import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 import { stepTitle } from '../shared/step-title';
 import stepButtonMeta from '../step-button/block.json';
 import stepsMeta from '../steps/block.json';
+import './editor.css';
 
 const isSteps = ( type: { name: string } ) => type.name === stepsMeta.name;
 
 interface StepAttributes {
 	title: string;
+	style?: BlockGapStyles;
 }
 
 interface EditProps {
 	attributes: StepAttributes;
 	setAttributes: ( attributes: Partial< StepAttributes > ) => void;
 	clientId: string;
+	context: { 'yaycheckout/showHeadings'?: boolean };
 }
 
-export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
-	const { title } = attributes;
+export default function Edit( { attributes, setAttributes, clientId, context }: EditProps ) {
+	const { title, style } = attributes;
+	// The storefront hides the header; here it stays, faded, so the title Steps Progress shows can still be edited.
+	const hiddenOnCheckout = context[ 'yaycheckout/showHeadings' ] === false;
 	const index = useSelect( ( select ) => select( blockEditorStore ).getBlockIndex( clientId ), [ clientId ] );
 	const position = typeof index === 'number' && index >= 0 ? index + 1 : 1;
+	// Margins, as core's flow layout prints Block spacing, so a child's own Margin setting wins.
+	const css = useBlockGapCSS( `#block-${ clientId } > .yaycheckout-step__body`, style, true );
 	const blockProps = useBlockProps( { className: 'yaycheckout-step' } );
 	const allowedBlocks = useBlocksAllowedExcept( isSteps );
 	const bodyProps = useInnerBlocksProps(
@@ -39,7 +48,8 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 
 	return (
 		<div { ...blockProps }>
-			<div className="yaycheckout-step__header">
+			{ css && <style>{ css }</style> }
+			<div className={ hiddenOnCheckout ? 'yaycheckout-step__header is-hidden-on-checkout' : 'yaycheckout-step__header' }>
 				<span className="yaycheckout-step__index">{ position }</span>
 				<RichText
 					tagName="span"
@@ -50,6 +60,9 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					allowedFormats={ [] }
 					withoutInteractiveFormatting
 				/>
+				{ hiddenOnCheckout && (
+					<span className="yaycheckout-step__hidden-note">{ __( 'Hidden on the checkout', 'yaycheckout' ) }</span>
+				) }
 			</div>
 			<div { ...bodyProps } />
 		</div>

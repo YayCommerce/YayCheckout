@@ -1,13 +1,13 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 import { __ } from '@wordpress/i18n';
 
-import type { NewLayoutFormValues } from '@/lib/schema/layout.schema';
+import { layoutNameSchema, type NewLayoutFormValues } from '@/lib/schema/layout.schema';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { TemplatePicker } from '@/components/shared/template-picker/TemplatePicker';
 import { NameField } from '@/pages/layouts/new-layout/NameField';
 
-/** Library step: name plus template pick, then Create draft. */
+/** Library step: name plus template pick, then Create layout. */
 export function LibraryStep({
   onBack,
   onCancel,
@@ -27,7 +27,7 @@ export function LibraryStep({
     setValue('templateSlug', slug, { shouldValidate: true });
   }
 
-  const disabled = '' === (name ?? '').trim() || !selectedSlug;
+  const disabled = !layoutNameSchema.safeParse(name).success || !selectedSlug;
 
   return (
     <div className="flex flex-col gap-5">
@@ -37,10 +37,7 @@ export function LibraryStep({
 
       {rootError && <p className="text-destructive text-sm">{rootError}</p>}
 
-      <DialogFooter className="items-center gap-3 border-t pt-4 sm:justify-between">
-        <p className="text-muted-foreground text-xs">
-          {__('Your existing fields and gateways are mapped into the template you pick.', 'yaycheckout')}
-        </p>
+      <DialogFooter className="items-center gap-3 border-t pt-4 sm:justify-end">
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={onBack}>
             {__('Back', 'yaycheckout')}
@@ -49,7 +46,7 @@ export function LibraryStep({
             {__('Cancel', 'yaycheckout')}
           </Button>
           <Button type="submit" disabled={disabled || isPending}>
-            {isPending ? __('Creating…', 'yaycheckout') : __('Create draft', 'yaycheckout')}
+            {isPending ? __('Creating…', 'yaycheckout') : __('Create layout', 'yaycheckout')}
           </Button>
         </div>
       </DialogFooter>

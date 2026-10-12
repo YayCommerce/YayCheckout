@@ -44,13 +44,35 @@
   "attributes": {
     "layout": {
       "type": "string",
-      "default": "list",
-      "enum": [ "list", "single" ]
+      "default": "accordion",
+      "enum": [ "accordion", "one-at-a-time", "timeline" ]
+    },
+    "showHeadings": {
+      "type": "boolean",
+      "default": true
     }
+  },
+  "providesContext": {
+    "yaycheckout/showHeadings": "showHeadings"
   },
   "supports": {
     "html": false,
-    "reusable": false
+    "reusable": false,
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true,
+      "blockGap": true
+    }
   },
   "editorScript": "file:./index.js",
   "viewScript": "file:./view.js",

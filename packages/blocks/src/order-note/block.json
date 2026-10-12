@@ -1,0 +1,83 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/order-note",
+  "title": "Order note",
+  "category": "yaycheckout",
+  "description": "The shopper's note about their order, saved as the order's customer note.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "note", "comment", "instructions", "delivery" ],
+  "example": {
+    "attributes": {
+      "label": "Order notes"
+    }
+  },
+  "ancestor": [ "yaycheckout/checkout" ],
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": ""
+    },
+    "placeholder": {
+      "type": "string",
+      "default": ""
+    },
+    "description": {
+      "type": "string",
+      "default": ""
+    },
+    "required": {
+      "type": "boolean",
+      "default": false
+    },
+    "requiredMark": {
+      "type": "string",
+      "default": ""
+    },
+    "optionalText": {
+      "type": "string",
+      "default": ""
+    },
+    "disclosure": {
+      "type": "string",
+      "enum": [ "none", "link", "collapsible", "checkbox" ]
+    },
+    "disclosureText": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false,
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "__experimentalFontFamily": true,
+      "__experimentalFontStyle": true,
+      "__experimentalFontWeight": true,
+      "__experimentalLetterSpacing": true,
+      "__experimentalTextDecoration": true,
+      "__experimentalTextTransform": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "viewScript": "file:./view.js",
+  "render": "file:./render.php"
+}

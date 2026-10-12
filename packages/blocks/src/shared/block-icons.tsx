@@ -31,7 +31,7 @@ export const blockIcons: Record< string, JSX.Element > = {
 			<rect x="4" y="16" width="16" height="4" rx="1.5" />
 		</>
 	),
-	'yaycheckout/progress': icon(
+	'yaycheckout/steps-progress': icon(
 		<>
 			<circle cx="5" cy="12" r="2" />
 			<circle cx="12" cy="12" r="2" />
@@ -63,6 +63,12 @@ export const blockIcons: Record< string, JSX.Element > = {
 			<circle cx="9" cy="18.5" r="1.25" />
 			<circle cx="17" cy="18.5" r="1.25" />
 			<path d="m12.5 9-2 2 2 2M10.5 11h5" />
+		</>
+	),
+	'yaycheckout/go-to-step': icon(
+		<>
+			<rect x="3" y="7" width="18" height="10" rx="5" />
+			<path d="M9 10.5h5a2 2 0 0 1 0 4H9m2-6-2 2 2 2" />
 		</>
 	),
 	// The Yay cube, from the brand logo.
@@ -99,6 +105,12 @@ export const blockIcons: Record< string, JSX.Element > = {
 			<circle cx="12" cy="10" r="2" />
 		</>
 	),
+	'yaycheckout/different-address': icon(
+		<>
+			<rect x="3" y="4" width="7" height="7" rx="2" />
+			<path d="m5 7.5 1.25 1.25L8.5 6.5M14 7.5h7M3 16h18M17 12.5 20.5 16 17 19.5" />
+		</>
+	),
 	'yaycheckout/field': icon(
 		<>
 			<rect x="3" y="7" width="18" height="10" rx="3" />
@@ -109,6 +121,18 @@ export const blockIcons: Record< string, JSX.Element > = {
 		<>
 			<path d="M14 17H6a3 3 0 0 1-3-3v-4a3 3 0 0 1 3-3h8" />
 			<path d="M7.5 10v4M19 9v6M16 12h6" />
+		</>
+	),
+	'yaycheckout/order-note': icon(
+		<>
+			<path d="M14 3.5H7.5a2.5 2.5 0 0 0-2.5 2.5v12a2.5 2.5 0 0 0 2.5 2.5h9a2.5 2.5 0 0 0 2.5-2.5V8.5l-5-5Z" />
+			<path d="M14 3.5v5h5M8.5 12.5h7M8.5 16h5" />
+		</>
+	),
+	'yaycheckout/additional-fields': icon(
+		<>
+			<path d="M12 20.5H7.5A2.5 2.5 0 0 1 5 18V6a2.5 2.5 0 0 1 2.5-2.5H14l5 5V12" />
+			<path d="M14 3.5v5h5M8.5 12.5h5M8.5 16h2.5M18 15v6M15 18h6" />
 		</>
 	),
 	'yaycheckout/shipping-methods': icon(
@@ -132,10 +156,27 @@ export const blockIcons: Record< string, JSX.Element > = {
 			<path d="M10 8.5v7" strokeDasharray="1.5 2" />
 		</>
 	),
+	'yaycheckout/coupon-button': icon(
+		<>
+			<rect x="3" y="7" width="18" height="10" rx="3" />
+			<path d="M8 12h8" />
+		</>
+	),
 	'yaycheckout/order-summary': icon(
 		<>
 			<path d="M5 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v15.5l-2.33-1.5-2.34 1.5L12 19l-2.33 1.5L7.33 19 5 20.5V5Z" />
 			<path d="M9 8h6M9 12h6" />
+		</>
+	),
+	'yaycheckout/order-summary-header': icon( <path d="M4 6h16v5H4zM15 9l1.5 1.5L18 9" /> ),
+	'yaycheckout/order-summary-details': icon( <path d="M4 4h16v16H4zM8 9h8M8 13h8M8 17h5" /> ),
+	'yaycheckout/order-summary-toggle': icon( <path d="M4 7h16v10H4zM9 11l3 3 3-3" /> ),
+	'yaycheckout/order-summary-items': icon( <path d="M4 6h16M4 12h16M4 18h10" /> ),
+	'yaycheckout/order-summary-totals': icon( <path d="M4 7h16M4 12h16M12 17h8" /> ),
+	'yaycheckout/field-value': icon(
+		<>
+			<rect x="3" y="5" width="18" height="14" rx="2" />
+			<path d="M7 10h4M7 14h10" />
 		</>
 	),
 	'yaycheckout/place-order': icon(

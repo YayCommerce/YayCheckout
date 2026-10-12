@@ -1,24 +1,4 @@
-.editor-styles-wrapper .yaycheckout-order-summary__table {
-	width: 100%;
-	border-collapse: collapse;
-	font-size: 13px;
-}
-
-.editor-styles-wrapper .yaycheckout-order-summary__cell {
-	padding: 8px 0;
-	border-bottom: 1px solid #ddd;
-	text-align: left;
-}
-
-.editor-styles-wrapper .yaycheckout-order-summary__cell--end {
-	text-align: right;
-}
-
-.editor-styles-wrapper .yaycheckout-order-summary__cell--muted {
-	color: #646970;
-}
-
-.editor-styles-wrapper .yaycheckout-order-summary__cell--total {
-	border-bottom: 0;
-	font-weight: 600;
+/* The details stay editable while the summary starts collapsed, dimmed to show the shopper won't see them. */
+.editor-styles-wrapper .yaycheckout-order-summary.is-preview-collapsed .yaycheckout-order-summary-details {
+	opacity: 0.5;
 }

@@ -1,33 +1,37 @@
 import { useEffect } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { useTemplate, useTemplateLibraryQuery } from '@/lib/queries/template.queries';
-import { Button } from '@/components/ui/button';
+import { isPickable, useTemplate, useTemplateLibraryQuery } from '@/lib/queries/template.queries';
+import { Button, LoadingButton } from '@/components/ui/button';
 import { TemplatePicker } from '@/components/shared/template-picker/TemplatePicker';
 
 /**
- * Wizard step 2: pick the template the draft starts from. Only remembers the
- * pick; the draft is created when Brand is applied.
+ * Wizard step 2: pick the template the draft starts from. Create layout sends
+ * the pick in the wizard's one save, which creates the draft.
  *
  * @param templateSlug undefined until first defaulted, null when a filter cleared it.
  */
 export function StartFromStep({
   templateSlug,
   onTemplateChange,
+  isApplying,
+  error,
   onBack,
-  onContinue,
+  onApply,
 }: {
   templateSlug: string | null | undefined;
   onTemplateChange: (slug: string | null) => void;
+  isApplying: boolean;
+  error: string | null;
   onBack: () => void;
-  onContinue: () => void;
+  onApply: () => void;
 }) {
   const { data } = useTemplateLibraryQuery();
-  const firstUnlocked = data?.templates.find((t) => !t.locked);
+  const firstPickable = data?.templates.find(isPickable);
 
   useEffect(() => {
-    if (templateSlug === undefined && firstUnlocked) onTemplateChange(firstUnlocked.slug);
-  }, [templateSlug, firstUnlocked, onTemplateChange]);
+    if (templateSlug === undefined && firstPickable) onTemplateChange(firstPickable.slug);
+  }, [templateSlug, firstPickable, onTemplateChange]);
 
   const selected = useTemplate(templateSlug);
 
@@ -35,15 +39,12 @@ export function StartFromStep({
     <div className="flex flex-col gap-6">
       <h2 className="text-lg font-semibold">{__('Where should your layout start?', 'yaycheckout')}</h2>
 
-      <div className="flex flex-col gap-3">
-        <TemplatePicker selectedSlug={templateSlug} onSelect={onTemplateChange} />
-        <p className="text-muted-foreground text-sm">
-          {__('Your existing fields and gateways are mapped into the template you pick.', 'yaycheckout')}
-        </p>
-      </div>
+      <TemplatePicker selectedSlug={templateSlug} onSelect={onTemplateChange} />
+
+      {error && <p className="text-destructive text-sm">{error}</p>}
 
       <div className="flex items-center justify-between gap-2 border-t pt-4">
-        <Button variant="outline" onClick={onBack}>
+        <Button variant="outline" onClick={onBack} disabled={isApplying}>
           {__('Back', 'yaycheckout')}
         </Button>
         <div className="flex items-center gap-3">
@@ -56,9 +57,9 @@ export function StartFromStep({
               )}
             </span>
           )}
-          <Button disabled={!selected} onClick={onContinue}>
-            {__('Continue', 'yaycheckout')}
-          </Button>
+          <LoadingButton loading={isApplying} disabled={!selected || isApplying} onClick={onApply}>
+            {__('Create layout', 'yaycheckout')}
+          </LoadingButton>
         </div>
       </div>
     </div>

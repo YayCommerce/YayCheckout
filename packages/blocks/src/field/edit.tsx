@@ -1,21 +1,19 @@
 import { decodeEntities } from '@wordpress/html-entities';
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import { PanelBody, SelectControl } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { billingAddressFields, shippingAddressFields, type AddressFieldDef } from '../shared/address-fields';
+import { FieldTextControls } from '../shared/field-text-controls';
 import { FieldPreview } from '../shared/field-preview';
+import { addressSectionOf, type AddressSection } from '../shared/section-fields';
+import metadata from './block.json';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
-import { RevealLinkControls, RevealLinkPreview, defaultRevealText, isCollapsed } from '../shared/reveal-link';
+import { DisclosureControls, DisclosurePreview, disclosureMode, type DisclosureMode } from '../shared/disclosure';
 
 // A checkbox and a hidden input show no placeholder.
 const NO_PLACEHOLDER_TYPES = [ 'checkbox', 'hidden' ];
-
-const ADDRESS_PARENTS = {
-	'yaycheckout/billing': 'billing',
-	'yaycheckout/shipping': 'shipping',
-} as const;
 
 interface EditorBlock {
 	clientId: string;
@@ -23,7 +21,7 @@ interface EditorBlock {
 	attributes?: Record< string, unknown >;
 }
 
-function catalogFor( section: 'billing' | 'shipping' ): AddressFieldDef[] {
+function catalogFor( section: AddressSection ): AddressFieldDef[] {
 	return section === 'shipping' ? shippingAddressFields() : billingAddressFields();
 }
 
@@ -35,7 +33,7 @@ function collectFieldKeys(
 	const keys: string[] = [];
 
 	for ( const block of getBlocks( rootClientId ) ) {
-		if ( block.name === 'yaycheckout/field' && block.clientId !== excludeId ) {
+		if ( block.name === metadata.name && block.clientId !== excludeId ) {
 			const key = block.attributes?.fieldKey;
 			if ( typeof key === 'string' && key !== '' ) {
 				keys.push( key );
@@ -60,8 +58,8 @@ interface FieldAttributes {
 	autocomplete: string;
 	validate: string[];
 	width: string;
-	collapseBehindLink?: boolean;
-	revealText: string;
+	disclosure?: DisclosureMode;
+	disclosureText: string;
 }
 
 interface EditProps {
@@ -85,21 +83,15 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		required,
 		requiredMark = '',
 		optionalText = '',
-		collapseBehindLink,
-		revealText = '',
+		disclosure,
+		disclosureText = '',
 	} = attributes;
 	const { addressSection, usedKeys } = useSelect(
 		( select ) => {
 			const { getBlockParents, getBlockName, getBlocks } = select( blockEditorStore );
 			const parents = getBlockParents( clientId );
-			const sectionId = [ ...parents ].reverse().find( ( id ) =>
-				Object.prototype.hasOwnProperty.call( ADDRESS_PARENTS, getBlockName( id ) )
-			);
-			const sectionName = sectionId ? getBlockName( sectionId ) : '';
-			const section =
-				sectionName === 'yaycheckout/billing' || sectionName === 'yaycheckout/shipping'
-					? ADDRESS_PARENTS[ sectionName ]
-					: null;
+			const sectionId = [ ...parents ].reverse().find( ( id ) => addressSectionOf( getBlockName( id ) ) !== null );
+			const section = sectionId ? addressSectionOf( getBlockName( sectionId ) ) : null;
 			const taken = sectionId
 				? collectFieldKeys(
 						getBlocks as ( rootClientId?: string ) => EditorBlock[],
@@ -142,7 +134,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	const labelPlaceholder = fieldKey || __( 'Field', 'yaycheckout' );
 	// A hidden input has nothing for the shopper to open.
 	const canCollapse = type !== 'hidden';
-	const collapsed = canCollapse && isCollapsed( fieldKey, isEmail || required, collapseBehindLink );
+	const mode = canCollapse ? disclosureMode( fieldKey, isEmail || required, disclosure ) : 'none';
 
 	return (
 		<>
@@ -161,26 +153,14 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 							} }
 						/>
 					) }
-					<TextControl
-						label={ __( 'Label', 'yaycheckout' ) }
-						value={ decodeEntities( label ) }
-						onChange={ ( value ) => setAttributes( { label: value } ) }
+					<FieldTextControls
+						label={ label }
+						placeholder={ placeholder }
+						description={ description }
+						setAttributes={ setAttributes }
+						showPlaceholder={ ! NO_PLACEHOLDER_TYPES.includes( type ) }
+						showHelp={ type !== 'hidden' }
 					/>
-					{ ! NO_PLACEHOLDER_TYPES.includes( type ) && (
-						<TextControl
-							label={ __( 'Placeholder', 'yaycheckout' ) }
-							value={ placeholder }
-							onChange={ ( value ) => setAttributes( { placeholder: value } ) }
-						/>
-					) }
-					{ type !== 'hidden' && (
-						<TextControl
-							label={ __( 'Help text', 'yaycheckout' ) }
-							help={ __( 'Shown under the field while the shopper fills it in.', 'yaycheckout' ) }
-							value={ description }
-							onChange={ ( value ) => setAttributes( { description: value } ) }
-						/>
-					) }
 					<RequiredIndicatorControls
 						required={ isEmail || required }
 						requiredMark={ requiredMark }
@@ -196,22 +176,19 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
 					/>
 					{ canCollapse && (
-						<RevealLinkControls
+						<DisclosureControls
 							fieldKey={ fieldKey }
 							label={ label || labelPlaceholder }
 							required={ isEmail || required }
-							collapseBehindLink={ collapseBehindLink }
-							revealText={ revealText }
+							disclosure={ disclosure }
+							disclosureText={ disclosureText }
 							setAttributes={ setAttributes }
 						/>
 					) }
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<RevealLinkPreview
-					collapsed={ collapsed }
-					text={ revealText || defaultRevealText( fieldKey, label || labelPlaceholder ) }
-				>
+				<DisclosurePreview mode={ mode } fieldKey={ fieldKey } label={ label || labelPlaceholder } disclosureText={ disclosureText }>
 					<FieldPreview
 						label={ label }
 						onLabelChange={ ( value ) => setAttributes( { label: value } ) }
@@ -224,7 +201,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						description={ description }
 						inheritLabelFont
 					/>
-				</RevealLinkPreview>
+				</DisclosurePreview>
 			</div>
 		</>
 	);

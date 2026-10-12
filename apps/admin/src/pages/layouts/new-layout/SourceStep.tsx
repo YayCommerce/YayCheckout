@@ -1,7 +1,7 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 import { __ } from '@wordpress/i18n';
 
-import type { NewLayoutFormValues } from '@/lib/schema/layout.schema';
+import { layoutNameSchema, type NewLayoutFormValues } from '@/lib/schema/layout.schema';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
@@ -9,7 +9,7 @@ import { FormField } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { NameField } from '@/pages/layouts/new-layout/NameField';
 
-/** Name and source. Choosing From library moves straight to the library step; Create draft here makes a blank layout. */
+/** Name and source. Choosing From library moves straight to the library step; Create layout here makes a blank layout. */
 export function SourceStep({
   onChooseLibrary,
   onCancel,
@@ -24,7 +24,7 @@ export function SourceStep({
   const { control } = useFormContext<NewLayoutFormValues>();
   const name = useWatch<NewLayoutFormValues, 'name'>({ control, name: 'name' });
 
-  const disabled = '' === (name ?? '').trim();
+  const disabled = !layoutNameSchema.safeParse(name).success;
 
   return (
     <div className="flex flex-col gap-5">
@@ -82,7 +82,7 @@ export function SourceStep({
             {__('Cancel', 'yaycheckout')}
           </Button>
           <Button type="submit" disabled={disabled || isPending}>
-            {isPending ? __('Creating…', 'yaycheckout') : __('Create draft', 'yaycheckout')}
+            {isPending ? __('Creating…', 'yaycheckout') : __('Create layout', 'yaycheckout')}
           </Button>
         </div>
       </DialogFooter>

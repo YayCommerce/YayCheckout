@@ -16,15 +16,25 @@ if ( function_exists( 'yaycheckout_step_index' ) ) {
     yaycheckout_step_index( true );
 }
 
-$yaycheckout_layout  = isset( $attributes['layout'] ) && 'single' === $attributes['layout'] ? 'single' : 'list';
-$yaycheckout_wrapper = get_block_wrapper_attributes(
-    [
-        'class'                 => 'yaycheckout-steps',
-        'data-layout'           => $yaycheckout_layout,
-        'data-required-message' => __( 'Please fill out this field.', 'yaycheckout' ),
-        'data-select-message'   => __( 'Please choose an option.', 'yaycheckout' ),
-    ]
-);
+// Mirrors steps/block.json "layout" enum; anything else is the default, accordion.
+$yaycheckout_layout = in_array( $attributes['layout'] ?? '', [ 'accordion', 'one-at-a-time', 'timeline' ], true ) ? $attributes['layout'] : 'accordion';
+
+$yaycheckout_wrapper_attrs = [
+    'class'                 => 'yaycheckout-steps',
+    'data-layout'           => $yaycheckout_layout,
+    'data-required-message' => __( 'Please fill out this field.', 'yaycheckout' ),
+    'data-select-message'   => __( 'Please choose an option.', 'yaycheckout' ),
+];
+
+// A layout saved before the setting has no value: headings show.
+if ( false === ( $attributes['showHeadings'] ?? true ) ) {
+    $yaycheckout_wrapper_attrs['data-headings'] = 'hidden';
+}
+
+// Block spacing.
+$yaycheckout_wrapper_attrs['class'] .= \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/steps', 'yaycheckout-steps' );
+
+$yaycheckout_wrapper = get_block_wrapper_attributes( $yaycheckout_wrapper_attrs );
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>

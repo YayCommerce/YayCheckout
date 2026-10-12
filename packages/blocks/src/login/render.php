@@ -19,10 +19,8 @@ if ( ! \YayCheckout\Renderer\CheckoutLogin::reminder_shown() ) {
     return;
 }
 
-$yaycheckout_text        = isset( $attributes['text'] ) && is_string( $attributes['text'] ) && '' !== $attributes['text']
-    ? $attributes['text']
-    : __( 'Returning customers? Log in', 'yaycheckout' );
-$yaycheckout_link_text   = isset( $attributes['linkText'] ) && is_string( $attributes['linkText'] ) ? $attributes['linkText'] : '';
+$yaycheckout_text        = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'text', __( 'Returning customers? Log in', 'yaycheckout' ) );
+$yaycheckout_link_text   = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'linkText' );
 $yaycheckout_behavior    = isset( $attributes['behavior'] ) && 'page' === $attributes['behavior'] ? 'page' : 'modal';
 $yaycheckout_parts       = \YayCheckout\Renderer\CheckoutLogin::trigger_parts( $yaycheckout_text );
 $yaycheckout_plain       = html_entity_decode( wp_strip_all_tags( $yaycheckout_text ), ENT_QUOTES, 'UTF-8' );
@@ -37,13 +35,14 @@ $yaycheckout_href      = function_exists( 'wc_get_checkout_url' ) ? wp_login_url
 $yaycheckout_login_url = class_exists( 'WC_AJAX' ) ? WC_AJAX::get_endpoint( 'yaycheckout_login' ) : '';
 $yaycheckout_state_url = class_exists( 'WC_AJAX' ) ? WC_AJAX::get_endpoint( 'yaycheckout_login_state' ) : '';
 $yaycheckout_trigger   = \YayCheckout\Renderer\CheckoutLogin::TRIGGER_CLASS;
-$yaycheckout_wrapper   = get_block_wrapper_attributes(
+$yaycheckout_wrapper   = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
     array(
         'class'          => 'yaycheckout-login',
         'data-behavior'  => $yaycheckout_behavior,
         'data-login-url' => $yaycheckout_login_url,
         'data-state-url' => $yaycheckout_state_url,
-    )
+    ),
+    $attributes
 );
 
 ?>

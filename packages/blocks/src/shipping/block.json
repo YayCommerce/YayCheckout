@@ -34,16 +34,27 @@
     "showTitle": {
       "type": "boolean",
       "default": true
-    },
-    "shipToDifferent": {
-      "type": "boolean",
-      "default": true
     }
   },
   "supports": {
     "html": false,
     "multiple": false,
-    "reusable": false
+    "reusable": false,
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true,
+      "blockGap": true
+    }
   },
   "editorScript": "file:./index.js",
   "render": "file:./render.php"

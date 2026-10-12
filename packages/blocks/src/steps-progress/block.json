@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/steps-progress",
+  "title": "Steps Progress",
+  "category": "yaycheckout",
+  "description": "Shows which checkout step is open, in one of several styles. Titles come from the Steps block.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "steps", "progress", "indicator" ],
+  "example": {},
+  "attributes": {
+    "variant": {
+      "type": "string",
+      "default": "circles",
+      "enum": [ "circles", "dots", "segments", "bar", "text" ]
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false,
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "viewScript": "file:./view.js",
+  "style": "file:./style-index.css",
+  "render": "file:./render.php"
+}

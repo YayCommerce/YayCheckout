@@ -2,18 +2,23 @@
 namespace YayCheckout\Engine\Admin;
 
 use YayCheckout\Models\Layout;
+use YayCheckout\Models\LayoutDesign;
+use YayCheckout\Renderer\CheckoutBaseStyles;
+use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Gives the layout editor's canvas the storefront's full width and no title field,
- * and takes the document bar and the Publish date row out of the editor around it.
+ * Gives the layout editor's canvas the storefront's full width, base stylesheet and
+ * Design tokens and no title field, and takes the document bar, the Publish date row
+ * and core's save and status controls out of the editor around it.
  *
  * A layout is the whole checkout page, so the theme's content width, wide width
  * and root padding don't apply to it. Its name is set when it is created, so the
  * canvas shows no title to edit, and the document bar only repeats that name. The
- * manager publishes layouts, so the editor offers no publish date to schedule.
+ * manager and the editor's Activate own a layout's status, so the editor offers no
+ * publish date to schedule and no status to pick.
  */
 class LayoutEditorCanvas {
 
@@ -42,21 +47,56 @@ class LayoutEditorCanvas {
 	display: none;
 }';
 
-    /** The Publish row has no class of its own, only the schedule dropdown inside it. */
+    /**
+     * The Publish and Status rows have no class of their own, only the dropdown inside each.
+     * WordPress 6.5 has no Status row: its Visibility row and its Pending review checkbox (the
+     * Summary panel's only checkbox, since layouts support neither sticky nor formats) take its place.
+     * Core's save and status controls hide only once layout-actions.tsx has mounted its own
+     * buttons and tagged the body, so a header it can't find still leaves core's.
+     */
     private const EDITOR_CSS = '.editor-document-bar,
 .editor-post-panel__row:has(.editor-post-schedule__panel-dropdown) {
+	display: none;
+}
+body.yaycheckout-has-layout-actions :is(
+	.editor-post-publish-button__button,
+	.editor-post-publish-panel__toggle,
+	.editor-post-save-draft,
+	.editor-post-saved-state,
+	.editor-post-switch-to-draft,
+	.editor-post-panel__row:has(.editor-post-status),
+	.editor-post-panel__row:has(.edit-post-post-visibility__toggle),
+	.edit-post-post-status .editor-post-panel__row:has(.components-checkbox-control)
+) {
 	display: none;
 }';
 
     protected function __construct() {
         add_filter( 'block_editor_settings_all', [ $this, 'canvas_styles' ], 10, 2 );
         add_action( 'admin_enqueue_scripts', [ $this, 'editor_styles' ] );
+        // The hook core collects into the iframed canvas.
+        add_action( 'enqueue_block_assets', [ $this, 'canvas_base_styles' ] );
+    }
+
+    /** The storefront's base stylesheet and the edited layout's design tokens, without the merchant's custom CSS. */
+    public function canvas_base_styles(): void {
+        if ( ! $this->is_layout_editor() ) {
+            return;
+        }
+
+        $layout = ( new LayoutRepository() )->find( (int) get_the_ID() );
+
+        ( new CheckoutBaseStyles() )->enqueue( false, null !== $layout ? $layout->design : LayoutDesign::from_meta( [] ) );
+    }
+
+    private function is_layout_editor(): bool {
+        $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+        return null !== $screen && $screen->is_block_editor() && Layout::POST_TYPE === $screen->post_type;
     }
 
     public function editor_styles(): void {
-        $screen = get_current_screen();
-
-        if ( null === $screen || ! $screen->is_block_editor() || Layout::POST_TYPE !== $screen->post_type ) {
+        if ( ! $this->is_layout_editor() ) {
             return;
         }
 
@@ -71,7 +111,7 @@ class LayoutEditorCanvas {
      * @return array
      */
     public function canvas_styles( array $settings, $context ): array {
-        if ( ! $context->post instanceof \WP_Post || Layout::POST_TYPE !== $context->post->post_type ) {
+        if ( ! LayoutRepository::is_layout( $context->post ) ) {
             return $settings;
         }
 

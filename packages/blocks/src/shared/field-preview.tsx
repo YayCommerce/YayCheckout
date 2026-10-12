@@ -55,7 +55,7 @@ export function FieldPreview( {
 	const usableOptions = options.filter( ( option ) => option.label !== '' || option.value !== '' );
 
 	return (
-		<div className="yaycheckout-field-preview">
+		<div className="yaycheckout-field-preview form-row">
 			<LabelTag
 				className={
 					'yaycheckout-field-preview__label' +
@@ -75,17 +75,17 @@ export function FieldPreview( {
 					label
 				) }
 				{ required ? (
-					<span className="yaycheckout-field-preview__required">{ requiredMark || '*' }</span>
+					<span className="required">{ requiredMark || '*' }</span>
 				) : (
-					<span className="yaycheckout-field-preview__optional">
+					<span className="optional">
 						({ optionalText || 'optional' })
 					</span>
 				) }
 			</LabelTag>
 			{ type === 'textarea' ? (
-				<textarea readOnly rows={ 3 } placeholder={ placeholder } className="yaycheckout-field-preview__input" />
+				<textarea readOnly rows={ 3 } placeholder={ placeholder } className="input-text" />
 			) : type === 'select' ? (
-				<select disabled className="yaycheckout-field-preview__input">
+				<select disabled>
 					{ usableOptions.length === 0 ? (
 						<option>{ placeholder || label || labelPlaceholder }</option>
 					) : (
@@ -127,10 +127,10 @@ export function FieldPreview( {
 					type={ previewInputType( type ) }
 					readOnly
 					placeholder={ placeholder }
-					className="yaycheckout-field-preview__input"
+					className="input-text"
 				/>
 			) }
-			{ description !== '' && <p className="yaycheckout-field-preview__description">{ description }</p> }
+			{ description !== '' && <p className="description">{ description }</p> }
 		</div>
 	);
 }

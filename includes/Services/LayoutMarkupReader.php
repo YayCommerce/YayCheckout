@@ -10,11 +10,15 @@ defined( 'ABSPATH' ) || exit;
  */
 class LayoutMarkupReader {
 
-    private const CHECKOUT    = 'yaycheckout/checkout';
-    private const EMAIL       = 'yaycheckout/email';
-    private const FIELD       = 'yaycheckout/field';
-    private const EXTRA_FIELD = 'yaycheckout/extra-field';
-    private const SLOT        = 'yaycheckout/slot';
+    private const CHECKOUT          = 'yaycheckout/checkout';
+    private const EMAIL             = 'yaycheckout/email';
+    public const FIELD              = 'yaycheckout/field';
+    private const EXTRA_FIELD       = 'yaycheckout/extra-field';
+    private const ORDER_NOTE        = 'yaycheckout/order-note';
+    private const SLOT              = 'yaycheckout/slot';
+    public const BILLING            = 'yaycheckout/billing';
+    public const SHIPPING           = 'yaycheckout/shipping';
+    private const DIFFERENT_ADDRESS = 'yaycheckout/different-address';
 
     /**
      * A Key is a posted field name and an order meta key. PHP rewrites spaces
@@ -24,11 +28,14 @@ class LayoutMarkupReader {
      */
     public const EXTRA_FIELD_KEY_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9_]*$/';
 
+    /** WooCommerce's posted name for the order note, which the Order note block prints. */
+    public const ORDER_NOTE_KEY = 'order_comments';
+
     /** Section block => slot name it occupies. */
     private const SECTION_SLOTS = [
         self::EMAIL                    => 'email',
-        'yaycheckout/billing'          => 'billing',
-        'yaycheckout/shipping'         => 'shipping',
+        self::BILLING                  => 'billing',
+        self::SHIPPING                 => 'shipping',
         'yaycheckout/shipping-methods' => 'shipping_methods',
         'yaycheckout/express-pay'      => 'express_pay',
         'yaycheckout/payment'          => 'payment',
@@ -87,15 +94,8 @@ class LayoutMarkupReader {
                 continue;
             }
 
-            $fields[ $key ] = [
-                'fieldKey'     => $key,
-                'type'         => self::text( $attrs, 'type', 'text' ),
-                'label'        => self::plain_text( $attrs, 'label' ),
-                'placeholder'  => self::text( $attrs, 'placeholder' ),
+            $fields[ $key ] = self::field_entry( $key, self::text( $attrs, 'type', 'text' ), $attrs ) + [
                 'description'  => self::text( $attrs, 'description' ),
-                'required'     => ! empty( $attrs['required'] ),
-                'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
-                'optionalText' => trim( self::text( $attrs, 'optionalText' ) ),
                 'enabled'      => true,
                 'autocomplete' => self::text( $attrs, 'autocomplete' ),
                 'validate'     => isset( $attrs['validate'] ) && is_array( $attrs['validate'] ) ? array_values( array_map( 'strval', $attrs['validate'] ) ) : [],
@@ -123,20 +123,88 @@ class LayoutMarkupReader {
             }
 
             $attrs          = $block['attrs'];
-            $fields[ $key ] = [
-                'fieldKey'     => $key,
-                'type'         => self::text( $attrs, 'type', 'text' ),
-                'label'        => self::plain_text( $attrs, 'label' ),
-                'placeholder'  => self::text( $attrs, 'placeholder' ),
-                'required'     => ! empty( $attrs['required'] ),
-                'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
-                'optionalText' => trim( self::text( $attrs, 'optionalText' ) ),
-                'options'      => self::options( $attrs['options'] ?? [] ),
-                'remember'     => ! empty( $attrs['rememberValue'] ),
+            $fields[ $key ] = self::field_entry( $key, self::text( $attrs, 'type', 'text' ), $attrs ) + [
+                'options'  => self::options( $attrs['options'] ?? [] ),
+                'remember' => ! empty( $attrs['rememberValue'] ),
             ];
         }
 
         return $fields;
+    }
+
+    /**
+     * The Order note block as a field entry for WooCommerce's order_comments, with the keys of
+     * fields()' entries that a note has; null when the layout has none. The block allows one, so the first wins.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function order_note( string $markup ): ?array {
+        $block = self::first_block( $markup, self::ORDER_NOTE );
+
+        if ( null === $block ) {
+            return null;
+        }
+
+        return self::field_entry( self::ORDER_NOTE_KEY, 'textarea', $block['attrs'] ) + [
+            'description' => self::text( $block['attrs'], 'description' ),
+        ];
+    }
+
+    /**
+     * The first block named $name, at any depth, in document order; null when the layout has none.
+     *
+     * @return array|null A parsed block, attrs always an array.
+     */
+    public static function first_block( string $markup, string $name ): ?array {
+        foreach ( self::blocks( $markup ) as $block ) {
+            if ( $name === $block['blockName'] ) {
+                return $block;
+            }
+        }
+
+        return null;
+    }
+
+    /** Whether the layout has a Checkout block, without parsing it. */
+    public static function has_checkout( string $markup ): bool {
+        return has_block( self::CHECKOUT, $markup );
+    }
+
+    /** Whether the layout has an Order note block, without parsing it. */
+    public static function has_order_note( string $markup ): bool {
+        return has_block( self::ORDER_NOTE, $markup );
+    }
+
+    /** Whether the layout has a Billing section, without parsing it. */
+    public static function has_billing( string $markup ): bool {
+        return has_block( self::BILLING, $markup );
+    }
+
+    /** Whether the layout has a Shipping section, without parsing it. */
+    public static function has_shipping( string $markup ): bool {
+        return has_block( self::SHIPPING, $markup );
+    }
+
+    /** Whether the layout has a Different address block, without parsing it. */
+    public static function has_different_address( string $markup ): bool {
+        return has_block( self::DIFFERENT_ADDRESS, $markup );
+    }
+
+    /**
+     * The entry keys every field reader shares: what the shopper sees and whether it is required.
+     *
+     * @param array $attrs Raw block attributes.
+     */
+    private static function field_entry( string $key, string $type, array $attrs ): array {
+        return [
+            'fieldKey'     => $key,
+            'type'         => $type,
+            'label'        => self::plain_text( $attrs, 'label' ),
+            'placeholder'  => self::text( $attrs, 'placeholder' ),
+            'required'     => ! empty( $attrs['required'] ),
+            'requiredMark' => trim( self::text( $attrs, 'requiredMark' ) ),
+            'optionalText' => trim( self::text( $attrs, 'optionalText' ) ),
+        ];
     }
 
     /**
@@ -150,13 +218,13 @@ class LayoutMarkupReader {
     }
 
     /**
-     * Why the layout cannot be published, or '' when it can. JavaScript copies of these rules live in
+     * Why the layout cannot be activated, or saved while live, or '' when it can. JavaScript copies of these rules live in
      * packages/blocks/src/checkout/publish-guard.ts, packages/blocks/src/shared/extra-field-keys.ts
      * and packages/blocks/src/extra-field/edit.tsx; change them together.
      */
     public static function publish_error( string $markup ): string {
-        if ( ! has_block( self::CHECKOUT, $markup ) ) {
-            return __( 'Add a Checkout block to this layout before publishing it.', 'yaycheckout' );
+        if ( ! self::has_checkout( $markup ) ) {
+            return __( 'Add a Checkout block to this layout before activating it.', 'yaycheckout' );
         }
 
         $keys = [];
@@ -168,7 +236,7 @@ class LayoutMarkupReader {
         }
 
         if ( in_array( '', $keys, true ) ) {
-            return __( 'Every extra field needs a Key before this layout can be published.', 'yaycheckout' );
+            return __( 'Every extra field needs a Key before this layout can be activated.', 'yaycheckout' );
         }
 
         $malformed = array_values( array_unique( preg_grep( self::EXTRA_FIELD_KEY_PATTERN, $keys, PREG_GREP_INVERT ) ) );

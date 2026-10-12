@@ -2,11 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Plus, Search } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
-import { useDebounceFn } from 'rooks';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
-import { formatDateTime } from '@/lib/helpers/date.helper';
 import { editLayoutIdFrom, withEditLayout } from '@/lib/helpers/layout.helper';
 import { isPro } from '@/lib/plan';
 import {
@@ -29,6 +27,7 @@ import {
   type PreviewLink,
 } from '@/lib/schema/layout.schema';
 import { cn } from '@/lib/utils';
+import { useDebouncedSearch } from '@/hooks/useDebouncedSearch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,14 +44,15 @@ import { Pagination } from '@/components/ui/pagination';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { LayoutStatusBadge } from '@/components/shared/LayoutStatusBadge';
 import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
 import { AssignmentChips } from '@/pages/layouts/assignment/AssignmentChips';
 import { AssignmentDrawer } from '@/pages/layouts/assignment/AssignmentDrawer';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { DeleteModal } from '@/pages/layouts/DeleteModal';
-import { LayoutStatusBadge } from '@/pages/layouts/LayoutStatusBadge';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import { PreviewLinkModal } from '@/pages/layouts/PreviewLinkModal';
+import { RenameModal } from '@/pages/layouts/RenameModal';
 import { SetActiveModal } from '@/pages/layouts/SetActiveModal';
 import PageLayout from '@/pages/PageLayout';
 
@@ -63,31 +63,16 @@ const MIN_ITEMS_FOR_LIST_CONTROLS = 10;
 export default function LayoutsPage() {
   const [view, setView] = useState<View>('listed');
   const [pageIndex, setPageIndex] = useState(0);
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  // useDebounceFn has no cancel; the trailing callback checks this ref to drop a stale value.
-  const searchInputRef = useRef('');
-
-  // Page reset happens in the same update as the filter change: a separate
-  // effect would first fetch a page that may not exist under the new filter.
-  const [applySearch] = useDebounceFn((value: string) => {
-    if (value !== searchInputRef.current) return;
-
-    setSearch(value);
-    setPageIndex(0);
-  }, 300);
-
-  function onSearchInputChange(value: string) {
-    searchInputRef.current = value;
-    setSearchInput(value);
-    applySearch(value);
-  }
+  const {
+    input: searchInput,
+    search,
+    setInput: onSearchInputChange,
+    reset: resetSearch,
+  } = useDebouncedSearch(() => setPageIndex(0));
 
   function onViewChange(next: View) {
-    searchInputRef.current = '';
     setView(next);
-    setSearchInput('');
-    setSearch('');
+    resetSearch();
     setPageIndex(0);
   }
 
@@ -110,7 +95,7 @@ export default function LayoutsPage() {
   return (
     <PageLayout
       heading={__('Layouts', 'yaycheckout')}
-      description={__('Create, publish and activate checkout layouts.', 'yaycheckout')}
+      description={__('Create and activate checkout layouts.', 'yaycheckout')}
     >
       {/* isPending fires only on first load; keepPreviousData turns later fetches into isFetching. */}
       {isPending && <LayoutsPageSkeleton />}
@@ -181,6 +166,7 @@ function LayoutsPageBody({
   const lastEditingLayoutId = useRef(editingLayoutId);
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
+  const [renamingLayout, setRenamingLayout] = useState<LayoutSummary | null>(null);
   const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
   const [deletingLayout, setDeletingLayout] = useState<LayoutSummary | null>(null);
   const [assigningLayout, setAssigningLayout] = useState<LayoutSummary | null>(null);
@@ -212,15 +198,20 @@ function LayoutsPageBody({
     });
   }
 
+  /** After a row leaves the list: when it was the last on a later page, that page no longer exists. */
+  function stepBackIfPageEmptied() {
+    if (listData?.items.length === 1 && pageIndex > 0) {
+      onPageIndexChange(pageIndex - 1);
+    }
+  }
+
   function onArchive(layout: LayoutSummary) {
     archiveMutation.mutate(layout.id, {
       onSuccess: () => {
         setArchivingLayout(null);
         toast.success(__('Layout archived.', 'yaycheckout'));
 
-        if (listData?.items.length === 1 && pageIndex > 0) {
-          onPageIndexChange(pageIndex - 1);
-        }
+        stepBackIfPageEmptied();
       },
     });
   }
@@ -230,9 +221,7 @@ function LayoutsPageBody({
       onSuccess: () => {
         toast.success(__('Layout restored.', 'yaycheckout'));
 
-        if (listData?.items.length === 1 && pageIndex > 0) {
-          onPageIndexChange(pageIndex - 1);
-        }
+        stepBackIfPageEmptied();
       },
     });
   }
@@ -243,10 +232,7 @@ function LayoutsPageBody({
         setDeletingLayout(null);
         toast.success(__('Layout deleted.', 'yaycheckout'));
 
-        // The last row of a later page is gone; that page no longer exists.
-        if (listData?.items.length === 1 && pageIndex > 0) {
-          onPageIndexChange(pageIndex - 1);
-        }
+        stepBackIfPageEmptied();
       },
     });
   }
@@ -316,6 +302,7 @@ function LayoutsPageBody({
         onConfirm={onDeactivate}
         isPending={deactivateMutation.isPending}
       />
+      <RenameModal layout={renamingLayout} onOpenChange={(open) => !open && setRenamingLayout(null)} />
       <ArchiveModal
         layout={archivingLayout}
         onOpenChange={(open) => !open && setArchivingLayout(null)}
@@ -436,6 +423,7 @@ function LayoutsPageBody({
                       onRestore={onRestore}
                       onDelete={setDeletingLayout}
                       onDuplicate={onDuplicate}
+                      onRename={setRenamingLayout}
                       onAssign={setAssigningLayout}
                       onPreview={onPreview}
                       previewPending={previewLinkMutation.isPending}
@@ -538,6 +526,7 @@ function LayoutsTable({
   onRestore,
   onDelete,
   onDuplicate,
+  onRename,
   onAssign,
   onPreview,
   previewPending,
@@ -551,6 +540,7 @@ function LayoutsTable({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onRename: (layout: LayoutSummary) => void;
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
   previewPending: boolean;
@@ -562,8 +552,6 @@ function LayoutsTable({
           <TableHead>{__('Name', 'yaycheckout')}</TableHead>
           {isPro && <TableHead>{__('Assignment', 'yaycheckout')}</TableHead>}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
-          <TableHead>{__('Active', 'yaycheckout')}</TableHead>
-          <TableHead>{__('Published', 'yaycheckout')}</TableHead>
           <TableHead>{__('Actions', 'yaycheckout')}</TableHead>
         </TableRow>
       </TableHeader>
@@ -580,6 +568,7 @@ function LayoutsTable({
             onRestore={onRestore}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
+            onRename={onRename}
             onAssign={onAssign}
             onPreview={onPreview}
             previewPending={previewPending}
@@ -600,6 +589,7 @@ function LayoutTableRow({
   onRestore,
   onDelete,
   onDuplicate,
+  onRename,
   onAssign,
   onPreview,
   previewPending,
@@ -613,6 +603,7 @@ function LayoutTableRow({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onRename: (layout: LayoutSummary) => void;
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
   previewPending: boolean;
@@ -630,12 +621,6 @@ function LayoutTableRow({
       <TableCell>
         <LayoutStatusBadge layout={layout} />
       </TableCell>
-      <TableCell className="font-mono text-xs">
-        {layout.isActive ? <Badge variant="success">{__('Active', 'yaycheckout')}</Badge> : '—'}
-      </TableCell>
-      <TableCell className="font-mono text-xs">
-        {formatDateTime(layout.publishedAt) || __('never', 'yaycheckout')}
-      </TableCell>
       <TableCell>
         <LayoutRowActions
           layout={layout}
@@ -647,6 +632,7 @@ function LayoutTableRow({
           onRestore={onRestore}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
+          onRename={onRename}
           onAssign={onAssign}
           onPreview={onPreview}
           previewPending={previewPending}
@@ -667,6 +653,7 @@ function LayoutRowActions({
   onRestore,
   onDelete,
   onDuplicate,
+  onRename,
   onAssign,
   onPreview,
   previewPending,
@@ -680,6 +667,7 @@ function LayoutRowActions({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
+  onRename: (layout: LayoutSummary) => void;
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
   /** One link mints at a time; every Preview button waits. */
@@ -721,6 +709,7 @@ function LayoutRowActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={() => onAssign(layout)}>{__('Assignment', 'yaycheckout')}</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onRename(layout)}>{__('Rename', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
             {__('Deactivate', 'yaycheckout')}

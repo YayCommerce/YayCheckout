@@ -15,6 +15,10 @@
   },
   "ancestor": [ "yaycheckout/billing", "yaycheckout/shipping" ],
   "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
     "fieldKey": {
       "type": "string",
       "default": ""
@@ -61,16 +65,18 @@
       "enum": [ "full", "half" ],
       "default": "full"
     },
-    "collapseBehindLink": {
-      "type": "boolean"
+    "disclosure": {
+      "type": "string",
+      "enum": [ "none", "link", "collapsible", "checkbox" ]
     },
-    "revealText": {
+    "disclosureText": {
       "type": "string",
       "default": ""
     }
   },
   "supports": {
     "html": false,
+    "yaycheckoutWatchable": true,
     "reusable": false,
     "color": {
       "text": true,

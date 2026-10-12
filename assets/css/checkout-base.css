@@ -1,0 +1,493 @@
+/*
+ * YayCheckout's base for the checkout layout, on the storefront and in the layout editor canvas
+ * (Renderer\CheckoutBaseStyles). WooCommerce's woocommerce-general is dequeued, so this styles
+ * the markup that several blocks, or WooCommerce itself, print. Markup only one block prints is
+ * styled in that block's style.css. Values come from the layout's design tokens (DesignStyles) with
+ * neutral fallbacks that take the theme's font and colour; block supports override per instance.
+ *
+ * Selectors are .yaycheckout-checkout plus a class or more, so they beat a theme's
+ * input[type="text"] (0,1,1). Things WooCommerce or select2 append outside the form are
+ * scoped to body.yaycheckout-page. No @layer: unlayered theme CSS would beat it.
+ */
+
+/*
+ * Neutral fallbacks, resolved once. A layout's empty token leaves its property unset, so these
+ * follow the theme: its primary preset (then #3858e9, Classic two-column's primary), a border
+ * mixed from the text colour, a 2px corner. Block CSS reads the same names.
+ */
+:root,
+.editor-styles-wrapper {
+	--yaycheckout-neutral-radius: 2px;
+	--yaycheckout-primary-color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
+	--yaycheckout-border-color: var(--yaycheckout-color-border, color-mix(in srgb, currentColor 45%, transparent));
+	--yaycheckout-field-radius: var(--yaycheckout-input-radius, var(--yaycheckout-neutral-radius));
+	/* White check drawn on a filled circle: Steps, Steps Progress and the Cards with checkmark layouts. */
+	--yaycheckout-check-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+}
+
+/* The theme's layout limits stop at the checkout: the layout's own blocks set any width. */
+body.yaycheckout-page {
+	margin-left: 0;
+	margin-right: 0;
+	padding-left: 0;
+	padding-right: 0;
+	max-width: none;
+}
+
+body.yaycheckout-page > .wp-site-blocks,
+.woocommerce.yaycheckout-page {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: none;
+	margin-left: 0;
+	margin-right: 0;
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.woocommerce.yaycheckout-page {
+	--wp--style--global--content-size: 100%;
+	--wp--style--global--wide-size: 100%;
+	--wp--style--root--padding-left: 0px;
+	--wp--style--root--padding-right: 0px;
+}
+
+/* A Group, Columns or Column whose watched blocks are all empty (HideWhenEmpty::HIDDEN_CLASS); beats its layout display. */
+.yaycheckout-hidden-when-empty {
+	display: none !important;
+}
+
+/*
+ * Classic themes (Storefront) float WooCommerce's order review into a right-hand column of
+ * their own; the layout places it. No block setting can undo a theme's float. Their margins are 0 too,
+ * since Order Summary's Block spacing places them and themes style them by id.
+ */
+.yaycheckout-checkout #order_review_heading,
+.yaycheckout-checkout #order_review {
+	float: none;
+	width: auto;
+	margin-block: 0;
+}
+
+/*
+ * Field rows. A Field or Email block wraps WooCommerce's p.form-row in a div.form-row of its
+ * own, so the gap goes on the outer row only. Classic themes float the half-width rows; the
+ * layout's Columns place fields side by side instead.
+ */
+.yaycheckout-checkout .form-row {
+	margin-block: 0 12px;
+	padding: 0;
+}
+
+.yaycheckout-checkout .form-row .form-row {
+	margin: 0;
+}
+
+.yaycheckout-checkout :is(.form-row-first, .form-row-last, .form-row-wide) {
+	float: none;
+	width: auto;
+}
+
+.yaycheckout-checkout .form-row :is(label, .yaycheckout-field-preview__label) {
+	display: block;
+	margin-block: 0 4px;
+	font-weight: 500;
+	line-height: 1.4;
+}
+
+/* Checkbox rows keep the box beside their text. */
+.yaycheckout-checkout .form-row label:is(.checkbox, .woocommerce-form__label-for-checkbox),
+.yaycheckout-checkout .form-row label:has(> input[type="checkbox"]) {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: inherit;
+}
+
+/* RequiredIndicator::span() and WooCommerce's own mark. */
+.yaycheckout-checkout .form-row :is(.required, abbr.required) {
+	margin-inline-start: 2px;
+	border: 0;
+	color: var(--wc-red, #cc1818);
+	font-weight: inherit;
+	text-decoration: none;
+}
+
+.yaycheckout-checkout .form-row .optional {
+	margin-inline-start: 2px;
+	font-weight: 400;
+	opacity: 0.7;
+}
+
+/*
+ * Help text shows inline under its field instead of as WooCommerce's focus popup. WooCommerce
+ * toggles this span with jQuery slideUp()/slideDown(), which write height, overflow, padding,
+ * margin and display inline; the !important declarations only outrank those inline styles.
+ * The editor's field preview prints the same classes.
+ */
+.yaycheckout-checkout .form-row .description {
+	display: block !important;
+	height: auto !important;
+	overflow: visible !important;
+	padding: 0 !important;
+	margin: 0.25em 0 0 !important;
+	position: static;
+	background: none;
+	color: inherit;
+	border-radius: 0;
+	font-size: 0.875em;
+	opacity: 0.75;
+}
+
+.yaycheckout-checkout .form-row .description::before {
+	display: none;
+}
+
+/* The toggle Disclosure::open() prints in front of a hidden Field, Extra field or Coupon form. */
+.yaycheckout-checkout .yaycheckout-disclosure__toggle {
+	background: none;
+	border: 0;
+	padding: 0;
+	margin-top: 0.25em;
+	font: inherit;
+	color: var(--wp--style--color--link, currentColor);
+	cursor: pointer;
+}
+
+/* Collapsible: a full-width header that opens and closes the panel below it. */
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="collapsible"] {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	width: 100%;
+	color: inherit;
+	font-weight: 600;
+	text-align: start;
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__chevron {
+	flex: none;
+	width: 1.25em;
+	height: 1.25em;
+	fill: currentColor;
+	transition: transform 0.15s ease;
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[aria-expanded="true"] .yaycheckout-disclosure__chevron {
+	transform: rotate(180deg);
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="collapsible"] + .yaycheckout-disclosure__panel {
+	padding-top: 0.5em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.yaycheckout-checkout .yaycheckout-disclosure__chevron {
+		transition: none;
+	}
+}
+
+/* Checkbox: ticking shows the panel below, unticking hides it again. */
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="checkbox"] {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	color: inherit;
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__checkbox {
+	margin: 0;
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="checkbox"] + .yaycheckout-disclosure__panel {
+	padding-top: 0.5em;
+}
+
+/* A theme's button or div display rule would otherwise beat the hidden attribute. */
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[hidden],
+.yaycheckout-checkout .yaycheckout-disclosure__panel[hidden] {
+	display: none;
+}
+
+/*
+ * Text inputs, selects, textareas, the coupon code and the select2 box all draw as one input.
+ * A section left at theme default leaves its token unset, so the fallback applies: the theme's
+ * font and text colour, a border mixed from the text colour, a transparent background.
+ */
+.yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code),
+.yaycheckout-checkout .select2-container .select2-selection--single {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: var(--yaycheckout-input-height, 40px);
+	margin: 0;
+	padding-block: 8px;
+	padding-inline: var(--yaycheckout-input-padding-inline, 12px);
+	border-style: solid;
+	border-width: var(--yaycheckout-input-border-width, 1px);
+	border-color: var(--yaycheckout-border-color);
+	border-radius: var(--yaycheckout-field-radius);
+	background-color: var(--yaycheckout-color-background, transparent);
+	box-shadow: none;
+	color: inherit;
+	font: inherit;
+	line-height: 1.4;
+}
+
+.yaycheckout-checkout textarea {
+	min-height: calc(var(--yaycheckout-input-height, 40px) * 2);
+	resize: vertical;
+}
+
+.yaycheckout-checkout :is(.input-text, textarea, .yaycheckout-coupon-form__code)::placeholder {
+	color: inherit;
+	opacity: 0.55;
+}
+
+/* select2's box: the rendered value fills it, the arrow sits at the inline end. */
+.yaycheckout-checkout .select2-container .select2-selection--single {
+	display: flex;
+	align-items: center;
+	height: auto;
+}
+
+.yaycheckout-checkout .select2-container .select2-selection--single .select2-selection__rendered {
+	flex: 1;
+	padding: 0;
+	color: inherit;
+	line-height: inherit;
+}
+
+.yaycheckout-checkout .select2-container .select2-selection--single .select2-selection__arrow {
+	top: 0;
+	bottom: 0;
+	height: auto;
+	inset-inline-end: 8px;
+}
+
+/* select2 appends its dropdown to body, outside the form. */
+body.yaycheckout-page .select2-dropdown {
+	border-color: var(--yaycheckout-border-color);
+	border-radius: var(--yaycheckout-field-radius);
+	background-color: var(--yaycheckout-color-background, #fff);
+	color: var(--yaycheckout-color-text, inherit);
+}
+
+body.yaycheckout-page .select2-search--dropdown .select2-search__field {
+	box-sizing: border-box;
+	padding: 6px 8px;
+	border: 1px solid var(--yaycheckout-border-color);
+	border-radius: var(--yaycheckout-field-radius);
+	font: inherit;
+}
+
+body.yaycheckout-page .select2-container--default .select2-results__option--highlighted {
+	background-color: var(--yaycheckout-primary-color);
+	color: #fff;
+}
+
+.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]) {
+	width: 1.1em;
+	height: 1.1em;
+	margin: 0;
+	accent-color: var(--yaycheckout-primary-color);
+}
+
+/* Focus ring in the primary colour; offset so it shows beside an underline input too. */
+.yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code):focus,
+.yaycheckout-checkout .select2-container:is(.select2-container--focus, .select2-container--open) .select2-selection--single,
+.yaycheckout-checkout :is(.button, button, input[type="checkbox"], input[type="radio"]):focus-visible {
+	outline: 2px solid var(--yaycheckout-primary-color);
+	outline-offset: 1px;
+}
+
+/* WooCommerce marks the row, not the input, when a field fails validation. */
+.yaycheckout-checkout .form-row.woocommerce-invalid :is(.input-text, select, textarea),
+.yaycheckout-checkout .form-row.woocommerce-invalid .select2-container .select2-selection--single {
+	border-color: var(--wc-red, #cc1818);
+}
+
+/* Notices: WooCommerce's classic list markup, and the banner markup it prints on block themes (wc-blocks-style draws its layout). */
+body.yaycheckout-page :is(.woocommerce-error, .woocommerce-message, .woocommerce-info) {
+	--yaycheckout-notice: var(--yaycheckout-primary-color);
+	margin: 0 0 16px;
+	padding: 12px 16px;
+	list-style: none;
+	/* Lighter than a field's border: a notice is a panel, not a control. */
+	border: 1px solid var(--yaycheckout-color-border, color-mix(in srgb, currentColor 25%, transparent));
+	border-inline-start: 4px solid var(--yaycheckout-notice);
+	border-radius: var(--yaycheckout-neutral-radius);
+	background: none;
+	color: inherit;
+}
+
+body.yaycheckout-page .woocommerce-error {
+	--yaycheckout-notice: var(--wc-red, #cc1818);
+}
+
+body.yaycheckout-page .woocommerce-message {
+	--yaycheckout-notice: #4ab866;
+}
+
+body.yaycheckout-page :is(.woocommerce-error, .woocommerce-message, .woocommerce-info) li {
+	margin: 0;
+}
+
+body.yaycheckout-page :is(.woocommerce-error, .woocommerce-message, .woocommerce-info)::before {
+	display: none;
+}
+
+body.yaycheckout-page .wc-block-components-notice-banner {
+	border-inline-start-width: 4px;
+}
+
+body.yaycheckout-page .wc-block-components-notice-banner.is-error {
+	border-color: var(--wc-red, #cc1818);
+}
+
+body.yaycheckout-page .wc-block-components-notice-banner.is-success {
+	border-color: #4ab866;
+}
+
+body.yaycheckout-page .wc-block-components-notice-banner.is-info {
+	border-color: var(--yaycheckout-primary-color);
+}
+
+/* blockUI writes the overlay's white veil inline while totals update; the spinner was woocommerce-general's. */
+body.yaycheckout-page .blockUI.blockOverlay::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 24px;
+	height: 24px;
+	margin: -12px 0 0 -12px;
+	border: 2px solid var(--yaycheckout-primary-color);
+	border-inline-end-color: transparent;
+	border-radius: 50%;
+	animation: yaycheckout-spin 0.7s linear infinite;
+}
+
+@keyframes yaycheckout-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.yaycheckout-page .blockUI.blockOverlay::before {
+		animation: none;
+	}
+}
+
+/*
+ * Buttons: Coupon's Apply, Login's submit, WooCommerce's .button and Place Order. No display:
+ * Place Order's align classes set it. Block supports (inline styles, has-* classes) win.
+ */
+.yaycheckout-checkout :is(.button, button[type="submit"]) {
+	box-sizing: border-box;
+	min-height: var(--yaycheckout-input-height, 40px);
+	padding: 8px 20px;
+	/* Transparent, so a background picked in the block's settings shows edge to edge. */
+	border: 1px solid transparent;
+	border-radius: var(--yaycheckout-neutral-radius);
+	background-color: var(--yaycheckout-primary-color);
+	color: #fff;
+	font-family: inherit;
+	font-weight: 600;
+	line-height: 1.4;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.yaycheckout-checkout :is(.button, button[type="submit"]):hover {
+	filter: brightness(0.92);
+}
+
+.yaycheckout-checkout :is(.button, button[type="submit"]):disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+/* Columns that lay out address fields side by side keep the fields' own spacing, not core's block margin. */
+.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-columns {
+	margin-block: 0;
+}
+
+/*
+ * Billing, Shipping, Order Summary and Summary Details space their children with Block spacing, as core's layouts do: a flex
+ * column whose gap (12px, or the block's Block spacing, printed by BlockGap) replaces the children's own block
+ * margins. A hidden child (display:none, or the editor's <style>) takes no gap. A child's own margin setting is
+ * inline, so it still wins.
+ */
+:is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary, .yaycheckout-order-summary-details) {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary, .yaycheckout-order-summary-details) > * {
+	margin-block: 0;
+}
+
+/*
+ * The editor on a classic theme centres a block with auto inline margins and an 840px cap unless its parent is
+ * .is-layout-flex, which these sections aren't; in their flex column that shrinks each child to its content.
+ * Core's Columns undoes it the same way.
+ */
+.editor-styles-wrapper .yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary, .yaycheckout-order-summary-details) > .wp-block {
+	margin-inline: 0;
+	max-width: none;
+}
+
+/* Fields in a Columns row end at the row, which the section's gap spaces; fields stacked in one Column keep 12px. */
+.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-column > * {
+	margin-block: 0;
+}
+
+.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-column > * + * {
+	margin-block-start: 12px;
+}
+
+/* A Field whose row WooCommerce's address-i18n.js hid for the country is left empty; it takes no gap. */
+:is(.yaycheckout-billing, .yaycheckout-shipping) > .yaycheckout-field:has(> .form-row[style*="display: none"]):not(:has(> .form-row:not([style*="display: none"]))) {
+	display: none;
+}
+
+/* Order Summary's Totals table: its amounts end-aligned in a fixed column. Items lays out its own rows. */
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td) {
+	padding: 6px 0;
+	border: 0;
+	vertical-align: top;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):first-child {
+	text-align: start;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):last-child {
+	width: 40%;
+	text-align: end;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__via {
+	display: block;
+	font-size: 0.875em;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__shipping strong {
+	text-transform: uppercase;
+}
+
+/* iOS zooms into a focused field whose text is under 16px. */
+@media (pointer: coarse) {
+	.yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code) {
+		font-size: max(16px, 1em);
+	}
+}

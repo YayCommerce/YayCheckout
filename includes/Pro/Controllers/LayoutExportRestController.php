@@ -43,7 +43,7 @@ class LayoutExportRestController extends BaseRestController {
         $layout = $this->layouts->find( (int) $request->get_param( 'id' ) );
 
         if ( null === $layout ) {
-            return $this->error_not_found( __( 'Layout not found.', 'yaycheckout' ) );
+            return $this->error_layout_not_found();
         }
 
         $exported_at = DateHelper::now_iso8601();
@@ -53,13 +53,14 @@ class LayoutExportRestController extends BaseRestController {
                 'format'         => Layout::EXPORT_FORMAT,
                 'plugin_version' => YAYCHECKOUT_VERSION,
                 'exported_at'    => $exported_at,
-                // Title, markup and assignment rules; status, active flag and dates are site state and stay behind.
+                // Title, markup, assignment rules and design; status, active flag and dates are site state and stay behind.
                 // Rules name roles by slug: another store may not have them, and such a condition never matches there.
                 'layouts'        => [
                     [
                         'title'   => $layout->title,
                         'content' => $layout->content,
                         'rules'   => $layout->rules,
+                        'design'  => $layout->design->to_meta(),
                     ],
                 ],
             ]

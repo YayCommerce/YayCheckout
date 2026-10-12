@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/order-summary-totals",
+  "title": "Order Summary Totals",
+  "category": "yaycheckout",
+  "description": "Subtotal, coupons, shipping, fees, tax and total. WooCommerce refreshes them when the order updates.",
+  "textdomain": "yaycheckout",
+  "ancestor": [ "yaycheckout/order-summary" ],
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false,
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}

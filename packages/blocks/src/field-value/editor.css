@@ -1,0 +1,4 @@
+/* The field-name hint shows at the same muted tone as a typed placeholder, not core's extra .62 fade. */
+.editor-styles-wrapper .yaycheckout-field-value__value [data-rich-text-placeholder]::after {
+	opacity: 1;
+}

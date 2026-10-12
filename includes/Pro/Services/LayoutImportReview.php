@@ -2,6 +2,8 @@
 namespace YayCheckout\Pro\Services;
 
 use YayCheckout\Models\Layout;
+use YayCheckout\Models\LayoutDesign;
+use YayCheckout\Services\LayoutMarkupReader;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -19,14 +21,15 @@ class LayoutImportReview {
     public const RULES_NONE     = 'none';
 
     /**
-     * @return array { title, content, rules } rules as the file holds them, unchecked; see rules_from_file().
+     * @return array { title, content, rules, design } rules as the file holds them, unchecked (see rules_from_file());
+     *               design projected through LayoutDesign::from_meta().
      * @throws \InvalidArgumentException When the file is not an export or has no Checkout block.
      */
     public static function from_envelope( array $envelope ): array {
         $layout = self::layout( $envelope );
 
         // First of LayoutMarkupReader::publish_error()'s rules; the rest wait for publish, as for any draft.
-        if ( ! has_block( 'yaycheckout/checkout', $layout['content'] ) ) {
+        if ( ! LayoutMarkupReader::has_checkout( $layout['content'] ) ) {
             throw new \InvalidArgumentException( __( 'The file does not contain a checkout layout.', 'yaycheckout' ) );
         }
 
@@ -63,7 +66,11 @@ class LayoutImportReview {
     }
 
     /**
-     * @return array { title, content, rules }
+     * The design is projected, never refused: a bad value only changes how the layout looks, so a missing
+     * or malformed section imports as empty and an invalid token reads as its empty default. A file from before
+     * layout designs has none.
+     *
+     * @return array { title, content, rules, design }
      * @throws \InvalidArgumentException When the envelope is not a YayCheckout export.
      */
     private static function layout( array $envelope ): array {
@@ -82,6 +89,7 @@ class LayoutImportReview {
             'title'   => $layout['title'],
             'content' => $layout['content'],
             'rules'   => $layout['rules'] ?? null,
+            'design'  => LayoutDesign::from_meta( $layout['design'] ?? null ),
         ];
     }
 }

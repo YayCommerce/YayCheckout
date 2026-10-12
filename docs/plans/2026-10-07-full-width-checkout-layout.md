@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. There is no spec; the Requirements section below is the contract.
 
-**Status:** active
+**Status:** done 2026-10-08
 **Goal:** The checkout layout spans the full viewport width on the storefront and in the layout editor, so the theme's or FSE's content width, wide width and root padding never box it. The layout editor shows no title field.
 **Spec:** none, planned from the request
 **Architecture:** Both changes are CSS scoped to the layout. On the storefront, a stylesheet enqueued only when `CheckoutPage` takes over does two things. It strips horizontal margin, padding and max-width from `body.yaycheckout-page`, `.wp-site-blocks` and the `.woocommerce.yaycheckout-page` wrapper. It also resets the theme.json variables (`--wp--style--global--content-size`, `--wp--style--global--wide-size`, `--wp--style--root--padding-left/right`) inside the wrapper. In the editor, a `block_editor_settings_all` filter, applied to layout posts only, adds a canvas style that resets the same variables on `.is-root-container` and hides the post-title wrapper. I chose this over the alternatives, which edit theme.json data (`wp_theme_json_data_theme`) or set `supportsLayout: false`. Those change the theme for the whole request, or turn off layout styles for the merchant's Groups, including the default layout's 1200px Group.

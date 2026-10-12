@@ -7,22 +7,43 @@
   "description": "Coupon code field with apply button and its notices.",
   "textdomain": "yaycheckout",
   "example": {
-    "attributes": {
-      "buttonText": "Apply coupon"
-    }
+    "innerBlocks": [
+      {
+        "name": "yaycheckout/coupon-button",
+        "attributes": { "buttonText": "Apply coupon" }
+      }
+    ]
   },
   "attributes": {
+    "blockId": {
+      "type": "string",
+      "default": ""
+    },
     "placeholder": {
       "type": "string",
       "default": ""
     },
-    "buttonText": {
+    "buttonBackgroundColor": {
+      "type": "string",
+      "default": ""
+    },
+    "buttonTextColor": {
+      "type": "string",
+      "default": ""
+    },
+    "disclosure": {
+      "type": "string",
+      "enum": [ "none", "link", "collapsible", "checkbox" ],
+      "default": "none"
+    },
+    "disclosureText": {
       "type": "string",
       "default": ""
     }
   },
   "supports": {
     "html": false,
+    "yaycheckoutWatchable": true,
     "multiple": false,
     "reusable": false,
     "color": {
@@ -51,7 +72,7 @@
     }
   },
   "editorScript": "file:./index.js",
-  "viewScript": "yaycheckout-coupon-form",
+  "viewScript": [ "yaycheckout-coupon-form", "file:./view.js" ],
   "editorStyle": "file:./index.css",
   "style": "file:./style-index.css",
   "render": "file:./render.php"

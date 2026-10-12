@@ -4,15 +4,19 @@
 	gap: 12px;
 }
 
-.yaycheckout-step {
+/*
+ * Defaults with no specificity, so the Step's colour, spacing and border settings and its
+ * Global Styles (:root :where(.wp-block-yaycheckout-step)) override them.
+ */
+:where(.yaycheckout-step) {
 	border: 1px solid #e5e7eb;
 	border-radius: 12px;
 	background: #fff;
 	padding: 16px 20px;
 }
 
-.yaycheckout-step[data-state="current"] {
-	border-color: var(--yaycheckout-primary);
+:where(.yaycheckout-step[data-state="current"]) {
+	border-color: var(--yaycheckout-primary-color, #3858e9);
 }
 
 .yaycheckout-step__header {
@@ -36,7 +40,7 @@
 	width: 28px;
 	height: 28px;
 	border-radius: 999px;
-	background: var(--yaycheckout-primary);
+	background: var(--yaycheckout-primary-color, #3858e9);
 	color: #fff;
 	font-size: 14px;
 	font-weight: 600;
@@ -49,7 +53,8 @@
 	box-shadow: inset 0 0 0 1.5px #d1d5db;
 }
 
-.yaycheckout-step[data-state="locked"] .yaycheckout-step__title {
+/* Muted until the text colour support sets a colour, or the shopper has opened the step before. */
+.yaycheckout-step[data-state="locked"]:not(.has-text-color, [data-reached="true"]) .yaycheckout-step__title {
 	color: #6b7280;
 }
 
@@ -58,14 +63,13 @@
 }
 
 .yaycheckout-step[data-state="complete"] .yaycheckout-step__index::after {
-	content: "\2713";
-	color: #fff;
+	content: "";
 	position: absolute;
 	inset: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 14px;
+	background-image: var(--yaycheckout-check-icon);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: 12px;
 }
 
 .yaycheckout-step__title {
@@ -89,7 +93,7 @@
 	padding: 0;
 	border: 0;
 	background: none;
-	color: var(--yaycheckout-primary);
+	color: var(--yaycheckout-primary-color, #3858e9);
 	font-weight: 600;
 	cursor: pointer;
 }
@@ -105,11 +109,69 @@
 	display: none;
 }
 
-.yaycheckout-steps[data-layout="single"] .yaycheckout-step:not([data-state="current"]) {
+/* One step at a time: the one-at-a-time layout, and any layout with headings hidden, where Back and Steps Progress are the ways back. */
+.yaycheckout-steps:is([data-layout="one-at-a-time"], [data-headings="hidden"]) .yaycheckout-step[data-state]:not([data-state="current"]) {
 	display: none;
 }
 
 /* Continue on the last step leaves nothing current. Keep that finished step on screen. */
-.yaycheckout-steps[data-layout="single"]:not(:has(.yaycheckout-step[data-state="current"])) > .yaycheckout-step[data-state="complete"]:last-child {
+.yaycheckout-steps:is([data-layout="one-at-a-time"], [data-headings="hidden"]):not(:has(.yaycheckout-step[data-state="current"])) > .yaycheckout-step[data-state="complete"]:last-child {
 	display: block;
+}
+
+/* Headings hidden: the open step's header stays for screen readers. The same declarations as WordPress's .screen-reader-text and steps-progress/style.css. */
+.yaycheckout-steps[data-headings="hidden"] .yaycheckout-step__header {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.yaycheckout-steps[data-headings="hidden"] .yaycheckout-step__body {
+	margin-top: 0;
+}
+
+/* Vertical timeline: no card per step, a line joins the badges, and the body lines up with the title. */
+:where(.yaycheckout-steps[data-layout="timeline"] .yaycheckout-step) {
+	border: 0;
+	border-radius: 0;
+	background: none;
+	padding: 0 0 20px;
+	position: relative;
+}
+
+/*
+ * From this badge's centre, through the gap, to the next badge's centre; the badges hide the overlap.
+ * ponytail: -26px assumes the default 12px gap, so a larger Block spacing breaks the line. Have BlockGap print a gap variable if that matters.
+ */
+.yaycheckout-steps[data-layout="timeline"] .yaycheckout-step::before {
+	content: "";
+	position: absolute;
+	inset-inline-start: 13.5px;
+	top: 14px;
+	bottom: -26px;
+	width: 1px;
+	background: #ddd;
+}
+
+/* :has(), not :last-child: the editor's appender follows the last step. */
+.yaycheckout-steps[data-layout="timeline"] .yaycheckout-step:not(:has(~ .yaycheckout-step))::before,
+.yaycheckout-steps[data-layout="timeline"][data-headings="hidden"] .yaycheckout-step::before {
+	content: none;
+}
+
+.yaycheckout-steps[data-layout="timeline"] .yaycheckout-step__index {
+	z-index: 1;
+}
+
+/* The page's colour, so the fill that hides the line doesn't show as a disc. */
+.yaycheckout-steps[data-layout="timeline"] .yaycheckout-step[data-state="locked"] .yaycheckout-step__index {
+	background: var(--yaycheckout-color-background, #fff);
+}
+
+.yaycheckout-steps[data-layout="timeline"] .yaycheckout-step__body {
+	margin-inline-start: 40px;
 }

@@ -10,6 +10,9 @@ const previewLinkLifetimeSchema = z.custom<PreviewLinkLifetime>(
   { message: 'Not an allowed preview link lifetime' },
 );
 
+/** Mirrors LayoutDesign::CUSTOM_CSS_MAX_BYTES in PHP. */
+export const CUSTOM_CSS_MAX_BYTES = 50000;
+
 // Wire schemas: the PHP shape, exactly.
 
 export const settingsWireSchema = z
@@ -25,6 +28,7 @@ export const settingsWireSchema = z
       .object({
         preview_link_lifetime: previewLinkLifetimeSchema,
         force_enqueue_checkout_scripts: z.boolean(),
+        custom_css: z.string(),
       })
       .strict(),
   })
@@ -63,6 +67,8 @@ export const settingsSchema = z.object({
   advanced: z.object({
     previewLinkLifetime: previewLinkLifetimeSchema,
     forceEnqueueCheckoutScripts: z.boolean(),
+    // Characters, so a multibyte value can still pass here; the server counts bytes and refuses unsafe markup, with its message.
+    customCss: z.string().max(CUSTOM_CSS_MAX_BYTES),
   }),
 });
 

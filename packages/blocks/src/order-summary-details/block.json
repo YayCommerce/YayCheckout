@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/order-summary-details",
+  "title": "Summary Details",
+  "category": "yaycheckout",
+  "description": "The Order Summary's items, totals and your own blocks.",
+  "textdomain": "yaycheckout",
+  "parent": [ "yaycheckout/order-summary" ],
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false,
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true,
+      "blockGap": true
+    }
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}
