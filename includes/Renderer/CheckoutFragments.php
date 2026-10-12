@@ -22,6 +22,28 @@ class CheckoutFragments {
 
     public const ORDER_TOTALS_CLASS = 'yaycheckout-order-summary-totals';
 
+    /** Layout values the Payment block accepts; an unknown attribute falls back to default. */
+    public const PAYMENT_LAYOUTS = [ 'default', 'check', 'boxed', 'columns', 'stacked', 'divided' ];
+
+    /** Length key under style.yaycheckout => the --yaycheckout-payment-* variable it sets. LENGTH_VARS in style-paths.ts mirrors it; radius stays at style.border.radius. */
+    private const PAYMENT_LENGTH_VARS = [
+        'borderWidth' => '--yaycheckout-payment-border-width',
+    ];
+
+    /**
+     * Colour key under style.yaycheckout => the --yaycheckout-payment-* variable it sets.
+     * Idle background stays at style.color.background. COLOR_VARS in style-paths.ts mirrors both.
+     */
+    private const PAYMENT_COLOR_VARS = [
+        'backgroundSelected' => '--yaycheckout-payment-bg-selected',
+        'backgroundHover'    => '--yaycheckout-payment-bg-hover',
+        'radio'              => '--yaycheckout-payment-radio',
+        'radioSelected'      => '--yaycheckout-payment-radio-selected',
+        'border'             => '--yaycheckout-payment-border',
+        'borderSelected'     => '--yaycheckout-payment-border-selected',
+        'borderHover'        => '--yaycheckout-payment-border-hover',
+    ];
+
     /** Layout values the Shipping Methods block accepts; an unknown attribute falls back to default. */
     public const SHIPPING_LAYOUTS = [ 'default', 'check', 'boxed', 'columns', 'stacked', 'divided' ];
 
@@ -153,6 +175,72 @@ class CheckoutFragments {
     }
 
     /**
+     * The Payment layout from block attributes, or default when missing or unknown.
+     *
+     * @param array $attributes Block attributes.
+     */
+    public static function payment_layout( array $attributes ): string {
+        $layout = isset( $attributes['layout'] ) && is_string( $attributes['layout'] ) ? $attributes['layout'] : '';
+
+        return in_array( $layout, self::PAYMENT_LAYOUTS, true ) ? $layout : 'default';
+    }
+
+    /**
+     * Inline style attribute value of --yaycheckout-payment-* vars from the block's style object.
+     * Empty when no Methods styles are set. Mirrors packages/blocks/.../style-paths.ts.
+     *
+     * @param array $attributes Block attributes.
+     */
+    public static function payment_methods_style_attribute( array $attributes ): string {
+        $style   = isset( $attributes['style'] ) && is_array( $attributes['style'] ) ? $attributes['style'] : [];
+        $spacing = isset( $style['spacing'] ) && is_array( $style['spacing'] ) ? $style['spacing'] : [];
+        $border  = isset( $style['border'] ) && is_array( $style['border'] ) ? $style['border'] : [];
+        $color   = isset( $style['color'] ) && is_array( $style['color'] ) ? $style['color'] : [];
+        $yay     = isset( $style['yaycheckout'] ) && is_array( $style['yaycheckout'] ) ? $style['yaycheckout'] : [];
+        $decls   = [];
+
+        $gap = self::css_gap( $spacing['blockGap'] ?? null );
+        if ( '' !== $gap ) {
+            $decls[] = '--yaycheckout-payment-gap:' . $gap;
+        }
+
+        $radius = self::css_length( $border['radius'] ?? null );
+        if ( '' !== $radius ) {
+            $decls[] = '--yaycheckout-payment-radius:' . $radius;
+        }
+
+        foreach ( self::PAYMENT_LENGTH_VARS as $key => $var ) {
+            $length = self::css_length( $yay[ $key ] ?? null );
+            if ( '' !== $length ) {
+                $decls[] = $var . ':' . $length;
+            }
+        }
+
+        $bg = self::css_color( $color['background'] ?? null );
+        if ( '' !== $bg ) {
+            $decls[] = '--yaycheckout-payment-bg:' . $bg;
+        }
+
+        foreach ( self::PAYMENT_COLOR_VARS as $key => $var ) {
+            $value = self::css_color( $yay[ $key ] ?? null );
+            if ( '' !== $value ) {
+                $decls[] = $var . ':' . $value;
+            }
+        }
+
+        // Text colour from color.text or the textColor preset slug (skipSerialization).
+        $text = self::css_color( $color['text'] ?? null );
+        if ( '' === $text && isset( $attributes['textColor'] ) && is_string( $attributes['textColor'] ) && '' !== $attributes['textColor'] ) {
+            $text = 'var(--wp--preset--color--' . sanitize_title( $attributes['textColor'] ) . ')';
+        }
+        if ( '' !== $text ) {
+            $decls[] = 'color:' . $text;
+        }
+
+        return implode( ';', $decls );
+    }
+
+    /**
      * The Shipping Methods layout from block attributes, or default when missing or unknown.
      *
      * @param array $attributes Block attributes.
@@ -177,27 +265,27 @@ class CheckoutFragments {
         $yay     = isset( $style['yaycheckout'] ) && is_array( $style['yaycheckout'] ) ? $style['yaycheckout'] : [];
         $decls   = [];
 
-        $gap = self::shipping_css_gap( $spacing['blockGap'] ?? null );
+        $gap = self::css_gap( $spacing['blockGap'] ?? null );
         if ( '' !== $gap ) {
             $decls[] = '--yaycheckout-shipping-gap:' . $gap;
         }
 
         foreach ( self::SHIPPING_LENGTH_VARS as $key => $var ) {
-            $length = self::shipping_css_length( $yay[ $key ] ?? null );
+            $length = self::css_length( $yay[ $key ] ?? null );
             if ( '' !== $length ) {
                 $decls[] = $var . ':' . $length;
             }
         }
 
         foreach ( self::SHIPPING_COLOR_VARS as $key => $var ) {
-            $value = self::shipping_css_color( $yay[ $key ] ?? null );
+            $value = self::css_color( $yay[ $key ] ?? null );
             if ( '' !== $value ) {
                 $decls[] = $var . ':' . $value;
             }
         }
 
         // Text colour from color.text or the textColor preset slug (skipSerialization).
-        $text = self::shipping_css_color( $color['text'] ?? null );
+        $text = self::css_color( $color['text'] ?? null );
         if ( '' === $text && isset( $attributes['textColor'] ) && is_string( $attributes['textColor'] ) && '' !== $attributes['textColor'] ) {
             $text = 'var(--wp--preset--color--' . sanitize_title( $attributes['textColor'] ) . ')';
         }
@@ -211,7 +299,7 @@ class CheckoutFragments {
     /**
      * @param mixed $gap Block style spacing.blockGap.
      */
-    private static function shipping_css_gap( $gap ): string {
+    private static function css_gap( $gap ): string {
         if ( ! is_string( $gap ) && ! is_numeric( $gap ) ) {
             return '';
         }
@@ -231,13 +319,13 @@ class CheckoutFragments {
             return 'var(--wp--preset--spacing--' . _wp_to_kebab_case( $slug ) . ')';
         }
 
-        return self::shipping_css_safe_token( $raw );
+        return self::css_safe_token( $raw );
     }
 
     /**
      * @param mixed $value Border radius string, number, or corner object (ignored).
      */
-    private static function shipping_css_length( $value ): string {
+    private static function css_length( $value ): string {
         if ( is_numeric( $value ) ) {
             return absint( $value ) . 'px';
         }
@@ -246,13 +334,13 @@ class CheckoutFragments {
             return '';
         }
 
-        return self::shipping_css_safe_token( $value );
+        return self::css_safe_token( $value );
     }
 
     /**
      * @param mixed $value A CSS colour string or var:preset|color|slug.
      */
-    private static function shipping_css_color( $value ): string {
+    private static function css_color( $value ): string {
         if ( ! is_string( $value ) || '' === $value ) {
             return '';
         }
@@ -268,11 +356,11 @@ class CheckoutFragments {
             return $hex;
         }
 
-        return self::shipping_css_safe_token( $value );
+        return self::css_safe_token( $value );
     }
 
     /** Rejects values that could break out of a CSS custom-property declaration. */
-    private static function shipping_css_safe_token( string $value ): string {
+    private static function css_safe_token( string $value ): string {
         if ( preg_match( '/[=<>{}]|\/\*/', $value ) ) {
             return '';
         }
