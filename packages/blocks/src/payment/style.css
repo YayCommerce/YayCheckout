@@ -10,6 +10,11 @@
  * Check and divided keep one background unless the merchant sets selected/hover.
  */
 
+/* Hide the block, heading included, while #payment is marked empty (order needs no payment). */
+.yaycheckout-checkout .yaycheckout-payment:has(#payment[data-yaycheckout-empty]) {
+	display: none !important;
+}
+
 /* Shared */
 .yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods {
 	margin: 0;
