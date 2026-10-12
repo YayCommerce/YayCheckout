@@ -156,10 +156,13 @@ function isColourRule( rule: DesignRule ): boolean {
  * prints nothing, so the theme's colour shows. A fill (the background) also takes gradients.
  */
 function ColourSettings( {
+	panelId,
 	rules,
 	values,
 	onChange,
 }: {
+	/** One per panel, so each panel's colour items register with its own ToolsPanel. */
+	panelId: string;
 	rules: Record< string, DesignRule >;
 	values: SectionTokens;
 	onChange: ( next: SectionTokens ) => void;
@@ -220,7 +223,7 @@ function ColourSettings( {
 	return (
 		<ToolsPanel
 			label={ __( 'Custom colours', 'yaycheckout' ) }
-			panelId={ SIDEBAR }
+			panelId={ panelId }
 			hasInnerWrapper
 			className="color-block-support-panel"
 			__experimentalFirstVisibleItemClass="first"
@@ -235,7 +238,7 @@ function ColourSettings( {
 			<div className="color-block-support-panel__inner-wrapper">
 				<ColorGradientSettingsDropdown
 					__experimentalIsRenderedInSidebar
-					panelId={ SIDEBAR }
+					panelId={ panelId }
 					settings={ settings }
 					colors={ palettes.colors }
 					gradients={ palettes.gradients }
@@ -322,8 +325,9 @@ function SectionPanel( {
 	return (
 		<PanelBody title={ SECTIONS[ section ] }>
 			<Flex direction="column" align="stretch" gap={ 4 }>
-				{ 'colours' === section && (
+				{ Object.values( design.schema[ section ] ).some( isColourRule ) && (
 					<ColourSettings
+						panelId={ `${ SIDEBAR }-${ section }` }
 						rules={ design.schema[ section ] }
 						values={ values }
 						onChange={ onChange }

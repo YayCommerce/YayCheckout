@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking.
 
-**Status:** active
+**Status:** done 2026-10-12
 **Goal:** Two new layout design tokens, input background and input text colour, set in the Layout Design sidebar's Inputs panel and drawn the same in the editor canvas and on the storefront.
 **Spec:** none. Planned from the request and the answers below.
 **Architecture:** A design token is one entry in `LayoutDesign::schema()`, then `DesignStyles::vars()` and its copy in `design-css.ts` (docs/conventions.md § "Settings and design are declared once"). The REST schema, meta default, sanitize callback, import projection and editor sidebar all read `schema()`, so no other copy of the rules changes. `checkout-base.css` reads the two new properties, falling back to what it reads today.
@@ -67,11 +67,11 @@ Steps:
 Consumes Task 1's `schema()['inputs']` entries. The sidebar reads the schema from PHP (`BlockRegistry` → `editorData.design.schema`), so `normalize()` and `sectionTokens()` already carry the new keys, and `SectionPanel` already skips colour rules in its token loop.
 
 Steps:
-- [ ] 1. `packages/blocks/src/checkout/layout-design.tsx`:
+- [x] 1. `packages/blocks/src/checkout/layout-design.tsx`:
   - `SectionPanel` renders `<ColourSettings>` whenever the section's rules contain a colour rule (`Object.values( design.schema[ section ] ).some( isColourRule )`), instead of only for `'colours' === section`. It stays first in the panel.
   - `ColourSettings` takes a `panelId: string` prop and passes it to both `ToolsPanel` and `ColorGradientSettingsDropdown`, in place of the shared `SIDEBAR`. `SectionPanel` passes `` `${ SIDEBAR }-${ section }` ``, so the two panels' items don't register with each other.
   - `TOKEN_LABELS` already has `background: 'Background'` and `text: 'Text'`, so no new strings are needed.
-- [ ] 2. Verify: run `pnpm build:blocks`, then open a fresh throwaway layout in the editor and open the Layout Design sidebar → Inputs. Expected:
+- [x] 2. Verify: run `pnpm build:blocks`, then open a fresh throwaway layout in the editor and open the Layout Design sidebar → Inputs. Expected:
   - "Custom colours" with Background and Text appears above Style, Size and Radius, and the Colours panel is unchanged.
   - Picking a theme swatch for Background recolours the canvas inputs at once.
   - Its stored value is `var(--wp--preset--color--<slug>)`: read it with `wp.data.select('core/editor').getEditedPostAttribute('meta')`.
@@ -80,8 +80,8 @@ Steps:
   - Reset all in the Inputs colour group clears only those two tokens.
   - After Save and a reload, the values persist, and the storefront preview shows the same colours.
   - Choosing Underline still hides Radius, while the colour group stays.
-- [ ] 3. Verify: the Colours panel's own Reset all still clears only Primary, Text, Background and Border.
-- [ ] 4. Commit `packages/blocks/src/checkout/layout-design.tsx` with the message `feat(blocks): pick input background and text colour in the Inputs panel`.
+- [x] 3. Verify: the Colours panel's own Reset all still clears only Primary, Text, Background and Border.
+- [x] 4. Commit `packages/blocks/src/checkout/layout-design.tsx` with the message `feat(blocks): pick input background and text colour in the Inputs panel`.
 
 ## Review focus
 
