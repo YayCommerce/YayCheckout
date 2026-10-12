@@ -42,6 +42,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			</InspectorControls>
 			<div { ...innerBlocksProps }>
 				{ children }
+				{ /* Same class render.php gives the storefront chevron. */ }
 				{ collapsible && showChevron && (
 					<Chevron className={ `yaycheckout-order-summary-toggle__chevron${ open ? ' is-open' : '' }` } />
 				) }

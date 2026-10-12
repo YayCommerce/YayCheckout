@@ -15,9 +15,11 @@ class OrderSummaryCollapse {
     /** The id of the Summary Details wrapper, which every toggle controls; one Order Summary per layout. */
     public const DETAILS_ID = 'yaycheckout-order-summary-details';
 
+    /** The child blocks whose presence puts an Order Summary in the new shape. */
+    public const HEADER  = 'yaycheckout/order-summary-header';
+    public const DETAILS = 'yaycheckout/order-summary-details';
+
     private const SUMMARY = 'yaycheckout/order-summary';
-    private const HEADER  = 'yaycheckout/order-summary-header';
-    private const DETAILS = 'yaycheckout/order-summary-details';
     private const TOGGLE  = 'yaycheckout/order-summary-toggle';
 
     /** @var array<string, array{collapsible: bool, open: bool}> Keyed by the markup's md5. */
@@ -34,11 +36,12 @@ class OrderSummaryCollapse {
         $key = md5( $content );
 
         if ( ! isset( self::$memo[ $key ] ) ) {
-            $summary     = LayoutMarkupReader::first_block( $content, self::SUMMARY );
-            $attrs       = null !== $summary ? $summary['attrs'] : [];
-            $collapsible = true === ( $attrs['collapsible'] ?? false )
-                && has_block( self::DETAILS, $content )
+            // has_block() only searches the text, so a layout that can't collapse is never parsed.
+            $can_collapse = has_block( self::DETAILS, $content )
                 && ( has_block( self::HEADER, $content ) || has_block( self::TOGGLE, $content ) );
+            $summary      = $can_collapse ? LayoutMarkupReader::first_block( $content, self::SUMMARY ) : null;
+            $attrs        = null !== $summary ? $summary['attrs'] : [];
+            $collapsible  = true === ( $attrs['collapsible'] ?? false );
 
             self::$memo[ $key ] = [
                 'collapsible' => $collapsible,
@@ -47,6 +50,11 @@ class OrderSummaryCollapse {
         }
 
         return self::$memo[ $key ];
+    }
+
+    /** Order Summary's Label while the merchant leaves it empty; it names the header's button too. */
+    public static function default_label(): string {
+        return __( 'Your order', 'yaycheckout' );
     }
 
     /**

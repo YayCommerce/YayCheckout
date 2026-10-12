@@ -3,7 +3,7 @@ import fieldMeta from '../field/block.json';
 import { billingAddressFields, shippingAddressFields } from './address-fields';
 
 /** A block template: [ name, attributes?, inner template? ], nested. */
-type TemplateArray = ( string | object | TemplateArray )[];
+export type TemplateArray = ( string | object | TemplateArray )[];
 
 type Prefix = 'billing' | 'shipping';
 

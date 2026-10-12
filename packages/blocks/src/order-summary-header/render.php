@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 $yaycheckout_collapse = \YayCheckout\Services\OrderSummaryCollapse::of_layout( \YayCheckout\Renderer\CheckoutPage::get_instance()->layout() );
 
 // Order Summary's Label names the button, since the header's own text may be a total or a button.
-$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( [ 'label' => $block->context['yaycheckout/orderSummaryLabel'] ?? null ], 'label', __( 'Your order', 'yaycheckout' ) );
+$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( [ 'label' => $block->context['yaycheckout/orderSummaryLabel'] ?? null ], 'label', \YayCheckout\Services\OrderSummaryCollapse::default_label() );
 
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-order-summary-header' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>

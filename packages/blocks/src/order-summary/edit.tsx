@@ -15,6 +15,7 @@ import headerMeta from '../order-summary-header/block.json';
 import itemsMeta from '../order-summary-items/block.json';
 import toggleMeta from '../order-summary-toggle/block.json';
 import totalsMeta from '../order-summary-totals/block.json';
+import type { TemplateArray } from '../shared/address-template';
 import { isCheckoutSection, useBlocksAllowedExcept } from '../shared/allowed-blocks';
 import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 import { SectionLabel } from '../shared/section-label';
@@ -35,9 +36,6 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< OrderSummaryAttributes > ) => void;
 	clientId: string;
 }
-
-/** A block template: [ name, attributes?, inner template? ], nested. */
-type TemplateArray = ( string | object | TemplateArray )[];
 
 // A Header holding a Toggle holding a Heading, then Details holding Items and Totals. templates/layouts/classic-two-column/markup.php
 // seeds the same tree, with Coupon Form between Items and Totals; change both.
@@ -119,24 +117,8 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						: undefined
 				}
 			/>
-			{ ! newShape && (
-				<InspectorControls>
-					<PanelBody>
-						<Notice
-							status="info"
-							isDismissible={ false }
-							actions={ [ { label: __( 'Use header and details', 'yaycheckout' ), onClick: convert, variant: 'primary' } ] }
-						>
-							{ __(
-								'This summary uses the old layout. Switch to a header and a details part to make it collapsible.',
-								'yaycheckout'
-							) }
-						</Notice>
-					</PanelBody>
-				</InspectorControls>
-			) }
-			{ newShape && (
-				<InspectorControls>
+			<InspectorControls>
+				{ newShape ? (
 					<PanelBody title={ __( 'Collapsing', 'yaycheckout' ) }>
 						<ToggleControl
 							label={ __( 'Collapsible', 'yaycheckout' ) }
@@ -176,8 +158,21 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 							</ToggleGroupControl>
 						) }
 					</PanelBody>
-				</InspectorControls>
-			) }
+				) : (
+					<PanelBody>
+						<Notice
+							status="info"
+							isDismissible={ false }
+							actions={ [ { label: __( 'Use header and details', 'yaycheckout' ), onClick: convert, variant: 'primary' } ] }
+						>
+							{ __(
+								'This summary uses the old layout. Switch to a header and a details part to make it collapsible.',
+								'yaycheckout'
+							) }
+						</Notice>
+					</PanelBody>
+				) }
+			</InspectorControls>
 			{ children }
 		</div>
 	);

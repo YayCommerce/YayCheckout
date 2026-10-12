@@ -7,6 +7,7 @@ import { onDomReady } from '../shared/dom-ready';
 
 // A copy of OrderSummaryCollapse::DETAILS_ID.
 const DETAILS_ID = 'yaycheckout-order-summary-details';
+// Mirror the markup order-summary-header/render.php and order-summary-toggle/render.php print.
 const HEADER_BUTTON = '.yaycheckout-order-summary__header-button';
 const TOGGLE = '[data-yaycheckout-summary-toggle]';
 

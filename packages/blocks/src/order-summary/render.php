@@ -14,18 +14,14 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', __( 'Your order', 'yaycheckout' ) );
+$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', \YayCheckout\Services\OrderSummaryCollapse::default_label() );
 
 $yaycheckout_has_cart = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart;
 
-$yaycheckout_new_shape = false;
-
-foreach ( $block->parsed_block['innerBlocks'] ?? [] as $yaycheckout_child ) {
-    if ( in_array( $yaycheckout_child['blockName'] ?? '', [ 'yaycheckout/order-summary-header', 'yaycheckout/order-summary-details' ], true ) ) {
-        $yaycheckout_new_shape = true;
-        break;
-    }
-}
+$yaycheckout_new_shape = [] !== array_intersect(
+    array_column( $block->parsed_block['innerBlocks'] ?? [], 'blockName' ),
+    [ \YayCheckout\Services\OrderSummaryCollapse::HEADER, \YayCheckout\Services\OrderSummaryCollapse::DETAILS ]
+);
 
 // Block spacing.
 $yaycheckout_class = 'yaycheckout-order-summary' . \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/order-summary', 'yaycheckout-order-summary' );
