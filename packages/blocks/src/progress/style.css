@@ -87,14 +87,13 @@
 }
 
 .yaycheckout-progress__item[data-state="complete"] .yaycheckout-progress__marker::after {
-	content: "\2713";
+	content: "";
 	position: absolute;
 	inset: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	color: #fff;
-	font-size: 14px;
+	background-image: var(--yaycheckout-check-icon);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: 12px;
 }
 
 .yaycheckout-progress__title {
