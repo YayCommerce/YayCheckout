@@ -149,6 +149,7 @@ class CheckoutFragments {
      * Inline style attribute value of --yaycheckout-shipping-* vars from the block's style object.
      * Empty when no Methods styles are set. Mirrors packages/blocks/.../style-paths.ts.
      * Row radius and background live under style.yaycheckout: core's border and background style the wrapper.
+     * Radio and border colours: style.yaycheckout.radio, radioSelected, border, borderSelected, borderHover.
      *
      * @param array $attributes Block attributes.
      */
@@ -182,6 +183,20 @@ class CheckoutFragments {
         $bg_hover = self::shipping_css_color( $yay['backgroundHover'] ?? null );
         if ( '' !== $bg_hover ) {
             $decls[] = '--yaycheckout-shipping-bg-hover:' . $bg_hover;
+        }
+
+        $color_vars = [
+            'radio'          => '--yaycheckout-shipping-radio',
+            'radioSelected'  => '--yaycheckout-shipping-radio-selected',
+            'border'         => '--yaycheckout-shipping-border',
+            'borderSelected' => '--yaycheckout-shipping-border-selected',
+            'borderHover'    => '--yaycheckout-shipping-border-hover',
+        ];
+        foreach ( $color_vars as $key => $var ) {
+            $value = self::shipping_css_color( $yay[ $key ] ?? null );
+            if ( '' !== $value ) {
+                $decls[] = $var . ':' . $value;
+            }
         }
 
         // Text colour from color.text or the textColor preset slug (skipSerialization).
