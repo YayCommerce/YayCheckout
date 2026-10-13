@@ -33,6 +33,9 @@ class BlockVisibility {
     /** The storefront script, packages/blocks/src/visibility/view.ts; registered by BlockRegistry. */
     public const SCRIPT = 'yaycheckout-visibility';
 
+    /** The editor script, packages/blocks/src/visibility/index.tsx; enqueued by BlockRegistry. */
+    public const EDITOR_SCRIPT = 'yaycheckout-visibility-editor';
+
     /** Blocks that never take the setting: step navigation can't skip a step. Mirrored by EXCLUDED in visibility-rules.ts. */
     public const EXCLUDED = [ 'yaycheckout/checkout', 'yaycheckout/steps', 'yaycheckout/step' ];
 

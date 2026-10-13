@@ -6,6 +6,7 @@ use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutDifferentAddress;
 use YayCheckout\Renderer\CheckoutLogin;
+use YayCheckout\Renderer\BlockVisibility;
 use YayCheckout\Renderer\HideWhenEmpty;
 use YayCheckout\Renderer\LiveValues;
 use YayCheckout\Renderer\PinToBottom;
@@ -82,6 +83,7 @@ class BlockRegistry {
         add_action( 'init', [ $this, 'register_blocks' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_design_data' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_live_value_editor' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_visibility_editor' ] );
         add_action( 'enqueue_block_assets', [ $this, 'enqueue_live_value_editor_style' ] );
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
@@ -240,6 +242,27 @@ class BlockRegistry {
         wp_set_script_translations( LiveValues::EDITOR_SCRIPT, 'yaycheckout', YAYCHECKOUT_PLUGIN_DIR . 'languages' );
     }
 
+    /**
+     * The block visibility setting, in every editor rather than only the layout editor's, so markup saved in a
+     * layout stays valid anywhere. It runs after the Checkout editor script. Skipped without a build.
+     */
+    public function enqueue_visibility_editor(): void {
+        $asset = self::built_asset( 'visibility/index' );
+
+        if ( null === $asset ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            BlockVisibility::EDITOR_SCRIPT,
+            $asset['url'] . '.js',
+            array_merge( $asset['dependencies'], [ generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ) ] ),
+            $asset['version'],
+            true
+        );
+        wp_set_script_translations( BlockVisibility::EDITOR_SCRIPT, 'yaycheckout', YAYCHECKOUT_PLUGIN_DIR . 'languages' );
+    }
+
     /** The live value chip style, on enqueue_block_assets so it reaches the canvas iframe. Layout editor only; skipped without a build. */
     public function enqueue_live_value_editor_style(): void {
         $asset = is_admin() && 'layout' === $this->editor( null ) ? self::built_asset( 'live-value/index', true ) : null;
@@ -305,6 +328,13 @@ class BlockRegistry {
         if ( null !== $live_value ) {
             wp_register_script( LiveValues::SCRIPT, $live_value['url'] . '.js', array_merge( $live_value['dependencies'], [ 'jquery' ] ), $live_value['version'], true );
             wp_register_style( LiveValues::STYLE, $live_value['url'] . '.css', [], $live_value['version'] );
+        }
+
+        // Enqueued by BlockVisibility::filter_block() for a conditional block. Skipped without a build.
+        $visibility = self::built_asset( 'visibility/view' );
+
+        if ( null !== $visibility ) {
+            wp_register_script( BlockVisibility::SCRIPT, $visibility['url'] . '.js', array_merge( $visibility['dependencies'], [ 'jquery' ] ), $visibility['version'], true );
         }
     }
 
