@@ -60,7 +60,8 @@
   - Block `yaycheckout/order-summary-total`, attributes `label` (string, no default), `showLabel` (boolean, default `true`), `showCurrencyCode` (boolean, default `false`).
   - `CheckoutFragments::ORDER_TOTAL_CLASS = 'yaycheckout-order-summary-total'` (public const).
   - `CheckoutFragments::order_total_options( array $attributes ): array{show_label: bool, label: string, show_currency_code: bool}` (public static).
-  - `CheckoutFragments::order_total_hash_class( array $attributes ): string` (private static), e.g. `yaycheckout-order-summary-total--1a2b3c4d`.
+  - `CheckoutFragments::order_total_hash_class( array $options ): string` (private static; takes `order_total_options()` output), e.g. `yaycheckout-order-summary-total--1a2b3c4d`.
+  - `CheckoutFragments::fragment_selector( string $name, array $attrs ): string` (private static): the hashed selector for a Total, `BLOCK_FRAGMENTS[ $name ][0]` for the others.
   - `CheckoutFragments::order_total_html( array $attributes = [] ): string` (public static).
   - Storefront markup `<div class="wp-block-yaycheckout-order-summary-total …"><table class="shop_table yaycheckout-order-summary-total yaycheckout-order-summary-total--{hash}"><tbody><tr class="order-total">[<th>label</th>]<td>[<span class="yaycheckout-order-summary-total__currency">USD</span>] {wc_cart_totals_order_total_html()}</td></tr></tbody></table></div>`. Task 3 seeds this block in templates.
 
@@ -82,12 +83,12 @@ Exactly the spec's Components entry: `name` `yaycheckout/order-summary-total`, `
 - `public const ORDER_TOTAL_CLASS = 'yaycheckout-order-summary-total';` after `ORDER_TOTALS_CLASS`.
 - `BLOCK_FRAGMENTS` gains `'yaycheckout/order-summary-total' => [ '.' . self::ORDER_TOTAL_CLASS, 'order_total_html' ]`. Update its docblock: the Total's selector is replaced per block by `summary_block_fragments()`.
 - `order_total_options()`: defaults `show_label` `true`, `show_currency_code` `false` (same `$bool` closure as `order_totals_options()`), `label` = `LayoutMarkupReader::plain_text( $attributes, 'label', __( 'Total', 'woocommerce' ) )`. Docblock says why defaults are repeated (parsed attrs omit them).
-- `order_total_hash_class()`: `self::ORDER_TOTAL_CLASS . '--' . substr( md5( (string) wp_json_encode( self::order_total_options( $attributes ) ) ), 0, 8 )`.
+- `order_total_hash_class()`: `self::ORDER_TOTAL_CLASS . '--' . substr( md5( (string) wp_json_encode( $options ) ), 0, 8 )`, where `$options` is `order_total_options()` output.
 - `order_total_html()`: `''` without `WC()->cart instanceof \WC_Cart`; otherwise the table in Interfaces, with the `th` only when `show_label` and the currency span only when `show_currency_code`. Escape the label with `esc_html()`, the classes with `esc_attr()`. No hooks.
 
 - [ ] **Step 5: Dedupe summary fragments by selector**
 
-In `summary_block_fragments()`, compute the selector per block: `'yaycheckout/order-summary-total' === $name ? '.' . self::order_total_hash_class( $block['attrs'] ) : self::BLOCK_FRAGMENTS[ $name ][0]`, and key `$summary` by that selector instead of `$name` (first wins). Update the docblock: one entry per distinct selector; Total copies with identical options share one. `fragments()`, `skip_review_order_table()` and `print_summary_block()` stay as they are.
+In `summary_block_fragments()`, compute the selector per block with `fragment_selector( $name, $block['attrs'] )` (a Total: `'.' . order_total_hash_class( order_total_options( $attrs ) )`; others: `BLOCK_FRAGMENTS[ $name ][0]`), and key `$summary` by that selector instead of `$name` (first wins). Update the docblock: one entry per distinct selector; Total copies with identical options share one. `fragments()`, `skip_review_order_table()` and `print_summary_block()` stay as they are.
 
 - [ ] **Step 6: Lint the PHP**
 

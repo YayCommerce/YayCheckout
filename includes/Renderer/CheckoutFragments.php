@@ -75,7 +75,7 @@ class CheckoutFragments {
 
     /**
      * Order Summary child block => [ selector checkout.js replaces, method building its HTML ]; found by block name, not slot.
-     * Total may appear several times, so summary_block_fragments() narrows its selector to each block's options.
+     * Total may appear several times, so fragment_selector() narrows its selector to each block's options.
      */
     private const BLOCK_FRAGMENTS = [
         'yaycheckout/order-summary-items'  => [ '.' . self::ORDER_ITEMS_CLASS, 'order_items_html' ],
@@ -157,7 +157,7 @@ class CheckoutFragments {
                 continue;
             }
 
-            $selector = 'yaycheckout/order-summary-total' === $name ? '.' . self::order_total_hash_class( $block['attrs'] ) : self::BLOCK_FRAGMENTS[ $name ][0];
+            $selector = self::fragment_selector( $name, $block['attrs'] );
 
             if ( ! isset( $summary[ $selector ] ) ) {
                 $summary[ $selector ] = [ $selector, self::BLOCK_FRAGMENTS[ $name ][1], $block['attrs'] ];
@@ -165,6 +165,15 @@ class CheckoutFragments {
         }
 
         return array_values( $summary );
+    }
+
+    /** The selector checkout.js replaces for one BLOCK_FRAGMENTS block: a Total's names its options, the others are fixed. */
+    private static function fragment_selector( string $name, array $attrs ): string {
+        if ( 'yaycheckout/order-summary-total' === $name ) {
+            return '.' . self::order_total_hash_class( self::order_total_options( $attrs ) );
+        }
+
+        return self::BLOCK_FRAGMENTS[ $name ][0];
     }
 
     public static function print_shipping_rates(): void {
@@ -742,27 +751,24 @@ class CheckoutFragments {
      * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_stepper: bool}
      */
     public static function order_items_options( array $attributes ): array {
-        $bool = static function ( string $name, bool $fallback ) use ( $attributes ): bool {
-            return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
-        };
         // The first choice is the default.
         $choice = static function ( string $name, array $choices ) use ( $attributes ): string {
             return isset( $attributes[ $name ] ) && in_array( $attributes[ $name ], $choices, true ) ? $attributes[ $name ] : $choices[0];
         };
 
         return [
-            'show_labels'            => $bool( 'showLabels', true ),
+            'show_labels'            => self::bool_attr( $attributes, 'showLabels', true ),
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own header word, so its translation still applies.
             'product_label'          => LayoutMarkupReader::plain_text( $attributes, 'productLabel', __( 'Product', 'woocommerce' ) ),
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own header word, so its translation still applies.
             'subtotal_label'         => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
-            'show_thumbnails'        => $bool( 'showThumbnails', true ),
+            'show_thumbnails'        => self::bool_attr( $attributes, 'showThumbnails', true ),
             'item_data'              => $choice( 'itemData', [ 'list', 'inline', 'hidden' ] ),
-            'show_sku'               => $bool( 'showSku', false ),
-            'show_unit_price'        => $bool( 'showUnitPrice', false ),
-            'show_short_description' => $bool( 'showShortDescription', false ),
+            'show_sku'               => self::bool_attr( $attributes, 'showSku', false ),
+            'show_unit_price'        => self::bool_attr( $attributes, 'showUnitPrice', false ),
+            'show_short_description' => self::bool_attr( $attributes, 'showShortDescription', false ),
             'quantity_display'       => $choice( 'quantityDisplay', [ 'inline', 'badge' ] ),
-            'show_stepper'           => $bool( 'showStepper', false ),
+            'show_stepper'           => self::bool_attr( $attributes, 'showStepper', false ),
         ];
     }
 
@@ -937,6 +943,11 @@ class CheckoutFragments {
         echo '</tbody></table>';
     }
 
+    /** A boolean block attribute, or $fallback when it is missing or not a boolean. */
+    private static function bool_attr( array $attributes, string $name, bool $fallback ): bool {
+        return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
+    }
+
     /**
      * The Totals block's attributes with their defaults. During AJAX they come from the parsed
      * layout, where an untouched attribute is missing, so each default matches block.json's.
@@ -944,12 +955,8 @@ class CheckoutFragments {
      * @return array{show_subtotal: bool, subtotal_label: string}
      */
     public static function order_totals_options( array $attributes ): array {
-        $bool = static function ( string $name, bool $fallback ) use ( $attributes ): bool {
-            return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
-        };
-
         return [
-            'show_subtotal'  => $bool( 'showSubtotal', true ),
+            'show_subtotal'  => self::bool_attr( $attributes, 'showSubtotal', true ),
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
             'subtotal_label' => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
         ];
@@ -1008,6 +1015,7 @@ class CheckoutFragments {
         </tr>
             <?php endif; ?>
         <?php endif; ?>
+        <?php // The order-total row between these hooks is the Total block's; extensions' rows stay here. ?>
         <?php do_action( 'woocommerce_review_order_before_order_total' ); ?>
         <?php do_action( 'woocommerce_review_order_after_order_total' ); ?>
     </tbody>
@@ -1025,24 +1033,22 @@ class CheckoutFragments {
      * @return array{show_label: bool, label: string, show_currency_code: bool}
      */
     public static function order_total_options( array $attributes ): array {
-        $bool = static function ( string $name, bool $fallback ) use ( $attributes ): bool {
-            return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
-        };
-
         return [
-            'show_label'         => $bool( 'showLabel', true ),
+            'show_label'         => self::bool_attr( $attributes, 'showLabel', true ),
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
             'label'              => LayoutMarkupReader::plain_text( $attributes, 'label', __( 'Total', 'woocommerce' ) ),
-            'show_currency_code' => $bool( 'showCurrencyCode', false ),
+            'show_currency_code' => self::bool_attr( $attributes, 'showCurrencyCode', false ),
         ];
     }
 
     /**
      * The class naming one Total block's fragment. Hashed from its options rather than its raw attrs,
      * so render.php (defaults filled) and the parsed layout (defaults missing) agree.
+     *
+     * @param array $options order_total_options() output.
      */
-    private static function order_total_hash_class( array $attributes ): string {
-        return self::ORDER_TOTAL_CLASS . '--' . substr( md5( (string) wp_json_encode( self::order_total_options( $attributes ) ) ), 0, 8 );
+    private static function order_total_hash_class( array $options ): string {
+        return self::ORDER_TOTAL_CLASS . '--' . substr( md5( (string) wp_json_encode( $options ) ), 0, 8 );
     }
 
     /**
@@ -1060,7 +1066,7 @@ class CheckoutFragments {
 
         ob_start();
         ?>
-<table class="shop_table <?php echo esc_attr( self::ORDER_TOTAL_CLASS . ' ' . self::order_total_hash_class( $attributes ) ); ?>">
+<table class="shop_table <?php echo esc_attr( self::ORDER_TOTAL_CLASS . ' ' . self::order_total_hash_class( $options ) ); ?>">
     <tbody>
         <tr class="order-total">
             <?php if ( $options['show_label'] ) : ?>

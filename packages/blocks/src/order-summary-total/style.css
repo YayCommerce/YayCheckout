@@ -1,31 +1,8 @@
-/* Order Summary's Total row: its amount end-aligned in the same fixed column as the Totals table. */
-.yaycheckout-order-summary table.yaycheckout-order-summary-total {
-	width: 100%;
-	table-layout: fixed;
-	border-collapse: collapse;
-}
+/* Order Summary's Total table; order-summary/style.css lays out its column, shared with Totals. */
 
 /* Cells take the wrapper's typography, so the block's font settings reach the total. */
 .yaycheckout-order-summary table.yaycheckout-order-summary-total :is(th, td) {
-	padding: 6px 0;
-	border: 0;
-	vertical-align: top;
 	font: inherit;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-total :is(th, td):first-child {
-	text-align: start;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-total :is(th, td):last-child {
-	width: 40%;
-	text-align: end;
-}
-
-/* Without its label the amount fills the row, still end-aligned. */
-.yaycheckout-order-summary table.yaycheckout-order-summary-total td:only-child {
-	width: 100%;
-	text-align: end;
 }
 
 .yaycheckout-order-summary table.yaycheckout-order-summary-total tr.order-total th {
@@ -37,7 +14,7 @@
 	font-weight: 400;
 }
 
-/* In a flex row (Summary Header, Summary Toggle) the total sizes to its content beside the other blocks. */
+/* In any flex row (Summary Header, Summary Toggle, a Row group) the total sizes to its content beside the other blocks. */
 .yaycheckout-order-summary .is-layout-flex > .wp-block-yaycheckout-order-summary-total {
 	flex: none;
 }

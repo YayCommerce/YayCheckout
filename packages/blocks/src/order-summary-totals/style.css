@@ -1,24 +1,4 @@
-/* Order Summary's Totals table: its amounts end-aligned in a fixed column. Items lays out its own rows. */
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals {
-	width: 100%;
-	table-layout: fixed;
-	border-collapse: collapse;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td) {
-	padding: 6px 0;
-	border: 0;
-	vertical-align: top;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):first-child {
-	text-align: start;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):last-child {
-	width: 40%;
-	text-align: end;
-}
+/* Order Summary's Totals table; order-summary/style.css lays out its column, shared with Total. */
 
 /* Labels read as plain text. */
 .yaycheckout-order-summary table.yaycheckout-order-summary-totals th {
