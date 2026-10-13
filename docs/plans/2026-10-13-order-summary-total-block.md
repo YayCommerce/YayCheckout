@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. Read the spec linked below before starting; the plan argues from it.
 
-**Status:** active
+**Status:** done 2026-10-13
 **Goal:** Add a `yaycheckout/order-summary-total` block that prints only the order total row, and take the Total row and its settings out of Order Summary Totals.
 **Spec:** `docs/specs/2026-10-13-order-summary-total-block-design.md`
 **Architecture:** A leaf dynamic block that reuses the Items/Totals fragment pattern (`CheckoutFragments::print_summary_block()` plus a `BLOCK_FRAGMENTS` entry). Because the block may appear several times with different settings, its fragment selector carries an 8-character hash of its normalized options, and `summary_block_fragments()` dedupes by selector instead of block name. The extension hooks stay in Totals so copies never repeat them. A client-side Live value refresh was rejected because it loses Woo's total HTML and filters.
