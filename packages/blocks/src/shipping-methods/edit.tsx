@@ -1,5 +1,6 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { layoutFor, SHIPPING_LAYOUTS } from './layouts';
 import { StylePanels } from './style-panels';
@@ -21,6 +22,8 @@ interface EditProps {
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label, layout, style, textColor } = attributes;
 	const selectedLayout = layoutFor( layout );
+	// Preview only: which row looks selected. Never stored.
+	const [ selectedRow, setSelectedRow ] = useState( 0 );
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-shipping-methods',
 		'data-layout': selectedLayout.value,
@@ -59,25 +62,21 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>
 				{ /* Same row markup the storefront prints, so the block CSS draws it the same way. */ }
 				<ul id="shipping_method" className="woocommerce-shipping-methods yaycheckout-shipping-methods__list">
-					<li className="yaycheckout-shipping-methods__option">
-						<input type="radio" className="shipping_method" disabled defaultChecked />
-						<label>
-							<span className="yaycheckout-shipping-methods__indicator" aria-hidden="true" />
-							<span className="yaycheckout-shipping-methods__body">
-								<span className="yaycheckout-shipping-methods__name">{ __( 'Flat rate', 'yaycheckout' ) }</span>
-							</span>
-							<span className="yaycheckout-shipping-methods__price">{ __( '$5.00', 'yaycheckout' ) }</span>
-						</label>
-					</li>
-					<li className="yaycheckout-shipping-methods__option">
-						<input type="radio" className="shipping_method" disabled />
-						<label>
-							<span className="yaycheckout-shipping-methods__indicator" aria-hidden="true" />
-							<span className="yaycheckout-shipping-methods__body">
-								<span className="yaycheckout-shipping-methods__name">{ __( 'Free shipping', 'yaycheckout' ) }</span>
-							</span>
-						</label>
-					</li>
+					{ [
+						{ name: __( 'Flat rate', 'yaycheckout' ), price: __( '$5.00', 'yaycheckout' ) },
+						{ name: __( 'Free shipping', 'yaycheckout' ), price: '' },
+					].map( ( row, index ) => (
+						<li key={ row.name } className="yaycheckout-shipping-methods__option" onClick={ () => setSelectedRow( index ) }>
+							<input type="radio" className="shipping_method" disabled readOnly checked={ selectedRow === index } />
+							<label>
+								<span className="yaycheckout-shipping-methods__indicator" aria-hidden="true" />
+								<span className="yaycheckout-shipping-methods__body">
+									<span className="yaycheckout-shipping-methods__name">{ row.name }</span>
+								</span>
+								{ row.price && <span className="yaycheckout-shipping-methods__price">{ row.price }</span> }
+							</label>
+						</li>
+					) ) }
 				</ul>
 			</div>
 		</>

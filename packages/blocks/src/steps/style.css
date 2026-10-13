@@ -19,6 +19,11 @@
 	border-color: var(--yaycheckout-primary-color, #3858e9);
 }
 
+/* The gap revealStep() in view.ts leaves above a step it scrolls to. Outside :where() so step styles keep it. */
+.yaycheckout-step {
+	scroll-margin-top: 16px;
+}
+
 .yaycheckout-step__header {
 	display: grid;
 	grid-template-columns: auto 1fr auto;
