@@ -39,12 +39,13 @@ final class LayoutDesign {
     public const GRADIENT_MAX_LENGTH = 1000;
 
     /**
-     * Fonts the merchant can pick: token slug => CSS font-family, '' for the theme's font.
-     * Fonts in core's Google Fonts collection, under the same slug: picking one installs it into the
-     * Font Library (Repositories\FontRepository) unless the theme loads it already.
+     * Fonts the merchant can pick: token slug => CSS font-family, '' for the theme's font. A FONT_STACKS key
+     * maps to its label instead. The other fonts are in core's Google Fonts collection, under the same slug:
+     * picking one installs it into the Font Library (Repositories\FontRepository) unless the theme loads it already.
      */
     public const FONT_FAMILIES = [
         ''                 => '',
+        'system'           => 'System font',
         'inter'            => 'Inter',
         'roboto'           => 'Roboto',
         'open-sans'        => 'Open Sans',
@@ -57,6 +58,14 @@ final class LayoutDesign {
         'merriweather'     => 'Merriweather',
         'playfair-display' => 'Playfair Display',
         'roboto-slab'      => 'Roboto Slab',
+    ];
+
+    /**
+     * The FONT_FAMILIES keys the shopper's device already has: each prints as this stack, with no fallback added,
+     * and has nothing to install or load.
+     */
+    public const FONT_STACKS = [
+        'system' => '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
     ];
 
     /** The FONT_FAMILIES keys whose fallback is a serif stack; the rest fall back to sans-serif. */

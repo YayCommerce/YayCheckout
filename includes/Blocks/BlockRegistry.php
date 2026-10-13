@@ -207,6 +207,7 @@ class BlockRegistry {
             'schema'            => LayoutDesign::schema(),
             'fontFamilies'      => LayoutDesign::FONT_FAMILIES,
             'serifFonts'        => LayoutDesign::SERIF_FONTS,
+            'fontStacks'        => LayoutDesign::FONT_STACKS,
             // The id WordPress gives this handle's inline style, which holds the font faces.
             'fontStyleId'       => ScriptName::STYLE_CHECKOUT_FONTS . '-inline-css',
             'customCssMaxBytes' => LayoutDesign::CUSTOM_CSS_MAX_BYTES,

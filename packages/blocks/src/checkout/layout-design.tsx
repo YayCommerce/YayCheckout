@@ -484,7 +484,8 @@ function useDesignFont( design: EditorDesign, slug: string ): { css: string | nu
 	useEffect( () => {
 		let cancelled = false;
 
-		if ( '' === slug ) {
+		// The theme's font, or one the device has: no faces to print.
+		if ( '' === slug || design.fontStacks[ slug ] ) {
 			setState( { slug, css: '', uploaded: true } );
 			return;
 		}
@@ -512,9 +513,9 @@ function useDesignFont( design: EditorDesign, slug: string ): { css: string | nu
 		return () => {
 			cancelled = true;
 		};
-	}, [ slug, saves ] );
+	}, [ slug, saves, design.fontStacks ] );
 
-	if ( '' === slug ) {
+	if ( '' === slug || design.fontStacks[ slug ] ) {
 		return { css: '' };
 	}
 

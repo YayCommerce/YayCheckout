@@ -6,8 +6,8 @@
 		"border": "#dddddd"
 	},
 	"typography": {
-		"font_family": "",
-		"base_size": 16
+		"font_family": "system",
+		"base_size": 13
 	},
 	"inputs": {
 		"style": "boxed",
