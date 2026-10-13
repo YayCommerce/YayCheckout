@@ -57,6 +57,11 @@ body.yaycheckout-page > .wp-site-blocks,
 	display: none !important;
 }
 
+/* BlockVisibility::HIDDEN_CLASS: a block whose visibility setting fails for the open step or the cart. */
+.yaycheckout-hidden-by-visibility {
+	display: none !important;
+}
+
 /*
  * A Group pinned to the bottom of the screen (PinToBottom::PINNED_CLASS), on mobile only with
  * PinToBottom::MOBILE_CLASS. Only the storefront render adds the class, so the editor shows it in place.
