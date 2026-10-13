@@ -87,13 +87,19 @@
 	pointer-events: none;
 }
 
+/* The clipped radio can't show focus, so its row does: inside the row, where a joined neighbour can't cover it. */
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li:has(> input:focus-visible) {
+	outline: 2px solid var(--yaycheckout-primary-color);
+	outline-offset: -2px;
+}
+
 .yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li > label::before {
 	content: "";
 	flex: none;
 	width: 18px;
 	height: 18px;
 	border-radius: 999px;
-	box-shadow: inset 0 0 0 1.5px var(--yaycheckout-payment-radio, var(--yaycheckout-border-color));
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-payment-radio, var(--yaycheckout-border-color));
 }
 
 .yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) > label::before {
@@ -266,7 +272,7 @@
 	justify-content: center;
 	width: 22px;
 	height: 22px;
-	box-shadow: inset 0 0 0 1.5px var(--yaycheckout-payment-radio, color-mix(in srgb, currentColor 35%, transparent));
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-payment-radio, color-mix(in srgb, currentColor 35%, transparent));
 }
 
 .yaycheckout-checkout .yaycheckout-payment[data-layout="checkmark"] #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) > label::before {
@@ -317,7 +323,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-payment[data-layout="lines"] #payment .wc_payment_methods > li > label::before {
-	box-shadow: inset 0 0 0 1.5px var(--yaycheckout-payment-radio, currentColor);
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-payment-radio, currentColor);
 }
 
 /* Single box: one outline around the list; selected row gets a tint, outer border stays. */
