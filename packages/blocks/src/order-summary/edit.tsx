@@ -3,6 +3,7 @@ import { cloneBlock, createBlock } from '@wordpress/blocks';
 import {
 	Notice,
 	PanelBody,
+	TextControl,
 	ToggleControl,
 	__experimentalToggleGroupControl as ToggleGroupControl,
 	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
@@ -10,11 +11,12 @@ import {
 import { useDispatch, useSelect } from '@wordpress/data';
 import { escapeHTML } from '@wordpress/escape-html';
 import { __ } from '@wordpress/i18n';
+import breakdownMeta from '../order-summary-breakdown/block.json';
 import detailsMeta from '../order-summary-details/block.json';
 import headerMeta from '../order-summary-header/block.json';
 import itemsMeta from '../order-summary-items/block.json';
 import toggleMeta from '../order-summary-toggle/block.json';
-import totalsMeta from '../order-summary-totals/block.json';
+import totalMeta from '../order-summary-total/block.json';
 import type { TemplateArray } from '../shared/address-template';
 import { isCheckoutSection, useBlocksAllowedExcept } from '../shared/allowed-blocks';
 import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
@@ -26,6 +28,8 @@ type InitialState = 'collapsed' | 'open';
 
 interface OrderSummaryAttributes {
 	label: string;
+	showTitle?: boolean;
+	description?: string;
 	collapsible?: boolean;
 	initialState?: InitialState;
 	style?: BlockGapStyles;
@@ -37,21 +41,24 @@ interface EditProps {
 	clientId: string;
 }
 
-// A Header holding a Toggle holding a Heading, then Details holding Items and Totals. templates/layouts/classic-two-column/markup.php
-// seeds the same tree, with Coupon Form between Items and Totals; change both.
+// A Header holding a Toggle holding a Heading, then Details holding Items, Order Summary Breakdown and Order Summary Total. templates/layouts/classic-two-column/markup.php
+// seeds the same tree, with Coupon Form between Items and Order Summary Breakdown; change both.
 const TEMPLATE: TemplateArray[] = [
 	[
 		headerMeta.name,
 		{},
 		[ [ toggleMeta.name, {}, [ [ 'core/heading', { level: 3, content: __( 'Order summary', 'yaycheckout' ) } ] ] ] ],
 	],
-	[ detailsMeta.name, { lock: { remove: true } }, [ [ itemsMeta.name ], [ totalsMeta.name ] ] ],
+	[ detailsMeta.name, { lock: { remove: true } }, [ [ itemsMeta.name ], [ breakdownMeta.name ], [ totalMeta.name ] ] ],
 ];
 
 const NEW_SHAPE_CHILDREN = [ headerMeta.name, detailsMeta.name ];
 
 export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
 	const { label, initialState = 'collapsed', style } = attributes;
+	const showTitle = attributes.showTitle !== false;
+	const description = attributes.description ?? '';
+	const trimmedDescription = description.trim();
 	const css = useBlockGapCSS( `#block-${ clientId }`, style );
 	const { collapsible, hasTrigger } = useSummaryCollapse();
 	const { newShape, headerId, headerIndex, detailsIndex, childCount } = useSelect(
@@ -73,7 +80,11 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	const { moveBlockToPosition, replaceInnerBlocks } = useDispatch( blockEditorStore );
 	const { getBlocks } = useSelect( blockEditorStore );
 	const blockProps = useBlockProps( {
-		className: [ 'yaycheckout-order-summary', collapsible && initialState === 'collapsed' ? 'is-preview-collapsed' : '' ]
+		className: [
+			'yaycheckout-order-summary',
+			! showTitle ? 'is-title-hidden' : '',
+			collapsible && initialState === 'collapsed' ? 'is-preview-collapsed' : '',
+		]
 			.filter( Boolean )
 			.join( ' ' ),
 	} );
@@ -106,18 +117,32 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		<div { ...innerBlocksProps }>
 			{ css && <style>{ css }</style> }
 			<SectionLabel
-				panelTitle={ __( 'Order summary', 'yaycheckout' ) }
 				label={ label }
 				defaultLabel={ __( 'Your order', 'yaycheckout' ) }
 				setAttributes={ setAttributes }
-				showHeading={ ! newShape }
+				showHeading={ ! newShape && showTitle }
 				help={
 					newShape
 						? __( "Read by screen readers as the name of the header's open/close button.", 'yaycheckout' )
 						: undefined
 				}
 			/>
+			{ ! newShape && trimmedDescription !== '' && (
+				<p className="yaycheckout-section-description">{ trimmedDescription }</p>
+			) }
 			<InspectorControls>
+				<PanelBody title={ __( 'Title', 'yaycheckout' ) }>
+					<ToggleControl
+						label={ __( 'Show title', 'yaycheckout' ) }
+						checked={ showTitle }
+						onChange={ ( value ) => setAttributes( { showTitle: value } ) }
+					/>
+					<TextControl
+						label={ __( 'Description', 'yaycheckout' ) }
+						value={ description }
+						onChange={ ( value ) => setAttributes( { description: value } ) }
+					/>
+				</PanelBody>
 				{ newShape ? (
 					<PanelBody title={ __( 'Collapsing', 'yaycheckout' ) }>
 						<ToggleControl

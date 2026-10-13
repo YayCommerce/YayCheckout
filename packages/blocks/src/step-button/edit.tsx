@@ -19,7 +19,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Continue button', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<ArrowControl direction="forward" value={ attributes.arrow } onChange={ ( arrow ) => setAttributes( { arrow } ) } />
 				</PanelBody>
 			</InspectorControls>

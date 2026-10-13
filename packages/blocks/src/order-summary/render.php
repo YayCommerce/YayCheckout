@@ -1,6 +1,6 @@
 <?php
 /**
- * Prints the heading, then the Items and Totals blocks with the merchant's blocks around them. A summary
+ * Prints the heading, then the Items, Order Summary Breakdown and Order Summary Total blocks with the merchant's blocks around them. A summary
  * split into a Summary Header and Summary Details prints no heading: the header holds the merchant's own,
  * and the wrapper says whether the details collapse and start open.
  * A layout saved before Order Summary held blocks has none, and gets WooCommerce's review-order
@@ -14,7 +14,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', \YayCheckout\Services\OrderSummaryCollapse::default_label() );
+$yaycheckout_label       = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', \YayCheckout\Services\OrderSummaryCollapse::default_label() );
+$yaycheckout_show_title  = ! isset( $attributes['showTitle'] ) || (bool) $attributes['showTitle'];
+$yaycheckout_description = trim( \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'description' ) );
 
 $yaycheckout_has_cart = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart;
 
@@ -25,6 +27,10 @@ $yaycheckout_new_shape = [] !== array_intersect(
 
 // Block spacing.
 $yaycheckout_class = 'yaycheckout-order-summary' . \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/order-summary', 'yaycheckout-order-summary' );
+
+if ( ! $yaycheckout_show_title ) {
+    $yaycheckout_class .= ' is-title-hidden';
+}
 
 if ( $yaycheckout_new_shape ) {
     $yaycheckout_collapse = \YayCheckout\Services\OrderSummaryCollapse::of_layout( \YayCheckout\Renderer\CheckoutPage::get_instance()->layout() );
@@ -39,7 +45,12 @@ if ( $yaycheckout_new_shape ) {
 <?php if ( $yaycheckout_new_shape ) : ?>
     <?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner block markup, already rendered and escaped by core. ?>
 <?php else : ?>
-    <h3 id="order_review_heading"><?php echo esc_html( $yaycheckout_label ); ?></h3>
+    <?php if ( $yaycheckout_show_title ) : ?>
+        <h3 id="order_review_heading"><?php echo esc_html( $yaycheckout_label ); ?></h3>
+    <?php endif; ?>
+    <?php if ( '' !== $yaycheckout_description ) : ?>
+        <p class="yaycheckout-section-description"><?php echo esc_html( $yaycheckout_description ); ?></p>
+    <?php endif; ?>
     <?php if ( ! empty( $block->parsed_block['innerBlocks'] ) ) : ?>
         <?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner block markup, already rendered and escaped by core. ?>
     <?php elseif ( $yaycheckout_has_cart && function_exists( 'woocommerce_order_review' ) ) : ?>

@@ -1,0 +1,10 @@
+/* Order Summary Breakdown's table; order-summary/style.css lays out its column, shared with Order Summary Total. */
+
+/* Labels read as plain text. */
+.yaycheckout-order-summary table.yaycheckout-order-summary-breakdown th {
+	font-weight: normal;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-breakdown .yaycheckout-order-summary-breakdown__shipping strong {
+	text-transform: uppercase;
+}

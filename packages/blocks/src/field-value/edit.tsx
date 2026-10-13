@@ -45,7 +45,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Field value', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					{ /* Values print in the order the fields were added; remove and re-add one to move it. */ }
 					<FormTokenField
 						label={ __( 'Fields', 'yaycheckout' ) }

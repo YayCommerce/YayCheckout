@@ -12,14 +12,14 @@
 
 /*
  * Neutral fallbacks, resolved once. A layout's empty token leaves its property unset, so these
- * follow the theme: its primary preset (then #3858e9, Classic two-column's primary), a border
- * mixed from the text colour, a 2px corner. Block CSS reads the same names.
+ * follow the theme: the primary and border colours through the design presets, which hold their
+ * fallbacks (design-presets.css), and a 2px corner. Block CSS reads the same names.
  */
 :root,
 .editor-styles-wrapper {
 	--yaycheckout-neutral-radius: 2px;
-	--yaycheckout-primary-color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
-	--yaycheckout-border-color: var(--yaycheckout-color-border, color-mix(in srgb, currentColor 45%, transparent));
+	--yaycheckout-primary-color: var(--wp--preset--color--yaycheckout-primary);
+	--yaycheckout-border-color: var(--wp--preset--color--yaycheckout-border);
 	--yaycheckout-field-radius: var(--yaycheckout-input-radius, var(--yaycheckout-neutral-radius));
 	/* White check drawn on a filled circle: Steps, Steps Progress and the Cards with checkmark layouts. */
 	--yaycheckout-check-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
@@ -130,6 +130,18 @@ html.yaycheckout-has-pinned body {
 	float: none;
 	width: auto;
 	margin-block: 0;
+}
+
+/* Section description under Shipping Methods, Payment, and Order Summary headings. */
+.yaycheckout-checkout .yaycheckout-section-description {
+	margin: 0 0 8px;
+	font-size: 0.875em;
+	opacity: 0.75;
+}
+
+.yaycheckout-checkout .yaycheckout-order-summary-header > .yaycheckout-section-description {
+	flex-basis: 100%;
+	margin: 4px 0 0;
 }
 
 /* Field rows. Classic themes float the half-width rows; the layout's Columns place fields side by side instead. */
@@ -624,46 +636,6 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 /* A Field whose row WooCommerce's address-i18n.js hid for the country is left empty; it takes no gap. */
 :is(.yaycheckout-billing, .yaycheckout-shipping) > .yaycheckout-field:has(> .form-row[style*="display: none"]):not(:has(> .form-row:not([style*="display: none"]))) {
 	display: none;
-}
-
-/* Order Summary's Totals table: its amounts end-aligned in a fixed column. Items lays out its own rows. */
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals {
-	width: 100%;
-	table-layout: fixed;
-	border-collapse: collapse;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td) {
-	padding: 6px 0;
-	border: 0;
-	vertical-align: top;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):first-child {
-	text-align: start;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):last-child {
-	width: 40%;
-	text-align: end;
-}
-
-/* Labels read as plain text; only the Total stands out. */
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals th {
-	font-weight: normal;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals tr.order-total th {
-	font-weight: bold;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__shipping strong {
-	text-transform: uppercase;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__currency {
-	margin-inline-end: 0.35em;
-	font-weight: 400;
 }
 
 /* iOS zooms into a focused field whose text is under 16px. */

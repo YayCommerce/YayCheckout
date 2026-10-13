@@ -116,7 +116,7 @@ export async function deleteLayout(id: number): Promise<void> {
 }
 
 export type CreateLayoutDraftPayload =
-  { name: string; source: 'blank' } | { name: string; source: 'library'; templateSlug: string };
+  { name: string; source: 'default' } | { name: string; source: 'library'; templateSlug: string };
 
 export async function createLayoutDraft(payload: CreateLayoutDraftPayload): Promise<Layout> {
   const json =

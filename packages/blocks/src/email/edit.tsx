@@ -30,7 +30,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Email address', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<FieldTextControls
 						label={ label }
 						placeholder={ placeholder }

@@ -11,6 +11,8 @@ class ScriptName {
 
     public const STYLE_CHECKOUT_FONTS = 'yaycheckout/style/checkout-fonts';
 
+    public const STYLE_DESIGN_PRESETS = 'yaycheckout/style/design-presets';
+
     public const MODULE_PREFIX = 'yaycheckout/module/';
 
     public const PAGE_SETTINGS = 'yaycheckout/module/page-settings';

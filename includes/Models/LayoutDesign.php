@@ -22,8 +22,15 @@ final class LayoutDesign {
      */
     public const GRADIENT_PATTERN = '^(repeating-)?(linear|radial|conic)-gradient\\([^"\'\\\\*;{}<>]*\\)$';
 
-    /** A theme colour preset, by the custom property WordPress prints for it, so the token follows the theme's palette. */
-    public const PRESET_COLOR_PATTERN = '^var\\(--wp--preset--color--[a-z0-9-]+\\)$';
+    /**
+     * A theme colour preset, by the custom property WordPress prints for it, so the token follows the theme's palette.
+     * Not one of the design's own presets (design-presets.css): each is read from a colour token, so a token naming
+     * one would read itself.
+     */
+    public const PRESET_COLOR_PATTERN = '^var\\(--wp--preset--color--(?!' . self::DESIGN_PRESET_PREFIX . ')[a-z0-9-]+\\)$';
+
+    /** The slug prefix of the palette presets that offer the colour tokens to block colour pickers (addDesignPalette() in layout-design.tsx). */
+    public const DESIGN_PRESET_PREFIX = 'yaycheckout-';
 
     /** A theme gradient preset, the same way. */
     public const PRESET_GRADIENT_PATTERN = '^var\\(--wp--preset--gradient--[a-z0-9-]+\\)$';

@@ -16,10 +16,20 @@ $yaycheckout_collapse = \YayCheckout\Services\OrderSummaryCollapse::of_layout( \
 // Order Summary's Label names the button, since the header's own text may be a total or a button.
 $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( [ 'label' => $block->context['yaycheckout/orderSummaryLabel'] ?? null ], 'label', \YayCheckout\Services\OrderSummaryCollapse::default_label() );
 
+$yaycheckout_description = trim(
+    \YayCheckout\Services\LayoutMarkupReader::text(
+        [ 'description' => $block->context['yaycheckout/orderSummaryDescription'] ?? null ],
+        'description'
+    )
+);
+
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-order-summary-header' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php if ( $yaycheckout_collapse['collapsible'] ) : ?>
         <button type="button" class="yaycheckout-order-summary__header-button" aria-expanded="<?php echo $yaycheckout_collapse['open'] ? 'true' : 'false'; ?>" aria-controls="<?php echo esc_attr( \YayCheckout\Services\OrderSummaryCollapse::DETAILS_ID ); ?>" aria-label="<?php echo esc_attr( $yaycheckout_label ); ?>"></button>
     <?php endif; ?>
     <?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner block markup, already rendered and escaped by core. ?>
+    <?php if ( '' !== $yaycheckout_description ) : ?>
+        <p class="yaycheckout-section-description"><?php echo esc_html( $yaycheckout_description ); ?></p>
+    <?php endif; ?>
 </div>

@@ -150,7 +150,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Steps Progress', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<SelectControl
 						label={ __( 'Style', 'yaycheckout' ) }
 						value={ attributes.variant }

@@ -103,7 +103,7 @@ export default function Edit( { attributes, setAttributes, isSelected }: EditPro
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Login', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<SelectControl
 						label={ __( 'Clicking the link', 'yaycheckout' ) }
 						value={ behavior }

@@ -1,5 +1,5 @@
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import { PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { layoutFor, PAYMENT_LAYOUTS } from './layouts';
@@ -9,6 +9,8 @@ import '../shared/section-preview.css';
 
 interface PaymentAttributes {
 	label: string;
+	showTitle?: boolean;
+	description?: string;
 	layout?: string;
 	style?: Record< string, unknown >;
 	textColor?: string;
@@ -21,6 +23,8 @@ interface EditProps {
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { label, layout, style, textColor } = attributes;
+	const showTitle = attributes.showTitle !== false;
+	const description = attributes.description ?? '';
 	const selectedLayout = layoutFor( layout );
 	// Preview only: which row looks selected. Never stored.
 	const [ selectedRow, setSelectedRow ] = useState( 0 );
@@ -34,15 +38,28 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		...paymentStyleVars( style, textColor ),
 	};
 	const heading = label || __( 'Payment', 'yaycheckout' );
+	const trimmedDescription = description.trim();
 
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Payment', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
+					<ToggleControl
+						label={ __( 'Show title', 'yaycheckout' ) }
+						checked={ showTitle }
+						onChange={ ( value ) => setAttributes( { showTitle: value } ) }
+					/>
+					{ showTitle && (
+						<TextControl
+							label={ __( 'Label', 'yaycheckout' ) }
+							value={ label }
+							onChange={ ( value ) => setAttributes( { label: value } ) }
+						/>
+					) }
 					<TextControl
-						label={ __( 'Label', 'yaycheckout' ) }
-						value={ label }
-						onChange={ ( value ) => setAttributes( { label: value } ) }
+						label={ __( 'Description', 'yaycheckout' ) }
+						value={ description }
+						onChange={ ( value ) => setAttributes( { description: value } ) }
 					/>
 					<SelectControl
 						label={ __( 'Layout', 'yaycheckout' ) }
@@ -63,7 +80,10 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				/>
 			</InspectorControls>
 			<div { ...blockProps } style={ wrapperStyle }>
-				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>
+				{ showTitle && <h3 className="yaycheckout-section-preview__heading">{ heading }</h3> }
+				{ trimmedDescription !== '' && (
+					<p className="yaycheckout-section-description">{ trimmedDescription }</p>
+				) }
 				{ /* WooCommerce's list markup, so the block's own CSS draws it as on the storefront. */ }
 				<div id="payment" className="woocommerce-checkout-payment">
 					<ul className="wc_payment_methods payment_methods methods">
