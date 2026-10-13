@@ -18,6 +18,14 @@
       "type": "string",
       "default": "Payment"
     },
+    "showTitle": {
+      "type": "boolean",
+      "default": true
+    },
+    "description": {
+      "type": "string",
+      "default": ""
+    },
     "layout": {
       "type": "string",
       "default": "joined"

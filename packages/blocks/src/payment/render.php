@@ -10,7 +10,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', __( 'Payment', 'yaycheckout' ) );
+$yaycheckout_label       = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', __( 'Payment', 'yaycheckout' ) );
+$yaycheckout_show_title  = ! isset( $attributes['showTitle'] ) || (bool) $attributes['showTitle'];
+$yaycheckout_description = trim( \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'description' ) );
 
 $yaycheckout_wrapper_base = [
     'class'       => 'yaycheckout-payment',
@@ -30,6 +32,11 @@ $yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
-    <h3><?php echo esc_html( $yaycheckout_label ); ?></h3>
+    <?php if ( $yaycheckout_show_title ) : ?>
+        <h3><?php echo esc_html( $yaycheckout_label ); ?></h3>
+    <?php endif; ?>
+    <?php if ( '' !== $yaycheckout_description ) : ?>
+        <p class="yaycheckout-section-description"><?php echo esc_html( $yaycheckout_description ); ?></p>
+    <?php endif; ?>
     <?php \YayCheckout\Renderer\CheckoutFragments::print_payment_methods(); ?>
 </div>
