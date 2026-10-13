@@ -14,6 +14,7 @@
 	grid-template-columns: minmax(0, 1fr) auto;
 	column-gap: 12px;
 	align-items: start;
+	align-items: center;
 }
 
 .yaycheckout-order-summary-items__item:has(> .product-thumbnail) {
