@@ -228,20 +228,9 @@ class BlockRegistry {
      * Checkout editor script, whose inline data it reads. Skipped without a build.
      */
     public function enqueue_live_value_editor(): void {
-        $asset = 'layout' === $this->editor( null ) ? self::built_asset( 'live-value/index' ) : null;
-
-        if ( null === $asset ) {
-            return;
+        if ( 'layout' === $this->editor( null ) ) {
+            self::enqueue_editor_script( LiveValues::EDITOR_SCRIPT, 'live-value/index' );
         }
-
-        wp_enqueue_script(
-            LiveValues::EDITOR_SCRIPT,
-            $asset['url'] . '.js',
-            array_merge( $asset['dependencies'], [ generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ) ] ),
-            $asset['version'],
-            true
-        );
-        wp_set_script_translations( LiveValues::EDITOR_SCRIPT, 'yaycheckout', YAYCHECKOUT_PLUGIN_DIR . 'languages' );
     }
 
     /**
@@ -249,37 +238,43 @@ class BlockRegistry {
      * layout stays valid anywhere. It runs after the Checkout editor script. Skipped without a build.
      */
     public function enqueue_visibility_editor(): void {
-        $asset = self::built_asset( 'visibility/index' );
+        self::enqueue_editor_script( BlockVisibility::EDITOR_SCRIPT, 'visibility/index' );
+    }
+
+    /** The live value chip style, on enqueue_block_assets so it reaches the canvas iframe. Layout editor only; skipped without a build. */
+    public function enqueue_live_value_editor_style(): void {
+        $this->enqueue_layout_editor_style( LiveValues::EDITOR_STYLE, 'live-value/index' );
+    }
+
+    /** The Conditional tag and preview dimming, on enqueue_block_assets so they reach the canvas iframe. Layout editor only; skipped without a build. */
+    public function enqueue_visibility_editor_style(): void {
+        $this->enqueue_layout_editor_style( BlockVisibility::EDITOR_STYLE, 'visibility/index' );
+    }
+
+    /** A built editor entry's script as $handle, after the Checkout editor script, with translations. Skipped without a build. */
+    private static function enqueue_editor_script( string $handle, string $entry ): void {
+        $asset = self::built_asset( $entry );
 
         if ( null === $asset ) {
             return;
         }
 
         wp_enqueue_script(
-            BlockVisibility::EDITOR_SCRIPT,
+            $handle,
             $asset['url'] . '.js',
             array_merge( $asset['dependencies'], [ generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ) ] ),
             $asset['version'],
             true
         );
-        wp_set_script_translations( BlockVisibility::EDITOR_SCRIPT, 'yaycheckout', YAYCHECKOUT_PLUGIN_DIR . 'languages' );
+        wp_set_script_translations( $handle, 'yaycheckout', YAYCHECKOUT_PLUGIN_DIR . 'languages' );
     }
 
-    /** The live value chip style, on enqueue_block_assets so it reaches the canvas iframe. Layout editor only; skipped without a build. */
-    public function enqueue_live_value_editor_style(): void {
-        $asset = is_admin() && 'layout' === $this->editor( null ) ? self::built_asset( 'live-value/index', true ) : null;
+    /** A built editor entry's style as $handle, in the layout editor only. Skipped without a build. */
+    private function enqueue_layout_editor_style( string $handle, string $entry ): void {
+        $asset = is_admin() && 'layout' === $this->editor( null ) ? self::built_asset( $entry, true ) : null;
 
         if ( null !== $asset ) {
-            wp_enqueue_style( LiveValues::EDITOR_STYLE, $asset['url'] . '.css', [], $asset['version'] );
-        }
-    }
-
-    /** The Conditional tag and preview dimming, on enqueue_block_assets so they reach the canvas iframe. Layout editor only; skipped without a build. */
-    public function enqueue_visibility_editor_style(): void {
-        $asset = is_admin() && 'layout' === $this->editor( null ) ? self::built_asset( 'visibility/index', true ) : null;
-
-        if ( null !== $asset ) {
-            wp_enqueue_style( BlockVisibility::EDITOR_STYLE, $asset['url'] . '.css', [], $asset['version'] );
+            wp_enqueue_style( $handle, $asset['url'] . '.css', [], $asset['version'] );
         }
     }
 

@@ -24,6 +24,8 @@ import { __, sprintf } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
 import { useIsLayoutEditor } from '../shared/layout-editor';
+import { addLayoutPanel, type LayoutPanelProps } from '../shared/layout-panel';
+import { firstStepsBlock } from '../shared/layout-steps';
 import { plainText } from '../shared/plain-text';
 import { stepTitle } from '../shared/step-title';
 import {
@@ -33,10 +35,10 @@ import {
 	normalize,
 	type VisibilityRule,
 	type VisibilitySetting,
+	type VisibilityState,
 } from '../shared/visibility-rules';
+import stepMeta from '../step/block.json';
 import './editor.css';
-
-type BlockSettings = { attributes?: Record< string, unknown > };
 
 type RuleType = VisibilityRule[ 'type' ];
 
@@ -47,11 +49,13 @@ type DraftSetting = { action: 'show' | 'hide'; rules: DraftRule[] };
 
 type StepOption = { value: number | 'last'; label: string };
 
-const STEPS = 'yaycheckout/steps';
+const STEP = stepMeta.name;
 
-const STEP = 'yaycheckout/step';
-
-/** Blocks holding WooCommerce fields, whose required rules stay while a container hides. */
+/**
+ * Blocks holding WooCommerce fields, whose required rules stay while a container hides: the notice warns
+ * about any of them. Not shared/hide-when-empty.tsx's check, a block set to required, which misses Billing
+ * and Shipping: they hold required fields without a `required` attribute of their own.
+ */
 const FIELD_BLOCKS = [
 	'yaycheckout/billing',
 	'yaycheckout/shipping',
@@ -69,10 +73,6 @@ const PLUGIN = 'yaycheckout-visibility-preview';
 
 const STORE = 'yaycheckout/visibility-preview';
 
-addFilter( 'blocks.registerBlockType', 'yaycheckout/visibility', ( settings: BlockSettings, name: string ) =>
-	EXCLUDED.includes( name ) ? settings : { ...settings, attributes: { ...settings.attributes, [ ATTRIBUTE ]: { type: 'object' } } }
-);
-
 function typeLabels(): Record< RuleType, string > {
 	return {
 		step: __( 'Step', 'yaycheckout' ),
@@ -83,29 +83,57 @@ function typeLabels(): Record< RuleType, string > {
 	};
 }
 
-/**
- * "1. <title>" … for the editor's first Steps block, then "Last step"; only "Last step" without one.
- * Mirrors CheckoutStepsProgress::layout_titles(), which counts the steps the storefront numbers.
- */
-export function stepOptions( registrySelect: typeof selectNow = selectNow ): StepOption[] {
-	const { getBlockAttributes, getBlockName, getBlockOrder, getBlocksByName } = registrySelect( blockEditorStore );
-	const stepsId = ( getBlocksByName( STEPS ) as string[] )[ 0 ];
-	const steps = stepsId ? ( getBlockOrder( stepsId ) as string[] ).filter( ( id ) => getBlockName( id ) === STEP ) : [];
+/** The Step blocks of the layout's first Steps block, in order; empty without one. */
+function stepIds( registrySelect: typeof selectNow ): string[] {
+	const { getBlockName, getBlockOrder } = registrySelect( blockEditorStore );
+	const stepsId = firstStepsBlock( registrySelect );
 
+	return stepsId ? ( getBlockOrder( stepsId ) as string[] ).filter( ( id ) => getBlockName( id ) === STEP ) : [];
+}
+
+/** "1. <title>" … for the editor's first Steps block, then "Last step"; only "Last step" without one. */
+export function stepOptions( registrySelect: typeof selectNow = selectNow ): StepOption[] {
+	const { getBlockAttributes } = registrySelect( blockEditorStore );
+
+	return optionsFor( stepIds( registrySelect ).map( ( id ) => getBlockAttributes( id )?.title ) );
+}
+
+function optionsFor( titles: unknown[] ): StepOption[] {
 	return [
-		...steps.map( ( id, index ) => ( {
+		...titles.map( ( title, index ) => ( {
 			value: index + 1,
-			label: `${ index + 1 }. ${ stepTitle( plainText( getBlockAttributes( id )?.title ) ) }`,
+			label: `${ index + 1 }. ${ stepTitle( plainText( title ) ) }`,
 		} ) ),
 		{ value: 'last' as const, label: __( 'Last step', 'yaycheckout' ) },
 	];
 }
 
-/** stepOptions(), re-read as the layout's steps change. */
+/** stepOptions(), rebuilt only when a step is added, removed or renamed. */
 function useStepOptions(): StepOption[] {
-	const key = useSelect( ( select ) => JSON.stringify( stepOptions( select ) ), [] );
+	const titles = useSelect( ( select ) => {
+		const { getBlockAttributes } = select( blockEditorStore );
 
-	return useMemo( () => JSON.parse( key ) as StepOption[], [ key ] );
+		return JSON.stringify( stepIds( select ).map( ( id ) => getBlockAttributes( id )?.title ?? '' ) );
+	}, [] );
+
+	return useMemo( () => optionsFor( JSON.parse( titles ) as unknown[] ), [ titles ] );
+}
+
+/** A step select's options: stepOptions() with string values. */
+function stepSelectOptions( steps: StepOption[] ): { value: string; label: string }[] {
+	return steps.map( ( option ) => ( { value: String( option.value ), label: option.label } ) );
+}
+
+/** A step select's value back as a step: "last" or its number. */
+function parseStep( value: string ): number | 'last' {
+	return value === 'last' ? 'last' : Number( value );
+}
+
+/** A typed amount, or 0 when it is empty, negative or not a number. */
+function toAmount( value?: string ): number {
+	const amount = Number( value );
+
+	return Number.isFinite( amount ) && amount >= 0 ? amount : 0;
 }
 
 function newRule( type: RuleType, steps: StepOption[] ): DraftRule {
@@ -194,12 +222,6 @@ function CurrencySuffix() {
 	return <InputControlSuffixWrapper>{ editorData.currencySymbol }</InputControlSuffixWrapper>;
 }
 
-type PanelProps = {
-	clientId: string;
-	attributes: Record< string, unknown >;
-	setAttributes: ( attributes: Record< string, unknown > ) => void;
-};
-
 type RuleRowProps = {
 	rule: DraftRule;
 	used: RuleType[];
@@ -237,7 +259,7 @@ function RuleRow( { rule, used, steps, onChange, onRemove }: RuleRowProps ) {
 					label={ __( 'Step is', 'yaycheckout' ) }
 					value={ stepValue }
 					options={ [
-						...steps.map( ( option ) => ( { value: String( option.value ), label: option.label } ) ),
+						...stepSelectOptions( steps ),
 						// A step deleted since: kept selected, so the merchant sees it rather than another step.
 						...( stepValues.includes( stepValue )
 							? []
@@ -249,7 +271,7 @@ function RuleRow( { rule, used, steps, onChange, onRemove }: RuleRowProps ) {
 									},
 							  ] ),
 					] }
-					onChange={ ( value: string ) => onChange( { ...rule, step: value === 'last' ? 'last' : Number( value ) } ) }
+					onChange={ ( value: string ) => onChange( { ...rule, step: parseStep( value ) } ) }
 				/>
 			) }
 			{ rule.type === 'subtotal' && (
@@ -275,11 +297,7 @@ function RuleRow( { rule, used, steps, onChange, onRemove }: RuleRowProps ) {
 							step={ 0.01 }
 							value={ rule.amount ?? 0 }
 							suffix={ <CurrencySuffix /> }
-							onChange={ ( value?: string ) => {
-								const amount = Number( value );
-
-								onChange( { ...rule, amount: Number.isFinite( amount ) && amount >= 0 ? amount : 0 } );
-							} }
+							onChange={ ( value?: string ) => onChange( { ...rule, amount: toAmount( value ) } ) }
 						/>
 					</FlexBlock>
 				</Flex>
@@ -288,16 +306,16 @@ function RuleRow( { rule, used, steps, onChange, onRemove }: RuleRowProps ) {
 	);
 }
 
-function VisibilityPanel( { clientId, attributes, setAttributes }: PanelProps ) {
+function VisibilityPanel( { clientId, attributes, setAttributes }: LayoutPanelProps ) {
 	const draft = draftOf( attributes[ ATTRIBUTE ] );
 	const setting = normalize( attributes[ ATTRIBUTE ] );
 	const steps = useStepOptions();
 	const { hasSteps, hasFields } = useSelect(
 		( select ) => {
-			const { getBlockName, getBlocksByName, getClientIdsOfDescendants } = select( blockEditorStore );
+			const { getBlockName, getClientIdsOfDescendants } = select( blockEditorStore );
 
 			return {
-				hasSteps: ( getBlocksByName( STEPS ) as string[] ).length > 0,
+				hasSteps: firstStepsBlock( select ) !== undefined,
 				hasFields: [ clientId, ...( getClientIdsOfDescendants( [ clientId ] ) as string[] ) ].some( ( id ) =>
 					FIELD_BLOCKS.includes( getBlockName( id ) )
 				),
@@ -365,36 +383,10 @@ function VisibilityPanel( { clientId, attributes, setAttributes }: PanelProps ) 
 	);
 }
 
-function LayoutOnlyPanel( props: PanelProps ) {
-	return useIsLayoutEditor() ? <VisibilityPanel { ...props } /> : null;
-}
-
-type BlockEditProps = PanelProps & { name: string; isSelected: boolean };
-
-const withVisibilityPanel = createHigherOrderComponent(
-	( BlockEdit: ComponentType< BlockEditProps > ) =>
-		function VisibilityBlockEdit( props: BlockEditProps ) {
-			return (
-				<>
-					<BlockEdit { ...props } />
-					{ props.isSelected && ! EXCLUDED.includes( props.name ) && <LayoutOnlyPanel { ...props } /> }
-				</>
-			);
-		},
-	'withVisibilityPanel'
-);
-
-addFilter( 'editor.BlockEdit', 'yaycheckout/visibility/panel', withVisibilityPanel );
+addLayoutPanel( 'yaycheckout/visibility', ( name ) => ! EXCLUDED.includes( name ), ATTRIBUTE, { type: 'object' }, VisibilityPanel );
 
 /** The preview sidebar's inputs; in memory only, never in the post. */
-type Preview = {
-	open: boolean;
-	step: 'off' | number | 'last';
-	logged_in: boolean;
-	needs_shipping: boolean;
-	has_coupon: boolean;
-	subtotal: number;
-};
+type Preview = VisibilityState & { open: boolean; step: 'off' | number | 'last' };
 
 const NO_PREVIEW: Preview = {
 	open: false,
@@ -440,20 +432,13 @@ function isPreviewing( preview: Preview ): boolean {
  * out, so the preview shows what the other inputs alone decide.
  */
 function previewHides( setting: VisibilitySetting, preview: Preview, stepCount: number ): boolean {
-	const state = {
-		logged_in: preview.logged_in,
-		needs_shipping: preview.needs_shipping,
-		has_coupon: preview.has_coupon,
-		subtotal: preview.subtotal,
-	};
-
 	if ( preview.step === 'off' ) {
 		const rules = setting.rules.filter( ( rule ) => rule.type !== 'step' );
 
-		return rules.length > 0 && ! isVisible( { ...setting, rules }, state, 0, stepCount );
+		return rules.length > 0 && ! isVisible( { ...setting, rules }, preview, 0, stepCount );
 	}
 
-	return ! isVisible( setting, state, preview.step === 'last' ? stepCount : preview.step, stepCount );
+	return ! isVisible( setting, preview, preview.step === 'last' ? stepCount : preview.step, stepCount );
 }
 
 type ListBlockProps = { attributes: Record< string, unknown >; className?: string; wrapperProps?: Record< string, unknown > };
@@ -466,8 +451,7 @@ function ConditionalBlock( { BlockListBlock, setting, ...props }: ConditionalBlo
 		( select ) => {
 			const preview: Preview = select( STORE ).getPreview();
 
-			// stepOptions() ends with "Last step", so the steps are one fewer.
-			return isPreviewing( preview ) && previewHides( setting, preview, stepOptions( select ).length - 1 );
+			return isPreviewing( preview ) && previewHides( setting, preview, stepIds( select ).length );
 		},
 		[ setting ]
 	);
@@ -486,9 +470,8 @@ const withConditionalMarker = createHigherOrderComponent(
 	( BlockListBlock: ComponentType< ListBlockProps > ) =>
 		function VisibilityBlockListBlock( props: ListBlockProps ) {
 			const value = props.attributes?.[ ATTRIBUTE ];
-			// Keyed on the stored JSON, so the preview's selector keeps one setting object between renders.
-			const key = value === undefined ? '' : JSON.stringify( value );
-			const setting = useMemo( () => ( key === '' ? null : normalize( JSON.parse( key ) ) ), [ key ] );
+			// The attribute keeps its identity until it is set again, so the preview's selector keeps one setting.
+			const setting = useMemo( () => normalize( value ), [ value ] );
 
 			return setting ? (
 				<ConditionalBlock { ...props } BlockListBlock={ BlockListBlock } setting={ setting } />
@@ -501,10 +484,14 @@ const withConditionalMarker = createHigherOrderComponent(
 
 addFilter( 'editor.BlockListBlock', 'yaycheckout/visibility/marker', withConditionalMarker );
 
+/** The preview's yes/no inputs, in the panel's order. */
+const TOGGLES = [ 'logged_in', 'needs_shipping', 'has_coupon' ] as const;
+
 function PreviewSidebar() {
 	const preview: Preview = useSelect( ( select ) => select( STORE ).getPreview(), [] );
 	const { setPreview, resetPreview } = useDispatch( STORE );
 	const steps = useStepOptions();
+	const labels = typeLabels();
 	const active = useSelect(
 		( select ) => select( 'core/interface' ).getActiveComplementaryArea( 'core' ) === `${ PLUGIN }/${ PLUGIN }`,
 		[]
@@ -540,30 +527,19 @@ function PreviewSidebar() {
 							value={ String( preview.step ) }
 							options={ [
 								{ value: 'off', label: __( 'Off', 'yaycheckout' ) },
-								...steps.map( ( option ) => ( { value: String( option.value ), label: option.label } ) ),
+								...stepSelectOptions( steps ),
 							] }
-							onChange={ ( value: string ) =>
-								setPreview( { step: value === 'off' || value === 'last' ? value : Number( value ) } )
-							}
+							onChange={ ( value: string ) => setPreview( { step: value === 'off' ? 'off' : parseStep( value ) } ) }
 						/>
-						<ToggleControl
-							__nextHasNoMarginBottom
-							label={ __( 'Logged in', 'yaycheckout' ) }
-							checked={ preview.logged_in }
-							onChange={ ( logged_in: boolean ) => setPreview( { logged_in } ) }
-						/>
-						<ToggleControl
-							__nextHasNoMarginBottom
-							label={ __( 'Needs shipping', 'yaycheckout' ) }
-							checked={ preview.needs_shipping }
-							onChange={ ( needs_shipping: boolean ) => setPreview( { needs_shipping } ) }
-						/>
-						<ToggleControl
-							__nextHasNoMarginBottom
-							label={ __( 'Coupon applied', 'yaycheckout' ) }
-							checked={ preview.has_coupon }
-							onChange={ ( has_coupon: boolean ) => setPreview( { has_coupon } ) }
-						/>
+						{ TOGGLES.map( ( key ) => (
+							<ToggleControl
+								key={ key }
+								__nextHasNoMarginBottom
+								label={ labels[ key ] }
+								checked={ preview[ key ] }
+								onChange={ ( checked: boolean ) => setPreview( { [ key ]: checked } ) }
+							/>
+						) ) }
 						<NumberControl
 							__next40pxDefaultSize
 							label={ __( 'Subtotal', 'yaycheckout' ) }
@@ -571,11 +547,7 @@ function PreviewSidebar() {
 							step={ 0.01 }
 							value={ preview.subtotal }
 							suffix={ <CurrencySuffix /> }
-							onChange={ ( value?: string ) => {
-								const subtotal = Number( value );
-
-								setPreview( { subtotal: Number.isFinite( subtotal ) && subtotal >= 0 ? subtotal : 0 } );
-							} }
+							onChange={ ( value?: string ) => setPreview( { subtotal: toAmount( value ) } ) }
 						/>
 					</VStack>
 				</PanelBody>

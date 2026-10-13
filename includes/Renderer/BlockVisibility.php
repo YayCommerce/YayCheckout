@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Helpers\JsonElementHelper;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -107,7 +108,7 @@ class BlockVisibility {
         return [
             'needs_shipping' => null !== $cart && $cart->needs_shipping(),
             'has_coupon'     => null !== $cart && ! empty( $cart->get_applied_coupons() ),
-            'subtotal'       => null !== $cart ? round( LiveValues::money()['cart_subtotal'] ?? 0.0, wc_get_price_decimals() ) : 0.0,
+            'subtotal'       => round( LiveValues::money()['cart_subtotal'] ?? 0.0, wc_get_price_decimals() ),
             'logged_in'      => is_user_logged_in(),
         ];
     }
@@ -121,16 +122,13 @@ class BlockVisibility {
      * @param int   $step_count The layout's steps; 0 without a Steps block, when no step rule matches.
      */
     public static function is_visible( array $setting, array $state, int $step, int $step_count ): bool {
-        $all = true;
-
         foreach ( $setting['rules'] as $rule ) {
             if ( ! self::matches( $rule, $state, $step, $step_count ) ) {
-                $all = false;
-                break;
+                return 'show' !== $setting['action'];
             }
         }
 
-        return ( 'show' === $setting['action'] ) === $all;
+        return 'show' === $setting['action'];
     }
 
     /**
@@ -192,11 +190,9 @@ class BlockVisibility {
         return $fragments;
     }
 
-    /** The state() and the layout's step count as a JSON element; `<` and `&` are escaped, so nothing can close it. */
+    /** The state() and the layout's step count as a JSON element. */
     private static function state_element(): string {
-        return '<script type="application/json" id="' . esc_attr( self::STATE_ID ) . '">'
-            . wp_json_encode( self::state() + [ 'step_count' => self::step_count() ], JSON_HEX_TAG | JSON_HEX_AMP )
-            . '</script>';
+        return JsonElementHelper::html( self::STATE_ID, self::state() + [ 'step_count' => self::step_count() ] );
     }
 
     /** The steps in the served layout's first Steps block; 0 without one. Memoised by layout_titles(). */

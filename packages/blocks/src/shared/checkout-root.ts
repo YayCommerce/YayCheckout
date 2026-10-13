@@ -16,6 +16,11 @@ export function canReopenStep( step: HTMLElement | null | undefined ): boolean {
 	return step?.dataset.state === 'complete';
 }
 
+/** The open Step inside `root`: the one steps/view.ts marks `data-state="current"`; null while none is. */
+export function currentStep( root: ParentNode ): HTMLElement | null {
+	return root.querySelector< HTMLElement >( '.yaycheckout-step[data-state="current"]' );
+}
+
 /** Asks Steps (steps/view.ts onReopen()) to open step `step`, a 1-based data-step value. */
 export function reopenStep( checkout: Element, step: string ): void {
 	checkout.dispatchEvent( new CustomEvent( 'yaycheckout:step-reopen', { bubbles: true, detail: { step } } ) );

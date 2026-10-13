@@ -6,7 +6,7 @@
  */
 
 import { bindOnce } from '../shared/bind-once';
-import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
+import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor, currentStep } from '../shared/checkout-root';
 import { onDomReady } from '../shared/dom-ready';
 import { controlsText } from '../shared/form-text';
 import type { Control } from '../shared/jquery';
@@ -195,7 +195,9 @@ function stepForButton( button: HTMLElement ): HTMLElement | null {
 		return inside;
 	}
 
-	return checkoutFor( button )?.querySelector< HTMLElement >( `${ STEP }[data-state="${ CURRENT }"]` ) ?? null;
+	const checkout = checkoutFor( button );
+
+	return checkout ? currentStep( checkout ) : null;
 }
 
 /**

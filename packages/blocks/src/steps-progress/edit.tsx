@@ -3,12 +3,10 @@ import { Notice, PanelBody, SelectControl, ToggleControl } from '@wordpress/comp
 import { useSelect } from '@wordpress/data';
 import { createInterpolateElement, type ReactNode } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { firstStepsBlock } from '../shared/layout-steps';
 import { plainText } from '../shared/plain-text';
 import { stepTitle } from '../shared/step-title';
-import stepsMeta from '../steps/block.json';
 import './editor.css';
-
-const STEPS = stepsMeta.name;
 
 type Variant = 'circles' | 'dots' | 'segments' | 'bar' | 'text';
 
@@ -112,12 +110,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	// The store's own order array, so typing elsewhere doesn't re-render this block.
 	const stepIds: string[] | null = useSelect(
 		( select ) => {
-			const { getBlockOrder, getBlocksByName } = select( blockEditorStore );
+			const stepsId = firstStepsBlock( select );
 
-			// Mirrors CheckoutStepsProgress::titles_in(): the layout's first Steps block, in document order.
-			const stepsId = ( getBlocksByName( STEPS ) as string[] )[ 0 ];
-
-			return stepsId ? getBlockOrder( stepsId ) : null;
+			return stepsId ? select( blockEditorStore ).getBlockOrder( stepsId ) : null;
 		},
 		[]
 	);

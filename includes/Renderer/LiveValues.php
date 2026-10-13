@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Helpers\JsonElementHelper;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -218,11 +219,9 @@ class LiveValues {
         return $fragments;
     }
 
-    /** The cart's values as a JSON element; `<` and `&` are escaped, so no value can close it. */
+    /** The cart's values as a JSON element. */
     public static function values_element(): string {
-        return '<script type="application/json" id="' . esc_attr( self::VALUES_ID ) . '">'
-            . wp_json_encode( (object) self::values(), JSON_HEX_TAG | JSON_HEX_AMP )
-            . '</script>';
+        return JsonElementHelper::html( self::VALUES_ID, (object) self::values() );
     }
 
     /**
