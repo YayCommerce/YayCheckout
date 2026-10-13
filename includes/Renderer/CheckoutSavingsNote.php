@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
  * Sale is regular vs line_subtotal (before coupons). Coupon is the cart discount total.
  * Shipping is the cheapest paid rate minus the chosen rate, per package.
  */
-class SavingsNote {
+class CheckoutSavingsNote {
 
     /** Mirrors the editor placeholder in packages/blocks/src/savings-note/edit.tsx. */
     public const DEFAULT_TEXT = "You're saving %s";

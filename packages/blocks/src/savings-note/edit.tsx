@@ -12,7 +12,7 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< SavingsNoteAttributes > ) => void;
 }
 
-/** Mirrors SavingsNote::DEFAULT_TEXT in includes/Renderer/SavingsNote.php. */
+/** Mirrors CheckoutSavingsNote::DEFAULT_TEXT in includes/Renderer/CheckoutSavingsNote.php. */
 const DEFAULT_TEXT = __( "You're saving %s", 'yaycheckout' );
 
 const PREVIEW_AMOUNT = '$5.00';

@@ -659,7 +659,7 @@ class CheckoutFragments {
      * @param \WP_Block $block Block instance.
      */
     public static function print_savings_note( \WP_Block $block ): void {
-        $empty = SavingsNote::is_zero();
+        $empty = CheckoutSavingsNote::is_zero();
 
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
         echo '<div ' . HideWhenEmpty::wrapper( [], $block->attributes, $empty ) . '>';
@@ -675,8 +675,8 @@ class CheckoutFragments {
      * @param array $attributes Block attributes.
      */
     public static function savings_note_html( array $attributes = [] ): string {
-        $empty = SavingsNote::is_zero();
-        $inner = $empty ? '' : SavingsNote::sentence_html( $attributes );
+        $empty = CheckoutSavingsNote::is_zero();
+        $inner = $empty ? '' : CheckoutSavingsNote::sentence_html( $attributes );
 
         return '<p class="' . esc_attr( self::SAVINGS_NOTE_CLASS ) . '"' . self::live_attributes( $empty ) . '>' . $inner . '</p>';
     }
