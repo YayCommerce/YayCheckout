@@ -178,7 +178,7 @@ $yaycheckout_policy_links = array_filter(
 <!-- /wp:paragraph -->
 <?php endif; ?>
 
-<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?><span class="yaycheckout-live-value" data-yaycheckout-value="cart_total" data-fallback="" data-prefix=" · " data-suffix=""> · <?php esc_html_e( 'Order total', 'yaycheckout' ); ?></span>","style":{"typography":{"fontSize":"15px","fontWeight":"600"},"border":{"radius":"2px"}}} /-->
+<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022 · \u0022 data-suffix=\u0022\u0022\u003e · <?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","style":{"typography":{"fontSize":"15px","fontWeight":"600"},"border":{"radius":"2px"}}} /-->
 
 <!-- wp:yaycheckout/return-to-cart {"style":{"color":{"text":"#757575"},"typography":{"fontSize":"13px"}}} /--></div>
 <!-- /wp:group --></div>
@@ -204,7 +204,7 @@ $yaycheckout_policy_links = array_filter(
 <!-- wp:yaycheckout/order-summary-items {"showLabels":false,"quantityDisplay":"badge","badgeBackgroundColor":"#3858e9","badgeTextColor":"#ffffff"} /-->
 
 <!-- wp:yaycheckout/coupon-form {"placeholder":"<?php esc_html_e( 'Enter code', 'yaycheckout' ); ?>","disclosure":"collapsible","disclosureText":"<?php esc_html_e( 'Add coupons', 'yaycheckout' ); ?>"} -->
-<!-- wp:yaycheckout/coupon-button {"buttonText":"<?php esc_html_e( 'Apply', 'yaycheckout' ); ?>","style":{"color":{"background":"transparent","text":"#3858e9"},"border":{"color":"#3858e9","width":"1px","style":"solid"},"typography":{"fontWeight":"500"}}} /-->
+<!-- wp:yaycheckout/coupon-button {"buttonText":"<?php esc_html_e( 'Apply', 'yaycheckout' ); ?>","style":{"color":{"background":"transparent","text":"#3858e9"},"border":{"color":"#3858e9","width":"1px","style":"solid"},"typography":{"fontSize":"13px","fontWeight":"500"}}} /-->
 <!-- /wp:yaycheckout/coupon-form -->
 
 <!-- wp:yaycheckout/order-summary-breakdown {"style":{"border":{"top":{"color":"#dddddd","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"16px"}},"typography":{"fontSize":"14px"},"yaycheckout":{"label":{"color":{"text":"#757575"}}}}} /-->
