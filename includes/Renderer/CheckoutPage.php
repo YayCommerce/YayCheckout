@@ -30,8 +30,11 @@ class CheckoutPage {
      */
     public const OPTION_RENDER_FAILURE = 'yaycheckout_render_failure';
 
-    /** Fatals that end the request mid-render; anything lighter lets the catch in page_template() run. */
-    private const FATAL_ERRORS = [ E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR ];
+    /** Errors that end the request mid-render with a message worth reporting; anything lighter lets the catch in page_template() run. */
+    private const FATAL_ERRORS = [ E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR ];
+
+    /** Longest reason kept: the option is autoloaded, and an exception message can be arbitrarily large. */
+    private const REASON_MAX_LENGTH = 500;
 
     /** @var Layout|null|false false until first resolved. */
     private $layout = false;
@@ -96,13 +99,7 @@ class CheckoutPage {
                 ob_end_clean();
             }
 
-            if ( $preview ) {
-                throw $ex;
-            }
-
-            $this->record_failure( $layout, '' !== $ex->getMessage() ? $ex->getMessage() : get_class( $ex ) );
-
-            if ( ! $safe_mode ) {
+            if ( ! $this->absorb( $layout, $ex ) ) {
                 throw $ex;
             }
 
@@ -143,15 +140,37 @@ class CheckoutPage {
     }
 
     /**
-     * Records a fatal that ended the request mid-render, so the next request falls back. Public only
-     * for register_shutdown_function().
+     * Records a request that ended mid-render, by a fatal error or by a block calling exit or wp_die(),
+     * so the next request falls back. Public only for register_shutdown_function().
      */
     public function record_fatal( Layout $layout ): void {
+        if ( ! $this->rendering ) {
+            return;
+        }
+
         $error = error_get_last();
 
-        if ( $this->rendering && null !== $error && in_array( $error['type'], self::FATAL_ERRORS, true ) ) {
-            $this->record_failure( $layout, $error['message'] );
+        $this->record_failure(
+            $layout,
+            null !== $error && in_array( $error['type'], self::FATAL_ERRORS, true )
+                ? $error['message']
+                : __( 'The layout stopped the page while rendering.', 'yaycheckout' )
+        );
+    }
+
+    /**
+     * Handles a layout that threw while rendering, on the page or in an update_order_review fragment:
+     * records it for the next request, and says whether safe mode wants the caller to swallow it.
+     * A preview records nothing and always rethrows.
+     */
+    public function absorb( Layout $layout, \Throwable $ex ): bool {
+        if ( PreviewRequest::get_instance()->active() ) {
+            return false;
         }
+
+        $this->record_failure( $layout, '' !== $ex->getMessage() ? $ex->getMessage() : get_class( $ex ) );
+
+        return ( new SettingsRepository() )->is_safe_mode();
     }
 
     /** Woo's checkout scripts, the base stylesheet and the design tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
@@ -225,6 +244,8 @@ class CheckoutPage {
 
     /** Written only when the layout, its content or the reason changed, so a broken layout costs no write per request. */
     private function record_failure( Layout $layout, string $reason ): void {
+        $reason = mb_substr( $reason, 0, self::REASON_MAX_LENGTH );
+
         if ( self::render_failure( $layout ) === $reason ) {
             return;
         }

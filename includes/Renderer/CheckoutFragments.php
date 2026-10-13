@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Models\Layout;
 use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -106,7 +107,13 @@ class CheckoutFragments {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/review-order-skipped.php';
     }
 
-    /** Swaps the fragments of this layout's sections for this layout's HTML, and refreshes Place order's total. */
+    /**
+     * Swaps the fragments of this layout's sections for this layout's HTML, and refreshes Place order's total.
+     * A layout that throws here is recorded like one that throws on the page (CheckoutPage::absorb()); with
+     * safe mode on, WooCommerce's own fragments go out instead of an error, and the next request falls back.
+     *
+     * @throws \Throwable A layout failure during a preview, or with safe mode off.
+     */
     public function fragments( $fragments ) {
         $layout = CheckoutPage::get_instance()->layout();
 
@@ -114,6 +121,18 @@ class CheckoutFragments {
             return $fragments;
         }
 
+        try {
+            return $this->layout_fragments( $fragments, $layout );
+        } catch ( \Throwable $ex ) {
+            if ( ! CheckoutPage::get_instance()->absorb( $layout, $ex ) ) {
+                throw $ex;
+            }
+
+            return $fragments;
+        }
+    }
+
+    private function layout_fragments( array $fragments, Layout $layout ): array {
         $rendered = array_flip( LayoutMarkupReader::slots( $layout->content ) );
         $summary  = self::summary_block_fragments( $layout->content );
 
