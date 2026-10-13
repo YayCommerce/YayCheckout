@@ -704,6 +704,16 @@ class CheckoutFragments {
             }
         }
 
+        // Breakdown and Total: their Label and Value styles, on the wrapper for the same reason.
+        if ( 'yaycheckout/order-summary-breakdown' === $block->name || 'yaycheckout/order-summary-total' === $block->name ) {
+            $table_class = 'yaycheckout/order-summary-total' === $block->name ? self::ORDER_TOTAL_CLASS : self::ORDER_BREAKDOWN_CLASS;
+            $parts_class = SummaryPartStyles::wrapper_class( $block->attributes, wp_get_block_default_classname( $block->name ), $table_class );
+
+            if ( '' !== $parts_class ) {
+                $wrapper['class'] = trim( $parts_class );
+            }
+        }
+
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
         echo '<div ' . get_block_wrapper_attributes( $wrapper ) . '>';
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Same HTML Woo prints for review-order rows.

@@ -1,0 +1,4 @@
+/* The Text colour item spans the panel's grid like a block's Color panel, above the typography controls. */
+.yaycheckout-summary-part-panel .yaycheckout-summary-part-panel__colors {
+	grid-column: 1 / -1;
+}
