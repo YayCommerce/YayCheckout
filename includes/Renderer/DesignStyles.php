@@ -169,10 +169,16 @@ class DesignStyles {
                     'input-background'   => $inputs['background'],
                     'input-color'        => $inputs['text'],
                     'input-border-color' => $inputs['border'],
+                    'input-focus-color'  => $inputs['focus'],
                 ],
                 $not_empty
             )
         );
+
+        // Border only drops the flush ring, so focus just recolours the border.
+        if ( 'border' === $inputs['focus_style'] ) {
+            $vars['input-focus-ring-width'] = '0';
+        }
 
         // A radius of 0 is a square box, not an empty token.
         $checkboxes = $sections['checkboxes'];

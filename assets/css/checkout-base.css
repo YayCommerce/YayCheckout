@@ -424,15 +424,34 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	}
 }
 
-/* Focus ring in the primary colour; offset so it shows beside an underline input too. */
+/*
+ * A focused field draws one edge in the layout's input focus colour (DesignStyles), falling back to the
+ * primary colour: its border recolours and a flush ring thickens it, with no gap between the two. The
+ * Border only focus style sets the ring width to 0.
+ */
 .yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code):focus,
-.yaycheckout-checkout .select2-container:is(.select2-container--focus, .select2-container--open) .select2-selection--single,
-.yaycheckout-checkout :is(.button, button, input[type="checkbox"], input[type="radio"]):focus-visible {
+.yaycheckout-checkout .select2-container:is(.select2-container--focus, .select2-container--open) .select2-selection--single {
+	border-color: var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
+	outline: var(--yaycheckout-input-focus-ring-width, 1px) solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
+	outline-offset: 0;
+}
+
+/* Keyboard focus on a button, checkbox or radio: an offset ring, in the input focus colour for the controls. */
+.yaycheckout-checkout :is(.button, button):focus-visible {
 	outline: 2px solid var(--yaycheckout-primary-color);
 	outline-offset: 1px;
 }
 
-/* WooCommerce marks the row, not the input, when a field fails validation. */
+.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):focus-visible {
+	outline: 2px solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
+	outline-offset: 1px;
+}
+
+/* WooCommerce marks the row, not the input, when a field fails validation; its focus edge turns red too. */
+.yaycheckout-checkout .form-row.woocommerce-invalid {
+	--yaycheckout-input-focus-color: var(--wc-red, #cc1818);
+}
+
 .yaycheckout-checkout .form-row.woocommerce-invalid :is(.input-text, select, textarea),
 .yaycheckout-checkout .form-row.woocommerce-invalid .select2-container .select2-selection--single {
 	border-color: var(--wc-red, #cc1818);

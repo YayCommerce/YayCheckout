@@ -127,11 +127,6 @@
 	text-decoration: underline;
 }
 
-.yaycheckout-steps-progress button.yaycheckout-steps-progress__jump:focus-visible {
-	outline: 2px solid var(--yaycheckout-primary-color, #3858e9);
-	outline-offset: 2px;
-}
-
 /* Dots: a small dot and the title on one line, hairlines between steps. Matches template 09 (Soft steps). */
 .is-variant-dots .yaycheckout-steps-progress__list {
 	justify-content: center;

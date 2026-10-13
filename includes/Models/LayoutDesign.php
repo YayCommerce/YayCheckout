@@ -126,35 +126,44 @@ final class LayoutDesign {
                 ],
             ],
             'inputs'     => [
-                'style'      => [
+                'style'       => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'boxed', 'underline' ],
                 ],
-                'size'       => [
+                'size'        => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'small', 'medium', 'large' ],
                 ],
-                'radius'     => [
+                'radius'      => [
                     'type'    => 'int',
                     'default' => null,
                     'min'     => 0,
                     'max'     => 24,
                 ],
-                'background' => [
+                'background'  => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'text'       => [
+                'text'        => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'border'     => [
+                'border'      => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'label'      => [
+                'focus'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'focus_style' => [
+                    'type'    => 'enum',
+                    'default' => '',
+                    'enum'    => [ '', 'border' ],
+                ],
+                'label'       => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'floating' ],

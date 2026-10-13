@@ -59,6 +59,8 @@ const TOKEN_LABELS: Record< string, string > = {
 	style: __( 'Style', 'yaycheckout' ),
 	size: __( 'Size', 'yaycheckout' ),
 	radius: __( 'Radius', 'yaycheckout' ),
+	focus: __( 'Focus', 'yaycheckout' ),
+	focus_style: __( 'Focus style', 'yaycheckout' ),
 	label: __( 'Label', 'yaycheckout' ),
 	border_width: __( 'Border width', 'yaycheckout' ),
 	checked: __( 'Checked', 'yaycheckout' ),
@@ -72,6 +74,7 @@ const ENUM_LABELS: Record< string, string > = {
 	medium: __( 'Medium', 'yaycheckout' ),
 	large: __( 'Large', 'yaycheckout' ),
 	floating: __( 'Floating', 'yaycheckout' ),
+	border: __( 'Border only', 'yaycheckout' ),
 };
 
 function isTokens( value: unknown ): value is Record< string, unknown > {
