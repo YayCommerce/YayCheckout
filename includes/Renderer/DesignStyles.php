@@ -164,8 +164,9 @@ class DesignStyles {
             $vars,
             array_filter(
                 [
-                    'input-background' => $inputs['background'],
-                    'input-color'      => $inputs['text'],
+                    'input-background'   => $inputs['background'],
+                    'input-color'        => $inputs['text'],
+                    'input-border-color' => $inputs['border'],
                 ],
                 $not_empty
             )

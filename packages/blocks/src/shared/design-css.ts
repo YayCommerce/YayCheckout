@@ -98,6 +98,7 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts }: DesignFonts )
 	const inputColours: [ string, string ][] = [
 		[ 'input-background', inputBackground ],
 		[ 'input-color', String( inputs.text ?? '' ) ],
+		[ 'input-border-color', String( inputs.border ?? '' ) ],
 	];
 
 	return [ ...out, ...inputColours.filter( notEmpty ) ];
