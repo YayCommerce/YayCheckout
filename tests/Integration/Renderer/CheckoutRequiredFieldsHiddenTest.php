@@ -12,7 +12,7 @@ class CheckoutRequiredFieldsHiddenTest extends WP_UnitTestCase {
         wc_load_cart();
         update_option( 'woocommerce_allowed_countries', 'all' );
         update_option( 'woocommerce_ship_to_countries', '' );
-        LayoutFactory::serve( '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/billing --><!-- wp:yaycheckout/field {"fieldKey":"billing_state","label":"State","required":true} /--><!-- /wp:yaycheckout/billing --><!-- wp:yaycheckout/shipping --><!-- wp:yaycheckout/field {"fieldKey":"shipping_state","label":"State","required":true} /--><!-- /wp:yaycheckout/shipping --><!-- /wp:yaycheckout/checkout -->' );
+        LayoutFactory::serve( '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/billing --><!-- wp:yaycheckout/field {"fieldKey":"billing_state","label":"State","required":true} /--><!-- /wp:yaycheckout/billing --><!-- wp:yaycheckout/shipping --><!-- wp:yaycheckout/field {"fieldKey":"shipping_state","label":"State","required":true} /--><!-- /wp:yaycheckout/shipping --><!-- wp:yaycheckout/payment /--><!-- wp:yaycheckout/place-order /--><!-- /wp:yaycheckout/checkout -->' );
     }
 
     public function tear_down(): void {

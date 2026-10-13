@@ -19,6 +19,8 @@ class LayoutMarkupReader {
     public const BILLING            = 'yaycheckout/billing';
     public const SHIPPING           = 'yaycheckout/shipping';
     private const DIFFERENT_ADDRESS = 'yaycheckout/different-address';
+    private const PLACE_ORDER       = 'yaycheckout/place-order';
+    private const PAYMENT           = 'yaycheckout/payment';
 
     /**
      * A Key is a posted field name and an order meta key. PHP rewrites spaces
@@ -38,9 +40,9 @@ class LayoutMarkupReader {
         self::SHIPPING                 => 'shipping',
         'yaycheckout/shipping-methods' => 'shipping_methods',
         'yaycheckout/express-pay'      => 'express_pay',
-        'yaycheckout/payment'          => 'payment',
+        self::PAYMENT                  => 'payment',
         'yaycheckout/order-summary'    => 'order_summary',
-        'yaycheckout/place-order'      => 'place_order',
+        self::PLACE_ORDER              => 'place_order',
     ];
 
     /**
@@ -225,6 +227,14 @@ class LayoutMarkupReader {
     public static function publish_error( string $markup ): string {
         if ( ! self::has_checkout( $markup ) ) {
             return __( 'Add a Checkout block to this layout before activating it.', 'yaycheckout' );
+        }
+
+        if ( ! has_block( self::PLACE_ORDER, $markup ) ) {
+            return __( 'Add a Place order block to this layout before activating it.', 'yaycheckout' );
+        }
+
+        if ( ! has_block( self::PAYMENT, $markup ) ) {
+            return __( 'Add a Payment block to this layout before activating it.', 'yaycheckout' );
         }
 
         $keys = [];

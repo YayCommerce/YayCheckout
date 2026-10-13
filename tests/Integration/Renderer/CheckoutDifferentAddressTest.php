@@ -11,7 +11,7 @@ class CheckoutDifferentAddressTest extends WP_UnitTestCase {
         parent::set_up();
         wc_load_cart();
         add_filter( 'woocommerce_cart_needs_shipping_address', '__return_true' );
-        LayoutFactory::serve( '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/billing /--><!-- wp:yaycheckout/different-address /--><!-- wp:yaycheckout/shipping /--><!-- /wp:yaycheckout/checkout -->' );
+        LayoutFactory::serve( '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/billing /--><!-- wp:yaycheckout/different-address /--><!-- wp:yaycheckout/shipping /--><!-- wp:yaycheckout/payment /--><!-- wp:yaycheckout/place-order /--><!-- /wp:yaycheckout/checkout -->' );
 
         $_POST = [
             'woocommerce-process-checkout-nonce' => 'x',
