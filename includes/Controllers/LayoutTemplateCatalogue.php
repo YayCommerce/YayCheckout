@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class LayoutTemplateCatalogue {
 
-    /** Template 01, which a Blank layout and a Reset without a usable template also get. */
+    /** Template 01, which a Default layout and a Reset without a usable template also get. */
     public const DEFAULT_SLUG = 'classic-two-column';
 
     /** Free picks the first N; the rest render locked. */
