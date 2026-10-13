@@ -20,7 +20,9 @@ class CheckoutFragments {
 
     public const ORDER_ITEMS_CLASS = 'yaycheckout-order-summary-items';
 
-    public const ORDER_TOTALS_CLASS = 'yaycheckout-order-summary-totals';
+    public const ORDER_BREAKDOWN_CLASS = 'yaycheckout-order-summary-breakdown';
+
+    public const ORDER_TOTAL_CLASS = 'yaycheckout-order-summary-total';
 
     /** Layout values the Payment block accepts; an unknown attribute falls back to joined. */
     public const PAYMENT_LAYOUTS = [ 'joined', 'checkmark', 'box', 'grid', 'cards', 'lines' ];
@@ -71,10 +73,14 @@ class CheckoutFragments {
         'shipping_methods' => [ '.' . self::SHIPPING_RATES_CLASS, 'shipping_rates_html' ],
     ];
 
-    /** Order Summary child block => [ selector checkout.js replaces, method building its HTML ]; found by block name, not slot. */
+    /**
+     * Order Summary child block => [ selector checkout.js replaces, method building its HTML ]; found by block name, not slot.
+     * Order Summary Total may appear several times, so fragment_selector() narrows its selector to each block's options.
+     */
     private const BLOCK_FRAGMENTS = [
-        'yaycheckout/order-summary-items'  => [ '.' . self::ORDER_ITEMS_CLASS, 'order_items_html' ],
-        'yaycheckout/order-summary-totals' => [ '.' . self::ORDER_TOTALS_CLASS, 'order_totals_html' ],
+        'yaycheckout/order-summary-items'     => [ '.' . self::ORDER_ITEMS_CLASS, 'order_items_html' ],
+        'yaycheckout/order-summary-breakdown' => [ '.' . self::ORDER_BREAKDOWN_CLASS, 'order_breakdown_html' ],
+        'yaycheckout/order-summary-total'     => [ '.' . self::ORDER_TOTAL_CLASS, 'order_total_html' ],
     ];
 
     /** Woo's update_order_review fragment for its whole review-order table. */
@@ -89,7 +95,7 @@ class CheckoutFragments {
 
     /**
      * During update_order_review, Woo renders its whole review-order table before the fragments
-     * filter runs. A layout with Items or Totals discards it, so swap it for an empty template
+     * filter runs. A layout with Items, Order Summary Breakdown or Order Summary Total discards it, so swap it for an empty template
      * and its review-order hooks fire once, in our tables.
      */
     public function skip_review_order_table( $template, $template_name ) {
@@ -136,7 +142,8 @@ class CheckoutFragments {
     }
 
     /**
-     * The BLOCK_FRAGMENTS entries whose block is in the layout, each with that block's parsed attrs.
+     * The BLOCK_FRAGMENTS entries whose block is in the layout, one per distinct selector, each with
+     * the first such block's parsed attrs. Order Summary Total copies with the same options share one selector and HTML.
      *
      * @return array<int, array{0: string, 1: string, 2: array}>
      */
@@ -146,12 +153,27 @@ class CheckoutFragments {
         foreach ( LayoutMarkupReader::flatten( parse_blocks( $markup ) ) as $block ) {
             $name = $block['blockName'];
 
-            if ( is_string( $name ) && isset( self::BLOCK_FRAGMENTS[ $name ] ) && ! isset( $summary[ $name ] ) ) {
-                $summary[ $name ] = [ self::BLOCK_FRAGMENTS[ $name ][0], self::BLOCK_FRAGMENTS[ $name ][1], $block['attrs'] ];
+            if ( ! is_string( $name ) || ! isset( self::BLOCK_FRAGMENTS[ $name ] ) ) {
+                continue;
+            }
+
+            $selector = self::fragment_selector( $name, $block['attrs'] );
+
+            if ( ! isset( $summary[ $selector ] ) ) {
+                $summary[ $selector ] = [ $selector, self::BLOCK_FRAGMENTS[ $name ][1], $block['attrs'] ];
             }
         }
 
         return array_values( $summary );
+    }
+
+    /** The selector checkout.js replaces for one BLOCK_FRAGMENTS block: an Order Summary Total's names its options, the others are fixed. */
+    private static function fragment_selector( string $name, array $attrs ): string {
+        if ( 'yaycheckout/order-summary-total' === $name ) {
+            return '.' . self::order_total_hash_class( self::order_total_options( $attrs ) );
+        }
+
+        return self::BLOCK_FRAGMENTS[ $name ][0];
     }
 
     public static function print_shipping_rates(): void {
@@ -376,8 +398,8 @@ class CheckoutFragments {
     /**
      * Rates wrapper so AJAX can replace an empty first paint. The list is this block's markup;
      * each rate still posts Woo's shipping_method input and runs woocommerce_after_shipping_rate.
-     * Review-order shipping hooks fire around the list, as review-order.php does, since Totals
-     * leaves the rates to this block. Plugins on those hooks print table rows, so each hook's
+     * Review-order shipping hooks fire around the list, as review-order.php does, since Order
+     * Summary Breakdown leaves the rates to this block. Plugins on those hooks print table rows, so each hook's
      * output sits in its own table.
      */
     public static function shipping_rates_html(): string {
@@ -650,7 +672,7 @@ class CheckoutFragments {
         return (string) ob_get_clean();
     }
 
-    /** An Items or Totals block: its wrapper and the fragment root fragments() refreshes. */
+    /** An Items, Order Summary Breakdown or Order Summary Total block: its wrapper and the fragment root fragments() refreshes. */
     public static function print_summary_block( \WP_Block $block ): void {
         if ( ! isset( self::BLOCK_FRAGMENTS[ $block->name ] ) ) {
             return;
@@ -729,27 +751,24 @@ class CheckoutFragments {
      * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_stepper: bool}
      */
     public static function order_items_options( array $attributes ): array {
-        $bool = static function ( string $name, bool $fallback ) use ( $attributes ): bool {
-            return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
-        };
         // The first choice is the default.
         $choice = static function ( string $name, array $choices ) use ( $attributes ): string {
             return isset( $attributes[ $name ] ) && in_array( $attributes[ $name ], $choices, true ) ? $attributes[ $name ] : $choices[0];
         };
 
         return [
-            'show_labels'            => $bool( 'showLabels', true ),
+            'show_labels'            => self::bool_attr( $attributes, 'showLabels', true ),
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own header word, so its translation still applies.
             'product_label'          => LayoutMarkupReader::plain_text( $attributes, 'productLabel', __( 'Product', 'woocommerce' ) ),
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own header word, so its translation still applies.
             'subtotal_label'         => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
-            'show_thumbnails'        => $bool( 'showThumbnails', true ),
+            'show_thumbnails'        => self::bool_attr( $attributes, 'showThumbnails', true ),
             'item_data'              => $choice( 'itemData', [ 'list', 'inline', 'hidden' ] ),
-            'show_sku'               => $bool( 'showSku', false ),
-            'show_unit_price'        => $bool( 'showUnitPrice', false ),
-            'show_short_description' => $bool( 'showShortDescription', false ),
+            'show_sku'               => self::bool_attr( $attributes, 'showSku', false ),
+            'show_unit_price'        => self::bool_attr( $attributes, 'showUnitPrice', false ),
+            'show_short_description' => self::bool_attr( $attributes, 'showShortDescription', false ),
             'quantity_display'       => $choice( 'quantityDisplay', [ 'inline', 'badge' ] ),
-            'show_stepper'           => $bool( 'showStepper', false ),
+            'show_stepper'           => self::bool_attr( $attributes, 'showStepper', false ),
         ];
     }
 
@@ -924,45 +943,43 @@ class CheckoutFragments {
         echo '</tbody></table>';
     }
 
+    /** A boolean block attribute, or $fallback when it is missing or not a boolean. */
+    private static function bool_attr( array $attributes, string $name, bool $fallback ): bool {
+        return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
+    }
+
     /**
-     * The Totals block's attributes with their defaults. During AJAX they come from the parsed
+     * The Order Summary Breakdown block's attributes with their defaults. During AJAX they come from the parsed
      * layout, where an untouched attribute is missing, so each default matches block.json's.
      *
-     * @return array{show_currency_code: bool, show_subtotal: bool, show_total: bool, subtotal_label: string, total_label: string}
+     * @return array{show_subtotal: bool, subtotal_label: string}
      */
-    public static function order_totals_options( array $attributes ): array {
-        $bool = static function ( string $name, bool $fallback ) use ( $attributes ): bool {
-            return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
-        };
-
+    public static function order_breakdown_options( array $attributes ): array {
         return [
-            'show_currency_code' => $bool( 'showCurrencyCode', false ),
-            'show_subtotal'      => $bool( 'showSubtotal', true ),
-            'show_total'         => $bool( 'showTotal', true ),
+            'show_subtotal'  => self::bool_attr( $attributes, 'showSubtotal', true ),
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
-            'subtotal_label'     => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
-            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
-            'total_label'        => LayoutMarkupReader::plain_text( $attributes, 'totalLabel', __( 'Total', 'woocommerce' ) ),
+            'subtotal_label' => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
         ];
     }
 
     /**
      * The tfoot rows of Woo's checkout/review-order.php, as the body of their own table. Shipping
-     * is one read-only row (method name / Free); the Shipping Methods block keeps the radios.
+     * is one read-only row (method name / Free); the Shipping Methods block keeps the radios. The
+     * order-total row is the Order Summary Total block's; its hooks stay here, so extensions' rows print once.
      *
-     * @param array $attributes Totals block attributes; see order_totals_options().
+     * @param array $attributes Order Summary Breakdown block attributes; see order_breakdown_options().
      */
-    public static function order_totals_html( array $attributes = [] ): string {
+    public static function order_breakdown_html( array $attributes = [] ): string {
         if ( ! WC()->cart instanceof \WC_Cart ) {
             return '';
         }
 
-        $options = self::order_totals_options( $attributes );
+        $options = self::order_breakdown_options( $attributes );
 
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Woo's review-order hooks and strings, so its translation still applies.
         ob_start();
         ?>
-<table class="shop_table <?php echo esc_attr( self::ORDER_TOTALS_CLASS ); ?>">
+<table class="shop_table <?php echo esc_attr( self::ORDER_BREAKDOWN_CLASS ); ?>">
     <tbody>
         <?php if ( $options['show_subtotal'] ) : ?>
         <tr class="cart-subtotal">
@@ -998,23 +1015,73 @@ class CheckoutFragments {
         </tr>
             <?php endif; ?>
         <?php endif; ?>
+        <?php // The order-total row between these hooks is the Order Summary Total block's; extensions' rows stay here. ?>
         <?php do_action( 'woocommerce_review_order_before_order_total' ); ?>
-        <?php if ( $options['show_total'] ) : ?>
-        <tr class="order-total">
-            <th><?php echo esc_html( $options['total_label'] ); ?></th>
-            <td>
-                <?php if ( $options['show_currency_code'] ) : ?>
-                <span class="<?php echo esc_attr( self::ORDER_TOTALS_CLASS . '__currency' ); ?>"><?php echo esc_html( get_woocommerce_currency() ); ?></span>
-                <?php endif; ?>
-                <?php wc_cart_totals_order_total_html(); ?>
-            </td>
-        </tr>
-        <?php endif; ?>
         <?php do_action( 'woocommerce_review_order_after_order_total' ); ?>
     </tbody>
 </table>
         <?php
         // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch
+
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * The Order Summary Total block's attributes with their defaults. During AJAX they come from the parsed
+     * layout, where an untouched attribute is missing, so each default matches block.json's.
+     *
+     * @return array{show_label: bool, label: string, show_currency_code: bool}
+     */
+    public static function order_total_options( array $attributes ): array {
+        return [
+            'show_label'         => self::bool_attr( $attributes, 'showLabel', true ),
+            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
+            'label'              => LayoutMarkupReader::plain_text( $attributes, 'label', __( 'Total', 'woocommerce' ) ),
+            'show_currency_code' => self::bool_attr( $attributes, 'showCurrencyCode', false ),
+        ];
+    }
+
+    /**
+     * The class naming one Order Summary Total block's fragment. Hashed from its options rather than its raw attrs,
+     * so render.php (defaults filled) and the parsed layout (defaults missing) agree.
+     *
+     * @param array $options order_total_options() output.
+     */
+    private static function order_total_hash_class( array $options ): string {
+        return self::ORDER_TOTAL_CLASS . '--' . substr( md5( (string) wp_json_encode( $options ) ), 0, 8 );
+    }
+
+    /**
+     * Woo's order-total row of checkout/review-order.php as its own table, without the hooks around
+     * it: Order Summary Breakdown fires those, so several Order Summary Total blocks never repeat extensions' rows.
+     *
+     * @param array $attributes Order Summary Total block attributes; see order_total_options().
+     */
+    public static function order_total_html( array $attributes = [] ): string {
+        if ( ! WC()->cart instanceof \WC_Cart ) {
+            return '';
+        }
+
+        $options = self::order_total_options( $attributes );
+
+        ob_start();
+        ?>
+<table class="shop_table <?php echo esc_attr( self::ORDER_TOTAL_CLASS . ' ' . self::order_total_hash_class( $options ) ); ?>">
+    <tbody>
+        <tr class="order-total">
+            <?php if ( $options['show_label'] ) : ?>
+            <th><?php echo esc_html( $options['label'] ); ?></th>
+            <?php endif; ?>
+            <td>
+                <?php if ( $options['show_currency_code'] ) : ?>
+                <span class="<?php echo esc_attr( self::ORDER_TOTAL_CLASS . '__currency' ); ?>"><?php echo esc_html( get_woocommerce_currency() ); ?></span>
+                <?php endif; ?>
+                <?php wc_cart_totals_order_total_html(); ?>
+            </td>
+        </tr>
+    </tbody>
+</table>
+        <?php
 
         return (string) ob_get_clean();
     }
@@ -1092,7 +1159,7 @@ class CheckoutFragments {
         }
         // phpcs:enable WordPress.WP.I18n.TextDomainMismatch
         ?>
-        <tr class="yaycheckout-order-summary-totals__shipping">
+        <tr class="yaycheckout-order-summary-breakdown__shipping">
             <th><?php echo esc_html( $label ); ?></th>
             <td><?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above or wc_price() HTML. ?></td>
         </tr>

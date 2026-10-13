@@ -1,0 +1,35 @@
+/* Order Summary Total's table; order-summary/style.css lays out its column, shared with Order Summary Breakdown. */
+
+/* Cells take the wrapper's typography, so the block's font settings reach the total. */
+.yaycheckout-order-summary table.yaycheckout-order-summary-total :is(th, td) {
+	font: inherit;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-total tr.order-total th {
+	font-weight: bold;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-total .yaycheckout-order-summary-total__currency {
+	margin-inline-end: 0.35em;
+	font-weight: 400;
+}
+
+/* In any flex row (Summary Header, Summary Toggle, a Row group) the total sizes to its content beside the other blocks. */
+.yaycheckout-order-summary .is-layout-flex > .wp-block-yaycheckout-order-summary-total {
+	flex: none;
+}
+
+.yaycheckout-order-summary .is-layout-flex > .wp-block-yaycheckout-order-summary-total table.yaycheckout-order-summary-total {
+	width: auto;
+	table-layout: auto;
+}
+
+.yaycheckout-order-summary .is-layout-flex > .wp-block-yaycheckout-order-summary-total table.yaycheckout-order-summary-total :is(th, td) {
+	width: auto;
+	padding-block: 0;
+	white-space: nowrap;
+}
+
+.yaycheckout-order-summary .is-layout-flex > .wp-block-yaycheckout-order-summary-total th {
+	padding-inline-end: 0.5em;
+}

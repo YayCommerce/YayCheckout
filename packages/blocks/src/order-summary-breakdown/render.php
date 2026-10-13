@@ -1,6 +1,6 @@
 <?php
 /**
- * Prints the Totals table, which CheckoutFragments refreshes on AJAX totals updates.
+ * Prints the Order Summary Breakdown table, which CheckoutFragments refreshes on AJAX totals updates.
  *
  * @var array    $attributes Block attributes (none).
  * @var string   $content    Unused; this block is a leaf.

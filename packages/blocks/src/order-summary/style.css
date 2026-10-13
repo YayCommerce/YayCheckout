@@ -57,3 +57,28 @@
 	width: auto;
 	margin-block: 0;
 }
+
+/*
+ * The Order Summary Breakdown and Order Summary Total tables share one amount column, end-aligned at a fixed width, so the order
+ * total lines up under the rows above it. Here because Order Summary is the ancestor of both.
+ */
+.yaycheckout-order-summary table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total) {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+}
+
+.yaycheckout-order-summary table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total) :is(th, td) {
+	padding: 6px 0;
+	border: 0;
+	vertical-align: top;
+}
+
+.yaycheckout-order-summary table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total) :is(th, td):first-child {
+	text-align: start;
+}
+
+.yaycheckout-order-summary table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total) :is(th, td):last-child {
+	width: 40%;
+	text-align: end;
+}

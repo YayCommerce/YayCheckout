@@ -4,7 +4,7 @@
   "name": "yaycheckout/order-summary-details",
   "title": "Summary Details",
   "category": "yaycheckout",
-  "description": "The Order Summary's items, totals and your own blocks.",
+  "description": "The Order Summary's items, order breakdown, order total and your own blocks.",
   "textdomain": "yaycheckout",
   "parent": [ "yaycheckout/order-summary" ],
   "supports": {

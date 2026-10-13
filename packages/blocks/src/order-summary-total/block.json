@@ -1,39 +1,42 @@
 {
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
-  "name": "yaycheckout/order-summary-totals",
-  "title": "Order Summary Totals",
+  "name": "yaycheckout/order-summary-total",
+  "title": "Order Summary Total",
   "category": "yaycheckout",
-  "description": "Subtotal, coupons, shipping, fees, tax and total. WooCommerce refreshes them when the order updates.",
+  "description": "The amount the shopper pays. Updates as the cart changes. Add it more than once, for example in the summary header.",
+  "keywords": [ "total", "grand total", "amount", "price", "pay" ],
   "textdomain": "yaycheckout",
   "ancestor": [ "yaycheckout/order-summary" ],
   "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "showLabel": {
+      "type": "boolean",
+      "default": true
+    },
     "showCurrencyCode": {
       "type": "boolean",
       "default": false
-    },
-    "showSubtotal": {
-      "type": "boolean",
-      "default": true
-    },
-    "showTotal": {
-      "type": "boolean",
-      "default": true
-    },
-    "subtotalLabel": {
-      "type": "string"
-    },
-    "totalLabel": {
-      "type": "string"
     }
   },
   "supports": {
     "html": false,
-    "multiple": false,
     "reusable": false,
     "color": {
       "text": true,
       "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "__experimentalFontFamily": true,
+      "__experimentalFontStyle": true,
+      "__experimentalFontWeight": true,
+      "__experimentalLetterSpacing": true,
+      "__experimentalTextDecoration": true,
+      "__experimentalTextTransform": true
     },
     "__experimentalBorder": {
       "color": true,
