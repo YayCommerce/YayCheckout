@@ -129,10 +129,10 @@ export const layoutNameSchema = z.string().trim().min(1, __('Name is required', 
 export const newLayoutFormSchema = z
   .object({
     name: layoutNameSchema,
-    source: z.enum(['blank', 'library']),
+    source: z.enum(['default', 'library']),
     templateSlug: z.string().nullable(),
   })
-  .refine((data) => data.source === 'blank' || !!data.templateSlug, {
+  .refine((data) => data.source === 'default' || !!data.templateSlug, {
     message: __('Pick a template', 'yaycheckout'),
     path: ['templateSlug'],
   });

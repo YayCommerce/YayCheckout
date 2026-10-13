@@ -1,7 +1,7 @@
 <?php
 /**
  * Classic two-column (LayoutTemplateCatalogue::DEFAULT_SLUG): the block markup of template 01, which a
- * Blank layout also starts with, printed by LayoutTemplateCatalogue::markup(). Its look is design.json beside it.
+ * Default layout also starts with, printed by LayoutTemplateCatalogue::markup(). Its look is design.json beside it.
  *
  * To update it, build the layout in the block editor, copy it from the Code editor and
  * paste it here, then put back the PHP: translated text, the logo-or-title choice, the

@@ -47,7 +47,7 @@ class LayoutRestController extends BaseRestController {
                             'type'              => 'string',
                             'sanitize_callback' => 'sanitize_key',
                             'validate_callback' => static function ( $value ) {
-                                return in_array( $value, [ 'blank', 'library' ], true );
+                                return in_array( $value, [ 'default', 'library' ], true );
                             },
                         ],
                         'template_slug' => [
@@ -289,7 +289,7 @@ class LayoutRestController extends BaseRestController {
 
     /**
      * Creates a layout draft from the New layout modal. Titles may repeat, as Pages do.
-     * 'blank' builds from the default template, 'library' from the picked one, once it is available on this plan.
+     * 'default' builds from the default template, 'library' from the picked one, once it is available on this plan.
      *
      * @return array|\WP_Error
      */
