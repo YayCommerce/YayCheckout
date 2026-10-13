@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { Loader2, Plus, Search } from 'lucide-react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Loader2, Plus, Search, TriangleAlert } from 'lucide-react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { editLayoutIdFrom, withEditLayout } from '@/lib/helpers/layout.helper';
+import { editLayoutIdFrom, editLayoutPath, withEditLayout } from '@/lib/helpers/layout.helper';
 import { isPro } from '@/lib/plan';
+import { COMPATIBILITY_QUERIES } from '@/lib/queries/compatibility.queries';
 import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
@@ -58,6 +59,83 @@ import PageLayout from '@/pages/PageLayout';
 
 type View = 'listed' | 'archived';
 
+/**
+ * Which active layouts are unsafe to serve, one row each with what to fix and a link to its editor (hover adds the recorded error, for support); a store-wide
+ * problem links to the Compatibility page. Nothing when all is well. A fresh report on each visit: a layout may
+ * have changed since the last one.
+ */
+function CheckoutProblemsAlert() {
+  const { data: report } = useQuery({ ...COMPATIBILITY_QUERIES.report, staleTime: 0 });
+  const problems = report?.store.checkoutProblems ?? [];
+  if (!report || problems.length === 0) return null;
+
+  const layoutCount = problems.filter((problem) => problem.layoutId !== null).length;
+  const title =
+    layoutCount === 0
+      ? __('Your checkout needs attention', 'yaycheckout')
+      : report.store.safeMode
+        ? sprintf(
+            /* translators: %d: number of layouts */
+            _n(
+              '%d active layout is hidden from shoppers',
+              '%d active layouts are hidden from shoppers',
+              layoutCount,
+              'yaycheckout',
+            ),
+            layoutCount,
+          )
+        : sprintf(
+            /* translators: %d: number of layouts */
+            _n(
+              '%d active layout may break checkout',
+              '%d active layouts may break checkout',
+              layoutCount,
+              'yaycheckout',
+            ),
+            layoutCount,
+          );
+
+  return (
+    <section role="status" className="border-warning/50 bg-warning/5 space-y-4 rounded-lg border p-4">
+      <div className="flex gap-3">
+        <span className="bg-warning/20 text-warning-accent flex size-8 shrink-0 items-center justify-center rounded-full">
+          <TriangleAlert className="size-4" />
+        </span>
+        <div className="space-y-0.5">
+          <p className="text-sm font-medium">{title}</p>
+          <p className="text-muted-foreground text-sm">
+            {report.store.safeMode
+              ? __('Shoppers get the standard WooCommerce checkout until it is fixed.', 'yaycheckout')
+              : __('Safe mode is off, so shoppers still get it. Fix it or turn safe mode on.', 'yaycheckout')}
+          </p>
+        </div>
+      </div>
+
+      <ul className="bg-card divide-y rounded-md border">
+        {problems.map(({ reason, detail, layoutId, layoutTitle }) => (
+          <li key={`${layoutId ?? 'store'}-${reason}`} className="flex items-center gap-4 px-4 py-3">
+            <div className="min-w-0 flex-1" title={[layoutTitle, reason, detail].filter(Boolean).join('\n')}>
+              <p className="truncate text-sm font-medium">
+                {layoutId === null
+                  ? __('Store setup', 'yaycheckout')
+                  : layoutTitle || __('Untitled layout', 'yaycheckout')}
+              </p>
+              <p className="text-muted-foreground truncate text-xs">{reason}</p>
+            </div>
+            <Button asChild variant="outline" size="sm" className="shrink-0">
+              {layoutId === null ? (
+                <Link to="/compatibility">{__('View details', 'yaycheckout')}</Link>
+              ) : (
+                <Link to={editLayoutPath(layoutId)}>{__('Edit layout', 'yaycheckout')}</Link>
+              )}
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 const MIN_ITEMS_FOR_LIST_CONTROLS = 10;
 
 export default function LayoutsPage() {
@@ -97,6 +175,7 @@ export default function LayoutsPage() {
       heading={__('Layouts', 'yaycheckout')}
       description={__('Create and activate checkout layouts.', 'yaycheckout')}
     >
+      <CheckoutProblemsAlert />
       {/* isPending fires only on first load; keepPreviousData turns later fetches into isFetching. */}
       {isPending && <LayoutsPageSkeleton />}
       {/* Only a counts failure replaces the page; a list failure is shown inside it so the tabs stay mounted. */}
@@ -265,6 +344,8 @@ function LayoutsPageBody({
   useEffect(() => {
     if (lastEditingLayoutId.current !== null && editingLayoutId === null) {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+      // A saved change can fix, or cause, the problem the alert reports.
+      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_QUERIES.report.queryKey });
     }
     lastEditingLayoutId.current = editingLayoutId;
   }, [editingLayoutId, queryClient]);

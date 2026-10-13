@@ -26,10 +26,14 @@ class SafeModeNotice {
             return;
         }
 
-        $problem = CheckoutHealth::reported_problem();
-        if ( '' === $problem ) {
+        $problems = CheckoutHealth::reported_problems();
+        if ( [] === $problems ) {
             return;
         }
+
+        // The first one: the Compatibility page lists the rest.
+        $problem = $problems[0];
+        $more    = count( $problems ) - 1;
 
         $message = ( new SettingsRepository() )->is_safe_mode()
             /* translators: %s: why the layout is not served. */
@@ -37,9 +41,27 @@ class SafeModeNotice {
             /* translators: %s: why the layout may break checkout. */
             : __( 'Your checkout layout may not work: %s', 'yaycheckout' );
 
+        $edit = null === $problem['layout_id']
+            ? ''
+            : sprintf(
+                '<a href="%s">%s</a> ',
+                esc_url( AdminUrlHelper::edit_layout( $problem['layout_id'] ) ),
+                '' !== $problem['layout_title']
+                    /* translators: %s: layout name. */
+                    ? esc_html( sprintf( __( 'Edit %s', 'yaycheckout' ), $problem['layout_title'] ) )
+                    : esc_html__( 'Edit layout', 'yaycheckout' )
+            );
+
+        $others = 0 === $more
+            ? ''
+            /* translators: %d: number of other problems. */
+            : esc_html( sprintf( _n( 'and %d more problem.', 'and %d more problems.', $more, 'yaycheckout' ), $more ) ) . ' ';
+
         printf(
-            '<div class="notice notice-warning"><p>%s <a href="%s">%s</a></p></div>',
-            esc_html( sprintf( $message, $problem ) ),
+            '<div class="notice notice-warning"><p>%s %s%s<a href="%s">%s</a></p></div>',
+            esc_html( sprintf( $message, $problem['reason'] ) ),
+            $edit, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built above from escaped parts.
+            $others, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built above from escaped parts.
             esc_url( admin_url( 'admin.php?page=' . AdminUrlHelper::MENU_SLUG ) . '#/compatibility' ),
             esc_html__( 'See Compatibility', 'yaycheckout' )
         );

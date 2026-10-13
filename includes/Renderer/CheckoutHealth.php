@@ -26,24 +26,49 @@ class CheckoutHealth {
     }
 
     /**
-     * What the admin reports: the same rules the storefront applies, safe mode on or off. Nothing
-     * while no layout is active, since the storefront then serves WooCommerce's checkout anyway.
+     * What the admin reports: every problem the storefront's rules find, safe mode on or off. A layout's
+     * own problems come first, one per active layout, each naming it; a store-level problem follows and
+     * belongs to no layout. A render failure reads as one plain sentence, its recorded message, which may be a
+     * PHP error, kept as `detail` for support; `detail` is null otherwise. Empty while no layout is active,
+     * since the storefront then serves WooCommerce's checkout anyway.
+     *
+     * @return array<int, array{reason: string, detail: ?string, layout_id: ?int, layout_title: ?string}>
      */
-    public static function reported_problem(): string {
+    public static function reported_problems(): array {
         $layouts = ( new LayoutRepository() )->active_layouts();
         if ( [] === $layouts ) {
-            return '';
+            return [];
         }
+
+        $problems = [];
 
         // Pro: the shopper decides which active layout serves, so any one of them can be the broken one.
         foreach ( $layouts as $layout ) {
-            $own = self::layout_problem( $layout );
+            $failure = CheckoutPage::render_failure( $layout );
+            $own     = '' !== $failure
+                ? __( 'This layout failed to load on the checkout page.', 'yaycheckout' )
+                : LayoutMarkupReader::publish_error( $layout->content );
             if ( '' !== $own ) {
-                return $own;
+                $problems[] = [
+                    'reason'       => $own,
+                    'detail'       => '' !== $failure ? $failure : null,
+                    'layout_id'    => $layout->id,
+                    'layout_title' => $layout->title,
+                ];
             }
         }
 
-        return self::store_problem();
+        $store = self::store_problem();
+        if ( '' !== $store ) {
+            $problems[] = [
+                'reason'       => $store,
+                'detail'       => null,
+                'layout_id'    => null,
+                'layout_title' => null,
+            ];
+        }
+
+        return $problems;
     }
 
     /** The layout's own problem: its last render failed with this content, or its markup may not be published. */

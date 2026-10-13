@@ -27,6 +27,7 @@ import {
   restoreLayout,
   saveLayoutRules,
 } from '@/lib/api/layout.api';
+import { COMPATIBILITY_QUERIES } from '@/lib/queries/compatibility.queries';
 import { LISTED_LAYOUT_STATUSES, type LayoutListResponse } from '@/lib/schema/layout.schema';
 
 export const LAYOUT_KEYS = {
@@ -124,6 +125,8 @@ export function useActivateLayoutMutation() {
     mutationFn: activateLayout,
     onSuccess: () => {
       invalidateListedLayouts(queryClient);
+      // The Compatibility report names the active layout's problem.
+      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_QUERIES.report.queryKey });
     },
   });
 }
@@ -136,6 +139,7 @@ export function useDeactivateLayoutMutation() {
     mutationFn: deactivateLayout,
     onSuccess: () => {
       invalidateListedLayouts(queryClient);
+      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_QUERIES.report.queryKey });
     },
   });
 }

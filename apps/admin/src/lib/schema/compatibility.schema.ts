@@ -26,7 +26,16 @@ export const compatibilityWireSchema = z
           })
           .strict(),
         safe_mode: z.boolean(),
-        checkout_problem: z.string(),
+        checkout_problems: z.array(
+          z
+            .object({
+              reason: z.string(),
+              detail: z.string().nullable(),
+              layout_id: z.number().int().nullable(),
+              layout_title: z.string().nullable(),
+            })
+            .strict(),
+        ),
       })
       .strict(),
     gateways: z.array(
@@ -79,7 +88,8 @@ export type StoreEnvironment = {
   wordpressVersion: string;
   theme: { name: string; version: string; isBlockTheme: boolean };
   safeMode: boolean;
-  checkoutProblem: string;
+  /** Why layouts are unsafe to serve: one per broken active layout, then a store-level one with no layout; empty when there is none. */
+  checkoutProblems: { reason: string; detail: string | null; layoutId: number | null; layoutTitle: string | null }[];
 };
 
 export type GatewayRow = {

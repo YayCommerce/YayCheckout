@@ -108,10 +108,11 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
     public function test_render_failure_reports_only_while_it_applies(): void {
         $id = LayoutFactory::serve( self::boom_markup() );
         CheckoutPage::get_instance()->page_template( '/theme/page.php' );
-        $this->assertSame( 'boom', CheckoutHealth::reported_problem() );
+        $this->assertSame( 'boom', CheckoutHealth::reported_problems()[0]['detail'] );
+        $this->assertSame( $id, CheckoutHealth::reported_problems()[0]['layout_id'] );
 
         ( new LayoutRepository() )->deactivate( $id );
-        $this->assertSame( '', CheckoutHealth::reported_problem() );
+        $this->assertSame( [], CheckoutHealth::reported_problems() );
     }
 
     public function test_fragment_failure_sends_woocommerce_fragments_and_records(): void {
