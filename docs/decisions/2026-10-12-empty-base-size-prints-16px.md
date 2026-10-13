@@ -6,7 +6,7 @@
 
 ## Status
 
-Accepted, 2026-10-12, by Trace Bui. It supersedes [2026-10-10-layout-owns-its-design.md](2026-10-10-layout-owns-its-design.md), restating its decisions with the base-size exception.
+Superseded by [2026-10-13-empty-base-size-prints-13px.md](2026-10-13-empty-base-size-prints-13px.md).
 
 ## Context
 

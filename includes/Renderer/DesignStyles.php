@@ -52,7 +52,7 @@ class DesignStyles {
     ];
 
     /** The page's font size in px while typography.base_size is empty, so a layout doesn't take the theme's. Mirrored by design-css.ts. */
-    public const DEFAULT_BASE_SIZE = 16;
+    public const DEFAULT_BASE_SIZE = 13;
 
     /**
      * Per inputs.size step: the field's height, then its height with floating labels. In em, so a field grows with
@@ -132,7 +132,9 @@ class DesignStyles {
             $not_empty
         );
 
-        if ( '' !== $typography['font_family'] ) {
+        if ( isset( LayoutDesign::FONT_STACKS[ $typography['font_family'] ] ) ) {
+            $vars['font-family'] = LayoutDesign::FONT_STACKS[ $typography['font_family'] ];
+        } elseif ( '' !== $typography['font_family'] ) {
             $fallback            = in_array( $typography['font_family'], LayoutDesign::SERIF_FONTS, true ) ? self::SERIF_FONT_FALLBACK : self::FONT_FALLBACK;
             $vars['font-family'] = '"' . LayoutDesign::FONT_FAMILIES[ $typography['font_family'] ] . '", ' . $fallback;
         }

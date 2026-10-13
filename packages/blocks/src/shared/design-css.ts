@@ -19,6 +19,8 @@ export type DesignFonts = {
 	fontFamilies: Record< string, string >;
 	/** The slugs whose fallback is a serif stack. */
 	serifFonts: string[];
+	/** The slugs the device already has => the stack they print, with no fallback added. */
+	fontStacks: Record< string, string >;
 };
 
 /** Mirrors DesignStyles::PAGE_PROPERTIES in PHP, in its order. */
@@ -39,7 +41,7 @@ export function isGradient( fill: unknown ): boolean {
 }
 
 /** Mirrors DesignStyles::DEFAULT_BASE_SIZE in PHP: the page's font size in px while typography.base_size is empty. */
-export const DEFAULT_BASE_SIZE = 16;
+export const DEFAULT_BASE_SIZE = 13;
 
 /** Mirrors DesignStyles::INPUT_SIZES in PHP: the height, then the height with floating labels. */
 const INPUT_SIZES: Record< string, [ string, string ] > = {
@@ -49,7 +51,7 @@ const INPUT_SIZES: Record< string, [ string, string ] > = {
 };
 
 /** Mirrors DesignStyles::vars() in PHP: custom property values by name, for the tokens that aren't empty, and always the font size. */
-function vars( tokens: DesignTokens, { fontFamilies, serifFonts }: DesignFonts ): [ string, string ][] {
+function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: DesignFonts ): [ string, string ][] {
 	const { colours, typography, inputs } = tokens;
 	const background = String( colours.background ?? '' );
 	const pairs: [ string, string ][] = [
@@ -64,7 +66,9 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts }: DesignFonts )
 	const font = String( typography.font_family ?? '' );
 
 	// PHP never sees a slug outside the list: LayoutDesign::from_meta() empties it.
-	if ( '' !== font && fontFamilies[ font ] ) {
+	if ( fontStacks[ font ] ) {
+		out.push( [ 'font-family', fontStacks[ font ] ] );
+	} else if ( '' !== font && fontFamilies[ font ] ) {
 		const fallback = serifFonts.includes( font ) ? SERIF_FONT_FALLBACK : FONT_FALLBACK;
 		out.push( [ 'font-family', `"${ fontFamilies[ font ] }", ${ fallback }` ] );
 	}
