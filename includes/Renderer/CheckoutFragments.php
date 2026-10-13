@@ -733,6 +733,13 @@ class CheckoutFragments {
                 $wrapper['data-yaycheckout-cart-nonce'] = wp_create_nonce( CartItemQuantity::NONCE_ACTION );
                 $wrapper['data-error-text']             = CartItemQuantity::retry_message();
             }
+        } else {
+            // Breakdown and Total: their Label and Value styles, on the wrapper for the same reason.
+            $class = SummaryPartStyles::wrapper_class( $block->attributes, $block->name, ltrim( self::BLOCK_FRAGMENTS[ $block->name ][0], '.' ) );
+
+            if ( '' !== $class ) {
+                $wrapper['class'] = $class;
+            }
         }
 
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.

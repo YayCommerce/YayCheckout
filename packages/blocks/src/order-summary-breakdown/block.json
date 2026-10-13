@@ -25,6 +25,16 @@
       "text": true,
       "background": true
     },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "__experimentalFontFamily": true,
+      "__experimentalFontStyle": true,
+      "__experimentalFontWeight": true,
+      "__experimentalLetterSpacing": true,
+      "__experimentalTextDecoration": true,
+      "__experimentalTextTransform": true
+    },
     "__experimentalBorder": {
       "color": true,
       "radius": true,
@@ -37,6 +47,7 @@
     }
   },
   "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
   "style": "file:./style-index.css",
   "render": "file:./render.php"
 }

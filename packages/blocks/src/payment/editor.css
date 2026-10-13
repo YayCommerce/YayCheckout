@@ -1,4 +1,0 @@
-/* The colour items span the panel's grid and stack like a block's Color panel, above the range controls. */
-.yaycheckout-payment-panel .yaycheckout-payment-panel__colors {
-	grid-column: 1 / -1;
-}
