@@ -1,10 +1,11 @@
 {
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
-  "name": "yaycheckout/order-summary-totals",
-  "title": "Order Summary Totals",
+  "name": "yaycheckout/order-summary-breakdown",
+  "title": "Order Summary Breakdown",
   "category": "yaycheckout",
-  "description": "Subtotal, coupons, shipping, fees and tax. WooCommerce refreshes them when the order updates.",
+  "description": "Subtotal, discounts, shipping, fees and taxes: the lines that add up to the order total. Updates as the cart changes.",
+  "keywords": [ "subtotal", "discount", "coupon", "shipping", "fee", "tax", "totals" ],
   "textdomain": "yaycheckout",
   "ancestor": [ "yaycheckout/order-summary" ],
   "attributes": {

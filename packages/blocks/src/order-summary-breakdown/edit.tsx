@@ -3,17 +3,17 @@ import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { plainText } from '../shared/plain-text';
 
-interface OrderSummaryTotalsAttributes {
+interface OrderSummaryBreakdownAttributes {
 	showSubtotal: boolean;
 	subtotalLabel?: string;
 }
 
 interface EditProps {
-	attributes: OrderSummaryTotalsAttributes;
-	setAttributes: ( attributes: Partial< OrderSummaryTotalsAttributes > ) => void;
+	attributes: OrderSummaryBreakdownAttributes;
+	setAttributes: ( attributes: Partial< OrderSummaryBreakdownAttributes > ) => void;
 }
 
-// Mirrors CheckoutFragments::order_totals_html(), so its style.css draws it as on the storefront.
+// Mirrors CheckoutFragments::order_breakdown_html(), so its style.css draws it as on the storefront.
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { showSubtotal, subtotalLabel } = attributes;
 	const subtotalPlaceholder = __( 'Subtotal', 'yaycheckout' );
@@ -21,7 +21,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Order summary totals', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Order summary breakdown', 'yaycheckout' ) }>
 					<ToggleControl
 						label={ __( 'Show subtotal', 'yaycheckout' ) }
 						checked={ showSubtotal }
@@ -38,7 +38,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...useBlockProps() }>
-				<table className="shop_table yaycheckout-order-summary-totals">
+				<table className="shop_table yaycheckout-order-summary-breakdown">
 					<tbody>
 						{ showSubtotal && (
 							<tr className="cart-subtotal">
@@ -46,7 +46,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 								<td>$20.00</td>
 							</tr>
 						) }
-						<tr className="yaycheckout-order-summary-totals__shipping">
+						<tr className="yaycheckout-order-summary-breakdown__shipping">
 							<th>{ __( 'Free shipping', 'yaycheckout' ) }</th>
 							<td>
 								<strong>{ __( 'Free', 'yaycheckout' ) }</strong>

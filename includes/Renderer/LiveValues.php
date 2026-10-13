@@ -91,7 +91,7 @@ class LiveValues {
      */
     public static function cart_values(): array {
         return [
-            'cart_total'          => __( 'Order total', 'yaycheckout' ),
+            'cart_total'          => __( 'Order summary total', 'yaycheckout' ),
             'cart_subtotal'       => __( 'Subtotal', 'yaycheckout' ),
             'cart_shipping_total' => __( 'Shipping', 'yaycheckout' ),
             'cart_discount_total' => __( 'Discount', 'yaycheckout' ),
@@ -103,7 +103,7 @@ class LiveValues {
 
     /**
      * Each cart value for the current cart, as text: money as the cart shows it (with tax when WooCommerce
-     * shows prices with tax, so it matches the Totals block), counts as numbers. Empty at 0. [] without a cart.
+     * shows prices with tax, so it matches the Order Summary Total block), counts as numbers. Empty at 0. [] without a cart.
      *
      * @return array<string, array{text: string, empty: bool}>
      */

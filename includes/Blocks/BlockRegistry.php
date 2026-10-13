@@ -70,7 +70,7 @@ class BlockRegistry {
         'order-summary-details',
         'order-summary-toggle',
         'order-summary-items',
-        'order-summary-totals',
+        'order-summary-breakdown',
         'order-summary-total',
         'field-value',
         'place-order',

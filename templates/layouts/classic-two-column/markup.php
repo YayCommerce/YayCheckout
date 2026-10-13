@@ -190,7 +190,7 @@ $yaycheckout_policy_links = array_filter(
 <!-- wp:yaycheckout/coupon-button /-->
 <!-- /wp:yaycheckout/coupon-form -->
 
-<!-- wp:yaycheckout/order-summary-totals /-->
+<!-- wp:yaycheckout/order-summary-breakdown /-->
 
 <!-- wp:yaycheckout/order-summary-total /-->
 <!-- /wp:yaycheckout/order-summary-details -->

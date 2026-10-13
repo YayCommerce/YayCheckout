@@ -4,7 +4,8 @@
   "name": "yaycheckout/order-summary-total",
   "title": "Order Summary Total",
   "category": "yaycheckout",
-  "description": "The order total. WooCommerce refreshes it when the order updates.",
+  "description": "The amount the shopper pays. Updates as the cart changes. Add it more than once, for example in the summary header.",
+  "keywords": [ "total", "grand total", "amount", "price", "pay" ],
   "textdomain": "yaycheckout",
   "ancestor": [ "yaycheckout/order-summary" ],
   "attributes": {

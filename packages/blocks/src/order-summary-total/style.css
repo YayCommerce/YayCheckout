@@ -1,4 +1,4 @@
-/* Order Summary's Total table; order-summary/style.css lays out its column, shared with Totals. */
+/* Order Summary Total's table; order-summary/style.css lays out its column, shared with Order Summary Breakdown. */
 
 /* Cells take the wrapper's typography, so the block's font settings reach the total. */
 .yaycheckout-order-summary table.yaycheckout-order-summary-total :is(th, td) {

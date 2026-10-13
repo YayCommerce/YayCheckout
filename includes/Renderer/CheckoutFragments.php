@@ -20,7 +20,7 @@ class CheckoutFragments {
 
     public const ORDER_ITEMS_CLASS = 'yaycheckout-order-summary-items';
 
-    public const ORDER_TOTALS_CLASS = 'yaycheckout-order-summary-totals';
+    public const ORDER_BREAKDOWN_CLASS = 'yaycheckout-order-summary-breakdown';
 
     public const ORDER_TOTAL_CLASS = 'yaycheckout-order-summary-total';
 
@@ -75,12 +75,12 @@ class CheckoutFragments {
 
     /**
      * Order Summary child block => [ selector checkout.js replaces, method building its HTML ]; found by block name, not slot.
-     * Total may appear several times, so fragment_selector() narrows its selector to each block's options.
+     * Order Summary Total may appear several times, so fragment_selector() narrows its selector to each block's options.
      */
     private const BLOCK_FRAGMENTS = [
-        'yaycheckout/order-summary-items'  => [ '.' . self::ORDER_ITEMS_CLASS, 'order_items_html' ],
-        'yaycheckout/order-summary-totals' => [ '.' . self::ORDER_TOTALS_CLASS, 'order_totals_html' ],
-        'yaycheckout/order-summary-total'  => [ '.' . self::ORDER_TOTAL_CLASS, 'order_total_html' ],
+        'yaycheckout/order-summary-items'     => [ '.' . self::ORDER_ITEMS_CLASS, 'order_items_html' ],
+        'yaycheckout/order-summary-breakdown' => [ '.' . self::ORDER_BREAKDOWN_CLASS, 'order_breakdown_html' ],
+        'yaycheckout/order-summary-total'     => [ '.' . self::ORDER_TOTAL_CLASS, 'order_total_html' ],
     ];
 
     /** Woo's update_order_review fragment for its whole review-order table. */
@@ -95,7 +95,7 @@ class CheckoutFragments {
 
     /**
      * During update_order_review, Woo renders its whole review-order table before the fragments
-     * filter runs. A layout with Items or Totals discards it, so swap it for an empty template
+     * filter runs. A layout with Items, Order Summary Breakdown or Order Summary Total discards it, so swap it for an empty template
      * and its review-order hooks fire once, in our tables.
      */
     public function skip_review_order_table( $template, $template_name ) {
@@ -143,7 +143,7 @@ class CheckoutFragments {
 
     /**
      * The BLOCK_FRAGMENTS entries whose block is in the layout, one per distinct selector, each with
-     * the first such block's parsed attrs. Total copies with the same options share one selector and HTML.
+     * the first such block's parsed attrs. Order Summary Total copies with the same options share one selector and HTML.
      *
      * @return array<int, array{0: string, 1: string, 2: array}>
      */
@@ -167,7 +167,7 @@ class CheckoutFragments {
         return array_values( $summary );
     }
 
-    /** The selector checkout.js replaces for one BLOCK_FRAGMENTS block: a Total's names its options, the others are fixed. */
+    /** The selector checkout.js replaces for one BLOCK_FRAGMENTS block: an Order Summary Total's names its options, the others are fixed. */
     private static function fragment_selector( string $name, array $attrs ): string {
         if ( 'yaycheckout/order-summary-total' === $name ) {
             return '.' . self::order_total_hash_class( self::order_total_options( $attrs ) );
@@ -398,8 +398,8 @@ class CheckoutFragments {
     /**
      * Rates wrapper so AJAX can replace an empty first paint. The list is this block's markup;
      * each rate still posts Woo's shipping_method input and runs woocommerce_after_shipping_rate.
-     * Review-order shipping hooks fire around the list, as review-order.php does, since Totals
-     * leaves the rates to this block. Plugins on those hooks print table rows, so each hook's
+     * Review-order shipping hooks fire around the list, as review-order.php does, since Order
+     * Summary Breakdown leaves the rates to this block. Plugins on those hooks print table rows, so each hook's
      * output sits in its own table.
      */
     public static function shipping_rates_html(): string {
@@ -672,7 +672,7 @@ class CheckoutFragments {
         return (string) ob_get_clean();
     }
 
-    /** An Items or Totals block: its wrapper and the fragment root fragments() refreshes. */
+    /** An Items, Order Summary Breakdown or Order Summary Total block: its wrapper and the fragment root fragments() refreshes. */
     public static function print_summary_block( \WP_Block $block ): void {
         if ( ! isset( self::BLOCK_FRAGMENTS[ $block->name ] ) ) {
             return;
@@ -949,12 +949,12 @@ class CheckoutFragments {
     }
 
     /**
-     * The Totals block's attributes with their defaults. During AJAX they come from the parsed
+     * The Order Summary Breakdown block's attributes with their defaults. During AJAX they come from the parsed
      * layout, where an untouched attribute is missing, so each default matches block.json's.
      *
      * @return array{show_subtotal: bool, subtotal_label: string}
      */
-    public static function order_totals_options( array $attributes ): array {
+    public static function order_breakdown_options( array $attributes ): array {
         return [
             'show_subtotal'  => self::bool_attr( $attributes, 'showSubtotal', true ),
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
@@ -965,21 +965,21 @@ class CheckoutFragments {
     /**
      * The tfoot rows of Woo's checkout/review-order.php, as the body of their own table. Shipping
      * is one read-only row (method name / Free); the Shipping Methods block keeps the radios. The
-     * order-total row is the Total block's; its hooks stay here, so extensions' rows print once.
+     * order-total row is the Order Summary Total block's; its hooks stay here, so extensions' rows print once.
      *
-     * @param array $attributes Totals block attributes; see order_totals_options().
+     * @param array $attributes Order Summary Breakdown block attributes; see order_breakdown_options().
      */
-    public static function order_totals_html( array $attributes = [] ): string {
+    public static function order_breakdown_html( array $attributes = [] ): string {
         if ( ! WC()->cart instanceof \WC_Cart ) {
             return '';
         }
 
-        $options = self::order_totals_options( $attributes );
+        $options = self::order_breakdown_options( $attributes );
 
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Woo's review-order hooks and strings, so its translation still applies.
         ob_start();
         ?>
-<table class="shop_table <?php echo esc_attr( self::ORDER_TOTALS_CLASS ); ?>">
+<table class="shop_table <?php echo esc_attr( self::ORDER_BREAKDOWN_CLASS ); ?>">
     <tbody>
         <?php if ( $options['show_subtotal'] ) : ?>
         <tr class="cart-subtotal">
@@ -1015,7 +1015,7 @@ class CheckoutFragments {
         </tr>
             <?php endif; ?>
         <?php endif; ?>
-        <?php // The order-total row between these hooks is the Total block's; extensions' rows stay here. ?>
+        <?php // The order-total row between these hooks is the Order Summary Total block's; extensions' rows stay here. ?>
         <?php do_action( 'woocommerce_review_order_before_order_total' ); ?>
         <?php do_action( 'woocommerce_review_order_after_order_total' ); ?>
     </tbody>
@@ -1027,7 +1027,7 @@ class CheckoutFragments {
     }
 
     /**
-     * The Total block's attributes with their defaults. During AJAX they come from the parsed
+     * The Order Summary Total block's attributes with their defaults. During AJAX they come from the parsed
      * layout, where an untouched attribute is missing, so each default matches block.json's.
      *
      * @return array{show_label: bool, label: string, show_currency_code: bool}
@@ -1042,7 +1042,7 @@ class CheckoutFragments {
     }
 
     /**
-     * The class naming one Total block's fragment. Hashed from its options rather than its raw attrs,
+     * The class naming one Order Summary Total block's fragment. Hashed from its options rather than its raw attrs,
      * so render.php (defaults filled) and the parsed layout (defaults missing) agree.
      *
      * @param array $options order_total_options() output.
@@ -1053,9 +1053,9 @@ class CheckoutFragments {
 
     /**
      * Woo's order-total row of checkout/review-order.php as its own table, without the hooks around
-     * it: Totals fires those, so several Total blocks never repeat extensions' rows.
+     * it: Order Summary Breakdown fires those, so several Order Summary Total blocks never repeat extensions' rows.
      *
-     * @param array $attributes Total block attributes; see order_total_options().
+     * @param array $attributes Order Summary Total block attributes; see order_total_options().
      */
     public static function order_total_html( array $attributes = [] ): string {
         if ( ! WC()->cart instanceof \WC_Cart ) {
@@ -1159,7 +1159,7 @@ class CheckoutFragments {
         }
         // phpcs:enable WordPress.WP.I18n.TextDomainMismatch
         ?>
-        <tr class="yaycheckout-order-summary-totals__shipping">
+        <tr class="yaycheckout-order-summary-breakdown__shipping">
             <th><?php echo esc_html( $label ); ?></th>
             <td><?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above or wc_price() HTML. ?></td>
         </tr>
