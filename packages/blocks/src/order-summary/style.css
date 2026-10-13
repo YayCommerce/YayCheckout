@@ -1,3 +1,8 @@
+/* Show title off: keep the Heading block, hide it without deleting. */
+.yaycheckout-order-summary.is-title-hidden .yaycheckout-order-summary-header .wp-block-heading {
+	display: none;
+}
+
 /*
  * A collapsible header is a click target as a whole: an empty button covers it, under the header's own
  * controls, which keep their action.
