@@ -71,6 +71,7 @@ class BlockRegistry {
         'order-summary-toggle',
         'order-summary-items',
         'order-summary-totals',
+        'savings-note',
         'field-value',
         'place-order',
         'slot',

@@ -173,6 +173,11 @@ export const blockIcons: Record< string, JSX.Element > = {
 	'yaycheckout/order-summary-toggle': icon( <path d="M4 7h16v10H4zM9 11l3 3 3-3" /> ),
 	'yaycheckout/order-summary-items': icon( <path d="M4 6h16M4 12h16M4 18h10" /> ),
 	'yaycheckout/order-summary-totals': icon( <path d="M4 7h16M4 12h16M12 17h8" /> ),
+	'yaycheckout/savings-note': icon(
+		<>
+			<path d="M12 3v18M8 8h5.5a2.5 2.5 0 0 1 0 5H9a2.5 2.5 0 0 0 0 5h6" />
+		</>
+	),
 	'yaycheckout/field-value': icon(
 		<>
 			<rect x="3" y="5" width="18" height="14" rx="2" />
