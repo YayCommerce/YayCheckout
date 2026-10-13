@@ -17,6 +17,18 @@
     "showCount": {
       "type": "boolean",
       "default": true
+    },
+    "activeColor": {
+      "type": "string",
+      "default": ""
+    },
+    "inactiveColor": {
+      "type": "string",
+      "default": ""
+    },
+    "disabledTextColor": {
+      "type": "string",
+      "default": ""
     }
   },
   "supports": {

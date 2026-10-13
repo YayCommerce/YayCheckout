@@ -1,4 +1,4 @@
-import { InspectorControls, RichText, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
+import { InspectorControls, PanelColorSettings, RichText, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { Notice, PanelBody, SelectControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { createInterpolateElement, type ReactNode } from '@wordpress/element';
@@ -18,6 +18,18 @@ const hasSummary = ( variant: Variant ) => variant === 'bar' || variant === 'tex
 interface Attributes {
 	variant: Variant;
 	showCount: boolean;
+	activeColor: string;
+	inactiveColor: string;
+	disabledTextColor: string;
+}
+
+/** Mirrors CheckoutStepsProgress::color_style(): each colour set becomes the variable style.css reads. */
+function progressStyle( { activeColor, inactiveColor, disabledTextColor }: Attributes ) {
+	return {
+		...( activeColor ? { '--yaycheckout-steps-progress-active': activeColor } : {} ),
+		...( inactiveColor ? { '--yaycheckout-steps-progress-inactive': inactiveColor } : {} ),
+		...( disabledTextColor ? { '--yaycheckout-steps-progress-disabled': disabledTextColor } : {} ),
+	};
 }
 
 interface EditProps {
@@ -116,6 +128,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	);
 	const blockProps = useBlockProps( {
 		className: `yaycheckout-steps-progress is-variant-${ attributes.variant }`,
+		style: progressStyle( attributes ),
 	} );
 
 	if ( isPreview && stepIds === null ) {
@@ -173,6 +186,29 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						/>
 					) }
 				</PanelBody>
+			</InspectorControls>
+			<InspectorControls group="styles">
+				<PanelColorSettings
+					title={ __( 'Progress colors', 'yaycheckout' ) }
+					initialOpen={ false }
+					colorSettings={ [
+						{
+							label: __( 'Active', 'yaycheckout' ),
+							value: attributes.activeColor,
+							onChange: ( value?: string ) => setAttributes( { activeColor: value ?? '' } ),
+						},
+						{
+							label: __( 'Inactive', 'yaycheckout' ),
+							value: attributes.inactiveColor,
+							onChange: ( value?: string ) => setAttributes( { inactiveColor: value ?? '' } ),
+						},
+						{
+							label: __( 'Disabled text', 'yaycheckout' ),
+							value: attributes.disabledTextColor,
+							onChange: ( value?: string ) => setAttributes( { disabledTextColor: value ?? '' } ),
+						},
+					] }
+				/>
 			</InspectorControls>
 			<div { ...blockProps }>
 				<ProgressBody attributes={ attributes } total={ stepIds.length }>
