@@ -12,7 +12,8 @@
 	"inputs": {
 		"style": "boxed",
 		"size": "medium",
-		"radius": 2
+		"radius": 2,
+		"background": "#ffffff"
 	},
 	"custom_css": ""
 }
