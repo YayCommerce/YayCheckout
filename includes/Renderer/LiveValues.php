@@ -25,6 +25,7 @@ class LiveValues {
         'yaycheckout/step',
         'yaycheckout/create-account',
         'yaycheckout/different-address',
+        'yaycheckout/place-order',
     ];
 
     /** Blocks that print another block's text, so its live values: Steps Progress shows the step titles. */
@@ -151,11 +152,18 @@ class LiveValues {
      * @param array  $block         Parsed block.
      */
     public function fill( $block_content, $block ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- render_block_{$name} passes it.
-        $block_content = (string) $block_content;
-        $page          = CheckoutPage::get_instance();
+        return $this->fill_html( (string) $block_content );
+    }
 
-        if ( false === strpos( $block_content, self::CLASS_NAME ) || ! $page->takes_over() ) {
-            return $block_content;
+    /**
+     * Fills each live value span in $html on a taken-over checkout; anywhere else the HTML comes back
+     * untouched. Place Order's render.php calls it on its label, so value and data-value hold the values.
+     */
+    public function fill_html( string $html ): string {
+        $page = CheckoutPage::get_instance();
+
+        if ( false === strpos( $html, self::CLASS_NAME ) || ! $page->takes_over() ) {
+            return $html;
         }
 
         $markup = $page->layout()->content;
@@ -164,10 +172,10 @@ class LiveValues {
             function ( array $found ) use ( $markup ): string {
                 return $this->fill_span( $found[0], $found[1], $found[2], $markup );
             },
-            $block_content
+            $html
         );
 
-        return is_string( $filled ) ? $filled : $block_content;
+        return is_string( $filled ) ? $filled : $html;
     }
 
     /** Prints the cart's values for view.js, once a span was filled. */

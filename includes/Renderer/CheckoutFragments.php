@@ -106,7 +106,7 @@ class CheckoutFragments {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/review-order-skipped.php';
     }
 
-    /** Swaps the fragments of this layout's sections for this layout's HTML, and refreshes Place order's total. */
+    /** Swaps the fragments of this layout's sections for this layout's HTML. */
     public function fragments( $fragments ) {
         $layout = CheckoutPage::get_instance()->layout();
 
@@ -132,15 +132,7 @@ class CheckoutFragments {
             $html[ $selector ] = self::$build( $attrs );
         }
 
-        $fragments = array_merge( $fragments, array_filter( $html, 'strlen' ) );
-
-        $button = isset( $rendered['place_order'] ) ? self::place_order_button_html( $layout->content ) : '';
-
-        if ( '' !== $button ) {
-            $fragments['#place_order'] = $button;
-        }
-
-        return $fragments;
+        return array_merge( $fragments, array_filter( $html, 'strlen' ) );
     }
 
     /**
@@ -160,13 +152,6 @@ class CheckoutFragments {
         }
 
         return array_values( $summary );
-    }
-
-    /** The Place order button alone (render.php prints only it during AJAX), when it shows the total. */
-    private static function place_order_button_html( string $markup ): string {
-        $block = LayoutMarkupReader::first_block( $markup, 'yaycheckout/place-order' );
-
-        return null === $block || empty( $block['attrs']['showTotal'] ) ? '' : render_block( $block );
     }
 
     public static function print_shipping_rates(): void {
