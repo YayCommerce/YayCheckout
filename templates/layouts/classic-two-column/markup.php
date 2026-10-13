@@ -191,6 +191,8 @@ $yaycheckout_policy_links = array_filter(
 <!-- /wp:yaycheckout/coupon-form -->
 
 <!-- wp:yaycheckout/order-summary-totals /-->
+
+<!-- wp:yaycheckout/order-summary-total /-->
 <!-- /wp:yaycheckout/order-summary-details -->
 <!-- /wp:yaycheckout/order-summary --></div>
 <!-- /wp:group --><?php if ( $yaycheckout_policy_links ) : ?>

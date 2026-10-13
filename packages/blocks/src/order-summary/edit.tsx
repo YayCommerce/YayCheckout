@@ -15,6 +15,7 @@ import detailsMeta from '../order-summary-details/block.json';
 import headerMeta from '../order-summary-header/block.json';
 import itemsMeta from '../order-summary-items/block.json';
 import toggleMeta from '../order-summary-toggle/block.json';
+import totalMeta from '../order-summary-total/block.json';
 import totalsMeta from '../order-summary-totals/block.json';
 import type { TemplateArray } from '../shared/address-template';
 import { isCheckoutSection, useBlocksAllowedExcept } from '../shared/allowed-blocks';
@@ -40,7 +41,7 @@ interface EditProps {
 	clientId: string;
 }
 
-// A Header holding a Toggle holding a Heading, then Details holding Items and Totals. templates/layouts/classic-two-column/markup.php
+// A Header holding a Toggle holding a Heading, then Details holding Items, Totals and Total. templates/layouts/classic-two-column/markup.php
 // seeds the same tree, with Coupon Form between Items and Totals; change both.
 const TEMPLATE: TemplateArray[] = [
 	[
@@ -48,7 +49,7 @@ const TEMPLATE: TemplateArray[] = [
 		{},
 		[ [ toggleMeta.name, {}, [ [ 'core/heading', { level: 3, content: __( 'Order summary', 'yaycheckout' ) } ] ] ] ],
 	],
-	[ detailsMeta.name, { lock: { remove: true } }, [ [ itemsMeta.name ], [ totalsMeta.name ] ] ],
+	[ detailsMeta.name, { lock: { remove: true } }, [ [ itemsMeta.name ], [ totalsMeta.name ], [ totalMeta.name ] ] ],
 ];
 
 const NEW_SHAPE_CHILDREN = [ headerMeta.name, detailsMeta.name ];
