@@ -8,7 +8,7 @@ final class LayoutFactory {
 
     /** The smallest publishable markup: the root block with the two blocks publish_error() requires. */
     public static function checkout_markup(): string {
-        return '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/payment /--><!-- wp:yaycheckout/place-order /--><!-- /wp:yaycheckout/checkout -->';
+        return '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/email /--><!-- wp:yaycheckout/payment /--><!-- wp:yaycheckout/place-order /--><!-- /wp:yaycheckout/checkout -->';
     }
 
     /**

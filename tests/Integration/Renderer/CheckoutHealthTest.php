@@ -126,7 +126,7 @@ class CheckoutHealthTest extends \WP_UnitTestCase {
     public function test_layout_markup_problem_comes_first(): void {
         $layout = ( new LayoutRepository() )->find( LayoutFactory::create_draft( [ 'post_content' => '<!-- wp:yaycheckout/checkout /-->' ] ) );
         add_filter( 'yaycheckout_safe_mode_problem', [ $this, 'custom_reason' ] );
-        $this->assertSame( 'Add a Place order block to this layout before activating it.', CheckoutHealth::problem( $layout ) );
+        $this->assertSame( 'Add an Email field to this layout before activating it.', CheckoutHealth::problem( $layout ) );
     }
 
     public function test_safe_mode_on_falls_back_on_a_problem(): void {
