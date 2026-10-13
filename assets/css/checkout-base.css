@@ -363,28 +363,35 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 
 /*
  * Drawn checkbox and radio, as in the layout templates: the input's border and background, the
- * primary colour once checked. The corner stays 2px whatever the input radius, so a box stays a box.
- * Payment and Shipping hide their real radio and draw their own indicator.
+ * primary colour once checked. A checkbox's size, corner, border width and checked colour come from
+ * the layout's Checkboxes design (DesignStyles); its corner never takes the input radius. Radios keep
+ * their own size. Payment and Shipping hide their real radio and draw their own indicator.
  */
 .yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]) {
 	-webkit-appearance: none;
 	appearance: none;
 	box-sizing: border-box;
 	flex: none;
-	width: 16px;
-	height: 16px;
 	margin: 0;
 	border: 1px solid var(--yaycheckout-input-border-color, var(--yaycheckout-border-color));
-	border-radius: var(--yaycheckout-neutral-radius);
-	background: var(--yaycheckout-input-background, var(--yaycheckout-color-background, #fff)) center / 12px no-repeat;
+	background: var(--yaycheckout-input-background, var(--yaycheckout-color-background, #fff)) center no-repeat;
 	vertical-align: middle;
 	cursor: pointer;
 	transition: background-color 100ms, border-color 100ms, border-width 100ms;
 }
 
+/* The tick stays 12px and shrinks only to keep a quarter of a small box clear. */
+.yaycheckout-checkout input[type="checkbox"] {
+	width: var(--yaycheckout-checkbox-size, 16px);
+	height: var(--yaycheckout-checkbox-size, 16px);
+	border-width: var(--yaycheckout-checkbox-border-width, 1px);
+	border-radius: var(--yaycheckout-checkbox-radius, var(--yaycheckout-neutral-radius));
+	background-size: min(12px, calc(var(--yaycheckout-checkbox-size, 16px) * 0.75));
+}
+
 .yaycheckout-checkout input[type="checkbox"]:checked {
-	border-color: var(--yaycheckout-primary-color);
-	background-color: var(--yaycheckout-primary-color);
+	border-color: var(--yaycheckout-checkbox-checked-color, var(--yaycheckout-primary-color));
+	background-color: var(--yaycheckout-checkbox-checked-color, var(--yaycheckout-primary-color));
 	background-image: var(--yaycheckout-check-icon);
 }
 

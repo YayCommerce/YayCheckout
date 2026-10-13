@@ -162,7 +162,7 @@ class DesignStyles {
             $vars['input-padding-inline'] = $is_underline && '' === $inputs['background'] ? '0' : '12px';
         }
 
-        return array_merge(
+        $vars = array_merge(
             $vars,
             array_filter(
                 [
@@ -173,5 +173,26 @@ class DesignStyles {
                 $not_empty
             )
         );
+
+        // A radius of 0 is a square box, not an empty token.
+        $checkboxes = $sections['checkboxes'];
+
+        if ( null !== $checkboxes['size'] ) {
+            $vars['checkbox-size'] = $checkboxes['size'] . 'px';
+        }
+
+        if ( null !== $checkboxes['radius'] ) {
+            $vars['checkbox-radius'] = $checkboxes['radius'] . 'px';
+        }
+
+        if ( null !== $checkboxes['border_width'] ) {
+            $vars['checkbox-border-width'] = $checkboxes['border_width'] . 'px';
+        }
+
+        if ( '' !== $checkboxes['checked'] ) {
+            $vars['checkbox-checked-color'] = $checkboxes['checked'];
+        }
+
+        return $vars;
     }
 }
