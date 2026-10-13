@@ -12,14 +12,14 @@
 
 /*
  * Neutral fallbacks, resolved once. A layout's empty token leaves its property unset, so these
- * follow the theme: its primary preset (then #3858e9, Classic two-column's primary), a border
- * mixed from the text colour, a 2px corner. Block CSS reads the same names.
+ * follow the theme: the primary and border colours through the design presets, which hold their
+ * fallbacks (design-presets.css), and a 2px corner. Block CSS reads the same names.
  */
 :root,
 .editor-styles-wrapper {
 	--yaycheckout-neutral-radius: 2px;
-	--yaycheckout-primary-color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
-	--yaycheckout-border-color: var(--yaycheckout-color-border, color-mix(in srgb, currentColor 45%, transparent));
+	--yaycheckout-primary-color: var(--wp--preset--color--yaycheckout-primary);
+	--yaycheckout-border-color: var(--wp--preset--color--yaycheckout-border);
 	--yaycheckout-field-radius: var(--yaycheckout-input-radius, var(--yaycheckout-neutral-radius));
 	/* White check drawn on a filled circle: Steps, Steps Progress and the Cards with checkmark layouts. */
 	--yaycheckout-check-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");

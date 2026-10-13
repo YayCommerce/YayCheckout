@@ -1,5 +1,6 @@
 import apiFetch from '@wordpress/api-fetch';
 import {
+	store as blockEditorStore,
 	__experimentalColorGradientSettingsDropdown as ColorGradientSettingsDropdown,
 	__experimentalUseMultipleOriginColorsAndGradients as useMultipleOriginColorsAndGradients,
 	getColorClassName,
@@ -12,7 +13,8 @@ import {
 	TextareaControl,
 	__experimentalToolsPanel as ToolsPanel,
 } from '@wordpress/components';
-import { useDispatch, useSelect } from '@wordpress/data';
+import { select, useDispatch, useSelect } from '@wordpress/data';
+import { addFilter } from '@wordpress/hooks';
 import { PluginSidebar, PluginSidebarMoreMenuItem, store as editorStore } from '@wordpress/editor';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -124,7 +126,7 @@ function customCssError( css: string, maxBytes: number ): string | null {
 	return null;
 }
 
-type Swatch = { slug: string; color?: string; gradient?: string };
+type Swatch = { name?: string; slug: string; color?: string; gradient?: string };
 type ColourOrigin = { name: string; slug: string; colors?: Swatch[]; gradients?: Swatch[] };
 type PresetKind = 'color' | 'gradient';
 
@@ -145,6 +147,87 @@ function presetOf( value: string, kind: PresetKind, origins: ColourOrigin[] | un
 	return ( origins ?? [] )
 		.flatMap( ( origin ) => origin[ key ] ?? [] )
 		.find( ( swatch ) => presetVar( kind, swatch.slug ) === value );
+}
+
+/** Mirrors LayoutDesign::DESIGN_PRESET_PREFIX in PHP: the palette presets that offer the colour tokens to blocks. */
+const DESIGN_PRESET_PREFIX = 'yaycheckout-';
+
+/** The context core labels the user's palette ("Custom") with, in every colour picker. */
+const CUSTOM_ORIGIN_CONTEXT = 'Indicates this palette is created by the user.';
+
+/** The merchant's own palette (Global Styles), at a block's level when it sets one. */
+function merchantPalette( blockName?: string ): Swatch[] {
+	const features = select( blockEditorStore ).getSettings().__experimentalFeatures;
+
+	return (
+		( blockName ? features?.blocks?.[ blockName ]?.color?.palette?.custom : undefined ) ??
+		features?.color?.palette?.custom ??
+		[]
+	);
+}
+
+function isLayoutEditor(): boolean {
+	return select( editorStore ).getCurrentPostType() === editorData.postType;
+}
+
+/**
+ * The colour tokens as swatches in every colour picker of the layout editor, as the presets design-presets.css
+ * prints. A swatch's colour is a custom property no other swatch shares, so a pick matches its slug (or stores
+ * that var()) and the block follows later Design changes. The editor's own document loads the same stylesheet
+ * and design, so the swatches show the design's colours.
+ *
+ * Core groups a picker's swatches by origin only (Theme, Default, Custom), so they go first in the user's origin,
+ * which core labels Custom and this labels Checkout. A merchant with their own Global Styles palette keeps the
+ * Custom label, since their colours follow in the same group.
+ *
+ * Added here, not in PHP: the post editor rebuilds __experimentalFeatures from the theme's global styles over REST,
+ * which drops a block_editor_settings_all palette. The filter's value replaces core's, so it reads the palette the
+ * way core would (a block's own, then the root's), less a block attribute's `settings`.
+ */
+function addDesignPalette( design: EditorDesign ) {
+	const swatches: Swatch[] = Object.keys( design.schema.colours ).map( ( token ) => {
+		const slug = DESIGN_PRESET_PREFIX + token;
+
+		return {
+			/* translators: %s: a design colour, such as Primary */
+			name: sprintf( __( 'Design: %s', 'yaycheckout' ), TOKEN_LABELS[ token ] ?? token ),
+			slug,
+			// Not the preset's own var(): the editor resolves a colour naming a preset through it, so it would never return.
+			color: `var(--yaycheckout-design-${ token })`,
+		};
+	} );
+	const groupLabel = __( 'Checkout', 'yaycheckout' );
+
+	addFilter(
+		'blockEditor.useSetting.before',
+		'yaycheckout/design-palette',
+		( value: unknown, path: string, _clientId: string | null, blockName?: string ) => {
+			if ( 'color.palette.custom' !== path || ! isLayoutEditor() ) {
+				return value;
+			}
+
+			return [ ...swatches, ...merchantPalette( blockName ) ];
+		}
+	);
+
+	addFilter(
+		'i18n.gettext_with_context_default',
+		'yaycheckout/design-palette-label',
+		( translation: string, text: string, context: string ) =>
+			'Custom' === text && CUSTOM_ORIGIN_CONTEXT === context && isLayoutEditor() && ! merchantPalette().length
+				? groupLabel
+				: translation
+	);
+}
+
+/** The palettes without the design's own presets: each reads a colour token, so a token naming one would read itself. */
+function withoutDesignPresets( origins: ColourOrigin[] | undefined ): ColourOrigin[] | undefined {
+	return origins
+		?.map( ( origin ) => ( {
+			...origin,
+			colors: origin.colors?.filter( ( swatch ) => ! swatch.slug.startsWith( DESIGN_PRESET_PREFIX ) ),
+		} ) )
+		.filter( ( origin ) => origin.gradients?.length || origin.colors?.length );
 }
 
 function isColourRule( rule: DesignRule ): boolean {
@@ -169,7 +252,8 @@ function ColourSettings( {
 	values: SectionTokens;
 	onChange: ( next: SectionTokens ) => void;
 } ) {
-	const palettes = useMultipleOriginColorsAndGradients();
+	const allPalettes = useMultipleOriginColorsAndGradients();
+	const palettes = { ...allPalettes, colors: withoutDesignPresets( allPalettes.colors ) };
 	// The control calls back twice for one pick (the new value, then a clear of the other kind), so each call
 	// must see the value the one before it left, not the value this render started with.
 	const latest = useRef( values );
@@ -570,3 +654,7 @@ function LayoutDesign() {
 registerPlugin( SIDEBAR, {
 	render: LayoutDesign,
 } );
+
+if ( editorData.design ) {
+	addDesignPalette( editorData.design );
+}

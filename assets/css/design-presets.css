@@ -1,0 +1,74 @@
+/*
+ * The layout's colour tokens as palette presets, so a block's colour picker can offer "Design: Primary"
+ * and the rest (addDesignPalette() in layout-design.tsx). A block that picks one stores the slug, or the
+ * preset's var(), and follows later Design changes. Loaded before checkout-base.css (CheckoutBaseStyles),
+ * on the storefront and in the layout editor.
+ *
+ * An empty token falls back to a neutral colour that follows the theme: its primary preset (then #3858e9,
+ * Classic two-column's primary), its contrast and base presets, a border mixed from the text colour.
+ * checkout-base.css reads the primary and border fallbacks from here.
+ *
+ * A swatch's colour is --yaycheckout-design-<token>, not its own preset's var(): the editor resolves a palette
+ * colour that names a preset through that preset, so a swatch naming itself never returns.
+ *
+ * Core prints the has-*-color classes only for theme.json presets, so these print their own, as core does.
+ */
+:root,
+.editor-styles-wrapper {
+	--yaycheckout-design-primary: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
+	--yaycheckout-design-text: var(--yaycheckout-color-text, var(--wp--preset--color--contrast, #1e1e1e));
+	--yaycheckout-design-background: var(--yaycheckout-color-background, var(--wp--preset--color--base, #fff));
+	--yaycheckout-design-border: var(--yaycheckout-color-border, color-mix(in srgb, currentColor 45%, transparent));
+	--wp--preset--color--yaycheckout-primary: var(--yaycheckout-design-primary);
+	--wp--preset--color--yaycheckout-text: var(--yaycheckout-design-text);
+	--wp--preset--color--yaycheckout-background: var(--yaycheckout-design-background);
+	--wp--preset--color--yaycheckout-border: var(--yaycheckout-design-border);
+}
+
+.has-yaycheckout-primary-color {
+	color: var(--wp--preset--color--yaycheckout-primary) !important;
+}
+
+.has-yaycheckout-text-color {
+	color: var(--wp--preset--color--yaycheckout-text) !important;
+}
+
+.has-yaycheckout-background-color {
+	color: var(--wp--preset--color--yaycheckout-background) !important;
+}
+
+.has-yaycheckout-border-color {
+	color: var(--wp--preset--color--yaycheckout-border) !important;
+}
+
+.has-yaycheckout-primary-background-color {
+	background-color: var(--wp--preset--color--yaycheckout-primary) !important;
+}
+
+.has-yaycheckout-text-background-color {
+	background-color: var(--wp--preset--color--yaycheckout-text) !important;
+}
+
+.has-yaycheckout-background-background-color {
+	background-color: var(--wp--preset--color--yaycheckout-background) !important;
+}
+
+.has-yaycheckout-border-background-color {
+	background-color: var(--wp--preset--color--yaycheckout-border) !important;
+}
+
+.has-yaycheckout-primary-border-color {
+	border-color: var(--wp--preset--color--yaycheckout-primary) !important;
+}
+
+.has-yaycheckout-text-border-color {
+	border-color: var(--wp--preset--color--yaycheckout-text) !important;
+}
+
+.has-yaycheckout-background-border-color {
+	border-color: var(--wp--preset--color--yaycheckout-background) !important;
+}
+
+.has-yaycheckout-border-border-color {
+	border-color: var(--wp--preset--color--yaycheckout-border) !important;
+}
