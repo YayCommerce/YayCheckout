@@ -16,6 +16,7 @@ class YayCheckout {
         \YayCheckout\Engine\RestAPI::get_instance();
         \YayCheckout\Engine\Register\RegisterFacade::get_instance();
         \YayCheckout\Engine\Admin\Settings::get_instance();
+        \YayCheckout\Engine\Admin\SafeModeNotice::get_instance();
         \YayCheckout\Blocks\BlockRegistry::get_instance();
         \YayCheckout\PostTypes\LayoutPostType::get_instance();
         \YayCheckout\Engine\LayoutCapGuard::get_instance();

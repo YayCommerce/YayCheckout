@@ -3,38 +3,10 @@
  * Checkout page: the layout's blocks in our own document, with no theme header
  * or footer, on every theme. The root Checkout block is the form; everything
  * WooCommerce needs on the page is a block. The theme's styles still load
- * through wp_head().
+ * through wp_head(). CheckoutPage::page_template() rendered the layout already.
  */
 
 defined( 'ABSPATH' ) || exit;
-
-$yaycheckout_layout  = \YayCheckout\Renderer\CheckoutPage::get_instance()->layout();
-$yaycheckout_preview = \YayCheckout\Renderer\PreviewRequest::get_instance();
-
-/*
- * Rendered before wp_head(), as core's template-canvas.php does: blocks enqueue
- * script modules and styles while rendering, and on block themes the import
- * map is printed in the head. Rendered after it, a module's imports go unmapped
- * and the browser refuses to load it.
- */
-ob_start();
-?>
-<div class="woocommerce yaycheckout-page">
-    <?php
-    if ( null !== $yaycheckout_layout && $yaycheckout_preview->active() ) {
-        $yaycheckout_preview->banner( $yaycheckout_layout );
-    }
-
-    if ( null !== $yaycheckout_layout ) {
-        // Shipping packages only exist after a calculation; session totals alone leave the order table without shipping rows.
-        WC()->cart->calculate_totals();
-
-        echo do_blocks( $yaycheckout_layout->content ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block markup, rendered and escaped by each block.
-    }
-    ?>
-</div>
-<?php
-$yaycheckout_main = (string) ob_get_clean();
 ?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
@@ -52,7 +24,7 @@ $yaycheckout_main = (string) ob_get_clean();
 <body <?php body_class( 'yaycheckout-page' ); ?>>
 <?php wp_body_open(); ?>
 <div class="wp-site-blocks">
-<?php echo $yaycheckout_main; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered above by the layout's blocks. ?>
+<?php echo \YayCheckout\Renderer\CheckoutPage::get_instance()->html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered by the layout's blocks. ?>
 </div>
 <?php wp_footer(); ?>
 </body>

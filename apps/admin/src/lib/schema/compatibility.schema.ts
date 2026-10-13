@@ -3,8 +3,8 @@ import { z } from 'zod';
 // Wire schemas: the PHP shape of GET /compatibility, exactly.
 
 /** Mirrors CompatibilityCatalogue::GATEWAY_STATUSES / PLUGIN_STATUSES in PHP. */
-const gatewayStatusWireSchema = z.enum(['verified', 'community', 'unverified', 'block-only']);
-const pluginStatusWireSchema = z.enum(['verified', 'community', 'unverified']);
+const gatewayStatusWireSchema = z.enum(['verified', 'community', 'unverified', 'block-only', 'conflict']);
+const pluginStatusWireSchema = z.enum(['verified', 'community', 'unverified', 'conflict']);
 /** Mirrors CheckoutHookScanHelper::HOOKS buckets. */
 const touchWireSchema = z.enum(['fields', 'templates', 'gateways', 'order_review', 'submission']);
 const storeTypeWireSchema = z.enum(['classic', 'block']);
@@ -26,6 +26,7 @@ export const compatibilityWireSchema = z
           })
           .strict(),
         safe_mode: z.boolean(),
+        checkout_problem: z.string(),
       })
       .strict(),
     gateways: z.array(
@@ -78,6 +79,7 @@ export type StoreEnvironment = {
   wordpressVersion: string;
   theme: { name: string; version: string; isBlockTheme: boolean };
   safeMode: boolean;
+  checkoutProblem: string;
 };
 
 export type GatewayRow = {

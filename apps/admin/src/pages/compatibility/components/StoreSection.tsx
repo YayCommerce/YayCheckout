@@ -4,6 +4,25 @@ import { storeTypeLabel } from '@/lib/helpers/compatibility.helper';
 import type { StoreEnvironment } from '@/lib/schema/compatibility.schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+/** Which checkout shoppers get, and why when safe mode found a problem. */
+function renderingLabel({ safeMode, checkoutProblem }: StoreEnvironment): string {
+  if (!checkoutProblem) {
+    return __('YayCheckout layout', 'yaycheckout');
+  }
+
+  return safeMode
+    ? sprintf(
+        /* translators: %s: why the layout is not served */
+        __('Native checkout — %s', 'yaycheckout'),
+        checkoutProblem,
+      )
+    : sprintf(
+        /* translators: %s: why the layout may break checkout */
+        __('YayCheckout layout — %s', 'yaycheckout'),
+        checkoutProblem,
+      );
+}
+
 export function StoreSection({ store }: { store: StoreEnvironment }) {
   const themeLabel = `${store.theme.name} ${store.theme.version}`.trim();
   const theme = store.theme.isBlockTheme
@@ -19,10 +38,7 @@ export function StoreSection({ store }: { store: StoreEnvironment }) {
     [__('WooCommerce', 'yaycheckout'), store.woocommerceVersion],
     [__('WordPress', 'yaycheckout'), store.wordpressVersion],
     [__('Theme', 'yaycheckout'), theme],
-    [
-      __('Rendering', 'yaycheckout'),
-      store.safeMode ? __('Native checkout — safe mode is on', 'yaycheckout') : __('YayCheckout layout', 'yaycheckout'),
-    ],
+    [__('Rendering', 'yaycheckout'), renderingLabel(store)],
   ];
 
   return (

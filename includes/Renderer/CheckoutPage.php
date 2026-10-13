@@ -14,9 +14,9 @@ defined( 'ABSPATH' ) || exit;
  * theme's, printing the layout's blocks in its own document without the
  * theme's header or footer (the root block is the form).
  *
- * Stands down entirely, leaving WooCommerce untouched, when safe mode is on
- * or no layout resolves; a preview link (PreviewRequest) renders its layout
- * regardless.
+ * Stands down entirely, leaving WooCommerce untouched, when no layout resolves,
+ * or when safe mode is on and the layout has a problem (CheckoutHealth) or last
+ * failed to render; a preview link (PreviewRequest) renders its layout regardless.
  */
 class CheckoutPage {
     use SingletonTrait;
@@ -24,8 +24,23 @@ class CheckoutPage {
     /** After WC_Frontend_Scripts registers its handles at priority 10. */
     private const SCRIPTS_PRIORITY = 20;
 
+    /**
+     * The circuit breaker: the last render failure, array{layout_id: int, hash: string, reason: string, time: int},
+     * hash being md5 of the layout's post_content. Holds while that layout is served with that content.
+     */
+    public const OPTION_RENDER_FAILURE = 'yaycheckout_render_failure';
+
+    /** Fatals that end the request mid-render; anything lighter lets the catch in page_template() run. */
+    private const FATAL_ERRORS = [ E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR ];
+
     /** @var Layout|null|false false until first resolved. */
     private $layout = false;
+
+    /** @var string The rendered layout, for the template. */
+    private $html = '';
+
+    /** @var bool True while the layout's blocks render, for record_fatal(). */
+    private $rendering = false;
 
     protected function __construct() {
         add_action( 'wp', [ $this, 'maybe_take_over' ] );
@@ -55,8 +70,88 @@ class CheckoutPage {
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], self::SCRIPTS_PRIORITY );
     }
 
-    public function page_template(): string {
+    /**
+     * Renders the layout before choosing the template, so a layout that fails to render gives this
+     * request to WooCommerce's checkout ($template) with safe mode on, and trips the breaker for the next.
+     *
+     * @throws \Throwable A render failure during a preview, or with safe mode off.
+     */
+    public function page_template( string $template ): string {
+        $layout    = $this->layout();
+        $preview   = PreviewRequest::get_instance()->active();
+        $safe_mode = ( new SettingsRepository() )->is_safe_mode();
+        $level     = ob_get_level();
+
+        // A preview is the merchant looking: its failures show as they are and never trip the breaker.
+        if ( ! $preview ) {
+            $this->rendering = true;
+            register_shutdown_function( [ $this, 'record_fatal' ], $layout );
+        }
+
+        try {
+            $html = $this->render( $layout );
+        } catch ( \Throwable $ex ) {
+            // Drop whatever the blocks printed before the throw, or half a layout leaks into WooCommerce's page.
+            while ( ob_get_level() > $level ) {
+                ob_end_clean();
+            }
+
+            if ( $preview ) {
+                throw $ex;
+            }
+
+            $this->record_failure( $layout, '' !== $ex->getMessage() ? $ex->getMessage() : get_class( $ex ) );
+
+            if ( ! $safe_mode ) {
+                throw $ex;
+            }
+
+            return $this->stand_down( $template );
+        } finally {
+            $this->rendering = false;
+        }
+
+        // A form without WooCommerce's submit button cannot place an order: the id is checkout.js's submit contract, printed by
+        // packages/blocks/src/place-order/render.php. Safe mode off renders it anyway; the merchant is warned.
+        if ( ! $preview && false === strpos( $html, 'id="place_order"' ) ) {
+            $this->record_failure( $layout, __( 'The layout rendered without a Place order button.', 'yaycheckout' ) );
+
+            if ( $safe_mode ) {
+                return $this->stand_down( $template );
+            }
+        }
+
+        $this->html = $html;
+
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php';
+    }
+
+    /** The rendered layout, for templates/checkout-page.php. */
+    public function html(): string {
+        return $this->html;
+    }
+
+    /** The breaker: the reason $layout last failed to render, while its content is unchanged since, or ''. */
+    public static function render_failure( Layout $layout ): string {
+        $failure = get_option( self::OPTION_RENDER_FAILURE );
+
+        return is_array( $failure )
+            && $layout->id === (int) ( $failure['layout_id'] ?? 0 )
+            && md5( $layout->content ) === ( $failure['hash'] ?? '' )
+            ? (string) $failure['reason']
+            : '';
+    }
+
+    /**
+     * Records a fatal that ended the request mid-render, so the next request falls back. Public only
+     * for register_shutdown_function().
+     */
+    public function record_fatal( Layout $layout ): void {
+        $error = error_get_last();
+
+        if ( $this->rendering && null !== $error && in_array( $error['type'], self::FATAL_ERRORS, true ) ) {
+            $this->record_failure( $layout, $error['message'] );
+        }
     }
 
     /** Woo's checkout scripts, the base stylesheet and the design tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
@@ -82,12 +177,68 @@ class CheckoutPage {
             return ( new LayoutRepository() )->find( $preview_id );
         }
 
-        if ( ( new SettingsRepository() )->is_safe_mode() ) {
+        // Picked afresh by every request, AJAX and order submit too, with no pin: safe because every ConditionType reads a fact that holds for the life of the form.
+        $layout = ( new LayoutRepository() )->active( $this->shopper_context() );
+
+        // CheckoutHealth reads store configuration and the breaker only, so the submit request reaches the answer the render request did.
+        if ( null !== $layout && ( new SettingsRepository() )->is_safe_mode() && '' !== CheckoutHealth::problem( $layout ) ) {
             return null;
         }
 
-        // Picked afresh by every request, AJAX and order submit too, with no pin: safe because every ConditionType reads a fact that holds for the life of the form.
-        return ( new LayoutRepository() )->active( $this->shopper_context() );
+        return $layout;
+    }
+
+    /**
+     * The layout's blocks inside the page wrapper. Rendered before wp_head(), as core's
+     * template-canvas.php does: blocks enqueue script modules and styles while rendering, and on
+     * block themes the import map is printed in the head. Rendered after it, a module's imports go
+     * unmapped and the browser refuses to load it.
+     */
+    private function render( Layout $layout ): string {
+        $preview = PreviewRequest::get_instance();
+
+        ob_start();
+        ?>
+        <div class="woocommerce yaycheckout-page">
+            <?php
+            if ( $preview->active() ) {
+                $preview->banner( $layout );
+            }
+
+            // Shipping packages only exist after a calculation; session totals alone leave the order table without shipping rows.
+            WC()->cart->calculate_totals();
+
+            echo do_blocks( $layout->content ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block markup, rendered and escaped by each block.
+            ?>
+        </div>
+        <?php
+        return (string) ob_get_clean();
+    }
+
+    /** Gives this request back to WooCommerce: every storefront hook reads layout() and stands down. */
+    private function stand_down( string $template ): string {
+        $this->layout = null;
+        remove_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], self::SCRIPTS_PRIORITY );
+
+        return $template;
+    }
+
+    /** Written only when the layout, its content or the reason changed, so a broken layout costs no write per request. */
+    private function record_failure( Layout $layout, string $reason ): void {
+        if ( self::render_failure( $layout ) === $reason ) {
+            return;
+        }
+
+        update_option(
+            self::OPTION_RENDER_FAILURE,
+            [
+                'layout_id' => $layout->id,
+                'hash'      => md5( $layout->content ),
+                'reason'    => $reason,
+                'time'      => time(),
+            ],
+            true
+        );
     }
 
     /**
