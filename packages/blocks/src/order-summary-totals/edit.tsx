@@ -16,7 +16,7 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< OrderSummaryTotalsAttributes > ) => void;
 }
 
-// Mirrors CheckoutFragments::order_totals_html(), so checkout-base.css draws it as on the storefront.
+// Mirrors CheckoutFragments::order_totals_html(), so its style.css draws it as on the storefront.
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const { showCurrencyCode, showSubtotal, showTotal, subtotalLabel, totalLabel } = attributes;
 	const subtotalPlaceholder = __( 'Subtotal', 'yaycheckout' );

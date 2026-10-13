@@ -1,0 +1,39 @@
+/* Order Summary's Totals table: its amounts end-aligned in a fixed column. Items lays out its own rows. */
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td) {
+	padding: 6px 0;
+	border: 0;
+	vertical-align: top;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):first-child {
+	text-align: start;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):last-child {
+	width: 40%;
+	text-align: end;
+}
+
+/* Labels read as plain text; only the Total stands out. */
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals th {
+	font-weight: normal;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals tr.order-total th {
+	font-weight: bold;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__shipping strong {
+	text-transform: uppercase;
+}
+
+.yaycheckout-order-summary table.yaycheckout-order-summary-totals .yaycheckout-order-summary-totals__currency {
+	margin-inline-end: 0.35em;
+	font-weight: 400;
+}
