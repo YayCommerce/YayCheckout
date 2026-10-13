@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. There is no spec; the Requirements below are the contract.
 
-**Status:** active
+**Status:** done 2026-10-13
 **Goal:** Let a merchant set the checkout checkbox's size, corner radius, border width and checked colour in the editor's Layout design sidebar, stored with the layout's design.
 **Spec:** none, planned from the request
 **Architecture:** A new `checkboxes` section in `LayoutDesign::schema()` with four empty-by-default tokens. `DesignStyles::vars()` prints a `--yaycheckout-checkbox-*` property for each token that is set, and the drawn checkbox rule in `checkout-base.css` (commit `8ad86f4`) reads each one with today's value as its fallback. This is a section of its own, not more `inputs` keys, so the sidebar shows a separate "Checkboxes" panel and doesn't crowd Inputs. Presets were considered and rejected by the user.
