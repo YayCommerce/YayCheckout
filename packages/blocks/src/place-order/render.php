@@ -2,8 +2,9 @@
 /**
  * Prints WooCommerce's terms, Place order button and checkout nonce; without a
  * cart, only the disabled button. The button is the block's root element, so
- * its style supports land on it. During update_order_review only the button is
- * printed, as the fragment that refreshes its order total (CheckoutFragments).
+ * its style supports land on it. Its label may hold live values, filled here so
+ * value and data-value carry their text; live-value/view.ts keeps the spans
+ * when WooCommerce resets the label to data-value.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
@@ -14,33 +15,27 @@ defined( 'ABSPATH' ) || exit;
 
 $yaycheckout_has_cart      = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart;
 $yaycheckout_default_label = __( 'Place order', 'yaycheckout' );
-$yaycheckout_label         = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'buttonText' );
-$yaycheckout_show_total    = isset( $attributes['showTotal'] ) && $attributes['showTotal'];
+$yaycheckout_plain_label   = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'buttonText' );
 
-if ( '' === $yaycheckout_label || $yaycheckout_default_label === $yaycheckout_label ) {
+if ( '' === $yaycheckout_plain_label || $yaycheckout_default_label === $yaycheckout_plain_label ) {
     // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
-    $yaycheckout_label = (string) apply_filters( 'woocommerce_order_button_text', $yaycheckout_default_label );
+    $yaycheckout_label_html = esc_html( (string) apply_filters( 'woocommerce_order_button_text', $yaycheckout_default_label ) );
+} else {
+    $yaycheckout_label_html = \YayCheckout\Renderer\LiveValues::get_instance()->fill_html(
+        \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'buttonText' )
+    );
 }
 
-$yaycheckout_wrapper = [
-    'class' => 'yaycheckout-place-order wp-element-button',
-];
-
-// The total is shown by ::after, which also lands in the button's accessible name.
-if ( $yaycheckout_show_total && $yaycheckout_has_cart ) {
-    $yaycheckout_wrapper['data-show-total'] = '1';
-    $yaycheckout_wrapper['data-total']      = wp_strip_all_tags( wc_price( WC()->cart->get_total( 'edit' ) ) );
-}
+$yaycheckout_label = trim( html_entity_decode( wp_strip_all_tags( $yaycheckout_label_html ), ENT_QUOTES, get_bloginfo( 'charset' ) ) );
 
 $yaycheckout_button = '<button type="submit" '
-    . get_block_wrapper_attributes( $yaycheckout_wrapper )
+    . get_block_wrapper_attributes( [ 'class' => 'yaycheckout-place-order wp-element-button' ] )
     . ' name="woocommerce_checkout_place_order" id="place_order" value="' . esc_attr( $yaycheckout_label ) . '" data-value="' . esc_attr( $yaycheckout_label ) . '"'
     . ( $yaycheckout_has_cart ? '' : ' disabled' )
-    . '>' . esc_html( $yaycheckout_label ) . '</button>';
+    . '>' . $yaycheckout_label_html . '</button>';
 
-// Unfiltered in the fragment: woocommerce_order_button_html may add siblings, which replacing #place_order would repeat.
-if ( ! $yaycheckout_has_cart || wp_doing_ajax() ) {
-    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the wrapper attributes; the label is escaped above.
+if ( ! $yaycheckout_has_cart ) {
+    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the wrapper attributes; the label is escaped or kses-filtered above.
     echo $yaycheckout_button;
     return;
 }
@@ -54,7 +49,7 @@ if ( ! $yaycheckout_has_cart || wp_doing_ajax() ) {
     // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
     do_action( 'woocommerce_review_order_before_submit' );
 
-    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's button filter; core escapes the wrapper attributes and the label is escaped above.
+    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's button filter; core escapes the wrapper attributes and the label is escaped or kses-filtered above.
     echo apply_filters(
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
         'woocommerce_order_button_html',

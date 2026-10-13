@@ -45,3 +45,15 @@
 [aria-expanded="true"] > .yaycheckout-order-summary-toggle__chevron {
 	transform: rotate(180deg);
 }
+
+/*
+ * Classic themes (Storefront) float WooCommerce's order review into a right-hand column of
+ * their own; the layout places it. No block setting can undo a theme's float. Their margins are 0 too,
+ * since Order Summary's Block spacing places them and themes style them by id.
+ */
+.yaycheckout-checkout #order_review_heading,
+.yaycheckout-checkout #order_review {
+	float: none;
+	width: auto;
+	margin-block: 0;
+}
