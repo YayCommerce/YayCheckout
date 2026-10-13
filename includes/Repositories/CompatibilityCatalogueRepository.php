@@ -34,10 +34,7 @@ class CompatibilityCatalogueRepository {
                 'source'     => CompatibilityCatalogue::SOURCE_REMOTE,
                 'fetched_at' => DateHelper::now_iso8601(),
             ]
-            : CompatibilityCatalogue::bundled() + [
-                'source'     => CompatibilityCatalogue::SOURCE_BUNDLED,
-                'fetched_at' => null,
-            ];
+            : self::bundled();
 
         set_transient(
             CompatibilityCatalogue::TRANSIENT,
@@ -46,6 +43,24 @@ class CompatibilityCatalogueRepository {
         );
 
         return $catalogue;
+    }
+
+    /**
+     * For the storefront: never fetches. The cached catalogue, or the bundled one when the cache is empty.
+     *
+     * @return array{gateways: array, plugins: array, source: string, fetched_at: ?string}
+     */
+    public function cached(): array {
+        $cached = get_transient( CompatibilityCatalogue::TRANSIENT );
+
+        return is_array( $cached ) ? $cached : self::bundled();
+    }
+
+    private static function bundled(): array {
+        return CompatibilityCatalogue::bundled() + [
+            'source'     => CompatibilityCatalogue::SOURCE_BUNDLED,
+            'fetched_at' => null,
+        ];
     }
 
     private function fetch_remote(): ?array {

@@ -46,7 +46,7 @@ class GatewayCompatibilityHelper {
     /**
      * @return string[]
      */
-    private static function block_registered_ids(): array {
+    public static function block_registered_ids(): array {
         if ( ! class_exists( Package::class ) || ! class_exists( PaymentMethodRegistry::class ) ) {
             return [];
         }
