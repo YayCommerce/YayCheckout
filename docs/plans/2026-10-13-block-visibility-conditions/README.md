@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute phases in order. Read this file, then the current phase file. Do not start a phase until the previous phase's exit criterion has been verified and `/yayplancheck` has passed on it.
 
-**Status:** active
+**Status:** done 2026-10-13
 **Goal:** Any block in a layout can be shown or hidden by the open step, the cart and login state, on load and live, with an editor panel and a preview.
 **Spec:** [docs/specs/2026-10-13-block-visibility-conditions-design.md](../../specs/2026-10-13-block-visibility-conditions-design.md)
 **Architecture:**
@@ -46,8 +46,8 @@
 
 | Phase | Delivers (user-visible) | Exit criterion (exact check) | Status |
 |---|---|---|---|
-| [1. Storefront](phase-1-storefront.md) | A setting written in the Code editor shows and hides blocks on load, on step changes and after cart updates | Spec criteria 1–9 pass on the storefront with the attribute set by hand | pending |
-| [2. Editor](phase-2-editor.md) | The Visibility panel, the Conditional marker, the preview sidebar, docs | Spec criteria 10–13, including the end-to-end walk | pending |
+| [1. Storefront](phase-1-storefront.md) | A setting written in the Code editor shows and hides blocks on load, on step changes and after cart updates | Spec criteria 1–9 pass on the storefront with the attribute set by hand | done |
+| [2. Editor](phase-2-editor.md) | The Visibility panel, the Conditional marker, the preview sidebar, docs | Spec criteria 10–13, including the end-to-end walk | done |
 
 ## Interface contract
 
