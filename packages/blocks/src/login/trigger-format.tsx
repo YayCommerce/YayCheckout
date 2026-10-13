@@ -1,4 +1,5 @@
-import { RichTextToolbarButton } from '@wordpress/block-editor';
+import { RichTextToolbarButton, store as blockEditorStore } from '@wordpress/block-editor';
+import { useSelect } from '@wordpress/data';
 import { applyFormat, registerFormatType, removeFormat } from '@wordpress/rich-text';
 import type { RichTextValue } from '@wordpress/rich-text';
 import { __ } from '@wordpress/i18n';
@@ -15,6 +16,17 @@ type FormatEditProps = {
 };
 
 function Edit( { isActive, value, onChange }: FormatEditProps ) {
+	const blockName = useSelect( ( select ) => {
+		const editor = select( blockEditorStore );
+		const clientId = editor.getSelectedBlockClientId();
+
+		return clientId ? editor.getBlockName( clientId ) : null;
+	}, [] );
+
+	if ( blockName !== 'yaycheckout/login' ) {
+		return null;
+	}
+
 	return (
 		<RichTextToolbarButton
 			name="link"
