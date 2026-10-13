@@ -15,12 +15,20 @@ const CART_GROUPS = [
 	{ label: __( 'Counts', 'yaycheckout' ), counts: true },
 ];
 
+/** A chip's attributes, as format.tsx maps them to the span's. */
+export interface LiveValueAttributes {
+	value?: string;
+	fallback?: string;
+	prefix?: string;
+	suffix?: string;
+}
+
 interface LiveValuePopoverProps {
 	value: RichTextValue;
 	onChange: ( value: RichTextValue ) => void;
 	contentRef: { current: HTMLElement | null };
 	/** The chip being edited, selected in `value`; undefined while inserting a new one. */
-	editing?: { value?: string; fallback?: string };
+	editing?: LiveValueAttributes;
 	onClose: () => void;
 }
 
@@ -29,6 +37,8 @@ const ANCHOR_SETTINGS = { tagName: 'span', className: LIVE_VALUE_CLASS };
 export default function LiveValuePopover( { value, onChange, contentRef, editing, onClose }: LiveValuePopoverProps ) {
 	const [ key, setKey ] = useState( editing?.value ?? '' );
 	const [ fallback, setFallback ] = useState( editing?.fallback ?? '' );
+	const [ prefix, setPrefix ] = useState( editing?.prefix ?? '' );
+	const [ suffix, setSuffix ] = useState( editing?.suffix ?? '' );
 	const anchor = useAnchor( { editableContentElement: contentRef.current, settings: ANCHOR_SETTINGS } );
 	const fields = useShowableFields();
 	const names = useMemo( () => fieldNames( fields ), [ fields ] );
@@ -42,8 +52,9 @@ export default function LiveValuePopover( { value, onChange, contentRef, editing
 		onChange(
 			insertObject( value, {
 				type: LIVE_VALUE_FORMAT,
-				attributes: { value: key, fallback },
-				innerHTML: escapeHTML( labelOf( key ) ),
+				attributes: { value: key, fallback, prefix, suffix },
+				// The prefix and suffix show in the chip, so the merchant sees their spacing.
+				innerHTML: escapeHTML( prefix + labelOf( key ) + suffix ),
 			} )
 		);
 		onClose();
@@ -90,7 +101,22 @@ export default function LiveValuePopover( { value, onChange, contentRef, editing
 					) }
 				</SelectControl>
 				<TextControl
+					label={ __( 'Prefix', 'yaycheckout' ) }
+					value={ prefix }
+					onChange={ ( next: string ) => setPrefix( next ) }
+					__next40pxDefaultSize
+					__nextHasNoMarginBottom
+				/>
+				<TextControl
+					label={ __( 'Suffix', 'yaycheckout' ) }
+					value={ suffix }
+					onChange={ ( next: string ) => setSuffix( next ) }
+					__next40pxDefaultSize
+					__nextHasNoMarginBottom
+				/>
+				<TextControl
 					label={ __( 'Fallback when empty', 'yaycheckout' ) }
+					help={ __( 'Shown alone, without the prefix and suffix, while the value is empty. Leave blank to show nothing.', 'yaycheckout' ) }
 					value={ fallback }
 					onChange={ ( next: string ) => setFallback( next ) }
 					__next40pxDefaultSize

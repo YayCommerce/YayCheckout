@@ -49,6 +49,8 @@ class LayoutMarkupReader {
             'class'                  => true,
             'data-yaycheckout-value' => true,
             'data-fallback'          => true,
+            'data-prefix'            => true,
+            'data-suffix'            => true,
         ],
     ];
 
