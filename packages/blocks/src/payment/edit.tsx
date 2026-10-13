@@ -67,14 +67,12 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				{ /* WooCommerce's list markup, so the block's own CSS draws it as on the storefront. */ }
 				<div id="payment" className="woocommerce-checkout-payment">
 					<ul className="wc_payment_methods payment_methods methods">
-						<li className="wc_payment_method" onClick={ () => setSelectedRow( 0 ) }>
-							<input type="radio" className="input-radio" disabled readOnly checked={ selectedRow === 0 } />
-							<label>{ __( 'Direct bank transfer', 'yaycheckout' ) }</label>
-						</li>
-						<li className="wc_payment_method" onClick={ () => setSelectedRow( 1 ) }>
-							<input type="radio" className="input-radio" disabled readOnly checked={ selectedRow === 1 } />
-							<label>{ __( 'Cash on delivery', 'yaycheckout' ) }</label>
-						</li>
+						{ [ __( 'Direct bank transfer', 'yaycheckout' ), __( 'Cash on delivery', 'yaycheckout' ) ].map( ( name, index ) => (
+							<li key={ name } className="wc_payment_method" onClick={ () => setSelectedRow( index ) }>
+								<input type="radio" className="input-radio" disabled readOnly checked={ selectedRow === index } />
+								<label>{ name }</label>
+							</li>
+						) ) }
 					</ul>
 				</div>
 			</div>

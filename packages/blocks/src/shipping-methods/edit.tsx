@@ -62,25 +62,21 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				<h3 className="yaycheckout-section-preview__heading">{ heading }</h3>
 				{ /* Same row markup the storefront prints, so the block CSS draws it the same way. */ }
 				<ul id="shipping_method" className="woocommerce-shipping-methods yaycheckout-shipping-methods__list">
-					<li className="yaycheckout-shipping-methods__option" onClick={ () => setSelectedRow( 0 ) }>
-						<input type="radio" className="shipping_method" disabled readOnly checked={ selectedRow === 0 } />
-						<label>
-							<span className="yaycheckout-shipping-methods__indicator" aria-hidden="true" />
-							<span className="yaycheckout-shipping-methods__body">
-								<span className="yaycheckout-shipping-methods__name">{ __( 'Flat rate', 'yaycheckout' ) }</span>
-							</span>
-							<span className="yaycheckout-shipping-methods__price">{ __( '$5.00', 'yaycheckout' ) }</span>
-						</label>
-					</li>
-					<li className="yaycheckout-shipping-methods__option" onClick={ () => setSelectedRow( 1 ) }>
-						<input type="radio" className="shipping_method" disabled readOnly checked={ selectedRow === 1 } />
-						<label>
-							<span className="yaycheckout-shipping-methods__indicator" aria-hidden="true" />
-							<span className="yaycheckout-shipping-methods__body">
-								<span className="yaycheckout-shipping-methods__name">{ __( 'Free shipping', 'yaycheckout' ) }</span>
-							</span>
-						</label>
-					</li>
+					{ [
+						{ name: __( 'Flat rate', 'yaycheckout' ), price: __( '$5.00', 'yaycheckout' ) },
+						{ name: __( 'Free shipping', 'yaycheckout' ), price: '' },
+					].map( ( row, index ) => (
+						<li key={ row.name } className="yaycheckout-shipping-methods__option" onClick={ () => setSelectedRow( index ) }>
+							<input type="radio" className="shipping_method" disabled readOnly checked={ selectedRow === index } />
+							<label>
+								<span className="yaycheckout-shipping-methods__indicator" aria-hidden="true" />
+								<span className="yaycheckout-shipping-methods__body">
+									<span className="yaycheckout-shipping-methods__name">{ row.name }</span>
+								</span>
+								{ row.price && <span className="yaycheckout-shipping-methods__price">{ row.price }</span> }
+							</label>
+						</li>
+					) ) }
 				</ul>
 			</div>
 		</>
