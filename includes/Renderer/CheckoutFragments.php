@@ -347,7 +347,7 @@ class CheckoutFragments {
     /**
      * @param mixed $value A CSS colour string or var:preset|color|slug.
      */
-    private static function css_color( $value ): string {
+    public static function css_color( $value ): string {
         if ( ! is_string( $value ) || '' === $value ) {
             return '';
         }

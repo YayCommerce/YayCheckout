@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. There is no spec; the Requirements section below is the contract.
 
-**Status:** active
+**Status:** done 2026-10-13
 **Goal:** Three per-block colour settings for Steps Progress (Active, Inactive, Disabled text) in its Styles tab, applied the same in all five styles in the editor and on the storefront; the "Step N of M" count follows the block's Text colour.
 **Spec:** none, planned from the request
 **Architecture:** The Order Summary Items badge pattern: plain string attributes set by a `PanelColorSettings` in the Styles tab → `--yaycheckout-steps-progress-*` variables on the block wrapper (editor: `useBlockProps` style; storefront: `CheckoutStepsProgress::markup()`) → `style.css` reads each variable with today's colour as the fallback. Plain attributes rather than `style.yaycheckout.*` keys (the Shipping Methods and Payment pattern), because three fixed colours need no per-layout key sets or ToolsPanel.

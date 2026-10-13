@@ -20,6 +20,13 @@ class CheckoutStepsProgress {
     /** Mirrors steps-progress/block.json "variant" enum; the first is the default. */
     private const VARIANTS = [ 'circles', 'dots', 'segments', 'bar', 'text' ];
 
+    /** Colour attribute => the variable style.css reads for it. */
+    private const COLOR_VARS = [
+        'activeColor'       => '--yaycheckout-steps-progress-active',
+        'inactiveColor'     => '--yaycheckout-steps-progress-inactive',
+        'disabledTextColor' => '--yaycheckout-steps-progress-disabled',
+    ];
+
     /** @var string[]|null Memoised layout_titles(); null until first read. */
     private static $titles = null;
 
@@ -81,6 +88,7 @@ class CheckoutStepsProgress {
         }
 
         $args    = [ 'class' => 'yaycheckout-steps-progress is-variant-' . $variant ];
+        $style   = self::color_style( $attributes );
         $summary = '';
 
         if ( $has_summary ) {
@@ -90,13 +98,37 @@ class CheckoutStepsProgress {
             $summary    = self::summary( $total, 'bar' === $variant, $with_count );
 
             if ( 'bar' === $variant ) {
-                $args['style'] = '--yaycheckout-steps-progress-value:' . number_format( 1 / $total, 3, '.', '' ) . ';';
+                $style .= '--yaycheckout-steps-progress-value:' . number_format( 1 / $total, 3, '.', '' ) . ';';
             }
+        }
+
+        if ( '' !== $style ) {
+            $args['style'] = $style;
         }
 
         $wrapper = get_block_wrapper_attributes( $args );
 
         return '<div ' . $wrapper . '>' . $summary . '<ol class="yaycheckout-steps-progress__list">' . $items . '</ol></div>';
+    }
+
+    /**
+     * The colour variables for each colour attribute set, as declarations ending in `;`; empty when none
+     * is. Mirrors progressStyle() in steps-progress/edit.tsx.
+     *
+     * @param array $attributes Block attributes.
+     */
+    private static function color_style( array $attributes ): string {
+        $style = '';
+
+        foreach ( self::COLOR_VARS as $key => $var ) {
+            $value = CheckoutFragments::css_color( $attributes[ $key ] ?? null );
+
+            if ( '' !== $value ) {
+                $style .= $var . ':' . $value . ';';
+            }
+        }
+
+        return $style;
     }
 
     /**
