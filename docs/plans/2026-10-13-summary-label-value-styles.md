@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. Read the spec linked below before starting; the plan argues from it.
 
-**Status:** active
+**Status:** done 2026-10-13
 **Goal:** Label and Value style panels (text colour + full typography) on Order Summary Breakdown and Order Summary Total, plus block-level Typography on Breakdown.
 **Spec:** [docs/specs/2026-10-13-summary-label-value-styles-design.md](../specs/2026-10-13-summary-label-value-styles-design.md)
 **Architecture:** Settings live under the block's `style.yaycheckout.label` / `.value` in core's style shape. The storefront queues one rule per part in core's `block-supports` stylesheet through `wp_style_engine_get_styles()` under a unique wrapper class, like `BlockGap`; the editor compiles the same rules with `compileCSS()` into a `<style>` element. Chosen over wrapper CSS variables because the style engine resolves presets on both sides with no hand-written mirror.
@@ -37,11 +37,11 @@
 **Files:**
 - Add: `docs/specs/2026-10-13-summary-label-value-styles-design.md`, `docs/plans/2026-10-13-summary-label-value-styles.md`
 
-- [ ] **Step 1: Branch**
+- [x] **Step 1: Branch**
 
 From an up-to-date `dev/edd`, create `trace/feat/summary-label-value-styles`. Expected: `git status` shows only the two docs as untracked.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 Stage: the two docs above
 Message: `docs(blocks): spec and plan for summary label and value styles`
@@ -56,21 +56,21 @@ Message: `docs(blocks): spec and plan for summary label and value styles`
 - Consumes: nothing
 - Produces: nothing other tasks call
 
-- [ ] **Step 1: Add typography supports**
+- [x] **Step 1: Add typography supports**
 
 Copy Order Summary Total's `supports.typography` object verbatim (`fontSize`, `lineHeight`, `__experimentalFontFamily`, `__experimentalFontStyle`, `__experimentalFontWeight`, `__experimentalLetterSpacing`, `__experimentalTextDecoration`, `__experimentalTextTransform`, all `true`) into Breakdown's `supports`, after `color`.
 
-- [ ] **Step 2: Cells inherit the wrapper's font**
+- [x] **Step 2: Cells inherit the wrapper's font**
 
 In `style.css`, before the existing `th { font-weight: normal }` rule, add `.yaycheckout-order-summary table.yaycheckout-order-summary-breakdown :is(th, td) { font: inherit; }` with a one-line comment matching Total's ("Cells take the wrapper's typography, so the block's font settings reach the rows.").
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `pnpm build:blocks`. Expected: `compiled successfully`.
 In a new draft layout, select Order Summary Breakdown. Expected: Styles tab shows a Typography panel with the eight properties Total has; setting font size `20px` enlarges every row on the canvas and on the layout's preview link.
 With nothing set, compare the preview link's Breakdown before and after this change (`git stash` the two files and rebuild for "before") on Storefront and on Twenty Twenty-Five. Expected: no visible change. If a theme changes, record it in the PR description; do not scope the rule down.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Stage: `packages/blocks/src/order-summary-breakdown/block.json`, `packages/blocks/src/order-summary-breakdown/style.css`
 Message: `feat(blocks): add Typography to Order Summary Breakdown`
@@ -87,18 +87,18 @@ Message: `feat(blocks): add Typography to Order Summary Breakdown`
 - Produces: stored shape, read by Task 3 and Task 4:
   `style.yaycheckout.label` / `style.yaycheckout.value` = `{ typography?: { fontSize?, lineHeight?, fontFamily?, fontStyle?, fontWeight?, letterSpacing?, textDecoration?, textTransform? }, color?: { text? } }`
 
-- [ ] **Step 1: Implement `SummaryPartStyles` in `includes/Renderer/SummaryPartStyles.php`**
+- [x] **Step 1: Implement `SummaryPartStyles` in `includes/Renderer/SummaryPartStyles.php`**
 
 `final class`, namespace `YayCheckout\Renderer`, header per `.claude/rules/php-standards.md`. Constant `PARTS = [ 'label' => 'th', 'value' => 'td' ]`.
 `wrapper_class()`: `$class = wp_unique_id( 'yaycheckout-summary-parts-' )`; for each part whose `$attributes['style']['yaycheckout'][ $part ]` is a non-empty array, call
 `wp_style_engine_get_styles( $part_style, [ 'selector' => '.yaycheckout-order-summary .' . $class . '.' . $block_class . ' table.' . $table_class . ' tr > ' . $cell, 'context' => 'block-supports' ] )`.
 Pass only the `typography` and `color` keys of the part (drop anything else). A part counts as queued when the result's `declarations` is non-empty. Return `' ' . $class` if any part queued, else `''`.
 
-- [ ] **Step 2: Wire into `print_summary_block()`**
+- [x] **Step 2: Wire into `print_summary_block()`**
 
 After the Items branch, for `yaycheckout/order-summary-breakdown` call `wrapper_class( $block->attributes, 'wp-block-yaycheckout-order-summary-breakdown', self::ORDER_BREAKDOWN_CLASS )`, and for `yaycheckout/order-summary-total` the same with `'wp-block-yaycheckout-order-summary-total'` and `self::ORDER_TOTAL_CLASS`. Set `$wrapper['class']` to the trimmed result when non-empty. Do not touch `order_total_options()` or `order_total_hash_class()`.
 
-- [ ] **Step 3: Verify on the storefront**
+- [x] **Step 3: Verify on the storefront**
 
 Run: `composer lint -- includes/Renderer/SummaryPartStyles.php includes/Renderer/CheckoutFragments.php`. Expected: no errors.
 In a new draft layout with an Order Summary Total in Summary Header and another in Summary Details (same options), open the Code editor and add to the header Total's `style`: `"yaycheckout":{"label":{"typography":{"fontWeight":"400"},"color":{"text":"#777777"}},"value":{"typography":{"fontSize":"20px"}}}`; to Breakdown's: `"yaycheckout":{"value":{"color":{"text":"#0a7d00"}}}`. Save the draft, open its preview link with a coupon and a paid shipping method in the cart.
@@ -109,7 +109,7 @@ Expected:
 - A block with no `style.yaycheckout` has no `yaycheckout-summary-parts-*` class.
 - Apply another coupon and change the shipping method: after the refresh all of the above still hold.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Stage: `includes/Renderer/SummaryPartStyles.php`, `includes/Renderer/CheckoutFragments.php`
 Message: `feat(blocks): print summary label and value styles on the storefront`
@@ -126,23 +126,23 @@ Message: `feat(blocks): print summary label and value styles on the storefront`
   - `summaryPartCSS( clientId: string, tableClass: string, style: Record< string, unknown > | undefined ): string`
   - `SummaryPartPanels( props: { style: Record< string, unknown > | undefined; onChange: ( style: Record< string, unknown > | undefined ) => void; showLabel?: boolean } ): JSX.Element` — `showLabel` defaults to `true`.
 
-- [ ] **Step 1: Implement `summaryPartCSS()`**
+- [x] **Step 1: Implement `summaryPartCSS()`**
 
 For each part, `compileCSS( { typography, color }, { selector: `#block-${ clientId } table.${ tableClass } tr > ${ cell }` } )` from `@wordpress/style-engine` (`th` for label, `td` for value); join the results.
 
-- [ ] **Step 2: Implement `SummaryPartPanels`**
+- [x] **Step 2: Implement `SummaryPartPanels`**
 
 Two `ToolsPanel`s, labels `__( 'Label', 'yaycheckout' )` and `__( 'Value', 'yaycheckout' )`, `panelId` `yaycheckout-summary-label` / `yaycheckout-summary-value`; the Label panel is not rendered when `showLabel` is false. Follow `packages/blocks/src/payment/style-panels.tsx`: a `useRef` of the latest style so Reset all's per-item callbacks build on each other, `resetAll` clearing the part, one `ToolsPanelItem` per property with `hasValue` / `onDeselect`, `isShownByDefault` on all.
 Items in this order, each from `@wordpress/block-editor`: Text colour (`ColorGradientSettingsDropdown`, palettes from `useMultipleOriginColorsAndGradients()`, `clearable`), Font family (`__experimentalFontFamilyControl`), Font size (`FontSizePicker`), Appearance (`__experimentalFontAppearanceControl`, writes `fontStyle` and `fontWeight`), Line height (`LineHeightControl`), Letter spacing (`__experimentalLetterSpacingControl`), Decoration (`__experimentalTextDecorationControl`), Letter case (`__experimentalTextTransformControl`). Theme lists come from `useSettings( 'typography.fontSizes', 'typography.fontFamilies' )`.
 Presets: a picked palette colour is stored as `var:preset|color|<slug>` (match with `getColorObjectByColorValue()`), a picked font size preset as `var:preset|font-size|<slug>` (match with `getFontSizeObjectByValue()`), a picked font family preset as `var:preset|font-family|<slug>`; when reading, map each preset back to its value for the control. Writes go to `style.yaycheckout.<part>.typography.<prop>` / `.color.text`, removing empty values and pruning empty objects as `setAt()` in `payment/style-paths.ts` does (copy the helper; do not import from `payment/`).
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `pnpm build:blocks`. Expected: `compiled successfully`.
 Run: `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit`. Expected: no errors.
 (The panels are not mounted until Task 4; this task is accepted on the build.)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Stage: `packages/blocks/src/shared/summary-part-styles.tsx`
 Message: `feat(blocks): add shared Label and Value style panels`
@@ -156,19 +156,19 @@ Message: `feat(blocks): add shared Label and Value style panels`
 **Interfaces:**
 - Consumes: `SummaryPartPanels`, `summaryPartCSS()` from Task 3
 
-- [ ] **Step 1: Breakdown**
+- [x] **Step 1: Breakdown**
 
 Add `style?: Record< string, unknown >` to the attributes interface and take `clientId` from props. Render `<InspectorControls group="styles"><SummaryPartPanels style={ style } onChange={ ( next ) => setAttributes( { style: next } ) } /></InspectorControls>`, and inside the wrapper, before the table, `{ css && <style>{ css }</style> }` with `css = summaryPartCSS( clientId, 'yaycheckout-order-summary-breakdown', style )`.
 
-- [ ] **Step 2: Total**
+- [x] **Step 2: Total**
 
 Same, with `'yaycheckout-order-summary-total'` and `showLabel={ showLabel }`.
 
-- [ ] **Step 3: Build**
+- [x] **Step 3: Build**
 
 Run: `pnpm build:blocks`. Expected: `compiled successfully`.
 
-- [ ] **Step 4: Verify in the editor**
+- [x] **Step 4: Verify in the editor**
 
 In a new draft layout, on Order Summary Total in Summary Header, set block font size `16px`, block text colour `#111111`, Label colour `#777777`, Label weight `400`, Value font size `20px`. Expected: on the canvas the label is `#777777`, not bold, `16px`; the amount `#111111`, `20px`.
 Turn Show label off. Expected: Label panel disappears; turn it on, the Label values are still applied.
@@ -177,23 +177,23 @@ Use the panel menu to reset one item, then Reset all. Expected: the item, then t
 Copy styles on the header Total, Paste styles on the details Total. Expected: the details Total shows the same Label and Value styles.
 With Show currency code on and Value weight `700`, expected: the amount is bold and `USD` stays weight 400.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Stage: `packages/blocks/src/order-summary-breakdown/edit.tsx`, `packages/blocks/src/order-summary-total/edit.tsx`
 Message: `feat(blocks): style summary labels and amounts separately`
 
 ### Task 5: End-to-end verification and close
 
-- [ ] **Step 1: Spec criterion 15**
+- [x] **Step 1: Spec criterion 15**
 
 In a draft layout created for this test, set block typography, Label and Value (colours, a font size preset, a custom line height, weight, letter case) on Order Summary Breakdown and on two Order Summary Total blocks (one in Summary Header, one in Summary Details). Check spec criteria 5–10 and 12 in the editor, then on the layout's preview link with a cart that has a coupon and a paid shipping method; apply another coupon and change shipping to trigger a refresh. Expected: every criterion holds before and after the refresh, and the editor and storefront match.
 
-- [ ] **Step 2: Full checks**
+- [x] **Step 2: Full checks**
 
 Run: `./scripts/run.sh build`. Expected: succeeds.
 Run: `composer lint`. Expected: passes (no new failures against `dev/edd`).
 
-- [ ] **Step 3: Close the plan**
+- [x] **Step 3: Close the plan**
 
 Set this plan's Status to `done YYYY-MM-DD`.
 Stage: `docs/plans/2026-10-13-summary-label-value-styles.md`
