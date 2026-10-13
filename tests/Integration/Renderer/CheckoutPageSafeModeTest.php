@@ -17,7 +17,7 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
 
         wc_load_cart();
         update_option( 'yaycheckout_settings', [ 'general' => [ 'safe_mode' => true ] ] );
-        delete_option( CheckoutPage::OPTION_RENDER_FAILURE );
+        delete_option( CheckoutPage::OPTION_RENDER_FAILURES );
         register_block_type(
             self::BOOM,
             [
@@ -49,10 +49,8 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
         $this->assertSame( '', $echoed );
         $this->assertNull( CheckoutPage::get_instance()->layout() );
 
-        $failure = get_option( CheckoutPage::OPTION_RENDER_FAILURE );
-        $this->assertSame( $id, $failure['layout_id'] );
-        $this->assertSame( 'boom', $failure['reason'] );
-        $this->assertSame( md5( get_post( $id )->post_content ), $failure['hash'] );
+        $this->assertSame( 'boom', self::failure( $id ) );
+        $this->assertSame( md5( get_post( $id )->post_content ), get_option( CheckoutPage::OPTION_RENDER_FAILURES )[ $id ]['hash'] );
     }
 
     public function test_next_request_after_failure_falls_back(): void {
@@ -79,10 +77,10 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
 
     public function test_render_without_place_order_button_falls_back(): void {
         add_filter( 'render_block_yaycheckout/place-order', '__return_empty_string' );
-        LayoutFactory::serve( LayoutFactory::checkout_markup() );
+        $id = LayoutFactory::serve( LayoutFactory::checkout_markup() );
 
         $this->assertSame( '/theme/page.php', CheckoutPage::get_instance()->page_template( '/theme/page.php' ) );
-        $this->assertSame( 'The layout rendered without a Place order button.', get_option( CheckoutPage::OPTION_RENDER_FAILURE )['reason'] );
+        $this->assertSame( 'The layout rendered without a Place order button.', self::failure( $id ) );
     }
 
     public function test_healthy_render_takes_over(): void {
@@ -90,18 +88,18 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
 
         $this->assertSame( YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php', CheckoutPage::get_instance()->page_template( '/theme/page.php' ) );
         $this->assertStringContainsString( 'id="place_order"', CheckoutPage::get_instance()->html() );
-        $this->assertFalse( get_option( CheckoutPage::OPTION_RENDER_FAILURE ) );
+        $this->assertFalse( get_option( CheckoutPage::OPTION_RENDER_FAILURES ) );
     }
 
     public function test_safe_mode_off_rethrows_and_records(): void {
         update_option( 'yaycheckout_settings', [ 'general' => [ 'safe_mode' => false ] ] );
-        LayoutFactory::serve( self::boom_markup() );
+        $id = LayoutFactory::serve( self::boom_markup() );
 
         try {
             CheckoutPage::get_instance()->page_template( '/theme/page.php' );
             $this->fail( 'Expected the exception to propagate.' );
         } catch ( \RuntimeException $e ) {
-            $this->assertSame( 'boom', get_option( CheckoutPage::OPTION_RENDER_FAILURE )['reason'] );
+            $this->assertSame( 'boom', self::failure( $id ) );
         }
     }
 
@@ -115,56 +113,63 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
         $this->assertSame( [], CheckoutHealth::reported_problems() );
     }
 
-    public function test_fragment_failure_sends_woocommerce_fragments_and_records(): void {
+    public function test_fragment_failure_reloads_the_checkout_and_records(): void {
         $id = LayoutFactory::serve( LayoutFactory::checkout_markup() );
-        add_action( 'woocommerce_review_order_before_payment', [ self::class, 'throw_fragboom' ] );
+        add_action( 'woocommerce_review_order_before_payment', [ self::class, 'throw_fragboom_then_answer_as_ajax' ] );
+        add_filter( 'wp_die_ajax_handler', [ $this, 'get_wp_die_handler' ] );
         $fragments = [ '.woocommerce-checkout-payment' => '<div>stock</div>' ];
 
-        $result = CheckoutFragments::get_instance()->fragments( $fragments );
+        ob_start();
+        try {
+            CheckoutFragments::get_instance()->fragments( $fragments );
+            $this->fail( 'Expected the response to be sent.' );
+        } catch ( \WPDieException $e ) {
+            $response = json_decode( ob_get_clean(), true );
+        }
 
-        $this->assertSame( $fragments, $result );
-        $this->assertSame( 'fragboom', get_option( CheckoutPage::OPTION_RENDER_FAILURE )['reason'] );
-        $this->assertSame( $id, get_option( CheckoutPage::OPTION_RENDER_FAILURE )['layout_id'] );
+        $this->assertTrue( $response['reload'] );
+        $this->assertSame( $fragments, $response['fragments'] );
+        $this->assertSame( 'fragboom', self::failure( $id ) );
         LayoutFactory::forget_served_layout();
         $this->assertNull( CheckoutPage::get_instance()->layout() );
     }
 
     public function test_fragment_failure_rethrows_with_safe_mode_off(): void {
         update_option( 'yaycheckout_settings', [ 'general' => [ 'safe_mode' => false ] ] );
-        LayoutFactory::serve( LayoutFactory::checkout_markup() );
+        $id = LayoutFactory::serve( LayoutFactory::checkout_markup() );
         add_action( 'woocommerce_review_order_before_payment', [ self::class, 'throw_fragboom' ] );
 
         try {
             CheckoutFragments::get_instance()->fragments( [] );
             $this->fail( 'Expected the exception to propagate.' );
         } catch ( \RuntimeException $e ) {
-            $this->assertSame( 'fragboom', get_option( CheckoutPage::OPTION_RENDER_FAILURE )['reason'] );
+            $this->assertSame( 'fragboom', self::failure( $id ) );
         }
     }
 
     public function test_recorded_reason_is_truncated(): void {
-        LayoutFactory::serve( LayoutFactory::checkout_markup() );
+        $id = LayoutFactory::serve( LayoutFactory::checkout_markup() );
         add_filter( 'render_block_yaycheckout/place-order', [ self::class, 'throw_long' ] );
 
         CheckoutPage::get_instance()->page_template( '/theme/page.php' );
 
-        $this->assertSame( 500, mb_strlen( get_option( CheckoutPage::OPTION_RENDER_FAILURE )['reason'] ) );
+        $this->assertSame( 500, mb_strlen( self::failure( $id ) ) );
     }
 
     public function test_request_ending_mid_render_is_recorded(): void {
-        LayoutFactory::serve( LayoutFactory::checkout_markup() );
+        $id   = LayoutFactory::serve( LayoutFactory::checkout_markup() );
         $page = CheckoutPage::get_instance();
         $flag = new \ReflectionProperty( CheckoutPage::class, 'rendering' );
         $flag->setAccessible( true );
 
         $page->record_fatal( $page->layout() );
-        $this->assertFalse( get_option( CheckoutPage::OPTION_RENDER_FAILURE ), 'A request that finished rendering records nothing.' );
+        $this->assertFalse( get_option( CheckoutPage::OPTION_RENDER_FAILURES ), 'A request that finished rendering records nothing.' );
 
         $flag->setValue( $page, true );
         $page->record_fatal( $page->layout() );
         $flag->setValue( $page, false );
 
-        $this->assertSame( 'The layout stopped the page while rendering.', get_option( CheckoutPage::OPTION_RENDER_FAILURE )['reason'] );
+        $this->assertSame( 'The layout stopped the page while rendering.', self::failure( $id ) );
     }
 
     /**
@@ -177,12 +182,27 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
     }
 
     /**
+     * As throw_fragboom(), then makes the rest of the request an AJAX one, so wp_send_json() ends in wp_die().
+     * Not set up front: the Payment fragment fires its action only outside AJAX.
+     *
+     * @throws \RuntimeException Always.
+     */
+    public static function throw_fragboom_then_answer_as_ajax(): void {
+        add_filter( 'wp_doing_ajax', '__return_true' );
+        self::throw_fragboom();
+    }
+
+    /**
      * Hooked to a block render, so the layout fails with a message past the length limit.
      *
      * @throws \RuntimeException Always.
      */
     public static function throw_long(): void {
         throw new \RuntimeException( str_repeat( 'é', 1000 ) );
+    }
+
+    private static function failure( int $id ): string {
+        return CheckoutPage::render_failure( ( new LayoutRepository() )->find( $id ) );
     }
 
     private static function boom_markup(): string {

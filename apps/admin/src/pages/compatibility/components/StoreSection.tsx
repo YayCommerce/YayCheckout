@@ -17,17 +17,11 @@ function Rendering({ safeMode, checkoutProblems }: StoreEnvironment) {
     <div className="text-destructive space-y-1">
       {checkoutProblems.map(({ reason, detail, layoutId, layoutTitle }) => (
         <p key={`${layoutId ?? 'store'}-${reason}`} title={detail ?? undefined}>
-          {safeMode
-            ? sprintf(
-                /* translators: %s: why the layout is not served */
-                __('Native checkout — %s', 'yaycheckout'),
-                reason,
-              )
-            : sprintf(
-                /* translators: %s: why the layout may break checkout */
-                __('YayCheckout layout — %s', 'yaycheckout'),
-                reason,
-              )}
+          {sprintf(
+            /* translators: %s: why the layout is not served, or may break checkout */
+            safeMode ? __('Native checkout — %s', 'yaycheckout') : __('YayCheckout layout — %s', 'yaycheckout'),
+            reason,
+          )}
           {layoutId !== null && (
             <>
               {' '}

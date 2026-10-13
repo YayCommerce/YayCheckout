@@ -25,10 +25,16 @@ class CheckoutPage {
     private const SCRIPTS_PRIORITY = 20;
 
     /**
-     * The circuit breaker: the last render failure, array{layout_id: int, hash: string, reason: string, time: int},
-     * hash being md5 of the layout's post_content. Holds while that layout is served with that content.
+     * The circuit breaker: each layout's last render failure, layout id => array{hash: string, reason: string, time: int},
+     * hash being md5 of the layout's post_content. One holds while its layout keeps that content, for FAILURE_TTL.
      */
-    public const OPTION_RENDER_FAILURE = 'yaycheckout_render_failure';
+    public const OPTION_RENDER_FAILURES = 'yaycheckout_render_failures';
+
+    /**
+     * How long a failure holds. A failure may be transient (a timeout, a third-party hiccup), so the layout is
+     * tried again after this; one that still fails is recorded again, and with safe mode on that request falls back.
+     */
+    private const FAILURE_TTL = HOUR_IN_SECONDS;
 
     /** Errors that end the request mid-render with a message worth reporting; anything lighter lets the catch in page_template() run. */
     private const FATAL_ERRORS = [ E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR ];
@@ -130,15 +136,25 @@ class CheckoutPage {
         return $this->html;
     }
 
-    /** The breaker: the reason $layout last failed to render, while its content is unchanged since, or ''. */
+    /** The breaker: the reason $layout last failed to render, while its content is unchanged since and FAILURE_TTL has not passed, or ''. */
     public static function render_failure( Layout $layout ): string {
-        $failure = get_option( self::OPTION_RENDER_FAILURE );
+        $failure = self::live_failures()[ $layout->id ] ?? null;
 
-        return is_array( $failure )
-            && $layout->id === (int) ( $failure['layout_id'] ?? 0 )
-            && md5( $layout->content ) === ( $failure['hash'] ?? '' )
+        return null !== $failure && md5( $layout->content ) === ( $failure['hash'] ?? '' )
             ? (string) $failure['reason']
             : '';
+    }
+
+    /** The recorded failures still within FAILURE_TTL, by layout id. */
+    private static function live_failures(): array {
+        $now = time();
+
+        return array_filter(
+            (array) get_option( self::OPTION_RENDER_FAILURES, [] ),
+            static function ( $failure ) use ( $now ) {
+                return is_array( $failure ) && $now - (int) ( $failure['time'] ?? 0 ) < self::FAILURE_TTL;
+            }
+        );
     }
 
     /**
@@ -249,12 +265,17 @@ class CheckoutPage {
     /** Gives this request back to WooCommerce: every storefront hook reads layout() and stands down. */
     private function stand_down( string $template ): string {
         $this->layout = null;
+        // Blocks read the checkout fields while rendering, so WooCommerce cached them with the layout's rules applied.
+        WC()->checkout()->checkout_fields = null;
         remove_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], self::SCRIPTS_PRIORITY );
 
         return $template;
     }
 
-    /** Written only when the layout, its content or the reason changed, so a broken layout costs no write per request. */
+    /**
+     * Written only when the layout's failure is new, expired, or its content or reason changed, so a broken
+     * layout costs no write per request. Expired failures are dropped on the way.
+     */
     private function record_failure( Layout $layout, string $reason ): void {
         $reason = mb_substr( $reason, 0, self::REASON_MAX_LENGTH );
 
@@ -262,16 +283,14 @@ class CheckoutPage {
             return;
         }
 
-        update_option(
-            self::OPTION_RENDER_FAILURE,
-            [
-                'layout_id' => $layout->id,
-                'hash'      => md5( $layout->content ),
-                'reason'    => $reason,
-                'time'      => time(),
-            ],
-            true
-        );
+        $failures                = self::live_failures();
+        $failures[ $layout->id ] = [
+            'hash'   => md5( $layout->content ),
+            'reason' => $reason,
+            'time'   => time(),
+        ];
+
+        update_option( self::OPTION_RENDER_FAILURES, $failures, true );
     }
 
     /**

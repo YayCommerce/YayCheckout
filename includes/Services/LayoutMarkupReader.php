@@ -63,9 +63,9 @@ class LayoutMarkupReader {
         self::SHIPPING                 => 'shipping',
         'yaycheckout/shipping-methods' => 'shipping_methods',
         'yaycheckout/express-pay'      => 'express_pay',
-        self::PAYMENT                  => 'payment',
+        'yaycheckout/payment'          => 'payment',
         'yaycheckout/order-summary'    => 'order_summary',
-        self::PLACE_ORDER              => 'place_order',
+        'yaycheckout/place-order'      => 'place_order',
     ];
 
     /**

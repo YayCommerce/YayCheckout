@@ -7,7 +7,7 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { editLayoutIdFrom, editLayoutPath, withEditLayout } from '@/lib/helpers/layout.helper';
 import { isPro } from '@/lib/plan';
-import { COMPATIBILITY_QUERIES } from '@/lib/queries/compatibility.queries';
+import { COMPATIBILITY_KEY, COMPATIBILITY_QUERIES } from '@/lib/queries/compatibility.queries';
 import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
@@ -61,39 +61,34 @@ type View = 'listed' | 'archived';
 
 /**
  * Which active layouts are unsafe to serve, one row each with what to fix and a link to its editor (hover adds the recorded error, for support); a store-wide
- * problem links to the Compatibility page. Nothing when all is well. A fresh report on each visit: a layout may
- * have changed since the last one.
+ * problem links to the Compatibility page. Nothing when all is well.
  */
 function CheckoutProblemsAlert() {
-  const { data: report } = useQuery({ ...COMPATIBILITY_QUERIES.report, staleTime: 0 });
-  const problems = report?.store.checkoutProblems ?? [];
-  if (!report || problems.length === 0) return null;
+  const { data } = useQuery(COMPATIBILITY_QUERIES.problems);
+  const problems = data?.checkoutProblems ?? [];
+  if (!data || problems.length === 0) return null;
 
   const layoutCount = problems.filter((problem) => problem.layoutId !== null).length;
   const title =
     layoutCount === 0
       ? __('Your checkout needs attention', 'yaycheckout')
-      : report.store.safeMode
-        ? sprintf(
-            /* translators: %d: number of layouts */
-            _n(
-              '%d active layout is hidden from shoppers',
-              '%d active layouts are hidden from shoppers',
-              layoutCount,
-              'yaycheckout',
-            ),
-            layoutCount,
-          )
-        : sprintf(
-            /* translators: %d: number of layouts */
-            _n(
-              '%d active layout may break checkout',
-              '%d active layouts may break checkout',
-              layoutCount,
-              'yaycheckout',
-            ),
-            layoutCount,
-          );
+      : sprintf(
+          /* translators: %d: number of layouts */
+          data.safeMode
+            ? _n(
+                '%d active layout is hidden from shoppers',
+                '%d active layouts are hidden from shoppers',
+                layoutCount,
+                'yaycheckout',
+              )
+            : _n(
+                '%d active layout may break checkout',
+                '%d active layouts may break checkout',
+                layoutCount,
+                'yaycheckout',
+              ),
+          layoutCount,
+        );
 
   return (
     <section role="status" className="border-warning/50 bg-warning/5 space-y-4 rounded-lg border p-4">
@@ -104,7 +99,7 @@ function CheckoutProblemsAlert() {
         <div className="space-y-0.5">
           <p className="text-sm font-medium">{title}</p>
           <p className="text-muted-foreground text-sm">
-            {report.store.safeMode
+            {data.safeMode
               ? __('Shoppers get the standard WooCommerce checkout until it is fixed.', 'yaycheckout')
               : __('Safe mode is off, so shoppers still get it. Fix it or turn safe mode on.', 'yaycheckout')}
           </p>
@@ -345,7 +340,7 @@ function LayoutsPageBody({
     if (lastEditingLayoutId.current !== null && editingLayoutId === null) {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
       // A saved change can fix, or cause, the problem the alert reports.
-      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_QUERIES.report.queryKey });
+      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_KEY });
     }
     lastEditingLayoutId.current = editingLayoutId;
   }, [editingLayoutId, queryClient]);

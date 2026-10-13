@@ -80,6 +80,14 @@ final class CompatibilityCatalogue {
         ];
     }
 
+    /** Whether a catalogue entry still conflicts at the installed $version: marked `conflict`, and $version is below its `fixed_in`, if any. */
+    public static function conflicts( array $entry, string $version ): bool {
+        $fixed_in = (string) ( $entry['fixed_in'] ?? '' );
+
+        return self::STATUS_CONFLICT === ( $entry['status'] ?? null )
+            && ( '' === $fixed_in || version_compare( $version, $fixed_in, '<' ) );
+    }
+
     /**
      * @return array{title: null, status: null, express_pay: null, notes: null, docs_url: null, fixed_in: null}
      */

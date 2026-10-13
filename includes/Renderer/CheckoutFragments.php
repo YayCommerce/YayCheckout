@@ -110,7 +110,7 @@ class CheckoutFragments {
     /**
      * Swaps the fragments of this layout's sections for this layout's HTML.
      * A layout that throws here is recorded like one that throws on the page (CheckoutPage::absorb()); with
-     * safe mode on, WooCommerce's own fragments go out instead of an error, and the next request falls back.
+     * safe mode on, the response reloads the checkout instead, which then falls back.
      *
      * @throws \Throwable A layout failure during a preview, or with safe mode off.
      */
@@ -135,7 +135,16 @@ class CheckoutFragments {
                 throw $ex;
             }
 
-            return $fragments;
+            // The breaker now gives this form's submit to WooCommerce, which would check the layout's form by its own
+            // field rules. Reloading swaps in WooCommerce's form first. Sent here: the filter runs after WooCommerce reads `reload`.
+            wp_send_json(
+                [
+                    'result'    => 'success',
+                    'messages'  => '',
+                    'reload'    => true,
+                    'fragments' => $fragments,
+                ]
+            );
         }
     }
 

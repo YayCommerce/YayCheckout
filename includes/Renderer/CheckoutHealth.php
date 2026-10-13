@@ -20,7 +20,11 @@ defined( 'ABSPATH' ) || exit;
 class CheckoutHealth {
 
     public static function problem( Layout $layout ): string {
-        $own = self::layout_problem( $layout );
+        // Its last render failed with this content, or its markup may not be published, or the store has a problem.
+        $own = CheckoutPage::render_failure( $layout );
+        if ( '' === $own ) {
+            $own = LayoutMarkupReader::publish_error( $layout->content );
+        }
 
         return '' !== $own ? $own : self::store_problem();
     }
@@ -71,13 +75,6 @@ class CheckoutHealth {
         return $problems;
     }
 
-    /** The layout's own problem: its last render failed with this content, or its markup may not be published. */
-    private static function layout_problem( Layout $layout ): string {
-        $failure = CheckoutPage::render_failure( $layout );
-
-        return '' !== $failure ? $failure : LayoutMarkupReader::publish_error( $layout->content );
-    }
-
     /** A problem with the store rather than one layout. A new rule is one private method and one line here. */
     public static function store_problem(): string {
         $catalogue = ( new CompatibilityCatalogueRepository() )->cached();
@@ -117,10 +114,9 @@ class CheckoutHealth {
                 continue;
             }
 
-            $fixed_in = (string) ( $entry['fixed_in'] ?? '' );
             // The header is read only when needed: get_plugin_data() opens the plugin's files.
-            $header = '' !== $fixed_in || null === $entry['title'] ? PluginHeaderHelper::describe( 'plugin', $slug, $active[ $slug ] ) : null;
-            if ( '' !== $fixed_in && ! version_compare( $header['version'], $fixed_in, '<' ) ) {
+            $header = null !== ( $entry['fixed_in'] ?? null ) || null === $entry['title'] ? PluginHeaderHelper::describe( 'plugin', $slug, $active[ $slug ] ) : null;
+            if ( ! CompatibilityCatalogue::conflicts( $entry, $header['version'] ?? '' ) ) {
                 continue;
             }
 
