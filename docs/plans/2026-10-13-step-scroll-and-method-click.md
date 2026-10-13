@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking.
 
-**Status:** active
+**Status:** done 2026-10-13
 **Goal:** Opening another step scrolls the page only when the new step is off-screen. Clicking anywhere on a shipping or payment method item selects it, on the storefront and in the editor preview.
 **Spec:** none; `## Requirements` below.
 **Architecture:** One helper in `steps/view.ts` decides whether to scroll, and every way of opening a step calls it. Shipping and payment each get a `view.ts` that registers one shared delegated click handler. The handler clicks the item's radio when the click lands on the item's own box rather than on a child. The editor previews keep the selected row in local React state.
@@ -10,7 +10,7 @@
 - `packages/blocks/src/steps/view.ts`, `packages/blocks/src/steps/style.css`
 - New `packages/blocks/src/shared/method-item-click.ts`. `shared/` is also the SPA's `@blocks-shared`, but the SPA does not import this file.
 - New `packages/blocks/src/shipping-methods/view.ts`, `packages/blocks/src/payment/view.ts`; `block.json`, `style.css` and `edit.tsx` in both folders.
-**Verified 2026-10-13** on yaydevs.local (layout 61: Steps accordion, Shipping Methods and Payment outside the steps). The test tab reported `visibilityState: hidden`, where Chrome skips smooth scrolls, so the scroll checks ran with `prefers-reduced-motion` stubbed to true (the instant branch). A pinned bar was simulated with `scroll-padding-bottom` on `<html>`. The six layouts were checked by switching `data-layout` in the DOM. Task 2 Step 4d was staged in the DOM (one rate's radio swapped for the hidden input Woo prints for a single rate): clicking the item changed nothing, sent no request and logged no error. After the tidy pass (`bindOnce`, `matches()`, mapped previews), real padding clicks on a rate and a gateway and the editor preview check were run again and passed. The editor check ran on the published layout 61 with no edits and no save, not on a new draft.
+**Verified 2026-10-13** on yaydevs.local (layout 61: Steps accordion, Shipping Methods and Payment outside the steps). The test tab reported `visibilityState: hidden`, where Chrome skips smooth scrolls, so the scroll checks ran with `prefers-reduced-motion` stubbed to true (the instant branch). A pinned bar was simulated with `scroll-padding-bottom` on `<html>`. The six layouts were checked by switching `data-layout` in the DOM. The final verification was run by the developer in their browser on 2026-10-13 and passed. Task 2 Step 4d was staged in the DOM (one rate's radio swapped for the hidden input Woo prints for a single rate): clicking the item changed nothing, sent no request and logged no error. After the tidy pass (`bindOnce`, `matches()`, mapped previews), real padding clicks on a rate and a gateway and the editor preview check were run again and passed. The editor check ran on the published layout 61 with no edits and no save, not on a new draft.
 **Tests:** none. Neither change is logic that CLAUDE.md's test rule lists, and the blocks have no JS test suite. Each task has an exact manual check instead.
 
 ## Requirements
@@ -96,4 +96,4 @@
 
 ### Final verification
 
-- [ ] Rebuild with `pnpm build:blocks`, then run Requirement 1–7's checks once more on one layout that has Steps, Shipping Methods and Payment in different steps. Complete step 1 with Continue (no scroll while step 2 is visible). Pick a shipping rate by clicking its padding, then Continue. Pick a gateway by clicking its padding, then place an order with Cash on delivery. Expect the order-received page.
+- [x] Rebuild with `pnpm build:blocks`, then run Requirement 1–7's checks once more on one layout that has Steps, Shipping Methods and Payment in different steps. Complete step 1 with Continue (no scroll while step 2 is visible). Pick a shipping rate by clicking its padding, then Continue. Pick a gateway by clicking its padding, then place an order with Cash on delivery. Expect the order-received page.
