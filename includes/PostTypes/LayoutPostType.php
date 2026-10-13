@@ -80,6 +80,7 @@ class LayoutPostType {
         );
 
         // In REST so the editor's Save writes it with the markup; the schema makes core refuse an invalid token.
+        // Reads are projected first: core answers null for a stored design missing a section added since.
         register_post_meta(
             Layout::POST_TYPE,
             Layout::META_DESIGN,
@@ -87,7 +88,12 @@ class LayoutPostType {
                 'type'              => 'object',
                 'single'            => true,
                 'default'           => LayoutDesign::from_meta( [] )->to_meta(),
-                'show_in_rest'      => [ 'schema' => LayoutDesign::rest_schema() ],
+                'show_in_rest'      => [
+                    'schema'           => LayoutDesign::rest_schema(),
+                    'prepare_callback' => static function ( $value ) {
+                        return LayoutDesign::from_meta( $value )->to_meta();
+                    },
+                ],
                 'sanitize_callback' => static function ( $value ) {
                     return LayoutDesign::from_meta( $value )->to_meta();
                 },

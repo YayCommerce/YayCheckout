@@ -52,7 +52,7 @@ const INPUT_SIZES: Record< string, [ string, string ] > = {
 
 /** Mirrors DesignStyles::vars() in PHP: custom property values by name, for the tokens that aren't empty, and always the font size. */
 function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: DesignFonts ): [ string, string ][] {
-	const { colours, typography, inputs } = tokens;
+	const { colours, typography, inputs, checkboxes } = tokens;
 	const background = String( colours.background ?? '' );
 	const pairs: [ string, string ][] = [
 		[ 'color-primary', String( colours.primary ?? '' ) ],
@@ -105,7 +105,28 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 		[ 'input-border-color', String( inputs.border ?? '' ) ],
 	];
 
-	return [ ...out, ...inputColours.filter( notEmpty ) ];
+	out.push( ...inputColours.filter( notEmpty ) );
+
+	// A radius of 0 is a square box, not an empty token.
+	if ( null !== checkboxes.size ) {
+		out.push( [ 'checkbox-size', `${ checkboxes.size }px` ] );
+	}
+
+	if ( null !== checkboxes.radius ) {
+		out.push( [ 'checkbox-radius', `${ checkboxes.radius }px` ] );
+	}
+
+	if ( null !== checkboxes.border_width ) {
+		out.push( [ 'checkbox-border-width', `${ checkboxes.border_width }px` ] );
+	}
+
+	const checked = String( checkboxes.checked ?? '' );
+
+	if ( '' !== checked ) {
+		out.push( [ 'checkbox-checked-color', checked ] );
+	}
+
+	return out;
 }
 
 /** Mirrors DesignStyles::css() in PHP, without custom CSS: the same text for the same tokens. */

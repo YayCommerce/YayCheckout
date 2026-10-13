@@ -18,5 +18,11 @@
 		"border": "#757575",
 		"label": ""
 	},
+	"checkboxes": {
+		"size": 16,
+		"radius": 2,
+		"border_width": 1,
+		"checked": ""
+	},
 	"custom_css": ""
 }
