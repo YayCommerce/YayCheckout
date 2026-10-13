@@ -11,11 +11,12 @@ import {
 import { useDispatch, useSelect } from '@wordpress/data';
 import { escapeHTML } from '@wordpress/escape-html';
 import { __ } from '@wordpress/i18n';
+import breakdownMeta from '../order-summary-breakdown/block.json';
 import detailsMeta from '../order-summary-details/block.json';
 import headerMeta from '../order-summary-header/block.json';
 import itemsMeta from '../order-summary-items/block.json';
 import toggleMeta from '../order-summary-toggle/block.json';
-import totalsMeta from '../order-summary-totals/block.json';
+import totalMeta from '../order-summary-total/block.json';
 import type { TemplateArray } from '../shared/address-template';
 import { isCheckoutSection, useBlocksAllowedExcept } from '../shared/allowed-blocks';
 import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
@@ -40,15 +41,15 @@ interface EditProps {
 	clientId: string;
 }
 
-// A Header holding a Toggle holding a Heading, then Details holding Items and Totals. templates/layouts/classic-two-column/markup.php
-// seeds the same tree, with Coupon Form between Items and Totals; change both.
+// A Header holding a Toggle holding a Heading, then Details holding Items, Order Summary Breakdown and Order Summary Total. templates/layouts/classic-two-column/markup.php
+// seeds the same tree, with Coupon Form between Items and Order Summary Breakdown; change both.
 const TEMPLATE: TemplateArray[] = [
 	[
 		headerMeta.name,
 		{},
 		[ [ toggleMeta.name, {}, [ [ 'core/heading', { level: 3, content: __( 'Order summary', 'yaycheckout' ) } ] ] ] ],
 	],
-	[ detailsMeta.name, { lock: { remove: true } }, [ [ itemsMeta.name ], [ totalsMeta.name ] ] ],
+	[ detailsMeta.name, { lock: { remove: true } }, [ [ itemsMeta.name ], [ breakdownMeta.name ], [ totalMeta.name ] ] ],
 ];
 
 const NEW_SHAPE_CHILDREN = [ headerMeta.name, detailsMeta.name ];
@@ -116,7 +117,6 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		<div { ...innerBlocksProps }>
 			{ css && <style>{ css }</style> }
 			<SectionLabel
-				panelTitle={ __( 'Order summary', 'yaycheckout' ) }
 				label={ label }
 				defaultLabel={ __( 'Your order', 'yaycheckout' ) }
 				setAttributes={ setAttributes }

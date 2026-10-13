@@ -15,7 +15,15 @@ interface EditProps {
 }
 
 // No form controls or buttons, which a role="button" element can't hold; render.php prints any link as its text.
-const ALLOWED_BLOCKS = [ 'core/paragraph', 'core/heading', 'core/image', 'core/group', 'core/spacer' ];
+// Order Summary Total's own ancestor rule keeps it out of a Toggle placed outside the summary.
+const ALLOWED_BLOCKS = [
+	'core/paragraph',
+	'core/heading',
+	'core/image',
+	'core/group',
+	'core/spacer',
+	'yaycheckout/order-summary-total',
+];
 
 const TEMPLATE: [ string, Record< string, unknown > ][] = [ [ 'core/paragraph', { content: __( 'Order summary', 'yaycheckout' ) } ] ];
 
@@ -31,7 +39,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Summary toggle', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<ToggleControl
 						label={ __( 'Show chevron', 'yaycheckout' ) }
 						checked={ showChevron }

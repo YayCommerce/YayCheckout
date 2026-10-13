@@ -108,7 +108,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Extra field', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					{ keyError !== '' && (
 						<Notice status="error" isDismissible={ false } className="yaycheckout-extra-field__key-error">
 							{ keyError }

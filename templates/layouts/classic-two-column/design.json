@@ -12,7 +12,11 @@
 	"inputs": {
 		"style": "boxed",
 		"size": "medium",
-		"radius": 2
+		"radius": 2,
+		"background": "#ffffff",
+		"text": "#1e1e1e",
+		"border": "#757575",
+		"label": ""
 	},
 	"custom_css": ""
 }

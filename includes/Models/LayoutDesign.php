@@ -140,6 +140,10 @@ final class LayoutDesign {
                     'type'    => 'color',
                     'default' => '',
                 ],
+                'border'     => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
                 'label'      => [
                     'type'    => 'enum',
                     'default' => '',

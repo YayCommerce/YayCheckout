@@ -1,6 +1,6 @@
 <?php
 /**
- * Prints the details' blocks: Items, Totals and the merchant's own. The wrapper carries none of the
+ * Prints the details' blocks: Items, Order Summary Breakdown, Order Summary Total and the merchant's own. The wrapper carries none of the
  * classes CheckoutFragments replaces, so an order review refresh leaves it and its state alone. It is
  * hidden on the server while it starts collapsed, so it never flashes open.
  *

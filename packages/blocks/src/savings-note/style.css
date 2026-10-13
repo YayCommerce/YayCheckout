@@ -1,0 +1,4 @@
+.wp-block-yaycheckout-savings-note[data-yaycheckout-empty],
+.yaycheckout-savings-note[data-yaycheckout-empty] {
+	display: none;
+}

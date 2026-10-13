@@ -1,4 +1,4 @@
-import { InspectorControls, RichText, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
+import { InspectorControls, PanelColorSettings, RichText, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { Notice, PanelBody, SelectControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { createInterpolateElement, type ReactNode } from '@wordpress/element';
@@ -18,6 +18,18 @@ const hasSummary = ( variant: Variant ) => variant === 'bar' || variant === 'tex
 interface Attributes {
 	variant: Variant;
 	showCount: boolean;
+	fillColor: string;
+	trackColor: string;
+	upcomingTextColor: string;
+}
+
+/** Mirrors CheckoutStepsProgress::color_style(): each colour set becomes the variable style.css reads. */
+function progressStyle( { fillColor, trackColor, upcomingTextColor }: Attributes ) {
+	return {
+		...( fillColor ? { '--yaycheckout-steps-progress-fill': fillColor } : {} ),
+		...( trackColor ? { '--yaycheckout-steps-progress-track': trackColor } : {} ),
+		...( upcomingTextColor ? { '--yaycheckout-steps-progress-upcoming-text': upcomingTextColor } : {} ),
+	};
 }
 
 interface EditProps {
@@ -116,6 +128,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	);
 	const blockProps = useBlockProps( {
 		className: `yaycheckout-steps-progress is-variant-${ attributes.variant }`,
+		style: progressStyle( attributes ),
 	} );
 
 	if ( isPreview && stepIds === null ) {
@@ -150,7 +163,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Steps Progress', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<SelectControl
 						label={ __( 'Style', 'yaycheckout' ) }
 						value={ attributes.variant }
@@ -173,6 +186,32 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						/>
 					) }
 				</PanelBody>
+			</InspectorControls>
+			<InspectorControls group="styles">
+				<PanelColorSettings
+					title={ __( 'Progress colors', 'yaycheckout' ) }
+					initialOpen={ false }
+					colorSettings={ [
+						{
+							label: __( 'Fill', 'yaycheckout' ),
+							value: attributes.fillColor,
+							onChange: ( value?: string ) => setAttributes( { fillColor: value ?? '' } ),
+							clearable: true,
+						},
+						{
+							label: __( 'Track', 'yaycheckout' ),
+							value: attributes.trackColor,
+							onChange: ( value?: string ) => setAttributes( { trackColor: value ?? '' } ),
+							clearable: true,
+						},
+						{
+							label: __( 'Upcoming text', 'yaycheckout' ),
+							value: attributes.upcomingTextColor,
+							onChange: ( value?: string ) => setAttributes( { upcomingTextColor: value ?? '' } ),
+							clearable: true,
+						},
+					] }
+				/>
 			</InspectorControls>
 			<div { ...blockProps }>
 				<ProgressBody attributes={ attributes } total={ stepIds.length }>

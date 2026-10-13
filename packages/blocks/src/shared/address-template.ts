@@ -28,7 +28,7 @@ function field( prefix: Prefix, { key, label, ...attrs }: FieldSeed ): TemplateA
 
 // Matches the horizontal spacing between side-by-side fields in
 // templates/layouts/classic-two-column/markup.php.
-const COLUMN_GAP = { style: { spacing: { blockGap: { left: '24px' } } } };
+const COLUMN_GAP = { style: { spacing: { blockGap: { left: '12px' } } } };
 
 /** Core aligns each Column, not the row, so a row's verticalAlignment is copied onto its columns as the editor does. */
 function row(
@@ -66,6 +66,7 @@ export function addressTemplate( prefix: Prefix ): TemplateArray {
 		field( prefix, {
 			key: 'address_2',
 			label: __( 'Apartment, suite, unit, etc.', 'yaycheckout' ),
+			placeholder: __( 'Apartment, suite, unit, etc. (optional)', 'yaycheckout' ),
 		} ),
 		row( [
 			[ '50%', field( prefix, { key: 'city', label: __( 'City', 'yaycheckout' ) } ) ],
