@@ -20,6 +20,7 @@ export const LIVE_VALUE_BLOCKS = [
 	'yaycheckout/step',
 	'yaycheckout/create-account',
 	'yaycheckout/different-address',
+	'yaycheckout/place-order',
 ];
 
 /** Mirrors LiveValues::VALUES_ID in PHP: the footer's JSON element of the cart's values, swapped by update_order_review. */

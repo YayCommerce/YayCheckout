@@ -1,10 +1,9 @@
-import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, ToggleControl } from '@wordpress/components';
+import { RichText, useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
+import { LIVE_VALUE_FORMAT } from '../live-value/constants';
 
 interface PlaceOrderAttributes {
 	buttonText?: string;
-	showTotal?: boolean;
 }
 
 interface EditProps {
@@ -14,40 +13,23 @@ interface EditProps {
 
 /** The button is the block's root element, so its style supports land on it. Mirrors the class and default label render.php prints on the <button>. */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const showTotal = attributes.showTotal === true;
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-place-order wp-element-button',
-		...( showTotal
-			? {
-					'data-show-total': '1',
-					'data-total': '$20.00',
-			  }
-			: {} ),
 	} );
 
 	return (
-		<>
-			<InspectorControls>
-				<PanelBody title={ __( 'Place order', 'yaycheckout' ) }>
-					<ToggleControl
-						label={ __( 'Show order total', 'yaycheckout' ) }
-						checked={ showTotal }
-						onChange={ ( value ) => setAttributes( { showTotal: value } ) }
-					/>
-				</PanelBody>
-			</InspectorControls>
-			<RichText
-				{ ...blockProps }
-				tagName="div"
-				value={ attributes.buttonText ?? '' }
-				onChange={ ( buttonText: string ) =>
-					setAttributes( { buttonText: buttonText.replace( /\s*\n\s*/g, ' ' ) } )
-				}
-				placeholder={ __( 'Place order', 'yaycheckout' ) }
-				// Plain text on one line (pasted line breaks become spaces): the label also goes into value and data-value.
-				__unstableDisableFormats
-				disableLineBreaks
-			/>
-		</>
+		<RichText
+			{ ...blockProps }
+			tagName="div"
+			value={ attributes.buttonText ?? '' }
+			onChange={ ( buttonText: string ) =>
+				setAttributes( { buttonText: buttonText.replace( /\s*\n\s*/g, ' ' ) } )
+			}
+			placeholder={ __( 'Place order', 'yaycheckout' ) }
+			// One line (pasted line breaks become spaces) whose only format is Live value: render.php fills it, then
+			// copies the plain text into value and data-value.
+			allowedFormats={ [ LIVE_VALUE_FORMAT ] }
+			disableLineBreaks
+		/>
 	);
 }

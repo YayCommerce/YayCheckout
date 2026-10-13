@@ -74,9 +74,33 @@ function syncFields(): void {
 	} );
 }
 
+/**
+ * WooCommerce's payment_method_selected sets #place_order's text to its data-value on every payment method
+ * click, which init_payment_methods() makes after each updated_checkout, and that drops the label's spans.
+ * They go back while the text is that label, not a gateway's order_button_text. The observer runs before paint.
+ */
+function keepPlaceOrderSpans(): void {
+	const button = document.getElementById( 'place_order' );
+
+	if ( ! button?.querySelector( `.${ LIVE_VALUE_CLASS }` ) ) {
+		return;
+	}
+
+	const label = button.innerHTML;
+
+	new MutationObserver( () => {
+		if ( ! button.querySelector( `.${ LIVE_VALUE_CLASS }` ) && button.textContent === button.dataset.value ) {
+			button.innerHTML = label;
+			syncCart();
+			syncFields();
+		}
+	} ).observe( button, { childList: true } );
+}
+
 onDomReady( () => {
 	syncCart();
 	syncFields();
+	keepPlaceOrderSpans();
 
 	// updated_checkout also fires once after load, after address-i18n.js has relabelled and hidden fields.
 	jquery( document.body )
