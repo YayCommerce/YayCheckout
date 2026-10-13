@@ -7,12 +7,12 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Live values: cart totals, cart counts and shopper fields that a merchant drops into the text of the
- * blocks in BLOCKS in the layout editor (packages/blocks/src/live-value/). Each is a span holding its key
- * and fallback; its text is only the editor's label.
+ * blocks in BLOCKS in the layout editor (packages/blocks/src/live-value/). Each is a span holding its key,
+ * fallback, prefix and suffix; its text is only the editor's label.
  *
- * On a taken-over checkout, fill() swaps each span's text for its value, or its fallback while the value
- * is empty. The cart's values reach view.js as a JSON element in the footer, which update_order_review
- * swaps as a fragment; view.js reads field values from the form as the shopper types.
+ * On a taken-over checkout, fill() swaps each span's text for its value between its prefix and suffix, or
+ * for its fallback alone while the value is empty. The cart's values reach view.js as a JSON element in
+ * the footer, which update_order_review swaps as a fragment; view.js reads field values from the form as the shopper types.
  */
 class LiveValues {
 
@@ -39,6 +39,12 @@ class LiveValues {
 
     /** Mirrored by FALLBACK_ATTR in packages/blocks/src/live-value/constants.ts. */
     public const FALLBACK_ATTR = 'data-fallback';
+
+    /** Mirrored by PREFIX_ATTR in packages/blocks/src/live-value/constants.ts. */
+    public const PREFIX_ATTR = 'data-prefix';
+
+    /** Mirrored by SUFFIX_ATTR in packages/blocks/src/live-value/constants.ts. */
+    public const SUFFIX_ATTR = 'data-suffix';
 
     /** Mirrored by FIELD_PREFIX in packages/blocks/src/live-value/constants.ts: a key naming a layout field rather than a cart value. */
     public const FIELD_PREFIX = 'field:';
@@ -206,8 +212,9 @@ class LiveValues {
     }
 
     /**
-     * One span with its text set: the value, or the fallback while the value is empty and the fallback isn't
-     * ''. A key the layout can't show, or a span holding tags, prints its fallback: never its label.
+     * One span with its text set: the value between the prefix and suffix, or the fallback alone while the
+     * value is empty. A key the layout can't show, or a span holding tags, counts as empty: it never prints
+     * its label.
      */
     private function fill_span( string $span, string $opening, string $inner, string $markup ): string {
         $tags = new \WP_HTML_Tag_Processor( $opening );
@@ -220,6 +227,8 @@ class LiveValues {
         $key      = $tags->get_attribute( self::KEY_ATTR );
         $fallback = $tags->get_attribute( self::FALLBACK_ATTR );
         $fallback = is_string( $fallback ) ? $fallback : '';
+        $prefix   = $tags->get_attribute( self::PREFIX_ATTR );
+        $suffix   = $tags->get_attribute( self::SUFFIX_ATTR );
         $value    = $this->resolve( is_string( $key ) ? $key : '', $markup );
 
         $unfillable = ! $value['known'] || false !== strpos( $inner, '<' );
@@ -230,7 +239,10 @@ class LiveValues {
             $tags->remove_attribute( self::KEY_ATTR );
         }
 
-        $text = $unfillable || ( $value['empty'] && '' !== $fallback ) ? $fallback : $value['text'];
+        // As show() in view.ts.
+        $text = $unfillable || $value['empty']
+            ? $fallback
+            : ( is_string( $prefix ) ? $prefix : '' ) . $value['text'] . ( is_string( $suffix ) ? $suffix : '' );
 
         if ( $value['empty'] || ! $value['known'] ) {
             $tags->add_class( self::EMPTY_CLASS );

@@ -7,6 +7,12 @@ export const KEY_ATTR = 'data-yaycheckout-value';
 /** Mirrors LiveValues::FALLBACK_ATTR in PHP. */
 export const FALLBACK_ATTR = 'data-fallback';
 
+/** Mirrors LiveValues::PREFIX_ATTR in PHP. */
+export const PREFIX_ATTR = 'data-prefix';
+
+/** Mirrors LiveValues::SUFFIX_ATTR in PHP. */
+export const SUFFIX_ATTR = 'data-suffix';
+
 /** Mirrors LiveValues::EMPTY_CLASS in PHP: on a span whose value is empty or unknown. */
 export const EMPTY_CLASS = 'is-empty';
 
