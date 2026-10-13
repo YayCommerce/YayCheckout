@@ -79,7 +79,7 @@ $yaycheckout_policy_links = array_filter(
 <div class="wp-block-columns"><!-- wp:column {"width":"60%","style":{"spacing":{"blockGap":"40px"}}} -->
 <div class="wp-block-column" style="flex-basis:60%"><!-- wp:yaycheckout/express-pay /-->
 
-<!-- wp:group {"style":{"spacing":{"blockGap":"12px"}},"layout":{"type":"flow"}} -->
+<!-- wp:group {"style":{"spacing":{"blockGap":"12px"}}} -->
 <div class="wp-block-group"><!-- wp:group {"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
 <div class="wp-block-group"><!-- wp:heading {"style":{"typography":{"fontSize":"20px","fontWeight":"400"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
 <h2 class="wp-block-heading" style="margin-top:0;margin-bottom:0;font-size:20px;font-weight:400"><?php esc_html_e( 'Contact information', 'yaycheckout' ); ?></h2>
