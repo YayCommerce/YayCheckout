@@ -702,15 +702,12 @@ class CheckoutFragments {
                 $wrapper['data-yaycheckout-cart-nonce'] = wp_create_nonce( CartItemQuantity::NONCE_ACTION );
                 $wrapper['data-error-text']             = CartItemQuantity::retry_message();
             }
-        }
+        } else {
+            // Breakdown and Total: their Label and Value styles, on the wrapper for the same reason.
+            $class = SummaryPartStyles::wrapper_class( $block->attributes, $block->name, ltrim( self::BLOCK_FRAGMENTS[ $block->name ][0], '.' ) );
 
-        // Breakdown and Total: their Label and Value styles, on the wrapper for the same reason.
-        if ( 'yaycheckout/order-summary-breakdown' === $block->name || 'yaycheckout/order-summary-total' === $block->name ) {
-            $table_class = 'yaycheckout/order-summary-total' === $block->name ? self::ORDER_TOTAL_CLASS : self::ORDER_BREAKDOWN_CLASS;
-            $parts_class = SummaryPartStyles::wrapper_class( $block->attributes, wp_get_block_default_classname( $block->name ), $table_class );
-
-            if ( '' !== $parts_class ) {
-                $wrapper['class'] = trim( $parts_class );
+            if ( '' !== $class ) {
+                $wrapper['class'] = $class;
             }
         }
 

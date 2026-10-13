@@ -1,6 +1,6 @@
 import type { ColorSettingKey, PaymentSettingKey } from './setting-controls';
 
-type StyleObject = Record< string, unknown >;
+import { getAt, setAt, type StyleObject } from '../shared/style-path';
 
 /**
  * Gap and idle background sit under core style keys; radius under core's border.
@@ -37,50 +37,6 @@ const COLOR_VARS: Record< ColorSettingKey, string > = {
 	borderColorSelected: '--yaycheckout-payment-border-selected',
 	borderColorHover: '--yaycheckout-payment-border-hover',
 };
-
-function isPlainObject( value: unknown ): value is StyleObject {
-	return typeof value === 'object' && value !== null && ! Array.isArray( value );
-}
-
-function getAt( style: StyleObject | undefined, path: string[] ): unknown {
-	let cursor: unknown = style;
-
-	for ( const key of path ) {
-		if ( ! isPlainObject( cursor ) ) {
-			return undefined;
-		}
-		cursor = cursor[ key ];
-	}
-
-	return cursor;
-}
-
-/** Drop empty nested objects so Copy/Paste styles stays tidy. */
-function setAt( style: StyleObject | undefined, path: string[], value: unknown ): StyleObject | undefined {
-	if ( path.length === 0 ) {
-		return style;
-	}
-
-	const [ head, ...rest ] = path;
-	const current = isPlainObject( style ) ? { ...style } : {};
-
-	if ( rest.length === 0 ) {
-		if ( value === undefined || value === null || value === '' ) {
-			delete current[ head ];
-		} else {
-			current[ head ] = value;
-		}
-	} else {
-		const nested = setAt( isPlainObject( current[ head ] ) ? ( current[ head ] as StyleObject ) : undefined, rest, value );
-		if ( nested === undefined || Object.keys( nested ).length === 0 ) {
-			delete current[ head ];
-		} else {
-			current[ head ] = nested;
-		}
-	}
-
-	return Object.keys( current ).length === 0 ? undefined : current;
-}
 
 /** Read a Methods setting from the block's `style` attribute. */
 export function getStyleSetting( style: StyleObject | undefined, key: PaymentSettingKey ): unknown {

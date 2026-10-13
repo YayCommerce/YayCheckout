@@ -1,0 +1,4 @@
+/* A Styles tab ToolsPanel's colour items span its grid and stack like a block's Color panel, above the other controls. */
+.yaycheckout-tools-panel .yaycheckout-tools-panel__colors {
+	grid-column: 1 / -1;
+}

@@ -18,21 +18,19 @@ import {
 import { useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { compileCSS } from '@wordpress/style-engine';
-import './summary-part-styles.css';
+import { getAt, hasValue, isPlainObject, setAt, type StyleObject } from './style-path';
+import './tools-panel.css';
 
 /**
  * The Label and Value styles of Order Summary Breakdown and Order Summary Total: core's typography
  * and text colour per part, under style.yaycheckout.<part>, compiled into one rule per cell type.
- * Mirrors SummaryPartStyles (includes/Renderer/SummaryPartStyles.php).
+ * Mirrors SummaryPartStyles::wrapper_class() in PHP: the part keys, the printed keys and the cells.
  */
 
 export type SummaryPart = 'label' | 'value';
 
-type StyleObject = Record< string, unknown >;
-
 interface Preset {
 	slug: string;
-	name?: string;
 	color?: string;
 	size?: string;
 	fontFamily?: string;
@@ -44,62 +42,15 @@ const PARTS: [ SummaryPart, 'th' | 'td' ][] = [
 	[ 'value', 'td' ],
 ];
 
-const TYPOGRAPHY_KEYS = [
-	'fontFamily',
-	'fontSize',
-	'fontStyle',
-	'fontWeight',
-	'lineHeight',
-	'letterSpacing',
-	'textDecoration',
-	'textTransform',
-] as const;
-
-type TypographyKey = ( typeof TYPOGRAPHY_KEYS )[ number ];
-
-function isPlainObject( value: unknown ): value is StyleObject {
-	return typeof value === 'object' && value !== null && ! Array.isArray( value );
-}
-
-function getAt( style: StyleObject | undefined, path: string[] ): unknown {
-	let cursor: unknown = style;
-
-	for ( const key of path ) {
-		if ( ! isPlainObject( cursor ) ) {
-			return undefined;
-		}
-		cursor = cursor[ key ];
-	}
-
-	return cursor;
-}
-
-/** Drop empty values and empty nested objects, as payment/style-paths.ts does, so Copy/Paste styles stays tidy. */
-function setAt( style: StyleObject | undefined, path: string[], value: unknown ): StyleObject | undefined {
-	if ( path.length === 0 ) {
-		return style;
-	}
-
-	const [ head, ...rest ] = path;
-	const current = isPlainObject( style ) ? { ...style } : {};
-
-	if ( rest.length === 0 ) {
-		if ( value === undefined || value === null || value === '' ) {
-			delete current[ head ];
-		} else {
-			current[ head ] = value;
-		}
-	} else {
-		const nested = setAt( isPlainObject( current[ head ] ) ? ( current[ head ] as StyleObject ) : undefined, rest, value );
-		if ( nested === undefined || Object.keys( nested ).length === 0 ) {
-			delete current[ head ];
-		} else {
-			current[ head ] = nested;
-		}
-	}
-
-	return Object.keys( current ).length === 0 ? undefined : current;
-}
+type TypographyKey =
+	| 'fontFamily'
+	| 'fontSize'
+	| 'fontStyle'
+	| 'fontWeight'
+	| 'lineHeight'
+	| 'letterSpacing'
+	| 'textDecoration'
+	| 'textTransform';
 
 /** One part's style, only the keys the rules print. */
 function partStyle( style: StyleObject | undefined, part: SummaryPart ): StyleObject {
@@ -127,7 +78,7 @@ function presetList( value: unknown ): Preset[] {
 const presetPrefix = ( kind: string ) => `var:preset|${ kind }|`;
 
 /** A stored `var:preset|<kind>|<slug>` as the preset's value, for the control. */
-function fromPreset< K extends keyof Preset >( value: unknown, kind: string, presets: Preset[], field: K ): string | undefined {
+function fromPreset( value: unknown, kind: string, presets: Preset[], field: 'color' | 'size' | 'fontFamily' ): string | undefined {
 	if ( typeof value !== 'string' || value === '' ) {
 		return undefined;
 	}
@@ -137,7 +88,7 @@ function fromPreset< K extends keyof Preset >( value: unknown, kind: string, pre
 
 	const slug = value.slice( presetPrefix( kind ).length );
 
-	return presets.find( ( preset ) => preset.slug === slug )?.[ field ] ?? undefined;
+	return presets.find( ( preset ) => preset.slug === slug )?.[ field ];
 }
 
 interface SummaryPartPanelsProps {
@@ -153,9 +104,7 @@ export function SummaryPartPanels( { style, onChange, showLabel = true }: Summar
 	const [ fontSizesSetting, fontFamiliesSetting ] = useSettings( 'typography.fontSizes', 'typography.fontFamilies' );
 	const fontSizes = presetList( fontSizesSetting );
 	const fontFamilies = presetList( fontFamiliesSetting );
-	const colors = presetList(
-		( palettes.colors as { colors?: Preset[] }[] | undefined )?.flatMap( ( origin ) => origin.colors ?? [] )
-	);
+	const colors = ( palettes.colors as { colors?: Preset[] }[] | undefined )?.flatMap( ( origin ) => origin.colors ?? [] ) ?? [];
 	// Reset all calls back once per item before re-rendering, so each change must build on the last one.
 	const latest = useRef( style );
 	latest.current = style;
@@ -169,25 +118,18 @@ export function SummaryPartPanels( { style, onChange, showLabel = true }: Summar
 		const panelId = `yaycheckout-summary-${ part }`;
 		const typography = ( key: TypographyKey ) => getAt( style, [ 'yaycheckout', part, 'typography', key ] );
 		const setTypography = ( key: TypographyKey, value: unknown ) => set( part, [ 'typography', key ], value );
-		const has = ( key: TypographyKey ) => {
-			const value = typography( key );
-			return value !== undefined && value !== null && value !== '';
-		};
+		const has = ( key: TypographyKey ) => hasValue( typography( key ) );
+		// Decoration and Letter case clear when the picked value is picked again.
+		const toggle = ( key: TypographyKey ) => ( next: string | undefined ) =>
+			setTypography( key, next === typography( key ) ? undefined : next );
 		const textColor = fromPreset( getAt( style, [ 'yaycheckout', part, 'color', 'text' ] ), 'color', colors, 'color' );
-		const item = ( key: TypographyKey | 'appearance', itemLabel: string, control: JSX.Element ) => (
+		const item = ( keys: TypographyKey[], itemLabel: string, control: JSX.Element ) => (
 			<ToolsPanelItem
-				key={ key }
+				key={ keys.join() }
 				panelId={ panelId }
 				label={ itemLabel }
-				hasValue={ () => ( key === 'appearance' ? has( 'fontStyle' ) || has( 'fontWeight' ) : has( key ) ) }
-				onDeselect={ () => {
-					if ( key === 'appearance' ) {
-						setTypography( 'fontStyle', undefined );
-						setTypography( 'fontWeight', undefined );
-					} else {
-						setTypography( key, undefined );
-					}
-				} }
+				hasValue={ () => keys.some( has ) }
+				onDeselect={ () => keys.forEach( ( key ) => setTypography( key, undefined ) ) }
 				isShownByDefault
 			>
 				{ control }
@@ -199,10 +141,10 @@ export function SummaryPartPanels( { style, onChange, showLabel = true }: Summar
 				key={ part }
 				label={ label }
 				panelId={ panelId }
-				className="yaycheckout-summary-part-panel"
+				className="yaycheckout-tools-panel"
 				resetAll={ () => set( part, [], undefined ) }
 			>
-				<div className="yaycheckout-summary-part-panel__colors">
+				<div className="yaycheckout-tools-panel__colors">
 					<ColorGradientSettingsDropdown
 						__experimentalIsRenderedInSidebar
 						panelId={ panelId }
@@ -225,7 +167,7 @@ export function SummaryPartPanels( { style, onChange, showLabel = true }: Summar
 				</div>
 				{ fontFamilies.length > 0 &&
 					item(
-						'fontFamily',
+						[ 'fontFamily' ],
 						__( 'Font', 'yaycheckout' ),
 						<FontFamilyControl
 							__nextHasNoMarginBottom
@@ -239,7 +181,7 @@ export function SummaryPartPanels( { style, onChange, showLabel = true }: Summar
 						/>
 					) }
 				{ item(
-					'fontSize',
+					[ 'fontSize' ],
 					__( 'Size', 'yaycheckout' ),
 					<FontSizePicker
 						__next40pxDefaultSize
@@ -255,7 +197,7 @@ export function SummaryPartPanels( { style, onChange, showLabel = true }: Summar
 					/>
 				) }
 				{ item(
-					'appearance',
+					[ 'fontStyle', 'fontWeight' ],
 					__( 'Appearance', 'yaycheckout' ),
 					<FontAppearanceControl
 						__next40pxDefaultSize
@@ -267,7 +209,7 @@ export function SummaryPartPanels( { style, onChange, showLabel = true }: Summar
 					/>
 				) }
 				{ item(
-					'lineHeight',
+					[ 'lineHeight' ],
 					__( 'Line height', 'yaycheckout' ),
 					<LineHeightControl
 						__next40pxDefaultSize
@@ -277,7 +219,7 @@ export function SummaryPartPanels( { style, onChange, showLabel = true }: Summar
 					/>
 				) }
 				{ item(
-					'letterSpacing',
+					[ 'letterSpacing' ],
 					__( 'Letter spacing', 'yaycheckout' ),
 					<LetterSpacingControl
 						__next40pxDefaultSize
@@ -287,23 +229,19 @@ export function SummaryPartPanels( { style, onChange, showLabel = true }: Summar
 					/>
 				) }
 				{ item(
-					'textDecoration',
+					[ 'textDecoration' ],
 					__( 'Decoration', 'yaycheckout' ),
 					<TextDecorationControl
 						value={ typography( 'textDecoration' ) }
-						onChange={ ( next: string | undefined ) =>
-							setTypography( 'textDecoration', next === typography( 'textDecoration' ) ? undefined : next )
-						}
+						onChange={ toggle( 'textDecoration' ) }
 					/>
 				) }
 				{ item(
-					'textTransform',
+					[ 'textTransform' ],
 					__( 'Letter case', 'yaycheckout' ),
 					<TextTransformControl
 						value={ typography( 'textTransform' ) }
-						onChange={ ( next: string | undefined ) =>
-							setTypography( 'textTransform', next === typography( 'textTransform' ) ? undefined : next )
-						}
+						onChange={ toggle( 'textTransform' ) }
 					/>
 				) }
 			</ToolsPanel>

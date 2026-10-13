@@ -6,7 +6,7 @@
 **Goal:** Label and Value style panels (text colour + full typography) on Order Summary Breakdown and Order Summary Total, plus block-level Typography on Breakdown.
 **Spec:** [docs/specs/2026-10-13-summary-label-value-styles-design.md](../specs/2026-10-13-summary-label-value-styles-design.md)
 **Architecture:** Settings live under the block's `style.yaycheckout.label` / `.value` in core's style shape. The storefront queues one rule per part in core's `block-supports` stylesheet through `wp_style_engine_get_styles()` under a unique wrapper class, like `BlockGap`; the editor compiles the same rules with `compileCSS()` into a `<style>` element. Chosen over wrapper CSS variables because the style engine resolves presets on both sides with no hand-written mirror.
-**Touches:** `includes/Renderer/SummaryPartStyles.php` (new), `includes/Renderer/CheckoutFragments.php`, `packages/blocks/src/shared/summary-part-styles.tsx` (new, shared: consumed by the two summary blocks; `shared/` is also the admin SPA's `@blocks-shared`, though the SPA does not import this file), `packages/blocks/src/order-summary-breakdown/{block.json,edit.tsx,style.css}`, `packages/blocks/src/order-summary-total/edit.tsx`.
+**Touches:** `includes/Renderer/SummaryPartStyles.php` (new), `includes/Renderer/CheckoutFragments.php`, `packages/blocks/src/shared/summary-part-styles.tsx` (new, shared: consumed by the two summary blocks; `shared/` is also the admin SPA's `@blocks-shared`, though the SPA does not import this file), `packages/blocks/src/order-summary-breakdown/{block.json,edit.tsx,style.css}`, `packages/blocks/src/order-summary-total/edit.tsx`. Tidy (yaytidy, after Task 4): `packages/blocks/src/shared/style-path.ts` (new, shared: the style path helpers, also used by `payment/` and `shipping-methods/` `style-paths.ts` and `style-panels.tsx`), `packages/blocks/src/shared/tools-panel.css` (replaces `payment/editor.css` and `shipping-methods/editor.css`).
 **Tests:** none. Not in CLAUDE.md's checkout-breaking list; every task has a manual verification step.
 
 ## Global constraints
@@ -83,7 +83,7 @@ Message: `feat(blocks): add Typography to Order Summary Breakdown`
 
 **Interfaces:**
 - Consumes: nothing
-- Produces: `SummaryPartStyles::wrapper_class( array $attributes, string $block_class, string $table_class ): string` — returns `' yaycheckout-summary-parts-N'` (leading space) when at least one rule was queued, else `''`.
+- Produces: `SummaryPartStyles::wrapper_class( array $attributes, string $block_name, string $table_class ): string` — returns `'yaycheckout-summary-parts-N'` when at least one rule was queued, else `''`.
 - Produces: stored shape, read by Task 3 and Task 4:
   `style.yaycheckout.label` / `style.yaycheckout.value` = `{ typography?: { fontSize?, lineHeight?, fontFamily?, fontStyle?, fontWeight?, letterSpacing?, textDecoration?, textTransform? }, color?: { text? } }`
 
@@ -91,12 +91,12 @@ Message: `feat(blocks): add Typography to Order Summary Breakdown`
 
 `final class`, namespace `YayCheckout\Renderer`, header per `.claude/rules/php-standards.md`. Constant `PARTS = [ 'label' => 'th', 'value' => 'td' ]`.
 `wrapper_class()`: `$class = wp_unique_id( 'yaycheckout-summary-parts-' )`; for each part whose `$attributes['style']['yaycheckout'][ $part ]` is a non-empty array, call
-`wp_style_engine_get_styles( $part_style, [ 'selector' => '.yaycheckout-order-summary .' . $class . '.' . $block_class . ' table.' . $table_class . ' tr > ' . $cell, 'context' => 'block-supports' ] )`.
+`wp_style_engine_get_styles( $part_style, [ 'selector' => '.yaycheckout-order-summary .' . $class . '.' . wp_get_block_default_classname( $block_name ) . ' table.' . $table_class . ' tr > ' . $cell, 'context' => 'block-supports' ] )`.
 Pass only the `typography` and `color` keys of the part (drop anything else). A part counts as queued when the result's `declarations` is non-empty. Return `' ' . $class` if any part queued, else `''`.
 
 - [x] **Step 2: Wire into `print_summary_block()`**
 
-After the Items branch, for `yaycheckout/order-summary-breakdown` call `wrapper_class( $block->attributes, 'wp-block-yaycheckout-order-summary-breakdown', self::ORDER_BREAKDOWN_CLASS )`, and for `yaycheckout/order-summary-total` the same with `'wp-block-yaycheckout-order-summary-total'` and `self::ORDER_TOTAL_CLASS`. Set `$wrapper['class']` to the trimmed result when non-empty. Do not touch `order_total_options()` or `order_total_hash_class()`.
+In an `else` after the Items branch (so Breakdown and Total), call `wrapper_class( $block->attributes, $block->name, ltrim( self::BLOCK_FRAGMENTS[ $block->name ][0], '.' ) )`. Set `$wrapper['class']` to the result when non-empty. Do not touch `order_total_options()` or `order_total_hash_class()`.
 
 - [x] **Step 3: Verify on the storefront**
 
