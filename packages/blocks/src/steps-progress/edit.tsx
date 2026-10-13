@@ -1,9 +1,9 @@
-import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
+import { InspectorControls, RichText, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
 import { Notice, PanelBody, SelectControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { createInterpolateElement, type ReactNode } from '@wordpress/element';
-import { decodeEntities } from '@wordpress/html-entities';
 import { __, sprintf } from '@wordpress/i18n';
+import { plainText } from '../shared/plain-text';
 import { stepTitle } from '../shared/step-title';
 import stepsMeta from '../steps/block.json';
 import './editor.css';
@@ -36,7 +36,12 @@ function ProgressItem( { title, position }: { title: string; position: number } 
 			aria-current={ state === 'current' ? 'step' : undefined }
 		>
 			<span className="yaycheckout-steps-progress__marker">{ position }</span>
-			<span className="yaycheckout-steps-progress__title">{ stepTitle( decodeEntities( title ) ) }</span>
+			{ /* The step's rich title, as CheckoutStepsProgress::step_title_html() prints it; "Step" while it holds no text. */ }
+			<RichText.Content
+				tagName="span"
+				className="yaycheckout-steps-progress__title"
+				value={ plainText( title ) !== '' ? title : stepTitle( '' ) }
+			/>
 		</li>
 	);
 }

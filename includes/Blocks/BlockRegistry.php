@@ -296,7 +296,7 @@ class BlockRegistry {
         // Enqueued by PinToBottom::filter_group() for a pinned Group.
         wp_register_script( PinToBottom::SCRIPT, YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-pin-to-bottom.js', [], YAYCHECKOUT_VERSION, true );
 
-        // Enqueued by LiveValues::fill() when a Paragraph or Heading holds a live value. Skipped without a build.
+        // Enqueued by LiveValues::fill() when an allow-listed block holds a live value. Skipped without a build.
         $live_value = self::built_asset( 'live-value/view', true );
 
         if ( null !== $live_value ) {

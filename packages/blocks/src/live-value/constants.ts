@@ -14,7 +14,13 @@ export const EMPTY_CLASS = 'is-empty';
 export const FIELD_PREFIX = 'field:';
 
 /** Mirrors LiveValues::BLOCKS in PHP: the blocks whose text can hold live values. */
-export const LIVE_VALUE_BLOCKS = [ 'core/paragraph', 'core/heading' ];
+export const LIVE_VALUE_BLOCKS = [
+	'core/paragraph',
+	'core/heading',
+	'yaycheckout/step',
+	'yaycheckout/create-account',
+	'yaycheckout/different-address',
+];
 
 /** Mirrors LiveValues::VALUES_ID in PHP: the footer's JSON element of the cart's values, swapped by update_order_review. */
 export const VALUES_ID = 'yaycheckout-live-values';

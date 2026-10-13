@@ -31,6 +31,27 @@ class LayoutMarkupReader {
     /** WooCommerce's posted name for the order note, which the Order note block prints. */
     public const ORDER_NOTE_KEY = 'order_comments';
 
+    /**
+     * The tags rich_text() keeps, for wp_kses(): what the display-text toolbar saves (TEXT_FORMATS in
+     * packages/blocks/src/shared/text-formats.ts) and the live value span (LiveValues).
+     */
+    public const RICH_TEXT_TAGS = [
+        'strong' => [],
+        'em'     => [],
+        's'      => [],
+        'sub'    => [],
+        'sup'    => [],
+        'mark'   => [
+            'class' => true,
+            'style' => true,
+        ],
+        'span'   => [
+            'class'                  => true,
+            'data-yaycheckout-value' => true,
+            'data-fallback'          => true,
+        ],
+    ];
+
     /** Section block => slot name it occupies. */
     private const SECTION_SLOTS = [
         self::EMAIL                    => 'email',
@@ -313,6 +334,35 @@ class LayoutMarkupReader {
         $text = trim( html_entity_decode( wp_strip_all_tags( self::text( $attrs, $name ), true ), ENT_QUOTES, get_bloginfo( 'charset' ) ) );
 
         return '' !== $text ? $text : $fallback;
+    }
+
+    /**
+     * A string attribute edited on the canvas with the display-text toolbar, as HTML safe to echo: only the
+     * tags in RICH_TEXT_TAGS survive, any other tag is stripped to its text. The editor's entities (&amp;)
+     * stay as they are, so print it without escaping again. $fallback, plain text, while the attribute
+     * holds no text.
+     */
+    public static function rich_text( array $attrs, string $name, string $fallback = '' ): string {
+        if ( '' === self::plain_text( $attrs, $name ) ) {
+            return esc_html( $fallback );
+        }
+
+        add_filter( 'safecss_filter_attr_allow_css', [ self::class, 'allow_rgb_color' ], 10, 2 );
+        $html = wp_kses( self::text( $attrs, $name ), self::RICH_TEXT_TAGS );
+        remove_filter( 'safecss_filter_attr_allow_css', [ self::class, 'allow_rgb_color' ], 10 );
+
+        return trim( $html );
+    }
+
+    /**
+     * Keeps an rgb() or rgba() color in a rich_text() style, which kses drops for its parentheses. Highlight
+     * saves its background as rgba(0, 0, 0, 0) so the mark shows no default yellow.
+     *
+     * @param bool   $allow       Whether kses keeps the declaration.
+     * @param string $declaration One declaration, such as `background-color:rgba(0, 0, 0, 0)`.
+     */
+    public static function allow_rgb_color( $allow, $declaration ): bool {
+        return (bool) $allow || 1 === preg_match( '/^\s*(background-)?color\s*:\s*rgba?\(\s*[\d.\s,%\/]+\)\s*$/i', (string) $declaration );
     }
 
     /**
