@@ -4,7 +4,6 @@ import { __ } from '@wordpress/i18n';
 import './section-preview.css';
 
 interface SectionLabelProps {
-	panelTitle: string;
 	label: string;
 	/** The heading while the label is empty, as render.php prints it. */
 	defaultLabel: string;
@@ -16,7 +15,6 @@ interface SectionLabelProps {
 
 /** A section's heading on the canvas and its Label field in the sidebar. */
 export function SectionLabel( {
-	panelTitle,
 	label,
 	defaultLabel,
 	setAttributes,
@@ -26,7 +24,7 @@ export function SectionLabel( {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ panelTitle }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<TextControl
 						label={ __( 'Label', 'yaycheckout' ) }
 						value={ label }

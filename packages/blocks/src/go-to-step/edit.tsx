@@ -39,7 +39,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Go to step', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					{ titles === null ? (
 						<Notice status="warning" isDismissible={ false }>
 							{ __( 'Add a Steps block to use Go to Step.', 'yaycheckout' ) }

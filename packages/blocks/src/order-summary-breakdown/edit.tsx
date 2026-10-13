@@ -21,7 +21,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Order summary breakdown', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<ToggleControl
 						label={ __( 'Show subtotal', 'yaycheckout' ) }
 						checked={ showSubtotal }

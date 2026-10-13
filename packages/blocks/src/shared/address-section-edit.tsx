@@ -40,7 +40,7 @@ export function AddressSectionEdit( {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ fallbackTitle }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<ToggleControl
 						label={ __( 'Show title', 'yaycheckout' ) }
 						checked={ showTitle }

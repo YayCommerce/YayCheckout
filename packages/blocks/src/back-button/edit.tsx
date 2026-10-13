@@ -24,7 +24,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Previous step button', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<ArrowControl direction="back" value={ attributes.arrow } onChange={ ( arrow ) => setAttributes( { arrow } ) } />
 					<SelectControl
 						label={ __( 'On the first step', 'yaycheckout' ) }

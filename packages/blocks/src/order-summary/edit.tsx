@@ -117,7 +117,6 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		<div { ...innerBlocksProps }>
 			{ css && <style>{ css }</style> }
 			<SectionLabel
-				panelTitle={ __( 'Order summary', 'yaycheckout' ) }
 				label={ label }
 				defaultLabel={ __( 'Your order', 'yaycheckout' ) }
 				setAttributes={ setAttributes }

@@ -48,7 +48,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Coupon form', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<TextControl
 						label={ __( 'Placeholder', 'yaycheckout' ) }
 						value={ placeholder }

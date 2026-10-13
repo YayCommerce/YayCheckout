@@ -39,7 +39,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Summary toggle', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<ToggleControl
 						label={ __( 'Show chevron', 'yaycheckout' ) }
 						checked={ showChevron }
