@@ -85,6 +85,7 @@ class BlockRegistry {
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_live_value_editor' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_visibility_editor' ] );
         add_action( 'enqueue_block_assets', [ $this, 'enqueue_live_value_editor_style' ] );
+        add_action( 'enqueue_block_assets', [ $this, 'enqueue_visibility_editor_style' ] );
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
@@ -160,9 +161,10 @@ class BlockRegistry {
 
         // One bundle serves both editions, so the plan reaches it at runtime; PHP supplies the post type and upgrade link so the bundle never redeclares them.
         $editor_data = [
-            'isPro'      => Plan::is_pro(),
-            'postType'   => Layout::POST_TYPE,
-            'upgradeUrl' => YAYCHECKOUT_UPGRADE_URL,
+            'isPro'          => Plan::is_pro(),
+            'postType'       => Layout::POST_TYPE,
+            'upgradeUrl'     => YAYCHECKOUT_UPGRADE_URL,
+            'currencySymbol' => html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8' ),
         ];
 
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks', $editor_data );
@@ -269,6 +271,15 @@ class BlockRegistry {
 
         if ( null !== $asset ) {
             wp_enqueue_style( LiveValues::EDITOR_STYLE, $asset['url'] . '.css', [], $asset['version'] );
+        }
+    }
+
+    /** The Conditional tag and preview dimming, on enqueue_block_assets so they reach the canvas iframe. Layout editor only; skipped without a build. */
+    public function enqueue_visibility_editor_style(): void {
+        $asset = is_admin() && 'layout' === $this->editor( null ) ? self::built_asset( 'visibility/index', true ) : null;
+
+        if ( null !== $asset ) {
+            wp_enqueue_style( BlockVisibility::EDITOR_STYLE, $asset['url'] . '.css', [], $asset['version'] );
         }
     }
 

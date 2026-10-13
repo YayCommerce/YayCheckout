@@ -36,6 +36,9 @@ class BlockVisibility {
     /** The editor script, packages/blocks/src/visibility/index.tsx; enqueued by BlockRegistry. */
     public const EDITOR_SCRIPT = 'yaycheckout-visibility-editor';
 
+    /** The Conditional tag and preview dimming in the layout editor's canvas, from packages/blocks/src/visibility/editor.css. */
+    public const EDITOR_STYLE = 'yaycheckout-visibility-editor';
+
     /** Blocks that never take the setting: step navigation can't skip a step. Mirrored by EXCLUDED in visibility-rules.ts. */
     public const EXCLUDED = [ 'yaycheckout/checkout', 'yaycheckout/steps', 'yaycheckout/step' ];
 
