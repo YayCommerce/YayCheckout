@@ -22,9 +22,9 @@ class CheckoutStepsProgress {
 
     /** Colour attribute => the variable style.css reads for it. */
     private const COLOR_VARS = [
-        'activeColor'       => '--yaycheckout-steps-progress-active',
-        'inactiveColor'     => '--yaycheckout-steps-progress-inactive',
-        'disabledTextColor' => '--yaycheckout-steps-progress-disabled',
+        'fillColor'         => '--yaycheckout-steps-progress-fill',
+        'trackColor'        => '--yaycheckout-steps-progress-track',
+        'upcomingTextColor' => '--yaycheckout-steps-progress-upcoming-text',
     ];
 
     /** @var string[]|null Memoised layout_titles(); null until first read. */

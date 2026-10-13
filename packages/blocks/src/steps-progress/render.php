@@ -5,7 +5,7 @@
  * WordPress includes this file on each render and prints whatever it echoes.
  * The list is built in CheckoutStepsProgress from the layout's first Steps block.
  *
- * @var array    $attributes Block attributes: `variant`, `showCount`, `activeColor`, `inactiveColor`, `disabledTextColor`. Titles live on each step.
+ * @var array    $attributes Block attributes: `variant`, `showCount`, `fillColor`, `trackColor`, `upcomingTextColor`. Titles live on each step.
  * @var string   $content    Unused; this block is a leaf.
  * @var WP_Block $block      Block instance.
  *

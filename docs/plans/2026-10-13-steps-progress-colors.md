@@ -22,7 +22,7 @@
   6. With no colour set, every style looks exactly as it does on `dev/edd`.
   7. The editor canvas and the storefront show the same colours, and a theme palette pick and a custom hex both work.
   8. End to end: on a throwaway layout with Steps and Steps Progress, set Active `#e11d48`, Inactive `#fde68a`, Disabled text `#0f766e`, Text `#7c3aed`, and save. The storefront preview shows those colours in all five styles, and they persist through moving to step 2 and back.
-- **Decided with the user:** which colours (after checking templates 02, 06, 09 and 11 in `~/Downloads/WooCommerce Checkout Templates_v1.1.html`): Active + Inactive + Disabled text. The "Step N of M" count follows the block's Text colour, not Disabled text. "Disabled text" was renamed **Disabled text** for clarity; the Dots style's completed titles moved out of it to the Text colour so the name stays accurate. Keep it as simple as possible.
+- **Decided with the user:** which colours (after checking templates 02, 06, 09 and 11 in `~/Downloads/WooCommerce Checkout Templates_v1.1.html`): Active + Inactive + Disabled text. The "Step N of M" count follows the block's Text colour, not Disabled text. "Disabled text" was renamed **Disabled text** for clarity; the Dots style's completed titles moved out of it to the Text colour so the name stays accurate. Keep it as simple as possible. After implementation the pickers were renamed for what they paint: Active → **Fill**, Inactive → **Track**, Disabled text → **Upcoming text** (attributes `fillColor`, `trackColor`, `upcomingTextColor`; variables `--yaycheckout-steps-progress-fill`, `-track`, `-upcoming-text`), and each picker is `clearable`.
 
 ## Global constraints
 
@@ -58,7 +58,7 @@
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `--yaycheckout-steps-progress-active`, `--yaycheckout-steps-progress-inactive`, `--yaycheckout-steps-progress-disabled`, read from the `.yaycheckout-steps-progress` wrapper. Tasks 2 and 3 set them.
+- Produces: `--yaycheckout-steps-progress-fill`, `--yaycheckout-steps-progress-track`, `--yaycheckout-steps-progress-upcoming-text`, read from the `.yaycheckout-steps-progress` wrapper. Tasks 2 and 3 set them.
 
 - [ ] **Step 1: Wrap each colour in its variable, keeping today's value as the fallback**
 
@@ -79,7 +79,7 @@ Leave unchanged: the bar and text `__count` colour `#757575`, the dots completed
 Run: `pnpm build:blocks`
 Expected: `webpack … compiled successfully`.
 Open the throwaway layout's preview, switch the block through all five styles in the editor (save each), and compare against the same layout on `dev/edd`'s build.
-Expected: identical in every style; DevTools on `.yaycheckout-steps-progress__marker` shows `var(--yaycheckout-steps-progress-active, var(--yaycheckout-primary-color, #3858e9))` resolving to the primary colour.
+Expected: identical in every style; DevTools on `.yaycheckout-steps-progress__marker` shows `var(--yaycheckout-steps-progress-fill, var(--yaycheckout-primary-color, #3858e9))` resolving to the primary colour.
 
 - [ ] **Step 3: Commit**
 
@@ -94,13 +94,13 @@ Message: `refactor(steps-progress): read colours from CSS variables`
 
 **Interfaces:**
 - Consumes: Task 1's variables.
-- Produces: attributes `activeColor`, `inactiveColor`, `disabledTextColor`: `{ "type": "string", "default": "" }`, holding a colour value as `PanelColorSettings` returns it. Task 3 reads them.
+- Produces: attributes `fillColor`, `trackColor`, `upcomingTextColor`: `{ "type": "string", "default": "" }`, holding a colour value as `PanelColorSettings` returns it. Task 3 reads them.
 
 - [ ] **Step 1: Add the three attributes to `block.json`**
 
 - [ ] **Step 2: Add `progressStyle( attributes: Attributes ): Record< string, string >` in `edit.tsx`**
 
-Maps each non-empty attribute to its variable (`activeColor` → `--yaycheckout-steps-progress-active`, `inactiveColor` → `-inactive`, `disabledTextColor` → `-disabled`), as `badgeStyle()` does in `order-summary-items/edit.tsx`. Doc comment: `Mirrors CheckoutStepsProgress::color_style().` Pass it as `style` to the existing `useBlockProps()` call, which every branch (preview, notice, list) shares.
+Maps each non-empty attribute to its variable (`fillColor` → `--yaycheckout-steps-progress-fill`, `trackColor` → `-inactive`, `upcomingTextColor` → `-disabled`), as `badgeStyle()` does in `order-summary-items/edit.tsx`. Doc comment: `Mirrors CheckoutStepsProgress::color_style().` Pass it as `style` to the existing `useBlockProps()` call, which every branch (preview, notice, list) shares.
 
 - [ ] **Step 3: Add the panel**
 
@@ -126,7 +126,7 @@ Message: `feat(steps-progress): add Active, Inactive and Disabled text colours i
 
 **Interfaces:**
 - Consumes: Task 2's attributes; `CheckoutFragments::css_color( $value ): string` (accepts a hex, a safe CSS colour token or `var:preset|color|<slug>`; returns `''` for anything else).
-- Produces: `private static function color_style( array $attributes ): string` in `CheckoutStepsProgress`, returning `--yaycheckout-steps-progress-active:<c>;…` for each set attribute, or `''`.
+- Produces: `private static function color_style( array $attributes ): string` in `CheckoutStepsProgress`, returning `--yaycheckout-steps-progress-fill:<c>;…` for each set attribute, or `''`.
 
 - [ ] **Step 1: Implement `color_style()` and use it in `markup()`**
 
@@ -142,8 +142,8 @@ Expected, for each of the five styles (change and save in the editor, reload the
 - bar: after Continue to step 2, the fill is at 2/3 width and still `#e11d48`, and the wrapper's `style` holds both the colour variables and the updated `--yaycheckout-steps-progress-value`;
 - bar and text: the count is `#7c3aed` (the block's Text colour), not `#0f766e`;
 - circles: after reaching step 2, step 1's title (reopenable) keeps the inherited colour, not `#0f766e`.
-Then: `wp post get <id> --field=post_content | sed 's/"activeColor":"#e11d48"/"activeColor":"red;}body{display:none"/' | wp post update <id> -`, reload the preview, and afterwards set Active back in the editor.
-Expected: no `--yaycheckout-steps-progress-active` in the wrapper's `style`; the page renders normally.
+Then: `wp post get <id> --field=post_content | sed 's/"fillColor":"#e11d48"/"fillColor":"red;}body{display:none"/' | wp post update <id> -`, reload the preview, and afterwards set Active back in the editor.
+Expected: no `--yaycheckout-steps-progress-fill` in the wrapper's `style`; the page renders normally.
 
 - [ ] **Step 3: Commit**
 

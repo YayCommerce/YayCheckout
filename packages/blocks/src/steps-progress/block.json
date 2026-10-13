@@ -18,15 +18,15 @@
       "type": "boolean",
       "default": true
     },
-    "activeColor": {
+    "fillColor": {
       "type": "string",
       "default": ""
     },
-    "inactiveColor": {
+    "trackColor": {
       "type": "string",
       "default": ""
     },
-    "disabledTextColor": {
+    "upcomingTextColor": {
       "type": "string",
       "default": ""
     }

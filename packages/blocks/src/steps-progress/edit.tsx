@@ -18,17 +18,17 @@ const hasSummary = ( variant: Variant ) => variant === 'bar' || variant === 'tex
 interface Attributes {
 	variant: Variant;
 	showCount: boolean;
-	activeColor: string;
-	inactiveColor: string;
-	disabledTextColor: string;
+	fillColor: string;
+	trackColor: string;
+	upcomingTextColor: string;
 }
 
 /** Mirrors CheckoutStepsProgress::color_style(): each colour set becomes the variable style.css reads. */
-function progressStyle( { activeColor, inactiveColor, disabledTextColor }: Attributes ) {
+function progressStyle( { fillColor, trackColor, upcomingTextColor }: Attributes ) {
 	return {
-		...( activeColor ? { '--yaycheckout-steps-progress-active': activeColor } : {} ),
-		...( inactiveColor ? { '--yaycheckout-steps-progress-inactive': inactiveColor } : {} ),
-		...( disabledTextColor ? { '--yaycheckout-steps-progress-disabled': disabledTextColor } : {} ),
+		...( fillColor ? { '--yaycheckout-steps-progress-fill': fillColor } : {} ),
+		...( trackColor ? { '--yaycheckout-steps-progress-track': trackColor } : {} ),
+		...( upcomingTextColor ? { '--yaycheckout-steps-progress-upcoming-text': upcomingTextColor } : {} ),
 	};
 }
 
@@ -193,19 +193,22 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					initialOpen={ false }
 					colorSettings={ [
 						{
-							label: __( 'Active', 'yaycheckout' ),
-							value: attributes.activeColor,
-							onChange: ( value?: string ) => setAttributes( { activeColor: value ?? '' } ),
+							label: __( 'Fill', 'yaycheckout' ),
+							value: attributes.fillColor,
+							onChange: ( value?: string ) => setAttributes( { fillColor: value ?? '' } ),
+							clearable: true,
 						},
 						{
-							label: __( 'Inactive', 'yaycheckout' ),
-							value: attributes.inactiveColor,
-							onChange: ( value?: string ) => setAttributes( { inactiveColor: value ?? '' } ),
+							label: __( 'Track', 'yaycheckout' ),
+							value: attributes.trackColor,
+							onChange: ( value?: string ) => setAttributes( { trackColor: value ?? '' } ),
+							clearable: true,
 						},
 						{
-							label: __( 'Disabled text', 'yaycheckout' ),
-							value: attributes.disabledTextColor,
-							onChange: ( value?: string ) => setAttributes( { disabledTextColor: value ?? '' } ),
+							label: __( 'Upcoming text', 'yaycheckout' ),
+							value: attributes.upcomingTextColor,
+							onChange: ( value?: string ) => setAttributes( { upcomingTextColor: value ?? '' } ),
+							clearable: true,
 						},
 					] }
 				/>
