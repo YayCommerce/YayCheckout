@@ -16,7 +16,7 @@ type Step = 'source' | 'library';
 
 const DEFAULT_VALUES: NewLayoutFormValues = {
   name: __('Untitled checkout', 'yaycheckout'),
-  source: 'blank',
+  source: 'default',
   templateSlug: null,
 };
 
@@ -46,14 +46,14 @@ function NewLayoutForm({ onClose }: { onClose: () => void }) {
 
   // Must reset `source` too, or Create layout would submit a stale library selection.
   function backToSource() {
-    form.setValue('source', 'blank');
+    form.setValue('source', 'default');
     setStep('source');
   }
 
   async function onValid(values: NewLayoutFormValues) {
     const payload =
-      values.source === 'blank'
-        ? { name: values.name, source: 'blank' as const }
+      values.source === 'default'
+        ? { name: values.name, source: 'default' as const }
         : { name: values.name, source: 'library' as const, templateSlug: values.templateSlug! };
 
     try {

@@ -5,7 +5,8 @@
  * and required, so a form-wide checkValidity() would block step 1.
  */
 
-import { CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
+import { bindOnce } from '../shared/bind-once';
+import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
 import { onDomReady } from '../shared/dom-ready';
 import { controlsText } from '../shared/form-text';
 import type { Control } from '../shared/jquery';
@@ -18,11 +19,6 @@ const COMPLETE = 'complete';
 type StepState = typeof CURRENT | typeof LOCKED | typeof COMPLETE;
 
 function boot(): void {
-	if ( document.documentElement.hasAttribute( 'data-yaycheckout-steps-bound' ) ) {
-		return;
-	}
-
-	document.documentElement.setAttribute( 'data-yaycheckout-steps-bound', '' );
 	document.addEventListener( 'click', onClick );
 	document.addEventListener( 'yaycheckout:step-reopen', onReopen );
 	syncBackButtons();
@@ -70,8 +66,8 @@ function onClick( event: MouseEvent ): void {
 
 	const step = target.closest< HTMLElement >( STEP );
 
-	// Any step the shopper already opened reopens, a locked one too (the last step, left before Place order).
-	if ( ! step || step.dataset.reached !== 'true' || step.dataset.state === CURRENT || target.closest( '.yaycheckout-step__body' ) ) {
+	// Only a completed step reopens. One reached but not finished (the last step, after going back) is reached again with Next.
+	if ( ! step || ! canReopenStep( step ) || target.closest( '.yaycheckout-step__body' ) ) {
 		return;
 	}
 
@@ -91,11 +87,30 @@ function advance( step: HTMLElement ): void {
 	revealStep( next );
 }
 
-/** Scrolls the step Next or Back opened to the top of the viewport. Focus stays where it is. */
+/**
+ * Scrolls an opened step to the top of the visible area, but only when its header is off-screen.
+ * The step's scroll-margin-top keeps a gap above it. Focus stays where it is.
+ */
 function revealStep( step: HTMLElement ): void {
+	if ( stepIsInView( step ) ) {
+		return;
+	}
+
 	const reduced = window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
 
 	step.scrollIntoView( { block: 'start', behavior: reduced ? 'auto' : 'smooth' } );
+}
+
+/** Whether the step's header is fully inside the viewport, less a sticky header's or pinned bar's scroll padding. */
+function stepIsInView( step: HTMLElement ): boolean {
+	const root = getComputedStyle( document.documentElement );
+	const topInset = parseFloat( root.scrollPaddingTop ) || 0;
+	const bottomInset = parseFloat( root.scrollPaddingBottom ) || 0;
+	const top = step.getBoundingClientRect().top;
+	// With headings hidden the header is a 1px clipped box, so the step's top edge stands in for it.
+	const headerHeight = step.querySelector( '.yaycheckout-step__header' )?.getBoundingClientRect().height ?? 0;
+
+	return top >= topInset && top + headerHeight <= window.innerHeight - bottomInset;
 }
 
 /** Checks the step and, when it passes, marks it complete with its summary. */
@@ -127,6 +142,9 @@ function reopen( step: HTMLElement ): void {
 	}
 
 	setState( step, CURRENT );
+	// The control that asked may now be disabled or hidden (Steps Progress, Go to Step, Edit), so focus follows the step.
+	step.querySelector< HTMLElement >( '.yaycheckout-step__header' )?.focus( { preventScroll: true } );
+	revealStep( step );
 }
 
 function park( step: HTMLElement ): boolean {
@@ -318,4 +336,4 @@ function message( step: HTMLElement, key: 'requiredMessage' | 'selectMessage' ):
 	return steps?.dataset[ key ] ?? '';
 }
 
-onDomReady( boot );
+onDomReady( () => bindOnce( 'data-yaycheckout-steps-bound', boot ) );

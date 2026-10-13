@@ -3,6 +3,7 @@
  * Toggle, wherever it sits in the layout, flip the one Summary Details panel and stay in sync.
  */
 
+import { bindOnce } from '../shared/bind-once';
 import { onDomReady } from '../shared/dom-ready';
 
 // A copy of OrderSummaryCollapse::DETAILS_ID.
@@ -12,11 +13,6 @@ const HEADER_BUTTON = '.yaycheckout-order-summary__header-button';
 const TOGGLE = '[data-yaycheckout-summary-toggle]';
 
 function boot(): void {
-	if ( document.documentElement.hasAttribute( 'data-yaycheckout-summary-bound' ) ) {
-		return;
-	}
-
-	document.documentElement.setAttribute( 'data-yaycheckout-summary-bound', '' );
 	document.addEventListener( 'click', onClick );
 	document.addEventListener( 'keydown', onKeydown );
 }
@@ -58,4 +54,4 @@ function flip(): void {
 	}
 }
 
-onDomReady( boot );
+onDomReady( () => bindOnce( 'data-yaycheckout-summary-bound', boot ) );

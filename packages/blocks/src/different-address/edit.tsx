@@ -4,6 +4,7 @@ import { useSelect } from '@wordpress/data';
 import { __, sprintf } from '@wordpress/i18n';
 import { plainText } from '../shared/plain-text';
 import { ADDRESS_SECTIONS, type BlockEditorSelectors, sectionFields } from '../shared/section-fields';
+import { TEXT_FORMATS_WITH_LIVE_VALUE } from '../shared/text-formats';
 import { differentAddressEditorData, type ShipToDestination } from './editor-data';
 import './editor.css';
 
@@ -132,8 +133,7 @@ export default function Edit( { attributes, isSelected, setAttributes }: EditPro
 						value={ attributes[ mode.label ] }
 						onChange={ ( value: string ) => setAttributes( { [ mode.label ]: value } ) }
 						placeholder={ mode.placeholder }
-						allowedFormats={ [] }
-						withoutInteractiveFormatting
+						allowedFormats={ TEXT_FORMATS_WITH_LIVE_VALUE }
 					/>
 				</div>
 			</div>

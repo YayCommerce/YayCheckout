@@ -1,7 +1,7 @@
 <?php
 /**
  * Classic two-column (LayoutTemplateCatalogue::DEFAULT_SLUG): the block markup of template 01, which a
- * Blank layout also starts with, printed by LayoutTemplateCatalogue::markup(). Its look is design.json beside it.
+ * Default layout also starts with, printed by LayoutTemplateCatalogue::markup(). Its look is design.json beside it.
  *
  * To update it, build the layout in the block editor, copy it from the Code editor and
  * paste it here, then put back the PHP: translated text, the logo-or-title choice, the
@@ -165,7 +165,7 @@ $yaycheckout_policy_links = array_filter(
 <!-- /wp:paragraph -->
 <?php endif; ?>
 
-<!-- wp:yaycheckout/place-order {"showTotal":true} /-->
+<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022 · \u0022 data-suffix=\u0022\u0022\u003e · <?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e"} /-->
 
 <!-- wp:yaycheckout/return-to-cart /--></div>
 <!-- /wp:group --></div>

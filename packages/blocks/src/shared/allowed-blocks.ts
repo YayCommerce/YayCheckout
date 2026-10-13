@@ -4,7 +4,7 @@ import { useMemo } from '@wordpress/element';
 import backButtonMeta from '../back-button/block.json';
 import checkoutMeta from '../checkout/block.json';
 import emailMeta from '../email/block.json';
-import progressMeta from '../progress/block.json';
+import stepsProgressMeta from '../steps-progress/block.json';
 import stepButtonMeta from '../step-button/block.json';
 
 interface BlockTypeRules {
@@ -21,10 +21,10 @@ const ALLOWED_IN_ADDRESS_SECTIONS = new Set( [ stepButtonMeta.name, backButtonMe
 
 /**
  * A block whose ancestor rule names Checkout, other than the step buttons and Email address,
- * or Progress, which may sit outside Checkout but stays out of address sections.
+ * or Steps Progress, which may sit outside Checkout but stays out of address sections.
  */
 export function isCheckoutSection( type: BlockTypeRules ): boolean {
-	if ( type.name === progressMeta.name ) {
+	if ( type.name === stepsProgressMeta.name ) {
 		return true;
 	}
 

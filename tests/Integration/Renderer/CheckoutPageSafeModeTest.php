@@ -115,8 +115,8 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
     }
 
     public function test_fragment_failure_sends_woocommerce_fragments_and_records(): void {
-        $id = LayoutFactory::serve( self::total_button_markup() );
-        add_filter( 'render_block_yaycheckout/place-order', [ self::class, 'throw_fragboom' ] );
+        $id = LayoutFactory::serve( LayoutFactory::checkout_markup() );
+        add_action( 'woocommerce_review_order_before_payment', [ self::class, 'throw_fragboom' ] );
         $fragments = [ '.woocommerce-checkout-payment' => '<div>stock</div>' ];
 
         $result = CheckoutFragments::get_instance()->fragments( $fragments );
@@ -130,8 +130,8 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
 
     public function test_fragment_failure_rethrows_with_safe_mode_off(): void {
         update_option( 'yaycheckout_settings', [ 'general' => [ 'safe_mode' => false ] ] );
-        LayoutFactory::serve( self::total_button_markup() );
-        add_filter( 'render_block_yaycheckout/place-order', [ self::class, 'throw_fragboom' ] );
+        LayoutFactory::serve( LayoutFactory::checkout_markup() );
+        add_action( 'woocommerce_review_order_before_payment', [ self::class, 'throw_fragboom' ] );
 
         try {
             CheckoutFragments::get_instance()->fragments( [] );
@@ -166,17 +166,22 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
         $this->assertSame( 'The layout stopped the page while rendering.', get_option( CheckoutPage::OPTION_RENDER_FAILURE )['reason'] );
     }
 
+    /**
+     * Hooked to the action the Payment fragment fires, so the fragment throws.
+     *
+     * @throws \RuntimeException Always.
+     */
     public static function throw_fragboom(): void {
         throw new \RuntimeException( 'fragboom' );
     }
 
+    /**
+     * Hooked to a block render, so the layout fails with a message past the length limit.
+     *
+     * @throws \RuntimeException Always.
+     */
     public static function throw_long(): void {
         throw new \RuntimeException( str_repeat( 'é', 1000 ) );
-    }
-
-    /** A layout whose Place order button shows the total, so update_order_review renders it as a fragment. */
-    private static function total_button_markup(): string {
-        return str_replace( '<!-- wp:yaycheckout/place-order /-->', '<!-- wp:yaycheckout/place-order {"showTotal":true} /-->', LayoutFactory::checkout_markup() );
     }
 
     private static function boom_markup(): string {

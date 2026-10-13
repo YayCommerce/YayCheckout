@@ -47,6 +47,17 @@
     "showStepper": {
       "type": "boolean",
       "default": false
+    },
+    "badgeBackgroundColor": {
+      "type": "string",
+      "default": ""
+    },
+    "badgeTextColor": {
+      "type": "string",
+      "default": ""
+    },
+    "badgeSize": {
+      "type": "number"
     }
   },
   "supports": {

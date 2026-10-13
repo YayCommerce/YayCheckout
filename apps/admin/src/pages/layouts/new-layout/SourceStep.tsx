@@ -9,7 +9,7 @@ import { FormField } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { NameField } from '@/pages/layouts/new-layout/NameField';
 
-/** Name and source. Choosing From library moves straight to the library step; Create layout here makes a blank layout. */
+/** Name and source. Choosing From library moves straight to the library step; Create layout here makes a layout from the default template (Classic two-column). */
 export function SourceStep({
   onChooseLibrary,
   onCancel,
@@ -50,11 +50,11 @@ export function SourceStep({
               )}
             >
               <div className="flex items-center gap-2">
-                <RadioGroupItem value="blank" />
-                <span className="text-sm font-semibold">{__('Blank', 'yaycheckout')}</span>
+                <RadioGroupItem value="default" />
+                <span className="text-sm font-semibold">{__('Default', 'yaycheckout')}</span>
               </div>
               <p className="text-muted-foreground text-xs">
-                {__('Root + required sections. Always a working checkout.', 'yaycheckout')}
+                {__('Classic two-column template. Always a working checkout.', 'yaycheckout')}
               </p>
             </label>
 

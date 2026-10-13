@@ -1,3 +1,8 @@
+/* Show title off: keep the Heading block, hide it without deleting. */
+.yaycheckout-order-summary.is-title-hidden .yaycheckout-order-summary-header .wp-block-heading {
+	display: none;
+}
+
 /*
  * A collapsible header is a click target as a whole: an empty button covers it, under the header's own
  * controls, which keep their action.
@@ -39,4 +44,16 @@
 
 [aria-expanded="true"] > .yaycheckout-order-summary-toggle__chevron {
 	transform: rotate(180deg);
+}
+
+/*
+ * Classic themes (Storefront) float WooCommerce's order review into a right-hand column of
+ * their own; the layout places it. No block setting can undo a theme's float. Their margins are 0 too,
+ * since Order Summary's Block spacing places them and themes style them by id.
+ */
+.yaycheckout-checkout #order_review_heading,
+.yaycheckout-checkout #order_review {
+	float: none;
+	width: auto;
+	margin-block: 0;
 }

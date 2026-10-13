@@ -14,6 +14,14 @@
       "type": "string",
       "default": "Your order"
     },
+    "showTitle": {
+      "type": "boolean",
+      "default": true
+    },
+    "description": {
+      "type": "string",
+      "default": ""
+    },
     "collapsible": {
       "type": "boolean",
       "default": false
@@ -25,7 +33,8 @@
     }
   },
   "providesContext": {
-    "yaycheckout/orderSummaryLabel": "label"
+    "yaycheckout/orderSummaryLabel": "label",
+    "yaycheckout/orderSummaryDescription": "description"
   },
   "supports": {
     "html": false,

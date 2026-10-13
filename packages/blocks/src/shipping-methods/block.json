@@ -18,6 +18,14 @@
       "type": "string",
       "default": "Shipping methods"
     },
+    "showTitle": {
+      "type": "boolean",
+      "default": true
+    },
+    "description": {
+      "type": "string",
+      "default": ""
+    },
     "layout": {
       "type": "string",
       "default": "joined"
@@ -53,6 +61,7 @@
   },
   "editorScript": "file:./index.js",
   "editorStyle": "file:./index.css",
+  "viewScript": "file:./view.js",
   "style": "file:./style-index.css",
   "render": "file:./render.php"
 }

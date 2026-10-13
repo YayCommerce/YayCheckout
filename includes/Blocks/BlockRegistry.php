@@ -8,6 +8,7 @@ use YayCheckout\Renderer\CheckoutDifferentAddress;
 use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Renderer\HideWhenEmpty;
 use YayCheckout\Renderer\LiveValues;
+use YayCheckout\Renderer\PinToBottom;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -43,7 +44,7 @@ class BlockRegistry {
     private const ORDER = [
         'checkout',
         'login',
-        'progress',
+        'steps-progress',
         'steps',
         'step',
         'step-button',
@@ -292,7 +293,10 @@ class BlockRegistry {
             true
         );
 
-        // Enqueued by LiveValues::fill() when a Paragraph or Heading holds a live value. Skipped without a build.
+        // Enqueued by PinToBottom::filter_group() for a pinned Group.
+        wp_register_script( PinToBottom::SCRIPT, YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-pin-to-bottom.js', [], YAYCHECKOUT_VERSION, true );
+
+        // Enqueued by LiveValues::fill() when an allow-listed block holds a live value. Skipped without a build.
         $live_value = self::built_asset( 'live-value/view', true );
 
         if ( null !== $live_value ) {

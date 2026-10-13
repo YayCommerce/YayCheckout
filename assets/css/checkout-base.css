@@ -12,15 +12,17 @@
 
 /*
  * Neutral fallbacks, resolved once. A layout's empty token leaves its property unset, so these
- * follow the theme: its primary preset (then #3858e9, Classic two-column's primary), a border
- * mixed from the text colour, a 2px corner. Block CSS reads the same names.
+ * follow the theme: the primary and border colours through the design presets, which hold their
+ * fallbacks (design-presets.css), and a 2px corner. Block CSS reads the same names.
  */
 :root,
 .editor-styles-wrapper {
 	--yaycheckout-neutral-radius: 2px;
-	--yaycheckout-primary-color: var(--yaycheckout-color-primary, var(--wp--preset--color--primary, #3858e9));
-	--yaycheckout-border-color: var(--yaycheckout-color-border, color-mix(in srgb, currentColor 45%, transparent));
+	--yaycheckout-primary-color: var(--wp--preset--color--yaycheckout-primary);
+	--yaycheckout-border-color: var(--wp--preset--color--yaycheckout-border);
 	--yaycheckout-field-radius: var(--yaycheckout-input-radius, var(--yaycheckout-neutral-radius));
+	/* White check drawn on a filled circle: Steps, Steps Progress and the Cards with checkmark layouts. */
+	--yaycheckout-check-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
 }
 
 /* The theme's layout limits stop at the checkout: the layout's own blocks set any width. */
@@ -56,6 +58,69 @@ body.yaycheckout-page > .wp-site-blocks,
 }
 
 /*
+ * A Group pinned to the bottom of the screen (PinToBottom::PINNED_CLASS), on mobile only with
+ * PinToBottom::MOBILE_CLASS. Only the storefront render adds the class, so the editor shows it in place.
+ * The !important beats core's sticky container class, which may print after this file.
+ */
+.yaycheckout-pinned:not(.yaycheckout-pinned--mobile) {
+	position: fixed !important;
+	top: auto !important;
+	bottom: 0 !important;
+	left: 0 !important;
+	right: 0 !important;
+	z-index: 100;
+	margin: 0 !important;
+	max-width: none !important;
+	max-height: 100dvh;
+	overflow-y: auto;
+	box-shadow: 0 -2px 3px rgba(0, 0, 0, .05);
+}
+
+.yaycheckout-pinned:not(.yaycheckout-pinned--mobile):not(.has-background) {
+	background-color: #fff;
+}
+
+@media (max-width: 781px) {
+	.yaycheckout-pinned.yaycheckout-pinned--mobile {
+		position: fixed !important;
+		top: auto !important;
+		bottom: 0 !important;
+		left: 0 !important;
+		right: 0 !important;
+		z-index: 100;
+		margin: 0 !important;
+		max-width: none !important;
+		max-height: 100dvh;
+		overflow-y: auto;
+		box-shadow: 0 -2px 3px rgba(0, 0, 0, .05);
+	}
+
+	.yaycheckout-pinned.yaycheckout-pinned--mobile:not(.has-background) {
+		background-color: #fff;
+	}
+}
+
+/* The bar keeps its header in view: an Order Summary's details scroll inside it. */
+.yaycheckout-pinned .yaycheckout-order-summary-details {
+	max-height: 50vh;
+	overflow-y: auto;
+}
+
+/* checkout-pin-to-bottom.js KEYBOARD_HIDDEN, set while a touch keyboard is up; the height stays, so nothing shifts. */
+.yaycheckout-pinned.is-keyboard-hidden {
+	visibility: hidden;
+}
+
+/* checkout-pin-to-bottom.js HAS_PINNED and HEIGHT_VAR, set while a bar is fixed. */
+html.yaycheckout-has-pinned {
+	scroll-padding-bottom: var(--yaycheckout-pinned-height, 0px);
+}
+
+html.yaycheckout-has-pinned body {
+	padding-bottom: var(--yaycheckout-pinned-height, 0px);
+}
+
+/*
  * Classic themes (Storefront) float WooCommerce's order review into a right-hand column of
  * their own; the layout places it. No block setting can undo a theme's float. Their margins are 0 too,
  * since Order Summary's Block spacing places them and themes style them by id.
@@ -67,20 +132,19 @@ body.yaycheckout-page > .wp-site-blocks,
 	margin-block: 0;
 }
 
-/*
- * Field rows. A Field or Email block wraps WooCommerce's p.form-row in a div.form-row of its
- * own, so the gap goes on the outer row only. Classic themes float the half-width rows; the
- * layout's Columns place fields side by side instead.
- */
-.yaycheckout-checkout .form-row {
-	margin-block: 0 12px;
-	padding: 0;
+/* Section description under Shipping Methods, Payment, and Order Summary headings. */
+.yaycheckout-checkout .yaycheckout-section-description {
+	margin: 0 0 8px;
+	font-size: 0.875em;
+	opacity: 0.75;
 }
 
-.yaycheckout-checkout .form-row .form-row {
-	margin: 0;
+.yaycheckout-checkout .yaycheckout-order-summary-header > .yaycheckout-section-description {
+	flex-basis: 100%;
+	margin: 4px 0 0;
 }
 
+/* Field rows. Classic themes float the half-width rows; the layout's Columns place fields side by side instead. */
 .yaycheckout-checkout :is(.form-row-first, .form-row-last, .form-row-wide) {
 	float: none;
 	width: auto;
@@ -211,7 +275,9 @@ body.yaycheckout-page > .wp-site-blocks,
 /*
  * Text inputs, selects, textareas, the coupon code and the select2 box all draw as one input.
  * A section left at theme default leaves its token unset, so the fallback applies: the theme's
- * font and text colour, a border mixed from the text colour, a transparent background.
+ * font and text colour, a border mixed from the text colour, a transparent background. The input
+ * background and text colour tokens win over the page's background and text colour. A size token
+ * zeroes the vertical padding, so the box is exactly its height and the text centres in it.
  */
 .yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code),
 .yaycheckout-checkout .select2-container .select2-selection--single {
@@ -219,15 +285,15 @@ body.yaycheckout-page > .wp-site-blocks,
 	width: 100%;
 	min-height: var(--yaycheckout-input-height, 40px);
 	margin: 0;
-	padding-block: 8px;
+	padding-block: var(--yaycheckout-input-padding-block, 8px);
 	padding-inline: var(--yaycheckout-input-padding-inline, 12px);
 	border-style: solid;
 	border-width: var(--yaycheckout-input-border-width, 1px);
 	border-color: var(--yaycheckout-border-color);
 	border-radius: var(--yaycheckout-field-radius);
-	background-color: var(--yaycheckout-color-background, transparent);
+	background-color: var(--yaycheckout-input-background, var(--yaycheckout-color-background, transparent));
 	box-shadow: none;
-	color: inherit;
+	color: var(--yaycheckout-input-color, inherit);
 	font: inherit;
 	line-height: 1.4;
 }
@@ -267,8 +333,8 @@ body.yaycheckout-page > .wp-site-blocks,
 body.yaycheckout-page .select2-dropdown {
 	border-color: var(--yaycheckout-border-color);
 	border-radius: var(--yaycheckout-field-radius);
-	background-color: var(--yaycheckout-color-background, #fff);
-	color: var(--yaycheckout-color-text, inherit);
+	background-color: var(--yaycheckout-input-background, var(--yaycheckout-color-background, #fff));
+	color: var(--yaycheckout-input-color, var(--yaycheckout-color-text, inherit));
 }
 
 body.yaycheckout-page .select2-search--dropdown .select2-search__field {
@@ -303,6 +369,108 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 .yaycheckout-checkout .form-row.woocommerce-invalid :is(.input-text, select, textarea),
 .yaycheckout-checkout .form-row.woocommerce-invalid .select2-container .select2-selection--single {
 	border-color: var(--wc-red, #cc1818);
+}
+
+/*
+ * Floating labels (the layout's inputs.label token): the label rests inside the box like a placeholder and
+ * floats to its top once the field is focused, filled or holds a select. Only rows whose visible label comes
+ * straight before a text control, a select or the editor's preview control; checkbox and radio rows and
+ * screen-reader-only labels keep the default. The Coupon form's field floats its own label, which is screen-reader-only
+ * otherwise (coupon-form/style.css). WooCommerce prints the label before the input, so the row's
+ * state picks the look: :focus-within, autofill, or is-filled from checkout-floating-labels.js.
+ */
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
+),
+.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field {
+	/* A size token sets it; without one, tall enough for the label and the value. */
+	--yaycheckout-floating-height: var(--yaycheckout-input-floating-height, max(var(--yaycheckout-input-height, 40px), 3.25em));
+	position: relative;
+}
+
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
+) > :is(label, .yaycheckout-field-preview__label),
+.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__label {
+	position: absolute;
+	z-index: 1;
+	top: calc(var(--yaycheckout-floating-height) / 2);
+	inset-inline-start: calc(var(--yaycheckout-input-padding-inline, 12px) + 1px);
+	max-width: calc(100% - 2 * var(--yaycheckout-input-padding-inline, 12px) - 2px);
+	width: auto;
+	height: auto;
+	padding: 0;
+	margin: 0;
+	overflow: hidden;
+	clip-path: none;
+	color: var(--yaycheckout-input-color, inherit);
+	font-weight: 400;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	opacity: 0.7;
+	transform: translateY(-50%);
+	transform-origin: 0 0;
+	transition: top 0.15s ease, font-size 0.15s ease, transform 0.15s ease;
+}
+
+/* The storefront label lets a click through to its input; the editor's stays clickable, to edit its text. */
+.yaycheckout-checkout--floating-labels .form-row > label,
+.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > label {
+	pointer-events: none;
+}
+
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
+) :is(.input-text, select, textarea, .select2-selection--single),
+.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__code {
+	min-height: var(--yaycheckout-floating-height);
+	padding-block: 1.375em var(--yaycheckout-input-padding-block, 0.375em);
+}
+
+/* Floated: small, at the top of the box. A select always shows a value, so its label never rests. */
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
+):is(:focus-within, .is-filled, :has(select)) > :is(label, .yaycheckout-field-preview__label),
+.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field:is(:focus-within, .is-filled) > .yaycheckout-coupon-form__label {
+	top: 0.4em;
+	font-size: 0.75em;
+	transform: none;
+}
+
+/* Its own rule: a browser without :autofill would drop the whole list above. */
+.yaycheckout-checkout--floating-labels .form-row:has(> label + .woocommerce-input-wrapper :autofill) > label {
+	top: 0.4em;
+	font-size: 0.75em;
+	transform: none;
+}
+
+/* A resting label stands in for the placeholder, which shows once the label floats. */
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > .input-text),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea))
+):not(:focus-within, .is-filled) :is(.input-text, textarea)::placeholder {
+	opacity: 0;
+}
+
+/* The coupon's label is its placeholder text, so the placeholder would only repeat it. */
+.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__code::placeholder {
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.yaycheckout-checkout--floating-labels .form-row > :is(label, .yaycheckout-field-preview__label),
+	.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__label {
+		transition: none;
+	}
 }
 
 /* Notices: WooCommerce's classic list markup, and the banner markup it prints on block themes (wc-blocks-style draws its layout). */
@@ -379,13 +547,31 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 }
 
 /*
+ * A button takes the inputs' height in either label mode, so Coupon's Apply lines up with its field. Registered,
+ * so a size's em resolves here at the layout's font, not at a button's own (a theme's elements.button font size).
+ */
+@property --yaycheckout-button-height {
+	syntax: "<length>";
+	inherits: true;
+	initial-value: 40px;
+}
+
+.yaycheckout-checkout {
+	--yaycheckout-button-height: var(--yaycheckout-input-height, 40px);
+}
+
+.yaycheckout-checkout--floating-labels {
+	--yaycheckout-button-height: var(--yaycheckout-input-floating-height, var(--yaycheckout-input-height, 40px));
+}
+
+/*
  * Buttons: Coupon's Apply, Login's submit, WooCommerce's .button and Place Order. No display:
  * Place Order's align classes set it. Block supports (inline styles, has-* classes) win.
  */
 .yaycheckout-checkout :is(.button, button[type="submit"]) {
 	box-sizing: border-box;
-	min-height: var(--yaycheckout-input-height, 40px);
-	padding: 8px 20px;
+	min-height: var(--yaycheckout-button-height, 40px);
+	padding: var(--yaycheckout-input-padding-block, 8px) 20px;
 	/* Transparent, so a background picked in the block's settings shows edge to edge. */
 	border: 1px solid transparent;
 	border-radius: var(--yaycheckout-neutral-radius);
@@ -450,28 +636,6 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 /* A Field whose row WooCommerce's address-i18n.js hid for the country is left empty; it takes no gap. */
 :is(.yaycheckout-billing, .yaycheckout-shipping) > .yaycheckout-field:has(> .form-row[style*="display: none"]):not(:has(> .form-row:not([style*="display: none"]))) {
 	display: none;
-}
-
-/* Order Summary's Totals table: its amounts end-aligned in a fixed column. Items lays out its own rows. */
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals {
-	width: 100%;
-	table-layout: fixed;
-	border-collapse: collapse;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td) {
-	padding: 6px 0;
-	border: 0;
-	vertical-align: top;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):first-child {
-	text-align: start;
-}
-
-.yaycheckout-order-summary table.yaycheckout-order-summary-totals :is(th, td):last-child {
-	width: 40%;
-	text-align: end;
 }
 
 /* iOS zooms into a focused field whose text is under 16px. */

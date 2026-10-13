@@ -25,9 +25,11 @@
 	list-style: none;
 }
 
+/* The whole item selects its rate: shared/method-item-click.ts, and the preview in edit.tsx. */
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option {
 	position: relative;
 	list-style: none;
+	cursor: pointer;
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option > input.shipping_method {
@@ -78,9 +80,10 @@
 	white-space: nowrap;
 }
 
-/* Pickup points and delivery fields print after the label, on their own row. */
+/* Pickup points and delivery fields print after the label, on their own row. A click there selects nothing. */
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option > :not(label, input) {
 	flex-basis: 100%;
+	cursor: auto;
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__package + .yaycheckout-shipping-methods__package {
@@ -305,14 +308,10 @@
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="checkmark"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
 	background-color: var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
 	box-shadow: none;
-	color: #fff;
-}
-
-.yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="checkmark"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator::after {
-	content: "\2713";
-	font-size: 13px;
-	font-weight: 700;
-	line-height: 1;
+	background-image: var(--yaycheckout-check-icon);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: 10px;
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="checkmark"] .yaycheckout-shipping-methods__body {

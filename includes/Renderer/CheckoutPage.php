@@ -36,6 +36,8 @@ class CheckoutPage {
     /** Longest reason kept: the option is autoloaded, and an exception message can be arbitrarily large. */
     private const REASON_MAX_LENGTH = 500;
 
+    private const FLOATING_LABELS_SCRIPT = 'yaycheckout-floating-labels';
+
     /** @var Layout|null|false false until first resolved. */
     private $layout = false;
 
@@ -173,7 +175,7 @@ class CheckoutPage {
         return ( new SettingsRepository() )->is_safe_mode();
     }
 
-    /** Woo's checkout scripts, the base stylesheet and the design tokens. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
+    /** Woo's checkout scripts, the base stylesheet, the design tokens and, for floating labels, their script. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
     public function enqueue_scripts(): void {
         CheckoutScripts::enqueue_wc_scripts();
 
@@ -186,6 +188,16 @@ class CheckoutPage {
         }
 
         ( new CheckoutBaseStyles() )->enqueue( true, $this->layout()->design );
+
+        if ( $this->layout()->design->has_floating_labels() ) {
+            wp_enqueue_script(
+                self::FLOATING_LABELS_SCRIPT,
+                YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-floating-labels.js',
+                [ 'jquery' ],
+                YAYCHECKOUT_VERSION,
+                true
+            );
+        }
     }
 
     private function resolve(): ?Layout {

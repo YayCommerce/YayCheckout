@@ -8,7 +8,7 @@
 import { onDomReady } from '../shared/dom-ready';
 import { fieldText } from '../shared/form-text';
 import { jquery } from '../shared/jquery';
-import { EMPTY_CLASS, FALLBACK_ATTR, FIELD_PREFIX, KEY_ATTR, LIVE_VALUE_CLASS, VALUES_ID } from './constants';
+import { EMPTY_CLASS, FALLBACK_ATTR, FIELD_PREFIX, KEY_ATTR, LIVE_VALUE_CLASS, PREFIX_ATTR, SUFFIX_ATTR, VALUES_ID } from './constants';
 import './view.css';
 
 interface CartValue {
@@ -20,10 +20,11 @@ function spans(): HTMLElement[] {
 	return [ ...document.querySelectorAll< HTMLElement >( `.${ LIVE_VALUE_CLASS }[${ KEY_ATTR }]` ) ];
 }
 
-/** As LiveValues::fill(): the value, or the fallback while the value is empty and the fallback isn't ''. */
+/** As LiveValues::fill_span(): the value between the prefix and suffix, or the fallback alone while the value is empty. */
 function show( span: HTMLElement, text: string, empty: boolean ): void {
-	const fallback = span.getAttribute( FALLBACK_ATTR ) ?? '';
-	const shown = empty && fallback !== '' ? fallback : text;
+	const shown = empty
+		? span.getAttribute( FALLBACK_ATTR ) ?? ''
+		: ( span.getAttribute( PREFIX_ATTR ) ?? '' ) + text + ( span.getAttribute( SUFFIX_ATTR ) ?? '' );
 
 	if ( span.textContent !== shown ) {
 		span.textContent = shown;
@@ -74,9 +75,33 @@ function syncFields(): void {
 	} );
 }
 
+/**
+ * WooCommerce's payment_method_selected sets #place_order's text to its data-value on every payment method
+ * click, which init_payment_methods() makes after each updated_checkout, and that drops the label's spans.
+ * They go back while the text is that label, not a gateway's order_button_text. The observer runs before paint.
+ */
+function keepPlaceOrderSpans(): void {
+	const button = document.getElementById( 'place_order' );
+
+	if ( ! button?.querySelector( `.${ LIVE_VALUE_CLASS }` ) ) {
+		return;
+	}
+
+	const label = button.innerHTML;
+
+	new MutationObserver( () => {
+		if ( ! button.querySelector( `.${ LIVE_VALUE_CLASS }` ) && button.textContent === button.dataset.value ) {
+			button.innerHTML = label;
+			syncCart();
+			syncFields();
+		}
+	} ).observe( button, { childList: true } );
+}
+
 onDomReady( () => {
 	syncCart();
 	syncFields();
+	keepPlaceOrderSpans();
 
 	// updated_checkout also fires once after load, after address-i18n.js has relabelled and hidden fields.
 	jquery( document.body )

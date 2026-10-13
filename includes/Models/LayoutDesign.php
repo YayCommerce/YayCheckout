@@ -22,8 +22,15 @@ final class LayoutDesign {
      */
     public const GRADIENT_PATTERN = '^(repeating-)?(linear|radial|conic)-gradient\\([^"\'\\\\*;{}<>]*\\)$';
 
-    /** A theme colour preset, by the custom property WordPress prints for it, so the token follows the theme's palette. */
-    public const PRESET_COLOR_PATTERN = '^var\\(--wp--preset--color--[a-z0-9-]+\\)$';
+    /**
+     * A theme colour preset, by the custom property WordPress prints for it, so the token follows the theme's palette.
+     * Not one of the design's own presets (design-presets.css): each is read from a colour token, so a token naming
+     * one would read itself.
+     */
+    public const PRESET_COLOR_PATTERN = '^var\\(--wp--preset--color--(?!' . self::DESIGN_PRESET_PREFIX . ')[a-z0-9-]+\\)$';
+
+    /** The slug prefix of the palette presets that offer the colour tokens to block colour pickers (addDesignPalette() in layout-design.tsx). */
+    public const DESIGN_PRESET_PREFIX = 'yaycheckout-';
 
     /** A theme gradient preset, the same way. */
     public const PRESET_GRADIENT_PATTERN = '^var\\(--wp--preset--gradient--[a-z0-9-]+\\)$';
@@ -70,8 +77,10 @@ final class LayoutDesign {
      *   'enum' => array (enum only), 'min'/'max' => int (int only) ]
      *
      * Every default is empty: '' for a colour or an enum, null for an int. A colour is '', a hex colour or a
-     * theme preset; the background may also be a gradient. The inputs.size token is an abstract step; the
-     * renderer decides its px.
+     * theme preset; colours.background may also be a gradient. An empty typography.base_size prints
+     * DesignStyles::DEFAULT_BASE_SIZE, not the theme's size. The inputs.size token is an abstract step; the
+     * renderer decides its height, in em. The inputs.label token prints no custom property: it is the checkout
+     * wrapper's yaycheckout-checkout--floating-labels class.
      */
     public static function schema(): array {
         return [
@@ -107,24 +116,42 @@ final class LayoutDesign {
                 ],
             ],
             'inputs'     => [
-                'style'  => [
+                'style'      => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'boxed', 'underline' ],
                 ],
-                'size'   => [
+                'size'       => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'small', 'medium', 'large' ],
                 ],
-                'radius' => [
+                'radius'     => [
                     'type'    => 'int',
                     'default' => null,
                     'min'     => 0,
                     'max'     => 24,
                 ],
+                'background' => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'text'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'label'      => [
+                    'type'    => 'enum',
+                    'default' => '',
+                    'enum'    => [ '', 'floating' ],
+                ],
             ],
         ];
+    }
+
+    /** True when the inputs' labels sit inside the box and float up once the field is focused or filled. */
+    public function has_floating_labels(): bool {
+        return 'floating' === ( $this->sections['inputs']['label'] ?? '' );
     }
 
     /**

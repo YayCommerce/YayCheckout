@@ -69,12 +69,15 @@ $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, '
     echo \YayCheckout\Services\Disclosure::open_if( $attributes, 'yaycheckout-coupon-code', __( 'Coupon code', 'yaycheckout' ), $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
     ?>
     <div class="yaycheckout-coupon-form__row">
-        <label for="yaycheckout-coupon-code" class="screen-reader-text"><?php esc_html_e( 'Coupon:', 'yaycheckout' ); ?></label>
-        <?php
-        // No name: a coupon_code posted with the checkout form would be noise in every update_order_review and order submit.
-        // No input-text or form-row: inside the checkout form, WooCommerce's validate_field would claim the field and strip its error.
-        ?>
-        <input type="text" id="yaycheckout-coupon-code" class="yaycheckout-coupon-form__code" placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>" value="" />
+        <span class="yaycheckout-coupon-form__field">
+            <?php // Read by screen readers only, unless the layout's labels float: then it stands in for the placeholder (style.css). ?>
+            <label for="yaycheckout-coupon-code" class="yaycheckout-coupon-form__label"><?php echo esc_html( $yaycheckout_placeholder ); ?></label>
+            <?php
+            // No name: a coupon_code posted with the checkout form would be noise in every update_order_review and order submit.
+            // No input-text or form-row: inside the checkout form, WooCommerce's validate_field would claim the field and strip its error.
+            ?>
+            <input type="text" id="yaycheckout-coupon-code" class="yaycheckout-coupon-form__code" placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>" value="" />
+        </span>
         <?php echo $yaycheckout_button; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered block markup; its render.php escapes. ?>
     </div>
     <div class="yaycheckout-coupon-form__notices" aria-live="polite" data-error-text="<?php esc_attr_e( 'The coupon could not be applied. Please try again.', 'yaycheckout' ); ?>"></div>

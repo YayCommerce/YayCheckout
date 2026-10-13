@@ -108,7 +108,7 @@ class CheckoutFragments {
     }
 
     /**
-     * Swaps the fragments of this layout's sections for this layout's HTML, and refreshes Place order's total.
+     * Swaps the fragments of this layout's sections for this layout's HTML.
      * A layout that throws here is recorded like one that throws on the page (CheckoutPage::absorb()); with
      * safe mode on, WooCommerce's own fragments go out instead of an error, and the next request falls back.
      *
@@ -121,9 +121,16 @@ class CheckoutFragments {
             return $fragments;
         }
 
+        $level = ob_get_level();
+
         try {
             return $this->layout_fragments( $fragments, $layout );
         } catch ( \Throwable $ex ) {
+            // A builder opens a buffer before it renders; left open, its half-printed HTML would end up in the AJAX response.
+            while ( ob_get_level() > $level ) {
+                ob_end_clean();
+            }
+
             if ( ! CheckoutPage::get_instance()->absorb( $layout, $ex ) ) {
                 throw $ex;
             }
@@ -151,15 +158,7 @@ class CheckoutFragments {
             $html[ $selector ] = self::$build( $attrs );
         }
 
-        $fragments = array_merge( $fragments, array_filter( $html, 'strlen' ) );
-
-        $button = isset( $rendered['place_order'] ) ? self::place_order_button_html( $layout->content ) : '';
-
-        if ( '' !== $button ) {
-            $fragments['#place_order'] = $button;
-        }
-
-        return $fragments;
+        return array_merge( $fragments, array_filter( $html, 'strlen' ) );
     }
 
     /**
@@ -179,13 +178,6 @@ class CheckoutFragments {
         }
 
         return array_values( $summary );
-    }
-
-    /** The Place order button alone (render.php prints only it during AJAX), when it shows the total. */
-    private static function place_order_button_html( string $markup ): string {
-        $block = LayoutMarkupReader::first_block( $markup, 'yaycheckout/place-order' );
-
-        return null === $block || empty( $block['attrs']['showTotal'] ) ? '' : render_block( $block );
     }
 
     public static function print_shipping_rates(): void {
@@ -703,6 +695,11 @@ class CheckoutFragments {
                 $wrapper['class'] = $class;
             }
 
+            $badge_style = self::order_items_badge_style( $block->attributes );
+            if ( '' !== $badge_style ) {
+                $wrapper['style'] = $badge_style;
+            }
+
             $stepper = self::order_items_options( $block->attributes )['show_stepper'];
 
             if ( $stepper ) {
@@ -721,6 +718,34 @@ class CheckoutFragments {
         }
 
         echo '</div>';
+    }
+
+    /**
+     * Inline --yaycheckout-badge-* vars from the Items block's badge attributes; empty when none
+     * are set. On the wrapper, which checkout.js keeps across refreshes. Mirrors badgeStyle() in
+     * order-summary-items/edit.tsx.
+     *
+     * @param array $attributes Block attributes.
+     */
+    private static function order_items_badge_style( array $attributes ): string {
+        $decls = [];
+
+        $colors = [
+            'badgeBackgroundColor' => '--yaycheckout-badge-bg',
+            'badgeTextColor'       => '--yaycheckout-badge-text',
+        ];
+        foreach ( $colors as $key => $var ) {
+            $value = self::css_color( $attributes[ $key ] ?? null );
+            if ( '' !== $value ) {
+                $decls[] = $var . ':' . $value;
+            }
+        }
+
+        if ( isset( $attributes['badgeSize'] ) && is_numeric( $attributes['badgeSize'] ) ) {
+            $decls[] = '--yaycheckout-badge-size:' . max( 16, min( 32, (int) $attributes['badgeSize'] ) ) . 'px';
+        }
+
+        return implode( ';', $decls );
     }
 
     /**
@@ -926,31 +951,58 @@ class CheckoutFragments {
     }
 
     /**
-     * The tfoot rows of Woo's checkout/review-order.php, as the body of their own table, without
-     * the shipping rates: the Shipping Methods block offers those, and Total still counts them.
+     * The Totals block's attributes with their defaults. During AJAX they come from the parsed
+     * layout, where an untouched attribute is missing, so each default matches block.json's.
      *
-     * @param array $attributes Unused; Totals has no attributes.
+     * @return array{show_currency_code: bool, show_subtotal: bool, show_total: bool, subtotal_label: string, total_label: string}
      */
-    public static function order_totals_html( array $attributes = [] ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- fragments() passes every summary builder its attrs.
+    public static function order_totals_options( array $attributes ): array {
+        $bool = static function ( string $name, bool $fallback ) use ( $attributes ): bool {
+            return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
+        };
+
+        return [
+            'show_currency_code' => $bool( 'showCurrencyCode', false ),
+            'show_subtotal'      => $bool( 'showSubtotal', true ),
+            'show_total'         => $bool( 'showTotal', true ),
+            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
+            'subtotal_label'     => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
+            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
+            'total_label'        => LayoutMarkupReader::plain_text( $attributes, 'totalLabel', __( 'Total', 'woocommerce' ) ),
+        ];
+    }
+
+    /**
+     * The tfoot rows of Woo's checkout/review-order.php, as the body of their own table. Shipping
+     * is one read-only row (method name / Free); the Shipping Methods block keeps the radios.
+     *
+     * @param array $attributes Totals block attributes; see order_totals_options().
+     */
+    public static function order_totals_html( array $attributes = [] ): string {
         if ( ! WC()->cart instanceof \WC_Cart ) {
             return '';
         }
+
+        $options = self::order_totals_options( $attributes );
 
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Woo's review-order hooks and strings, so its translation still applies.
         ob_start();
         ?>
 <table class="shop_table <?php echo esc_attr( self::ORDER_TOTALS_CLASS ); ?>">
     <tbody>
+        <?php if ( $options['show_subtotal'] ) : ?>
         <tr class="cart-subtotal">
-            <th><?php esc_html_e( 'Subtotal', 'woocommerce' ); ?></th>
+            <th><?php echo esc_html( $options['subtotal_label'] ); ?></th>
             <td><?php wc_cart_totals_subtotal_html(); ?></td>
         </tr>
+        <?php endif; ?>
         <?php foreach ( WC()->cart->get_coupons() as $code => $coupon ) : ?>
         <tr class="cart-discount coupon-<?php echo esc_attr( sanitize_title( $code ) ); ?>">
             <th><?php wc_cart_totals_coupon_label( $coupon ); ?></th>
             <td><?php wc_cart_totals_coupon_html( $coupon ); ?></td>
         </tr>
         <?php endforeach; ?>
+        <?php self::print_order_shipping_row(); ?>
         <?php foreach ( WC()->cart->get_fees() as $fee ) : ?>
         <tr class="fee">
             <th><?php echo esc_html( $fee->name ); ?></th>
@@ -973,10 +1025,17 @@ class CheckoutFragments {
             <?php endif; ?>
         <?php endif; ?>
         <?php do_action( 'woocommerce_review_order_before_order_total' ); ?>
+        <?php if ( $options['show_total'] ) : ?>
         <tr class="order-total">
-            <th><?php esc_html_e( 'Total', 'woocommerce' ); ?></th>
-            <td><?php wc_cart_totals_order_total_html(); ?></td>
+            <th><?php echo esc_html( $options['total_label'] ); ?></th>
+            <td>
+                <?php if ( $options['show_currency_code'] ) : ?>
+                <span class="<?php echo esc_attr( self::ORDER_TOTALS_CLASS . '__currency' ); ?>"><?php echo esc_html( get_woocommerce_currency() ); ?></span>
+                <?php endif; ?>
+                <?php wc_cart_totals_order_total_html(); ?>
+            </td>
         </tr>
+        <?php endif; ?>
         <?php do_action( 'woocommerce_review_order_after_order_total' ); ?>
     </tbody>
 </table>
@@ -984,5 +1043,85 @@ class CheckoutFragments {
         // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch
 
         return (string) ob_get_clean();
+    }
+
+    /**
+     * One read-only shipping line for the totals table: the selected method name(s), and Free or
+     * the shipping amount. Radios stay in the Shipping Methods block.
+     */
+    private static function print_order_shipping_row(): void {
+        if ( ! WC()->cart instanceof \WC_Cart || ! WC()->cart->needs_shipping() ) {
+            return;
+        }
+
+        $packages = WC()->shipping()->get_packages();
+        $packages = is_array( $packages ) ? $packages : array();
+        $chosen   = WC()->session ? WC()->session->get( 'chosen_shipping_methods', array() ) : array();
+        $chosen   = is_array( $chosen ) ? $chosen : array();
+
+        $selected_names  = array();
+        $available_names = array();
+        $has_selected    = false;
+
+        foreach ( $packages as $index => $package ) {
+            if ( ! is_array( $package ) ) {
+                continue;
+            }
+
+            $methods   = isset( $package['rates'] ) && is_array( $package['rates'] ) ? $package['rates'] : array();
+            $chosen_id = isset( $chosen[ $index ] ) ? $chosen[ $index ] : '';
+
+            foreach ( $methods as $method ) {
+                if ( ! $method instanceof \WC_Shipping_Rate ) {
+                    continue;
+                }
+
+                $name = $method->get_label();
+                if ( is_string( $name ) && '' !== $name && ! in_array( $name, $available_names, true ) ) {
+                    $available_names[] = $name;
+                }
+
+                if ( '' !== $chosen_id && $method->id === $chosen_id ) {
+                    $has_selected = true;
+                    if ( is_string( $name ) && '' !== $name && ! in_array( $name, $selected_names, true ) ) {
+                        $selected_names[] = $name;
+                    }
+                }
+            }
+        }
+
+        // phpcs:disable WordPress.WP.I18n.TextDomainMismatch -- Woo's strings, so its translation still applies.
+        // The selected method(s), else the only available rate, else plain Shipping.
+        if ( array() !== $selected_names ) {
+            $label = implode( ', ', $selected_names );
+        } elseif ( 1 === count( $available_names ) ) {
+            $label = $available_names[0];
+        } else {
+            $label = __( 'Shipping', 'woocommerce' );
+        }
+
+        if ( $has_selected ) {
+            $amount = (float) WC()->cart->get_shipping_total();
+            if ( WC()->cart->display_prices_including_tax() ) {
+                $amount += (float) WC()->cart->get_shipping_tax();
+            }
+
+            if ( 0.0 === round( $amount, wc_get_price_decimals() ) ) {
+                $value = '<strong>' . esc_html__( 'Free', 'woocommerce' ) . '</strong>';
+            } else {
+                $value = wc_price( $amount );
+            }
+        } elseif ( WC()->customer && WC()->customer->has_calculated_shipping() ) {
+            $value = esc_html__( 'No available delivery option', 'woocommerce' );
+        } else {
+            $value = esc_html__( 'Enter address to calculate', 'woocommerce' );
+        }
+        // phpcs:enable WordPress.WP.I18n.TextDomainMismatch
+        ?>
+        <tr class="yaycheckout-order-summary-totals__shipping">
+            <th><?php echo esc_html( $label ); ?></th>
+            <td><?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above or wc_price() HTML. ?></td>
+        </tr>
+        <?php
     }
 }
