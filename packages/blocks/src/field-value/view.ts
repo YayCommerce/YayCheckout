@@ -20,6 +20,8 @@ interface Source {
 	keys: string[];
 	serverLabels: string[];
 	separator: string;
+	/** The typed placeholder with its formatting, which render.php prints beside the value; null without one. */
+	placeholder: HTMLTemplateElement | null;
 }
 
 /** What render.php printed on each value element, parsed once rather than on every keystroke. */
@@ -51,6 +53,7 @@ function source( element: HTMLElement ): Source {
 			keys: strings( element.dataset.fieldKeys ),
 			serverLabels: strings( element.dataset.labels ),
 			separator: element.dataset.separator ?? ', ',
+			placeholder: element.parentElement?.querySelector( 'template.yaycheckout-field-value__placeholder' ) ?? null,
 		};
 		sources.set( element, parsed );
 	}
@@ -63,7 +66,7 @@ function sync(): void {
 	let changed = false;
 
 	document.querySelectorAll< HTMLElement >( VALUE ).forEach( ( element ) => {
-		const { keys, serverLabels, separator } = source( element );
+		const { keys, serverLabels, separator, placeholder } = source( element );
 		// Empty values are skipped, as render.php does, so a half-filled block shows no dangling separator.
 		const value = keys
 			.map( ( key ) => fieldText( form, key ) )
@@ -75,7 +78,12 @@ function sync(): void {
 			element.dataset.placeholder ||
 			keys.map( ( key, index ) => formLabel( key ) || serverLabels[ index ] || key ).join( separator );
 
-		if ( element.textContent !== shown ) {
+		if ( value === '' && placeholder ) {
+			// Rebuilt only as the value empties, since render.php printed it on the first paint.
+			if ( ! element.classList.contains( 'is-empty' ) ) {
+				element.replaceChildren( placeholder.content.cloneNode( true ) );
+			}
+		} else if ( element.textContent !== shown ) {
 			element.textContent = shown;
 		}
 

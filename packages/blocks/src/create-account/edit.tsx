@@ -1,8 +1,8 @@
-import { decodeEntities } from '@wordpress/html-entities';
-import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
-import { ExternalLink, Notice, PanelBody, TextControl } from '@wordpress/components';
+import { RichText, useBlockProps } from '@wordpress/block-editor';
+import { ExternalLink, Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { FieldPreview } from '../shared/field-preview';
+import { TEXT_FORMATS_WITH_LIVE_VALUE } from '../shared/text-formats';
 import { createAccountEditorData } from './editor-data';
 import './editor.css';
 
@@ -25,15 +25,6 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 
 	return (
 		<>
-			<InspectorControls>
-				<PanelBody title={ __( 'Create account', 'yaycheckout' ) }>
-					<TextControl
-						label={ __( 'Checkbox label', 'yaycheckout' ) }
-						value={ decodeEntities( checkboxLabel ) }
-						onChange={ ( value ) => setAttributes( { checkboxLabel: value } ) }
-					/>
-				</PanelBody>
-			</InspectorControls>
 			<div { ...blockProps }>
 				{ ! createAccountEditorData.signupEnabled && (
 					<Notice
@@ -60,8 +51,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						value={ checkboxLabel }
 						onChange={ ( value: string ) => setAttributes( { checkboxLabel: value } ) }
 						placeholder={ __( 'Create an account?', 'yaycheckout' ) }
-						allowedFormats={ [] }
-						withoutInteractiveFormatting
+						allowedFormats={ TEXT_FORMATS_WITH_LIVE_VALUE }
 					/>
 				</div>
 				<FieldPreview

@@ -9,6 +9,7 @@ import { __ } from '@wordpress/i18n';
 import { useBlocksAllowedExcept } from '../shared/allowed-blocks';
 import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 import { stepTitle } from '../shared/step-title';
+import { TEXT_FORMATS_WITH_LIVE_VALUE } from '../shared/text-formats';
 import stepButtonMeta from '../step-button/block.json';
 import stepsMeta from '../steps/block.json';
 import './editor.css';
@@ -57,8 +58,7 @@ export default function Edit( { attributes, setAttributes, clientId, context }: 
 					value={ title }
 					onChange={ ( value: string ) => setAttributes( { title: value } ) }
 					placeholder={ stepTitle( '' ) }
-					allowedFormats={ [] }
-					withoutInteractiveFormatting
+					allowedFormats={ TEXT_FORMATS_WITH_LIVE_VALUE }
 				/>
 				{ hiddenOnCheckout && (
 					<span className="yaycheckout-step__hidden-note">{ __( 'Hidden on the checkout', 'yaycheckout' ) }</span>

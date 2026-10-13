@@ -31,6 +31,16 @@ class CheckoutStepsProgress {
     }
 
     /**
+     * A Step block's title as HTML safe to echo, with the display-text toolbar's formatting and live values,
+     * or "Step" while it holds no text. The step's header and Steps Progress print it alike.
+     *
+     * @param array $attrs The Step block's attributes.
+     */
+    public static function step_title_html( array $attrs ): string {
+        return LayoutMarkupReader::rich_text( $attrs, 'title', self::step_title( '' ) );
+    }
+
+    /**
      * Style of the block being rendered; the default when the attribute is missing or unknown.
      *
      * @param array $attributes Block attributes.
@@ -65,7 +75,8 @@ class CheckoutStepsProgress {
             $items .= '<li class="yaycheckout-steps-progress__item" data-state="' . ( $first ? 'current' : 'locked' ) . '" data-step="' . esc_attr( (string) $number ) . '"' . ( $first ? ' aria-current="step"' : '' ) . '>';
             $items .= '<' . $tag . ' class="yaycheckout-steps-progress__jump"' . ( $has_summary ? '' : ' type="button" disabled' ) . '>';
             $items .= '<span class="yaycheckout-steps-progress__marker">' . esc_html( (string) $number ) . '</span>';
-            $items .= '<span class="yaycheckout-steps-progress__title">' . esc_html( (string) $label ) . '</span>';
+            // step_title_html() filtered it with wp_kses.
+            $items .= '<span class="yaycheckout-steps-progress__title">' . $label . '</span>';
             $items .= '</' . $tag . '></li>';
         }
 
@@ -105,8 +116,8 @@ class CheckoutStepsProgress {
     }
 
     /**
-     * Titles of the rendered layout's first Steps block; empty without a layout or a Steps block.
-     * Go to Step reads it too, to count the steps.
+     * Titles of the rendered layout's first Steps block, as HTML safe to echo; empty without a layout or a
+     * Steps block. Go to Step reads it too, to count the steps.
      *
      * @return string[]
      */
@@ -120,7 +131,7 @@ class CheckoutStepsProgress {
     }
 
     /**
-     * Titles of the first Steps block's Step children, in order; empty without one.
+     * Titles of the first Steps block's Step children, in order, as step_title_html() prints them; empty without one.
      *
      * @return string[]
      */
@@ -130,7 +141,7 @@ class CheckoutStepsProgress {
 
         foreach ( null !== $block ? $block['innerBlocks'] : [] as $child ) {
             if ( self::STEP === ( $child['blockName'] ?? '' ) ) {
-                $titles[] = self::step_title( LayoutMarkupReader::plain_text( is_array( $child['attrs'] ?? null ) ? $child['attrs'] : [], 'title' ) );
+                $titles[] = self::step_title_html( is_array( $child['attrs'] ?? null ) ? $child['attrs'] : [] );
             }
         }
 

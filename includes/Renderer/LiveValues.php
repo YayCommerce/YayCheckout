@@ -6,8 +6,8 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Live values: cart totals, cart counts and shopper fields that a merchant drops into Paragraph and
- * Heading text in the layout editor (packages/blocks/src/live-value/). Each is a span holding its key
+ * Live values: cart totals, cart counts and shopper fields that a merchant drops into the text of the
+ * blocks in BLOCKS in the layout editor (packages/blocks/src/live-value/). Each is a span holding its key
  * and fallback; its text is only the editor's label.
  *
  * On a taken-over checkout, fill() swaps each span's text for its value, or its fallback while the value
@@ -19,7 +19,16 @@ class LiveValues {
     use SingletonTrait;
 
     /** Mirrored by LIVE_VALUE_BLOCKS in packages/blocks/src/live-value/constants.ts: the blocks whose text can hold live values. */
-    public const BLOCKS = [ 'core/paragraph', 'core/heading' ];
+    public const BLOCKS = [
+        'core/paragraph',
+        'core/heading',
+        'yaycheckout/step',
+        'yaycheckout/create-account',
+        'yaycheckout/different-address',
+    ];
+
+    /** Blocks that print another block's text, so its live values: Steps Progress shows the step titles. */
+    private const DISPLAY_BLOCKS = [ 'yaycheckout/steps-progress' ];
 
     /** Mirrored by LIVE_VALUE_CLASS in packages/blocks/src/live-value/constants.ts. */
     public const CLASS_NAME = 'yaycheckout-live-value';
@@ -58,7 +67,7 @@ class LiveValues {
     private $cart = null;
 
     protected function __construct() {
-        foreach ( self::BLOCKS as $name ) {
+        foreach ( array_merge( self::BLOCKS, self::DISPLAY_BLOCKS ) as $name ) {
             add_filter( 'render_block_' . $name, [ $this, 'fill' ], 10, 2 );
         }
 
@@ -134,8 +143,9 @@ class LiveValues {
     }
 
     /**
-     * Fills each live value span in a Paragraph or Heading on a taken-over checkout. Anywhere else, and in a
-     * block without one, the HTML comes back untouched.
+     * Fills each live value span in an allow-listed block on a taken-over checkout. Anywhere else, and in a
+     * block without one, the HTML comes back untouched. A Step's HTML holds its inner blocks, filled already;
+     * filling a span again prints the same text.
      *
      * @param string $block_content Rendered block.
      * @param array  $block         Parsed block.
