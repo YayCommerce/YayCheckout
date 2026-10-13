@@ -4,17 +4,13 @@
  * Steps owns the open step. This script mirrors each step's state and asks Steps to reopen one.
  */
 
+import { bindOnce } from '../shared/bind-once';
 import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor, reopenStep } from '../shared/checkout-root';
 import { onDomReady } from '../shared/dom-ready';
 
 const ITEM = '.yaycheckout-steps-progress__item';
 
 function boot(): void {
-	if ( document.documentElement.hasAttribute( 'data-yaycheckout-steps-progress-bound' ) ) {
-		return;
-	}
-
-	document.documentElement.setAttribute( 'data-yaycheckout-steps-progress-bound', '' );
 	document.addEventListener( 'yaycheckout:step-change', onStepChange );
 	document.addEventListener( 'click', onClick );
 }
@@ -108,4 +104,4 @@ function paint( item: HTMLElement, step: HTMLElement | undefined ): void {
 	}
 }
 
-onDomReady( boot );
+onDomReady( () => bindOnce( 'data-yaycheckout-steps-progress-bound', boot ) );

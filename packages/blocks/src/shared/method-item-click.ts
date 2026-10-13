@@ -6,6 +6,8 @@
  * leaves the selection alone.
  */
 
+import { bindOnce } from './bind-once';
+
 const ITEM = [
 	'.yaycheckout-checkout .yaycheckout-shipping-methods__option',
 	'.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li',
@@ -13,18 +15,13 @@ const ITEM = [
 
 export function bindMethodItemClick(): void {
 	// Both blocks' view scripts call this, so the first one binds.
-	if ( document.documentElement.hasAttribute( 'data-yaycheckout-method-click-bound' ) ) {
-		return;
-	}
-
-	document.documentElement.setAttribute( 'data-yaycheckout-method-click-bound', '' );
-	document.addEventListener( 'click', onClick );
+	bindOnce( 'data-yaycheckout-method-click-bound', () => document.addEventListener( 'click', onClick ) );
 }
 
 function onClick( event: MouseEvent ): void {
 	const target = event.target;
 
-	if ( ! ( target instanceof Element ) || target !== target.closest( ITEM ) ) {
+	if ( ! ( target instanceof Element ) || ! target.matches( ITEM ) ) {
 		return;
 	}
 
