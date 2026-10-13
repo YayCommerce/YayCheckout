@@ -24,6 +24,8 @@ class CheckoutFragments {
 
     public const ORDER_TOTAL_CLASS = 'yaycheckout-order-summary-total';
 
+    public const SAVINGS_NOTE_CLASS = 'yaycheckout-savings-note';
+
     /** Layout values the Payment block accepts; an unknown attribute falls back to joined. */
     public const PAYMENT_LAYOUTS = [ 'joined', 'checkmark', 'box', 'grid', 'cards', 'lines' ];
 
@@ -81,6 +83,7 @@ class CheckoutFragments {
         'yaycheckout/order-summary-items'     => [ '.' . self::ORDER_ITEMS_CLASS, 'order_items_html' ],
         'yaycheckout/order-summary-breakdown' => [ '.' . self::ORDER_BREAKDOWN_CLASS, 'order_breakdown_html' ],
         'yaycheckout/order-summary-total'     => [ '.' . self::ORDER_TOTAL_CLASS, 'order_total_html' ],
+        'yaycheckout/savings-note'            => [ '.' . self::SAVINGS_NOTE_CLASS, 'savings_note_html' ],
     ];
 
     /** Woo's update_order_review fragment for its whole review-order table. */
@@ -670,6 +673,34 @@ class CheckoutFragments {
         }
 
         return (string) ob_get_clean();
+    }
+
+    /**
+     * A Savings note block: watchable wrapper and the fragment root fragments() refreshes.
+     *
+     * @param \WP_Block $block Block instance.
+     */
+    public static function print_savings_note( \WP_Block $block ): void {
+        $empty = CheckoutSavingsNote::is_zero();
+
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
+        echo '<div ' . HideWhenEmpty::wrapper( [], $block->attributes, $empty ) . '>';
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sentence_html() escapes text and uses wc_price() HTML; live_attributes() is fixed.
+        echo self::savings_note_html( $block->attributes );
+        echo '</div>';
+    }
+
+    /**
+     * The Savings note sentence for first paint and update_order_review. Empty of text while
+     * savings are zero so Hide when empty can hide the wrapper after the fragment swaps.
+     *
+     * @param array $attributes Block attributes.
+     */
+    public static function savings_note_html( array $attributes = [] ): string {
+        $empty = CheckoutSavingsNote::is_zero();
+        $inner = $empty ? '' : CheckoutSavingsNote::sentence_html( $attributes );
+
+        return '<p class="' . esc_attr( self::SAVINGS_NOTE_CLASS ) . '"' . self::live_attributes( $empty ) . '>' . $inner . '</p>';
     }
 
     /** An Items, Order Summary Breakdown or Order Summary Total block: its wrapper and the fragment root fragments() refreshes. */
