@@ -2,22 +2,26 @@ import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { plainText } from '../shared/plain-text';
+import { SummaryPartPanels, summaryPartCSS } from '../shared/summary-part-styles';
 
 interface OrderSummaryTotalAttributes {
 	label?: string;
 	showLabel: boolean;
 	showCurrencyCode: boolean;
+	style?: Record< string, unknown >;
 }
 
 interface EditProps {
+	clientId: string;
 	attributes: OrderSummaryTotalAttributes;
 	setAttributes: ( attributes: Partial< OrderSummaryTotalAttributes > ) => void;
 }
 
 // Mirrors CheckoutFragments::order_total_html(), so its style.css draws it as on the storefront.
-export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { label, showLabel, showCurrencyCode } = attributes;
+export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
+	const { label, showLabel, showCurrencyCode, style } = attributes;
 	const placeholder = __( 'Total', 'yaycheckout' );
+	const css = summaryPartCSS( clientId, 'yaycheckout-order-summary-total', style );
 
 	return (
 		<>
@@ -43,7 +47,15 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					/>
 				</PanelBody>
 			</InspectorControls>
+			<InspectorControls group="styles">
+				<SummaryPartPanels
+					style={ style }
+					onChange={ ( next ) => setAttributes( { style: next } ) }
+					showLabel={ showLabel }
+				/>
+			</InspectorControls>
 			<div { ...useBlockProps() }>
+				{ css && <style>{ css }</style> }
 				<table className="shop_table yaycheckout-order-summary-total">
 					<tbody>
 						<tr className="order-total">

@@ -2,21 +2,25 @@ import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { plainText } from '../shared/plain-text';
+import { SummaryPartPanels, summaryPartCSS } from '../shared/summary-part-styles';
 
 interface OrderSummaryBreakdownAttributes {
 	showSubtotal: boolean;
 	subtotalLabel?: string;
+	style?: Record< string, unknown >;
 }
 
 interface EditProps {
+	clientId: string;
 	attributes: OrderSummaryBreakdownAttributes;
 	setAttributes: ( attributes: Partial< OrderSummaryBreakdownAttributes > ) => void;
 }
 
 // Mirrors CheckoutFragments::order_breakdown_html(), so its style.css draws it as on the storefront.
-export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { showSubtotal, subtotalLabel } = attributes;
+export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
+	const { showSubtotal, subtotalLabel, style } = attributes;
 	const subtotalPlaceholder = __( 'Subtotal', 'yaycheckout' );
+	const css = summaryPartCSS( clientId, 'yaycheckout-order-summary-breakdown', style );
 
 	return (
 		<>
@@ -37,7 +41,11 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					) }
 				</PanelBody>
 			</InspectorControls>
+			<InspectorControls group="styles">
+				<SummaryPartPanels style={ style } onChange={ ( next ) => setAttributes( { style: next } ) } />
+			</InspectorControls>
 			<div { ...useBlockProps() }>
+				{ css && <style>{ css }</style> }
 				<table className="shop_table yaycheckout-order-summary-breakdown">
 					<tbody>
 						{ showSubtotal && (
