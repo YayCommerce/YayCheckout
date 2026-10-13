@@ -25,6 +25,8 @@
 	border-color: var(--wc-red, #cc1818);
 	/* Some themes draw the field's frame with outline, not border. */
 	outline-color: var(--wc-red, #cc1818);
+	/* The focus edge (checkout-base.css) stays red too. */
+	--yaycheckout-input-focus-color: var(--wc-red, #cc1818);
 }
 
 .yaycheckout-coupon-form__error {

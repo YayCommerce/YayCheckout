@@ -103,9 +103,15 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 		[ 'input-background', inputBackground ],
 		[ 'input-color', String( inputs.text ?? '' ) ],
 		[ 'input-border-color', String( inputs.border ?? '' ) ],
+		[ 'input-focus-color', String( inputs.focus ?? '' ) ],
 	];
 
 	out.push( ...inputColours.filter( notEmpty ) );
+
+	// Border only drops the flush ring, so focus just recolours the border.
+	if ( 'border' === inputs.focus_style ) {
+		out.push( [ 'input-focus-ring-width', '0' ] );
+	}
 
 	// A radius of 0 is a square box, not an empty token.
 	if ( null !== checkboxes.size ) {
