@@ -14,9 +14,16 @@ $yaycheckout_label        = \YayCheckout\Services\LayoutMarkupReader::plain_text
 $yaycheckout_key          = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'fieldKey' );
 $yaycheckout_type         = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'type', 'text' );
 $yaycheckout_placeholder  = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'placeholder' );
-$yaycheckout_required     = ! empty( $attributes['required'] );
 $yaycheckout_autocomplete = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'autocomplete' );
 $yaycheckout_description  = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'description' );
+// The server's rule, so an email Field saved with Required off still prints required, as the editor shows it.
+$yaycheckout_required = \YayCheckout\Services\RequiredFieldOverlay::is_required(
+    $yaycheckout_key,
+    [
+        'type'     => $yaycheckout_type,
+        'required' => ! empty( $attributes['required'] ),
+    ]
+);
 
 if ( '' === $yaycheckout_label ) {
     $yaycheckout_label = '' !== $yaycheckout_key ? $yaycheckout_key : __( 'Field', 'yaycheckout' );
