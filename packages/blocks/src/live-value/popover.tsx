@@ -40,6 +40,8 @@ export default function LiveValuePopover( { value, onChange, contentRef, editing
 	const [ prefix, setPrefix ] = useState( editing?.prefix ?? '' );
 	const [ suffix, setSuffix ] = useState( editing?.suffix ?? '' );
 	const anchor = useAnchor( { editableContentElement: contentRef.current, settings: ANCHOR_SETTINGS } );
+	// The canvas's popover slot sits under the sidebar, so a text box in the sidebar (the Step title) keeps it inline.
+	const inSidebar = !! contentRef.current?.closest( '.block-editor-block-inspector' );
 	const fields = useShowableFields();
 	const names = useMemo( () => fieldNames( fields ), [ fields ] );
 	const cart = Object.entries( editorData.liveValues );
@@ -64,6 +66,7 @@ export default function LiveValuePopover( { value, onChange, contentRef, editing
 		<Popover
 			anchor={ anchor }
 			placement="bottom"
+			inline={ inSidebar }
 			focusOnMount="firstElement"
 			onClose={ onClose }
 			className="yaycheckout-live-value-popover"
