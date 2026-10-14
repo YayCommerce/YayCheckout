@@ -7,6 +7,7 @@
 
 import { onDomReady } from '../shared/dom-ready';
 import { fieldText } from '../shared/form-text';
+import { readJsonElement } from '../shared/json-element';
 import { jquery } from '../shared/jquery';
 import { EMPTY_CLASS, FALLBACK_ATTR, FIELD_PREFIX, KEY_ATTR, LIVE_VALUE_CLASS, PREFIX_ATTR, SUFFIX_ATTR, VALUES_ID } from './constants';
 import './view.css';
@@ -35,13 +36,7 @@ function show( span: HTMLElement, text: string, empty: boolean ): void {
 
 /** The cart's values from the footer's JSON element; null when it is missing or unreadable. */
 function cartValues(): Record< string, CartValue > | null {
-	try {
-		const parsed: unknown = JSON.parse( document.getElementById( VALUES_ID )?.textContent ?? '' );
-
-		return parsed !== null && typeof parsed === 'object' ? ( parsed as Record< string, CartValue > ) : null;
-	} catch {
-		return null;
-	}
+	return readJsonElement< Record< string, CartValue > >( VALUES_ID );
 }
 
 function syncCart(): void {

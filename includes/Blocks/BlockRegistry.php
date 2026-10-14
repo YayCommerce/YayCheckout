@@ -6,6 +6,7 @@ use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutDifferentAddress;
 use YayCheckout\Renderer\CheckoutLogin;
+use YayCheckout\Renderer\BlockVisibility;
 use YayCheckout\Renderer\HideWhenEmpty;
 use YayCheckout\Renderer\LiveValues;
 use YayCheckout\Renderer\PinToBottom;
@@ -82,7 +83,9 @@ class BlockRegistry {
         add_action( 'init', [ $this, 'register_blocks' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_design_data' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_live_value_editor' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_visibility_editor' ] );
         add_action( 'enqueue_block_assets', [ $this, 'enqueue_live_value_editor_style' ] );
+        add_action( 'enqueue_block_assets', [ $this, 'enqueue_visibility_editor_style' ] );
         add_filter( 'block_categories_all', [ $this, 'register_category' ], 10, 2 );
         // After other plugins so a later true/list cannot put our blocks back.
         add_filter( 'allowed_block_types_all', [ $this, 'allowed_blocks' ], 999, 2 );
@@ -158,9 +161,10 @@ class BlockRegistry {
 
         // One bundle serves both editions, so the plan reaches it at runtime; PHP supplies the post type and upgrade link so the bundle never redeclares them.
         $editor_data = [
-            'isPro'      => Plan::is_pro(),
-            'postType'   => Layout::POST_TYPE,
-            'upgradeUrl' => YAYCHECKOUT_UPGRADE_URL,
+            'isPro'          => Plan::is_pro(),
+            'postType'       => Layout::POST_TYPE,
+            'upgradeUrl'     => YAYCHECKOUT_UPGRADE_URL,
+            'currencySymbol' => html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8' ),
         ];
 
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks', $editor_data );
@@ -207,6 +211,7 @@ class BlockRegistry {
             'schema'            => LayoutDesign::schema(),
             'fontFamilies'      => LayoutDesign::FONT_FAMILIES,
             'serifFonts'        => LayoutDesign::SERIF_FONTS,
+            'fontStacks'        => LayoutDesign::FONT_STACKS,
             // The id WordPress gives this handle's inline style, which holds the font faces.
             'fontStyleId'       => ScriptName::STYLE_CHECKOUT_FONTS . '-inline-css',
             'customCssMaxBytes' => LayoutDesign::CUSTOM_CSS_MAX_BYTES,
@@ -223,28 +228,53 @@ class BlockRegistry {
      * Checkout editor script, whose inline data it reads. Skipped without a build.
      */
     public function enqueue_live_value_editor(): void {
-        $asset = 'layout' === $this->editor( null ) ? self::built_asset( 'live-value/index' ) : null;
+        if ( 'layout' === $this->editor( null ) ) {
+            self::enqueue_editor_script( LiveValues::EDITOR_SCRIPT, 'live-value/index' );
+        }
+    }
+
+    /**
+     * The block visibility setting, in every editor rather than only the layout editor's, so markup saved in a
+     * layout stays valid anywhere. It runs after the Checkout editor script. Skipped without a build.
+     */
+    public function enqueue_visibility_editor(): void {
+        self::enqueue_editor_script( BlockVisibility::EDITOR_SCRIPT, 'visibility/index' );
+    }
+
+    /** The live value chip style, on enqueue_block_assets so it reaches the canvas iframe. Layout editor only; skipped without a build. */
+    public function enqueue_live_value_editor_style(): void {
+        $this->enqueue_layout_editor_style( LiveValues::EDITOR_STYLE, 'live-value/index' );
+    }
+
+    /** The Conditional tag and preview dimming, on enqueue_block_assets so they reach the canvas iframe. Layout editor only; skipped without a build. */
+    public function enqueue_visibility_editor_style(): void {
+        $this->enqueue_layout_editor_style( BlockVisibility::EDITOR_STYLE, 'visibility/index' );
+    }
+
+    /** A built editor entry's script as $handle, after the Checkout editor script, with translations. Skipped without a build. */
+    private static function enqueue_editor_script( string $handle, string $entry ): void {
+        $asset = self::built_asset( $entry );
 
         if ( null === $asset ) {
             return;
         }
 
         wp_enqueue_script(
-            LiveValues::EDITOR_SCRIPT,
+            $handle,
             $asset['url'] . '.js',
             array_merge( $asset['dependencies'], [ generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ) ] ),
             $asset['version'],
             true
         );
-        wp_set_script_translations( LiveValues::EDITOR_SCRIPT, 'yaycheckout', YAYCHECKOUT_PLUGIN_DIR . 'languages' );
+        wp_set_script_translations( $handle, 'yaycheckout', YAYCHECKOUT_PLUGIN_DIR . 'languages' );
     }
 
-    /** The live value chip style, on enqueue_block_assets so it reaches the canvas iframe. Layout editor only; skipped without a build. */
-    public function enqueue_live_value_editor_style(): void {
-        $asset = is_admin() && 'layout' === $this->editor( null ) ? self::built_asset( 'live-value/index', true ) : null;
+    /** A built editor entry's style as $handle, in the layout editor only. Skipped without a build. */
+    private function enqueue_layout_editor_style( string $handle, string $entry ): void {
+        $asset = is_admin() && 'layout' === $this->editor( null ) ? self::built_asset( $entry, true ) : null;
 
         if ( null !== $asset ) {
-            wp_enqueue_style( LiveValues::EDITOR_STYLE, $asset['url'] . '.css', [], $asset['version'] );
+            wp_enqueue_style( $handle, $asset['url'] . '.css', [], $asset['version'] );
         }
     }
 
@@ -304,6 +334,13 @@ class BlockRegistry {
         if ( null !== $live_value ) {
             wp_register_script( LiveValues::SCRIPT, $live_value['url'] . '.js', array_merge( $live_value['dependencies'], [ 'jquery' ] ), $live_value['version'], true );
             wp_register_style( LiveValues::STYLE, $live_value['url'] . '.css', [], $live_value['version'] );
+        }
+
+        // Enqueued by BlockVisibility::filter_block() for a conditional block. Skipped without a build.
+        $visibility = self::built_asset( 'visibility/view' );
+
+        if ( null !== $visibility ) {
+            wp_register_script( BlockVisibility::SCRIPT, $visibility['url'] . '.js', array_merge( $visibility['dependencies'], [ 'jquery' ] ), $visibility['version'], true );
         }
     }
 

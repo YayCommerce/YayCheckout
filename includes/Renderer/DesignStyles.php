@@ -52,7 +52,7 @@ class DesignStyles {
     ];
 
     /** The page's font size in px while typography.base_size is empty, so a layout doesn't take the theme's. Mirrored by design-css.ts. */
-    public const DEFAULT_BASE_SIZE = 16;
+    public const DEFAULT_BASE_SIZE = 13;
 
     /**
      * Per inputs.size step: the field's height, then its height with floating labels. In em, so a field grows with
@@ -132,7 +132,9 @@ class DesignStyles {
             $not_empty
         );
 
-        if ( '' !== $typography['font_family'] ) {
+        if ( isset( LayoutDesign::FONT_STACKS[ $typography['font_family'] ] ) ) {
+            $vars['font-family'] = LayoutDesign::FONT_STACKS[ $typography['font_family'] ];
+        } elseif ( '' !== $typography['font_family'] ) {
             $fallback            = in_array( $typography['font_family'], LayoutDesign::SERIF_FONTS, true ) ? self::SERIF_FONT_FALLBACK : self::FONT_FALLBACK;
             $vars['font-family'] = '"' . LayoutDesign::FONT_FAMILIES[ $typography['font_family'] ] . '", ' . $fallback;
         }
@@ -160,16 +162,43 @@ class DesignStyles {
             $vars['input-padding-inline'] = $is_underline && '' === $inputs['background'] ? '0' : '12px';
         }
 
-        return array_merge(
+        $vars = array_merge(
             $vars,
             array_filter(
                 [
                     'input-background'   => $inputs['background'],
                     'input-color'        => $inputs['text'],
                     'input-border-color' => $inputs['border'],
+                    'input-focus-color'  => $inputs['focus'],
                 ],
                 $not_empty
             )
         );
+
+        // Border only drops the flush ring, so focus just recolours the border.
+        if ( 'border' === $inputs['focus_style'] ) {
+            $vars['input-focus-ring-width'] = '0';
+        }
+
+        // A radius of 0 is a square box, not an empty token.
+        $checkboxes = $sections['checkboxes'];
+
+        if ( null !== $checkboxes['size'] ) {
+            $vars['checkbox-size'] = $checkboxes['size'] . 'px';
+        }
+
+        if ( null !== $checkboxes['radius'] ) {
+            $vars['checkbox-radius'] = $checkboxes['radius'] . 'px';
+        }
+
+        if ( null !== $checkboxes['border_width'] ) {
+            $vars['checkbox-border-width'] = $checkboxes['border_width'] . 'px';
+        }
+
+        if ( '' !== $checkboxes['checked'] ) {
+            $vars['checkbox-checked-color'] = $checkboxes['checked'];
+        }
+
+        return $vars;
     }
 }

@@ -39,12 +39,13 @@ final class LayoutDesign {
     public const GRADIENT_MAX_LENGTH = 1000;
 
     /**
-     * Fonts the merchant can pick: token slug => CSS font-family, '' for the theme's font.
-     * Fonts in core's Google Fonts collection, under the same slug: picking one installs it into the
-     * Font Library (Repositories\FontRepository) unless the theme loads it already.
+     * Fonts the merchant can pick: token slug => CSS font-family, '' for the theme's font. A FONT_STACKS key
+     * maps to its label instead. The other fonts are in core's Google Fonts collection, under the same slug:
+     * picking one installs it into the Font Library (Repositories\FontRepository) unless the theme loads it already.
      */
     public const FONT_FAMILIES = [
         ''                 => '',
+        'system'           => 'System font',
         'inter'            => 'Inter',
         'roboto'           => 'Roboto',
         'open-sans'        => 'Open Sans',
@@ -57,6 +58,14 @@ final class LayoutDesign {
         'merriweather'     => 'Merriweather',
         'playfair-display' => 'Playfair Display',
         'roboto-slab'      => 'Roboto Slab',
+    ];
+
+    /**
+     * The FONT_FAMILIES keys the shopper's device already has: each prints as this stack, with no fallback added,
+     * and has nothing to install or load.
+     */
+    public const FONT_STACKS = [
+        'system' => '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
     ];
 
     /** The FONT_FAMILIES keys whose fallback is a serif stack; the rest fall back to sans-serif. */
@@ -80,7 +89,8 @@ final class LayoutDesign {
      * theme preset; colours.background may also be a gradient. An empty typography.base_size prints
      * DesignStyles::DEFAULT_BASE_SIZE, not the theme's size. The inputs.size token is an abstract step; the
      * renderer decides its height, in em. The inputs.label token prints no custom property: it is the checkout
-     * wrapper's yaycheckout-checkout--floating-labels class.
+     * wrapper's yaycheckout-checkout--floating-labels class. An empty checkboxes.checked fills a ticked box with the
+     * primary colour; its unticked border is inputs.border.
      */
     public static function schema(): array {
         return [
@@ -116,38 +126,71 @@ final class LayoutDesign {
                 ],
             ],
             'inputs'     => [
-                'style'      => [
+                'style'       => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'boxed', 'underline' ],
                 ],
-                'size'       => [
+                'size'        => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'small', 'medium', 'large' ],
                 ],
-                'radius'     => [
+                'radius'      => [
                     'type'    => 'int',
                     'default' => null,
                     'min'     => 0,
                     'max'     => 24,
                 ],
-                'background' => [
+                'background'  => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'text'       => [
+                'text'        => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'border'     => [
+                'border'      => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'label'      => [
+                'focus'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'focus_style' => [
+                    'type'    => 'enum',
+                    'default' => '',
+                    'enum'    => [ '', 'border' ],
+                ],
+                'label'       => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'floating' ],
+                ],
+            ],
+            'checkboxes' => [
+                'size'         => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 12,
+                    'max'     => 24,
+                ],
+                'radius'       => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 0,
+                    'max'     => 12,
+                ],
+                'border_width' => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 1,
+                    'max'     => 3,
+                ],
+                'checked'      => [
+                    'type'    => 'color',
+                    'default' => '',
                 ],
             ],
         ];

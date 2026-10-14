@@ -6,7 +6,7 @@
  */
 
 import { bindOnce } from '../shared/bind-once';
-import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor } from '../shared/checkout-root';
+import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor, currentStep } from '../shared/checkout-root';
 import { onDomReady } from '../shared/dom-ready';
 import { controlsText } from '../shared/form-text';
 import type { Control } from '../shared/jquery';
@@ -66,7 +66,7 @@ function onClick( event: MouseEvent ): void {
 
 	const step = target.closest< HTMLElement >( STEP );
 
-	// Only a completed step reopens. One reached but not finished (the last step, after going back) is reached again with Next.
+	// Only a completed step reopens, and every completed step is before the open one.
 	if ( ! step || ! canReopenStep( step ) || target.closest( '.yaycheckout-step__body' ) ) {
 		return;
 	}
@@ -83,8 +83,20 @@ function advance( step: HTMLElement ): void {
 		return;
 	}
 
-	setState( next, CURRENT );
+	open( next );
 	revealStep( next );
+}
+
+/** Makes `step` the open one and locks every step after it, so only the steps before it stay complete. */
+function open( step: HTMLElement ): void {
+	// Current first, so currentStep() and syncBackButtons() find it while the rest lock.
+	setState( step, CURRENT );
+
+	for ( let later = siblingStep( step.nextElementSibling ); later; later = siblingStep( later.nextElementSibling ) ) {
+		if ( later.dataset.state !== LOCKED ) {
+			setState( later, LOCKED );
+		}
+	}
 }
 
 /**
@@ -127,49 +139,20 @@ function complete( step: HTMLElement ): boolean {
 }
 
 function reopen( step: HTMLElement ): void {
-	const steps = step.closest( '.yaycheckout-steps' );
-
-	if ( ! steps ) {
+	// The open step and those after it lock without a check: Continue checks them again.
+	if ( ! canReopenStep( step ) ) {
 		return;
 	}
 
-	const blocked = [ ...steps.querySelectorAll< HTMLElement >( STEP ) ].some(
-		( other ) => other !== step && other.dataset.state === CURRENT && ! park( other )
-	);
-
-	if ( blocked ) {
-		return;
-	}
-
-	setState( step, CURRENT );
+	open( step );
 	// The control that asked may now be disabled or hidden (Steps Progress, Go to Step, Edit), so focus follows the step.
 	step.querySelector< HTMLElement >( '.yaycheckout-step__header' )?.focus( { preventScroll: true } );
 	revealStep( step );
 }
 
-function park( step: HTMLElement ): boolean {
-	// A reopened step is current too. Locking it would drop a step the shopper already finished.
-	if ( step.dataset.completed !== 'true' ) {
-		setState( step, LOCKED );
-		return true;
-	}
-
-	// Values may have changed since Continue. Leaving must re-check them.
-	return complete( step );
-}
-
 function setState( step: HTMLElement, state: StepState ): void {
 	const done = state === COMPLETE;
 	step.dataset.state = state;
-
-	if ( done ) {
-		step.dataset.completed = 'true';
-	}
-
-	// Not on CURRENT alone: step 1 starts current from the server, so it is first marked when it completes.
-	if ( state !== LOCKED ) {
-		step.dataset.reached = 'true';
-	}
 
 	const summary = step.querySelector< HTMLElement >( '.yaycheckout-step__summary' );
 
@@ -195,7 +178,9 @@ function stepForButton( button: HTMLElement ): HTMLElement | null {
 		return inside;
 	}
 
-	return checkoutFor( button )?.querySelector< HTMLElement >( `${ STEP }[data-state="${ CURRENT }"]` ) ?? null;
+	const checkout = checkoutFor( button );
+
+	return checkout ? currentStep( checkout ) : null;
 }
 
 /**
@@ -231,10 +216,8 @@ function retreat( step: HTMLElement ): void {
 		return;
 	}
 
-	// Back leaves the open step without re-checking it. Continue is what checks.
-	setState( step, step.dataset.completed === 'true' ? COMPLETE : LOCKED );
-
-	setState( previous, CURRENT );
+	// Back leaves the open step without checking it; it and every step after it lock. Continue is what checks.
+	open( previous );
 	revealStep( previous );
 }
 

@@ -118,18 +118,8 @@
 	color: var(--yaycheckout-steps-progress-upcoming-text, #6b7280);
 }
 
-/* A step the shopper can reopen keeps its title colour, as a reached Step header does in steps/style.css. */
-.yaycheckout-steps-progress__item[data-state="locked"]:has(> button:enabled) .yaycheckout-steps-progress__title {
-	color: inherit;
-}
-
 .yaycheckout-steps-progress button.yaycheckout-steps-progress__jump:enabled:is(:hover, :focus-visible) .yaycheckout-steps-progress__title {
 	text-decoration: underline;
-}
-
-.yaycheckout-steps-progress button.yaycheckout-steps-progress__jump:focus-visible {
-	outline: 2px solid var(--yaycheckout-primary-color, #3858e9);
-	outline-offset: 2px;
 }
 
 /* Dots: a small dot and the title on one line, hairlines between steps. Matches template 09 (Soft steps). */

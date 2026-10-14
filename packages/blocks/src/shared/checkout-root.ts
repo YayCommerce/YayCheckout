@@ -10,10 +10,16 @@ export function checkoutFor( element: Element ): Element | null {
 
 /**
  * Whether a step can be reopened: only a completed one. The one rule for a click on a step's
- * header (steps/view.ts), Steps Progress and Go to Step.
+ * header (steps/view.ts), Steps Progress and Go to Step. Completed steps are always the ones
+ * before the open step, because steps/view.ts locks every step after it.
  */
 export function canReopenStep( step: HTMLElement | null | undefined ): boolean {
 	return step?.dataset.state === 'complete';
+}
+
+/** The open Step inside `root`: the one steps/view.ts marks `data-state="current"`; null while none is. */
+export function currentStep( root: ParentNode ): HTMLElement | null {
+	return root.querySelector< HTMLElement >( '.yaycheckout-step[data-state="current"]' );
 }
 
 /** Asks Steps (steps/view.ts onReopen()) to open step `step`, a 1-based data-step value. */

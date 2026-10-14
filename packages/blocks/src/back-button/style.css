@@ -12,6 +12,8 @@
 	font-size: 16px;
 	font-weight: 600;
 	line-height: 1.2;
+	/* One line, so a flex row beside it (Place Order's terms text) can't squeeze the label. */
+	white-space: nowrap;
 	cursor: pointer;
 }
 

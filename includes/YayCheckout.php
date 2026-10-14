@@ -32,6 +32,7 @@ class YayCheckout {
         \YayCheckout\Renderer\CheckoutFragments::get_instance();
         \YayCheckout\Renderer\CartItemQuantity::get_instance();
         \YayCheckout\Renderer\HideWhenEmpty::get_instance();
+        \YayCheckout\Renderer\BlockVisibility::get_instance();
         \YayCheckout\Renderer\PinToBottom::get_instance();
         \YayCheckout\Renderer\LiveValues::get_instance();
         \YayCheckout\Renderer\CheckoutExtraFields::get_instance();

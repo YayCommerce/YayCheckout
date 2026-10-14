@@ -21,7 +21,7 @@
 	--yaycheckout-primary-color: var(--wp--preset--color--yaycheckout-primary);
 	--yaycheckout-border-color: var(--wp--preset--color--yaycheckout-border);
 	--yaycheckout-field-radius: var(--yaycheckout-input-radius, var(--yaycheckout-neutral-radius));
-	/* White check drawn on a filled circle: Steps, Steps Progress and the Cards with checkmark layouts. */
+	/* White check drawn on a filled box or circle: checkboxes, Steps, Steps Progress and the Cards with checkmark layouts. */
 	--yaycheckout-check-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
 }
 
@@ -52,8 +52,12 @@ body.yaycheckout-page > .wp-site-blocks,
 	--wp--style--root--padding-right: 0px;
 }
 
-/* A Group, Columns or Column whose watched blocks are all empty (HideWhenEmpty::HIDDEN_CLASS); beats its layout display. */
-.yaycheckout-hidden-when-empty {
+/*
+ * A Group, Columns or Column whose watched blocks are all empty (HideWhenEmpty::HIDDEN_CLASS), and a block
+ * whose visibility setting fails for the open step or the cart (BlockVisibility::HIDDEN_CLASS); beats its layout display.
+ */
+.yaycheckout-hidden-when-empty,
+.yaycheckout-hidden-by-visibility {
 	display: none !important;
 }
 
@@ -148,6 +152,16 @@ html.yaycheckout-has-pinned body {
 .yaycheckout-checkout :is(.form-row-first, .form-row-last, .form-row-wide) {
 	float: none;
 	width: auto;
+}
+
+/* WooCommerce prints each row as a <p>, whose browser margin would add to the layout's own spacing. */
+.yaycheckout-checkout :is(.form-row, .yaycheckout-disclosure__panel, .yaycheckout-different-address, .yaycheckout-create-account, .yaycheckout-create-account > .create-account, .woocommerce-additional-fields__field-wrapper) > .form-row {
+	margin-block: 0;
+}
+
+/* These wrappers hold several rows and have no gap of their own. */
+.yaycheckout-checkout :is(.yaycheckout-create-account > .create-account, .woocommerce-additional-fields__field-wrapper) > .form-row + .form-row {
+	margin-block-start: 12px;
 }
 
 .yaycheckout-checkout .form-row :is(label, .yaycheckout-field-preview__label) {
@@ -351,22 +365,97 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	color: #fff;
 }
 
+/*
+ * Drawn checkbox and radio, as in the layout templates: the input's border and background, the
+ * primary colour once checked. A checkbox's size, corner, border width and checked colour come from
+ * the layout's Checkboxes design (DesignStyles); its corner never takes the input radius. Radios keep
+ * their own size. Payment and Shipping hide their real radio and draw their own indicator.
+ */
 .yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]) {
-	width: 1.1em;
-	height: 1.1em;
+	-webkit-appearance: none;
+	appearance: none;
+	box-sizing: border-box;
+	flex: none;
 	margin: 0;
-	accent-color: var(--yaycheckout-primary-color);
+	border: 1px solid var(--yaycheckout-input-border-color, var(--yaycheckout-border-color));
+	background: var(--yaycheckout-input-background, var(--yaycheckout-color-background, #fff)) center no-repeat;
+	vertical-align: middle;
+	cursor: pointer;
+	transition: background-color 100ms, border-color 100ms, border-width 100ms;
 }
 
-/* Focus ring in the primary colour; offset so it shows beside an underline input too. */
+/* The tick stays 12px and shrinks only to keep a quarter of a small box clear. */
+.yaycheckout-checkout input[type="checkbox"] {
+	width: var(--yaycheckout-checkbox-size, 16px);
+	height: var(--yaycheckout-checkbox-size, 16px);
+	border-width: var(--yaycheckout-checkbox-border-width, 1px);
+	border-radius: var(--yaycheckout-checkbox-radius, var(--yaycheckout-neutral-radius));
+	background-size: min(12px, calc(var(--yaycheckout-checkbox-size, 16px) * 0.75));
+}
+
+.yaycheckout-checkout input[type="checkbox"]:checked {
+	border-color: var(--yaycheckout-checkbox-checked-color, var(--yaycheckout-primary-color));
+	background-color: var(--yaycheckout-checkbox-checked-color, var(--yaycheckout-primary-color));
+	background-image: var(--yaycheckout-check-icon);
+}
+
+.yaycheckout-checkout input[type="radio"] {
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+}
+
+.yaycheckout-checkout input[type="radio"]:checked {
+	border: 5px solid var(--yaycheckout-primary-color);
+}
+
+.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]) {
+		transition: none;
+	}
+}
+
+/* Forced colours drop backgrounds and borders: the native control stays legible. */
+@media (forced-colors: active) {
+	.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]) {
+		-webkit-appearance: auto;
+		appearance: auto;
+	}
+}
+
+/*
+ * A focused field draws one edge in the layout's input focus colour (DesignStyles), falling back to the
+ * primary colour: its border recolours and a flush ring thickens it, with no gap between the two. The
+ * Border only focus style sets the ring width to 0.
+ */
 .yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code):focus,
-.yaycheckout-checkout .select2-container:is(.select2-container--focus, .select2-container--open) .select2-selection--single,
-.yaycheckout-checkout :is(.button, button, input[type="checkbox"], input[type="radio"]):focus-visible {
+.yaycheckout-checkout .select2-container:is(.select2-container--focus, .select2-container--open) .select2-selection--single {
+	border-color: var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
+	outline: var(--yaycheckout-input-focus-ring-width, 1px) solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
+	outline-offset: 0;
+}
+
+/* Keyboard focus on a button, checkbox or radio: an offset ring, in the input focus colour for the controls. */
+.yaycheckout-checkout :is(.button, button):focus-visible {
 	outline: 2px solid var(--yaycheckout-primary-color);
 	outline-offset: 1px;
 }
 
-/* WooCommerce marks the row, not the input, when a field fails validation. */
+.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):focus-visible {
+	outline: 2px solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
+	outline-offset: 1px;
+}
+
+/* WooCommerce marks the row, not the input, when a field fails validation; its focus edge turns red too. */
+.yaycheckout-checkout .form-row.woocommerce-invalid {
+	--yaycheckout-input-focus-color: var(--wc-red, #cc1818);
+}
+
 .yaycheckout-checkout .form-row.woocommerce-invalid :is(.input-text, select, textarea),
 .yaycheckout-checkout .form-row.woocommerce-invalid .select2-container .select2-selection--single {
 	border-color: var(--wc-red, #cc1818);

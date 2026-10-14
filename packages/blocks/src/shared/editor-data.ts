@@ -22,6 +22,8 @@ export type EditorDesign = {
 	fontFamilies: Record< string, string >;
 	/** The fontFamilies slugs whose fallback is a serif stack. */
 	serifFonts: string[];
+	/** The fontFamilies slugs the device already has => the stack they print, with no fallback added. */
+	fontStacks: Record< string, string >;
 	/** The id of the canvas's printed font faces, which the sidebar rewrites when the merchant picks a font. */
 	fontStyleId: string;
 	customCssMaxBytes: number;
@@ -31,6 +33,8 @@ type EditorData = {
 	isPro: boolean;
 	postType: string;
 	upgradeUrl: string;
+	/** The store's currency symbol, decoded, for amounts the merchant types (the Visibility panel's subtotal). */
+	currencySymbol: string;
 	design: EditorDesign | null;
 	/** Cart value key => label, from LiveValues::cart_values(); printed in the block editor only. */
 	liveValues: Record< string, string >;
@@ -47,6 +51,7 @@ export const editorData: EditorData = {
 	isPro: false,
 	postType: '',
 	upgradeUrl: '',
+	currencySymbol: '',
 	design: null,
 	liveValues: {},
 	...window.yayCheckoutBlocks,
