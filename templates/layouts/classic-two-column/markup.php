@@ -10,7 +10,8 @@
  *
  * The address order follows WooCommerce's Shipping destination when the layout is created: Shipping first,
  * as in the mock, when shipping is main; Billing first when billing is main; Billing alone when shipping is
- * forced to billing. Both sections print the same fields, from $yaycheckout_address_fields.
+ * forced to billing. Both sections print the same fields, from $yaycheckout_address_fields, whose State column
+ * shows only while the State field isn't empty.
  * Billing and Shipping hold the structure packages/blocks/src/shared/address-template.ts gives a new
  * section; change both together. Their keys come from packages/blocks/src/shared/address-fields.ts.
  * Order Summary holds the tree TEMPLATE in packages/blocks/src/order-summary/edit.tsx gives a new one,
@@ -60,6 +61,9 @@ $yaycheckout_destination = \YayCheckout\Renderer\CheckoutDifferentAddress::desti
 
 // Shipping and Billing hold the same fields; $type is 'shipping' or 'billing'.
 $yaycheckout_address_fields = static function ( string $type ): void {
+    // The State column shows only while its State field isn't empty: a country without states leaves no gap.
+    // One blockId per section, since a layout holds both; each matches BlockEmptiness::BLOCK_ID_PATTERN.
+    $yaycheckout_state_id = 'billing' === $type ? 'bilstate' : 'shpstate';
     ?>
 <!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
@@ -84,8 +88,8 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:50%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
-<!-- wp:column {"verticalAlignment":"bottom","width":"25%"} -->
-<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:column {"verticalAlignment":"bottom","width":"25%","yaycheckoutVisibility":{"action":"show","rules":[{"type":"block","block":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","is":"not_empty"}]}} -->
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"blockId":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
 <!-- wp:column {"verticalAlignment":"bottom","width":"25%"} -->
@@ -157,7 +161,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/billing -->
 <?php if ( 'billing' === $yaycheckout_destination ) : ?>
 
-<!-- wp:yaycheckout/different-address /-->
+<!-- wp:yaycheckout/different-address {"shipLabel":"<?php esc_html_e( 'Shipping address is the same as billing', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:yaycheckout/shipping {"title":"<?php esc_html_e( 'Shipping address', 'yaycheckout' ); ?>","style":{"color":{"background":"#ffffff"},"border":{"color":"#dddddd","width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"20px","right":"20px","bottom":"20px","left":"20px"}}}} -->
 <?php $yaycheckout_address_fields( 'shipping' ); ?>
@@ -178,7 +182,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:paragraph -->
 <?php endif; ?>
 
-<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022 · \u0022 data-suffix=\u0022\u0022\u003e · <?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","style":{"typography":{"fontSize":"15px","fontWeight":"600"},"border":{"radius":"2px"}}} /-->
+<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022 · \u0022 data-suffix=\u0022\u0022\u003e · <?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","style":{"typography":{"fontSize":"15px","fontWeight":"600","textAlign":"center"},"border":{"radius":"2px"},"dimensions":{"width":"var:preset|dimension|100"}}} /-->
 
 <!-- wp:yaycheckout/return-to-cart {"style":{"color":{"text":"#757575"},"typography":{"fontSize":"13px"}}} /--></div>
 <!-- /wp:group --></div>
