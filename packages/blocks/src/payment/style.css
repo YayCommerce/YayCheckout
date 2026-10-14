@@ -47,10 +47,14 @@
 	vertical-align: middle;
 }
 
-/* Gateway description/fields and any sibling after the radio/label span the full row. A click there selects nothing. */
+/* Gateway description/fields and any sibling after the radio/label span the full row. A click there selects an unselected gateway only. */
 .yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li > :not(label, input) {
 	flex-basis: 100%;
 	cursor: auto;
+}
+
+.yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li:has(> input[type="radio"]:not(:checked)) > :not(label, input) {
+	cursor: pointer;
 }
 
 .yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods .payment_box {

@@ -86,7 +86,7 @@
 	white-space: nowrap;
 }
 
-/* Pickup points and delivery fields print after the label, on their own row. A click there selects nothing. */
+/* Pickup points and delivery fields print after the label, on their own row. A click there selects an unselected rate only. */
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option > :not(label, input) {
 	flex-basis: 100%;
 	cursor: auto;
