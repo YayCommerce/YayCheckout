@@ -34,6 +34,8 @@ interface FieldPreviewProps {
 	/** Makes the label editable on the canvas; labelPlaceholder shows while it is empty. */
 	onLabelChange?: ( value: string ) => void;
 	labelPlaceholder?: string;
+	/** Shown in place of a Select or Radio with no usable options; without it, the label stands in as the one choice. */
+	emptyOptionsHint?: string;
 }
 
 /** Read-only so typing on the canvas does not fight block selection. */
@@ -49,10 +51,12 @@ export function FieldPreview( {
 	inheritLabelFont = false,
 	onLabelChange,
 	labelPlaceholder = '',
+	emptyOptionsHint = '',
 }: FieldPreviewProps ) {
 	const LabelTag = onLabelChange ? 'div' : 'label';
 
 	const usableOptions = options.filter( ( option ) => option.label !== '' || option.value !== '' );
+	const showEmptyOptionsHint = emptyOptionsHint !== '' && usableOptions.length === 0 && [ 'select', 'radio' ].includes( type );
 
 	return (
 		<div className="yaycheckout-field-preview form-row">
@@ -82,7 +86,9 @@ export function FieldPreview( {
 					</span>
 				) }
 			</LabelTag>
-			{ type === 'textarea' ? (
+			{ showEmptyOptionsHint ? (
+				<p className="yaycheckout-field-preview__empty-options">{ emptyOptionsHint }</p>
+			) : type === 'textarea' ? (
 				<textarea readOnly rows={ 3 } placeholder={ placeholder } className="input-text" />
 			) : type === 'select' ? (
 				<select disabled>
