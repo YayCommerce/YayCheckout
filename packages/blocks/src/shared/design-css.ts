@@ -90,12 +90,15 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 	}
 
 	const inputBackground = String( inputs.background ?? '' );
+	const inputFocusBackground = String( inputs.focus_background ?? '' );
 
 	if ( '' !== inputs.style ) {
+		// An underline input with a background, or one on focus, is a filled box, so its text keeps the side padding.
+		const isFilled = '' !== inputBackground || '' !== inputFocusBackground;
+
 		out.push(
 			[ 'input-border-width', isUnderline ? '0 0 1px' : '1px' ],
-			// An underline input with a background is a filled box, so its text keeps the side padding.
-			[ 'input-padding-inline', isUnderline && '' === inputBackground ? '0' : '12px' ]
+			[ 'input-padding-inline', isUnderline && ! isFilled ? '0' : '12px' ]
 		);
 	}
 
@@ -103,7 +106,8 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 		[ 'input-background', inputBackground ],
 		[ 'input-color', String( inputs.text ?? '' ) ],
 		[ 'input-border-color', String( inputs.border ?? '' ) ],
-		[ 'input-focus-color', String( inputs.focus ?? '' ) ],
+		[ 'input-focus-color', String( inputs.focus_border ?? '' ) ],
+		[ 'input-focus-background', inputFocusBackground ],
 	];
 
 	out.push( ...inputColours.filter( notEmpty ) );

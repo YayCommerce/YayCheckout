@@ -158,18 +158,20 @@ class DesignStyles {
 
         if ( '' !== $inputs['style'] ) {
             $vars['input-border-width'] = $is_underline ? '0 0 1px' : '1px';
-            // An underline input with a background is a filled box, so its text keeps the side padding.
-            $vars['input-padding-inline'] = $is_underline && '' === $inputs['background'] ? '0' : '12px';
+            // An underline input with a background, or one on focus, is a filled box, so its text keeps the side padding.
+            $is_filled                    = '' !== $inputs['background'] || '' !== $inputs['focus_background'];
+            $vars['input-padding-inline'] = $is_underline && ! $is_filled ? '0' : '12px';
         }
 
         $vars = array_merge(
             $vars,
             array_filter(
                 [
-                    'input-background'   => $inputs['background'],
-                    'input-color'        => $inputs['text'],
-                    'input-border-color' => $inputs['border'],
-                    'input-focus-color'  => $inputs['focus'],
+                    'input-background'       => $inputs['background'],
+                    'input-color'            => $inputs['text'],
+                    'input-border-color'     => $inputs['border'],
+                    'input-focus-color'      => $inputs['focus_border'],
+                    'input-focus-background' => $inputs['focus_background'],
                 ],
                 $not_empty
             )
