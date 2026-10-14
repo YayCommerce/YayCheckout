@@ -137,6 +137,16 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 		out.push( [ 'checkbox-checked-color', checked ] );
 	}
 
+	const helpColor = String( tokens.help_text.color ?? '' );
+
+	if ( '' !== helpColor ) {
+		out.push( [ 'help-text-color', helpColor ] );
+	}
+
+	if ( null !== tokens.help_text.size ) {
+		out.push( [ 'help-text-size', `${ tokens.help_text.size }px` ] );
+	}
+
 	return out;
 }
 

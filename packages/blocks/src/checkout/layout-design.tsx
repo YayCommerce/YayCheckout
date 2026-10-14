@@ -37,16 +37,18 @@ export type LayoutDesignMeta = {
 	typography: SectionTokens;
 	inputs: SectionTokens;
 	checkboxes: SectionTokens;
+	help_text: SectionTokens;
 	custom_css: string;
 };
 
-type Section = 'colours' | 'typography' | 'inputs' | 'checkboxes';
+type Section = 'colours' | 'typography' | 'inputs' | 'checkboxes' | 'help_text';
 
 const SECTIONS: Record< Section, string > = {
 	colours: __( 'Colours', 'yaycheckout' ),
 	typography: __( 'Typography', 'yaycheckout' ),
 	inputs: __( 'Inputs', 'yaycheckout' ),
 	checkboxes: __( 'Checkboxes', 'yaycheckout' ),
+	help_text: __( 'Help text', 'yaycheckout' ),
 };
 
 const TOKEN_LABELS: Record< string, string > = {
@@ -67,6 +69,7 @@ const TOKEN_LABELS: Record< string, string > = {
 	label_color: __( 'Label text', 'yaycheckout' ),
 	border_width: __( 'Border width', 'yaycheckout' ),
 	checked: __( 'Checked', 'yaycheckout' ),
+	color: __( 'Colour', 'yaycheckout' ),
 };
 
 const ENUM_LABELS: Record< string, string > = {
@@ -111,6 +114,7 @@ function normalize( design: EditorDesign, raw: unknown ): LayoutDesignMeta {
 		typography: sectionTokens( design.schema.typography, meta.typography ),
 		inputs: sectionTokens( design.schema.inputs, meta.inputs ),
 		checkboxes: sectionTokens( design.schema.checkboxes, meta.checkboxes ),
+		help_text: sectionTokens( design.schema.help_text, meta.help_text ),
 		custom_css: 'string' === typeof meta.custom_css ? meta.custom_css : '',
 	};
 }
