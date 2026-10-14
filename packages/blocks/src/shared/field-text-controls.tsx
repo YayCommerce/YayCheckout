@@ -10,6 +10,8 @@ export interface FieldTextAttributes {
 
 interface FieldTextControlsProps extends FieldTextAttributes {
 	setAttributes: ( attributes: Partial< FieldTextAttributes > ) => void;
+	/** False when the label holds rich text, edited only on the canvas. */
+	showLabel?: boolean;
 	showPlaceholder?: boolean;
 	showHelp?: boolean;
 }
@@ -20,16 +22,19 @@ export function FieldTextControls( {
 	placeholder,
 	description,
 	setAttributes,
+	showLabel = true,
 	showPlaceholder = true,
 	showHelp = true,
 }: FieldTextControlsProps ) {
 	return (
 		<>
-			<TextControl
-				label={ __( 'Label', 'yaycheckout' ) }
-				value={ decodeEntities( label ) }
-				onChange={ ( value ) => setAttributes( { label: value } ) }
-			/>
+			{ showLabel && (
+				<TextControl
+					label={ __( 'Label', 'yaycheckout' ) }
+					value={ decodeEntities( label ) }
+					onChange={ ( value ) => setAttributes( { label: value } ) }
+				/>
+			) }
 			{ showPlaceholder && (
 				<TextControl
 					label={ __( 'Placeholder', 'yaycheckout' ) }

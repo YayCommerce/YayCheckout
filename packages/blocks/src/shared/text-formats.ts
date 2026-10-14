@@ -18,3 +18,9 @@ export const TEXT_FORMATS = [
 
 /** TEXT_FORMATS and Live value, for blocks named in LIVE_VALUE_BLOCKS. */
 export const TEXT_FORMATS_WITH_LIVE_VALUE = [ ...TEXT_FORMATS, LIVE_VALUE_FORMAT ];
+
+/**
+ * An Extra Field checkbox label: Bold, Italic and Link, for "I agree to the terms". The one toolbar
+ * with a link. LayoutMarkupReader::LABEL_TAGS must allow the tags these save.
+ */
+export const LABEL_FORMATS = [ 'core/bold', 'core/italic', 'core/link' ];

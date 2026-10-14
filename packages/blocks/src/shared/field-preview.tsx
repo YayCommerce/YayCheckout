@@ -34,8 +34,12 @@ interface FieldPreviewProps {
 	/** Makes the label editable on the canvas; labelPlaceholder shows while it is empty. */
 	onLabelChange?: ( value: string ) => void;
 	labelPlaceholder?: string;
-	/** Shown in place of a Select or Radio with no usable options; without it, the label stands in as the one choice. */
+	/** Shown in place of a Select, Radio or multiple Checkbox with no usable options; without it, the label stands in as the one choice. */
 	emptyOptionsHint?: string;
+	/** A Checkbox with one box per option; by default, when it has usable options. */
+	multiple?: boolean;
+	/** The label's rich-text formats; plain text when left out. */
+	labelFormats?: string[];
 }
 
 /** Read-only so typing on the canvas does not fight block selection. */
@@ -52,11 +56,55 @@ export function FieldPreview( {
 	onLabelChange,
 	labelPlaceholder = '',
 	emptyOptionsHint = '',
+	multiple,
+	labelFormats,
 }: FieldPreviewProps ) {
 	const LabelTag = onLabelChange ? 'div' : 'label';
 
 	const usableOptions = options.filter( ( option ) => option.label !== '' || option.value !== '' );
-	const showEmptyOptionsHint = emptyOptionsHint !== '' && usableOptions.length === 0 && [ 'select', 'radio' ].includes( type );
+	const isMultiple = type === 'checkbox' && ( multiple ?? usableOptions.length > 0 );
+	const showEmptyOptionsHint =
+		emptyOptionsHint !== '' &&
+		usableOptions.length === 0 &&
+		( [ 'select', 'radio' ].includes( type ) || isMultiple );
+	const labelText = onLabelChange ? (
+		<RichText
+			tagName="span"
+			value={ label }
+			onChange={ onLabelChange }
+			placeholder={ labelPlaceholder }
+			{ ...( labelFormats
+				? { allowedFormats: labelFormats }
+				: { allowedFormats: [], withoutInteractiveFormatting: true } ) }
+		/>
+	) : (
+		label
+	);
+	const mark = required ? (
+		<span className="required">{ requiredMark || '*' }</span>
+	) : (
+		<span className="optional">({ optionalText || 'optional' })</span>
+	);
+
+	// One box with its label beside it, as woocommerce_form_field() prints it on the storefront. A div,
+	// not a label: typing Space in the label would toggle a label's checkbox.
+	if ( type === 'checkbox' && ! isMultiple ) {
+		return (
+			<div className="yaycheckout-field-preview form-row">
+				<div
+					className={
+						'yaycheckout-field-preview__single-check' +
+						( inheritLabelFont ? ' yaycheckout-field-preview__label--inherit' : '' )
+					}
+				>
+					<input type="checkbox" disabled />
+					{ labelText }
+					{ mark }
+				</div>
+				{ description !== '' && <p className="description">{ description }</p> }
+			</div>
+		);
+	}
 
 	return (
 		<div className="yaycheckout-field-preview form-row">
@@ -66,25 +114,8 @@ export function FieldPreview( {
 					( inheritLabelFont ? ' yaycheckout-field-preview__label--inherit' : '' )
 				}
 			>
-				{ onLabelChange ? (
-					<RichText
-						tagName="span"
-						value={ label }
-						onChange={ onLabelChange }
-						placeholder={ labelPlaceholder }
-						allowedFormats={ [] }
-						withoutInteractiveFormatting
-					/>
-				) : (
-					label
-				) }
-				{ required ? (
-					<span className="required">{ requiredMark || '*' }</span>
-				) : (
-					<span className="optional">
-						({ optionalText || 'optional' })
-					</span>
-				) }
+				{ labelText }
+				{ mark }
 			</LabelTag>
 			{ showEmptyOptionsHint ? (
 				<p className="yaycheckout-field-preview__empty-options">{ emptyOptionsHint }</p>
@@ -116,7 +147,7 @@ export function FieldPreview( {
 						) )
 					) }
 				</div>
-			) : type === 'checkbox' && usableOptions.length > 0 ? (
+			) : type === 'checkbox' ? (
 				<div className="yaycheckout-field-preview__choices">
 					{ usableOptions.map( ( option, index ) => (
 						<label key={ index } className="yaycheckout-field-preview__choice">
@@ -124,8 +155,6 @@ export function FieldPreview( {
 						</label>
 					) ) }
 				</div>
-			) : type === 'checkbox' ? (
-				<input type="checkbox" disabled className="yaycheckout-field-preview__check" />
 			) : type === 'hidden' ? (
 				<span className="yaycheckout-field-preview__hidden">{ label || labelPlaceholder }</span>
 			) : (

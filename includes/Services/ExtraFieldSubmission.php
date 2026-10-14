@@ -59,7 +59,7 @@ class ExtraFieldSubmission {
 
         switch ( $field['type'] ) {
             case 'checkbox':
-                return empty( $options ) ? self::single_checkbox( $raw ) : self::choices( $raw, $options );
+                return empty( $field['multiple'] ) ? self::single_checkbox( $raw ) : self::choices( $raw, $options );
             case 'select':
             case 'radio':
                 return self::choice( $raw, $options );
