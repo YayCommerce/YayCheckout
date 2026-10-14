@@ -24,13 +24,13 @@ final class BlockGap {
      * @return bool False when nothing was queued.
      */
     public static function add_rules( array $style, string $block_name, string $selector, bool $flow = false ): bool {
-        $gap   = self::css_value( wp_sanitize_block_gap_value( $style['spacing']['blockGap'] ?? null ) )
+        $gap   = self::css_value( self::sanitize( $style['spacing']['blockGap'] ?? null ) )
             ?? self::css_value( wp_get_global_styles( [ 'spacing', 'blockGap' ], [ 'block_name' => $block_name ] ) );
         $rules = null !== $gap ? self::rules( $selector, $gap, $flow ) : [];
 
         if ( method_exists( 'WP_Theme_JSON', 'get_viewport_media_queries' ) ) {
             foreach ( \WP_Theme_JSON::get_viewport_media_queries( wp_get_global_settings( [ 'viewport' ] ) ) as $viewport => $media_query ) {
-                $viewport_gap = self::css_value( wp_sanitize_block_gap_value( $style[ $viewport ]['spacing']['blockGap'] ?? null ) );
+                $viewport_gap = self::css_value( self::sanitize( $style[ $viewport ]['spacing']['blockGap'] ?? null ) );
 
                 if ( null !== $viewport_gap ) {
                     $rules = array_merge( $rules, self::rules( $selector, $viewport_gap, $flow, $media_query ) );
@@ -66,6 +66,20 @@ final class BlockGap {
         $class = wp_unique_id( $base_class . '-gap-' );
 
         return self::add_rules( $attributes['style'] ?? [], $block_name, '.' . $base_class . '.' . $class . $inner, $flow ) ? ' ' . $class : '';
+    }
+
+    /**
+     * Core's wp_sanitize_block_gap_value(), which is WP 7.1+; before that, the same rule for a single value.
+     *
+     * @param mixed $gap A blockGap value.
+     * @return mixed The value, or null when it isn't safe CSS.
+     */
+    private static function sanitize( $gap ) {
+        if ( function_exists( 'wp_sanitize_block_gap_value' ) ) {
+            return wp_sanitize_block_gap_value( $gap );
+        }
+
+        return ! is_scalar( $gap ) || ( $gap && preg_match( '%[\\\(&=}]|/\*%', (string) $gap ) ) ? null : $gap;
     }
 
     /** A gap value as CSS, or null; a spacing preset becomes its custom property. */
