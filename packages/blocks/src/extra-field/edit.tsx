@@ -209,6 +209,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						placeholder={ placeholder }
 						description={ description }
 						options={ options }
+						emptyOptionsHint={ __( 'Add options in the block settings.', 'yaycheckout' ) }
 						inheritLabelFont
 					/>
 				</DisclosurePreview>
