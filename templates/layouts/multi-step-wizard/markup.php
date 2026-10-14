@@ -5,7 +5,7 @@
  *
  * To update it, build the layout in the block editor, copy it from the Code editor and
  * paste it here, then put back the PHP: translated text, the logo-or-title choice, the
- * shield icon's guard, the policy links and the address sections. Keep the markup as the editor saves it: a
+ * lock and cart icons' guards, the policy links and the address sections. Keep the markup as the editor saves it: a
  * hand edit that differs by one class or style makes the editor flag the block as invalid.
  *
  * One 720px column: the collapsed Order Summary, the progress bar, then one step card at a time
@@ -135,7 +135,9 @@ $yaycheckout_box_fields = static function ( string $type ): void {
 <?php endif; ?>
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"6px"}},"layout":{"type":"flex","flexWrap":"nowrap"}} -->
-<div class="wp-block-group"><?php if ( WP_Block_Type_Registry::get_instance()->is_registered( 'core/icon' ) ) : ?>
+<div class="wp-block-group"><?php if ( \YayCheckout\Blocks\IconRegistry::has( 'lock' ) ) : ?>
+<!-- wp:icon {"icon":"yaycheckout/lock","style":{"color":{"text":"#2f8a48"},"dimensions":{"width":"16px"}}} /-->
+<?php elseif ( WP_Block_Type_Registry::get_instance()->is_registered( 'core/icon' ) ) : ?>
 <!-- wp:icon {"icon":"core/shield","style":{"color":{"text":"#2f8a48"},"dimensions":{"width":"16px"}}} /-->
 <?php endif; ?>
 
@@ -152,7 +154,11 @@ $yaycheckout_box_fields = static function ( string $type ): void {
 <div class="wp-block-group"><!-- wp:group {"style":{"color":{"background":"#ffffff"},"border":{"color":"#dddddd","width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"14px","right":"20px","bottom":"14px","left":"20px"}}}} -->
 <div class="wp-block-group has-border-color has-background" style="border-color:#dddddd;border-style:solid;border-width:1px;border-radius:4px;background-color:#ffffff;padding-top:14px;padding-right:20px;padding-bottom:14px;padding-left:20px"><!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>","collapsible":true} -->
 <!-- wp:yaycheckout/order-summary-header -->
-<!-- wp:yaycheckout/order-summary-toggle -->
+<!-- wp:yaycheckout/order-summary-toggle {"style":{"spacing":{"blockGap":"8px"}}} -->
+<?php if ( \YayCheckout\Blocks\IconRegistry::has( 'cart' ) ) : ?>
+<!-- wp:icon {"icon":"yaycheckout/cart","style":{"color":{"text":"#3858e9"},"dimensions":{"width":"16px"}}} /-->
+<?php endif; ?>
+
 <!-- wp:paragraph {"style":{"color":{"text":"#3858e9"},"typography":{"fontWeight":"500"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
 <p class="has-text-color" style="color:#3858e9;margin-top:0;margin-bottom:0;font-weight:500"><?php esc_html_e( 'Order summary', 'yaycheckout' ); ?></p>
 <!-- /wp:paragraph -->
