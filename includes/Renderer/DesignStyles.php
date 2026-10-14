@@ -162,16 +162,43 @@ class DesignStyles {
             $vars['input-padding-inline'] = $is_underline && '' === $inputs['background'] ? '0' : '12px';
         }
 
-        return array_merge(
+        $vars = array_merge(
             $vars,
             array_filter(
                 [
                     'input-background'   => $inputs['background'],
                     'input-color'        => $inputs['text'],
                     'input-border-color' => $inputs['border'],
+                    'input-focus-color'  => $inputs['focus'],
                 ],
                 $not_empty
             )
         );
+
+        // Border only drops the flush ring, so focus just recolours the border.
+        if ( 'border' === $inputs['focus_style'] ) {
+            $vars['input-focus-ring-width'] = '0';
+        }
+
+        // A radius of 0 is a square box, not an empty token.
+        $checkboxes = $sections['checkboxes'];
+
+        if ( null !== $checkboxes['size'] ) {
+            $vars['checkbox-size'] = $checkboxes['size'] . 'px';
+        }
+
+        if ( null !== $checkboxes['radius'] ) {
+            $vars['checkbox-radius'] = $checkboxes['radius'] . 'px';
+        }
+
+        if ( null !== $checkboxes['border_width'] ) {
+            $vars['checkbox-border-width'] = $checkboxes['border_width'] . 'px';
+        }
+
+        if ( '' !== $checkboxes['checked'] ) {
+            $vars['checkbox-checked-color'] = $checkboxes['checked'];
+        }
+
+        return $vars;
     }
 }

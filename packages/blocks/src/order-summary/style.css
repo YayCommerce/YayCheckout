@@ -23,11 +23,6 @@
 	cursor: pointer;
 }
 
-.yaycheckout-order-summary__header-button:focus-visible {
-	outline: 2px solid currentColor;
-	outline-offset: 2px;
-}
-
 .is-collapsible .yaycheckout-order-summary-header :is(a, button:not(.yaycheckout-order-summary__header-button), input, select, textarea, label, [role="button"], [tabindex]) {
 	position: relative;
 	z-index: 1;

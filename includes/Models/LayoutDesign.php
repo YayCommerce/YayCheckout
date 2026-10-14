@@ -89,7 +89,8 @@ final class LayoutDesign {
      * theme preset; colours.background may also be a gradient. An empty typography.base_size prints
      * DesignStyles::DEFAULT_BASE_SIZE, not the theme's size. The inputs.size token is an abstract step; the
      * renderer decides its height, in em. The inputs.label token prints no custom property: it is the checkout
-     * wrapper's yaycheckout-checkout--floating-labels class.
+     * wrapper's yaycheckout-checkout--floating-labels class. An empty checkboxes.checked fills a ticked box with the
+     * primary colour; its unticked border is inputs.border.
      */
     public static function schema(): array {
         return [
@@ -125,38 +126,71 @@ final class LayoutDesign {
                 ],
             ],
             'inputs'     => [
-                'style'      => [
+                'style'       => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'boxed', 'underline' ],
                 ],
-                'size'       => [
+                'size'        => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'small', 'medium', 'large' ],
                 ],
-                'radius'     => [
+                'radius'      => [
                     'type'    => 'int',
                     'default' => null,
                     'min'     => 0,
                     'max'     => 24,
                 ],
-                'background' => [
+                'background'  => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'text'       => [
+                'text'        => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'border'     => [
+                'border'      => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'label'      => [
+                'focus'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'focus_style' => [
+                    'type'    => 'enum',
+                    'default' => '',
+                    'enum'    => [ '', 'border' ],
+                ],
+                'label'       => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'floating' ],
+                ],
+            ],
+            'checkboxes' => [
+                'size'         => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 12,
+                    'max'     => 24,
+                ],
+                'radius'       => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 0,
+                    'max'     => 12,
+                ],
+                'border_width' => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 1,
+                    'max'     => 3,
+                ],
+                'checked'      => [
+                    'type'    => 'color',
+                    'default' => '',
                 ],
             ],
         ];

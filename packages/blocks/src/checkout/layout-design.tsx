@@ -36,15 +36,17 @@ export type LayoutDesignMeta = {
 	colours: SectionTokens;
 	typography: SectionTokens;
 	inputs: SectionTokens;
+	checkboxes: SectionTokens;
 	custom_css: string;
 };
 
-type Section = 'colours' | 'typography' | 'inputs';
+type Section = 'colours' | 'typography' | 'inputs' | 'checkboxes';
 
 const SECTIONS: Record< Section, string > = {
 	colours: __( 'Colours', 'yaycheckout' ),
 	typography: __( 'Typography', 'yaycheckout' ),
 	inputs: __( 'Inputs', 'yaycheckout' ),
+	checkboxes: __( 'Checkboxes', 'yaycheckout' ),
 };
 
 const TOKEN_LABELS: Record< string, string > = {
@@ -57,7 +59,11 @@ const TOKEN_LABELS: Record< string, string > = {
 	style: __( 'Style', 'yaycheckout' ),
 	size: __( 'Size', 'yaycheckout' ),
 	radius: __( 'Radius', 'yaycheckout' ),
+	focus: __( 'Focus', 'yaycheckout' ),
+	focus_style: __( 'Focus style', 'yaycheckout' ),
 	label: __( 'Label', 'yaycheckout' ),
+	border_width: __( 'Border width', 'yaycheckout' ),
+	checked: __( 'Checked', 'yaycheckout' ),
 };
 
 const ENUM_LABELS: Record< string, string > = {
@@ -68,6 +74,7 @@ const ENUM_LABELS: Record< string, string > = {
 	medium: __( 'Medium', 'yaycheckout' ),
 	large: __( 'Large', 'yaycheckout' ),
 	floating: __( 'Floating', 'yaycheckout' ),
+	border: __( 'Border only', 'yaycheckout' ),
 };
 
 function isTokens( value: unknown ): value is Record< string, unknown > {
@@ -94,6 +101,7 @@ function normalize( design: EditorDesign, raw: unknown ): LayoutDesignMeta {
 		colours: sectionTokens( design.schema.colours, meta.colours ),
 		typography: sectionTokens( design.schema.typography, meta.typography ),
 		inputs: sectionTokens( design.schema.inputs, meta.inputs ),
+		checkboxes: sectionTokens( design.schema.checkboxes, meta.checkboxes ),
 		custom_css: 'string' === typeof meta.custom_css ? meta.custom_css : '',
 	};
 }
