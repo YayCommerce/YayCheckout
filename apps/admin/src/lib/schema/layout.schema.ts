@@ -34,6 +34,8 @@ const layoutSummaryWireFields = {
   published_at: z.string().nullable(),
   /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduled_at: z.string().nullable(),
+  /** ISO 8601 UTC; null only when WordPress holds no modified date. */
+  updated_at: z.string().nullable(),
   /** [] when the layout has none. */
   rules: rulesWireSchema,
 };
@@ -101,6 +103,8 @@ export type LayoutSummary = {
   publishedAt: string | null;
   /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduledAt: string | null;
+  /** ISO 8601 UTC; null only when WordPress holds no modified date. */
+  updatedAt: string | null;
   /** Groups ORed, conditions ANDed; [] means the layout applies to everyone. */
   rules: LayoutRulesWire;
 };

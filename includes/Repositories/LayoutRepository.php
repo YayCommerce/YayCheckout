@@ -557,7 +557,14 @@ class LayoutRepository {
     }
 
     private function to_layout( \WP_Post $post, bool $is_active ): Layout {
-        return Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $post->ID ) ), $is_active );
+        $layout = Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $post->ID ) ), $is_active );
+
+        // A draft not updated since insert keeps a zero post_modified_gmt; derive it from the local time, as core's REST API does.
+        if ( '0000-00-00 00:00:00' === $post->post_modified_gmt ) {
+            $layout->updated_at = get_gmt_from_date( $post->post_modified );
+        }
+
+        return $layout;
     }
 
     /**

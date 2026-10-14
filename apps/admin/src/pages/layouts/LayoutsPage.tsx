@@ -5,6 +5,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
+import { formatDateTime } from '@/lib/helpers/date.helper';
 import { editLayoutIdFrom, withEditLayout } from '@/lib/helpers/layout.helper';
 import { isPro } from '@/lib/plan';
 import {
@@ -552,6 +553,7 @@ function LayoutsTable({
           <TableHead>{__('Name', 'yaycheckout')}</TableHead>
           {isPro && <TableHead>{__('Assignment', 'yaycheckout')}</TableHead>}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
+          <TableHead>{__('Last updated', 'yaycheckout')}</TableHead>
           <TableHead>{__('Actions', 'yaycheckout')}</TableHead>
         </TableRow>
       </TableHeader>
@@ -620,6 +622,9 @@ function LayoutTableRow({
       )}
       <TableCell>
         <LayoutStatusBadge layout={layout} />
+      </TableCell>
+      <TableCell className="text-muted-foreground whitespace-nowrap">
+        {formatDateTime(layout.updatedAt) || '—'}
       </TableCell>
       <TableCell>
         <LayoutRowActions
