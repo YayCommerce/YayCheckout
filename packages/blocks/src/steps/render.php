@@ -34,6 +34,12 @@ if ( false === ( $attributes['showHeadings'] ?? true ) ) {
 // Block spacing.
 $yaycheckout_wrapper_attrs['class'] .= \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/steps', 'yaycheckout-steps' );
 
+// Title and Summary styles.
+$yaycheckout_text_class = \YayCheckout\Renderer\StepsTextStyles::wrapper_class( $attributes, 'yaycheckout/steps' );
+if ( '' !== $yaycheckout_text_class ) {
+    $yaycheckout_wrapper_attrs['class'] .= ' ' . $yaycheckout_text_class;
+}
+
 $yaycheckout_wrapper = get_block_wrapper_attributes( $yaycheckout_wrapper_attrs );
 
 ?>
