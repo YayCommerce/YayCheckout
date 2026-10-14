@@ -17,6 +17,8 @@ defined( 'ABSPATH' ) || exit;
  * Stands down entirely, leaving WooCommerce untouched, when no layout resolves,
  * or when safe mode is on and the layout has a problem (CheckoutHealth) or last
  * failed to render; a preview link (PreviewRequest) renders its layout regardless.
+ * A request that carries the form (update_order_review, the order submit) follows
+ * the form instead: the layout it was rendered with, or WooCommerce's own.
  */
 class CheckoutPage {
     use SingletonTrait;
@@ -24,9 +26,13 @@ class CheckoutPage {
     /** After WC_Frontend_Scripts registers its handles at priority 10. */
     private const SCRIPTS_PRIORITY = 20;
 
+    /** Hidden input the Checkout block prints in the form: the id of the layout that rendered it. */
+    public const FORM_FIELD = 'yaycheckout_layout';
+
     /**
-     * The circuit breaker: each layout's last render failure, layout id => array{hash: string, reason: string, time: int},
-     * hash being md5 of the layout's post_content. One holds while its layout keeps that content, for FAILURE_TTL.
+     * Each layout's last render failure, layout id => array{hash: string, reason: string, time: int, blocks: bool},
+     * hash being md5 of the layout's post_content. One counts while its layout keeps that content, for FAILURE_TTL.
+     * A failure that `blocks` is the circuit breaker: later requests fall back too. The others are only reported.
      */
     public const OPTION_RENDER_FAILURES = 'yaycheckout_render_failures';
 
@@ -88,7 +94,13 @@ class CheckoutPage {
      * @throws \Throwable A render failure during a preview, or with safe mode off.
      */
     public function page_template( string $template ): string {
-        $layout    = $this->layout();
+        $layout = $this->layout();
+
+        // Stood down already: a theme or plugin applied template_include again.
+        if ( null === $layout ) {
+            return $template;
+        }
+
         $preview   = PreviewRequest::get_instance()->active();
         $safe_mode = ( new SettingsRepository() )->is_safe_mode();
         $level     = ob_get_level();
@@ -107,7 +119,9 @@ class CheckoutPage {
                 ob_end_clean();
             }
 
-            if ( ! $this->absorb( $layout, $ex ) ) {
+            // Reported but not blocking: third-party code runs here too (totals, gateways, hooks), and may fail for this cart only.
+            // The next request renders again, and falls back again if it fails again.
+            if ( ! $this->absorb( $layout, $ex, false ) ) {
                 throw $ex;
             }
 
@@ -117,9 +131,10 @@ class CheckoutPage {
         }
 
         // A form without WooCommerce's submit button cannot place an order: the id is checkout.js's submit contract, printed by
-        // packages/blocks/src/place-order/render.php. Safe mode off renders it anyway; the merchant is warned.
-        if ( ! $preview && false === strpos( $html, 'id="place_order"' ) ) {
-            $this->record_failure( $layout, __( 'The layout rendered without a Place order button.', 'yaycheckout' ) );
+        // packages/blocks/src/place-order/render.php. Safe mode off renders it anyway; the merchant is warned. Not when
+        // WooCommerce shows a guest no form at all (registration required): the Checkout block prints only its login message.
+        if ( ! $preview && ! CheckoutLogin::must_log_in() && false === strpos( $html, 'id="place_order"' ) ) {
+            $this->record_failure( $layout, __( 'The layout rendered without a Place order button.', 'yaycheckout' ), true );
 
             if ( $safe_mode ) {
                 return $this->stand_down( $template );
@@ -136,13 +151,24 @@ class CheckoutPage {
         return $this->html;
     }
 
-    /** The breaker: the reason $layout last failed to render, while its content is unchanged since and FAILURE_TTL has not passed, or ''. */
+    /** The breaker: why $layout's failure blocks it, while its content is unchanged since and FAILURE_TTL has not passed, or ''. */
     public static function render_failure( Layout $layout ): string {
+        $failure = self::live_failure( $layout );
+
+        return null !== $failure && ! empty( $failure['blocks'] ) ? (string) $failure['reason'] : '';
+    }
+
+    /** For the admin: why $layout last failed to render, blocking or not, under the same conditions, or ''. */
+    public static function recorded_failure( Layout $layout ): string {
+        $failure = self::live_failure( $layout );
+
+        return null !== $failure ? (string) $failure['reason'] : '';
+    }
+
+    private static function live_failure( Layout $layout ): ?array {
         $failure = self::live_failures()[ $layout->id ] ?? null;
 
-        return null !== $failure && md5( $layout->content ) === ( $failure['hash'] ?? '' )
-            ? (string) $failure['reason']
-            : '';
+        return null !== $failure && md5( $layout->content ) === ( $failure['hash'] ?? '' ) ? $failure : null;
     }
 
     /** The recorded failures still within FAILURE_TTL, by layout id. */
@@ -158,35 +184,29 @@ class CheckoutPage {
     }
 
     /**
-     * Records a request that ended mid-render, by a fatal error or by a block calling exit or wp_die(),
-     * so the next request falls back. Public only for register_shutdown_function().
+     * Records a fatal error mid-render, so the next request falls back: this one cannot. A request that ended
+     * by exit or wp_die() is left alone, as plugins end requests on purpose (a redirect, a refusal).
+     * Public only for register_shutdown_function().
      */
     public function record_fatal( Layout $layout ): void {
-        if ( ! $this->rendering ) {
-            return;
-        }
-
         $error = error_get_last();
 
-        $this->record_failure(
-            $layout,
-            null !== $error && in_array( $error['type'], self::FATAL_ERRORS, true )
-                ? $error['message']
-                : __( 'The layout stopped the page while rendering.', 'yaycheckout' )
-        );
+        if ( $this->rendering && null !== $error && in_array( $error['type'], self::FATAL_ERRORS, true ) ) {
+            $this->record_failure( $layout, $error['message'], true );
+        }
     }
 
     /**
      * Handles a layout that threw while rendering, on the page or in an update_order_review fragment:
-     * records it for the next request, and says whether safe mode wants the caller to swallow it.
-     * A preview records nothing and always rethrows.
+     * records it, blocking the next requests when $blocks, and says whether safe mode wants the caller
+     * to swallow it. A preview records nothing and always rethrows.
      */
-    public function absorb( Layout $layout, \Throwable $ex ): bool {
+    public function absorb( Layout $layout, \Throwable $ex, bool $blocks ): bool {
         if ( PreviewRequest::get_instance()->active() ) {
             return false;
         }
 
-        $this->record_failure( $layout, '' !== $ex->getMessage() ? $ex->getMessage() : get_class( $ex ) );
+        $this->record_failure( $layout, '' !== $ex->getMessage() ? $ex->getMessage() : get_class( $ex ), $blocks );
 
         return ( new SettingsRepository() )->is_safe_mode();
     }
@@ -224,15 +244,40 @@ class CheckoutPage {
             return ( new LayoutRepository() )->find( $preview_id );
         }
 
-        // Picked afresh by every request, AJAX and order submit too, with no pin: safe because every ConditionType reads a fact that holds for the life of the form.
+        // Picked afresh by every request: every ConditionType reads a fact that holds for the life of the form.
         $layout = ( new LayoutRepository() )->active( $this->shopper_context() );
+        $posted = $this->posted_layout_id();
 
-        // CheckoutHealth reads store configuration and the breaker only, so the submit request reaches the answer the render request did.
+        // The form decides, so its AJAX and submit match what the shopper sees even if safe mode, a problem or the
+        // breaker changed since it rendered: the layout only when it rendered this form, WooCommerce's otherwise.
+        // A posted id can't pick another layout, only say whether this one is the form's.
+        if ( null !== $posted ) {
+            return null !== $layout && $posted === $layout->id ? $layout : null;
+        }
+
         if ( null !== $layout && ( new SettingsRepository() )->is_safe_mode() && '' !== CheckoutHealth::problem( $layout ) ) {
             return null;
         }
 
         return $layout;
+    }
+
+    /**
+     * For a request that carries the checkout form, the FORM_FIELD it posted: the layout's id, or 0 for
+     * WooCommerce's own form, which has none. Null for any other request.
+     */
+    private function posted_layout_id(): ?int {
+        // phpcs:disable WordPress.Security.NonceVerification -- Read only to pick the renderer; WooCommerce verifies the form's nonce.
+        if ( isset( $_POST['woocommerce-process-checkout-nonce'] ) ) {
+            $form = $_POST;
+        } elseif ( 'update_order_review' === sanitize_key( wp_unslash( $_GET['wc-ajax'] ?? '' ) ) && isset( $_POST['post_data'] ) ) {
+            wp_parse_str( wp_unslash( (string) $_POST['post_data'] ), $form ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Parsed, then only FORM_FIELD is read through absint().
+        } else {
+            return null;
+        }
+        // phpcs:enable
+
+        return absint( $form[ self::FORM_FIELD ] ?? 0 );
     }
 
     /**
@@ -273,21 +318,23 @@ class CheckoutPage {
     }
 
     /**
-     * Written only when the layout's failure is new, expired, or its content or reason changed, so a broken
-     * layout costs no write per request. Expired failures are dropped on the way.
+     * Written only when the layout has no live failure yet, or this one blocks and that one did not, so a broken
+     * layout costs no write per request. The reason is not compared: it is in the shopper's language, which varies.
+     * Expired failures are dropped on the way.
      */
-    private function record_failure( Layout $layout, string $reason ): void {
-        $reason = mb_substr( $reason, 0, self::REASON_MAX_LENGTH );
+    private function record_failure( Layout $layout, string $reason, bool $blocks ): void {
+        $live = self::live_failure( $layout );
 
-        if ( self::render_failure( $layout ) === $reason ) {
+        if ( null !== $live && ( ! empty( $live['blocks'] ) || ! $blocks ) ) {
             return;
         }
 
         $failures                = self::live_failures();
         $failures[ $layout->id ] = [
             'hash'   => md5( $layout->content ),
-            'reason' => $reason,
+            'reason' => mb_substr( $reason, 0, self::REASON_MAX_LENGTH ),
             'time'   => time(),
+            'blocks' => $blocks,
         ];
 
         update_option( self::OPTION_RENDER_FAILURES, $failures, true );

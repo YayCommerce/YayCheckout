@@ -53,12 +53,12 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
         $this->assertSame( md5( get_post( $id )->post_content ), get_option( CheckoutPage::OPTION_RENDER_FAILURES )[ $id ]['hash'] );
     }
 
-    public function test_next_request_after_failure_falls_back(): void {
+    public function test_page_failure_does_not_block_the_next_request(): void {
         LayoutFactory::serve( self::boom_markup() );
         CheckoutPage::get_instance()->page_template( '/theme/page.php' );
         LayoutFactory::forget_served_layout();
 
-        $this->assertNull( CheckoutPage::get_instance()->layout() );
+        $this->assertNotNull( CheckoutPage::get_instance()->layout() );
     }
 
     public function test_content_change_resets_breaker(): void {
@@ -156,7 +156,7 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
         $this->assertSame( 500, mb_strlen( self::failure( $id ) ) );
     }
 
-    public function test_request_ending_mid_render_is_recorded(): void {
+    public function test_request_ending_mid_render_without_a_fatal_is_not_recorded(): void {
         $id   = LayoutFactory::serve( LayoutFactory::checkout_markup() );
         $page = CheckoutPage::get_instance();
         $flag = new \ReflectionProperty( CheckoutPage::class, 'rendering' );
@@ -169,7 +169,7 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
         $page->record_fatal( $page->layout() );
         $flag->setValue( $page, false );
 
-        $this->assertSame( 'The layout stopped the page while rendering.', self::failure( $id ) );
+        $this->assertSame( '', self::failure( $id ), 'An exit or wp_die() mid-render, with no fatal error, records nothing.' );
     }
 
     /**
@@ -202,7 +202,7 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
     }
 
     private static function failure( int $id ): string {
-        return CheckoutPage::render_failure( ( new LayoutRepository() )->find( $id ) );
+        return CheckoutPage::recorded_failure( ( new LayoutRepository() )->find( $id ) );
     }
 
     private static function boom_markup(): string {

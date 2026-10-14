@@ -140,12 +140,12 @@ class CheckoutFragments {
                 ob_end_clean();
             }
 
-            if ( ! CheckoutPage::get_instance()->absorb( $layout, $ex ) ) {
+            if ( ! CheckoutPage::get_instance()->absorb( $layout, $ex, true ) ) {
                 throw $ex;
             }
 
-            // The breaker now gives this form's submit to WooCommerce, which would check the layout's form by its own
-            // field rules. Reloading swaps in WooCommerce's form first. Sent here: the filter runs after WooCommerce reads `reload`.
+            // Blocking, unlike a page failure: the reload must land on WooCommerce's form, or it would fail again.
+            // Sent here: the filter runs after WooCommerce reads `reload`.
             wp_send_json(
                 [
                     'result'    => 'success',

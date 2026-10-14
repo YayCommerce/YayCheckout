@@ -48,10 +48,15 @@ class CheckoutHealth {
 
         // Pro: the shopper decides which active layout serves, so any one of them can be the broken one.
         foreach ( $layouts as $layout ) {
-            $failure = CheckoutPage::render_failure( $layout );
-            $own     = '' !== $failure
-                ? __( 'This layout failed to load on the checkout page.', 'yaycheckout' )
-                : LayoutMarkupReader::publish_error( $layout->content );
+            $failure = CheckoutPage::recorded_failure( $layout );
+            if ( '' === $failure ) {
+                $own = LayoutMarkupReader::publish_error( $layout->content );
+            } elseif ( '' !== CheckoutPage::render_failure( $layout ) ) {
+                $own = __( 'This layout failed to load on the checkout page.', 'yaycheckout' );
+            } else {
+                // Not blocking: the layout is still served, and failed for one request.
+                $own = __( 'This layout failed to load for a shopper recently.', 'yaycheckout' );
+            }
             if ( '' !== $own ) {
                 $problems[] = [
                     'reason'       => $own,

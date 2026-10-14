@@ -72,5 +72,7 @@ if ( \YayCheckout\Renderer\CheckoutLogin::must_log_in() ) {
 
 ?>
 <form <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?> name="checkout" method="post" action="<?php echo esc_url( wc_get_checkout_url() ); ?>" enctype="multipart/form-data" aria-label="<?php echo esc_attr__( 'Checkout', 'woocommerce' ); ?>">
+    <?php // Tells the form's AJAX and submit requests which layout rendered it (CheckoutPage::posted_layout_id()). ?>
+    <input type="hidden" name="<?php echo esc_attr( \YayCheckout\Renderer\CheckoutPage::FORM_FIELD ); ?>" value="<?php echo esc_attr( $yaycheckout_layout_id ); ?>" />
     <?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner block markup, already rendered and escaped by core. ?>
 </form>
