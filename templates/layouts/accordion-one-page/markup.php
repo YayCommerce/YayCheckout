@@ -50,10 +50,10 @@ $yaycheckout_policy_links = array_filter(
     ]
 );
 
-// WooCommerce's Shipping destination when the layout is created: the main address comes first and the
-// other follows Different Address; with shipping forced to billing there is only Billing.
+// WooCommerce's Shipping destination when the layout is created: Delivery is the main address
+// (Shipping fields when shipping is main, Billing when billing is main or forced); Different Address
+// and the other section follow it. Forced-to-billing has only Delivery.
 $yaycheckout_destination = \YayCheckout\Renderer\CheckoutDifferentAddress::destination();
-$yaycheckout_step2_title = 'shipping' === $yaycheckout_destination ? __( 'Delivery address', 'yaycheckout' ) : __( 'Billing address', 'yaycheckout' );
 
 // Shipping and Billing hold the same fields; $type is 'shipping' or 'billing'. No Company. Phone is required.
 $yaycheckout_address_fields = static function ( string $type ): void {
@@ -91,7 +91,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
-<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'For delivery updates only.', 'yaycheckout' ); ?>","required":true} /-->
+<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>","required":true} /-->
 <?php
 };
 ?>
@@ -138,24 +138,25 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:group -->
 <!-- /wp:yaycheckout/step -->
 
-<!-- wp:yaycheckout/step {"title":"<?php echo esc_html( $yaycheckout_step2_title ); ?>","style":{"color":{"background":"#ffffff"},"border":{"color":"#dddddd","width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"16px","right":"20px","bottom":"16px","left":"20px"},"blockGap":"12px"}}} -->
+<!-- wp:yaycheckout/step {"title":"<?php esc_html_e( 'Delivery address', 'yaycheckout' ); ?>","style":{"color":{"background":"#ffffff"},"border":{"color":"#dddddd","width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"16px","right":"20px","bottom":"16px","left":"20px"},"blockGap":"12px"}}} -->
 <?php if ( 'shipping' === $yaycheckout_destination ) : ?>
 <!-- wp:yaycheckout/shipping {"showTitle":false} -->
 <?php $yaycheckout_address_fields( 'shipping' ); ?>
 <!-- /wp:yaycheckout/shipping -->
+<?php else : ?>
+<!-- wp:yaycheckout/billing {"showTitle":false} -->
+<?php $yaycheckout_address_fields( 'billing' ); ?>
+<!-- /wp:yaycheckout/billing -->
+<?php endif; ?>
+<?php if ( 'billing_only' !== $yaycheckout_destination ) : ?>
 
-<!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Billing address is the same as delivery', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Billing address is the same as delivery', 'yaycheckout' ); ?>","shipLabel":"<?php esc_html_e( 'Billing address is the same as delivery', 'yaycheckout' ); ?>"} /-->
+<?php if ( 'shipping' === $yaycheckout_destination ) : ?>
 
 <!-- wp:yaycheckout/billing {"showTitle":false} -->
 <?php $yaycheckout_address_fields( 'billing' ); ?>
 <!-- /wp:yaycheckout/billing -->
 <?php else : ?>
-<!-- wp:yaycheckout/billing {"showTitle":false} -->
-<?php $yaycheckout_address_fields( 'billing' ); ?>
-<!-- /wp:yaycheckout/billing -->
-<?php if ( 'billing' === $yaycheckout_destination ) : ?>
-
-<!-- wp:yaycheckout/different-address {"shipLabel":"<?php esc_html_e( 'Shipping address is the same as billing', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:yaycheckout/shipping {"showTitle":false} -->
 <?php $yaycheckout_address_fields( 'shipping' ); ?>
