@@ -76,7 +76,7 @@ When a merchant picks a template, in the New layout modal's library step or the 
    Their `title` tooltips are unchanged.
 10. The selected card has a 2px primary ring with a `bg-primary/5` tint, a filled primary check circle on the preview's top-right corner, its name in `text-primary`, and `aria-pressed="true"`.
 11. Every grid lists available templates first, then Coming soon ones, each group in catalogue order. The sort is display-only; `LayoutTemplateCatalogue::catalogue()`'s order still decides Free's unlocked templates and the wizard's default pick.
-12. Pro: the category chips and the "N templates" count stay, and all templates show as cards in one grid. A filter that hides the current selection still calls `onSelect(null)`.
+12. Pro: the category chips and the "N templates" count stay, and all templates show as cards in one grid. A template lists one or more categories (`categories: string[]` in `LayoutTemplateCatalogue::catalogue()` and on the wire, replacing the single `category`), shows under every chip it names, and each chip appears once. A filter that hides the current selection still calls `onSelect(null)`.
 13. Free shows, in order:
     - the 3 unlocked cards;
     - a row with `ProTag`, "8 more templates" (`_n`) and `UpgradeButton`;
@@ -138,7 +138,7 @@ When a merchant picks a template, in the New layout modal's library step or the 
 - Uninstall: nothing to remove.
 
 **Integration points:**
-- REST `GET /yaycheckout/v1/layouts/templates`: each entry gains `preview_url`. No new hooks, filters or routes.
+- REST `GET /yaycheckout/v1/layouts/templates`: each entry gains `preview_url`, and `category: string` becomes `categories: string[]`. No new hooks, filters or routes.
 - Doc updates:
   - CLAUDE.md hard rule 1 adds `templates/layouts/*/preview.html` (rebuilt by `./scripts/run.sh previews`);
   - the `docs/architecture.md` templates paragraph names `preview.html` and `preview_url`;

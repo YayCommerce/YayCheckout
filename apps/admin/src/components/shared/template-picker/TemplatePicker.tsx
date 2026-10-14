@@ -88,17 +88,18 @@ function ProTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: GridP
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL_CATEGORIES);
   const selected = useTemplate(selectedSlug);
 
-  const categories = useMemo(() => [ALL_CATEGORIES, ...new Set(templates.map((t) => t.category))], [templates]);
+  const categories = useMemo(() => [ALL_CATEGORIES, ...new Set(templates.flatMap((t) => t.categories))], [templates]);
 
   const shownTemplates = useMemo(
-    () => (categoryFilter === ALL_CATEGORIES ? templates : templates.filter((t) => t.category === categoryFilter)),
+    () =>
+      categoryFilter === ALL_CATEGORIES ? templates : templates.filter((t) => t.categories.includes(categoryFilter)),
     [templates, categoryFilter],
   );
 
   function onCategoryChange(category: string) {
     setCategoryFilter(category);
 
-    if (selected && category !== ALL_CATEGORIES && selected.category !== category) {
+    if (selected && category !== ALL_CATEGORIES && !selected.categories.includes(category)) {
       onSelect(null);
     }
   }

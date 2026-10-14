@@ -11,7 +11,7 @@ function templateFromWire(wire: TemplateWire): Template {
   return {
     slug: wire.slug,
     name: wire.name,
-    category: wire.category,
+    categories: wire.categories,
     locked: wire.locked,
     available: wire.available,
     previewUrl: wire.preview_url,

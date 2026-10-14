@@ -19,7 +19,7 @@ class LayoutTemplateCatalogue {
     /** Free picks the first N; the rest render locked. */
     private const FREE_UNLOCKED_COUNT = 3;
 
-    /** @return array{ slug: string, name: string, category: string, locked: bool, available: bool, preview_url: string }[] */
+    /** @return array{ slug: string, name: string, categories: string[], locked: bool, available: bool, preview_url: string }[] */
     public static function templates( bool $is_pro ): array {
         $templates = self::catalogue();
 
@@ -118,63 +118,63 @@ class LayoutTemplateCatalogue {
         return 'templates/layouts/' . $slug . '/' . $name;
     }
 
-    /** @return array{ slug: string, name: string, category: string }[] */
+    /** @return array{ slug: string, name: string, categories: string[] }[] */
     private static function catalogue(): array {
         return [
             [
-                'slug'     => 'classic-two-column',
-                'name'     => 'Classic two-column',
-                'category' => 'Two column',
+                'slug'       => 'classic-two-column',
+                'name'       => 'Classic two-column',
+                'categories' => [ 'Two column' ],
             ],
             [
-                'slug'     => 'split-express',
-                'name'     => 'Split express',
-                'category' => 'Two column',
+                'slug'       => 'split-express',
+                'name'       => 'Split express',
+                'categories' => [ 'Two column' ],
             ],
             [
-                'slug'     => 'editorial-fashion',
-                'name'     => 'Editorial fashion',
-                'category' => 'Two column',
+                'slug'       => 'editorial-fashion',
+                'name'       => 'Editorial fashion',
+                'categories' => [ 'Two column' ],
             ],
             [
-                'slug'     => 'multi-step-wizard',
-                'name'     => 'Multi-step wizard',
-                'category' => 'Multi-step',
+                'slug'       => 'multi-step-wizard',
+                'name'       => 'Multi-step wizard',
+                'categories' => [ 'Multi-step', 'One column' ],
             ],
             [
-                'slug'     => 'accordion-one-page',
-                'name'     => 'Accordion one-page',
-                'category' => 'One column',
+                'slug'       => 'accordion-one-page',
+                'name'       => 'Accordion one-page',
+                'categories' => [ 'One column' ],
             ],
             [
-                'slug'     => 'upsell-cross-sell',
-                'name'     => 'Upsell & cross-sell',
-                'category' => 'Two column',
+                'slug'       => 'upsell-cross-sell',
+                'name'       => 'Upsell & cross-sell',
+                'categories' => [ 'Two column' ],
             ],
             [
-                'slug'     => 'minimal-steps',
-                'name'     => 'Minimal steps',
-                'category' => 'Multi-step',
+                'slug'       => 'minimal-steps',
+                'name'       => 'Minimal steps',
+                'categories' => [ 'Multi-step', 'One column' ],
             ],
             [
-                'slug'     => 'live-receipt',
-                'name'     => 'Live receipt',
-                'category' => 'Two column',
+                'slug'       => 'live-receipt',
+                'name'       => 'Live receipt',
+                'categories' => [ 'Two column' ],
             ],
             [
-                'slug'     => 'soft-steps',
-                'name'     => 'Soft steps',
-                'category' => 'Multi-step',
+                'slug'       => 'soft-steps',
+                'name'       => 'Soft steps',
+                'categories' => [ 'Multi-step', 'One column' ],
             ],
             [
-                'slug'     => 'material-stepper',
-                'name'     => 'Material stepper',
-                'category' => 'Two column',
+                'slug'       => 'material-stepper',
+                'name'       => 'Material stepper',
+                'categories' => [ 'Two column' ],
             ],
             [
-                'slug'     => 'digital-product',
-                'name'     => 'Digital product',
-                'category' => 'Digital goods',
+                'slug'       => 'digital-product',
+                'name'       => 'Digital product',
+                'categories' => [ 'Digital goods' ],
             ],
         ];
     }
