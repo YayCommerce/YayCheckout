@@ -3,19 +3,17 @@ import { Check, Clock, Lock } from 'lucide-react';
 import { __, _n } from '@wordpress/i18n';
 
 import { isPro } from '@/lib/plan';
-import { isPickable, useTemplate, useTemplateLibraryQuery } from '@/lib/queries/template.queries';
+import { isPickable, useTemplate, useTemplates } from '@/lib/queries/template.queries';
 import type { Template } from '@/lib/schema/template.schema';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton';
 import { focusVariants } from '@/components/ui/variants/focus.variants';
 import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
-import { FRAME_ASPECT, TemplatePreview } from './TemplatePreview';
+import { TemplatePreview } from './TemplatePreview';
 
 const ALL_CATEGORIES = __('All', 'yaycheckout');
 
 type GridProps = {
   templates: Template[];
-  isLoading: boolean;
   selectedSlug: string | null | undefined;
   onSelect: (slug: string | null) => void;
 };
@@ -63,8 +61,8 @@ export function TemplatePicker({
   selectedSlug: string | null | undefined;
   onSelect: (slug: string | null) => void;
 }) {
-  const { data, isPending: isLoadingTemplates } = useTemplateLibraryQuery();
-  const gridProps = { templates: data?.templates ?? [], isLoading: isLoadingTemplates, selectedSlug, onSelect };
+  const templates = useTemplates();
+  const gridProps = { templates, selectedSlug, onSelect };
 
   return (
     <div className="flex flex-col gap-3 rounded-md border p-4">
@@ -72,9 +70,9 @@ export function TemplatePicker({
         <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
           {isPro ? __('Pro — full grid, filterable', 'yaycheckout') : __('Templates included in Lite', 'yaycheckout')}
         </span>
-        {isPro && data && (
+        {isPro && (
           <span className="text-muted-foreground text-xs">
-            {data.templates.length} {_n('template', 'templates', data.templates.length, 'yaycheckout')}
+            {templates.length} {_n('template', 'templates', templates.length, 'yaycheckout')}
           </span>
         )}
       </div>
@@ -84,7 +82,7 @@ export function TemplatePicker({
   );
 }
 
-function ProTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: GridProps) {
+function ProTemplateGrid({ templates, selectedSlug, onSelect }: GridProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL_CATEGORIES);
   const selected = useTemplate(selectedSlug);
 
@@ -124,13 +122,9 @@ function ProTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: GridP
         ))}
       </div>
 
-      {isLoading ? (
-        <PickerSkeleton />
-      ) : (
-        <ScrollArea>
-          <TemplateCards templates={shownTemplates} selectedSlug={selectedSlug} onSelect={onSelect} />
-        </ScrollArea>
-      )}
+      <ScrollArea>
+        <TemplateCards templates={shownTemplates} selectedSlug={selectedSlug} onSelect={onSelect} />
+      </ScrollArea>
     </>
   );
 }
@@ -152,7 +146,7 @@ function byAvailableFirst(templates: Template[]): Template[] {
   return [...templates].sort((a, b) => Number(b.available) - Number(a.available));
 }
 
-function TemplateCards({ templates, selectedSlug, onSelect }: Omit<GridProps, 'isLoading'>) {
+function TemplateCards({ templates, selectedSlug, onSelect }: GridProps) {
   return (
     <CardGrid>
       {byAvailableFirst(templates).map((template) => (
@@ -214,11 +208,7 @@ function TemplateTile({
   );
 }
 
-function FreeTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: GridProps) {
-  if (isLoading) {
-    return <PickerSkeleton />;
-  }
-
+function FreeTemplateGrid({ templates, selectedSlug, onSelect }: GridProps) {
   const unlockedTemplates = templates.filter((t) => !t.locked);
   const lockedTemplates = templates.filter((t) => t.locked);
 
@@ -239,19 +229,5 @@ function FreeTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: Grid
         </>
       )}
     </ScrollArea>
-  );
-}
-
-/** Matches the loaded cards' boxes (FRAME_ASPECT), so the dialog doesn't grow when templates arrive. */
-function PickerSkeleton() {
-  return (
-    <CardGrid>
-      {[...Array(6).keys()].map((i) => (
-        <div key={i} className="flex flex-col gap-2 rounded-md border p-2">
-          <Skeleton className="w-full" style={{ aspectRatio: FRAME_ASPECT }} />
-          <Skeleton className="h-4 w-2/3" />
-        </div>
-      ))}
-    </CardGrid>
   );
 }

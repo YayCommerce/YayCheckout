@@ -29,7 +29,7 @@ When a merchant picks a template, in the New layout modal's library step or the 
 **In:**
 - A generated, script-free `templates/layouts/<slug>/preview.html` for all 11 catalogue slugs, captured from the mock in its initial state.
 - `scripts/capture-template-previews.py` and the `./scripts/run.sh previews [mock-path]` command that writes them.
-- `preview_url` on each entry of `GET /layouts/templates`.
+- `preview_url` on each template entry, and the catalogue printed into the page (`window.yayCheckoutAdmin.templates`) instead of fetched from `GET /layouts/templates`, which is removed.
 - The redesigned shared `TemplatePicker`: 3-column large cards, each showing its preview in a sandboxed, scaled iframe that scrolls on hover. Used by both the New layout library step and the wizard's Start from step.
 - Deleting the SVG sketch components.
 - Doc updates: CLAUDE.md hard rule 1, `docs/architecture.md`, the build-checkout-template skill, `./scripts/run.sh help`.
@@ -53,7 +53,7 @@ When a merchant picks a template, in the New layout modal's library step or the 
 
    The script checks this and fails, without writing that file, if any check fails.
 3. If a mock template's name matches no catalogue name, or a catalogue slug gets no preview, the script exits non-zero and names it.
-4. `GET /yaycheckout/v1/layouts/templates` returns `preview_url` on every entry:
+4. The template catalogue (`window.yayCheckoutAdmin.templates`, printed by `LocalizeHelper::get_admin_data()` for the installed plan; the `GET /layouts/templates` route and its `plan` parameter are removed) carries `preview_url` on every entry:
    - when the file exists: `YAYCHECKOUT_PLUGIN_URL . 'templates/layouts/<slug>/preview.html?ver=' . YAYCHECKOUT_VERSION`;
    - when it doesn't: `''`.
 
@@ -84,7 +84,7 @@ When a merchant picks a template, in the New layout modal's library step or the 
 
     The dashed greyed strip no longer exists.
 14. When `previewUrl` is `''` or the iframe fires `error`, the frame shows a `bg-muted` box with the template name centred, and no iframe.
-15. While templates load, the picker shows 6 skeleton cards in 3 columns, each a 4:3 box plus a name bar.
+15. The picker has no loading state: the catalogue is in the page when the SPA starts, so the cards render at once.
 16. `TemplateThumbnail.tsx`, `TemplateThumbnailPrimitives.tsx` and `template-thumbnail-sketches.tsx` are deleted, and no file in `apps/` imports them.
 17. `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit` passes, and `composer lint` passes on the changed PHP files.
 18. End-to-end verification:
@@ -127,7 +127,7 @@ When a merchant picks a template, in the New layout modal's library step or the 
 - `includes/Controllers/LayoutTemplateCatalogue.php`: `templates()` adds `preview_url`. A private `preview_url( string $slug ): string` uses `path( $slug, 'preview.html' )` and `YAYCHECKOUT_PLUGIN_URL`. The `@return` shape is updated.
 - `apps/admin/src/lib/schema/template.schema.ts` and `lib/api/template.api.ts`: wire `preview_url: z.string()`, mapped to `previewUrl` on `Template`. Today `getTemplateLibrary()` returns the parsed wire as-is, since every key was one word; it gains the mapping.
 - `apps/admin/src/components/shared/template-picker/TemplatePreview.tsx` (new): the 4:3 frame, the iframe, the scale and height measuring, the hover-scroll CSS variables (`--preview-shift`, `--preview-duration`) and the muted fallback.
-- `apps/admin/src/components/shared/template-picker/TemplatePicker.tsx`: card grid, Free and Pro layouts, and the skeleton as in criteria 5–15. It uses `TemplatePreview` in place of `TemplateThumbnail`.
+- `apps/admin/src/components/shared/template-picker/TemplatePicker.tsx`: card grid and Free and Pro layouts, as in criteria 5–15. It uses `TemplatePreview` in place of `TemplateThumbnail`.
 - `apps/admin/src/pages/layouts/new-layout/NewLayoutModal.tsx`: on the library step the dialog width is `sm:max-w-5xl`.
 - Deleted: `TemplateThumbnail.tsx`, `TemplateThumbnailPrimitives.tsx`, `template-thumbnail-sketches.tsx`.
 
@@ -138,7 +138,7 @@ When a merchant picks a template, in the New layout modal's library step or the 
 - Uninstall: nothing to remove.
 
 **Integration points:**
-- REST `GET /yaycheckout/v1/layouts/templates`: each entry gains `preview_url`, and `category: string` becomes `categories: string[]`. No new hooks, filters or routes.
+- REST `GET /yaycheckout/v1/layouts/templates` is removed, with its `plan` parameter: the catalogue is printed into the page as `window.yayCheckoutAdmin.templates`. Each entry gains `preview_url`, and `category: string` becomes `categories: string[]`. No new hooks, filters or routes.
 - Doc updates:
   - CLAUDE.md hard rule 1 adds `templates/layouts/*/preview.html` (rebuilt by `./scripts/run.sh previews`);
   - the `docs/architecture.md` templates paragraph names `preview.html` and `preview_url`;

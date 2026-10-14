@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 /** Mirrors PAGE_WIDTH in scripts/capture-template-previews.py: the iframe renders at it and is scaled down to the frame. */
 const PAGE_WIDTH = 1280;
 
-/** The frame's width to height; the picker's skeleton cards use it too. */
-export const FRAME_ASPECT = 4 / 3;
+/** The frame's width to height. */
+const FRAME_ASPECT = 4 / 3;
 
 /** The page height the frame shows at once. */
 const FRAME_PAGE_HEIGHT = PAGE_WIDTH / FRAME_ASPECT;

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-/** Mirrors LayoutTemplateCatalogue::templates(). */
+/** Mirrors LayoutTemplateCatalogue::templates(), as LocalizeHelper::get_admin_data() prints it. */
 export const templateWireSchema = z
   .object({
     slug: z.string(),
@@ -12,11 +12,7 @@ export const templateWireSchema = z
   })
   .strict();
 
-export const templateLibraryWireSchema = z
-  .object({
-    templates: z.array(templateWireSchema),
-  })
-  .strict();
+export const templateListWireSchema = z.array(templateWireSchema);
 
 export type TemplateWire = z.infer<typeof templateWireSchema>;
 
@@ -30,5 +26,3 @@ export type Template = {
   /** '' when the template has no preview file. */
   previewUrl: string;
 };
-
-export type TemplateLibrary = { templates: Template[] };

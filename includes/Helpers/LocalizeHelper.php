@@ -2,8 +2,10 @@
 namespace YayCheckout\Helpers;
 
 use YayCheckout\Controllers\BaseRestController;
+use YayCheckout\Controllers\LayoutTemplateCatalogue;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
+use YayCheckout\Support\Plan;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -19,6 +21,8 @@ class LocalizeHelper {
         $admin_data = [
             'settings'     => ( new SettingsRepository() )->get()->to_array(),
             'integrations' => IntegrationsHelper::get_integrations(),
+            // The picker's catalogue, for the installed plan: it can't change while the page is open.
+            'templates'    => LayoutTemplateCatalogue::templates( Plan::is_pro() ),
         ];
 
         return apply_filters( 'yaycheckout_localize_admin_data', $admin_data );

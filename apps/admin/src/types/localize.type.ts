@@ -1,4 +1,5 @@
 import { IntegrationWire, SettingsResponseWire } from '@/lib/schema/settings.schema';
+import type { TemplateWire } from '@/lib/schema/template.schema';
 
 export type Meta = {
   wpMeta: {
@@ -27,6 +28,7 @@ export type Meta = {
 export type AdminData = {
   settings: SettingsResponseWire;
   integrations: IntegrationWire[];
+  templates: TemplateWire[];
   /** Pro only: Free has no Assignment drawer. */
   store?: StoreData;
 };
