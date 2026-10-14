@@ -11,6 +11,7 @@ import {
 import {
   activateLayout,
   archiveLayout,
+  bulkLayouts,
   createLayoutDraft,
   createPreviewLink,
   deactivateLayout,
@@ -180,6 +181,28 @@ export function useDeleteLayoutMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
+    },
+  });
+}
+
+/**
+ * Invalidates as the matching single-layout mutation does. Runs on settle too: a 500 midway
+ * leaves the layouts before it changed.
+ */
+export function useBulkLayoutsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'bulk'],
+    mutationFn: bulkLayouts,
+    onSettled: (_result, _error, { action }) => {
+      if (action === 'delete') {
+        // Not `all`, for the reason useDeleteLayoutMutation gives.
+        queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
+        queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
+      } else {
+        queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+      }
     },
   });
 }

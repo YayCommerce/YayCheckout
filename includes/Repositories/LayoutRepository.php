@@ -18,6 +18,9 @@ class LayoutRepository {
     /** Layouts the Free edition may hold. */
     public const FREE_LIMIT = 3;
 
+    /** What bulk() runs; each is a method of this class taking a layout id. */
+    public const BULK_ACTIONS = [ 'deactivate', 'archive', 'restore', 'delete' ];
+
     public function find( int $id ): ?Layout {
         $post = get_post( $id );
 
@@ -511,6 +514,51 @@ class LayoutRepository {
         if ( ! wp_delete_post( $id, true ) ) {
             throw new \RuntimeException( sprintf( 'Layout %d could not be deleted.', $id ) );
         }
+    }
+
+    /**
+     * Runs one of BULK_ACTIONS on each id and reports which ran and which were refused.
+     * Unlike archive(), a bulk archive refuses an active layout instead of deactivating it:
+     * a selection must not stop serving a layout the merchant did not pick to deactivate.
+     * A \RuntimeException from a failed WordPress write stops the loop; earlier ids stay changed.
+     *
+     * @param string $action One of BULK_ACTIONS.
+     * @param int[]  $ids    Layout ids.
+     * @return array{done: int[], failed: array<int, array{id: int, message: string}>}
+     * @throws \InvalidArgumentException When $action is unknown.
+     */
+    public function bulk( string $action, array $ids ): array {
+        if ( ! in_array( $action, self::BULK_ACTIONS, true ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Unknown bulk action "%s".', $action ) );
+        }
+
+        $done   = [];
+        $failed = [];
+
+        foreach ( array_unique( array_map( 'intval', $ids ) ) as $id ) {
+            try {
+                if ( ! self::is_layout( $id ) ) {
+                    throw new \InvalidArgumentException( __( 'Layout not found.', 'yaycheckout' ) );
+                }
+
+                if ( 'archive' === $action && $this->is_active( $id ) ) {
+                    throw new \InvalidArgumentException( __( 'Deactivate this layout before archiving it.', 'yaycheckout' ) );
+                }
+
+                $this->{$action}( $id );
+                $done[] = $id;
+            } catch ( \InvalidArgumentException $ex ) {
+                $failed[] = [
+                    'id'      => $id,
+                    'message' => $ex->getMessage(),
+                ];
+            }
+        }
+
+        return [
+            'done'   => $done,
+            'failed' => $failed,
+        ];
     }
 
     /**

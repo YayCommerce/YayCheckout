@@ -80,6 +80,35 @@ class LayoutRestController extends BaseRestController {
 
         register_rest_route(
             self::REST_NAMESPACE,
+            '/layouts/bulk',
+            [
+                [
+                    'methods'             => \WP_REST_Server::CREATABLE,
+                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'bulk_layouts' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => [
+                        'action' => [
+                            'required' => true,
+                            'type'     => 'string',
+                            'enum'     => LayoutRepository::BULK_ACTIONS,
+                        ],
+                        'ids'    => [
+                            'required' => true,
+                            'type'     => 'array',
+                            'items'    => [
+                                'type'    => 'integer',
+                                'minimum' => 1,
+                            ],
+                            'minItems' => 1,
+                            'maxItems' => 100,
+                        ],
+                    ],
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
             '/layouts/(?P<id>\d+)',
             [
                 [
@@ -315,6 +344,18 @@ class LayoutRestController extends BaseRestController {
      */
     public function restore_layout( \WP_REST_Request $request ) {
         return $this->change_layout( $request, fn( int $id ) => $this->layouts->restore( $id ) );
+    }
+
+    /**
+     * Runs one action on the layouts the list selected. Answers 200 with the ids that ran and
+     * those refused, with why: a refusal of one layout doesn't stop the rest. bulk() checks
+     * each id is a layout.
+     */
+    public function bulk_layouts( \WP_REST_Request $request ): array {
+        return $this->layouts->bulk(
+            (string) $request->get_param( 'action' ),
+            array_map( 'intval', (array) $request->get_param( 'ids' ) )
+        );
     }
 
     /**

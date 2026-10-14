@@ -75,6 +75,20 @@ export const layoutCountsResponseSchema = z
   })
   .strict();
 
+/** Owner: LayoutRepository::BULK_ACTIONS. */
+export const LAYOUT_BULK_ACTIONS = ['deactivate', 'archive', 'restore', 'delete'] as const;
+export type LayoutBulkAction = (typeof LAYOUT_BULK_ACTIONS)[number];
+
+/** POST /layouts/bulk: the ids that ran, and the ids refused with why. */
+export const layoutBulkResponseWireSchema = z
+  .object({
+    done: z.array(z.number()),
+    failed: z.array(z.object({ id: z.number(), message: z.string() }).strict()),
+  })
+  .strict();
+
+export type LayoutBulkResult = z.infer<typeof layoutBulkResponseWireSchema>;
+
 /** POST /layouts/{id}/preview-link. */
 export const previewLinkWireSchema = z
   .object({

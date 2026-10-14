@@ -1,6 +1,9 @@
 import { api } from '@/lib/api/api';
 import {
   Layout,
+  LayoutBulkAction,
+  layoutBulkResponseWireSchema,
+  LayoutBulkResult,
   layoutCountsResponseSchema,
   LayoutListResponse,
   layoutListResponseWireSchema,
@@ -122,6 +125,17 @@ export async function createPreviewLink(id: number): Promise<PreviewLink> {
 
 export async function deleteLayout(id: number): Promise<void> {
   await api.delete(`layouts/${id}`);
+}
+
+/** Runs one action on each id; a refused id is reported in `failed`, not thrown. */
+export async function bulkLayouts({
+  action,
+  ids,
+}: {
+  action: LayoutBulkAction;
+  ids: number[];
+}): Promise<LayoutBulkResult> {
+  return layoutBulkResponseWireSchema.parse(await api.post('layouts/bulk', { json: { action, ids } }).json());
 }
 
 export type CreateLayoutDraftPayload =

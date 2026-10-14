@@ -52,6 +52,7 @@ Commands and hard rules live in [CLAUDE.md](../CLAUDE.md). Citations give a path
   - `LayoutTrashSync` removes WordPress's trash timestamp, so an archived layout is never purged by cron;
   - `LayoutCapGuard` enforces the Free limit (`LayoutRepository::FREE_LIMIT`) on core's wp/v2 insert, because any shop manager can POST there directly. It misses a layout started from wp-admin's `post-new.php`, which core inserts as an auto-draft and the editor then saves as an update, and `LayoutRepository::count()` leaves private layouts out.
 - `LayoutRepository::archive()` deactivates before it trashes. With `EMPTY_TRASH_DAYS` set to 0, core's `wp_trash_post()` deletes instead, so archiving deletes the layout. `restore()` doesn't check the limit. `delete()` refuses a layout that isn't archived; core's wp/v2 `DELETE ?force=true` doesn't check.
+- The layouts list's bulk actions go through `POST /layouts/bulk` (`LayoutRepository::bulk()`). It runs deactivate, archive, restore or delete on each id, and answers with the ids that ran and the ids refused, with each one's message. One refusal doesn't stop the rest. Unlike `archive()`, a bulk archive refuses an active layout instead of deactivating it, so a selection can't stop a layout serving unless the merchant chose to deactivate it.
 - Layout lists are paged server-side (`Models\LayoutQuery::PER_PAGE`), and search matches titles only (`LayoutRepository::match_search_to_title()`), since `post_content` is markup. The lists show only listed statuses and the archive, so a private layout appears in neither.
 
 ## Storefront

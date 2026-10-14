@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, Plus, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, MoreHorizontal, Plus, Search } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { formatDateAtTime } from '@/lib/helpers/date.helper';
 import { editLayoutIdFrom, withEditLayout } from '@/lib/helpers/layout.helper';
@@ -12,6 +12,7 @@ import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
   useArchiveLayoutMutation,
+  useBulkLayoutsMutation,
   useCreatePreviewLinkMutation,
   useDeactivateLayoutMutation,
   useDeleteLayoutMutation,
@@ -22,6 +23,8 @@ import {
 } from '@/lib/queries/layout.queries';
 import {
   LISTED_LAYOUT_STATUSES,
+  type LayoutBulkAction,
+  type LayoutBulkResult,
   type LayoutCounts,
   type LayoutListResponse,
   type LayoutSummary,
@@ -32,6 +35,7 @@ import { useDebouncedSearch } from '@/hooks/useDebouncedSearch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -49,8 +53,10 @@ import { LayoutStatusBadge } from '@/components/shared/LayoutStatusBadge';
 import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
 import { AssignmentChips } from '@/pages/layouts/assignment/AssignmentChips';
 import { AssignmentDrawer } from '@/pages/layouts/assignment/AssignmentDrawer';
+import { BulkActionDialog, type ConfirmedBulkAction } from '@/pages/layouts/BulkActionDialog';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { DeleteModal } from '@/pages/layouts/DeleteModal';
+import { LayoutBulkBar } from '@/pages/layouts/LayoutBulkBar';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import { PreviewLinkModal } from '@/pages/layouts/PreviewLinkModal';
 import { RenameModal } from '@/pages/layouts/RenameModal';
@@ -189,6 +195,8 @@ function LayoutsPageBody({
   const [deletingLayout, setDeletingLayout] = useState<LayoutSummary | null>(null);
   const [assigningLayout, setAssigningLayout] = useState<LayoutSummary | null>(null);
   const [previewing, setPreviewing] = useState<{ layout: LayoutSummary; link: PreviewLink } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
+  const [confirmingBulk, setConfirmingBulk] = useState<ConfirmedBulkAction | null>(null);
 
   const activateMutation = useActivateLayoutMutation();
   const deactivateMutation = useDeactivateLayoutMutation();
@@ -197,6 +205,44 @@ function LayoutsPageBody({
   const deleteMutation = useDeleteLayoutMutation();
   const duplicateMutation = useDuplicateLayoutMutation();
   const previewLinkMutation = useCreatePreviewLinkMutation();
+  const bulkMutation = useBulkLayoutsMutation();
+
+  // A selection covers the rows on screen only.
+  useEffect(() => setSelectedIds(new Set()), [view, pageIndex, search, sort]);
+
+  const rows = listIsOtherTabPlaceholder ? [] : (listData?.items ?? []);
+  const selectedRows = rows.filter((layout) => selectedIds.has(layout.id));
+
+  /** The selected rows an action changes: Deactivate skips those already inactive. */
+  function bulkTargets(action: LayoutBulkAction) {
+    return action === 'deactivate' ? selectedRows.filter((layout) => layout.isActive) : selectedRows;
+  }
+
+  function onBulkAction(action: LayoutBulkAction) {
+    // Restore runs at once, as the row's Restore does.
+    if (action === 'restore') {
+      runBulk(action);
+    } else {
+      setConfirmingBulk(action);
+    }
+  }
+
+  function runBulk(action: LayoutBulkAction) {
+    bulkMutation.mutate(
+      { action, ids: bulkTargets(action).map((layout) => layout.id) },
+      {
+        onSuccess: (result) => {
+          setConfirmingBulk(null);
+          // Refused rows stay selected, to retry or act on otherwise.
+          setSelectedIds(new Set(result.failed.map((failure) => failure.id)));
+          toastBulkResult(action, result);
+
+          // Deactivated rows stay on the All tab; every other action takes them off this tab.
+          if (action !== 'deactivate' || view === 'active') stepBackIfPageEmptied(result.done.length);
+        },
+      },
+    );
+  }
 
   function onActivate(layout: LayoutSummary) {
     activateMutation.mutate(layout.id, {
@@ -219,9 +265,9 @@ function LayoutsPageBody({
     });
   }
 
-  /** After a row leaves the list: when it was the last on a later page, that page no longer exists. */
-  function stepBackIfPageEmptied() {
-    if (listData?.items.length === 1 && pageIndex > 0) {
+  /** After rows leave the list: when they were the last on a later page, that page no longer exists. */
+  function stepBackIfPageEmptied(removed = 1) {
+    if (listData && removed >= listData.items.length && pageIndex > 0) {
       onPageIndexChange(pageIndex - 1);
     }
   }
@@ -337,6 +383,14 @@ function LayoutsPageBody({
         onConfirm={onDelete}
         isPending={deleteMutation.isPending}
       />
+      <BulkActionDialog
+        action={confirmingBulk}
+        layouts={confirmingBulk ? bulkTargets(confirmingBulk) : []}
+        leavesNoneActive={confirmingBulk === 'deactivate' && bulkTargets('deactivate').length >= counts.active}
+        onOpenChange={(open) => !open && setConfirmingBulk(null)}
+        onConfirm={() => confirmingBulk && runBulk(confirmingBulk)}
+        isPending={bulkMutation.isPending}
+      />
       <AssignmentDrawer layout={assigningLayout} onOpenChange={(open) => !open && setAssigningLayout(null)} />
       <PreviewLinkModal
         layout={previewing?.layout ?? null}
@@ -447,6 +501,8 @@ function LayoutsPageBody({
                   <LayoutsTable
                     items={listData.items}
                     view={view}
+                    selectedIds={selectedIds}
+                    onSelectedIdsChange={setSelectedIds}
                     onEditLayout={openEditor}
                     onSetActive={setActivatingLayout}
                     onDeactivate={setDeactivatingLayout}
@@ -463,9 +519,18 @@ function LayoutsPageBody({
                     sortDisabled={controlsDisabled}
                   />
                 </div>
-                {showListControls && (
-                  <div className="mt-3 flex items-center justify-end gap-4">
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
+                  <LayoutBulkBar
+                    selected={selectedRows}
+                    archived={view === 'archived'}
+                    onClear={() => setSelectedIds(new Set())}
+                    onAction={onBulkAction}
+                    disabled={bulkMutation.isPending || listFetching}
+                  />
+                  {showListControls && (
                     <Pagination
+                      // Stays right while the bulk bar is hidden.
+                      className="ms-auto"
                       pageIndex={pageIndex}
                       pageCount={pageCount}
                       onPreviousPage={() => onPageIndexChange(pageIndex - 1)}
@@ -475,8 +540,8 @@ function LayoutsPageBody({
                       canNextPage={pageIndex + 1 < pageCount}
                       disabled={controlsDisabled}
                     />
-                  </div>
-                )}
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -536,6 +601,8 @@ function CountValue({ loading, value }: { loading: boolean; value: number }) {
 function LayoutsTable({
   items,
   view,
+  selectedIds,
+  onSelectedIdsChange,
   onEditLayout,
   onSetActive,
   onDeactivate,
@@ -553,6 +620,8 @@ function LayoutsTable({
 }: {
   items: LayoutSummary[];
   view: View;
+  selectedIds: ReadonlySet<number>;
+  onSelectedIdsChange: (ids: ReadonlySet<number>) => void;
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
@@ -569,11 +638,31 @@ function LayoutsTable({
   sortDisabled: boolean;
 }) {
   const SortIcon = sort === 'desc' ? ArrowDown : sort === 'asc' ? ArrowUp : ArrowUpDown;
+  const selectedCount = items.filter((layout) => selectedIds.has(layout.id)).length;
+
+  function onRowSelectedChange(id: number, selected: boolean) {
+    const next = new Set(selectedIds);
+    if (selected) {
+      next.add(id);
+    } else {
+      next.delete(id);
+    }
+    onSelectedIdsChange(next);
+  }
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-10">
+            <Checkbox
+              aria-label={__('Select all layouts on this page', 'yaycheckout')}
+              checked={selectedCount === items.length}
+              onCheckedChange={() =>
+                onSelectedIdsChange(new Set(selectedCount === items.length ? [] : items.map((layout) => layout.id)))
+              }
+            />
+          </TableHead>
           <TableHead>{__('Name', 'yaycheckout')}</TableHead>
           {isPro && <TableHead>{__('Assignment', 'yaycheckout')}</TableHead>}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
@@ -598,6 +687,8 @@ function LayoutsTable({
             key={layout.id}
             layout={layout}
             view={view}
+            selected={selectedIds.has(layout.id)}
+            onSelectedChange={(selected) => onRowSelectedChange(layout.id, selected)}
             onEditLayout={onEditLayout}
             onSetActive={onSetActive}
             onDeactivate={onDeactivate}
@@ -619,6 +710,8 @@ function LayoutsTable({
 function LayoutTableRow({
   layout,
   view,
+  selected,
+  onSelectedChange,
   onEditLayout,
   onSetActive,
   onDeactivate,
@@ -633,6 +726,8 @@ function LayoutTableRow({
 }: {
   layout: LayoutSummary;
   view: View;
+  selected: boolean;
+  onSelectedChange: (selected: boolean) => void;
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
@@ -646,7 +741,18 @@ function LayoutTableRow({
   previewPending: boolean;
 }) {
   return (
-    <TableRow>
+    <TableRow data-state={selected ? 'selected' : undefined}>
+      <TableCell>
+        <Checkbox
+          aria-label={sprintf(
+            /* translators: %s: layout title */
+            __('Select "%s"', 'yaycheckout'),
+            layout.title,
+          )}
+          checked={selected}
+          onCheckedChange={(checked) => onSelectedChange(checked === true)}
+        />
+      </TableCell>
       <TableCell className="font-medium">
         {/* On the div, not the cell: auto table layout ignores a cell's max-width, so the title would widen the column. */}
         <div className="max-w-[320px] truncate" title={layout.title}>
@@ -746,8 +852,13 @@ function LayoutRowActions({
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="outline">
-            ⋯
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            className="text-muted-foreground"
+            aria-label={__('More actions', 'yaycheckout')}
+          >
+            <MoreHorizontal className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -764,6 +875,46 @@ function LayoutRowActions({
       </DropdownMenu>
     </div>
   );
+}
+
+/** "Archived 3 layouts.", plus what was refused and why, from the first refusal's message. */
+function toastBulkResult(action: LayoutBulkAction, { done, failed }: LayoutBulkResult) {
+  const doneMessage = bulkDoneMessage(action, done.length);
+
+  if (failed.length === 0) {
+    toast.success(doneMessage);
+    return;
+  }
+
+  const failedMessage = sprintf(
+    /* translators: 1: number of layouts, 2: the reason for the first one */
+    _n('%1$d layout was not changed: %2$s', '%1$d layouts were not changed: %2$s', failed.length, 'yaycheckout'),
+    failed.length,
+    failed[0].message,
+  );
+
+  if (done.length === 0) {
+    toast.error(failedMessage);
+  } else {
+    toast.warning(`${doneMessage} ${failedMessage}`);
+  }
+}
+
+function bulkDoneMessage(action: LayoutBulkAction, count: number): string {
+  switch (action) {
+    case 'deactivate':
+      /* translators: %d: number of layouts */
+      return sprintf(_n('Deactivated %d layout.', 'Deactivated %d layouts.', count, 'yaycheckout'), count);
+    case 'archive':
+      /* translators: %d: number of layouts */
+      return sprintf(_n('Archived %d layout.', 'Archived %d layouts.', count, 'yaycheckout'), count);
+    case 'restore':
+      /* translators: %d: number of layouts */
+      return sprintf(_n('Restored %d layout.', 'Restored %d layouts.', count, 'yaycheckout'), count);
+    case 'delete':
+      /* translators: %d: number of layouts */
+      return sprintf(_n('Deleted %d layout.', 'Deleted %d layouts.', count, 'yaycheckout'), count);
+  }
 }
 
 function TableRowsSkeleton() {
