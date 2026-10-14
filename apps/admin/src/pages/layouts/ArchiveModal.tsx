@@ -5,13 +5,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LayoutConfirmDialog, type LayoutConfirmProps } from '@/pages/layouts/LayoutConfirmDialog';
 
 /**
- * Confirms moving a layout to the archive; reversible, so the button is not destructive.
+ * Confirms moving a layout to the archive. Reversible, but the button is red, as it takes the layout off the list.
  * Never opens for the active row: its Archive item is disabled, matching LayoutActiveGuard.
  */
 export function ArchiveModal(props: LayoutConfirmProps) {
   return (
     <LayoutConfirmDialog
       {...props}
+      destructive
       title={(layout) =>
         sprintf(
           /* translators: %s: layout title */
