@@ -135,16 +135,11 @@ html.yaycheckout-has-pinned body {
 	margin-block: 0;
 }
 
-/* Section description under Billing, Shipping, Shipping Methods, Payment and Order Summary headings. */
+/* Section description under Billing, Shipping, Shipping Methods and Payment headings. */
 .yaycheckout-checkout .yaycheckout-section-description {
 	margin: 0 0 8px;
 	font-size: 0.875em;
 	opacity: 0.75;
-}
-
-.yaycheckout-checkout .yaycheckout-order-summary-header > .yaycheckout-section-description {
-	flex-basis: 100%;
-	margin: 4px 0 0;
 }
 
 /* Field rows. Classic themes float the half-width rows; the layout's Columns place fields side by side instead. */

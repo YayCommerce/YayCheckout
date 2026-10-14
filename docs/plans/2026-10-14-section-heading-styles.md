@@ -50,7 +50,7 @@ New `includes/Renderer/SectionTextStyles.php` (PHP 7.4, `final class`, modelled 
 
 ### 5. Docs and CSS
 
-- `assets/css/checkout-base.css`: change the description comment to name all four sections plus Order Summary. Leave the rule alone.
+- `assets/css/checkout-base.css`: change the description comment to name all four sections. Order Summary has no description. Leave the rule alone.
 - `docs/conventions.md` "In code" list: add `shared/section-heading.tsx` (`SectionTextStyles::heading_tag()` / `wrapper_class()`).
 - Save this plan as `docs/plans/2026-10-14-section-heading-styles.md`.
 

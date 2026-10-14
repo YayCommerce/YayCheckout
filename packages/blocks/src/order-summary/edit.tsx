@@ -3,7 +3,6 @@ import { cloneBlock, createBlock } from '@wordpress/blocks';
 import {
 	Notice,
 	PanelBody,
-	TextControl,
 	ToggleControl,
 	__experimentalToggleGroupControl as ToggleGroupControl,
 	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
@@ -28,8 +27,6 @@ type InitialState = 'collapsed' | 'open';
 
 interface OrderSummaryAttributes {
 	label: string;
-	showTitle?: boolean;
-	description?: string;
 	collapsible?: boolean;
 	initialState?: InitialState;
 	style?: BlockGapStyles;
@@ -56,9 +53,6 @@ const NEW_SHAPE_CHILDREN = [ headerMeta.name, detailsMeta.name ];
 
 export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
 	const { label, initialState = 'collapsed', style } = attributes;
-	const showTitle = attributes.showTitle !== false;
-	const description = attributes.description ?? '';
-	const trimmedDescription = description.trim();
 	const css = useBlockGapCSS( `#block-${ clientId }`, style );
 	const { collapsible, hasTrigger } = useSummaryCollapse();
 	const { newShape, headerId, headerIndex, detailsIndex, childCount } = useSelect(
@@ -82,7 +76,6 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	const blockProps = useBlockProps( {
 		className: [
 			'yaycheckout-order-summary',
-			! showTitle ? 'is-title-hidden' : '',
 			collapsible && initialState === 'collapsed' ? 'is-preview-collapsed' : '',
 		]
 			.filter( Boolean )
@@ -120,29 +113,14 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 				label={ label }
 				defaultLabel={ __( 'Your order', 'yaycheckout' ) }
 				setAttributes={ setAttributes }
-				showHeading={ ! newShape && showTitle }
+				showHeading={ ! newShape }
 				help={
 					newShape
 						? __( "Read by screen readers as the name of the header's open/close button.", 'yaycheckout' )
 						: undefined
 				}
 			/>
-			{ ! newShape && trimmedDescription !== '' && (
-				<p className="yaycheckout-section-description">{ trimmedDescription }</p>
-			) }
 			<InspectorControls>
-				<PanelBody title={ __( 'Title', 'yaycheckout' ) }>
-					<ToggleControl
-						label={ __( 'Show title', 'yaycheckout' ) }
-						checked={ showTitle }
-						onChange={ ( value ) => setAttributes( { showTitle: value } ) }
-					/>
-					<TextControl
-						label={ __( 'Description', 'yaycheckout' ) }
-						value={ description }
-						onChange={ ( value ) => setAttributes( { description: value } ) }
-					/>
-				</PanelBody>
 				{ newShape ? (
 					<PanelBody title={ __( 'Collapsing', 'yaycheckout' ) }>
 						<ToggleControl
