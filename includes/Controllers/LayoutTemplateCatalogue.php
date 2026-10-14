@@ -105,12 +105,17 @@ class LayoutTemplateCatalogue {
             return '';
         }
 
-        return YAYCHECKOUT_PLUGIN_URL . 'templates/layouts/' . $slug . '/preview.html?ver=' . YAYCHECKOUT_VERSION;
+        return YAYCHECKOUT_PLUGIN_URL . self::relative_path( $slug, 'preview.html' ) . '?ver=' . YAYCHECKOUT_VERSION;
     }
 
     /** Unchecked: callers check $slug against the catalogue first. */
     private static function path( string $slug, string $name ): string {
-        return YAYCHECKOUT_PLUGIN_DIR . 'templates/layouts/' . $slug . '/' . $name;
+        return YAYCHECKOUT_PLUGIN_DIR . self::relative_path( $slug, $name );
+    }
+
+    /** A template file's path inside the plugin, shared by its file path and its URL. */
+    private static function relative_path( string $slug, string $name ): string {
+        return 'templates/layouts/' . $slug . '/' . $name;
     }
 
     /** @return array{ slug: string, name: string, category: string }[] */

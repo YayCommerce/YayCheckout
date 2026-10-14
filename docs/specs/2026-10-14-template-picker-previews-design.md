@@ -70,7 +70,7 @@ When a merchant picks a template, in the New layout modal's library step or the 
 9. Locked and Coming soon cards:
    - show their preview at full opacity, with hover-scroll;
    - cannot be selected (`disabled`, `cursor-not-allowed`, no `opacity-50`);
-   - show `ProTag` (locked) or the "Coming soon" badge (Coming soon) in the name row.
+   - show `ProTag` in the name row (locked), or the "Coming soon" badge on the preview's top-right corner (Coming soon).
 
    Their `title` tooltips are unchanged.
 10. Pro: the category chips and the "N templates" count stay, and all templates show as cards in one grid. A filter that hides the current selection still calls `onSelect(null)`.

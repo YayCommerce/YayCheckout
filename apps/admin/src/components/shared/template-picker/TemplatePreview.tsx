@@ -1,24 +1,31 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
 import type { Template } from '@/lib/schema/template.schema';
 import { cn } from '@/lib/utils';
 
-/** The width the previews were captured at; the iframe renders at it and is scaled down to the frame. */
+/** Mirrors PAGE_WIDTH in scripts/capture-template-previews.py: the iframe renders at it and is scaled down to the frame. */
 const PAGE_WIDTH = 1280;
 
+/** The frame's width to height; the picker's skeleton cards use it too. */
+export const FRAME_ASPECT = 4 / 3;
+
+/** The page height the frame shows at once. */
+const FRAME_PAGE_HEIGHT = PAGE_WIDTH / FRAME_ASPECT;
+
 /** Used until the preview reports its height, and kept when it can't. */
-const FALLBACK_PAGE_HEIGHT = 960;
+const FALLBACK_PAGE_HEIGHT = FRAME_PAGE_HEIGHT;
 
 /**
  * A template's mock page, scaled into a 4:3 frame, that scrolls to its bottom while the enclosing
  * `group` card is hovered or focused. Falls back to the template's name when there is no preview.
+ * `children` overlay the frame, such as a badge on its corner.
  *
  * The sandbox allows same-origin but not scripts: we can read the page's height, and nothing in the
  * preview can run.
  */
-export function TemplatePreview({ template }: { template: Template }) {
+export function TemplatePreview({ template, children }: { template: Template; children?: ReactNode }) {
   const frameRef = useRef<HTMLDivElement>(null);
-  const [frame, setFrame] = useState({ width: 0, height: 0 });
+  const [frameWidth, setFrameWidth] = useState(0);
   const [pageHeight, setPageHeight] = useState(FALLBACK_PAGE_HEIGHT);
   const [failed, setFailed] = useState(false);
 
@@ -27,15 +34,14 @@ export function TemplatePreview({ template }: { template: Template }) {
     if (!element) return;
 
     const observer = new ResizeObserver(([entry]) => {
-      setFrame({ width: entry.contentRect.width, height: entry.contentRect.height });
+      setFrameWidth(entry.contentRect.width);
     });
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
 
-  const scale = frame.width / PAGE_WIDTH;
-  // Floored, so a one-screen page whose scaled height rounds past the frame doesn't jiggle on hover.
-  const shift = Math.max(0, Math.floor(pageHeight * scale - frame.height));
+  const scale = frameWidth / PAGE_WIDTH;
+  const shift = Math.max(0, pageHeight - FRAME_PAGE_HEIGHT) * scale;
   const duration = Math.min(6, Math.max(2, (pageHeight / 1000) * 1.5));
 
   function onLoad(event: React.SyntheticEvent<HTMLIFrameElement>) {
@@ -45,38 +51,48 @@ export function TemplatePreview({ template }: { template: Template }) {
 
   const showPreview = template.previewUrl !== '' && !failed;
 
+  // The border sits on the outer box, so the measured inner box is exactly 4:3 and a one-screen page fits it.
   return (
-    <div
-      ref={frameRef}
-      className="bg-muted relative aspect-4/3 w-full overflow-hidden rounded-sm border"
-      style={{ '--preview-shift': `${shift}px`, '--preview-duration': `${duration}s` } as CSSProperties}
-    >
-      {showPreview ? (
-        <div
-          className={cn(
-            'transition-transform duration-400 ease-in-out motion-reduce:transition-none',
-            'motion-safe:group-hover:-translate-y-(--preview-shift) motion-safe:group-hover:duration-(--preview-duration)',
-            'motion-safe:group-focus-visible:-translate-y-(--preview-shift) motion-safe:group-focus-visible:duration-(--preview-duration)',
-          )}
-        >
-          <iframe
-            src={template.previewUrl}
-            title={template.name}
-            sandbox="allow-same-origin"
-            loading="lazy"
-            tabIndex={-1}
-            aria-hidden="true"
-            onLoad={onLoad}
-            onError={() => setFailed(true)}
-            className="pointer-events-none origin-top-left border-0"
-            style={{ width: PAGE_WIDTH, height: pageHeight, transform: `scale(${scale})` }}
-          />
-        </div>
-      ) : (
-        <div className="text-muted-foreground flex size-full items-center justify-center p-2 text-center text-xs">
-          {template.name}
-        </div>
-      )}
+    <div className="relative w-full overflow-hidden rounded-sm border">
+      <div
+        ref={frameRef}
+        className="bg-muted w-full overflow-hidden"
+        style={
+          {
+            aspectRatio: FRAME_ASPECT,
+            '--preview-shift': `${shift}px`,
+            '--preview-duration': `${duration}s`,
+          } as CSSProperties
+        }
+      >
+        {showPreview ? (
+          <div
+            className={cn(
+              'transition-transform duration-400 ease-in-out motion-reduce:transition-none',
+              'motion-safe:group-hover:-translate-y-(--preview-shift) motion-safe:group-hover:duration-(--preview-duration)',
+              'motion-safe:group-focus-visible:-translate-y-(--preview-shift) motion-safe:group-focus-visible:duration-(--preview-duration)',
+            )}
+          >
+            <iframe
+              src={template.previewUrl}
+              title={template.name}
+              sandbox="allow-same-origin"
+              loading="lazy"
+              tabIndex={-1}
+              aria-hidden="true"
+              onLoad={onLoad}
+              onError={() => setFailed(true)}
+              className="pointer-events-none origin-top-left border-0"
+              style={{ width: PAGE_WIDTH, height: pageHeight, transform: `scale(${scale})` }}
+            />
+          </div>
+        ) : (
+          <div className="text-muted-foreground flex size-full items-center justify-center p-2 text-center text-xs">
+            {template.name}
+          </div>
+        )}
+      </div>
+      {children}
     </div>
   );
 }

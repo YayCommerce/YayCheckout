@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { focusVariants } from '@/components/ui/variants/focus.variants';
 import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
-import { TemplatePreview } from './TemplatePreview';
+import { FRAME_ASPECT, TemplatePreview } from './TemplatePreview';
 
 const ALL_CATEGORIES = __('All', 'yaycheckout');
 
@@ -119,16 +119,7 @@ function ProTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: GridP
         <PickerSkeleton />
       ) : (
         <ScrollArea>
-          <CardGrid>
-            {shownTemplates.map((template) => (
-              <TemplateTile
-                key={template.slug}
-                template={template}
-                isSelected={template.slug === selectedSlug}
-                onSelect={onSelect}
-              />
-            ))}
-          </CardGrid>
+          <TemplateCards templates={shownTemplates} selectedSlug={selectedSlug} onSelect={onSelect} />
         </ScrollArea>
       )}
     </>
@@ -142,6 +133,21 @@ function ScrollArea({ children }: { children: ReactNode }) {
 
 function CardGrid({ children }: { children: ReactNode }) {
   return <div className="grid grid-cols-3 content-start gap-4">{children}</div>;
+}
+
+function TemplateCards({ templates, selectedSlug, onSelect }: Omit<GridProps, 'isLoading'>) {
+  return (
+    <CardGrid>
+      {templates.map((template) => (
+        <TemplateTile
+          key={template.slug}
+          template={template}
+          isSelected={template.slug === selectedSlug}
+          onSelect={onSelect}
+        />
+      ))}
+    </CardGrid>
+  );
 }
 
 /** One template card. Locked and Coming soon cards stay at full opacity, since the preview is the pitch. */
@@ -167,10 +173,7 @@ function TemplateTile({
         isPickable(template) ? 'hover:border-muted-foreground' : 'cursor-not-allowed',
       )}
     >
-      <div className="relative w-full">
-        <TemplatePreview template={template} />
-        {isComingSoon(template) && <ComingSoonBadge />}
-      </div>
+      <TemplatePreview template={template}>{isComingSoon(template) && <ComingSoonBadge />}</TemplatePreview>
       <div className="flex w-full items-center justify-between gap-1">
         <span className="text-xs font-medium">{template.name}</span>
         {template.locked && <ProTag />}
@@ -186,18 +189,10 @@ function FreeTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: Grid
 
   const unlockedTemplates = templates.filter((t) => !t.locked);
   const lockedTemplates = templates.filter((t) => t.locked);
-  const tile = (template: Template) => (
-    <TemplateTile
-      key={template.slug}
-      template={template}
-      isSelected={template.slug === selectedSlug}
-      onSelect={onSelect}
-    />
-  );
 
   return (
     <ScrollArea>
-      <CardGrid>{unlockedTemplates.map(tile)}</CardGrid>
+      <TemplateCards templates={unlockedTemplates} selectedSlug={selectedSlug} onSelect={onSelect} />
 
       {lockedTemplates.length > 0 && (
         <>
@@ -208,20 +203,20 @@ function FreeTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: Grid
             </span>
             <UpgradeButton />
           </div>
-          <CardGrid>{lockedTemplates.map(tile)}</CardGrid>
+          <TemplateCards templates={lockedTemplates} selectedSlug={selectedSlug} onSelect={onSelect} />
         </>
       )}
     </ScrollArea>
   );
 }
 
-/** Matches the loaded cards' boxes, so the dialog doesn't grow when templates arrive. */
+/** Matches the loaded cards' boxes (FRAME_ASPECT), so the dialog doesn't grow when templates arrive. */
 function PickerSkeleton() {
   return (
     <CardGrid>
       {[...Array(6).keys()].map((i) => (
         <div key={i} className="flex flex-col gap-2 rounded-md border p-2">
-          <Skeleton className="aspect-4/3 w-full" />
+          <Skeleton className="w-full" style={{ aspectRatio: FRAME_ASPECT }} />
           <Skeleton className="h-4 w-2/3" />
         </div>
       ))}

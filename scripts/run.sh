@@ -410,11 +410,7 @@ cmd_clean() {
 
 # Captures each template's picker preview from the HTML mock; the script owns the default mock path.
 cmd_previews() {
-    if [ -n "$1" ]; then
-        python3 -I "$PLUGIN_DIR/scripts/capture-template-previews.py" --mock "$1"
-    else
-        python3 -I "$PLUGIN_DIR/scripts/capture-template-previews.py"
-    fi
+    python3 -I "$PLUGIN_DIR/scripts/capture-template-previews.py" ${1:+--mock "$1"}
 }
 
 # Lists docs/backlog/: open items with their unticked boxes, then items whose boxes are all ticked.
