@@ -20,6 +20,7 @@ interface PaymentAttributes {
 	headingLevel?: number;
 	description?: string;
 	layout?: string;
+	showAllDescriptions?: boolean;
 	style?: Record< string, unknown >;
 	textColor?: string;
 }
@@ -31,7 +32,7 @@ interface EditProps {
 }
 
 export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
-	const { label, headingLevel, layout, style, textColor } = attributes;
+	const { label, headingLevel, layout, showAllDescriptions, style, textColor } = attributes;
 	const showTitle = attributes.showTitle !== false;
 	const description = attributes.description ?? '';
 	const selectedLayout = layoutFor( layout );
@@ -41,6 +42,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	const blockProps = useBlockProps( {
 		className: 'yaycheckout-payment',
 		'data-layout': selectedLayout.value,
+		'data-descriptions': showAllDescriptions ? 'all' : undefined,
 	} );
 	const wrapperStyle = {
 		...blockProps.style,
@@ -82,6 +84,12 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						} ) ) }
 						onChange={ ( value ) => setAttributes( { layout: value } ) }
 					/>
+					<ToggleControl
+						label={ __( 'Show all descriptions', 'yaycheckout' ) }
+						help={ __( 'Off: a method\'s description shows only when it is selected.', 'yaycheckout' ) }
+						checked={ !! showAllDescriptions }
+						onChange={ ( value ) => setAttributes( { showAllDescriptions: value } ) }
+					/>
 				</PanelBody>
 			</InspectorControls>
 			<InspectorControls group="styles">
@@ -110,6 +118,11 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 							<li key={ name } className="wc_payment_method" onClick={ () => setSelectedRow( index ) }>
 								<input type="radio" className="input-radio" disabled readOnly checked={ selectedRow === index } />
 								<label>{ name }</label>
+								{ ( showAllDescriptions || selectedRow === index ) && (
+									<div className="payment_box">
+										<p>{ __( 'The payment method\'s description appears here.', 'yaycheckout' ) }</p>
+									</div>
+								) }
 							</li>
 						) ) }
 					</ul>

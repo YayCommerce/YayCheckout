@@ -8,14 +8,12 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { TemplatePicker } from '@/components/shared/template-picker/TemplatePicker';
 import { NameField } from '@/pages/layouts/new-layout/NameField';
 
-/** Library step: name plus template pick, then Create layout. */
+/** Name plus template pick, then Create layout. */
 export function LibraryStep({
-  onBack,
   onCancel,
   isPending,
   rootError,
 }: {
-  onBack: () => void;
   onCancel: () => void;
   isPending: boolean;
   rootError?: string;
@@ -47,9 +45,6 @@ export function LibraryStep({
 
       <DialogFooter className="items-center gap-3 border-t pt-4 sm:justify-end">
         <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={onBack}>
-            {__('Back', 'yaycheckout')}
-          </Button>
           <Button type="button" variant="outline" onClick={onCancel}>
             {__('Cancel', 'yaycheckout')}
           </Button>
