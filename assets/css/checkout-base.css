@@ -135,7 +135,7 @@ html.yaycheckout-has-pinned body {
 	margin-block: 0;
 }
 
-/* Section description under Shipping Methods, Payment, and Order Summary headings. */
+/* Section description under Billing, Shipping, Shipping Methods, Payment and Order Summary headings. */
 .yaycheckout-checkout .yaycheckout-section-description {
 	margin: 0 0 8px;
 	font-size: 0.875em;
