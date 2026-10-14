@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Helpers\JsonElementHelper;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -113,16 +114,6 @@ class LiveValues {
         }
 
         $cart = WC()->cart;
-        $tax  = $cart->display_prices_including_tax();
-
-        // The keys cart_values() names; one missing here prints only its fallback.
-        $money = [
-            'cart_total'          => (float) $cart->get_total( 'edit' ),
-            'cart_subtotal'       => (float) $cart->get_subtotal() + ( $tax ? (float) $cart->get_subtotal_tax() : 0.0 ),
-            'cart_shipping_total' => (float) $cart->get_shipping_total() + ( $tax ? (float) $cart->get_shipping_tax() : 0.0 ),
-            'cart_discount_total' => (float) $cart->get_discount_total() + ( $tax ? (float) $cart->get_discount_tax() : 0.0 ),
-            'cart_tax_total'      => (float) $cart->get_total_tax(),
-        ];
 
         $counts = [
             'cart_item_count' => (int) $cart->get_cart_contents_count(),
@@ -131,7 +122,7 @@ class LiveValues {
 
         $values = [];
 
-        foreach ( $money as $key => $amount ) {
+        foreach ( self::money() as $key => $amount ) {
             $values[ $key ] = [
                 // wc_price()'s markup and entities removed: the value is plain text, escaped where it prints.
                 'text'  => html_entity_decode( wp_strip_all_tags( wc_price( $amount ) ), ENT_QUOTES, 'UTF-8' ),
@@ -147,6 +138,30 @@ class LiveValues {
         }
 
         return $values;
+    }
+
+    /**
+     * The cart's money amounts as the cart displays them (with tax when WooCommerce shows prices with tax);
+     * also read by BlockVisibility. [] without a cart.
+     *
+     * @return array<string, float>
+     */
+    public static function money(): array {
+        if ( ! function_exists( 'WC' ) || ! WC()->cart instanceof \WC_Cart ) {
+            return [];
+        }
+
+        $cart = WC()->cart;
+        $tax  = $cart->display_prices_including_tax();
+
+        // The keys cart_values() names; one missing here prints only its fallback.
+        return [
+            'cart_total'          => (float) $cart->get_total( 'edit' ),
+            'cart_subtotal'       => (float) $cart->get_subtotal() + ( $tax ? (float) $cart->get_subtotal_tax() : 0.0 ),
+            'cart_shipping_total' => (float) $cart->get_shipping_total() + ( $tax ? (float) $cart->get_shipping_tax() : 0.0 ),
+            'cart_discount_total' => (float) $cart->get_discount_total() + ( $tax ? (float) $cart->get_discount_tax() : 0.0 ),
+            'cart_tax_total'      => (float) $cart->get_total_tax(),
+        ];
     }
 
     /**
@@ -204,11 +219,9 @@ class LiveValues {
         return $fragments;
     }
 
-    /** The cart's values as a JSON element; `<` and `&` are escaped, so no value can close it. */
+    /** The cart's values as a JSON element. */
     public static function values_element(): string {
-        return '<script type="application/json" id="' . esc_attr( self::VALUES_ID ) . '">'
-            . wp_json_encode( (object) self::values(), JSON_HEX_TAG | JSON_HEX_AMP )
-            . '</script>';
+        return JsonElementHelper::html( self::VALUES_ID, (object) self::values() );
     }
 
     /**

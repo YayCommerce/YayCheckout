@@ -52,8 +52,12 @@ body.yaycheckout-page > .wp-site-blocks,
 	--wp--style--root--padding-right: 0px;
 }
 
-/* A Group, Columns or Column whose watched blocks are all empty (HideWhenEmpty::HIDDEN_CLASS); beats its layout display. */
-.yaycheckout-hidden-when-empty {
+/*
+ * A Group, Columns or Column whose watched blocks are all empty (HideWhenEmpty::HIDDEN_CLASS), and a block
+ * whose visibility setting fails for the open step or the cart (BlockVisibility::HIDDEN_CLASS); beats its layout display.
+ */
+.yaycheckout-hidden-when-empty,
+.yaycheckout-hidden-by-visibility {
 	display: none !important;
 }
 
