@@ -126,44 +126,48 @@ final class LayoutDesign {
                 ],
             ],
             'inputs'     => [
-                'style'       => [
+                'style'            => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'boxed', 'underline' ],
                 ],
-                'size'        => [
+                'size'             => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'small', 'medium', 'large' ],
                 ],
-                'radius'      => [
+                'radius'           => [
                     'type'    => 'int',
                     'default' => null,
                     'min'     => 0,
                     'max'     => 24,
                 ],
-                'background'  => [
+                'background'       => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'text'        => [
+                'text'             => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'border'      => [
+                'border'           => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'focus'       => [
+                'focus_border'     => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'focus_style' => [
+                'focus_background' => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'focus_style'      => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'border' ],
                 ],
-                'label'       => [
+                'label'            => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'floating', 'hidden' ],
@@ -215,6 +219,11 @@ final class LayoutDesign {
     public static function from_meta( $value ): self {
         $value  = is_array( $value ) ? $value : [];
         $design = new self();
+
+        // Layouts saved before the rename store the focus border colour as inputs.focus.
+        if ( is_array( $value['inputs'] ?? null ) && isset( $value['inputs']['focus'] ) && ! isset( $value['inputs']['focus_border'] ) ) {
+            $value['inputs']['focus_border'] = $value['inputs']['focus'];
+        }
 
         foreach ( self::schema() as $section => $rules ) {
             $design->sections[ $section ] = self::project_section( $rules, $value[ $section ] ?? null );

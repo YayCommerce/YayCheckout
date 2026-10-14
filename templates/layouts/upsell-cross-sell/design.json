@@ -16,7 +16,8 @@
 		"background": "#ffffff",
 		"text": "#1e1e1e",
 		"border": "#757575",
-		"focus": "",
+		"focus_border": "",
+		"focus_background": "",
 		"focus_style": "",
 		"label": ""
 	},

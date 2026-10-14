@@ -425,13 +425,15 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 /*
  * A focused field draws one edge in the layout's input focus colour (DesignStyles), falling back to the
  * primary colour: its border recolours and a flush ring thickens it, with no gap between the two. The
- * Border only focus style sets the ring width to 0.
+ * Border only focus style sets the ring width to 0. Its fill takes the layout's input focus background, falling back
+ * to the input background.
  */
 .yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code):focus,
 .yaycheckout-checkout .select2-container:is(.select2-container--focus, .select2-container--open) .select2-selection--single {
 	border-color: var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline: var(--yaycheckout-input-focus-ring-width, 1px) solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline-offset: 0;
+	background-color: var(--yaycheckout-input-focus-background, var(--yaycheckout-input-background, var(--yaycheckout-color-background, transparent)));
 }
 
 /* Keyboard focus on a button, checkbox or radio: an offset ring, in the input focus colour for the controls. */
