@@ -3,7 +3,6 @@ import { PanelBody, RangeControl, SelectControl, TextControl, ToggleControl } fr
 import { __, sprintf } from '@wordpress/i18n';
 import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 import { plainText } from '../shared/plain-text';
-import { StyleSection } from '../shared/style-section';
 import './editor.css';
 
 interface OrderSummaryItemsAttributes {
@@ -145,34 +144,33 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 			</InspectorControls>
 			{ badge && (
 				<InspectorControls group="styles">
-					<StyleSection title={ __( 'Quantity badge', 'yaycheckout' ) }>
-						<PanelColorSettings
-							title={ __( 'Quantity badge', 'yaycheckout' ) }
-							colorSettings={ [
-								{
-									label: __( 'Background', 'yaycheckout' ),
-									value: badgeBackgroundColor,
-									onChange: ( value?: string ) => setAttributes( { badgeBackgroundColor: value ?? '' } ),
-								},
-								{
-									label: __( 'Text', 'yaycheckout' ),
-									value: badgeTextColor,
-									onChange: ( value?: string ) => setAttributes( { badgeTextColor: value ?? '' } ),
-								},
-							] }
-						>
-							<RangeControl
-								__nextHasNoMarginBottom
-								label={ __( 'Size', 'yaycheckout' ) }
-								value={ badgeSize }
-								min={ 16 }
-								max={ 32 }
-								initialPosition={ 20 }
-								allowReset
-								onChange={ ( value ) => setAttributes( { badgeSize: value } ) }
-							/>
-						</PanelColorSettings>
-					</StyleSection>
+					<PanelColorSettings
+						title={ __( 'Quantity badge', 'yaycheckout' ) }
+						initialOpen={ false }
+						colorSettings={ [
+							{
+								label: __( 'Background', 'yaycheckout' ),
+								value: badgeBackgroundColor,
+								onChange: ( value?: string ) => setAttributes( { badgeBackgroundColor: value ?? '' } ),
+							},
+							{
+								label: __( 'Text', 'yaycheckout' ),
+								value: badgeTextColor,
+								onChange: ( value?: string ) => setAttributes( { badgeTextColor: value ?? '' } ),
+							},
+						] }
+					>
+						<RangeControl
+							__nextHasNoMarginBottom
+							label={ __( 'Size', 'yaycheckout' ) }
+							value={ badgeSize }
+							min={ 16 }
+							max={ 32 }
+							initialPosition={ 20 }
+							allowReset
+							onChange={ ( value ) => setAttributes( { badgeSize: value } ) }
+						/>
+					</PanelColorSettings>
 				</InspectorControls>
 			) }
 			<div { ...useBlockProps( { style: badgeStyle( attributes ) } ) }>

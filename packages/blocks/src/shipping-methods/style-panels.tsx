@@ -17,9 +17,8 @@ import {
 	type ShippingSettingKey,
 } from './setting-controls';
 import { getStyleSetting, setStyleSetting } from './style-paths';
-import { hasValue, type StyleObject } from '../shared/style-path';
-import { StyleSection } from '../shared/style-section';
 import '../shared/tools-panel.css';
+import { hasValue, type StyleObject } from '../shared/style-path';
 
 interface StylePanelsProps {
 	/** The selected layout's settings. */
@@ -56,56 +55,55 @@ export function StylePanels( { keys, style, onChange }: StylePanelsProps ) {
 				const rangeKeys = shown.filter( ( key ) => ! isColorSetting( key ) );
 
 				return (
-					<StyleSection key={ panel.id } title={ panel.title }>
-						<ToolsPanel
-							label={ panel.title }
-							panelId={ panelId }
-							className="yaycheckout-tools-panel"
-							resetAll={ () => shown.forEach( ( key ) => set( key, undefined ) ) }
-						>
-							{ colorKeys.length > 0 && (
-								<div className="yaycheckout-tools-panel__colors">
-									<ColorGradientSettingsDropdown
-										__experimentalIsRenderedInSidebar
-										panelId={ panelId }
-										settings={ colorKeys.map( ( key ) => {
-											const value = getStyleSetting( style, key );
-											return {
-												label: SETTING_LABELS[ key ],
-												colorValue: typeof value === 'string' && value !== '' ? value : undefined,
-												onColorChange: ( next?: string ) => set( key, next || undefined ),
-												clearable: true,
-												isShownByDefault: true,
-											};
-										} ) }
-										colors={ palettes.colors }
-										disableCustomColors={ palettes.disableCustomColors }
-										enableAlpha
-									/>
-								</div>
-							) }
-							{ rangeKeys.map( ( key ) => (
-								<ToolsPanelItem
-									key={ key }
+					<ToolsPanel
+						key={ panel.id }
+						label={ panel.title }
+						panelId={ panelId }
+						className="yaycheckout-tools-panel"
+						resetAll={ () => shown.forEach( ( key ) => set( key, undefined ) ) }
+					>
+						{ colorKeys.length > 0 && (
+							<div className="yaycheckout-tools-panel__colors">
+								<ColorGradientSettingsDropdown
+									__experimentalIsRenderedInSidebar
 									panelId={ panelId }
+									settings={ colorKeys.map( ( key ) => {
+										const value = getStyleSetting( style, key );
+										return {
+											label: SETTING_LABELS[ key ],
+											colorValue: typeof value === 'string' && value !== '' ? value : undefined,
+											onColorChange: ( next?: string ) => set( key, next || undefined ),
+											clearable: true,
+											isShownByDefault: true,
+										};
+									} ) }
+									colors={ palettes.colors }
+									disableCustomColors={ palettes.disableCustomColors }
+									enableAlpha
+								/>
+							</div>
+						) }
+						{ rangeKeys.map( ( key ) => (
+							<ToolsPanelItem
+								key={ key }
+								panelId={ panelId }
+								label={ SETTING_LABELS[ key ] }
+								hasValue={ () => hasValue( getStyleSetting( style, key ) ) }
+								onDeselect={ () => set( key, undefined ) }
+								isShownByDefault
+							>
+								<RangeControl
+									__nextHasNoMarginBottom
+									__next40pxDefaultSize
 									label={ SETTING_LABELS[ key ] }
-									hasValue={ () => hasValue( getStyleSetting( style, key ) ) }
-									onDeselect={ () => set( key, undefined ) }
-									isShownByDefault
-								>
-									<RangeControl
-										__nextHasNoMarginBottom
-										__next40pxDefaultSize
-										label={ SETTING_LABELS[ key ] }
-										value={ pxNumber( getStyleSetting( style, key ) ) }
-										onChange={ ( next ) => set( key, next === undefined ? undefined : `${ next }px` ) }
-										min={ 0 }
-										max={ RANGE_LIMITS[ key ] ?? 32 }
-									/>
-								</ToolsPanelItem>
-							) ) }
-						</ToolsPanel>
-					</StyleSection>
+									value={ pxNumber( getStyleSetting( style, key ) ) }
+									onChange={ ( next ) => set( key, next === undefined ? undefined : `${ next }px` ) }
+									min={ 0 }
+									max={ RANGE_LIMITS[ key ] ?? 32 }
+								/>
+							</ToolsPanelItem>
+						) ) }
+					</ToolsPanel>
 				);
 			} ) }
 		</>
