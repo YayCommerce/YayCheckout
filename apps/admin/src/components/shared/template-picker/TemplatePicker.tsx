@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { Clock, Lock } from 'lucide-react';
+import { Check, Clock, Lock } from 'lucide-react';
 import { __, _n } from '@wordpress/i18n';
 
 import { isPro } from '@/lib/plan';
@@ -158,7 +158,16 @@ function TemplateCards({ templates, selectedSlug, onSelect }: Omit<GridProps, 'i
   );
 }
 
-/** One template card. Locked and Coming soon cards stay at full opacity, since the preview is the pitch. */
+/** The selected card's corner mark, the check most pickers use. */
+function SelectedCheck() {
+  return (
+    <span className="bg-primary text-primary-foreground ring-background absolute top-2 right-2 flex size-6 items-center justify-center rounded-full shadow-md ring-2">
+      <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />
+    </span>
+  );
+}
+
+/** One template card. Locked and Coming soon cards are veiled but still preview, since the preview is the pitch. */
 function TemplateTile({
   template,
   isSelected,
@@ -174,18 +183,22 @@ function TemplateTile({
       disabled={!isPickable(template)}
       onClick={() => onSelect(template.slug)}
       title={tileTitle(template)}
+      aria-pressed={isSelected}
       className={cn(
         'group transition-default flex flex-col items-start gap-2 rounded-md border p-2 text-left',
         focusVariants({ variant: 'none' }),
-        isSelected && 'border-primary ring-primary ring-1',
-        isPickable(template) ? 'hover:border-muted-foreground' : 'cursor-not-allowed',
+        isSelected
+          ? 'border-primary ring-primary bg-primary/5 ring-2'
+          : isPickable(template) && 'hover:border-muted-foreground',
+        !isPickable(template) && 'cursor-not-allowed',
       )}
     >
       <TemplatePreview template={template}>
         {!isPickable(template) && <UnavailableOverlay template={template} />}
+        {isSelected && <SelectedCheck />}
       </TemplatePreview>
       <div className="flex w-full items-center justify-between gap-1">
-        <span className="text-xs font-medium">{template.name}</span>
+        <span className={cn('text-xs font-medium', isSelected && 'text-primary')}>{template.name}</span>
         {template.locked && <ProTag />}
       </div>
     </button>

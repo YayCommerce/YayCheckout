@@ -288,7 +288,7 @@ Message: `feat(admin): show template previews as large hover-scroll cards`
 
 ### Task 4: End-to-end verification
 
-Spec criterion 16, after Tasks 1–3 are on the branch:
+Spec criterion 17, after Tasks 1–3 are on the branch:
 
 - [ ] **Step 1:** Run `./scripts/run.sh previews`. Expected: exit 0, and `git status --short templates/` shows no change, so the committed previews match a fresh capture.
 - [ ] **Step 2:** Run `./scripts/run.sh dev` and repeat Task 3 Step 5's Pro checks end to end: wide dialog, 3 columns, Classic two-column hover-scrolls to Place order, Network shows only `preview.html`, and Create layout succeeds.
