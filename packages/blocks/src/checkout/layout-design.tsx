@@ -63,6 +63,8 @@ const TOKEN_LABELS: Record< string, string > = {
 	focus_background: __( 'Focus background', 'yaycheckout' ),
 	focus_style: __( 'Focus style', 'yaycheckout' ),
 	label: __( 'Label', 'yaycheckout' ),
+	text_color: __( 'Input text', 'yaycheckout' ),
+	label_color: __( 'Label text', 'yaycheckout' ),
 	border_width: __( 'Border width', 'yaycheckout' ),
 	checked: __( 'Checked', 'yaycheckout' ),
 };
@@ -76,7 +78,12 @@ const ENUM_LABELS: Record< string, string > = {
 	large: __( 'Large', 'yaycheckout' ),
 	floating: __( 'Floating', 'yaycheckout' ),
 	hidden: __( 'Hidden', 'yaycheckout' ),
-	border: __( 'Border only', 'yaycheckout' ),
+};
+
+/** Focus style names what the shopper sees: the theme's ring thickens the border; `border` drops the ring. */
+const FOCUS_STYLE_LABELS: Record< string, string > = {
+	'': __( 'Thick border', 'yaycheckout' ),
+	border: __( 'Thin border', 'yaycheckout' ),
 };
 
 function isTokens( value: unknown ): value is Record< string, unknown > {
@@ -398,7 +405,9 @@ function TokenControl( {
 						label:
 							'font_family' === token
 								? design.fontFamilies[ option ] || ENUM_LABELS[ '' ]
-								: ENUM_LABELS[ option ] ?? option,
+								: ( 'focus_style' === token ? FOCUS_STYLE_LABELS[ option ] : undefined ) ??
+								  ENUM_LABELS[ option ] ??
+								  option,
 					} ) ) }
 					onChange={ ( next: string ) => onChange( next ) }
 				/>
