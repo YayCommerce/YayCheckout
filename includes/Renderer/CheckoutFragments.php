@@ -26,6 +26,12 @@ class CheckoutFragments {
 
     public const SAVINGS_NOTE_CLASS = 'yaycheckout-savings-note';
 
+    /** The Coupon form's applied-coupon list, refreshed by fragments(). */
+    public const COUPON_CHIPS_CLASS = 'yaycheckout-coupon-form__chips';
+
+    /** Posted by assets/js/checkout-coupon-form.js with apply_coupon, so the cart page's own apply keeps Woo's notice. */
+    public const COUPON_FORM_FIELD = 'yaycheckout_coupon_form';
+
     /** Layout values the Payment block accepts; an unknown attribute falls back to joined. */
     public const PAYMENT_LAYOUTS = [ 'joined', 'checkmark', 'box', 'grid', 'cards', 'lines' ];
 
@@ -94,6 +100,23 @@ class CheckoutFragments {
         add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'fragments' ], 20 );
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's template path filter.
         add_filter( 'wc_get_template', [ $this, 'skip_review_order_table' ], 10, 2 );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's coupon message filter.
+        add_filter( 'woocommerce_coupon_message', [ $this, 'drop_applied_message' ], PHP_INT_MAX, 2 );
+    }
+
+    /**
+     * The Coupon form's chip replaces Woo's "Coupon code applied successfully." notice, so an empty
+     * message stops Woo adding it; other notices in the apply_coupon response still print under the field.
+     * Only for the Coupon form's own request: the cart page posts to the same endpoint.
+     */
+    public function drop_applied_message( $msg, $msg_code ) {
+        // Only the Coupon form posts the field, and it renders only under a layout.
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Woo's apply_coupon checks its nonce first; this only reads a flag.
+        if ( \WC_Coupon::WC_COUPON_SUCCESS !== (int) $msg_code || ! isset( $_POST[ self::COUPON_FORM_FIELD ] ) || ! doing_action( 'wc_ajax_apply_coupon' ) ) {
+            return $msg;
+        }
+
+        return '';
     }
 
     /**
@@ -140,6 +163,9 @@ class CheckoutFragments {
         foreach ( $summary as [ $selector, $build, $attrs ] ) {
             $html[ $selector ] = self::$build( $attrs );
         }
+
+        // Matches nothing on a layout without a Coupon form.
+        $html[ '.' . self::COUPON_CHIPS_CLASS ] = self::coupon_chips_html();
 
         return array_merge( $fragments, array_filter( $html, 'strlen' ) );
     }
@@ -986,6 +1012,48 @@ class CheckoutFragments {
         return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
     }
 
+    /** The amount half of Woo's wc_cart_totals_coupon_html() (wc-cart-functions.php), without its [Remove] link: the chip carries that. */
+    public static function coupon_amount_html( \WC_Coupon $coupon ): string {
+        $amount = WC()->cart->get_coupon_discount_amount( $coupon->get_code(), WC()->cart->display_cart_ex_tax );
+        $html   = '-' . wc_price( $amount );
+
+        if ( $coupon->get_free_shipping() && empty( $amount ) ) {
+            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own string, so its translation still applies.
+            $html = __( 'Free shipping coupon', 'woocommerce' );
+        }
+
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's filter, so extensions still change the amount.
+        return (string) apply_filters( 'woocommerce_coupon_discount_amount_html', $html, $coupon );
+    }
+
+    /** The Coupon form's applied coupons as chips; checkout.js's .woocommerce-remove-coupon handler runs their ×. */
+    public static function coupon_chips_html(): string {
+        $html = '<ul class="' . esc_attr( self::COUPON_CHIPS_CLASS ) . '">';
+
+        if ( WC()->cart instanceof \WC_Cart ) {
+            $checkout_url = wc_get_checkout_url();
+
+            foreach ( WC()->cart->get_coupons() as $code => $coupon ) {
+                $code = (string) $code;
+                // translators: %s: coupon code.
+                $label = sprintf( __( 'Remove %s coupon', 'woocommerce' ), $code ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own string, so its translation still applies.
+                $html .= '<li class="yaycheckout-coupon-form__chip">'
+                    . '<svg class="yaycheckout-coupon-form__chip-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg>'
+                    . '<strong>' . esc_html( wc_strtoupper( $code ) ) . '</strong>'
+                    . '<span aria-hidden="true">·</span>'
+                    // One flex item, or the gap would split the minus sign from the price.
+                    . '<span class="yaycheckout-coupon-form__chip-amount">' . wp_kses_post( self::coupon_amount_html( $coupon ) ) . '</span>'
+                    . '<a role="button" class="woocommerce-remove-coupon yaycheckout-coupon-form__chip-remove"'
+                    . ' href="' . esc_url( add_query_arg( 'remove_coupon', rawurlencode( $code ), $checkout_url ) ) . '"'
+                    . ' data-coupon="' . esc_attr( $code ) . '"'
+                    . ' aria-label="' . esc_attr( $label ) . '">×</a>'
+                    . '</li>';
+            }
+        }
+
+        return $html . '</ul>';
+    }
+
     /**
      * The Order Summary Breakdown block's attributes with their defaults. During AJAX they come from the parsed
      * layout, where an untouched attribute is missing, so each default matches block.json's.
@@ -1004,6 +1072,7 @@ class CheckoutFragments {
      * The tfoot rows of Woo's checkout/review-order.php, as the body of their own table. Shipping
      * is one read-only row (method name / Free); the Shipping Methods block keeps the radios. The
      * order-total row is the Order Summary Total block's; its hooks stay here, so extensions' rows print once.
+     * Coupon rows leave out Woo's [Remove] when the layout has a Coupon form, whose chips carry it.
      *
      * @param array $attributes Order Summary Breakdown block attributes; see order_breakdown_options().
      */
@@ -1013,6 +1082,9 @@ class CheckoutFragments {
         }
 
         $options = self::order_breakdown_options( $attributes );
+        $layout  = CheckoutPage::get_instance()->layout();
+        // Without a Coupon form there are no chips, so the rows keep Woo's [Remove].
+        $chips = null !== $layout && has_block( 'yaycheckout/coupon-form', $layout->content );
 
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Woo's review-order hooks and strings, so its translation still applies.
         ob_start();
@@ -1028,7 +1100,15 @@ class CheckoutFragments {
         <?php foreach ( WC()->cart->get_coupons() as $code => $coupon ) : ?>
         <tr class="cart-discount coupon-<?php echo esc_attr( sanitize_title( $code ) ); ?>">
             <th><?php wc_cart_totals_coupon_label( $coupon ); ?></th>
+            <?php if ( $chips ) : ?>
+                <?php
+                $amount_html = self::coupon_amount_html( $coupon );
+                // Woo's filter, given the amount without [Remove], so extensions that add to the row still apply.
+                ?>
+            <td><?php echo wp_kses_post( apply_filters( 'woocommerce_cart_totals_coupon_html', $amount_html, $coupon, $amount_html ) ); ?></td>
+            <?php else : ?>
             <td><?php wc_cart_totals_coupon_html( $coupon ); ?></td>
+            <?php endif; ?>
         </tr>
         <?php endforeach; ?>
         <?php self::print_order_shipping_row(); ?>

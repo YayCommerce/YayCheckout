@@ -61,7 +61,8 @@ $yaycheckout_button = '' !== trim( $content )
         ]
     );
 
-$yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, 'yaycheckout-coupon-code', false );
+// Applied coupons count as the field's value, so their chips (and their ×) stay shown after a reload.
+$yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, 'yaycheckout-coupon-code', false, WC()->cart->get_applied_coupons() );
 
 ?>
 <div <?php echo \YayCheckout\Renderer\BlockEmptiness::wrapper( $yaycheckout_wrapper_attrs, $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
@@ -80,6 +81,7 @@ $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, '
         </span>
         <?php echo $yaycheckout_button; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered block markup; its render.php escapes. ?>
     </div>
+    <?php echo \YayCheckout\Renderer\CheckoutFragments::coupon_chips_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped by CheckoutFragments; update_order_review refreshes it. ?>
     <div class="yaycheckout-coupon-form__notices" aria-live="polite" data-error-text="<?php esc_attr_e( 'The coupon could not be applied. Please try again.', 'yaycheckout' ); ?>"></div>
     <?php echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
 </div>
