@@ -1,5 +1,6 @@
 /**
- * Applies a coupon from the yaycheckout/coupon-form block and prints the result below it.
+ * Applies a coupon from the yaycheckout/coupon-form block and prints its notices below it; an applied coupon
+ * shows as a chip (CheckoutFragments::coupon_chips_html()).
  * Why it does not reuse WooCommerce's handler: docs/architecture.md, Storefront (Coupon form).
  */
 jQuery(function ($) {
@@ -49,6 +50,8 @@ jQuery(function ($) {
             data: {
                 security: wc_checkout_params.apply_coupon_nonce,
                 coupon_code: code,
+                // CheckoutFragments::COUPON_FORM_FIELD: drops Woo's success notice for this request only.
+                yaycheckout_coupon_form: 1,
                 // The block may sit outside the checkout form, so look the email up page-wide.
                 billing_email: $('form.checkout input[name="billing_email"]').val(),
             },
@@ -56,6 +59,8 @@ jQuery(function ($) {
         })
             .done(function (response) {
                 if (response.indexOf('woocommerce-error') === -1 && response.indexOf('is-error') === -1) {
+                    // Woo's own success notice is dropped server-side (CheckoutFragments::drop_applied_message());
+                    // the chip shows the coupon, and notices other extensions add still print here.
                     $notices.html(response);
                     $input.val('');
                 } else {

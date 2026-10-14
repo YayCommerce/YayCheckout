@@ -29,6 +29,56 @@
 	--yaycheckout-input-focus-color: var(--wc-red, #cc1818);
 }
 
+.yaycheckout-coupon-form__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 8px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.yaycheckout-coupon-form__chips:empty {
+	display: none;
+}
+
+.yaycheckout-coupon-form__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: 4px;
+	background: rgba(0, 0, 0, 0.06);
+	font-size: 0.875em;
+}
+
+/* Some themes reset strong's weight. A long code wraps; the amount never does. */
+.yaycheckout-coupon-form__chip strong {
+	font-weight: 600;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.yaycheckout-coupon-form__chip-amount {
+	white-space: nowrap;
+}
+
+/* A long code would otherwise squeeze the icon. */
+.yaycheckout-coupon-form__chip-check {
+	flex: none;
+}
+
+.yaycheckout-coupon-form__chip-remove {
+	color: inherit;
+	text-decoration: none;
+	opacity: 0.6;
+}
+
+.yaycheckout-coupon-form__chip-remove:hover,
+.yaycheckout-coupon-form__chip-remove:focus-visible {
+	opacity: 1;
+}
+
 .yaycheckout-coupon-form__error {
 	display: flex;
 	gap: 4px;
