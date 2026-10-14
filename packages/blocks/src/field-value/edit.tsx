@@ -4,6 +4,7 @@ import { useDispatch } from '@wordpress/data';
 import { useEffect, useMemo } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { fieldNames, useShowableFields, type ShowableField } from '../shared/showable-fields';
+import { TEXT_FORMATS } from '../shared/text-formats';
 import './editor.css';
 
 interface FieldValueAttributes {
@@ -44,7 +45,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Field value', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					{ /* Values print in the order the fields were added; remove and re-add one to move it. */ }
 					<FormTokenField
 						label={ __( 'Fields', 'yaycheckout' ) }
@@ -90,7 +91,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						value={ placeholder }
 						onChange={ ( value: string ) => setAttributes( { placeholder: value } ) }
 						placeholder={ labels }
-						allowedFormats={ [] }
+						allowedFormats={ TEXT_FORMATS }
 						withoutInteractiveFormatting
 					/>
 				) : (

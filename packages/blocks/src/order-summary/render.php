@@ -1,6 +1,6 @@
 <?php
 /**
- * Prints the heading, then the Items and Totals blocks with the merchant's blocks around them. A summary
+ * Prints the heading, then the Items, Order Summary Breakdown and Order Summary Total blocks with the merchant's blocks around them. A summary
  * split into a Summary Header and Summary Details prints no heading: the header holds the merchant's own,
  * and the wrapper says whether the details collapse and start open.
  * A layout saved before Order Summary held blocks has none, and gets WooCommerce's review-order

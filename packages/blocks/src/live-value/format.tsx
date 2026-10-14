@@ -1,10 +1,11 @@
-import { RichTextToolbarButton, store as blockEditorStore } from '@wordpress/block-editor';
+import { BlockControls, store as blockEditorStore } from '@wordpress/block-editor';
+import { ToolbarButton } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { registerFormatType, type RichTextValue } from '@wordpress/rich-text';
-import { FALLBACK_ATTR, KEY_ATTR, LIVE_VALUE_BLOCKS, LIVE_VALUE_CLASS, LIVE_VALUE_FORMAT } from './constants';
-import LiveValuePopover from './popover';
+import { FALLBACK_ATTR, KEY_ATTR, LIVE_VALUE_BLOCKS, LIVE_VALUE_CLASS, LIVE_VALUE_FORMAT, PREFIX_ATTR, SUFFIX_ATTR } from './constants';
+import LiveValuePopover, { type LiveValueAttributes } from './popover';
 
 type FormatEditProps = {
 	value: RichTextValue;
@@ -13,7 +14,7 @@ type FormatEditProps = {
 	contentRef: { current: HTMLElement | null };
 	/** True while the selection is one chip of this format. */
 	isObjectActive: boolean;
-	activeObjectAttributes: { value?: string; fallback?: string };
+	activeObjectAttributes: LiveValueAttributes;
 };
 
 function Edit( { value, onChange, onFocus, contentRef, isObjectActive, activeObjectAttributes }: FormatEditProps ) {
@@ -51,15 +52,18 @@ function Edit( { value, onChange, onFocus, contentRef, isObjectActive, activeObj
 
 	return (
 		<>
-			<RichTextToolbarButton
-				icon="database"
-				title={ __( 'Live value', 'yaycheckout' ) }
-				isActive={ isObjectActive }
-				onClick={ () => {
-					setDismissed( null );
-					setAdding( true );
-				} }
-			/>
+			{ /* In the inline group beside Bold and Link, not the More dropdown, so merchants see it without opening one. */ }
+			<BlockControls group="inline">
+				<ToolbarButton
+					icon="database"
+					label={ __( 'Live value', 'yaycheckout' ) }
+					isPressed={ isObjectActive }
+					onClick={ () => {
+						setDismissed( null );
+						setAdding( true );
+					} }
+				/>
+			</BlockControls>
 			{ ( adding || editing ) && (
 				<LiveValuePopover
 					// A fresh form for each chip, and for a new one.
@@ -79,7 +83,7 @@ registerFormatType( LIVE_VALUE_FORMAT, {
 	title: __( 'Live value', 'yaycheckout' ),
 	tagName: 'span',
 	className: LIVE_VALUE_CLASS,
-	attributes: { value: KEY_ATTR, fallback: FALLBACK_ATTR },
+	attributes: { value: KEY_ATTR, fallback: FALLBACK_ATTR, prefix: PREFIX_ATTR, suffix: SUFFIX_ATTR },
 	// One uneditable character in the text, as core's footnotes are: undo and delete take the whole chip.
 	contentEditable: false,
 	interactive: true,

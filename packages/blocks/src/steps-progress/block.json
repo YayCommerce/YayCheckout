@@ -13,6 +13,22 @@
       "type": "string",
       "default": "circles",
       "enum": [ "circles", "dots", "segments", "bar", "text" ]
+    },
+    "showCount": {
+      "type": "boolean",
+      "default": true
+    },
+    "fillColor": {
+      "type": "string",
+      "default": ""
+    },
+    "trackColor": {
+      "type": "string",
+      "default": ""
+    },
+    "upcomingTextColor": {
+      "type": "string",
+      "default": ""
     }
   },
   "supports": {

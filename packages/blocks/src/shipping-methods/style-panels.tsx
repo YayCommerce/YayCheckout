@@ -17,19 +17,14 @@ import {
 	type ShippingSettingKey,
 } from './setting-controls';
 import { getStyleSetting, setStyleSetting } from './style-paths';
-import './editor.css';
-
-type StyleObject = Record< string, unknown >;
+import '../shared/tools-panel.css';
+import { hasValue, type StyleObject } from '../shared/style-path';
 
 interface StylePanelsProps {
 	/** The selected layout's settings. */
 	keys: ShippingSettingKey[];
 	style: StyleObject | undefined;
 	onChange: ( style: StyleObject | undefined ) => void;
-}
-
-function hasValue( value: unknown ): boolean {
-	return value !== undefined && value !== null && value !== '';
 }
 
 /**
@@ -64,11 +59,11 @@ export function StylePanels( { keys, style, onChange }: StylePanelsProps ) {
 						key={ panel.id }
 						label={ panel.title }
 						panelId={ panelId }
-						className="yaycheckout-shipping-methods-panel"
+						className="yaycheckout-tools-panel"
 						resetAll={ () => shown.forEach( ( key ) => set( key, undefined ) ) }
 					>
 						{ colorKeys.length > 0 && (
-							<div className="yaycheckout-shipping-methods-panel__colors">
+							<div className="yaycheckout-tools-panel__colors">
 								<ColorGradientSettingsDropdown
 									__experimentalIsRenderedInSidebar
 									panelId={ panelId }

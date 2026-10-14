@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Loader2, Plus, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, MoreHorizontal, Plus, Search } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
+import { formatDateAtTime } from '@/lib/helpers/date.helper';
 import { editLayoutIdFrom, withEditLayout } from '@/lib/helpers/layout.helper';
 import { isPro } from '@/lib/plan';
 import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
   useArchiveLayoutMutation,
+  useBulkLayoutsMutation,
   useCreatePreviewLinkMutation,
   useDeactivateLayoutMutation,
   useDeleteLayoutMutation,
@@ -21,6 +23,8 @@ import {
 } from '@/lib/queries/layout.queries';
 import {
   LISTED_LAYOUT_STATUSES,
+  type LayoutBulkAction,
+  type LayoutBulkResult,
   type LayoutCounts,
   type LayoutListResponse,
   type LayoutSummary,
@@ -30,7 +34,8 @@ import { cn } from '@/lib/utils';
 import { useDebouncedSearch } from '@/hooks/useDebouncedSearch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -48,21 +53,27 @@ import { LayoutStatusBadge } from '@/components/shared/LayoutStatusBadge';
 import { ArchiveModal } from '@/pages/layouts/ArchiveModal';
 import { AssignmentChips } from '@/pages/layouts/assignment/AssignmentChips';
 import { AssignmentDrawer } from '@/pages/layouts/assignment/AssignmentDrawer';
+import { BulkActionDialog, type ConfirmedBulkAction } from '@/pages/layouts/BulkActionDialog';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { DeleteModal } from '@/pages/layouts/DeleteModal';
+import { LayoutBulkBar } from '@/pages/layouts/LayoutBulkBar';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import { PreviewLinkModal } from '@/pages/layouts/PreviewLinkModal';
 import { RenameModal } from '@/pages/layouts/RenameModal';
 import { SetActiveModal } from '@/pages/layouts/SetActiveModal';
 import PageLayout from '@/pages/PageLayout';
 
-type View = 'listed' | 'archived';
+type View = 'listed' | 'active' | 'archived';
+
+/** Last-updated sort; null keeps the server's default order, newest created first. */
+type Sort = 'asc' | 'desc' | null;
 
 const MIN_ITEMS_FOR_LIST_CONTROLS = 10;
 
 export default function LayoutsPage() {
   const [view, setView] = useState<View>('listed');
   const [pageIndex, setPageIndex] = useState(0);
+  const [sort, setSort] = useState<Sort>(null);
   const {
     input: searchInput,
     search,
@@ -76,10 +87,17 @@ export default function LayoutsPage() {
     setPageIndex(0);
   }
 
+  function onSortChange(next: Sort) {
+    setSort(next);
+    setPageIndex(0);
+  }
+
   const list = useLayoutsQuery({
     status: view === 'archived' ? ['trash'] : LISTED_LAYOUT_STATUSES,
+    active: view === 'active',
     search,
     page: pageIndex + 1,
+    ...(sort && { orderBy: 'modified' as const, order: sort }),
   });
   const countsQuery = useLayoutCountsQuery();
 
@@ -116,6 +134,8 @@ export default function LayoutsPage() {
           onSearchInputChange={onSearchInputChange}
           pageIndex={pageIndex}
           onPageIndexChange={setPageIndex}
+          sort={sort}
+          onSortChange={onSortChange}
         />
       )}
     </PageLayout>
@@ -136,6 +156,8 @@ function LayoutsPageBody({
   onSearchInputChange,
   pageIndex,
   onPageIndexChange,
+  sort,
+  onSortChange,
 }: {
   listData: LayoutListResponse | undefined;
   listError: Error | null;
@@ -152,6 +174,8 @@ function LayoutsPageBody({
   onSearchInputChange: (value: string) => void;
   pageIndex: number;
   onPageIndexChange: (pageIndex: number) => void;
+  sort: Sort;
+  onSortChange: (sort: Sort) => void;
 }) {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -171,6 +195,8 @@ function LayoutsPageBody({
   const [deletingLayout, setDeletingLayout] = useState<LayoutSummary | null>(null);
   const [assigningLayout, setAssigningLayout] = useState<LayoutSummary | null>(null);
   const [previewing, setPreviewing] = useState<{ layout: LayoutSummary; link: PreviewLink } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
+  const [confirmingBulk, setConfirmingBulk] = useState<ConfirmedBulkAction | null>(null);
 
   const activateMutation = useActivateLayoutMutation();
   const deactivateMutation = useDeactivateLayoutMutation();
@@ -179,6 +205,44 @@ function LayoutsPageBody({
   const deleteMutation = useDeleteLayoutMutation();
   const duplicateMutation = useDuplicateLayoutMutation();
   const previewLinkMutation = useCreatePreviewLinkMutation();
+  const bulkMutation = useBulkLayoutsMutation();
+
+  // A selection covers the rows on screen only.
+  useEffect(() => setSelectedIds(new Set()), [view, pageIndex, search, sort]);
+
+  const rows = listIsOtherTabPlaceholder ? [] : (listData?.items ?? []);
+  const selectedRows = rows.filter((layout) => selectedIds.has(layout.id));
+
+  /** The selected rows an action changes: Deactivate skips those already inactive. */
+  function bulkTargets(action: LayoutBulkAction) {
+    return action === 'deactivate' ? selectedRows.filter((layout) => layout.isActive) : selectedRows;
+  }
+
+  function onBulkAction(action: LayoutBulkAction) {
+    // Restore runs at once, as the row's Restore does.
+    if (action === 'restore') {
+      runBulk(action);
+    } else {
+      setConfirmingBulk(action);
+    }
+  }
+
+  function runBulk(action: LayoutBulkAction) {
+    bulkMutation.mutate(
+      { action, ids: bulkTargets(action).map((layout) => layout.id) },
+      {
+        onSuccess: (result) => {
+          setConfirmingBulk(null);
+          // Refused rows stay selected, to retry or act on otherwise.
+          setSelectedIds(new Set(result.failed.map((failure) => failure.id)));
+          toastBulkResult(action, result);
+
+          // Deactivated rows stay on the All tab; every other action takes them off this tab.
+          if (action !== 'deactivate' || view === 'active') stepBackIfPageEmptied(result.done.length);
+        },
+      },
+    );
+  }
 
   function onActivate(layout: LayoutSummary) {
     activateMutation.mutate(layout.id, {
@@ -194,13 +258,16 @@ function LayoutsPageBody({
       onSuccess: () => {
         setDeactivatingLayout(null);
         toast.success(__('Layout deactivated.', 'yaycheckout'));
+
+        // The row leaves the Active tab.
+        if (view === 'active') stepBackIfPageEmptied();
       },
     });
   }
 
-  /** After a row leaves the list: when it was the last on a later page, that page no longer exists. */
-  function stepBackIfPageEmptied() {
-    if (listData?.items.length === 1 && pageIndex > 0) {
+  /** After rows leave the list: when they were the last on a later page, that page no longer exists. */
+  function stepBackIfPageEmptied(removed = 1) {
+    if (listData && removed >= listData.items.length && pageIndex > 0) {
       onPageIndexChange(pageIndex - 1);
     }
   }
@@ -282,7 +349,8 @@ function LayoutsPageBody({
 
   const controlsDisabled = listIsOtherTabPlaceholder;
 
-  const showListControls = (view === 'archived' ? counts.archived : counts.listed) >= MIN_ITEMS_FOR_LIST_CONTROLS;
+  const viewCount = view === 'archived' ? counts.archived : view === 'active' ? counts.active : counts.listed;
+  const showListControls = viewCount >= MIN_ITEMS_FOR_LIST_CONTROLS;
   // totalPages is 0 for an empty result.
   const pageCount = Math.max(1, listData?.totalPages ?? 1);
 
@@ -315,6 +383,14 @@ function LayoutsPageBody({
         onConfirm={onDelete}
         isPending={deleteMutation.isPending}
       />
+      <BulkActionDialog
+        action={confirmingBulk}
+        layouts={confirmingBulk ? bulkTargets(confirmingBulk) : []}
+        leavesNoneActive={confirmingBulk === 'deactivate' && bulkTargets('deactivate').length >= counts.active}
+        onOpenChange={(open) => !open && setConfirmingBulk(null)}
+        onConfirm={() => confirmingBulk && runBulk(confirmingBulk)}
+        isPending={bulkMutation.isPending}
+      />
       <AssignmentDrawer layout={assigningLayout} onOpenChange={(open) => !open && setAssigningLayout(null)} />
       <PreviewLinkModal
         layout={previewing?.layout ?? null}
@@ -322,149 +398,155 @@ function LayoutsPageBody({
         onOpenChange={(open) => !open && setPreviewing(null)}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
-        <Card className="min-w-0">
-          <h2 className="text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
+      <Card className="min-w-0">
+        <h2 className="text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Segmented
-              size="sm"
-              value={view}
-              onValueChange={(next) => next && onViewChange(next as View)}
-              disabled={controlsDisabled}
-            >
-              <SegmentedItem value="listed">
-                {__('Active list', 'yaycheckout')}
-                <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
-                  <CountValue loading={countsFetching} value={counts.listed} />
-                </Badge>
-              </SegmentedItem>
-              <SegmentedItem value="archived">
-                {__('Archive', 'yaycheckout')}
-                <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
-                  <CountValue loading={countsFetching} value={counts.archived} />
-                </Badge>
-              </SegmentedItem>
-            </Segmented>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Segmented
+            size="sm"
+            value={view}
+            onValueChange={(next) => next && onViewChange(next as View)}
+            disabled={controlsDisabled}
+          >
+            <SegmentedItem value="listed">
+              {__('All', 'yaycheckout')}
+              <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
+                <CountValue loading={countsFetching} value={counts.listed} />
+              </Badge>
+            </SegmentedItem>
+            <SegmentedItem value="active">
+              {__('Active', 'yaycheckout')}
+              <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
+                <CountValue loading={countsFetching} value={counts.active} />
+              </Badge>
+            </SegmentedItem>
+            <SegmentedItem value="archived">
+              {__('Archive', 'yaycheckout')}
+              <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
+                <CountValue loading={countsFetching} value={counts.archived} />
+              </Badge>
+            </SegmentedItem>
+          </Segmented>
 
-            <div className="flex items-center gap-3">
-              {showListControls && (
-                <InputGroup size="small" className="w-64">
-                  <InputGroupInput
-                    placeholder={__('Search layouts…', 'yaycheckout')}
-                    value={searchInput}
-                    onChange={(e) => onSearchInputChange(e.target.value)}
-                  />
-                  <InputGroupAddon align="inline-end">
-                    <Search className="size-4" />
-                  </InputGroupAddon>
-                </InputGroup>
-              )}
-              <Button size="sm" variant="primary-outline" onClick={() => setNewLayoutOpen(true)}>
-                <Plus className="size-4" />
-                {__('Add layout', 'yaycheckout')}
-              </Button>
-            </div>
+          <div className="flex items-center gap-3">
+            {showListControls && (
+              <InputGroup size="small" className="w-64">
+                <InputGroupInput
+                  placeholder={__('Search layouts…', 'yaycheckout')}
+                  value={searchInput}
+                  onChange={(e) => onSearchInputChange(e.target.value)}
+                />
+                <InputGroupAddon align="inline-end">
+                  <Search className="size-4" />
+                </InputGroupAddon>
+              </InputGroup>
+            )}
+            <Button size="sm" variant="primary-outline" onClick={() => setNewLayoutOpen(true)}>
+              <Plus className="size-4" />
+              {__('Add layout', 'yaycheckout')}
+            </Button>
           </div>
+        </div>
 
-          {listError && <p className="text-destructive text-sm">{listError.message}</p>}
+        {listError && <p className="text-destructive text-sm">{listError.message}</p>}
 
-          {listIsOtherTabPlaceholder ? (
-            <TableRowsSkeleton />
-          ) : !listData ? null : (
-            <div className={cn('min-w-0 transition-opacity', listFetching && 'opacity-60')}>
-              {listData.items.length === 0 ? (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon" />
-                    <EmptyTitle>
-                      {search
-                        ? __('No matching layouts', 'yaycheckout')
-                        : view === 'archived'
-                          ? __('Nothing archived', 'yaycheckout')
+        {listIsOtherTabPlaceholder ? (
+          <TableRowsSkeleton />
+        ) : !listData ? null : (
+          <div className={cn('min-w-0 transition-opacity', listFetching && 'opacity-60')}>
+            {listData.items.length === 0 ? (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon" />
+                  <EmptyTitle>
+                    {search
+                      ? __('No matching layouts', 'yaycheckout')
+                      : view === 'archived'
+                        ? __('Nothing archived', 'yaycheckout')
+                        : view === 'active'
+                          ? __('No active layouts', 'yaycheckout')
                           : __('Nothing here yet', 'yaycheckout')}
-                    </EmptyTitle>
-                    <EmptyDescription>
-                      {search
-                        ? __('No layouts match your search. Try a different name.', 'yaycheckout')
-                        : view === 'archived'
-                          ? __('Layouts you archive will show up here.', 'yaycheckout')
+                  </EmptyTitle>
+                  <EmptyDescription>
+                    {search
+                      ? __('No layouts match your search. Try a different name.', 'yaycheckout')
+                      : view === 'archived'
+                        ? __('Layouts you archive will show up here.', 'yaycheckout')
+                        : view === 'active'
+                          ? __('Set a layout active to use it on your checkout.', 'yaycheckout')
                           : counts.archived > 0
                             ? __(
                                 'All of your layouts are archived. Restore one to bring it back to this list, or start a new draft. Archiving never deletes anything.',
                                 'yaycheckout',
                               )
                             : __('Create your first checkout layout to get started.', 'yaycheckout')}
-                    </EmptyDescription>
-                  </EmptyHeader>
-                  {view === 'listed' && !search && (
-                    <EmptyContent>
-                      <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
-                        {__('Add layout', 'yaycheckout')}
+                  </EmptyDescription>
+                </EmptyHeader>
+                {view === 'listed' && !search && (
+                  <EmptyContent>
+                    <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
+                      {__('Add layout', 'yaycheckout')}
+                    </Button>
+                    {counts.archived > 0 && (
+                      <Button size="sm" variant="outline" onClick={() => onViewChange('archived')}>
+                        {__('Restore from archive', 'yaycheckout')}
                       </Button>
-                      {counts.archived > 0 && (
-                        <Button size="sm" variant="outline" onClick={() => onViewChange('archived')}>
-                          {__('Restore from archive', 'yaycheckout')}
-                        </Button>
-                      )}
-                    </EmptyContent>
-                  )}
-                </Empty>
-              ) : (
-                <>
-                  <div className="overflow-x-auto rounded-lg border">
-                    <LayoutsTable
-                      items={listData.items}
-                      view={view}
-                      onEditLayout={openEditor}
-                      onSetActive={setActivatingLayout}
-                      onDeactivate={setDeactivatingLayout}
-                      onArchive={setArchivingLayout}
-                      onRestore={onRestore}
-                      onDelete={setDeletingLayout}
-                      onDuplicate={onDuplicate}
-                      onRename={setRenamingLayout}
-                      onAssign={setAssigningLayout}
-                      onPreview={onPreview}
-                      previewPending={previewLinkMutation.isPending}
-                    />
-                  </div>
+                    )}
+                  </EmptyContent>
+                )}
+              </Empty>
+            ) : (
+              <>
+                <div className="overflow-x-auto rounded-lg border">
+                  <LayoutsTable
+                    items={listData.items}
+                    view={view}
+                    selectedIds={selectedIds}
+                    onSelectedIdsChange={setSelectedIds}
+                    onEditLayout={openEditor}
+                    onSetActive={setActivatingLayout}
+                    onDeactivate={setDeactivatingLayout}
+                    onArchive={setArchivingLayout}
+                    onRestore={onRestore}
+                    onDelete={setDeletingLayout}
+                    onDuplicate={onDuplicate}
+                    onRename={setRenamingLayout}
+                    onAssign={setAssigningLayout}
+                    onPreview={onPreview}
+                    previewPending={previewLinkMutation.isPending}
+                    sort={sort}
+                    onSortChange={onSortChange}
+                    sortDisabled={controlsDisabled}
+                  />
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
+                  <LayoutBulkBar
+                    selected={selectedRows}
+                    archived={view === 'archived'}
+                    onClear={() => setSelectedIds(new Set())}
+                    onAction={onBulkAction}
+                    disabled={bulkMutation.isPending || listFetching}
+                  />
                   {showListControls && (
-                    <div className="mt-3 flex items-center justify-end gap-4">
-                      <Pagination
-                        pageIndex={pageIndex}
-                        pageCount={pageCount}
-                        onPreviousPage={() => onPageIndexChange(pageIndex - 1)}
-                        onNextPage={() => onPageIndexChange(pageIndex + 1)}
-                        onPageChange={onPageIndexChange}
-                        canPreviousPage={pageIndex > 0}
-                        canNextPage={pageIndex + 1 < pageCount}
-                        disabled={controlsDisabled}
-                      />
-                    </div>
+                    <Pagination
+                      // Stays right while the bulk bar is hidden.
+                      className="ms-auto"
+                      pageIndex={pageIndex}
+                      pageCount={pageCount}
+                      onPreviousPage={() => onPageIndexChange(pageIndex - 1)}
+                      onNextPage={() => onPageIndexChange(pageIndex + 1)}
+                      onPageChange={onPageIndexChange}
+                      canPreviousPage={pageIndex > 0}
+                      canNextPage={pageIndex + 1 < pageCount}
+                      disabled={controlsDisabled}
+                    />
                   )}
-                </>
-              )}
-            </div>
-          )}
-        </Card>
-
-        <aside className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{__('Health', 'yaycheckout')}</CardTitle>
-            </CardHeader>
-            <p className="text-muted-foreground text-sm">{__('Not available yet.', 'yaycheckout')}</p>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>{__('Compatibility', 'yaycheckout')}</CardTitle>
-            </CardHeader>
-            <p className="text-muted-foreground text-sm">{__('Not available yet.', 'yaycheckout')}</p>
-          </Card>
-        </aside>
-      </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </Card>
 
       <Dialog open={null !== editingLayoutId} onOpenChange={onEditorOpenChange}>
         <DialogContent className="!flex h-[92vh] w-[96vw] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[96vw]">
@@ -519,6 +601,8 @@ function CountValue({ loading, value }: { loading: boolean; value: number }) {
 function LayoutsTable({
   items,
   view,
+  selectedIds,
+  onSelectedIdsChange,
   onEditLayout,
   onSetActive,
   onDeactivate,
@@ -530,9 +614,14 @@ function LayoutsTable({
   onAssign,
   onPreview,
   previewPending,
+  sort,
+  onSortChange,
+  sortDisabled,
 }: {
   items: LayoutSummary[];
   view: View;
+  selectedIds: ReadonlySet<number>;
+  onSelectedIdsChange: (ids: ReadonlySet<number>) => void;
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
@@ -544,14 +633,51 @@ function LayoutsTable({
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
   previewPending: boolean;
+  sort: Sort;
+  onSortChange: (sort: Sort) => void;
+  sortDisabled: boolean;
 }) {
+  const SortIcon = sort === 'desc' ? ArrowDown : sort === 'asc' ? ArrowUp : ArrowUpDown;
+  const selectedCount = items.filter((layout) => selectedIds.has(layout.id)).length;
+
+  function onRowSelectedChange(id: number, selected: boolean) {
+    const next = new Set(selectedIds);
+    if (selected) {
+      next.add(id);
+    } else {
+      next.delete(id);
+    }
+    onSelectedIdsChange(next);
+  }
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-10">
+            <Checkbox
+              aria-label={__('Select all layouts on this page', 'yaycheckout')}
+              checked={selectedCount === items.length}
+              onCheckedChange={() =>
+                onSelectedIdsChange(new Set(selectedCount === items.length ? [] : items.map((layout) => layout.id)))
+              }
+            />
+          </TableHead>
           <TableHead>{__('Name', 'yaycheckout')}</TableHead>
           {isPro && <TableHead>{__('Assignment', 'yaycheckout')}</TableHead>}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
+          <TableHead aria-sort={sort === 'desc' ? 'descending' : sort === 'asc' ? 'ascending' : 'none'}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="-ml-2.5 h-7"
+              disabled={sortDisabled}
+              onClick={() => onSortChange(sort === 'desc' ? 'asc' : 'desc')}
+            >
+              {__('Last updated', 'yaycheckout')}
+              <SortIcon className={cn('size-3.5', !sort && 'text-muted-foreground')} />
+            </Button>
+          </TableHead>
           <TableHead>{__('Actions', 'yaycheckout')}</TableHead>
         </TableRow>
       </TableHeader>
@@ -561,6 +687,8 @@ function LayoutsTable({
             key={layout.id}
             layout={layout}
             view={view}
+            selected={selectedIds.has(layout.id)}
+            onSelectedChange={(selected) => onRowSelectedChange(layout.id, selected)}
             onEditLayout={onEditLayout}
             onSetActive={onSetActive}
             onDeactivate={onDeactivate}
@@ -582,6 +710,8 @@ function LayoutsTable({
 function LayoutTableRow({
   layout,
   view,
+  selected,
+  onSelectedChange,
   onEditLayout,
   onSetActive,
   onDeactivate,
@@ -596,6 +726,8 @@ function LayoutTableRow({
 }: {
   layout: LayoutSummary;
   view: View;
+  selected: boolean;
+  onSelectedChange: (selected: boolean) => void;
   onEditLayout: (id: number) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
@@ -609,9 +741,23 @@ function LayoutTableRow({
   previewPending: boolean;
 }) {
   return (
-    <TableRow>
-      <TableCell className="max-w-[320px] truncate font-medium" title={layout.title}>
-        {layout.title}
+    <TableRow data-state={selected ? 'selected' : undefined}>
+      <TableCell>
+        <Checkbox
+          aria-label={sprintf(
+            /* translators: %s: layout title */
+            __('Select "%s"', 'yaycheckout'),
+            layout.title,
+          )}
+          checked={selected}
+          onCheckedChange={(checked) => onSelectedChange(checked === true)}
+        />
+      </TableCell>
+      <TableCell className="font-medium">
+        {/* On the div, not the cell: auto table layout ignores a cell's max-width, so the title would widen the column. */}
+        <div className="max-w-[320px] truncate" title={layout.title}>
+          {layout.title}
+        </div>
       </TableCell>
       {isPro && (
         <TableCell className="max-w-70">
@@ -620,6 +766,9 @@ function LayoutTableRow({
       )}
       <TableCell>
         <LayoutStatusBadge layout={layout} />
+      </TableCell>
+      <TableCell className="text-muted-foreground whitespace-nowrap">
+        {formatDateAtTime(layout.updatedAt) || '—'}
       </TableCell>
       <TableCell>
         <LayoutRowActions
@@ -642,7 +791,7 @@ function LayoutTableRow({
   );
 }
 
-/** Per-row actions. Archive is disabled on the active row, so deactivating stays an explicit choice. Publishing is the editor's job. */
+/** Per-row actions. Activate turns into Deactivate on an active row. Archive is disabled on the active row, so deactivating stays an explicit choice. Publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,
@@ -697,30 +846,78 @@ function LayoutRowActions({
       <Button size="sm" variant="outline" disabled={previewPending} onClick={() => onPreview(layout)}>
         {__('Preview', 'yaycheckout')}
       </Button>
-      {/* Disabled rather than hidden so the action column keeps its shape. */}
-      <Button size="sm" variant="outline" disabled={layout.isActive} onClick={() => onSetActive(layout)}>
-        {__('Set active', 'yaycheckout')}
-      </Button>
+      {/* One button, two states; the min width keeps the column aligned across rows. */}
+      {layout.isActive ? (
+        <Button size="sm" variant="destructive-outline" className="min-w-25" onClick={() => onDeactivate(layout)}>
+          {__('Deactivate', 'yaycheckout')}
+        </Button>
+      ) : (
+        <Button size="sm" variant="outline" className="min-w-25" onClick={() => onSetActive(layout)}>
+          {__('Activate', 'yaycheckout')}
+        </Button>
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="outline">
-            ⋯
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            className="text-muted-foreground"
+            aria-label={__('More actions', 'yaycheckout')}
+          >
+            <MoreHorizontal className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={() => onAssign(layout)}>{__('Assignment', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onRename(layout)}>{__('Rename', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
-            {__('Deactivate', 'yaycheckout')}
-          </DropdownMenuItem>
-          <DropdownMenuItem disabled={layout.isActive} onSelect={() => onArchive(layout)}>
+          <DropdownMenuItem variant="destructive" disabled={layout.isActive} onSelect={() => onArchive(layout)}>
             {__('Archive', 'yaycheckout')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
   );
+}
+
+/** "Archived 3 layouts.", plus what was refused and why, from the first refusal's message. */
+function toastBulkResult(action: LayoutBulkAction, { done, failed }: LayoutBulkResult) {
+  const doneMessage = bulkDoneMessage(action, done.length);
+
+  if (failed.length === 0) {
+    toast.success(doneMessage);
+    return;
+  }
+
+  const failedMessage = sprintf(
+    /* translators: 1: number of layouts, 2: the reason for the first one */
+    _n('%1$d layout was not changed: %2$s', '%1$d layouts were not changed: %2$s', failed.length, 'yaycheckout'),
+    failed.length,
+    failed[0].message,
+  );
+
+  if (done.length === 0) {
+    toast.error(failedMessage);
+  } else {
+    toast.warning(`${doneMessage} ${failedMessage}`);
+  }
+}
+
+function bulkDoneMessage(action: LayoutBulkAction, count: number): string {
+  switch (action) {
+    case 'deactivate':
+      /* translators: %d: number of layouts */
+      return sprintf(_n('Deactivated %d layout.', 'Deactivated %d layouts.', count, 'yaycheckout'), count);
+    case 'archive':
+      /* translators: %d: number of layouts */
+      return sprintf(_n('Archived %d layout.', 'Archived %d layouts.', count, 'yaycheckout'), count);
+    case 'restore':
+      /* translators: %d: number of layouts */
+      return sprintf(_n('Restored %d layout.', 'Restored %d layouts.', count, 'yaycheckout'), count);
+    case 'delete':
+      /* translators: %d: number of layouts */
+      return sprintf(_n('Deleted %d layout.', 'Deleted %d layouts.', count, 'yaycheckout'), count);
+  }
 }
 
 function TableRowsSkeleton() {
@@ -735,20 +932,8 @@ function TableRowsSkeleton() {
 
 function LayoutsPageSkeleton() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
-      <Card>
-        <TableRowsSkeleton />
-      </Card>
-      <aside className="space-y-4">
-        <Card>
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="mt-3 h-3 w-1/2" />
-        </Card>
-        <Card>
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="mt-3 h-3 w-1/2" />
-        </Card>
-      </aside>
-    </div>
+    <Card>
+      <TableRowsSkeleton />
+    </Card>
   );
 }

@@ -8,10 +8,10 @@
 	border-radius: 6px;
 	background: transparent;
 	color: var(--yaycheckout-primary-color, #3858e9);
-	font-family: inherit;
-	font-size: 16px;
-	font-weight: 600;
-	line-height: 1.2;
+	/* The surrounding text's font, which the block's typography settings override. A button doesn't inherit it by default. */
+	font: inherit;
+	/* One line, so a flex row beside it (Place Order's terms text) can't squeeze the label. */
+	white-space: nowrap;
 	cursor: pointer;
 }
 

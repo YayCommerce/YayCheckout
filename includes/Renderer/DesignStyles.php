@@ -9,6 +9,8 @@ defined( 'ABSPATH' ) || exit;
  * Prints the layout's design as `--yaycheckout-*` custom properties on :root, then the page rule, then the
  * site-wide custom CSS and the layout's. An empty token prints nothing: checkout-base.css and the blocks' CSS
  * read each property with a neutral fallback that follows the theme.
+ * inputs.label is the one token with no property here: it switches a layout of rules on, so it is a class on the
+ * checkout wrapper (checkout/render.php, and checkout/edit.tsx on the canvas).
  *
  * The page rule and, with a font, the heading rule are the only selectors printed here. The page rule sets the
  * page's background, text colour and font, which a stylesheet can't read from an unset property
@@ -49,11 +51,17 @@ class DesignStyles {
         'font-size'        => 'font-size-base',
     ];
 
-    /** Pixel height per inputs.size step. Mirrored by the layout editor (design-css.ts). */
-    private const INPUT_HEIGHTS = [
-        'small'  => 32,
-        'medium' => 40,
-        'large'  => 48,
+    /** The page's font size in px while typography.base_size is empty, so a layout doesn't take the theme's. Mirrored by design-css.ts. */
+    public const DEFAULT_BASE_SIZE = 13;
+
+    /**
+     * Per inputs.size step: the field's height, then its height with floating labels. In em, so a field grows with
+     * the layout's font. Mirrored by the layout editor (design-css.ts).
+     */
+    private const INPUT_SIZES = [
+        'small'  => [ '2.5em', '3em' ],
+        'medium' => [ '2.75em', '3.25em' ],
+        'large'  => [ '3em', '3.5em' ],
     ];
 
     /**
@@ -103,12 +111,15 @@ class DesignStyles {
         return $css;
     }
 
-    /** Custom property values by name (without the `--yaycheckout-` prefix), for the tokens that aren't empty. */
+    /** Custom property values by name (without the `--yaycheckout-` prefix), for the tokens that aren't empty, and always the font size. */
     private function vars( array $sections ): array {
         $colours    = $sections['colours'];
         $typography = $sections['typography'];
         $inputs     = $sections['inputs'];
         $background = $colours['background'];
+        $not_empty  = static function ( $value ) {
+            return '' !== $value;
+        };
 
         // A gradient fills only the page: inputs and rows read color-background as a colour, so they keep their fallback.
         $vars = array_filter(
@@ -118,19 +129,17 @@ class DesignStyles {
                 LayoutDesign::is_gradient( $background ) ? 'background-gradient' : 'color-background' => $background,
                 'color-border'  => $colours['border'],
             ],
-            static function ( $value ) {
-                return '' !== $value;
-            }
+            $not_empty
         );
 
-        if ( '' !== $typography['font_family'] ) {
+        if ( isset( LayoutDesign::FONT_STACKS[ $typography['font_family'] ] ) ) {
+            $vars['font-family'] = LayoutDesign::FONT_STACKS[ $typography['font_family'] ];
+        } elseif ( '' !== $typography['font_family'] ) {
             $fallback            = in_array( $typography['font_family'], LayoutDesign::SERIF_FONTS, true ) ? self::SERIF_FONT_FALLBACK : self::FONT_FALLBACK;
             $vars['font-family'] = '"' . LayoutDesign::FONT_FAMILIES[ $typography['font_family'] ] . '", ' . $fallback;
         }
 
-        if ( null !== $typography['base_size'] ) {
-            $vars['font-size-base'] = $typography['base_size'] . 'px';
-        }
+        $vars['font-size-base'] = ( $typography['base_size'] ?? self::DEFAULT_BASE_SIZE ) . 'px';
 
         $is_underline = 'underline' === $inputs['style'];
 
@@ -140,13 +149,54 @@ class DesignStyles {
             $vars['input-radius'] = $inputs['radius'] . 'px';
         }
 
+        // The box is the chosen height: no vertical padding for the text to push past it.
         if ( '' !== $inputs['size'] ) {
-            $vars['input-height'] = self::INPUT_HEIGHTS[ $inputs['size'] ] . 'px';
+            $vars['input-height']          = self::INPUT_SIZES[ $inputs['size'] ][0];
+            $vars['input-floating-height'] = self::INPUT_SIZES[ $inputs['size'] ][1];
+            $vars['input-padding-block']   = '0';
         }
 
         if ( '' !== $inputs['style'] ) {
-            $vars['input-border-width']   = $is_underline ? '0 0 1px' : '1px';
-            $vars['input-padding-inline'] = $is_underline ? '0' : '12px';
+            $vars['input-border-width'] = $is_underline ? '0 0 1px' : '1px';
+            // An underline input with a background is a filled box, so its text keeps the side padding.
+            $vars['input-padding-inline'] = $is_underline && '' === $inputs['background'] ? '0' : '12px';
+        }
+
+        $vars = array_merge(
+            $vars,
+            array_filter(
+                [
+                    'input-background'   => $inputs['background'],
+                    'input-color'        => $inputs['text'],
+                    'input-border-color' => $inputs['border'],
+                    'input-focus-color'  => $inputs['focus'],
+                ],
+                $not_empty
+            )
+        );
+
+        // Border only drops the flush ring, so focus just recolours the border.
+        if ( 'border' === $inputs['focus_style'] ) {
+            $vars['input-focus-ring-width'] = '0';
+        }
+
+        // A radius of 0 is a square box, not an empty token.
+        $checkboxes = $sections['checkboxes'];
+
+        if ( null !== $checkboxes['size'] ) {
+            $vars['checkbox-size'] = $checkboxes['size'] . 'px';
+        }
+
+        if ( null !== $checkboxes['radius'] ) {
+            $vars['checkbox-radius'] = $checkboxes['radius'] . 'px';
+        }
+
+        if ( null !== $checkboxes['border_width'] ) {
+            $vars['checkbox-border-width'] = $checkboxes['border_width'] . 'px';
+        }
+
+        if ( '' !== $checkboxes['checked'] ) {
+            $vars['checkbox-checked-color'] = $checkboxes['checked'];
         }
 
         return $vars;

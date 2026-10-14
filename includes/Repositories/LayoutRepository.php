@@ -18,6 +18,9 @@ class LayoutRepository {
     /** Layouts the Free edition may hold. */
     public const FREE_LIMIT = 3;
 
+    /** What bulk() runs; each is a method of this class taking a layout id. */
+    public const BULK_ACTIONS = [ 'deactivate', 'archive', 'restore', 'delete' ];
+
     public function find( int $id ): ?Layout {
         $post = get_post( $id );
 
@@ -63,19 +66,25 @@ class LayoutRepository {
     public function query( LayoutQuery $query ): array {
         add_filter( 'posts_search', [ $this, 'match_search_to_title' ], 10, 2 );
 
-        $wp_query = new \WP_Query(
-            [
-                'post_type'              => Layout::POST_TYPE,
-                'post_status'            => $query->statuses(),
-                's'                      => $query->search(),
-                'posts_per_page'         => $query->per_page(),
-                'paged'                  => $query->page(),
-                'orderby'                => 'date ID',
-                'order'                  => 'DESC',
-                'update_post_meta_cache' => true,
-                'update_post_term_cache' => false,
-            ]
-        );
+        $args = [
+            'post_type'              => Layout::POST_TYPE,
+            'post_status'            => $query->statuses(),
+            's'                      => $query->search(),
+            'posts_per_page'         => $query->per_page(),
+            'paged'                  => $query->page(),
+            'orderby'                => $query->orderby() . ' ID',
+            'order'                  => $query->order(),
+            'update_post_meta_cache' => true,
+            'update_post_term_cache' => false,
+        ];
+
+        if ( $query->active_only() ) {
+            // An empty post__in means no filter to WP_Query, so [ 0 ] keeps an empty active set empty.
+            $active_ids       = $this->active_ids();
+            $args['post__in'] = $active_ids === [] ? [ 0 ] : $active_ids;
+        }
+
+        $wp_query = new \WP_Query( $args );
 
         remove_filter( 'posts_search', [ $this, 'match_search_to_title' ], 10 );
 
@@ -508,6 +517,51 @@ class LayoutRepository {
     }
 
     /**
+     * Runs one of BULK_ACTIONS on each id and reports which ran and which were refused.
+     * Unlike archive(), a bulk archive refuses an active layout instead of deactivating it:
+     * a selection must not stop serving a layout the merchant did not pick to deactivate.
+     * A \RuntimeException from a failed WordPress write stops the loop; earlier ids stay changed.
+     *
+     * @param string $action One of BULK_ACTIONS.
+     * @param int[]  $ids    Layout ids.
+     * @return array{done: int[], failed: array<int, array{id: int, message: string}>}
+     * @throws \InvalidArgumentException When $action is unknown.
+     */
+    public function bulk( string $action, array $ids ): array {
+        if ( ! in_array( $action, self::BULK_ACTIONS, true ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Unknown bulk action "%s".', $action ) );
+        }
+
+        $done   = [];
+        $failed = [];
+
+        foreach ( array_unique( array_map( 'intval', $ids ) ) as $id ) {
+            try {
+                if ( ! self::is_layout( $id ) ) {
+                    throw new \InvalidArgumentException( __( 'Layout not found.', 'yaycheckout' ) );
+                }
+
+                if ( 'archive' === $action && $this->is_active( $id ) ) {
+                    throw new \InvalidArgumentException( __( 'Deactivate this layout before archiving it.', 'yaycheckout' ) );
+                }
+
+                $this->{$action}( $id );
+                $done[] = $id;
+            } catch ( \InvalidArgumentException $ex ) {
+                $failed[] = [
+                    'id'      => $id,
+                    'message' => $ex->getMessage(),
+                ];
+            }
+        }
+
+        return [
+            'done'   => $done,
+            'failed' => $failed,
+        ];
+    }
+
+    /**
      * The active ids the current plan allows, oldest first.
      * Accepts a bare int (pre-Pro storage). On Free, keeps only the last id so
      * a site dropping back from Pro stays on the same layout and deactivating
@@ -557,7 +611,14 @@ class LayoutRepository {
     }
 
     private function to_layout( \WP_Post $post, bool $is_active ): Layout {
-        return Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $post->ID ) ), $is_active );
+        $layout = Layout::from_post( $post, $this->hydrate_meta( get_post_meta( $post->ID ) ), $is_active );
+
+        // A draft not updated since insert keeps a zero post_modified_gmt; derive it from the local time, as core's REST API does.
+        if ( '0000-00-00 00:00:00' === $post->post_modified_gmt ) {
+            $layout->updated_at = get_gmt_from_date( $post->post_modified );
+        }
+
+        return $layout;
     }
 
     /**
@@ -566,6 +627,9 @@ class LayoutRepository {
      * @throws \InvalidArgumentException With WordPress's message when the update fails.
      */
     private function update_post( array $fields ): void {
+        // Without edit_date, core re-dates a never-published draft to now, which moves it to the top of the list.
+        $fields['edit_date'] = true;
+
         $result = wp_update_post( wp_slash( $fields ), true );
 
         if ( is_wp_error( $result ) ) {

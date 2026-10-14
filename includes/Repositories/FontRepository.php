@@ -22,10 +22,15 @@ class FontRepository {
 
     /**
      * Whether the theme or the site's global styles already load the font, so the checkout prints no faces of its own.
+     * A LayoutDesign::FONT_STACKS font always is, since the shopper's device has it: nothing installs or loads it.
      *
      * @param string $slug A LayoutDesign::FONT_FAMILIES key other than ''.
      */
     public function is_provided_by_site( string $slug ): bool {
+        if ( isset( LayoutDesign::FONT_STACKS[ $slug ] ) ) {
+            return true;
+        }
+
         $name     = strtolower( LayoutDesign::FONT_FAMILIES[ $slug ] );
         $families = wp_get_global_settings( [ 'typography', 'fontFamilies' ] );
 

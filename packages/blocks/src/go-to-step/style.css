@@ -1,14 +1,11 @@
 /*
  * Block-level, so a constrained layout's auto margins align it with the content.
  * The look sits on the wrapper, where the block's colour, typography and spacing settings land, and the button inherits it.
- * Matches .yaycheckout-return-to-cart's link look (return-to-cart/style.css); change them together.
+ * No font of its own: the surrounding text's, until the block's typography settings change it.
  */
 .yaycheckout-go-to-step {
 	margin-block: 16px 0;
 	color: var(--yaycheckout-primary-color, #3858e9);
-	font-size: 16px;
-	font-weight: 600;
-	line-height: 1.2;
 }
 
 .yaycheckout-go-to-step__button {

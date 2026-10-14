@@ -1,25 +1,36 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Helpers\JsonElementHelper;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Live values: cart totals, cart counts and shopper fields that a merchant drops into Paragraph and
- * Heading text in the layout editor (packages/blocks/src/live-value/). Each is a span holding its key
- * and fallback; its text is only the editor's label.
+ * Live values: cart totals, cart counts and shopper fields that a merchant drops into the text of the
+ * blocks in BLOCKS in the layout editor (packages/blocks/src/live-value/). Each is a span holding its key,
+ * fallback, prefix and suffix; its text is only the editor's label.
  *
- * On a taken-over checkout, fill() swaps each span's text for its value, or its fallback while the value
- * is empty. The cart's values reach view.js as a JSON element in the footer, which update_order_review
- * swaps as a fragment; view.js reads field values from the form as the shopper types.
+ * On a taken-over checkout, fill() swaps each span's text for its value between its prefix and suffix, or
+ * for its fallback alone while the value is empty. The cart's values reach view.js as a JSON element in
+ * the footer, which update_order_review swaps as a fragment; view.js reads field values from the form as the shopper types.
  */
 class LiveValues {
 
     use SingletonTrait;
 
     /** Mirrored by LIVE_VALUE_BLOCKS in packages/blocks/src/live-value/constants.ts: the blocks whose text can hold live values. */
-    public const BLOCKS = [ 'core/paragraph', 'core/heading' ];
+    public const BLOCKS = [
+        'core/paragraph',
+        'core/heading',
+        'yaycheckout/step',
+        'yaycheckout/create-account',
+        'yaycheckout/different-address',
+        'yaycheckout/place-order',
+    ];
+
+    /** Blocks that print another block's text, so its live values: Steps Progress shows the step titles. */
+    private const DISPLAY_BLOCKS = [ 'yaycheckout/steps-progress' ];
 
     /** Mirrored by LIVE_VALUE_CLASS in packages/blocks/src/live-value/constants.ts. */
     public const CLASS_NAME = 'yaycheckout-live-value';
@@ -29,6 +40,12 @@ class LiveValues {
 
     /** Mirrored by FALLBACK_ATTR in packages/blocks/src/live-value/constants.ts. */
     public const FALLBACK_ATTR = 'data-fallback';
+
+    /** Mirrored by PREFIX_ATTR in packages/blocks/src/live-value/constants.ts. */
+    public const PREFIX_ATTR = 'data-prefix';
+
+    /** Mirrored by SUFFIX_ATTR in packages/blocks/src/live-value/constants.ts. */
+    public const SUFFIX_ATTR = 'data-suffix';
 
     /** Mirrored by FIELD_PREFIX in packages/blocks/src/live-value/constants.ts: a key naming a layout field rather than a cart value. */
     public const FIELD_PREFIX = 'field:';
@@ -58,7 +75,7 @@ class LiveValues {
     private $cart = null;
 
     protected function __construct() {
-        foreach ( self::BLOCKS as $name ) {
+        foreach ( array_merge( self::BLOCKS, self::DISPLAY_BLOCKS ) as $name ) {
             add_filter( 'render_block_' . $name, [ $this, 'fill' ], 10, 2 );
         }
 
@@ -75,7 +92,7 @@ class LiveValues {
      */
     public static function cart_values(): array {
         return [
-            'cart_total'          => __( 'Order total', 'yaycheckout' ),
+            'cart_total'          => __( 'Order summary total', 'yaycheckout' ),
             'cart_subtotal'       => __( 'Subtotal', 'yaycheckout' ),
             'cart_shipping_total' => __( 'Shipping', 'yaycheckout' ),
             'cart_discount_total' => __( 'Discount', 'yaycheckout' ),
@@ -87,7 +104,7 @@ class LiveValues {
 
     /**
      * Each cart value for the current cart, as text: money as the cart shows it (with tax when WooCommerce
-     * shows prices with tax, so it matches the Totals block), counts as numbers. Empty at 0. [] without a cart.
+     * shows prices with tax, so it matches the Order Summary Total block), counts as numbers. Empty at 0. [] without a cart.
      *
      * @return array<string, array{text: string, empty: bool}>
      */
@@ -97,16 +114,6 @@ class LiveValues {
         }
 
         $cart = WC()->cart;
-        $tax  = $cart->display_prices_including_tax();
-
-        // The keys cart_values() names; one missing here prints only its fallback.
-        $money = [
-            'cart_total'          => (float) $cart->get_total( 'edit' ),
-            'cart_subtotal'       => (float) $cart->get_subtotal() + ( $tax ? (float) $cart->get_subtotal_tax() : 0.0 ),
-            'cart_shipping_total' => (float) $cart->get_shipping_total() + ( $tax ? (float) $cart->get_shipping_tax() : 0.0 ),
-            'cart_discount_total' => (float) $cart->get_discount_total() + ( $tax ? (float) $cart->get_discount_tax() : 0.0 ),
-            'cart_tax_total'      => (float) $cart->get_total_tax(),
-        ];
 
         $counts = [
             'cart_item_count' => (int) $cart->get_cart_contents_count(),
@@ -115,7 +122,7 @@ class LiveValues {
 
         $values = [];
 
-        foreach ( $money as $key => $amount ) {
+        foreach ( self::money() as $key => $amount ) {
             $values[ $key ] = [
                 // wc_price()'s markup and entities removed: the value is plain text, escaped where it prints.
                 'text'  => html_entity_decode( wp_strip_all_tags( wc_price( $amount ) ), ENT_QUOTES, 'UTF-8' ),
@@ -134,18 +141,50 @@ class LiveValues {
     }
 
     /**
-     * Fills each live value span in a Paragraph or Heading on a taken-over checkout. Anywhere else, and in a
-     * block without one, the HTML comes back untouched.
+     * The cart's money amounts as the cart displays them (with tax when WooCommerce shows prices with tax);
+     * also read by BlockVisibility. [] without a cart.
+     *
+     * @return array<string, float>
+     */
+    public static function money(): array {
+        if ( ! function_exists( 'WC' ) || ! WC()->cart instanceof \WC_Cart ) {
+            return [];
+        }
+
+        $cart = WC()->cart;
+        $tax  = $cart->display_prices_including_tax();
+
+        // The keys cart_values() names; one missing here prints only its fallback.
+        return [
+            'cart_total'          => (float) $cart->get_total( 'edit' ),
+            'cart_subtotal'       => (float) $cart->get_subtotal() + ( $tax ? (float) $cart->get_subtotal_tax() : 0.0 ),
+            'cart_shipping_total' => (float) $cart->get_shipping_total() + ( $tax ? (float) $cart->get_shipping_tax() : 0.0 ),
+            'cart_discount_total' => (float) $cart->get_discount_total() + ( $tax ? (float) $cart->get_discount_tax() : 0.0 ),
+            'cart_tax_total'      => (float) $cart->get_total_tax(),
+        ];
+    }
+
+    /**
+     * Fills each live value span in an allow-listed block on a taken-over checkout. Anywhere else, and in a
+     * block without one, the HTML comes back untouched. A Step's HTML holds its inner blocks, filled already;
+     * filling a span again prints the same text.
      *
      * @param string $block_content Rendered block.
      * @param array  $block         Parsed block.
      */
     public function fill( $block_content, $block ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- render_block_{$name} passes it.
-        $block_content = (string) $block_content;
-        $page          = CheckoutPage::get_instance();
+        return $this->fill_html( (string) $block_content );
+    }
 
-        if ( false === strpos( $block_content, self::CLASS_NAME ) || ! $page->takes_over() ) {
-            return $block_content;
+    /**
+     * Fills each live value span in $html on a taken-over checkout; anywhere else the HTML comes back
+     * untouched. Place Order's render.php calls it on its label, so value and data-value hold the values.
+     */
+    public function fill_html( string $html ): string {
+        $page = CheckoutPage::get_instance();
+
+        if ( false === strpos( $html, self::CLASS_NAME ) || ! $page->takes_over() ) {
+            return $html;
         }
 
         $markup = $page->layout()->content;
@@ -154,10 +193,10 @@ class LiveValues {
             function ( array $found ) use ( $markup ): string {
                 return $this->fill_span( $found[0], $found[1], $found[2], $markup );
             },
-            $block_content
+            $html
         );
 
-        return is_string( $filled ) ? $filled : $block_content;
+        return is_string( $filled ) ? $filled : $html;
     }
 
     /** Prints the cart's values for view.js, once a span was filled. */
@@ -180,16 +219,15 @@ class LiveValues {
         return $fragments;
     }
 
-    /** The cart's values as a JSON element; `<` and `&` are escaped, so no value can close it. */
+    /** The cart's values as a JSON element. */
     public static function values_element(): string {
-        return '<script type="application/json" id="' . esc_attr( self::VALUES_ID ) . '">'
-            . wp_json_encode( (object) self::values(), JSON_HEX_TAG | JSON_HEX_AMP )
-            . '</script>';
+        return JsonElementHelper::html( self::VALUES_ID, (object) self::values() );
     }
 
     /**
-     * One span with its text set: the value, or the fallback while the value is empty and the fallback isn't
-     * ''. A key the layout can't show, or a span holding tags, prints its fallback: never its label.
+     * One span with its text set: the value between the prefix and suffix, or the fallback alone while the
+     * value is empty. A key the layout can't show, or a span holding tags, counts as empty: it never prints
+     * its label.
      */
     private function fill_span( string $span, string $opening, string $inner, string $markup ): string {
         $tags = new \WP_HTML_Tag_Processor( $opening );
@@ -202,6 +240,8 @@ class LiveValues {
         $key      = $tags->get_attribute( self::KEY_ATTR );
         $fallback = $tags->get_attribute( self::FALLBACK_ATTR );
         $fallback = is_string( $fallback ) ? $fallback : '';
+        $prefix   = $tags->get_attribute( self::PREFIX_ATTR );
+        $suffix   = $tags->get_attribute( self::SUFFIX_ATTR );
         $value    = $this->resolve( is_string( $key ) ? $key : '', $markup );
 
         $unfillable = ! $value['known'] || false !== strpos( $inner, '<' );
@@ -212,7 +252,10 @@ class LiveValues {
             $tags->remove_attribute( self::KEY_ATTR );
         }
 
-        $text = $unfillable || ( $value['empty'] && '' !== $fallback ) ? $fallback : $value['text'];
+        // As show() in view.ts.
+        $text = $unfillable || $value['empty']
+            ? $fallback
+            : ( is_string( $prefix ) ? $prefix : '' ) . $value['text'] . ( is_string( $suffix ) ? $suffix : '' );
 
         if ( $value['empty'] || ! $value['known'] ) {
             $tags->add_class( self::EMPTY_CLASS );

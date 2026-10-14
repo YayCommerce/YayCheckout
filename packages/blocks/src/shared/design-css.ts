@@ -19,6 +19,8 @@ export type DesignFonts = {
 	fontFamilies: Record< string, string >;
 	/** The slugs whose fallback is a serif stack. */
 	serifFonts: string[];
+	/** The slugs the device already has => the stack they print, with no fallback added. */
+	fontStacks: Record< string, string >;
 };
 
 /** Mirrors DesignStyles::PAGE_PROPERTIES in PHP, in its order. */
@@ -38,12 +40,19 @@ export function isGradient( fill: unknown ): boolean {
 	return 'string' === typeof fill && ( fill.includes( '-gradient(' ) || fill.startsWith( 'var(--wp--preset--gradient--' ) );
 }
 
-/** Mirrors DesignStyles::INPUT_HEIGHTS in PHP. */
-const INPUT_HEIGHTS: Record< string, number > = { small: 32, medium: 40, large: 48 };
+/** Mirrors DesignStyles::DEFAULT_BASE_SIZE in PHP: the page's font size in px while typography.base_size is empty. */
+export const DEFAULT_BASE_SIZE = 13;
 
-/** Mirrors DesignStyles::vars() in PHP: custom property values by name, for the tokens that aren't empty. */
-function vars( tokens: DesignTokens, { fontFamilies, serifFonts }: DesignFonts ): [ string, string ][] {
-	const { colours, typography, inputs } = tokens;
+/** Mirrors DesignStyles::INPUT_SIZES in PHP: the height, then the height with floating labels. */
+const INPUT_SIZES: Record< string, [ string, string ] > = {
+	small: [ '2.5em', '3em' ],
+	medium: [ '2.75em', '3.25em' ],
+	large: [ '3em', '3.5em' ],
+};
+
+/** Mirrors DesignStyles::vars() in PHP: custom property values by name, for the tokens that aren't empty, and always the font size. */
+function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: DesignFonts ): [ string, string ][] {
+	const { colours, typography, inputs, checkboxes } = tokens;
 	const background = String( colours.background ?? '' );
 	const pairs: [ string, string ][] = [
 		[ 'color-primary', String( colours.primary ?? '' ) ],
@@ -51,19 +60,20 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts }: DesignFonts )
 		[ isGradient( background ) ? 'background-gradient' : 'color-background', background ],
 		[ 'color-border', String( colours.border ?? '' ) ],
 	];
-	const out = pairs.filter( ( [ , value ] ) => '' !== value );
+	const notEmpty = ( [ , value ]: [ string, string ] ) => '' !== value;
+	const out = pairs.filter( notEmpty );
 
 	const font = String( typography.font_family ?? '' );
 
 	// PHP never sees a slug outside the list: LayoutDesign::from_meta() empties it.
-	if ( '' !== font && fontFamilies[ font ] ) {
+	if ( fontStacks[ font ] ) {
+		out.push( [ 'font-family', fontStacks[ font ] ] );
+	} else if ( '' !== font && fontFamilies[ font ] ) {
 		const fallback = serifFonts.includes( font ) ? SERIF_FONT_FALLBACK : FONT_FALLBACK;
 		out.push( [ 'font-family', `"${ fontFamilies[ font ] }", ${ fallback }` ] );
 	}
 
-	if ( null !== typography.base_size ) {
-		out.push( [ 'font-size-base', `${ typography.base_size }px` ] );
-	}
+	out.push( [ 'font-size-base', `${ typography.base_size ?? DEFAULT_BASE_SIZE }px` ] );
 
 	const isUnderline = 'underline' === inputs.style;
 
@@ -73,15 +83,53 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts }: DesignFonts )
 		out.push( [ 'input-radius', `${ inputs.radius }px` ] );
 	}
 
+	// The box is the chosen height: no vertical padding for the text to push past it.
 	if ( '' !== inputs.size ) {
-		out.push( [ 'input-height', `${ INPUT_HEIGHTS[ String( inputs.size ) ] }px` ] );
+		const [ height, floatingHeight ] = INPUT_SIZES[ String( inputs.size ) ];
+		out.push( [ 'input-height', height ], [ 'input-floating-height', floatingHeight ], [ 'input-padding-block', '0' ] );
 	}
+
+	const inputBackground = String( inputs.background ?? '' );
 
 	if ( '' !== inputs.style ) {
 		out.push(
 			[ 'input-border-width', isUnderline ? '0 0 1px' : '1px' ],
-			[ 'input-padding-inline', isUnderline ? '0' : '12px' ]
+			// An underline input with a background is a filled box, so its text keeps the side padding.
+			[ 'input-padding-inline', isUnderline && '' === inputBackground ? '0' : '12px' ]
 		);
+	}
+
+	const inputColours: [ string, string ][] = [
+		[ 'input-background', inputBackground ],
+		[ 'input-color', String( inputs.text ?? '' ) ],
+		[ 'input-border-color', String( inputs.border ?? '' ) ],
+		[ 'input-focus-color', String( inputs.focus ?? '' ) ],
+	];
+
+	out.push( ...inputColours.filter( notEmpty ) );
+
+	// Border only drops the flush ring, so focus just recolours the border.
+	if ( 'border' === inputs.focus_style ) {
+		out.push( [ 'input-focus-ring-width', '0' ] );
+	}
+
+	// A radius of 0 is a square box, not an empty token.
+	if ( null !== checkboxes.size ) {
+		out.push( [ 'checkbox-size', `${ checkboxes.size }px` ] );
+	}
+
+	if ( null !== checkboxes.radius ) {
+		out.push( [ 'checkbox-radius', `${ checkboxes.radius }px` ] );
+	}
+
+	if ( null !== checkboxes.border_width ) {
+		out.push( [ 'checkbox-border-width', `${ checkboxes.border_width }px` ] );
+	}
+
+	const checked = String( checkboxes.checked ?? '' );
+
+	if ( '' !== checked ) {
+		out.push( [ 'checkbox-checked-color', checked ] );
 	}
 
 	return out;

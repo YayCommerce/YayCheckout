@@ -1,6 +1,9 @@
 import { api } from '@/lib/api/api';
 import {
   Layout,
+  LayoutBulkAction,
+  layoutBulkResponseWireSchema,
+  LayoutBulkResult,
   layoutCountsResponseSchema,
   LayoutListResponse,
   layoutListResponseWireSchema,
@@ -26,6 +29,7 @@ function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
     size: wire.size,
     publishedAt: wire.published_at,
     scheduledAt: wire.scheduled_at,
+    updatedAt: wire.updated_at,
     rules: wire.rules,
   };
 }
@@ -45,6 +49,11 @@ export type LayoutListParams = {
   status?: LayoutStatus[];
   search?: string;
   page?: number;
+  /** Only layouts in the active set. */
+  active?: boolean;
+  /** 'date' is creation time, the server's default; 'modified' is last updated. */
+  orderBy?: 'date' | 'modified';
+  order?: 'asc' | 'desc';
 };
 
 export async function getLayouts(params: LayoutListParams = {}): Promise<LayoutListResponse> {
@@ -52,6 +61,9 @@ export async function getLayouts(params: LayoutListParams = {}): Promise<LayoutL
   if (params.status?.length) searchParams.status = params.status.join(',');
   if (params.search) searchParams.search = params.search;
   if (params.page != null) searchParams.page = String(params.page);
+  if (params.active) searchParams.active = '1';
+  if (params.orderBy) searchParams.orderby = params.orderBy;
+  if (params.order) searchParams.order = params.order;
 
   const wire = layoutListResponseWireSchema.parse(
     await api.get('layouts', Object.keys(searchParams).length ? { searchParams } : undefined).json(),
@@ -115,8 +127,19 @@ export async function deleteLayout(id: number): Promise<void> {
   await api.delete(`layouts/${id}`);
 }
 
+/** Runs one action on each id; a refused id is reported in `failed`, not thrown. */
+export async function bulkLayouts({
+  action,
+  ids,
+}: {
+  action: LayoutBulkAction;
+  ids: number[];
+}): Promise<LayoutBulkResult> {
+  return layoutBulkResponseWireSchema.parse(await api.post('layouts/bulk', { json: { action, ids } }).json());
+}
+
 export type CreateLayoutDraftPayload =
-  { name: string; source: 'blank' } | { name: string; source: 'library'; templateSlug: string };
+  { name: string; source: 'default' } | { name: string; source: 'library'; templateSlug: string };
 
 export async function createLayoutDraft(payload: CreateLayoutDraftPayload): Promise<Layout> {
   const json =

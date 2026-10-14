@@ -8,7 +8,6 @@ use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
-use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -47,7 +46,7 @@ class LayoutRestController extends BaseRestController {
                             'type'              => 'string',
                             'sanitize_callback' => 'sanitize_key',
                             'validate_callback' => static function ( $value ) {
-                                return in_array( $value, [ 'blank', 'library' ], true );
+                                return in_array( $value, [ 'default', 'library' ], true );
                             },
                         ],
                         'template_slug' => [
@@ -81,20 +80,27 @@ class LayoutRestController extends BaseRestController {
 
         register_rest_route(
             self::REST_NAMESPACE,
-            '/layouts/templates',
+            '/layouts/bulk',
             [
                 [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_templates' ], $request ),
+                    'methods'             => \WP_REST_Server::CREATABLE,
+                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'bulk_layouts' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => [
-                        'plan' => [
-                            'required'          => false,
-                            'type'              => 'string',
-                            'sanitize_callback' => 'sanitize_key',
-                            'validate_callback' => static function ( $value ) {
-                                return in_array( $value, [ 'free', 'pro' ], true );
-                            },
+                        'action' => [
+                            'required' => true,
+                            'type'     => 'string',
+                            'enum'     => LayoutRepository::BULK_ACTIONS,
+                        ],
+                        'ids'    => [
+                            'required' => true,
+                            'type'     => 'array',
+                            'items'    => [
+                                'type'    => 'integer',
+                                'minimum' => 1,
+                            ],
+                            'minItems' => 1,
+                            'maxItems' => 100,
                         ],
                     ],
                 ],
@@ -241,7 +247,9 @@ class LayoutRestController extends BaseRestController {
         try {
             $query = LayoutQuery::of_statuses( (array) $request->get_param( 'status' ) )
                 ->with_search( (string) $request->get_param( 'search' ) )
-                ->with_pagination( (int) $request->get_param( 'page' ) );
+                ->with_pagination( (int) $request->get_param( 'page' ) )
+                ->with_active_only( (bool) $request->get_param( 'active' ) )
+                ->with_order( (string) $request->get_param( 'orderby' ), (string) $request->get_param( 'order' ) );
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
@@ -277,19 +285,9 @@ class LayoutRestController extends BaseRestController {
         return $layout->to_array();
     }
 
-    /** The "From library" template catalogue for the New layout modal. `plan` lets the SPA preview its build-time edition; omitted, the real plan decides. */
-    public function get_templates( \WP_REST_Request $request ) {
-        $plan_param = $request->get_param( 'plan' );
-        $is_pro     = $plan_param ? ( 'pro' === $plan_param ) : Plan::is_pro();
-
-        return [
-            'templates' => LayoutTemplateCatalogue::templates( $is_pro ),
-        ];
-    }
-
     /**
      * Creates a layout draft from the New layout modal. Titles may repeat, as Pages do.
-     * 'blank' builds from the default template, 'library' from the picked one, once it is available on this plan.
+     * 'default' builds from the default template, 'library' from the picked one, once it is available on this plan.
      *
      * @return array|\WP_Error
      */
@@ -346,6 +344,18 @@ class LayoutRestController extends BaseRestController {
      */
     public function restore_layout( \WP_REST_Request $request ) {
         return $this->change_layout( $request, fn( int $id ) => $this->layouts->restore( $id ) );
+    }
+
+    /**
+     * Runs one action on the layouts the list selected. Answers 200 with the ids that ran and
+     * those refused, with why: a refusal of one layout doesn't stop the rest. bulk() checks
+     * each id is a layout.
+     */
+    public function bulk_layouts( \WP_REST_Request $request ): array {
+        return $this->layouts->bulk(
+            (string) $request->get_param( 'action' ),
+            array_map( 'intval', (array) $request->get_param( 'ids' ) )
+        );
     }
 
     /**
@@ -461,7 +471,7 @@ class LayoutRestController extends BaseRestController {
      */
     private function list_args(): array {
         return [
-            'status' => [
+            'status'  => [
                 'default'           => LayoutStatus::listed(),
                 'validate_callback' => static function ( $value ) {
                     return is_string( $value ) || is_array( $value );
@@ -474,13 +484,13 @@ class LayoutRestController extends BaseRestController {
                     return array_values( array_filter( array_map( 'sanitize_key', (array) $value ) ) );
                 },
             ],
-            'search' => [
+            'search'  => [
                 'required'          => false,
                 'type'              => 'string',
                 'default'           => '',
                 'sanitize_callback' => 'sanitize_text_field',
             ],
-            'page'   => [
+            'page'    => [
                 'required'          => false,
                 'type'              => 'integer',
                 'default'           => 1,
@@ -488,6 +498,23 @@ class LayoutRestController extends BaseRestController {
                 'validate_callback' => static function ( $value ) {
                     return is_numeric( $value ) && (int) $value >= 1;
                 },
+            ],
+            'active'  => [
+                'required' => false,
+                'type'     => 'boolean',
+                'default'  => false,
+            ],
+            'orderby' => [
+                'required' => false,
+                'type'     => 'string',
+                'enum'     => [ 'date', 'modified' ],
+                'default'  => 'date',
+            ],
+            'order'   => [
+                'required' => false,
+                'type'     => 'string',
+                'enum'     => [ 'asc', 'desc' ],
+                'default'  => 'desc',
             ],
         ];
     }

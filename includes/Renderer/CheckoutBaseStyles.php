@@ -8,7 +8,7 @@ use YayCheckout\Repositories\SettingsRepository;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Loads assets/css/checkout-base.css, the layout's font faces and, after them, the layout's design tokens. The storefront
+ * Loads assets/css/design-presets.css, assets/css/checkout-base.css, the layout's font faces and, after them, the layout's design tokens. The storefront
  * checkout (CheckoutPage) and the layout editor canvas (LayoutEditorCanvas) both call it,
  * so a layout looks the same in both.
  */
@@ -19,7 +19,8 @@ class CheckoutBaseStyles {
      * @param LayoutDesign $design          The rendered layout's design.
      */
     public function enqueue( bool $with_custom_css, LayoutDesign $design ): void {
-        wp_enqueue_style( ScriptName::STYLE_CHECKOUT_BASE, YAYCHECKOUT_PLUGIN_URL . 'assets/css/checkout-base.css', [], YAYCHECKOUT_VERSION );
+        wp_register_style( ScriptName::STYLE_DESIGN_PRESETS, YAYCHECKOUT_PLUGIN_URL . 'assets/css/design-presets.css', [], YAYCHECKOUT_VERSION );
+        wp_enqueue_style( ScriptName::STYLE_CHECKOUT_BASE, YAYCHECKOUT_PLUGIN_URL . 'assets/css/checkout-base.css', [ ScriptName::STYLE_DESIGN_PRESETS ], YAYCHECKOUT_VERSION );
 
         // Its own style, which the layout editor rewrites when the merchant picks another font. WordPress prints none when it is empty.
         wp_register_style( ScriptName::STYLE_CHECKOUT_FONTS, false, [], YAYCHECKOUT_VERSION );

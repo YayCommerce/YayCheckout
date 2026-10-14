@@ -1,14 +1,12 @@
-import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { Notice, PanelBody, SelectControl } from '@wordpress/components';
+import { InspectorControls, PanelColorSettings, RichText, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
+import { Notice, PanelBody, SelectControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { createInterpolateElement, type ReactNode } from '@wordpress/element';
-import { decodeEntities } from '@wordpress/html-entities';
 import { __, sprintf } from '@wordpress/i18n';
+import { firstStepsBlock } from '../shared/layout-steps';
+import { plainText } from '../shared/plain-text';
 import { stepTitle } from '../shared/step-title';
-import stepsMeta from '../steps/block.json';
 import './editor.css';
-
-const STEPS = stepsMeta.name;
 
 type Variant = 'circles' | 'dots' | 'segments' | 'bar' | 'text';
 
@@ -17,6 +15,19 @@ const hasSummary = ( variant: Variant ) => variant === 'bar' || variant === 'tex
 
 interface Attributes {
 	variant: Variant;
+	showCount: boolean;
+	fillColor: string;
+	trackColor: string;
+	upcomingTextColor: string;
+}
+
+/** Mirrors CheckoutStepsProgress::color_style(): each colour set becomes the variable style.css reads. */
+function progressStyle( { fillColor, trackColor, upcomingTextColor }: Attributes ) {
+	return {
+		...( fillColor ? { '--yaycheckout-steps-progress-fill': fillColor } : {} ),
+		...( trackColor ? { '--yaycheckout-steps-progress-track': trackColor } : {} ),
+		...( upcomingTextColor ? { '--yaycheckout-steps-progress-upcoming-text': upcomingTextColor } : {} ),
+	};
 }
 
 interface EditProps {
@@ -35,7 +46,12 @@ function ProgressItem( { title, position }: { title: string; position: number } 
 			aria-current={ state === 'current' ? 'step' : undefined }
 		>
 			<span className="yaycheckout-steps-progress__marker">{ position }</span>
-			<span className="yaycheckout-steps-progress__title">{ stepTitle( decodeEntities( title ) ) }</span>
+			{ /* The step's rich title, as CheckoutStepsProgress::step_title_html() prints it; "Step" while it holds no text. */ }
+			<RichText.Content
+				tagName="span"
+				className="yaycheckout-steps-progress__title"
+				value={ plainText( title ) !== '' ? title : stepTitle( '' ) }
+			/>
 		</li>
 	);
 }
@@ -54,7 +70,7 @@ function StepProgressItem( { stepId, position }: { stepId: string; position: num
 }
 
 // Mirrors CheckoutStepsProgress::summary(), with step 1 open.
-function Summary( { total, withTrack }: { total: number; withTrack: boolean } ) {
+function Summary( { total, withTrack, withCount }: { total: number; withTrack: boolean; withCount: boolean } ) {
 	return (
 		<div className="yaycheckout-steps-progress__summary">
 			{ withTrack && (
@@ -62,22 +78,27 @@ function Summary( { total, withTrack }: { total: number; withTrack: boolean } ) 
 					<span className="yaycheckout-steps-progress__fill" style={ { width: `${ ( 1 / Math.max( total, 1 ) ) * 100 }%` } } />
 				</div>
 			) }
-			<p className="yaycheckout-steps-progress__count">
-				{ createInterpolateElement(
-					/* translators: 1: number of the open step, 2: number of steps. */
-					sprintf( __( 'Step %1$s of %2$s', 'yaycheckout' ), '<current />', String( total ) ),
-					{ current: <span className="yaycheckout-steps-progress__current">1</span> }
-				) }
-			</p>
+			{ withCount && (
+				<p className="yaycheckout-steps-progress__count">
+					{ createInterpolateElement(
+						/* translators: 1: number of the open step, 2: number of steps. */
+						sprintf( __( 'Step %1$s of %2$s', 'yaycheckout' ), '<current />', String( total ) ),
+						{ current: <span className="yaycheckout-steps-progress__current">1</span> }
+					) }
+				</p>
+			) }
 		</div>
 	);
 }
 
-function ProgressBody( { variant, total, children }: { variant: Variant; total: number; children: ReactNode } ) {
+function ProgressBody( { attributes, total, children }: { attributes: Attributes; total: number; children: ReactNode } ) {
+	const { variant } = attributes;
+
 	return (
 		<>
 			{ hasSummary( variant ) && (
-				<Summary total={ total } withTrack={ variant === 'bar' } />
+				// Mirrors CheckoutStepsProgress::markup(): only the bar can leave the count out.
+				<Summary total={ total } withTrack={ variant === 'bar' } withCount={ variant !== 'bar' || attributes.showCount !== false } />
 			) }
 			<ol className="yaycheckout-steps-progress__list">{ children }</ol>
 		</>
@@ -89,12 +110,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	// The store's own order array, so typing elsewhere doesn't re-render this block.
 	const stepIds: string[] | null = useSelect(
 		( select ) => {
-			const { getBlockOrder, getBlocksByName } = select( blockEditorStore );
+			const stepsId = firstStepsBlock( select );
 
-			// Mirrors CheckoutStepsProgress::titles_in(): the layout's first Steps block, in document order.
-			const stepsId = ( getBlocksByName( STEPS ) as string[] )[ 0 ];
-
-			return stepsId ? getBlockOrder( stepsId ) : null;
+			return stepsId ? select( blockEditorStore ).getBlockOrder( stepsId ) : null;
 		},
 		[]
 	);
@@ -105,6 +123,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	);
 	const blockProps = useBlockProps( {
 		className: `yaycheckout-steps-progress is-variant-${ attributes.variant }`,
+		style: progressStyle( attributes ),
 	} );
 
 	if ( isPreview && stepIds === null ) {
@@ -116,7 +135,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 
 		return (
 			<div { ...blockProps }>
-				<ProgressBody variant={ attributes.variant } total={ titles.length }>
+				<ProgressBody attributes={ attributes } total={ titles.length }>
 					{ titles.map( ( title, index ) => (
 						<ProgressItem key={ title } title={ title } position={ index + 1 } />
 					) ) }
@@ -139,7 +158,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Steps Progress', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<SelectControl
 						label={ __( 'Style', 'yaycheckout' ) }
 						value={ attributes.variant }
@@ -152,10 +171,45 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						] }
 						onChange={ ( value: string ) => setAttributes( { variant: value as Variant } ) }
 					/>
+					{ attributes.variant === 'bar' && (
+						<ToggleControl
+							label={ __( 'Show step count', 'yaycheckout' ) }
+							help={ __( 'Turn off to show the bar alone. A Text only Steps Progress can show the count elsewhere.', 'yaycheckout' ) }
+							checked={ attributes.showCount !== false }
+							onChange={ ( showCount: boolean ) => setAttributes( { showCount } ) }
+							__nextHasNoMarginBottom
+						/>
+					) }
 				</PanelBody>
 			</InspectorControls>
+			<InspectorControls group="styles">
+				<PanelColorSettings
+					title={ __( 'Progress colors', 'yaycheckout' ) }
+					initialOpen={ false }
+					colorSettings={ [
+						{
+							label: __( 'Fill', 'yaycheckout' ),
+							value: attributes.fillColor,
+							onChange: ( value?: string ) => setAttributes( { fillColor: value ?? '' } ),
+							clearable: true,
+						},
+						{
+							label: __( 'Track', 'yaycheckout' ),
+							value: attributes.trackColor,
+							onChange: ( value?: string ) => setAttributes( { trackColor: value ?? '' } ),
+							clearable: true,
+						},
+						{
+							label: __( 'Upcoming text', 'yaycheckout' ),
+							value: attributes.upcomingTextColor,
+							onChange: ( value?: string ) => setAttributes( { upcomingTextColor: value ?? '' } ),
+							clearable: true,
+						},
+					] }
+				/>
+			</InspectorControls>
 			<div { ...blockProps }>
-				<ProgressBody variant={ attributes.variant } total={ stepIds.length }>
+				<ProgressBody attributes={ attributes } total={ stepIds.length }>
 					{ stepIds.map( ( stepId, index ) => (
 						<StepProgressItem key={ stepId } stepId={ stepId } position={ index + 1 } />
 					) ) }

@@ -18,11 +18,6 @@
 	cursor: pointer;
 }
 
-.yaycheckout-order-summary__header-button:focus-visible {
-	outline: 2px solid currentColor;
-	outline-offset: 2px;
-}
-
 .is-collapsible .yaycheckout-order-summary-header :is(a, button:not(.yaycheckout-order-summary__header-button), input, select, textarea, label, [role="button"], [tabindex]) {
 	position: relative;
 	z-index: 1;
@@ -39,4 +34,41 @@
 
 [aria-expanded="true"] > .yaycheckout-order-summary-toggle__chevron {
 	transform: rotate(180deg);
+}
+
+/*
+ * Classic themes (Storefront) float WooCommerce's order review into a right-hand column of
+ * their own; the layout places it. No block setting can undo a theme's float. Their margins are 0 too,
+ * since Order Summary's Block spacing places them and themes style them by id.
+ */
+.yaycheckout-checkout #order_review_heading,
+.yaycheckout-checkout #order_review {
+	float: none;
+	width: auto;
+	margin-block: 0;
+}
+
+/*
+ * The Order Summary Breakdown and Order Summary Total tables share one amount column, end-aligned at a fixed width, so the order
+ * total lines up under the rows above it. Here because Order Summary is the ancestor of both.
+ */
+.yaycheckout-order-summary table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total) {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+}
+
+.yaycheckout-order-summary table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total) :is(th, td) {
+	padding: 6px 0;
+	border: 0;
+	vertical-align: top;
+}
+
+.yaycheckout-order-summary table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total) :is(th, td):first-child {
+	text-align: start;
+}
+
+.yaycheckout-order-summary table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total) :is(th, td):last-child {
+	width: 40%;
+	text-align: end;
 }

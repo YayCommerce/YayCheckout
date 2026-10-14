@@ -34,6 +34,8 @@ const layoutSummaryWireFields = {
   published_at: z.string().nullable(),
   /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduled_at: z.string().nullable(),
+  /** ISO 8601 UTC; null only when WordPress holds no modified date. */
+  updated_at: z.string().nullable(),
   /** [] when the layout has none. */
   rules: rulesWireSchema,
 };
@@ -73,6 +75,20 @@ export const layoutCountsResponseSchema = z
   })
   .strict();
 
+/** Owner: LayoutRepository::BULK_ACTIONS. */
+export const LAYOUT_BULK_ACTIONS = ['deactivate', 'archive', 'restore', 'delete'] as const;
+export type LayoutBulkAction = (typeof LAYOUT_BULK_ACTIONS)[number];
+
+/** POST /layouts/bulk: the ids that ran, and the ids refused with why. */
+export const layoutBulkResponseWireSchema = z
+  .object({
+    done: z.array(z.number()),
+    failed: z.array(z.object({ id: z.number(), message: z.string() }).strict()),
+  })
+  .strict();
+
+export type LayoutBulkResult = z.infer<typeof layoutBulkResponseWireSchema>;
+
 /** POST /layouts/{id}/preview-link. */
 export const previewLinkWireSchema = z
   .object({
@@ -101,6 +117,8 @@ export type LayoutSummary = {
   publishedAt: string | null;
   /** ISO 8601 UTC while status is 'future'; null otherwise. */
   scheduledAt: string | null;
+  /** ISO 8601 UTC; null only when WordPress holds no modified date. */
+  updatedAt: string | null;
   /** Groups ORed, conditions ANDed; [] means the layout applies to everyone. */
   rules: LayoutRulesWire;
 };
@@ -129,10 +147,10 @@ export const layoutNameSchema = z.string().trim().min(1, __('Name is required', 
 export const newLayoutFormSchema = z
   .object({
     name: layoutNameSchema,
-    source: z.enum(['blank', 'library']),
+    source: z.enum(['default', 'library']),
     templateSlug: z.string().nullable(),
   })
-  .refine((data) => data.source === 'blank' || !!data.templateSlug, {
+  .refine((data) => data.source === 'default' || !!data.templateSlug, {
     message: __('Pick a template', 'yaycheckout'),
     path: ['templateSlug'],
   });

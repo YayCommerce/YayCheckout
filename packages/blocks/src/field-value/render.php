@@ -3,7 +3,7 @@
  * Prints the values of one or more layout fields as the shopper last saved them, joined by the
  * separator, or the placeholder, muted, while all are empty. view.js keeps it in step with the form
  * as they type. Prints nothing until the block points at a field the served layout holds. Counts as
- * empty for Hide when empty while every field is.
+ * empty for a Visibility "Block is empty" condition while every field is.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; the block is a leaf.
@@ -51,10 +51,23 @@ $yaycheckout_value      = implode( $yaycheckout_separator, array_filter( $yayche
 $yaycheckout_label_text = implode( $yaycheckout_separator, $yaycheckout_labels );
 
 // view.js swaps in the form's live labels where no placeholder was typed, so only a typed one goes in data-placeholder.
-$yaycheckout_placeholder = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'placeholder' );
-$yaycheckout_empty       = '' === $yaycheckout_value;
+// Its formatting goes in a template, which view.js shows again whenever every field empties.
+$yaycheckout_placeholder      = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'placeholder' );
+$yaycheckout_placeholder_html = \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'placeholder' );
+$yaycheckout_empty            = '' === $yaycheckout_value;
+
+if ( ! $yaycheckout_empty ) {
+    $yaycheckout_shown = esc_html( $yaycheckout_value );
+} elseif ( '' !== $yaycheckout_placeholder ) {
+    $yaycheckout_shown = $yaycheckout_placeholder_html;
+} else {
+    $yaycheckout_shown = esc_html( $yaycheckout_label_text );
+}
 
 ?>
-<div <?php echo \YayCheckout\Renderer\HideWhenEmpty::wrapper( [ 'class' => 'yaycheckout-field-value' ], $attributes, $yaycheckout_empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
-    <span class="yaycheckout-field-value__value<?php echo $yaycheckout_empty ? ' is-empty' : ''; ?>" data-field-keys="<?php echo esc_attr( (string) wp_json_encode( $yaycheckout_keys ) ); ?>" data-separator="<?php echo esc_attr( $yaycheckout_separator ); ?>" data-labels="<?php echo esc_attr( (string) wp_json_encode( $yaycheckout_labels ) ); ?>" data-placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>"><?php echo esc_html( $yaycheckout_empty ? ( '' !== $yaycheckout_placeholder ? $yaycheckout_placeholder : $yaycheckout_label_text ) : $yaycheckout_value ); ?></span>
+<div <?php echo \YayCheckout\Renderer\BlockEmptiness::wrapper( [ 'class' => 'yaycheckout-field-value' ], $attributes, $yaycheckout_empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+    <span class="yaycheckout-field-value__value<?php echo $yaycheckout_empty ? ' is-empty' : ''; ?>" data-field-keys="<?php echo esc_attr( (string) wp_json_encode( $yaycheckout_keys ) ); ?>" data-separator="<?php echo esc_attr( $yaycheckout_separator ); ?>" data-labels="<?php echo esc_attr( (string) wp_json_encode( $yaycheckout_labels ) ); ?>" data-placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>"><?php echo $yaycheckout_shown; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above, or filtered by wp_kses in LayoutMarkupReader::rich_text(). ?></span>
+    <?php if ( '' !== $yaycheckout_placeholder ) : ?>
+        <template class="yaycheckout-field-value__placeholder"><?php echo $yaycheckout_placeholder_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered by wp_kses in LayoutMarkupReader::rich_text(). ?></template>
+    <?php endif; ?>
 </div>

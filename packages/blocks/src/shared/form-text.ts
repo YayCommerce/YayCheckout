@@ -59,7 +59,7 @@ export function fieldText( form: Element | null, key: string ): string {
 
 	// WooCommerce hides the state field for a country without states, and address-i18n.js hides the row of a
 	// field the country's locale hides; a leftover value there means nothing. Mirrors syncLocaleMarkers() in
-	// checkout-hide-when-empty.js, which follows CheckoutFieldDefaults::hidden_for_country().
+	// visibility/view.ts, which follows CheckoutFieldDefaults::hidden_for_country().
 	if ( ! field || ( field instanceof HTMLInputElement && field.type === 'hidden' ) || ( row && getComputedStyle( row ).display === 'none' ) ) {
 		return '';
 	}

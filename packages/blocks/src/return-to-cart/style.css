@@ -3,12 +3,7 @@
  * the wrapper, where the block's colour, typography and margin settings land, and the link inherits it.
  */
 .yaycheckout-return-to-cart {
-	margin-block: 16px 0;
 	color: var(--yaycheckout-primary-color, #3858e9);
-	font-size: 16px;
-	font-weight: 600;
-	line-height: 1.2;
-	text-decoration: none;
 }
 
 /* Matches .yaycheckout-back-button's link look (back-button/style.css); change both together. */
@@ -16,7 +11,6 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	padding: 10px 0;
 	color: inherit;
 	font: inherit;
 	letter-spacing: inherit;

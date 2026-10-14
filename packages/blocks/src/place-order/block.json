@@ -16,10 +16,6 @@
   "attributes": {
     "buttonText": {
       "type": "string"
-    },
-    "showTotal": {
-      "type": "boolean",
-      "default": false
     }
   },
   "variations": [

@@ -48,7 +48,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Coupon form', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<TextControl
 						label={ __( 'Placeholder', 'yaycheckout' ) }
 						value={ placeholder }
@@ -83,12 +83,15 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			<div { ...blockProps }>
 				<DisclosurePreview mode={ mode } fieldKey={ COUPON_KEY } label={ COUPON_LABEL } disclosureText={ disclosureText }>
 					<div { ...innerBlocksProps }>
-						<input
-							type="text"
-							disabled
-							className="yaycheckout-coupon-form__code"
-							placeholder={ placeholder || COUPON_LABEL }
-						/>
+						<span className="yaycheckout-coupon-form__field">
+							<label className="yaycheckout-coupon-form__label">{ placeholder || COUPON_LABEL }</label>
+							<input
+								type="text"
+								disabled
+								className="yaycheckout-coupon-form__code"
+								placeholder={ placeholder || COUPON_LABEL }
+							/>
+						</span>
 						{ children }
 					</div>
 				</DisclosurePreview>

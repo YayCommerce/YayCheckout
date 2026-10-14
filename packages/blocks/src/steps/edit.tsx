@@ -39,7 +39,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Steps', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<SelectControl
 						label={ __( 'Layout', 'yaycheckout' ) }
 						value={ layout || 'accordion' }

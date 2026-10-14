@@ -17,6 +17,7 @@ class YayCheckout {
         \YayCheckout\Engine\Register\RegisterFacade::get_instance();
         \YayCheckout\Engine\Admin\Settings::get_instance();
         \YayCheckout\Blocks\BlockRegistry::get_instance();
+        \YayCheckout\Blocks\IconRegistry::get_instance();
         \YayCheckout\PostTypes\LayoutPostType::get_instance();
         \YayCheckout\Engine\LayoutCapGuard::get_instance();
         \YayCheckout\Engine\LayoutTrashSync::get_instance();
@@ -30,7 +31,8 @@ class YayCheckout {
         \YayCheckout\Renderer\CheckoutAdminBar::get_instance();
         \YayCheckout\Renderer\CheckoutFragments::get_instance();
         \YayCheckout\Renderer\CartItemQuantity::get_instance();
-        \YayCheckout\Renderer\HideWhenEmpty::get_instance();
+        \YayCheckout\Renderer\BlockVisibility::get_instance();
+        \YayCheckout\Renderer\PinToBottom::get_instance();
         \YayCheckout\Renderer\LiveValues::get_instance();
         \YayCheckout\Renderer\CheckoutExtraFields::get_instance();
         \YayCheckout\Renderer\CheckoutRequiredFields::get_instance();

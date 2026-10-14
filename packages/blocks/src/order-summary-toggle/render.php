@@ -28,6 +28,31 @@ if ( $yaycheckout_collapse['collapsible'] ) {
             'sizes'  => true,
         ]
     );
+    // Core's Icon prints an inline SVG, which the post rules leave out.
+    $yaycheckout_allowed['svg']     = [
+        'xmlns'       => true,
+        'viewbox'     => true,
+        'width'       => true,
+        'height'      => true,
+        'class'       => true,
+        'style'       => true,
+        'role'        => true,
+        'aria-label'  => true,
+        'aria-hidden' => true,
+        'focusable'   => true,
+    ];
+    $yaycheckout_allowed['path']    = [
+        'd'         => true,
+        'fill'      => true,
+        'fill-rule' => true,
+        'transform' => true,
+    ];
+    $yaycheckout_allowed['polygon'] = [
+        'points'    => true,
+        'fill'      => true,
+        'fill-rule' => true,
+        'transform' => true,
+    ];
 
     $yaycheckout_extra = sprintf(
         ' role="button" tabindex="0" aria-expanded="%s" aria-controls="%s" data-yaycheckout-summary-toggle',

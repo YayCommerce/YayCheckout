@@ -20,6 +20,13 @@ class CheckoutStepsProgress {
     /** Mirrors steps-progress/block.json "variant" enum; the first is the default. */
     private const VARIANTS = [ 'circles', 'dots', 'segments', 'bar', 'text' ];
 
+    /** Colour attribute => the variable style.css reads for it. */
+    private const COLOR_VARS = [
+        'fillColor'         => '--yaycheckout-steps-progress-fill',
+        'trackColor'        => '--yaycheckout-steps-progress-track',
+        'upcomingTextColor' => '--yaycheckout-steps-progress-upcoming-text',
+    ];
+
     /** @var string[]|null Memoised layout_titles(); null until first read. */
     private static $titles = null;
 
@@ -28,6 +35,16 @@ class CheckoutStepsProgress {
      */
     public static function step_title( string $raw ): string {
         return '' !== $raw ? $raw : __( 'Step', 'yaycheckout' );
+    }
+
+    /**
+     * A Step block's title as HTML safe to echo, with the display-text toolbar's formatting and live values,
+     * or "Step" while it holds no text. The step's header and Steps Progress print it alike.
+     *
+     * @param array $attrs The Step block's attributes.
+     */
+    public static function step_title_html( array $attrs ): string {
+        return LayoutMarkupReader::rich_text( $attrs, 'title', self::step_title( '' ) );
     }
 
     /**
@@ -65,20 +82,28 @@ class CheckoutStepsProgress {
             $items .= '<li class="yaycheckout-steps-progress__item" data-state="' . ( $first ? 'current' : 'locked' ) . '" data-step="' . esc_attr( (string) $number ) . '"' . ( $first ? ' aria-current="step"' : '' ) . '>';
             $items .= '<' . $tag . ' class="yaycheckout-steps-progress__jump"' . ( $has_summary ? '' : ' type="button" disabled' ) . '>';
             $items .= '<span class="yaycheckout-steps-progress__marker">' . esc_html( (string) $number ) . '</span>';
-            $items .= '<span class="yaycheckout-steps-progress__title">' . esc_html( (string) $label ) . '</span>';
+            // step_title_html() filtered it with wp_kses.
+            $items .= '<span class="yaycheckout-steps-progress__title">' . $label . '</span>';
             $items .= '</' . $tag . '></li>';
         }
 
         $args    = [ 'class' => 'yaycheckout-steps-progress is-variant-' . $variant ];
+        $style   = self::color_style( $attributes );
         $summary = '';
 
         if ( $has_summary ) {
-            $total   = count( $titles );
-            $summary = self::summary( $total, 'bar' === $variant );
+            $total = count( $titles );
+            // Only the bar can leave the count out. Layouts saved before showCount existed lack the key and keep it.
+            $with_count = 'bar' !== $variant || false !== ( $attributes['showCount'] ?? true );
+            $summary    = self::summary( $total, 'bar' === $variant, $with_count );
 
             if ( 'bar' === $variant ) {
-                $args['style'] = '--yaycheckout-steps-progress-value:' . number_format( 1 / $total, 3, '.', '' ) . ';';
+                $style .= '--yaycheckout-steps-progress-value:' . number_format( 1 / $total, 3, '.', '' ) . ';';
             }
+        }
+
+        if ( '' !== $style ) {
+            $args['style'] = $style;
         }
 
         $wrapper = get_block_wrapper_attributes( $args );
@@ -87,20 +112,44 @@ class CheckoutStepsProgress {
     }
 
     /**
-     * "Step 1 of N", with the track for the bar style. view.ts rewrites the current span and the fill.
+     * The colour variables for each colour attribute set, as declarations ending in `;`; empty when none
+     * is. Mirrors progressStyle() in steps-progress/edit.tsx.
+     *
+     * @param array $attributes Block attributes.
      */
-    private static function summary( int $total, bool $with_track ): string {
-        /* translators: 1: number of the open step, 2: number of steps. */
-        $count = sprintf( esc_html__( 'Step %1$s of %2$s', 'yaycheckout' ), '<span class="yaycheckout-steps-progress__current">1</span>', (string) $total );
+    private static function color_style( array $attributes ): string {
+        $style = '';
 
-        $track = $with_track ? '<div class="yaycheckout-steps-progress__track"><span class="yaycheckout-steps-progress__fill"></span></div>' : '';
+        foreach ( self::COLOR_VARS as $key => $var ) {
+            $value = CheckoutFragments::css_color( $attributes[ $key ] ?? null );
 
-        return '<div class="yaycheckout-steps-progress__summary">' . $track . '<p class="yaycheckout-steps-progress__count">' . $count . '</p></div>';
+            if ( '' !== $value ) {
+                $style .= $var . ':' . $value . ';';
+            }
+        }
+
+        return $style;
     }
 
     /**
-     * Titles of the rendered layout's first Steps block; empty without a layout or a Steps block.
-     * Go to Step reads it too, to count the steps.
+     * "Step 1 of N", with the track for the bar style, which may leave the count out. view.ts rewrites the current span and the fill.
+     */
+    private static function summary( int $total, bool $with_track, bool $with_count ): string {
+        $count = '';
+
+        if ( $with_count ) {
+            /* translators: 1: number of the open step, 2: number of steps. */
+            $count = '<p class="yaycheckout-steps-progress__count">' . sprintf( esc_html__( 'Step %1$s of %2$s', 'yaycheckout' ), '<span class="yaycheckout-steps-progress__current">1</span>', (string) $total ) . '</p>';
+        }
+
+        $track = $with_track ? '<div class="yaycheckout-steps-progress__track"><span class="yaycheckout-steps-progress__fill"></span></div>' : '';
+
+        return '<div class="yaycheckout-steps-progress__summary">' . $track . $count . '</div>';
+    }
+
+    /**
+     * Titles of the rendered layout's first Steps block, as HTML safe to echo; empty without a layout or a
+     * Steps block. Go to Step reads it too, to count the steps.
      *
      * @return string[]
      */
@@ -114,7 +163,7 @@ class CheckoutStepsProgress {
     }
 
     /**
-     * Titles of the first Steps block's Step children, in order; empty without one.
+     * Titles of the first Steps block's Step children, in order, as step_title_html() prints them; empty without one.
      *
      * @return string[]
      */
@@ -124,7 +173,7 @@ class CheckoutStepsProgress {
 
         foreach ( null !== $block ? $block['innerBlocks'] : [] as $child ) {
             if ( self::STEP === ( $child['blockName'] ?? '' ) ) {
-                $titles[] = self::step_title( LayoutMarkupReader::plain_text( is_array( $child['attrs'] ?? null ) ? $child['attrs'] : [], 'title' ) );
+                $titles[] = self::step_title_html( is_array( $child['attrs'] ?? null ) ? $child['attrs'] : [] );
             }
         }
 

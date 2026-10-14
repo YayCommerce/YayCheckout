@@ -7,6 +7,12 @@ export const KEY_ATTR = 'data-yaycheckout-value';
 /** Mirrors LiveValues::FALLBACK_ATTR in PHP. */
 export const FALLBACK_ATTR = 'data-fallback';
 
+/** Mirrors LiveValues::PREFIX_ATTR in PHP. */
+export const PREFIX_ATTR = 'data-prefix';
+
+/** Mirrors LiveValues::SUFFIX_ATTR in PHP. */
+export const SUFFIX_ATTR = 'data-suffix';
+
 /** Mirrors LiveValues::EMPTY_CLASS in PHP: on a span whose value is empty or unknown. */
 export const EMPTY_CLASS = 'is-empty';
 
@@ -14,7 +20,14 @@ export const EMPTY_CLASS = 'is-empty';
 export const FIELD_PREFIX = 'field:';
 
 /** Mirrors LiveValues::BLOCKS in PHP: the blocks whose text can hold live values. */
-export const LIVE_VALUE_BLOCKS = [ 'core/paragraph', 'core/heading' ];
+export const LIVE_VALUE_BLOCKS = [
+	'core/paragraph',
+	'core/heading',
+	'yaycheckout/step',
+	'yaycheckout/create-account',
+	'yaycheckout/different-address',
+	'yaycheckout/place-order',
+];
 
 /** Mirrors LiveValues::VALUES_ID in PHP: the footer's JSON element of the cart's values, swapped by update_order_review. */
 export const VALUES_ID = 'yaycheckout-live-values';

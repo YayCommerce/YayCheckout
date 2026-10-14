@@ -12,7 +12,7 @@
 /*
  * Virtual-only (or otherwise no-shipping) carts: CheckoutFragments marks the rates
  * fragment empty. Hide the whole block — heading included — like Woo's classic checkout.
- * :has() follows update_order_review swaps without waiting on HideWhenEmpty's script.
+ * :has() follows update_order_review swaps without waiting on the visibility script.
  */
 .yaycheckout-checkout .yaycheckout-shipping-methods:has(.yaycheckout-shipping-methods__rates[data-yaycheckout-empty]) {
 	display: none !important;
@@ -25,9 +25,11 @@
 	list-style: none;
 }
 
+/* The whole item selects its rate: shared/method-item-click.ts, and the preview in edit.tsx. */
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option {
 	position: relative;
 	list-style: none;
+	cursor: pointer;
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option > input.shipping_method {
@@ -37,6 +39,12 @@
 	margin: 0;
 	opacity: 0;
 	pointer-events: none;
+}
+
+/* The clipped radio can't show focus, so its row does: inside the row, where a joined neighbour can't cover it. */
+.yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:has(> input.shipping_method:focus-visible) {
+	outline: 2px solid var(--yaycheckout-primary-color);
+	outline-offset: -2px;
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option > label {
@@ -52,7 +60,7 @@
 	width: 18px;
 	height: 18px;
 	border-radius: 999px;
-	box-shadow: inset 0 0 0 1.5px var(--yaycheckout-shipping-radio, var(--yaycheckout-border-color));
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-shipping-radio, var(--yaycheckout-border-color));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__body {
@@ -78,9 +86,10 @@
 	white-space: nowrap;
 }
 
-/* Pickup points and delivery fields print after the label, on their own row. */
+/* Pickup points and delivery fields print after the label, on their own row. A click there selects nothing. */
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option > :not(label, input) {
 	flex-basis: 100%;
+	cursor: auto;
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__package + .yaycheckout-shipping-methods__package {
@@ -299,7 +308,7 @@
 	justify-content: center;
 	width: 22px;
 	height: 22px;
-	box-shadow: inset 0 0 0 1.5px var(--yaycheckout-shipping-radio, color-mix(in srgb, currentColor 35%, transparent));
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-shipping-radio, color-mix(in srgb, currentColor 35%, transparent));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="checkmark"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
@@ -356,7 +365,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="lines"] .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 1.5px var(--yaycheckout-shipping-radio, currentColor);
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-shipping-radio, currentColor);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="lines"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {

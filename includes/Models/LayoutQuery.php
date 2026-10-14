@@ -20,6 +20,14 @@ class LayoutQuery {
 
     private int $page = 1;
 
+    /** Narrows to the active set; the repository supplies the ids. */
+    private bool $active_only = false;
+
+    /** WP_Query orderby key: 'date' (created) or 'modified'. */
+    private string $orderby = 'date';
+
+    private string $order = 'DESC';
+
     /**
      * @throws \InvalidArgumentException When $statuses is empty or contains an unknown status.
      */
@@ -49,6 +57,34 @@ class LayoutQuery {
     public function with_pagination( int $page ): self {
         $clone       = clone $this;
         $clone->page = max( 1, $page );
+
+        return $clone;
+    }
+
+    public function with_active_only( bool $active_only ): self {
+        $clone              = clone $this;
+        $clone->active_only = $active_only;
+
+        return $clone;
+    }
+
+    /**
+     * @throws \InvalidArgumentException When $orderby is not 'date' or 'modified', or $order is not ASC or DESC.
+     */
+    public function with_order( string $orderby, string $order ): self {
+        $order = strtoupper( $order );
+
+        if ( ! in_array( $orderby, [ 'date', 'modified' ], true ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Unknown layout orderby: %s', $orderby ) );
+        }
+
+        if ( ! in_array( $order, [ 'ASC', 'DESC' ], true ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Unknown layout order: %s', $order ) );
+        }
+
+        $clone          = clone $this;
+        $clone->orderby = $orderby;
+        $clone->order   = $order;
 
         return $clone;
     }
@@ -86,6 +122,18 @@ class LayoutQuery {
 
     public function page(): int {
         return $this->page;
+    }
+
+    public function active_only(): bool {
+        return $this->active_only;
+    }
+
+    public function orderby(): string {
+        return $this->orderby;
+    }
+
+    public function order(): string {
+        return $this->order;
     }
 
     public function per_page(): int {

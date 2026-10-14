@@ -11,15 +11,20 @@
 defined( 'ABSPATH' ) || exit;
 
 $yaycheckout_layout_id = '0';
+$yaycheckout_class     = 'yaycheckout-checkout checkout woocommerce-checkout';
 $yaycheckout_layout    = \YayCheckout\Renderer\CheckoutPage::get_instance()->layout();
 
 if ( null !== $yaycheckout_layout ) {
     $yaycheckout_layout_id = (string) $yaycheckout_layout->id;
+
+    if ( $yaycheckout_layout->design->has_floating_labels() ) {
+        $yaycheckout_class .= ' yaycheckout-checkout--floating-labels';
+    }
 }
 
 $yaycheckout_wrapper = get_block_wrapper_attributes(
     [
-        'class'                   => 'yaycheckout-checkout checkout woocommerce-checkout',
+        'class'                   => $yaycheckout_class,
         'data-yaycheckout-layout' => $yaycheckout_layout_id,
     ]
 );

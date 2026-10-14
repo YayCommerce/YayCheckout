@@ -139,7 +139,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Field', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					{ addressSection && (
 						<SelectControl
 							label={ __( 'WooCommerce field', 'yaycheckout' ) }

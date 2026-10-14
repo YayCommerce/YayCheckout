@@ -1,7 +1,12 @@
+/* On the wrapper, not the list, so the block's Margin control can clear it. Bar and text hide the list and had no such space. */
+.yaycheckout-steps-progress:not(.is-variant-bar, .is-variant-text) {
+	margin-bottom: 24px;
+}
+
 .yaycheckout-steps-progress__list {
 	display: flex;
 	list-style: none;
-	margin: 0 0 24px;
+	margin: 0;
 	padding: 0;
 }
 
@@ -23,11 +28,11 @@
 	left: calc(50% + 18px);
 	width: calc(100% - 36px);
 	height: 2px;
-	background: #d1d5db;
+	background: var(--yaycheckout-steps-progress-track, #d1d5db);
 }
 
 .yaycheckout-steps-progress__item[data-state="complete"]:not(:last-child)::before {
-	background: var(--yaycheckout-primary-color, #3858e9);
+	background: var(--yaycheckout-steps-progress-fill, var(--yaycheckout-primary-color, #3858e9));
 }
 
 .yaycheckout-steps-progress :is(button, span).yaycheckout-steps-progress__jump {
@@ -73,7 +78,7 @@
 	width: 28px;
 	height: 28px;
 	border-radius: 999px;
-	background: var(--yaycheckout-primary-color, #3858e9);
+	background: var(--yaycheckout-steps-progress-fill, var(--yaycheckout-primary-color, #3858e9));
 	color: #fff;
 	font-size: 14px;
 	font-weight: 600;
@@ -81,8 +86,8 @@
 
 .yaycheckout-steps-progress__item[data-state="locked"] .yaycheckout-steps-progress__marker {
 	background: #fff;
-	color: #9ca3af;
-	box-shadow: inset 0 0 0 1.5px #d1d5db;
+	color: var(--yaycheckout-steps-progress-upcoming-text, #9ca3af);
+	box-shadow: inset 0 0 0 1.5px var(--yaycheckout-steps-progress-track, #d1d5db);
 }
 
 .yaycheckout-steps-progress__item[data-state="complete"] .yaycheckout-steps-progress__marker {
@@ -110,34 +115,24 @@
 }
 
 .yaycheckout-steps-progress__item[data-state="locked"] .yaycheckout-steps-progress__title {
-	color: #6b7280;
-}
-
-/* A step the shopper can reopen keeps its title colour, as a reached Step header does in steps/style.css. */
-.yaycheckout-steps-progress__item[data-state="locked"]:has(> button:enabled) .yaycheckout-steps-progress__title {
-	color: inherit;
+	color: var(--yaycheckout-steps-progress-upcoming-text, #6b7280);
 }
 
 .yaycheckout-steps-progress button.yaycheckout-steps-progress__jump:enabled:is(:hover, :focus-visible) .yaycheckout-steps-progress__title {
 	text-decoration: underline;
 }
 
-.yaycheckout-steps-progress button.yaycheckout-steps-progress__jump:focus-visible {
-	outline: 2px solid var(--yaycheckout-primary-color, #3858e9);
-	outline-offset: 2px;
-}
-
-/* Dots: a small dot and the title on one line, hairlines between steps. */
+/* Dots: a small dot and the title on one line, hairlines between steps. Matches template 09 (Soft steps). */
 .is-variant-dots .yaycheckout-steps-progress__list {
 	justify-content: center;
-	gap: 12px;
+	gap: 8px;
 }
 
 .is-variant-dots .yaycheckout-steps-progress__item {
 	flex: 0 1 auto;
 	flex-direction: row;
 	align-items: center;
-	gap: 12px;
+	gap: 8px;
 }
 
 .is-variant-dots .yaycheckout-steps-progress__item:not(:last-child)::before {
@@ -147,13 +142,9 @@
 .is-variant-dots .yaycheckout-steps-progress__item:not(:last-child)::after {
 	content: "";
 	flex: none;
-	width: 32px;
+	width: 20px;
 	height: 1px;
-	background: #d1d5db;
-}
-
-.is-variant-dots .yaycheckout-steps-progress__item[data-state="complete"]:not(:last-child)::after {
-	background: var(--yaycheckout-primary-color, #3858e9);
+	background: var(--yaycheckout-steps-progress-track, #e0e0e0);
 }
 
 .is-variant-dots :is(button, span).yaycheckout-steps-progress__jump {
@@ -163,13 +154,13 @@
 }
 
 .is-variant-dots .yaycheckout-steps-progress__marker {
-	width: 8px;
-	height: 8px;
+	width: 6px;
+	height: 6px;
 	font-size: 0;
 }
 
 .is-variant-dots .yaycheckout-steps-progress__item[data-state="locked"] .yaycheckout-steps-progress__marker {
-	background: #d1d5db;
+	background: var(--yaycheckout-steps-progress-track, #e0e0e0);
 	box-shadow: none;
 }
 
@@ -177,7 +168,24 @@
 	content: none;
 }
 
-/* Segments: a bar across the top of each step, the number and title under it. */
+.is-variant-dots .yaycheckout-steps-progress__title {
+	font-size: 12px;
+	font-weight: 400;
+}
+
+.is-variant-dots .yaycheckout-steps-progress__item[data-state="current"] .yaycheckout-steps-progress__title {
+	font-weight: 600;
+}
+
+.is-variant-dots .yaycheckout-steps-progress__item[data-state="complete"] .yaycheckout-steps-progress__title {
+	color: #757575;
+}
+
+.is-variant-dots .yaycheckout-steps-progress__item[data-state="locked"] .yaycheckout-steps-progress__title {
+	color: var(--yaycheckout-steps-progress-upcoming-text, #949494);
+}
+
+/* Segments: a bar across the top of each step, the number and title under it. Matches template 02 (Multi-step wizard). */
 .is-variant-segments .yaycheckout-steps-progress__list {
 	gap: 8px;
 }
@@ -193,38 +201,56 @@
 	content: "";
 	position: static;
 	width: 100%;
-	height: 3px;
+	height: 4px;
 	border-radius: 2px;
-	background: #d1d5db;
+	/* The primary fill sweeps in from the left as a step is reached, at the progress bar's pace. */
+	background: linear-gradient(var(--yaycheckout-steps-progress-fill, var(--yaycheckout-primary-color, #3858e9)), var(--yaycheckout-steps-progress-fill, var(--yaycheckout-primary-color, #3858e9))) left / 0% 100% no-repeat var(--yaycheckout-steps-progress-track, #e0e0e0);
+	transition: background-size 180ms;
 }
 
 .is-variant-segments .yaycheckout-steps-progress__item[data-state="current"]::before,
 .is-variant-segments .yaycheckout-steps-progress__item[data-state="complete"]:not(:last-child)::before,
 .is-variant-segments .yaycheckout-steps-progress__item[data-state="complete"]::before {
-	background: var(--yaycheckout-primary-color, #3858e9);
+	background-size: 100% 100%;
 }
 
 .is-variant-segments :is(button, span).yaycheckout-steps-progress__jump {
 	flex-direction: row;
 	justify-content: flex-start;
-	gap: 8px;
+	gap: 6px;
 }
 
 .is-variant-segments .yaycheckout-steps-progress__marker {
-	width: 20px;
-	height: 20px;
-	font-size: 12px;
+	width: 18px;
+	height: 18px;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.is-variant-segments .yaycheckout-steps-progress__item[data-state="locked"] .yaycheckout-steps-progress__marker {
+	color: var(--yaycheckout-steps-progress-upcoming-text, #757575);
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-steps-progress-track, #ccc);
 }
 
 .is-variant-segments .yaycheckout-steps-progress__item[data-state="complete"] .yaycheckout-steps-progress__marker::after {
-	font-size: 12px;
+	background-size: 10px;
 }
 
-/* Bar: a thin track filled to the open step and "Step N of M". Text: the count alone. Both hide the list from sight but not from screen readers. */
+.is-variant-segments .yaycheckout-steps-progress__title,
+.is-variant-segments .yaycheckout-steps-progress__item[data-state="current"] .yaycheckout-steps-progress__title {
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.is-variant-segments .yaycheckout-steps-progress__item[data-state="locked"] .yaycheckout-steps-progress__title {
+	color: var(--yaycheckout-steps-progress-upcoming-text, #757575);
+}
+
+/* Bar: a thin track filled to the open step and, unless turned off, "Step N of M". Matches template 06 (Minimal steps).
+   Text: the count alone. Both hide the list from sight but not from screen readers. */
 .is-variant-bar .yaycheckout-steps-progress__track {
-	height: 4px;
-	border-radius: 2px;
-	background: #d1d5db;
+	height: 3px;
+	background: var(--yaycheckout-steps-progress-track, #e0e0e0);
 	overflow: hidden;
 }
 
@@ -232,15 +258,25 @@
 	display: block;
 	width: calc(var(--yaycheckout-steps-progress-value, 0) * 100%);
 	height: 100%;
-	background: var(--yaycheckout-primary-color, #3858e9);
-	transition: width 0.25s ease;
+	background: var(--yaycheckout-steps-progress-fill, var(--yaycheckout-primary-color, #3858e9));
+	transition: width 180ms;
 }
 
 .is-variant-bar .yaycheckout-steps-progress__count,
 .is-variant-text .yaycheckout-steps-progress__count {
 	margin: 8px 0 0;
-	font-size: 13px;
-	color: #6b7280;
+	font-size: 12px;
+	color: #757575;
+}
+
+/* The block's Text colour, once set, replaces the grey of the count and of Dots' completed titles. */
+.yaycheckout-steps-progress.has-text-color :is(.yaycheckout-steps-progress__count, .yaycheckout-steps-progress__item[data-state="complete"] .yaycheckout-steps-progress__title) {
+	color: inherit;
+}
+
+.is-variant-text .yaycheckout-steps-progress__count {
+	margin: 0;
+	white-space: nowrap;
 }
 
 .is-variant-bar .yaycheckout-steps-progress__list,
@@ -255,7 +291,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.is-variant-bar .yaycheckout-steps-progress__fill {
+	.is-variant-bar .yaycheckout-steps-progress__fill,
+	.is-variant-segments .yaycheckout-steps-progress__item::before {
 		transition: none;
 	}
 }

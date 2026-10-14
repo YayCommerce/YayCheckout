@@ -4,17 +4,13 @@
  * Steps owns the open step. This script mirrors each step's state and asks Steps to reopen one.
  */
 
+import { bindOnce } from '../shared/bind-once';
 import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor, reopenStep } from '../shared/checkout-root';
 import { onDomReady } from '../shared/dom-ready';
 
 const ITEM = '.yaycheckout-steps-progress__item';
 
 function boot(): void {
-	if ( document.documentElement.hasAttribute( 'data-yaycheckout-steps-progress-bound' ) ) {
-		return;
-	}
-
-	document.documentElement.setAttribute( 'data-yaycheckout-steps-progress-bound', '' );
 	document.addEventListener( 'yaycheckout:step-change', onStepChange );
 	document.addEventListener( 'click', onClick );
 }
@@ -72,18 +68,21 @@ function sync( checkout: Element ): void {
 	document.querySelectorAll< HTMLElement >( '.yaycheckout-steps-progress' ).forEach( paintSummary );
 }
 
-// The bar style's fill and "Step N of M". Other styles have no summary.
+// The bar's fill and the "Step N of M" of bar and text. A bar may print no count; other styles have no summary.
 function paintSummary( root: HTMLElement ): void {
 	const current = root.querySelector< HTMLElement >( `${ ITEM }[data-state="current"]` );
 	const label = root.querySelector( '.yaycheckout-steps-progress__current' );
 	const total = root.querySelectorAll( ITEM ).length;
 	const step = Number( current?.dataset.step );
 
-	if ( ! label || ! current || ! step || ! total ) {
+	if ( ! current || ! step || ! total ) {
 		return;
 	}
 
-	label.textContent = String( step );
+	if ( label ) {
+		label.textContent = String( step );
+	}
+
 	root.style.setProperty( '--yaycheckout-steps-progress-value', String( step / total ) );
 }
 
@@ -105,4 +104,4 @@ function paint( item: HTMLElement, step: HTMLElement | undefined ): void {
 	}
 }
 
-onDomReady( boot );
+onDomReady( () => bindOnce( 'data-yaycheckout-steps-progress-bound', boot ) );

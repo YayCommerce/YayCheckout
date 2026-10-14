@@ -10,19 +10,28 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', __( 'Payment', 'yaycheckout' ) );
+$yaycheckout_label       = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'label', __( 'Payment', 'yaycheckout' ) );
+$yaycheckout_show_title  = ! isset( $attributes['showTitle'] ) || (bool) $attributes['showTitle'];
+$yaycheckout_heading_tag = \YayCheckout\Renderer\SectionTextStyles::heading_tag( $attributes );
+$yaycheckout_description = trim( \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'description' ) );
 
 $yaycheckout_wrapper_base = [
     'class'       => 'yaycheckout-payment',
     'data-layout' => \YayCheckout\Renderer\CheckoutFragments::payment_layout( $attributes ),
 ];
 
+// Title and Description styles.
+$yaycheckout_text_class = \YayCheckout\Renderer\SectionTextStyles::wrapper_class( $attributes, 'yaycheckout/payment' );
+if ( '' !== $yaycheckout_text_class ) {
+    $yaycheckout_wrapper_base['class'] .= ' ' . $yaycheckout_text_class;
+}
+
 $yaycheckout_style = \YayCheckout\Renderer\CheckoutFragments::payment_methods_style_attribute( $attributes );
 if ( '' !== $yaycheckout_style ) {
     $yaycheckout_wrapper_base['style'] = $yaycheckout_style;
 }
 
-$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
+$yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper(
     $yaycheckout_wrapper_base,
     $attributes,
     \YayCheckout\Renderer\CheckoutFragments::payment_empty()
@@ -30,6 +39,11 @@ $yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
-    <h3><?php echo esc_html( $yaycheckout_label ); ?></h3>
+    <?php if ( $yaycheckout_show_title ) : ?>
+        <<?php echo tag_escape( $yaycheckout_heading_tag ); ?> class="yaycheckout-section-title"><?php echo esc_html( $yaycheckout_label ); ?></<?php echo tag_escape( $yaycheckout_heading_tag ); ?>>
+    <?php endif; ?>
+    <?php if ( '' !== $yaycheckout_description ) : ?>
+        <p class="yaycheckout-section-description"><?php echo esc_html( $yaycheckout_description ); ?></p>
+    <?php endif; ?>
     <?php \YayCheckout\Renderer\CheckoutFragments::print_payment_methods(); ?>
 </div>

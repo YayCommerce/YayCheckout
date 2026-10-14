@@ -28,10 +28,10 @@ class LayoutTemplateCatalogueTest extends WP_UnitTestCase {
 
     public function test_a_template_without_files_is_coming_soon(): void {
         $available = array_column( LayoutTemplateCatalogue::templates( true ), 'available', 'slug' );
-        $this->assertFalse( $available['split-express'] );
+        $this->assertFalse( $available['editorial-fashion'] );
 
         $this->expectException( \InvalidArgumentException::class );
         $this->expectExceptionMessage( 'This template is coming soon.' );
-        LayoutTemplateCatalogue::assert_available( 'split-express' );
+        LayoutTemplateCatalogue::assert_available( 'editorial-fashion' );
     }
 }

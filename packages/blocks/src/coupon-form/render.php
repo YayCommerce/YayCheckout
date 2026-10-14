@@ -61,22 +61,27 @@ $yaycheckout_button = '' !== trim( $content )
         ]
     );
 
-$yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, 'yaycheckout-coupon-code', false );
+// Applied coupons count as the field's value, so their chips (and their ×) stay shown after a reload.
+$yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, 'yaycheckout-coupon-code', false, WC()->cart->get_applied_coupons() );
 
 ?>
-<div <?php echo \YayCheckout\Renderer\HideWhenEmpty::wrapper( $yaycheckout_wrapper_attrs, $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+<div <?php echo \YayCheckout\Renderer\BlockEmptiness::wrapper( $yaycheckout_wrapper_attrs, $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php
     echo \YayCheckout\Services\Disclosure::open_if( $attributes, 'yaycheckout-coupon-code', __( 'Coupon code', 'yaycheckout' ), $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
     ?>
     <div class="yaycheckout-coupon-form__row">
-        <label for="yaycheckout-coupon-code" class="screen-reader-text"><?php esc_html_e( 'Coupon:', 'yaycheckout' ); ?></label>
-        <?php
-        // No name: a coupon_code posted with the checkout form would be noise in every update_order_review and order submit.
-        // No input-text or form-row: inside the checkout form, WooCommerce's validate_field would claim the field and strip its error.
-        ?>
-        <input type="text" id="yaycheckout-coupon-code" class="yaycheckout-coupon-form__code" placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>" value="" />
+        <span class="yaycheckout-coupon-form__field">
+            <?php // Read by screen readers only, unless the layout's labels float: then it stands in for the placeholder (style.css). ?>
+            <label for="yaycheckout-coupon-code" class="yaycheckout-coupon-form__label"><?php echo esc_html( $yaycheckout_placeholder ); ?></label>
+            <?php
+            // No name: a coupon_code posted with the checkout form would be noise in every update_order_review and order submit.
+            // No input-text or form-row: inside the checkout form, WooCommerce's validate_field would claim the field and strip its error.
+            ?>
+            <input type="text" id="yaycheckout-coupon-code" class="yaycheckout-coupon-form__code" placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>" value="" />
+        </span>
         <?php echo $yaycheckout_button; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered block markup; its render.php escapes. ?>
     </div>
+    <?php echo \YayCheckout\Renderer\CheckoutFragments::coupon_chips_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped by CheckoutFragments; update_order_review refreshes it. ?>
     <div class="yaycheckout-coupon-form__notices" aria-live="polite" data-error-text="<?php esc_attr_e( 'The coupon could not be applied. Please try again.', 'yaycheckout' ); ?>"></div>
     <?php echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
 </div>

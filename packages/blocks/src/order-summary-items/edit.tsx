@@ -1,5 +1,5 @@
-import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
+import { InspectorControls, PanelColorSettings, useBlockProps } from '@wordpress/block-editor';
+import { PanelBody, RangeControl, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 import { plainText } from '../shared/plain-text';
@@ -16,6 +16,9 @@ interface OrderSummaryItemsAttributes {
 	showShortDescription: boolean;
 	quantityDisplay: 'inline' | 'badge';
 	showStepper: boolean;
+	badgeBackgroundColor: string;
+	badgeTextColor: string;
+	badgeSize?: number;
 	style?: BlockGapStyles;
 }
 
@@ -23,6 +26,17 @@ interface EditProps {
 	attributes: OrderSummaryItemsAttributes;
 	setAttributes: ( attributes: Partial< OrderSummaryItemsAttributes > ) => void;
 	clientId: string;
+}
+
+// Mirrors CheckoutFragments::order_items_badge_style(): the badge settings as --yaycheckout-badge-* vars.
+function badgeStyle( { badgeBackgroundColor, badgeTextColor, badgeSize }: OrderSummaryItemsAttributes ) {
+	return {
+		...( badgeBackgroundColor ? { '--yaycheckout-badge-bg': badgeBackgroundColor } : {} ),
+		...( badgeTextColor ? { '--yaycheckout-badge-text': badgeTextColor } : {} ),
+		...( typeof badgeSize === 'number'
+			? { '--yaycheckout-badge-size': `${ Math.max( 16, Math.min( 32, badgeSize ) ) }px` }
+			: {} ),
+	};
 }
 
 // Mirrors CheckoutFragments::order_items_html(), so the block's style.css draws it as on the storefront.
@@ -38,6 +52,9 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		showShortDescription,
 		quantityDisplay,
 		showStepper,
+		badgeBackgroundColor,
+		badgeTextColor,
+		badgeSize,
 		style,
 	} = attributes;
 	// As order_items_html(): a badge needs a thumbnail to sit on.
@@ -49,7 +66,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Order summary items', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<ToggleControl
 						label={ __( 'Show labels', 'yaycheckout' ) }
 						checked={ showLabels }
@@ -125,7 +142,38 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					/>
 				</PanelBody>
 			</InspectorControls>
-			<div { ...useBlockProps() }>
+			{ badge && (
+				<InspectorControls group="styles">
+					<PanelColorSettings
+						title={ __( 'Quantity badge', 'yaycheckout' ) }
+						initialOpen={ false }
+						colorSettings={ [
+							{
+								label: __( 'Background', 'yaycheckout' ),
+								value: badgeBackgroundColor,
+								onChange: ( value?: string ) => setAttributes( { badgeBackgroundColor: value ?? '' } ),
+							},
+							{
+								label: __( 'Text', 'yaycheckout' ),
+								value: badgeTextColor,
+								onChange: ( value?: string ) => setAttributes( { badgeTextColor: value ?? '' } ),
+							},
+						] }
+					>
+						<RangeControl
+							__nextHasNoMarginBottom
+							label={ __( 'Size', 'yaycheckout' ) }
+							value={ badgeSize }
+							min={ 16 }
+							max={ 32 }
+							initialPosition={ 20 }
+							allowReset
+							onChange={ ( value ) => setAttributes( { badgeSize: value } ) }
+						/>
+					</PanelColorSettings>
+				</InspectorControls>
+			) }
+			<div { ...useBlockProps( { style: badgeStyle( attributes ) } ) }>
 				{ css && <style>{ css }</style> }
 				<div
 					className={ `yaycheckout-order-summary-items${

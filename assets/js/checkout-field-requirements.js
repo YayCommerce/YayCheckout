@@ -20,7 +20,7 @@ jQuery(function ($) {
             }
             if (config.required) {
                 // address-i18n.js hid this row and dropped its required state; same row test as
-                // syncLocaleMarkers() in checkout-hide-when-empty.js.
+                // syncLocaleMarkers() in packages/blocks/src/visibility/view.ts.
                 if (field.css('display') === 'none') {
                     return;
                 }

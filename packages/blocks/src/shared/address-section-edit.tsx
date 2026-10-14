@@ -4,10 +4,19 @@ import { __ } from '@wordpress/i18n';
 import { addressTemplate } from './address-template';
 import { isCheckoutSection, useBlocksAllowedExcept } from './allowed-blocks';
 import { useBlockGapCSS, type BlockGapStyles } from './block-gap';
+import {
+	SectionDescription,
+	SectionHeadingToolbar,
+	sectionTextCSS,
+	SectionTextPanels,
+	SectionTitle,
+} from './section-heading';
 
 export interface AddressSectionAttributes {
 	title: string;
 	showTitle: boolean;
+	headingLevel?: number;
+	description?: string;
 	style?: BlockGapStyles;
 }
 
@@ -24,8 +33,9 @@ export function AddressSectionEdit( {
 	setAttributes,
 	clientId,
 }: AddressSectionEditProps ) {
-	const { title, showTitle, style } = attributes;
-	const css = useBlockGapCSS( `#block-${ clientId }`, style );
+	const { title, showTitle, headingLevel, style } = attributes;
+	const description = attributes.description ?? '';
+	const css = useBlockGapCSS( `#block-${ clientId }`, style ) + sectionTextCSS( clientId, style );
 	const fallbackTitle =
 		section === 'shipping' ? __( 'Shipping', 'yaycheckout' ) : __( 'Billing', 'yaycheckout' );
 	const blockProps = useBlockProps( { className: `yaycheckout-${ section }` } );
@@ -39,8 +49,11 @@ export function AddressSectionEdit( {
 
 	return (
 		<>
+			{ showTitle && (
+				<SectionHeadingToolbar level={ headingLevel } onChange={ ( level ) => setAttributes( { headingLevel: level } ) } />
+			) }
 			<InspectorControls>
-				<PanelBody title={ fallbackTitle }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<ToggleControl
 						label={ __( 'Show title', 'yaycheckout' ) }
 						checked={ showTitle }
@@ -53,11 +66,25 @@ export function AddressSectionEdit( {
 							onChange={ ( value ) => setAttributes( { title: value } ) }
 						/>
 					) }
+					<TextControl
+						label={ __( 'Description', 'yaycheckout' ) }
+						value={ description }
+						onChange={ ( value ) => setAttributes( { description: value } ) }
+					/>
 				</PanelBody>
+			</InspectorControls>
+			<InspectorControls group="styles">
+				<SectionTextPanels
+					style={ style }
+					onChange={ ( next ) => setAttributes( { style: next as BlockGapStyles | undefined } ) }
+					showTitle={ showTitle }
+					showDescription={ description.trim() !== '' }
+				/>
 			</InspectorControls>
 			<div { ...innerBlocksProps }>
 				{ css && <style>{ css }</style> }
-				{ showTitle && <h3>{ title || fallbackTitle }</h3> }
+				{ showTitle && <SectionTitle level={ headingLevel } text={ title || fallbackTitle } /> }
+				<SectionDescription text={ description } />
 				{ children }
 			</div>
 		</>
