@@ -13,6 +13,7 @@ function problemFromWire(problem: CheckoutProblemWire): CheckoutProblem {
   return {
     reason: problem.reason,
     detail: problem.detail,
+    blocks: problem.blocks,
     layoutId: problem.layout_id,
     layoutTitle: problem.layout_title,
   };

@@ -24,8 +24,8 @@ Proposed, 2026-10-14.
 
 - The Checkout block prints a hidden `CheckoutPage::FORM_FIELD` (`yaycheckout_layout`) in the form, holding the id of the layout that rendered it.
 - A request that carries the form, the order submit (it posts `woocommerce-process-checkout-nonce`) or `update_order_review` (its `post_data`), follows the form: it gets the layout only when that layout is the one the shopper's facts pick and its id is the one posted, and WooCommerce's checkout otherwise, as WooCommerce's own form has no such field. Safe mode, `CheckoutHealth` and the breaker are judged on the page render only.
-- Every other request, the page render and YayCheckout's own AJAX included, picks the layout as before.
-- Because a form keeps the renderer it started with, a render failure on the page blocks only that request; it is reported, not recorded as blocking. A fatal error mid-render, which can't fall back in its own request, and a failing `update_order_review` fragment, whose reload must land on WooCommerce's form, still block the layout for later requests.
+- YayCheckout's own AJAX that belongs to the form posts the field too (the Items block's quantity stepper, the extra fields' remembered values) and follows it the same way. Every other request, the page render included, picks the layout as before.
+- Because a form keeps the renderer it started with, a render failure on the page or in an `update_order_review` fragment affects only that request: it is reported, not recorded as blocking, and a failing fragment swaps nothing. Only a fatal error mid-render, which can't fall back in its own request, and output with no Place order button still block the layout for later requests.
 
 ## Consequences
 

@@ -15,6 +15,7 @@ const checkoutProblemWireSchema = z
   .object({
     reason: z.string(),
     detail: z.string().nullable(),
+    blocks: z.boolean(),
     layout_id: z.number().int().nullable(),
     layout_title: z.string().nullable(),
   })
@@ -105,6 +106,8 @@ export type StoreEnvironment = {
 export type CheckoutProblem = {
   reason: string;
   detail: string | null;
+  /** False only for a render failure that isn't the breaker: with safe mode on, the layout is still served. */
+  blocks: boolean;
   layoutId: number | null;
   layoutTitle: string | null;
 };

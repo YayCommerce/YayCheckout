@@ -153,6 +153,7 @@ export function useArchiveLayoutMutation() {
     mutationFn: archiveLayout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_KEY });
     },
   });
 }
@@ -213,6 +214,7 @@ export function useRenameLayoutMutation() {
     onSuccess: (_layout, { id }) => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.detail(id) });
+      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_KEY });
     },
   });
 }
@@ -226,6 +228,7 @@ export function useResetLayoutMutation() {
     mutationFn: resetLayout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
+      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_KEY });
     },
   });
 }

@@ -118,8 +118,8 @@ class CheckoutFragments {
 
     /**
      * Swaps the fragments of this layout's sections for this layout's HTML.
-     * A layout that throws here is recorded like one that throws on the page (CheckoutPage::absorb()); with
-     * safe mode on, the response reloads the checkout instead, which then falls back.
+     * A layout that throws here is reported like one that throws on the page (CheckoutPage::absorb()); with
+     * safe mode on, the response swaps nothing and the form keeps what it shows.
      *
      * @throws \Throwable A layout failure during a preview, or with safe mode off.
      */
@@ -140,20 +140,13 @@ class CheckoutFragments {
                 ob_end_clean();
             }
 
-            if ( ! CheckoutPage::get_instance()->absorb( $layout, $ex, true ) ) {
+            if ( ! CheckoutPage::get_instance()->absorb( $layout, $ex, false ) ) {
                 throw $ex;
             }
 
-            // Blocking, unlike a page failure: the reload must land on WooCommerce's form, or it would fail again.
-            // Sent here: the filter runs after WooCommerce reads `reload`.
-            wp_send_json(
-                [
-                    'result'    => 'success',
-                    'messages'  => '',
-                    'reload'    => true,
-                    'fragments' => $fragments,
-                ]
-            );
+            // Reported, not blocking, as on the page: it may fail for this cart only. The form keeps its layout
+            // (CheckoutPage::posted_layout_id()), so nothing is swapped: WooCommerce's own fragments don't fit it.
+            return [];
         }
     }
 

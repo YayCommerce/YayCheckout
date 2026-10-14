@@ -20,11 +20,9 @@ defined( 'ABSPATH' ) || exit;
 class CheckoutHealth {
 
     public static function problem( Layout $layout ): string {
-        // Its last render failed with this content, or its markup may not be published, or the store has a problem.
-        $own = CheckoutPage::render_failure( $layout );
-        if ( '' === $own ) {
-            $own = LayoutMarkupReader::publish_error( $layout->content );
-        }
+        // Its last render failed with this content and blocks it, or its markup may not be published, or the store has a problem.
+        $failure = CheckoutPage::render_failure( $layout );
+        $own     = null !== $failure && $failure['blocks'] ? $failure['reason'] : LayoutMarkupReader::publish_error( $layout->content );
 
         return '' !== $own ? $own : self::store_problem();
     }
@@ -32,11 +30,13 @@ class CheckoutHealth {
     /**
      * What the admin reports: every problem the storefront's rules find, safe mode on or off. A layout's
      * own problems come first, one per active layout, each naming it; a store-level problem follows and
-     * belongs to no layout. A render failure reads as one plain sentence, its recorded message, which may be a
-     * PHP error, kept as `detail` for support; `detail` is null otherwise. Empty while no layout is active,
-     * since the storefront then serves WooCommerce's checkout anyway.
+     * belongs to no layout. A layout's markup problem comes before its render failure, as the merchant can fix it.
+     * A render failure reads as one plain sentence, its recorded message, which may be a PHP error, kept as
+     * `detail` for support; `detail` is null otherwise. `blocks` is false only for a render failure that is not
+     * the breaker: with safe mode on, the layout is still served. Empty while no layout is active, since the
+     * storefront then serves WooCommerce's checkout anyway.
      *
-     * @return array<int, array{reason: string, detail: ?string, layout_id: ?int, layout_title: ?string}>
+     * @return array<int, array{reason: string, detail: ?string, blocks: bool, layout_id: ?int, layout_title: ?string}>
      */
     public static function reported_problems(): array {
         $layouts = ( new LayoutRepository() )->active_layouts();
@@ -48,19 +48,22 @@ class CheckoutHealth {
 
         // Pro: the shopper decides which active layout serves, so any one of them can be the broken one.
         foreach ( $layouts as $layout ) {
-            $failure = CheckoutPage::recorded_failure( $layout );
-            if ( '' === $failure ) {
-                $own = LayoutMarkupReader::publish_error( $layout->content );
-            } elseif ( '' !== CheckoutPage::render_failure( $layout ) ) {
-                $own = __( 'This layout failed to load on the checkout page.', 'yaycheckout' );
-            } else {
-                // Not blocking: the layout is still served, and failed for one request.
-                $own = __( 'This layout failed to load for a shopper recently.', 'yaycheckout' );
+            $failure = CheckoutPage::render_failure( $layout );
+            $own     = LayoutMarkupReader::publish_error( $layout->content );
+            $blocks  = true;
+
+            if ( '' === $own && null !== $failure ) {
+                $blocks = $failure['blocks'];
+                $own    = $blocks
+                    ? __( 'This layout failed to load on the checkout page.', 'yaycheckout' )
+                    : __( 'This layout failed to load for a shopper recently.', 'yaycheckout' );
             }
+
             if ( '' !== $own ) {
                 $problems[] = [
                     'reason'       => $own,
-                    'detail'       => '' !== $failure ? $failure : null,
+                    'detail'       => null !== $failure ? $failure['reason'] : null,
+                    'blocks'       => $blocks,
                     'layout_id'    => $layout->id,
                     'layout_title' => $layout->title,
                 ];
@@ -72,6 +75,7 @@ class CheckoutHealth {
             $problems[] = [
                 'reason'       => $store,
                 'detail'       => null,
+                'blocks'       => true,
                 'layout_id'    => null,
                 'layout_title' => null,
             ];

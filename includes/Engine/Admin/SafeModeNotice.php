@@ -35,7 +35,8 @@ class SafeModeNotice {
         $problem = $problems[0];
         $more    = count( $problems ) - 1;
 
-        $message = ( new SettingsRepository() )->is_safe_mode()
+        // A one-off render failure doesn't hide the layout, so only a blocking problem says shoppers are on WooCommerce's.
+        $message = ( new SettingsRepository() )->is_safe_mode() && $problem['blocks']
             /* translators: %s: why the layout is not served. */
             ? __( 'Shoppers are getting the WooCommerce checkout: %s', 'yaycheckout' )
             /* translators: %s: why the layout may break checkout. */

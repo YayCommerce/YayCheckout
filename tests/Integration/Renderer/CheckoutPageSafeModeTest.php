@@ -113,25 +113,14 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
         $this->assertSame( [], CheckoutHealth::reported_problems() );
     }
 
-    public function test_fragment_failure_reloads_the_checkout_and_records(): void {
+    public function test_fragment_failure_swaps_nothing_and_does_not_block(): void {
         $id = LayoutFactory::serve( LayoutFactory::checkout_markup() );
-        add_action( 'woocommerce_review_order_before_payment', [ self::class, 'throw_fragboom_then_answer_as_ajax' ] );
-        add_filter( 'wp_die_ajax_handler', [ $this, 'get_wp_die_handler' ] );
-        $fragments = [ '.woocommerce-checkout-payment' => '<div>stock</div>' ];
+        add_action( 'woocommerce_review_order_before_payment', [ self::class, 'throw_fragboom' ] );
 
-        ob_start();
-        try {
-            CheckoutFragments::get_instance()->fragments( $fragments );
-            $this->fail( 'Expected the response to be sent.' );
-        } catch ( \WPDieException $e ) {
-            $response = json_decode( ob_get_clean(), true );
-        }
-
-        $this->assertTrue( $response['reload'] );
-        $this->assertSame( $fragments, $response['fragments'] );
+        $this->assertSame( [], CheckoutFragments::get_instance()->fragments( [ '.woocommerce-checkout-payment' => '<div>stock</div>' ] ) );
         $this->assertSame( 'fragboom', self::failure( $id ) );
         LayoutFactory::forget_served_layout();
-        $this->assertNull( CheckoutPage::get_instance()->layout() );
+        $this->assertNotNull( CheckoutPage::get_instance()->layout() );
     }
 
     public function test_fragment_failure_rethrows_with_safe_mode_off(): void {
@@ -182,17 +171,6 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
     }
 
     /**
-     * As throw_fragboom(), then makes the rest of the request an AJAX one, so wp_send_json() ends in wp_die().
-     * Not set up front: the Payment fragment fires its action only outside AJAX.
-     *
-     * @throws \RuntimeException Always.
-     */
-    public static function throw_fragboom_then_answer_as_ajax(): void {
-        add_filter( 'wp_doing_ajax', '__return_true' );
-        self::throw_fragboom();
-    }
-
-    /**
      * Hooked to a block render, so the layout fails with a message past the length limit.
      *
      * @throws \RuntimeException Always.
@@ -202,7 +180,7 @@ class CheckoutPageSafeModeTest extends \WP_UnitTestCase {
     }
 
     private static function failure( int $id ): string {
-        return CheckoutPage::recorded_failure( ( new LayoutRepository() )->find( $id ) );
+        return CheckoutPage::render_failure( ( new LayoutRepository() )->find( $id ) )['reason'] ?? '';
     }
 
     private static function boom_markup(): string {

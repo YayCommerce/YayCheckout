@@ -96,9 +96,13 @@ class CheckoutPage {
     public function page_template( string $template ): string {
         $layout = $this->layout();
 
-        // Stood down already: a theme or plugin applied template_include again.
+        // A theme or plugin applied template_include again: answer as the first time, without rendering twice.
         if ( null === $layout ) {
             return $template;
+        }
+
+        if ( '' !== $this->html ) {
+            return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php';
         }
 
         $preview   = PreviewRequest::get_instance()->active();
@@ -151,24 +155,25 @@ class CheckoutPage {
         return $this->html;
     }
 
-    /** The breaker: why $layout's failure blocks it, while its content is unchanged since and FAILURE_TTL has not passed, or ''. */
-    public static function render_failure( Layout $layout ): string {
-        $failure = self::live_failure( $layout );
-
-        return null !== $failure && ! empty( $failure['blocks'] ) ? (string) $failure['reason'] : '';
-    }
-
-    /** For the admin: why $layout last failed to render, blocking or not, under the same conditions, or ''. */
-    public static function recorded_failure( Layout $layout ): string {
-        $failure = self::live_failure( $layout );
-
-        return null !== $failure ? (string) $failure['reason'] : '';
-    }
-
-    private static function live_failure( Layout $layout ): ?array {
+    /**
+     * $layout's last render failure, while its content is unchanged since and FAILURE_TTL has not passed, or null.
+     * One whose `blocks` is set is the breaker.
+     *
+     * @return array{hash: string, reason: string, time: int, blocks: bool}|null
+     */
+    public static function render_failure( Layout $layout ): ?array {
         $failure = self::live_failures()[ $layout->id ] ?? null;
 
-        return null !== $failure && md5( $layout->content ) === ( $failure['hash'] ?? '' ) ? $failure : null;
+        if ( null === $failure || md5( $layout->content ) !== ( $failure['hash'] ?? '' ) ) {
+            return null;
+        }
+
+        return [
+            'hash'   => (string) $failure['hash'],
+            'reason' => (string) ( $failure['reason'] ?? '' ),
+            'time'   => (int) $failure['time'],
+            'blocks' => ! empty( $failure['blocks'] ),
+        ];
     }
 
     /** The recorded failures still within FAILURE_TTL, by layout id. */
@@ -263,12 +268,12 @@ class CheckoutPage {
     }
 
     /**
-     * For a request that carries the checkout form, the FORM_FIELD it posted: the layout's id, or 0 for
-     * WooCommerce's own form, which has none. Null for any other request.
+     * For a request that carries the checkout form, or posts its FORM_FIELD as YayCheckout's own AJAX does,
+     * the id posted: the layout's, or 0 for WooCommerce's own form, which has none. Null for any other request.
      */
     private function posted_layout_id(): ?int {
         // phpcs:disable WordPress.Security.NonceVerification -- Read only to pick the renderer; WooCommerce verifies the form's nonce.
-        if ( isset( $_POST['woocommerce-process-checkout-nonce'] ) ) {
+        if ( isset( $_POST[ self::FORM_FIELD ] ) || isset( $_POST['woocommerce-process-checkout-nonce'] ) ) {
             $form = $_POST;
         } elseif ( 'update_order_review' === sanitize_key( wp_unslash( $_GET['wc-ajax'] ?? '' ) ) && isset( $_POST['post_data'] ) ) {
             wp_parse_str( wp_unslash( (string) $_POST['post_data'] ), $form ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Parsed, then only FORM_FIELD is read through absint().
@@ -323,9 +328,9 @@ class CheckoutPage {
      * Expired failures are dropped on the way.
      */
     private function record_failure( Layout $layout, string $reason, bool $blocks ): void {
-        $live = self::live_failure( $layout );
+        $live = self::render_failure( $layout );
 
-        if ( null !== $live && ( ! empty( $live['blocks'] ) || ! $blocks ) ) {
+        if ( null !== $live && ( $live['blocks'] || ! $blocks ) ) {
             return;
         }
 

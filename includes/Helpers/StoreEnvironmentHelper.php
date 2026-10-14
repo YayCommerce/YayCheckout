@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 class StoreEnvironmentHelper {
 
     /**
-     * @return array{store_type: string, woocommerce_version: string, wordpress_version: string, theme: array{name: string, version: string, is_block_theme: bool}, safe_mode: bool, checkout_problems: array<int, array{reason: string, detail: ?string, layout_id: ?int, layout_title: ?string}>}
+     * @return array{store_type: string, woocommerce_version: string, wordpress_version: string, theme: array{name: string, version: string, is_block_theme: bool}, safe_mode: bool, checkout_problems: array<int, array{reason: string, detail: ?string, blocks: bool, layout_id: ?int, layout_title: ?string}>}
      */
     public static function describe(): array {
         $theme = wp_get_theme();

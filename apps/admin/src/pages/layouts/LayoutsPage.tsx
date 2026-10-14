@@ -68,7 +68,11 @@ function CheckoutProblemsAlert() {
   const problems = data?.checkoutProblems ?? [];
   if (!data || problems.length === 0) return null;
 
-  const layoutCount = problems.filter((problem) => problem.layoutId !== null).length;
+  // With safe mode on, only a blocking problem hides a layout; a one-off render failure leaves it served.
+  const layoutCount = problems.filter(
+    (problem) => problem.layoutId !== null && (!data.safeMode || problem.blocks),
+  ).length;
+  const fallsBack = problems.some((problem) => problem.blocks);
   const title =
     layoutCount === 0
       ? __('Your checkout needs attention', 'yaycheckout')
@@ -99,9 +103,11 @@ function CheckoutProblemsAlert() {
         <div className="space-y-0.5">
           <p className="text-sm font-medium">{title}</p>
           <p className="text-muted-foreground text-sm">
-            {data.safeMode
-              ? __('Shoppers get the standard WooCommerce checkout until it is fixed.', 'yaycheckout')
-              : __('Safe mode is off, so shoppers still get it. Fix it or turn safe mode on.', 'yaycheckout')}
+            {!data.safeMode
+              ? __('Safe mode is off, so shoppers still get it. Fix it or turn safe mode on.', 'yaycheckout')
+              : fallsBack
+                ? __('Shoppers get the standard WooCommerce checkout until it is fixed.', 'yaycheckout')
+                : __('Your layouts are still served to shoppers.', 'yaycheckout')}
           </p>
         </div>
       </div>

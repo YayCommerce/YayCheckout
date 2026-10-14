@@ -15,11 +15,13 @@ function Rendering({ safeMode, checkoutProblems }: StoreEnvironment) {
 
   return (
     <div className="text-destructive space-y-1">
-      {checkoutProblems.map(({ reason, detail, layoutId, layoutTitle }) => (
+      {checkoutProblems.map(({ reason, detail, blocks, layoutId, layoutTitle }) => (
         <p key={`${layoutId ?? 'store'}-${reason}`} title={detail ?? undefined}>
           {sprintf(
             /* translators: %s: why the layout is not served, or may break checkout */
-            safeMode ? __('Native checkout — %s', 'yaycheckout') : __('YayCheckout layout — %s', 'yaycheckout'),
+            safeMode && blocks
+              ? __('Native checkout — %s', 'yaycheckout')
+              : __('YayCheckout layout — %s', 'yaycheckout'),
             reason,
           )}
           {layoutId !== null && (
