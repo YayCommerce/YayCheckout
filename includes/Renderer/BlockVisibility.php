@@ -7,13 +7,15 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Shows or hides any block in a layout by the open step, the cart and login (the block attribute
- * yaycheckoutVisibility). PHP owns the rules; packages/blocks/src/shared/visibility-rules.ts mirrors
+ * Shows or hides any block in a layout by the open step, the cart, login and whether a watchable block
+ * is empty (the block attribute yaycheckoutVisibility; BlockEmptiness owns what empty means). PHP owns the rules; packages/blocks/src/shared/visibility-rules.ts mirrors
  * normalize() and is_visible() for the storefront script and the editor preview.
  *
  * The server decides each block with step 1 open and prints a failing block with HIDDEN_CLASS. Every
  * conditional block carries its cleaned setting in DATA_ATTR, and the footer prints the cart state, which
  * update_order_review swaps as a fragment, so the storefront script re-decides on step and cart changes.
+ * A setting with a "block" rule can't be decided until its target renders, which may be later in the
+ * layout, so finalize() decides it over the whole layout's HTML.
  */
 class BlockVisibility {
 
@@ -44,10 +46,13 @@ class BlockVisibility {
     public const EXCLUDED = [ 'yaycheckout/checkout', 'yaycheckout/steps', 'yaycheckout/step' ];
 
     /** Mirrored by RULE_TYPES in visibility-rules.ts. */
-    public const RULE_TYPES = [ 'step', 'needs_shipping', 'has_coupon', 'subtotal', 'logged_in' ];
+    public const RULE_TYPES = [ 'step', 'needs_shipping', 'has_coupon', 'subtotal', 'logged_in', 'block' ];
 
     /** Set once filter_block() decorated a block, so the footer prints the state the script reads. */
     private $rendered = false;
+
+    /** Set once filter_block() left a block with a "block" rule for finalize() to decide. */
+    private $deferred = false;
 
     protected function __construct() {
         add_filter( 'render_block', [ $this, 'filter_block' ], 10, 2 );
@@ -79,15 +84,19 @@ class BlockVisibility {
         foreach ( $rules as $rule ) {
             $type = is_array( $rule ) ? ( $rule['type'] ?? null ) : null;
 
-            if ( ! in_array( $type, self::RULE_TYPES, true ) || isset( $clean[ $type ] ) ) {
+            if ( ! in_array( $type, self::RULE_TYPES, true ) ) {
                 return null;
             }
 
-            $clean[ $type ] = self::normalize_rule( $type, $rule );
+            $kept = self::normalize_rule( $type, $rule );
+            // Each type once, except "block", which may repeat for different blocks.
+            $key = null !== $kept && 'block' === $type ? 'block:' . $kept['block'] : $type;
 
-            if ( null === $clean[ $type ] ) {
+            if ( null === $kept || isset( $clean[ $key ] ) ) {
                 return null;
             }
+
+            $clean[ $key ] = $kept;
         }
 
         return [
@@ -120,10 +129,11 @@ class BlockVisibility {
      * @param array $state      As state() returns it.
      * @param int   $step       The open step, 1-based.
      * @param int   $step_count The layout's steps; 0 without a Steps block, when no step rule matches.
+     * @param array $empty_ids  The blockIds that are empty, as BlockEmptiness::empty_ids() returns them.
      */
-    public static function is_visible( array $setting, array $state, int $step, int $step_count ): bool {
+    public static function is_visible( array $setting, array $state, int $step, int $step_count, array $empty_ids = [] ): bool {
         foreach ( $setting['rules'] as $rule ) {
-            if ( ! self::matches( $rule, $state, $step, $step_count ) ) {
+            if ( ! self::matches( $rule, $state, $step, $step_count, $empty_ids ) ) {
                 return 'show' !== $setting['action'];
             }
         }
@@ -133,7 +143,8 @@ class BlockVisibility {
 
     /**
      * Marks a conditional block with its setting for the script, and hides it when it fails with step 1
-     * open. Anything else comes back untouched: no layout, an excluded block, no valid setting, or no HTML.
+     * open; a setting with a "block" rule is left to finalize(). Anything else comes back untouched: no
+     * layout, an excluded block, no valid setting, or no HTML.
      *
      * @param string $block_content Rendered block.
      * @param array  $block         Parsed block.
@@ -159,7 +170,9 @@ class BlockVisibility {
 
         $html->set_attribute( self::DATA_ATTR, wp_json_encode( $setting ) );
 
-        if ( ! self::is_visible( $setting, self::state(), 1, self::step_count() ) ) {
+        if ( [] !== self::block_ids( $setting ) ) {
+            $this->deferred = true;
+        } elseif ( ! self::is_visible( $setting, self::state(), 1, self::step_count() ) ) {
             $html->add_class( self::HIDDEN_CLASS );
         }
 
@@ -168,6 +181,50 @@ class BlockVisibility {
         wp_enqueue_script( self::SCRIPT );
 
         return $html->get_updated_html();
+    }
+
+    /**
+     * Decides the blocks filter_block() left for later, now that every block they point at has rendered,
+     * with step 1 open. The checkout template passes it the whole rendered layout.
+     *
+     * @param string $html The rendered layout.
+     */
+    public function finalize( string $html ): string {
+        if ( ! $this->deferred ) {
+            return $html;
+        }
+
+        $settings = [];
+        $targets  = [];
+        $tags     = new \WP_HTML_Tag_Processor( $html );
+
+        while ( $tags->next_tag() ) {
+            $setting = self::setting_of( $tags->get_attribute( self::DATA_ATTR ) );
+
+            if ( null !== $setting && [] !== self::block_ids( $setting ) ) {
+                $settings[] = $setting;
+                $targets    = array_merge( $targets, self::block_ids( $setting ) );
+            }
+        }
+
+        if ( [] === $settings ) {
+            return $html;
+        }
+
+        $empty_ids  = BlockEmptiness::empty_ids( $html, array_values( array_unique( $targets ) ) );
+        $state      = self::state();
+        $step_count = self::step_count();
+        $tags       = new \WP_HTML_Tag_Processor( $html );
+
+        while ( $tags->next_tag() ) {
+            $setting = self::setting_of( $tags->get_attribute( self::DATA_ATTR ) );
+
+            if ( null !== $setting && [] !== self::block_ids( $setting ) && ! self::is_visible( $setting, $state, 1, $step_count, $empty_ids ) ) {
+                $tags->add_class( self::HIDDEN_CLASS );
+            }
+        }
+
+        return $tags->get_updated_html();
     }
 
     /** Prints the state for the script, once a block was decorated. */
@@ -193,6 +250,33 @@ class BlockVisibility {
     /** The state() and the layout's step count as a JSON element. */
     private static function state_element(): string {
         return JsonElementHelper::html( self::STATE_ID, self::state() + [ 'step_count' => self::step_count() ] );
+    }
+
+    /**
+     * The blockIds a setting's "block" rules point at.
+     *
+     * @param array $setting A normalize()d setting.
+     * @return string[]
+     */
+    private static function block_ids( array $setting ): array {
+        $ids = [];
+
+        foreach ( $setting['rules'] as $rule ) {
+            if ( 'block' === $rule['type'] ) {
+                $ids[] = $rule['block'];
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * The setting a DATA_ATTR value holds, or null.
+     *
+     * @param mixed $value The attribute as WP_HTML_Tag_Processor returns it.
+     */
+    private static function setting_of( $value ): ?array {
+        return is_string( $value ) ? self::normalize( json_decode( $value, true ) ) : null;
     }
 
     /** The steps in the served layout's first Steps block; 0 without one. Memoised by layout_titles(). */
@@ -228,6 +312,21 @@ class BlockVisibility {
             ];
         }
 
+        if ( 'block' === $type ) {
+            $block = $rule['block'] ?? null;
+            $is    = $rule['is'] ?? null;
+
+            if ( ! is_string( $block ) || ! preg_match( BlockEmptiness::BLOCK_ID_PATTERN, $block ) || ! in_array( $is, [ 'empty', 'not_empty' ], true ) ) {
+                return null;
+            }
+
+            return [
+                'type'  => $type,
+                'block' => $block,
+                'is'    => $is,
+            ];
+        }
+
         if ( 'subtotal' === $type ) {
             $op     = $rule['op'] ?? null;
             $amount = $rule['amount'] ?? null;
@@ -247,12 +346,15 @@ class BlockVisibility {
     }
 
     /**
-     * True when one rule holds for the state and the open step.
+     * True when one rule holds for the state, the open step and the empty blocks.
      *
-     * @param array $rule A normalize()d rule.
+     * @param array    $rule  A normalize()d rule.
+     * @param string[] $empty_ids The blockIds that are empty.
      */
-    private static function matches( array $rule, array $state, int $step, int $step_count ): bool {
+    private static function matches( array $rule, array $state, int $step, int $step_count, array $empty_ids ): bool {
         switch ( $rule['type'] ) {
+            case 'block':
+                return in_array( $rule['block'], $empty_ids, true ) === ( 'empty' === $rule['is'] );
             case 'step':
                 return $step_count > 0 && ( $rule['step'] === $step || ( 'last' === $rule['step'] && $step === $step_count ) );
             case 'subtotal':

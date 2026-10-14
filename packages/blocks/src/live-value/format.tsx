@@ -1,4 +1,5 @@
-import { RichTextToolbarButton, store as blockEditorStore } from '@wordpress/block-editor';
+import { BlockControls, store as blockEditorStore } from '@wordpress/block-editor';
+import { ToolbarButton } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -51,15 +52,18 @@ function Edit( { value, onChange, onFocus, contentRef, isObjectActive, activeObj
 
 	return (
 		<>
-			<RichTextToolbarButton
-				icon="database"
-				title={ __( 'Live value', 'yaycheckout' ) }
-				isActive={ isObjectActive }
-				onClick={ () => {
-					setDismissed( null );
-					setAdding( true );
-				} }
-			/>
+			{ /* In the inline group beside Bold and Link, not the More dropdown, so merchants see it without opening one. */ }
+			<BlockControls group="inline">
+				<ToolbarButton
+					icon="database"
+					label={ __( 'Live value', 'yaycheckout' ) }
+					isPressed={ isObjectActive }
+					onClick={ () => {
+						setDismissed( null );
+						setAdding( true );
+					} }
+				/>
+			</BlockControls>
 			{ ( adding || editing ) && (
 				<LiveValuePopover
 					// A fresh form for each chip, and for a new one.
