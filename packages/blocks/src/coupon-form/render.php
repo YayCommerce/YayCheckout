@@ -64,7 +64,7 @@ $yaycheckout_button = '' !== trim( $content )
 $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, 'yaycheckout-coupon-code', false );
 
 ?>
-<div <?php echo \YayCheckout\Renderer\HideWhenEmpty::wrapper( $yaycheckout_wrapper_attrs, $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+<div <?php echo \YayCheckout\Renderer\BlockEmptiness::wrapper( $yaycheckout_wrapper_attrs, $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php
     echo \YayCheckout\Services\Disclosure::open_if( $attributes, 'yaycheckout-coupon-code', __( 'Coupon code', 'yaycheckout' ), $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
     ?>

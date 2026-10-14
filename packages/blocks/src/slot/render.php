@@ -24,12 +24,12 @@ if ( '' !== $yaycheckout_slot_name ) {
 $yaycheckout_slot_content = (string) ob_get_clean();
 
 // Prints nothing when no hook printed anything, so the merchant's padding, border or background don't draw an
-// empty box. HideWhenEmpty counts a block that prints nothing as empty.
+// empty box. BlockEmptiness counts a block that prints nothing as empty.
 if ( '' === trim( $yaycheckout_slot_content ) ) {
     return;
 }
 
-$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
+$yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper(
     [
         'class'     => 'yaycheckout-slot',
         'data-slot' => $yaycheckout_slot_name,

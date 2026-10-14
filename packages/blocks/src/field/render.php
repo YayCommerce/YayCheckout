@@ -28,10 +28,10 @@ if ( '' === $yaycheckout_key ) {
     $yaycheckout_key = 'yaycheckout_field_' . $yaycheckout_field_i;
 }
 
-$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
+$yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper(
     array(
-        'class'                                          => 'yaycheckout-field form-row',
-        \YayCheckout\Renderer\HideWhenEmpty::LOCALE_ATTR => '1',
+        'class'                                           => 'yaycheckout-field form-row',
+        \YayCheckout\Renderer\BlockEmptiness::LOCALE_ATTR => '1',
     ),
     $attributes,
     \YayCheckout\Renderer\CheckoutFieldDefaults::hidden_for_country( $yaycheckout_key )

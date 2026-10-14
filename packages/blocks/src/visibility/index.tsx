@@ -1,12 +1,15 @@
 /**
  * The block visibility setting in the editor. BlockRegistry enqueues it in every editor, so markup saved
- * in a layout stays valid anywhere; the Visibility panel and the preview sidebar show in the layout editor only.
+ * in a layout stays valid anywhere; the Visibility panel, the preview sidebar and the blockId keeper run
+ * in the layout editor only.
  */
 import { InspectorControls, store as blockEditorStore } from '@wordpress/block-editor';
+import { getBlockType, hasBlockSupport } from '@wordpress/blocks';
 import {
 	Button,
 	Flex,
 	FlexBlock,
+	Notice,
 	PanelBody,
 	SelectControl,
 	ToggleControl,
@@ -32,6 +35,7 @@ import {
 	EXCLUDED,
 	isVisible,
 	normalize,
+	WATCHABLE_SUPPORT,
 	type VisibilityRule,
 	type VisibilitySetting,
 	type VisibilityState,
@@ -42,7 +46,17 @@ import './editor.css';
 type RuleType = VisibilityRule[ 'type' ];
 
 /** A rule as the panel edits it: the stored shape, which normalize() may still reject. */
-type DraftRule = { type: RuleType; step?: number | 'last'; op?: 'gte' | 'lt'; amount?: number };
+type DraftRule = {
+	type: RuleType;
+	step?: number | 'last';
+	op?: 'gte' | 'lt';
+	amount?: number;
+	block?: string;
+	is?: 'empty' | 'not_empty';
+};
+
+/** A watchable block a "block" rule can point at; blockId is empty until one is given. */
+type Target = { clientId: string; blockId: string; label: string };
 
 type DraftSetting = { action: 'show' | 'hide'; rules: DraftRule[] };
 
@@ -67,7 +81,51 @@ function typeLabels(): Record< RuleType, string > {
 		has_coupon: __( 'Coupon applied', 'yaycheckout' ),
 		subtotal: __( 'Subtotal', 'yaycheckout' ),
 		logged_in: __( 'Logged in', 'yaycheckout' ),
+		block: __( 'Block', 'yaycheckout' ),
 	};
+}
+
+/** A new blockId. Mirrors BlockEmptiness::BLOCK_ID_PATTERN in PHP: 8 characters from [a-z0-9]. */
+function newBlockId(): string {
+	const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+	const bytes = crypto.getRandomValues( new Uint8Array( 8 ) );
+
+	return Array.from( bytes, ( byte ) => chars[ byte % chars.length ] ).join( '' );
+}
+
+/** The watchable blocks in the layout, in order, each named by its title and which Slot or Field it is. */
+function targetsIn( registrySelect: typeof selectNow ): Target[] {
+	const { getBlockName, getBlockAttributes, getClientIdsWithDescendants } = registrySelect( blockEditorStore );
+
+	return ( getClientIdsWithDescendants() as string[] )
+		.filter( ( id ) => hasBlockSupport( getBlockName( id ), WATCHABLE_SUPPORT ) )
+		.map( ( id ) => {
+			const name = getBlockName( id );
+			const attrs = getBlockAttributes( id ) ?? {};
+			const title = getBlockType( name )?.title ?? name;
+			// A layout can hold several Slots or Fields, and billing and shipping share labels.
+			const fieldLabel = plainText( attrs.label );
+			let detail = String( attrs.slotName ?? '' );
+
+			if ( attrs.fieldKey ) {
+				detail = fieldLabel ? `${ fieldLabel } (${ attrs.fieldKey })` : String( attrs.fieldKey );
+			} else if ( Array.isArray( attrs.fieldKeys ) ) {
+				detail = attrs.fieldKeys.join( ', ' );
+			}
+
+			return {
+				clientId: id,
+				blockId: typeof attrs.blockId === 'string' ? attrs.blockId : '',
+				label: detail ? `${ title } · ${ detail }` : title,
+			};
+		} );
+}
+
+/** targetsIn(), rebuilt only when a watchable block is added, removed, renamed or given a blockId. */
+function useTargets(): Target[] {
+	const targets = useSelect( ( select ) => JSON.stringify( targetsIn( select ) ), [] );
+
+	return useMemo( () => JSON.parse( targets ) as Target[], [ targets ] );
 }
 
 /** The Step blocks of the layout's first Steps block, in order; empty without one. */
@@ -123,9 +181,13 @@ function toAmount( value?: string ): number {
 	return Number.isFinite( amount ) && amount >= 0 ? amount : 0;
 }
 
-function newRule( type: RuleType, steps: StepOption[] ): DraftRule {
+function newRule( type: RuleType, steps: StepOption[], block = '' ): DraftRule {
 	if ( type === 'step' ) {
 		return { type, step: steps[ 0 ].value };
+	}
+
+	if ( type === 'block' ) {
+		return { type, block, is: 'empty' };
 	}
 
 	return type === 'subtotal' ? { type, op: 'gte', amount: 0 } : { type };
@@ -156,16 +218,28 @@ function CurrencySuffix() {
 
 type RuleRowProps = {
 	rule: DraftRule;
-	used: RuleType[];
+	types: RuleType[];
 	steps: StepOption[];
+	/** The targets this row can pick: every one not picked by another row. */
+	targets: Target[];
+	/** The blockId of a target, given one first if it has none. */
+	blockIdOf: ( target: Target ) => string;
+	/** A new rule of a type, with a free target for "block". */
+	ruleFor: ( type: RuleType ) => DraftRule;
 	onChange: ( rule: DraftRule ) => void;
 	onRemove: () => void;
 };
 
-function RuleRow( { rule, used, steps, onChange, onRemove }: RuleRowProps ) {
+/** A target select's value: the blockId, or the clientId of a block that has none yet. */
+function targetValue( target: Target ): string {
+	return target.blockId || `client:${ target.clientId }`;
+}
+
+function RuleRow( { rule, types, steps, targets, blockIdOf, ruleFor, onChange, onRemove }: RuleRowProps ) {
 	const labels = typeLabels();
 	const stepValues = steps.map( ( option ) => String( option.value ) );
 	const stepValue = String( rule.step ?? '' );
+	const block = rule.block ?? '';
 
 	return (
 		<div className="yaycheckout-visibility__rule">
@@ -177,9 +251,9 @@ function RuleRow( { rule, used, steps, onChange, onRemove }: RuleRowProps ) {
 						label={ __( 'Condition', 'yaycheckout' ) }
 						value={ rule.type }
 						options={ ( Object.keys( labels ) as RuleType[] )
-							.filter( ( type ) => type === rule.type || ! used.includes( type ) )
+							.filter( ( type ) => type === rule.type || types.includes( type ) )
 							.map( ( type ) => ( { value: type, label: labels[ type ] } ) ) }
-						onChange={ ( type: string ) => onChange( newRule( type as RuleType, steps ) ) }
+						onChange={ ( type: string ) => onChange( ruleFor( type as RuleType ) ) }
 					/>
 				</FlexBlock>
 				<Button __next40pxDefaultSize icon="no-alt" label={ __( 'Remove condition', 'yaycheckout' ) } onClick={ onRemove } />
@@ -205,6 +279,39 @@ function RuleRow( { rule, used, steps, onChange, onRemove }: RuleRowProps ) {
 					] }
 					onChange={ ( value: string ) => onChange( { ...rule, step: parseStep( value ) } ) }
 				/>
+			) }
+			{ rule.type === 'block' && (
+				<>
+					<SelectControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
+						label={ __( 'Block', 'yaycheckout' ) }
+						value={ block }
+						options={ [
+							...targets.map( ( target ) => ( { value: targetValue( target ), label: target.label } ) ),
+							// A block deleted since: kept selected, so the merchant sees it rather than another block.
+							...( targets.some( ( target ) => target.blockId === block )
+								? []
+								: [ { value: block, label: __( '(block removed)', 'yaycheckout' ) } ] ),
+						] }
+						onChange={ ( value: string ) => {
+							const target = targets.find( ( candidate ) => targetValue( candidate ) === value );
+
+							onChange( { ...rule, block: target ? blockIdOf( target ) : value } );
+						} }
+					/>
+					<SelectControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
+						label={ __( 'Block is', 'yaycheckout' ) }
+						value={ rule.is ?? 'empty' }
+						options={ [
+							{ value: 'empty', label: __( 'empty', 'yaycheckout' ) },
+							{ value: 'not_empty', label: __( 'not empty', 'yaycheckout' ) },
+						] }
+						onChange={ ( is: string ) => onChange( { ...rule, is: is as 'empty' | 'not_empty' } ) }
+					/>
+				</>
 			) }
 			{ rule.type === 'subtotal' && (
 				<Flex align="flex-end">
@@ -238,14 +345,57 @@ function RuleRow( { rule, used, steps, onChange, onRemove }: RuleRowProps ) {
 	);
 }
 
-function VisibilityPanel( { attributes, setAttributes }: LayoutPanelProps ) {
+/** Whether a block inside clientId, other than the targets, is a required field. */
+function useHasRequiredField( clientId: string, targets: string[] ): boolean {
+	return useSelect(
+		( select ) => {
+			const { getBlockName, getBlockAttributes, getClientIdsOfDescendants } = select( blockEditorStore );
+
+			// Any block whose block.json declares `required` (Field, Email, Extra field), except a target: a
+			// Field this block depends on hides only when its own country hides it.
+			return ( getClientIdsOfDescendants( [ clientId ] ) as string[] ).some( ( id ) => {
+				const attrs = getBlockAttributes( id ) ?? {};
+
+				return (
+					! targets.includes( String( attrs.blockId ?? '' ) ) &&
+					!! getBlockType( getBlockName( id ) )?.attributes?.required &&
+					attrs.required === true
+				);
+			} );
+		},
+		[ clientId, targets.join( ' ' ) ]
+	);
+}
+
+function VisibilityPanel( { clientId, attributes, setAttributes }: LayoutPanelProps ) {
 	const draft = draftOf( attributes[ ATTRIBUTE ] );
 	const steps = useStepOptions();
+	const targets = useTargets();
+	const { updateBlockAttributes } = useDispatch( blockEditorStore );
 
 	const write = ( next: DraftSetting | null ) => setAttributes( { [ ATTRIBUTE ]: next ?? undefined } );
 	const rules = draft?.rules ?? [];
-	const used = rules.map( ( rule ) => rule.type );
-	const unused = ( Object.keys( typeLabels() ) as RuleType[] ).filter( ( type ) => ! used.includes( type ) );
+	const picked = rules.flatMap( ( rule ) => ( rule.type === 'block' && rule.block ? [ rule.block ] : [] ) );
+	const free = targets.filter( ( target ) => target.blockId === '' || ! picked.includes( target.blockId ) );
+	const hasRequiredField = useHasRequiredField( clientId, picked );
+	// Each type once, except "block", offered while a target is left to pick.
+	const unused = ( Object.keys( typeLabels() ) as RuleType[] ).filter( ( type ) =>
+		type === 'block' ? free.length > 0 : ! rules.some( ( rule ) => rule.type === type )
+	);
+
+	const blockIdOf = ( target: Target ): string => {
+		if ( target.blockId !== '' ) {
+			return target.blockId;
+		}
+
+		const blockId = newBlockId();
+
+		updateBlockAttributes( target.clientId, { blockId } );
+
+		return blockId;
+	};
+
+	const ruleFor = ( type: RuleType ): DraftRule => newRule( type, steps, type === 'block' && free[ 0 ] ? blockIdOf( free[ 0 ] ) : '' );
 
 	return (
 		<InspectorControls>
@@ -265,12 +415,17 @@ function VisibilityPanel( { attributes, setAttributes }: LayoutPanelProps ) {
 				{ draft && (
 					<>
 						{ rules.map( ( rule, index ) => (
-							<Fragment key={ rule.type }>
+							<Fragment key={ `${ index }-${ rule.type }` }>
 								{ index > 0 && <p className="yaycheckout-visibility__and">{ __( 'and', 'yaycheckout' ) }</p> }
 								<RuleRow
 									rule={ rule }
-									used={ used }
+									types={ unused }
 									steps={ steps }
+									targets={ targets.filter(
+										( target ) => target.blockId === rule.block || ! picked.includes( target.blockId )
+									) }
+									blockIdOf={ blockIdOf }
+									ruleFor={ ruleFor }
 									onChange={ ( next ) => write( { ...draft, rules: rules.map( ( kept, at ) => ( at === index ? next : kept ) ) } ) }
 									onRemove={ () => write( { ...draft, rules: rules.filter( ( _, at ) => at !== index ) } ) }
 								/>
@@ -280,10 +435,18 @@ function VisibilityPanel( { attributes, setAttributes }: LayoutPanelProps ) {
 							<Button
 								variant="secondary"
 								className="yaycheckout-visibility__add"
-								onClick={ () => write( { ...draft, rules: [ ...rules, newRule( unused[ 0 ], steps ) ] } ) }
+								onClick={ () => write( { ...draft, rules: [ ...rules, ruleFor( unused[ 0 ] ) ] } ) }
 							>
 								{ __( 'Add condition', 'yaycheckout' ) }
 							</Button>
+						) }
+						{ picked.length > 0 && hasRequiredField && (
+							<Notice status="warning" isDismissible={ false }>
+								{ __(
+									"This block contains required fields. If it hides, shoppers can't complete checkout.",
+									'yaycheckout'
+								) }
+							</Notice>
 						) }
 					</>
 				) }
@@ -330,17 +493,16 @@ const previewStore = createReduxStore( STORE, {
 register( previewStore );
 
 /**
- * Whether the preview inputs would hide a block with this setting. With Step off, step conditions are left
- * out, so the preview shows what the other inputs alone decide.
+ * Whether the preview inputs would hide a block with this setting. Block conditions are left out, and with
+ * Step off step conditions too, so the preview shows what the other inputs alone decide.
  */
 function previewHides( setting: VisibilitySetting, preview: Preview, stepCount: number ): boolean {
-	if ( preview.step === 'off' ) {
-		const rules = setting.rules.filter( ( rule ) => rule.type !== 'step' );
+	const rules = setting.rules.filter(
+		( rule ) => rule.type !== 'block' && ( preview.step !== 'off' || rule.type !== 'step' )
+	);
+	const step = preview.step === 'last' ? stepCount : preview.step;
 
-		return rules.length > 0 && ! isVisible( { ...setting, rules }, preview, 0, stepCount );
-	}
-
-	return ! isVisible( setting, preview, preview.step === 'last' ? stepCount : preview.step, stepCount );
+	return rules.length > 0 && ! isVisible( { ...setting, rules }, preview, step === 'off' ? 0 : step, stepCount );
 }
 
 type ListBlockProps = { attributes: Record< string, unknown >; className?: string; wrapperProps?: Record< string, unknown > };
@@ -424,7 +586,10 @@ function PreviewSidebar() {
 				<PanelBody>
 					<VStack spacing={ 4 }>
 						<p className="yaycheckout-visibility__help">
-							{ __( 'Dims the blocks these inputs would hide on the checkout. Nothing here is saved.', 'yaycheckout' ) }
+							{ __(
+								"Dims the blocks these inputs would hide on the checkout. Block conditions aren't previewed. Nothing here is saved.",
+								'yaycheckout'
+							) }
 						</p>
 						<SelectControl
 							__nextHasNoMarginBottom
@@ -472,5 +637,62 @@ function PreviewSidebar() {
 registerPlugin( PLUGIN, {
 	render: function VisibilityPreview() {
 		return useIsLayoutEditor() ? <PreviewSidebar /> : null;
+	},
+} );
+
+/**
+ * A copied block keeps its original's blockId, and neither the server nor the script can tell them apart.
+ * The block that held the id before keeps it, so "block" rules keep pointing at the original; every other
+ * holder gets a new one.
+ */
+function BlockIdKeeper() {
+	const holders = useSelect( ( select ) => {
+		const { getBlockAttributes, getClientIdsWithDescendants } = select( blockEditorStore );
+
+		return JSON.stringify(
+			( getClientIdsWithDescendants() as string[] ).flatMap( ( id ) => {
+				const blockId = getBlockAttributes( id )?.blockId;
+
+				return typeof blockId === 'string' && blockId !== '' ? [ [ id, blockId ] ] : [];
+			} )
+		);
+	}, [] );
+	const { updateBlockAttributes } = useDispatch( blockEditorStore );
+	const previous = useRef( new Map< string, string >() );
+
+	useEffect( () => {
+		const pairs = JSON.parse( holders ) as [ string, string ][];
+		const byId = new Map< string, string[] >();
+
+		pairs.forEach( ( [ clientId, blockId ] ) => byId.set( blockId, [ ...( byId.get( blockId ) ?? [] ), clientId ] ) );
+
+		byId.forEach( ( clientIds, blockId ) => {
+			if ( clientIds.length < 2 ) {
+				return;
+			}
+
+			const before = previous.current.get( blockId );
+			const keeper = before && clientIds.includes( before ) ? before : clientIds[ 0 ];
+
+			clientIds
+				.filter( ( clientId ) => clientId !== keeper )
+				.forEach( ( clientId ) => updateBlockAttributes( clientId, { blockId: newBlockId() } ) );
+		} );
+
+		previous.current = new Map(
+			[ ...byId ].map( ( [ blockId, clientIds ] ) => {
+				const before = previous.current.get( blockId );
+
+				return [ blockId, before && clientIds.includes( before ) ? before : clientIds[ 0 ] ];
+			} )
+		);
+	}, [ holders ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	return null;
+}
+
+registerPlugin( 'yaycheckout-block-id-keeper', {
+	render: function BlockIds() {
+		return useIsLayoutEditor() ? <BlockIdKeeper /> : null;
 	},
 } );
