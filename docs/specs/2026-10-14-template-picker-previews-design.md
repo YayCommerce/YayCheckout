@@ -68,9 +68,10 @@ When a merchant picks a template, in the New layout modal's library step or the 
    The top of the page fills the frame.
 8. On card `:hover` or `:focus-visible`, the preview moves up by `pageHeight × scale − frameHeight` with `transition: transform` over `clamp(2s, pageHeight / 1000 × 1.5s, 6s)` `ease-in-out`, so the bottom of the page ends at the bottom of the frame. On leave or blur it returns in `0.4s`. Under `prefers-reduced-motion: reduce` it doesn't move.
 9. Locked and Coming soon cards:
-   - show their preview at full opacity, with hover-scroll;
+   - veil their preview with `bg-background/60` and a 1px backdrop blur, under a centred dark pill: a lock icon and "Pro" (locked) or a clock icon and "Coming soon" (Coming soon);
+   - on hover or focus, lighten the veil to `bg-background/25` with no blur, and still hover-scroll;
    - cannot be selected (`disabled`, `cursor-not-allowed`, no `opacity-50`);
-   - show `ProTag` in the name row (locked), or the "Coming soon" badge on the preview's top-right corner (Coming soon).
+   - locked cards also show `ProTag` in the name row.
 
    Their `title` tooltips are unchanged.
 10. Pro: the category chips and the "N templates" count stay, and all templates show as cards in one grid. A filter that hides the current selection still calls `onSelect(null)`.

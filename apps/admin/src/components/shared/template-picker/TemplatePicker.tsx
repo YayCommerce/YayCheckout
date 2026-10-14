@@ -1,11 +1,11 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import { Clock, Lock } from 'lucide-react';
 import { __, _n } from '@wordpress/i18n';
 
 import { isPro } from '@/lib/plan';
 import { isPickable, useTemplate, useTemplateLibraryQuery } from '@/lib/queries/template.queries';
 import type { Template } from '@/lib/schema/template.schema';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { focusVariants } from '@/components/ui/variants/focus.variants';
 import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
@@ -31,12 +31,20 @@ function tileTitle(template: Template): string | undefined {
   return undefined;
 }
 
-/** Sits on the preview's corner, so the name keeps the card's width. */
-function ComingSoonBadge() {
+/**
+ * Veils a card that can't be picked and names why, centred on the preview. It lightens on hover so the
+ * page still reads while it scrolls.
+ */
+function UnavailableOverlay({ template }: { template: Template }) {
+  const Icon = template.locked ? Lock : Clock;
+
   return (
-    <Badge variant="dimmed-outline" className="bg-background absolute top-1 right-1">
-      {__('Coming soon', 'yaycheckout')}
-    </Badge>
+    <div className="bg-background/60 group-hover:bg-background/25 group-focus-visible:bg-background/25 pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-[1px] transition-colors duration-300 group-hover:backdrop-blur-none">
+      <span className="bg-foreground text-background inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium shadow-sm">
+        <Icon className="size-3.5" aria-hidden="true" />
+        {template.locked ? __('Pro', 'yaycheckout') : __('Coming soon', 'yaycheckout')}
+      </span>
+    </div>
   );
 }
 
@@ -173,7 +181,9 @@ function TemplateTile({
         isPickable(template) ? 'hover:border-muted-foreground' : 'cursor-not-allowed',
       )}
     >
-      <TemplatePreview template={template}>{isComingSoon(template) && <ComingSoonBadge />}</TemplatePreview>
+      <TemplatePreview template={template}>
+        {!isPickable(template) && <UnavailableOverlay template={template} />}
+      </TemplatePreview>
       <div className="flex w-full items-center justify-between gap-1">
         <span className="text-xs font-medium">{template.name}</span>
         {template.locked && <ProTag />}
