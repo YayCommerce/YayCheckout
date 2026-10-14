@@ -74,6 +74,7 @@ const ENUM_LABELS: Record< string, string > = {
 	medium: __( 'Medium', 'yaycheckout' ),
 	large: __( 'Large', 'yaycheckout' ),
 	floating: __( 'Floating', 'yaycheckout' ),
+	hidden: __( 'Hidden', 'yaycheckout' ),
 	border: __( 'Border only', 'yaycheckout' ),
 };
 
@@ -421,7 +422,7 @@ function SectionPanel( {
 	onChange: ( next: SectionTokens ) => void;
 } ) {
 	return (
-		<PanelBody title={ SECTIONS[ section ] }>
+		<PanelBody title={ SECTIONS[ section ] } initialOpen={ false }>
 			<Flex direction="column" align="stretch" gap={ 4 }>
 				<ColourSettings
 					panelId={ `${ SIDEBAR }-${ section }` }

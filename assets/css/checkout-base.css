@@ -560,6 +560,27 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	}
 }
 
+/*
+ * Hidden labels (the layout's inputs.label token): the same rows as floating labels lose their label from view, with
+ * the declarations of WordPress's .screen-reader-text, so screen readers still name the field. Checkbox and radio rows
+ * keep theirs. The Coupon form's label is screen-reader-only already (coupon-form/style.css).
+ */
+.yaycheckout-checkout--hidden-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
+) > :is(label, .yaycheckout-field-preview__label) {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
 /* Notices: WooCommerce's classic list markup, and the banner markup it prints on block themes (wc-blocks-style draws its layout). */
 body.yaycheckout-page :is(.woocommerce-error, .woocommerce-message, .woocommerce-info) {
 	--yaycheckout-notice: var(--yaycheckout-primary-color);

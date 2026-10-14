@@ -25,8 +25,8 @@ const defaultTemplate = () => [
 	[ placeOrderMeta.name ],
 ];
 
-/** Mirrors LayoutDesign::has_floating_labels() in PHP, from the design as the merchant is editing it. */
-function useFloatingLabels(): boolean {
+/** The wrapper class for the inputs.label token, as the merchant is editing it. Mirrors LayoutDesign::has_floating_labels() and has_hidden_labels() in PHP. */
+function useLabelClass(): string {
 	const metaKey = editorData.design?.metaKey ?? '';
 
 	return useSelect(
@@ -35,16 +35,22 @@ function useFloatingLabels(): boolean {
 				| Record< string, { inputs?: { label?: unknown } } | undefined >
 				| undefined;
 
-			return '' !== metaKey && 'floating' === meta?.[ metaKey ]?.inputs?.label;
+			const label = '' !== metaKey ? meta?.[ metaKey ]?.inputs?.label : undefined;
+
+			if ( 'floating' === label ) {
+				return ' yaycheckout-checkout--floating-labels';
+			}
+
+			return 'hidden' === label ? ' yaycheckout-checkout--hidden-labels' : '';
 		},
 		[ metaKey ]
 	);
 }
 
 export default function Edit() {
-	const floatingLabels = useFloatingLabels();
+	const labelClass = useLabelClass();
 	const blockProps = useBlockProps( {
-		className: 'yaycheckout-checkout' + ( floatingLabels ? ' yaycheckout-checkout--floating-labels' : '' ),
+		className: 'yaycheckout-checkout' + labelClass,
 	} );
 	const innerBlocksProps = useInnerBlocksProps( blockProps, {
 		template: defaultTemplate(),
