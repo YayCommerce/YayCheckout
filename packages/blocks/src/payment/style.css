@@ -62,6 +62,11 @@
 	font-size: 0.875em;
 }
 
+/* !important: WooCommerce's template and checkout.js hide unselected boxes with an inline display:none. */
+.yaycheckout-checkout .yaycheckout-payment[data-descriptions="all"] #payment .wc_payment_methods .payment_box {
+	display: block !important;
+}
+
 .yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods .payment_box::before {
 	display: none;
 }

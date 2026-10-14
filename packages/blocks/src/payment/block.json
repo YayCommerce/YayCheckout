@@ -34,6 +34,10 @@
       "type": "string",
       "default": "joined"
     },
+    "showAllDescriptions": {
+      "type": "boolean",
+      "default": false
+    },
     "style": {
       "type": "object",
       "default": {}
