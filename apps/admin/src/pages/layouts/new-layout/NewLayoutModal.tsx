@@ -44,9 +44,13 @@ function NewLayoutForm({ onClose }: { onClose: () => void }) {
 
   const mutation = useCreateLayoutDraftMutation();
 
-  // Must reset `source` too, or Create layout would submit a stale library selection.
+  // Must reset `source` too, or Create layout would submit a stale library selection. A name the
+  // template filled in goes back to the default; a name the merchant typed stays.
   function backToSource() {
     form.setValue('source', 'default');
+    if (!form.getFieldState('name').isDirty) {
+      form.setValue('name', DEFAULT_VALUES.name, { shouldValidate: true });
+    }
     setStep('source');
   }
 
