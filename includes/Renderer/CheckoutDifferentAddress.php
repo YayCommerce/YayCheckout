@@ -135,9 +135,9 @@ class CheckoutDifferentAddress {
             return $fields;
         }
 
-        foreach ( self::COPIED_KEYS as $key ) {
-            if ( isset( $fields['billing'][ 'billing_' . $key ] ) && is_array( $fields['billing'][ 'billing_' . $key ] ) ) {
-                $fields['billing'][ 'billing_' . $key ]['required'] = false;
+        foreach ( CheckoutFieldUsage::copied_billing_keys() as $key ) {
+            if ( isset( $fields['billing'][ $key ] ) && is_array( $fields['billing'][ $key ] ) ) {
+                $fields['billing'][ $key ]['required'] = false;
             }
         }
 

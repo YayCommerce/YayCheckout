@@ -151,21 +151,11 @@ class CheckoutExtraFields {
     }
 
     /**
-     * The fields this order uses: those inside an address section the order doesn't use are left out,
-     * as WooCommerce ignores that section's own fields, so a required one there can't block the order.
-     * Shipping is unused when the cart needs no shipping address or the shopper keeps one address;
-     * Billing is unused when it copies Shipping.
+     * The fields this order uses: those inside an address section the order doesn't use
+     * (CheckoutFieldUsage::unused_sections()) are left out, so a required one there can't block the order.
      */
     private function submitted_fields( array $data ): array {
-        $unused = [];
-
-        if ( ! CheckoutDifferentAddress::needs_shipping_address() || empty( $data['ship_to_different_address'] ) ) {
-            $unused[] = 'shipping';
-        }
-
-        if ( CheckoutDifferentAddress::billing_copied() ) {
-            $unused[] = 'billing';
-        }
+        $unused = CheckoutFieldUsage::unused_sections( $data );
 
         return array_filter( $this->fields(), static fn( $field ) => ! in_array( $field['section'], $unused, true ) );
     }
