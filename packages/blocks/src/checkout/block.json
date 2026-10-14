@@ -35,6 +35,9 @@
         "name": "yaycheckout/payment"
       },
       {
+        "name": "yaycheckout/terms"
+      },
+      {
         "name": "yaycheckout/place-order",
         "attributes": {
           "buttonText": "Place order"

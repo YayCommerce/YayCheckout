@@ -309,6 +309,8 @@ $yaycheckout_box_fields = static function ( string $type ): void {
 <!-- /wp:paragraph -->
 
 <?php endif; ?>
+<!-- wp:yaycheckout/terms {"style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px"}}} /-->
+
 <!-- wp:group {"style":{"border":{"top":{"color":"#dddddd","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"20px"},"blockGap":"16px"}},"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between","verticalAlignment":"bottom"}} -->
 <div class="wp-block-group" style="border-top-color:#dddddd;border-top-style:solid;border-top-width:1px;padding-top:20px"><!-- wp:yaycheckout/back-button {"buttonText":"<?php esc_html_e( 'Return to shipping', 'yaycheckout' ); ?>","arrow":"chevron"} /-->
 
