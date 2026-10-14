@@ -5,8 +5,9 @@
  *
  * To update it, build the layout in the block editor, copy it from the Code editor and
  * paste it here, then put back the PHP: translated text, the logo-or-title choice, the
- * cart link and the policy links. Keep the markup as the editor saves it: a
- * hand edit that differs by one class or style makes the editor flag the block as invalid.
+ * cart link and the footer labels (linked when their page exists). Keep the markup as the
+ * editor saves it: a hand edit that differs by one class or style makes the editor flag the
+ * block as invalid.
  *
  * Left column is the dark order panel; right column is the form. Shipping comes first as
  * Delivery; Different Address follows Payment. Billing and Shipping hold the structure
@@ -18,37 +19,38 @@
 
 defined( 'ABSPATH' ) || exit;
 
-// Each link prints only when its page exists, and the sentences read correctly without it.
+// Labels always print; a missing page stays plain text so the footer matches the mock.
 $yaycheckout_terms_url   = wc_terms_and_conditions_page_id() > 0 ? (string) wc_get_page_permalink( 'terms' ) : '';
 $yaycheckout_privacy_url = get_privacy_policy_url();
 // WooCommerce creates the refund page as a draft, so it counts only once published.
 $yaycheckout_refund_id  = wc_get_page_id( 'refund_returns' );
 $yaycheckout_refund_url = $yaycheckout_refund_id > 0 && 'publish' === get_post_status( $yaycheckout_refund_id ) ? (string) get_permalink( $yaycheckout_refund_id ) : '';
+// WooCommerce has no shipping-policy page id; a published page with slug "shipping" is enough.
+$yaycheckout_shipping_page = get_page_by_path( 'shipping' );
+$yaycheckout_shipping_url  = $yaycheckout_shipping_page instanceof WP_Post && 'publish' === $yaycheckout_shipping_page->post_status
+    ? (string) get_permalink( $yaycheckout_shipping_page )
+    : '';
 
 $yaycheckout_link = static function ( string $url, string $label ): string {
-    return '' === $url ? '' : sprintf( '<a href="%s">%s</a>', esc_url( $url ), esc_html( $label ) );
+    return '' === $url
+        ? esc_html( $label )
+        : sprintf( '<a href="%s">%s</a>', esc_url( $url ), esc_html( $label ) );
 };
 
 $yaycheckout_terms_link   = $yaycheckout_link( $yaycheckout_terms_url, __( 'Terms and Conditions', 'yaycheckout' ) );
 $yaycheckout_privacy_link = $yaycheckout_link( $yaycheckout_privacy_url, __( 'Privacy Policy', 'yaycheckout' ) );
 
-if ( '' !== $yaycheckout_terms_link && '' !== $yaycheckout_privacy_link ) {
-    /* translators: 1: Terms and Conditions link, 2: Privacy Policy link */
-    $yaycheckout_terms_sentence = sprintf( esc_html__( 'By proceeding with your purchase you agree to our %1$s and %2$s.', 'yaycheckout' ), $yaycheckout_terms_link, $yaycheckout_privacy_link );
-} elseif ( '' !== $yaycheckout_terms_link . $yaycheckout_privacy_link ) {
-    /* translators: %s: Terms and Conditions or Privacy Policy link */
-    $yaycheckout_terms_sentence = sprintf( esc_html__( 'By proceeding with your purchase you agree to our %s.', 'yaycheckout' ), $yaycheckout_terms_link . $yaycheckout_privacy_link );
-} else {
-    $yaycheckout_terms_sentence = '';
-}
-
-$yaycheckout_policy_links = array_filter(
-    [
-        $yaycheckout_link( $yaycheckout_refund_url, __( 'Refund policy', 'yaycheckout' ) ),
-        $yaycheckout_link( $yaycheckout_privacy_url, __( 'Privacy', 'yaycheckout' ) ),
-        $yaycheckout_link( $yaycheckout_terms_url, __( 'Terms', 'yaycheckout' ) ),
-    ]
+$yaycheckout_terms_sentence = sprintf(
+    /* translators: 1: Terms and Conditions link or label, 2: Privacy Policy link or label */
+    esc_html__( 'By proceeding with your purchase you agree to our %1$s and %2$s.', 'yaycheckout' ),
+    $yaycheckout_terms_link,
+    $yaycheckout_privacy_link
 );
+
+$yaycheckout_policy_refund   = $yaycheckout_link( $yaycheckout_refund_url, __( 'Refund policy', 'yaycheckout' ) );
+$yaycheckout_policy_shipping = $yaycheckout_link( $yaycheckout_shipping_url, __( 'Shipping', 'yaycheckout' ) );
+$yaycheckout_policy_privacy  = $yaycheckout_link( $yaycheckout_privacy_url, __( 'Privacy', 'yaycheckout' ) );
+$yaycheckout_policy_terms    = $yaycheckout_link( $yaycheckout_terms_url, __( 'Terms', 'yaycheckout' ) );
 ?>
 <!-- wp:group {"style":{"dimensions":{"minHeight":"100vh"}},"layout":{"type":"default"}} -->
 <div class="wp-block-group" style="min-height:100vh"><!-- wp:yaycheckout/checkout -->
@@ -68,12 +70,10 @@ $yaycheckout_policy_links = array_filter(
 <!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"20px","fontWeight":"400"},"color":{"text":"#ffffff"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
 <h2 class="wp-block-heading has-text-color" style="color:#ffffff;margin-top:0;margin-bottom:0;font-size:20px;font-weight:400"><?php esc_html_e( 'Your order', 'yaycheckout' ); ?></h2>
 <!-- /wp:heading -->
-<!-- /wp:yaycheckout/order-summary-toggle -->
-
-<!-- wp:paragraph {"style":{"color":{"text":"#949494"},"typography":{"fontSize":"12px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
-<p class="has-text-color" style="color:#949494;margin-top:0;margin-bottom:0;font-size:12px"><a href="<?php echo esc_url( wc_get_cart_url() ); ?>" style="color:#949494;text-decoration:none"><?php esc_html_e( 'Edit cart', 'yaycheckout' ); ?></a></p>
-<!-- /wp:paragraph --></div>
+<!-- /wp:yaycheckout/order-summary-toggle --></div>
 <!-- /wp:group -->
+
+<!-- wp:yaycheckout/return-to-cart {"buttonText":"<?php esc_html_e( 'Edit cart', 'yaycheckout' ); ?>","arrow":"none","style":{"color":{"text":"#949494"},"typography":{"fontSize":"12px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} /-->
 <!-- /wp:yaycheckout/order-summary-header -->
 
 <!-- wp:yaycheckout/order-summary-details {"lock":{"remove":true}} -->
@@ -98,6 +98,20 @@ $yaycheckout_policy_links = array_filter(
 <!-- wp:column {"style":{"color":{"background":"#ffffff"}}} -->
 <div class="wp-block-column has-background" style="background-color:#ffffff"><!-- wp:group {"style":{"spacing":{"padding":{"top":"32px","right":"40px","bottom":"80px","left":"40px"},"blockGap":"32px"}},"layout":{"type":"constrained","contentSize":"600px"}} -->
 <div class="wp-block-group" style="padding-top:32px;padding-right:40px;padding-bottom:80px;padding-left:40px"><!-- wp:yaycheckout/express-pay /-->
+
+<!-- wp:group {"style":{"spacing":{"blockGap":"12px"}},"layout":{"type":"flex","flexWrap":"nowrap","verticalAlignment":"center"}} -->
+<div class="wp-block-group"><!-- wp:separator {"style":{"color":{"background":"#dddddd"},"spacing":{"margin":{"top":"0","bottom":"0"}},"layout":{"selfStretch":"fill","flexSize":null}}} -->
+<hr class="wp-block-separator has-text-color has-alpha-channel-opacity has-background" style="margin-top:0;margin-bottom:0;background-color:#dddddd;color:#dddddd"/>
+<!-- /wp:separator -->
+
+<!-- wp:paragraph {"align":"center","style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p class="has-text-align-center has-text-color" style="color:#757575;margin-top:0;margin-bottom:0;font-size:12px"><?php esc_html_e( 'OR', 'yaycheckout' ); ?></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:separator {"style":{"color":{"background":"#dddddd"},"spacing":{"margin":{"top":"0","bottom":"0"}},"layout":{"selfStretch":"fill","flexSize":null}}} -->
+<hr class="wp-block-separator has-text-color has-alpha-channel-opacity has-background" style="margin-top:0;margin-bottom:0;background-color:#dddddd;color:#dddddd"/>
+<!-- /wp:separator --></div>
+<!-- /wp:group -->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"12px"}}} -->
 <div class="wp-block-group"><!-- wp:group {"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
@@ -147,11 +161,15 @@ $yaycheckout_policy_links = array_filter(
 <!-- wp:yaycheckout/field {"fieldKey":"shipping_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>"} /-->
 <!-- /wp:yaycheckout/shipping -->
 
-<!-- wp:yaycheckout/shipping-methods {"label":"<?php esc_html_e( 'Shipping options', 'yaycheckout' ); ?>","layout":"box","style":{"yaycheckout":{"background":"#ffffff","backgroundSelected":"rgba(56,88,233,0.04)","backgroundHover":"#f0f0f0","border":"#dddddd","radio":"#757575","radioSelected":"#3858e9","radius":"4px"}}} /-->
+<!-- wp:paragraph {"style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px"}}} -->
+<p class="has-text-color" style="color:#757575;font-size:12px"><?php esc_html_e( 'Fields marked * are required.', 'yaycheckout' ); ?></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:yaycheckout/shipping-methods {"label":"<?php esc_html_e( 'Shipping options', 'yaycheckout' ); ?>","layout":"grid","style":{"yaycheckout":{"background":"#ffffff","backgroundSelected":"rgba(56,88,233,0.04)","backgroundHover":"#f0f0f0","border":"#dddddd","radio":"#757575","radioSelected":"#3858e9","radius":"4px"}}} /-->
 
 <!-- wp:yaycheckout/payment {"label":"<?php esc_html_e( 'Payment options', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'All transactions are secure and encrypted.', 'yaycheckout' ); ?>","layout":"box","style":{"color":{"background":"#ffffff"},"border":{"radius":"4px"},"yaycheckout":{"backgroundSelected":"rgba(56,88,233,0.04)","backgroundHover":"#f0f0f0","border":"#dddddd","radio":"#757575","radioSelected":"#3858e9"}}} /-->
 
-<!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Use shipping address as billing address', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Use shipping address as billing address', 'yaycheckout' ); ?>","shipLabel":"<?php esc_html_e( 'Use shipping address as billing address', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:yaycheckout/billing {"title":"<?php esc_html_e( 'Billing address', 'yaycheckout' ); ?>"} -->
 <!-- wp:yaycheckout/field {"fieldKey":"billing_country","type":"country","label":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","required":true} /-->
@@ -190,19 +208,33 @@ $yaycheckout_policy_links = array_filter(
 <!-- /wp:yaycheckout/billing -->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"16px"}}} -->
-<div class="wp-block-group"><?php if ( '' !== $yaycheckout_terms_sentence ) : ?>
+<div class="wp-block-group"><!-- wp:separator {"style":{"color":{"background":"#dddddd"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<hr class="wp-block-separator has-text-color has-alpha-channel-opacity has-background" style="margin-top:0;margin-bottom:0;background-color:#dddddd;color:#dddddd"/>
+<!-- /wp:separator -->
+
 <!-- wp:paragraph {"style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px"}}} -->
 <p class="has-text-color" style="color:#757575;font-size:12px"><?php echo wp_kses_post( $yaycheckout_terms_sentence ); ?></p>
 <!-- /wp:paragraph -->
-<?php endif; ?>
 
-<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Pay', 'yaycheckout' ); ?><span class="yaycheckout-live-value" data-yaycheckout-value="cart_total" data-fallback="" data-prefix=" · " data-suffix=""> · <?php esc_html_e( 'Order total', 'yaycheckout' ); ?></span>","style":{"typography":{"fontSize":"15px","fontWeight":"600"},"border":{"radius":"2px"}}} /-->
-<?php if ( $yaycheckout_policy_links ) : ?>
+<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Pay', 'yaycheckout' ); ?>","style":{"typography":{"fontSize":"15px","fontWeight":"600","textAlign":"center"},"border":{"radius":"2px"},"dimensions":{"width":"100%"}}} /-->
 
-<!-- wp:paragraph {"style":{"color":{"text":"#757575"},"typography":{"textAlign":"center","fontSize":"12px"}}} -->
-<p class="has-text-align-center has-text-color" style="color:#757575;font-size:12px"><?php echo wp_kses_post( implode( ' &middot; ', $yaycheckout_policy_links ) ); ?></p>
+<!-- wp:group {"style":{"spacing":{"blockGap":"16px"}},"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"center"}} -->
+<div class="wp-block-group"><!-- wp:paragraph {"style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p class="has-text-color" style="color:#757575;margin-top:0;margin-bottom:0;font-size:12px"><?php echo wp_kses_post( $yaycheckout_policy_refund ); ?></p>
 <!-- /wp:paragraph -->
-<?php endif; ?></div>
+
+<!-- wp:paragraph {"style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p class="has-text-color" style="color:#757575;margin-top:0;margin-bottom:0;font-size:12px"><?php echo wp_kses_post( $yaycheckout_policy_shipping ); ?></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p class="has-text-color" style="color:#757575;margin-top:0;margin-bottom:0;font-size:12px"><?php echo wp_kses_post( $yaycheckout_policy_privacy ); ?></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p class="has-text-color" style="color:#757575;margin-top:0;margin-bottom:0;font-size:12px"><?php echo wp_kses_post( $yaycheckout_policy_terms ); ?></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group --></div>
 <!-- /wp:group --></div>
 <!-- /wp:group --></div>
 <!-- /wp:column --></div>
