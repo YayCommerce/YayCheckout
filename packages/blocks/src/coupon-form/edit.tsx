@@ -1,4 +1,4 @@
-import { InspectorControls, PanelColorSettings, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { DisclosureControls, DisclosurePreview, disclosureMode, type DisclosureMode } from '../shared/disclosure';
@@ -12,8 +12,6 @@ const BUTTON = 'yaycheckout/coupon-button';
 
 interface CouponFormAttributes {
 	placeholder: string;
-	buttonBackgroundColor: string;
-	buttonTextColor: string;
 	disclosure: DisclosureMode;
 	disclosureText: string;
 }
@@ -25,19 +23,8 @@ interface EditProps {
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	// The fallbacks mirror render.php, which owns the storefront defaults.
-	const {
-		placeholder,
-		buttonBackgroundColor = '',
-		buttonTextColor = '',
-		disclosure = 'none',
-		disclosureText = '',
-	} = attributes;
-	// Mirrors render.php: the Button colors are the Coupon Button's starting look (coupon-button/style.css).
-	const style: Record< string, string > = {
-		...( buttonBackgroundColor ? { '--yaycheckout-coupon-button-background': buttonBackgroundColor } : {} ),
-		...( buttonTextColor ? { '--yaycheckout-coupon-button-text': buttonTextColor } : {} ),
-	};
-	const blockProps = useBlockProps( { className: 'yaycheckout-coupon-form', style } );
+	const { placeholder, disclosure = 'none', disclosureText = '' } = attributes;
+	const blockProps = useBlockProps( { className: 'yaycheckout-coupon-form' } );
 	// The form always holds exactly one Coupon Button, which the merchant styles from its own Styles tab.
 	const { children, ...innerBlocksProps } = useInnerBlocksProps(
 		{ className: 'yaycheckout-coupon-form__row' },
@@ -63,22 +50,6 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						setAttributes={ setAttributes }
 					/>
 				</PanelBody>
-				<PanelColorSettings
-					title={ __( 'Button colors', 'yaycheckout' ) }
-					initialOpen={ false }
-					colorSettings={ [
-						{
-							label: __( 'Background', 'yaycheckout' ),
-							value: buttonBackgroundColor,
-							onChange: ( value?: string ) => setAttributes( { buttonBackgroundColor: value ?? '' } ),
-						},
-						{
-							label: __( 'Text', 'yaycheckout' ),
-							value: buttonTextColor,
-							onChange: ( value?: string ) => setAttributes( { buttonTextColor: value ?? '' } ),
-						},
-					] }
-				/>
 			</InspectorControls>
 			<div { ...blockProps }>
 				<DisclosurePreview mode={ mode } fieldKey={ COUPON_KEY } label={ COUPON_LABEL } disclosureText={ disclosureText }>

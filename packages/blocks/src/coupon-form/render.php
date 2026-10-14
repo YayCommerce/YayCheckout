@@ -26,27 +26,7 @@ if ( \YayCheckout\Renderer\CheckoutLogin::must_log_in() ) {
 
 $yaycheckout_placeholder = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'placeholder', __( 'Coupon code', 'yaycheckout' ) );
 
-// The Button colors are the Coupon Button's starting look; its own colour support wins (coupon-button/style.css).
-$yaycheckout_button_vars       = [];
-$yaycheckout_button_properties = [
-    'buttonBackgroundColor' => '--yaycheckout-coupon-button-background',
-    'buttonTextColor'       => '--yaycheckout-coupon-button-text',
-];
-
-foreach ( $yaycheckout_button_properties as $yaycheckout_attr => $yaycheckout_property ) {
-    $yaycheckout_color = isset( $attributes[ $yaycheckout_attr ] ) && is_string( $attributes[ $yaycheckout_attr ] ) ? $attributes[ $yaycheckout_attr ] : '';
-
-    // Kept only if core's CSS filter passes it whole as a color, so no second declaration rides along.
-    if ( '' !== $yaycheckout_color && 'color:' . $yaycheckout_color === safecss_filter_attr( 'color:' . $yaycheckout_color ) ) {
-        $yaycheckout_button_vars[] = $yaycheckout_property . ':' . $yaycheckout_color;
-    }
-}
-
 $yaycheckout_wrapper_attrs = [ 'class' => 'yaycheckout-coupon-form' ];
-
-if ( $yaycheckout_button_vars ) {
-    $yaycheckout_wrapper_attrs['style'] = implode( ';', $yaycheckout_button_vars ) . ';';
-}
 
 // Inner block markup (the Coupon Button); a form saved without one gets the default button.
 $yaycheckout_button = '' !== trim( $content )
