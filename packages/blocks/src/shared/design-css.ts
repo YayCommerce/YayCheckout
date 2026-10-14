@@ -104,7 +104,8 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 
 	const inputColours: [ string, string ][] = [
 		[ 'input-background', inputBackground ],
-		[ 'input-color', String( inputs.text ?? '' ) ],
+		[ 'input-color', String( inputs.text_color ?? '' ) ],
+		[ 'input-label-color', String( inputs.label_color ?? '' ) ],
 		[ 'input-border-color', String( inputs.border ?? '' ) ],
 		[ 'input-focus-color', String( inputs.focus_border ?? '' ) ],
 		[ 'input-focus-background', inputFocusBackground ],
@@ -112,7 +113,7 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 
 	out.push( ...inputColours.filter( notEmpty ) );
 
-	// Border only drops the flush ring, so focus just recolours the border.
+	// Thin border drops the flush ring, so focus just recolours the border.
 	if ( 'border' === inputs.focus_style ) {
 		out.push( [ 'input-focus-ring-width', '0' ] );
 	}

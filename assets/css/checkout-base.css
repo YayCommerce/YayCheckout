@@ -161,6 +161,7 @@ html.yaycheckout-has-pinned body {
 .yaycheckout-checkout .form-row :is(label, .yaycheckout-field-preview__label) {
 	display: block;
 	margin-block: 0 4px;
+	color: var(--yaycheckout-input-label-color, inherit);
 	font-weight: 500;
 	line-height: 1.4;
 }
@@ -171,6 +172,7 @@ html.yaycheckout-has-pinned body {
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
+	color: inherit;
 	font-weight: inherit;
 }
 
@@ -425,7 +427,7 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 /*
  * A focused field draws one edge in the layout's input focus colour (DesignStyles), falling back to the
  * primary colour: its border recolours and a flush ring thickens it, with no gap between the two. The
- * Border only focus style sets the ring width to 0. Its fill takes the layout's input focus background, falling back
+ * Thin border focus style sets the ring width to 0. Its fill takes the layout's input focus background, falling back
  * to the input background.
  */
 .yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code):focus,
@@ -493,7 +495,7 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	margin: 0;
 	overflow: hidden;
 	clip-path: none;
-	color: var(--yaycheckout-input-color, inherit);
+	color: var(--yaycheckout-input-label-color, var(--yaycheckout-input-color, inherit));
 	font-weight: 400;
 	white-space: nowrap;
 	text-overflow: ellipsis;

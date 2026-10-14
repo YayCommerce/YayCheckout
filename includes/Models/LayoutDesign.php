@@ -146,7 +146,11 @@ final class LayoutDesign {
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'text'             => [
+                'text_color'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'label_color'      => [
                     'type'    => 'color',
                     'default' => '',
                 ],
@@ -223,6 +227,11 @@ final class LayoutDesign {
         // Layouts saved before the rename store the focus border colour as inputs.focus.
         if ( is_array( $value['inputs'] ?? null ) && isset( $value['inputs']['focus'] ) && ! isset( $value['inputs']['focus_border'] ) ) {
             $value['inputs']['focus_border'] = $value['inputs']['focus'];
+        }
+
+        // Layouts saved before the rename store the input text colour as inputs.text.
+        if ( is_array( $value['inputs'] ?? null ) && isset( $value['inputs']['text'] ) && ! isset( $value['inputs']['text_color'] ) ) {
+            $value['inputs']['text_color'] = $value['inputs']['text'];
         }
 
         foreach ( self::schema() as $section => $rules ) {

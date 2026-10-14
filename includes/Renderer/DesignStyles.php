@@ -168,7 +168,8 @@ class DesignStyles {
             array_filter(
                 [
                     'input-background'       => $inputs['background'],
-                    'input-color'            => $inputs['text'],
+                    'input-color'            => $inputs['text_color'],
+                    'input-label-color'      => $inputs['label_color'],
                     'input-border-color'     => $inputs['border'],
                     'input-focus-color'      => $inputs['focus_border'],
                     'input-focus-background' => $inputs['focus_background'],
@@ -177,7 +178,7 @@ class DesignStyles {
             )
         );
 
-        // Border only drops the flush ring, so focus just recolours the border.
+        // Thin border drops the flush ring, so focus just recolours the border.
         if ( 'border' === $inputs['focus_style'] ) {
             $vars['input-focus-ring-width'] = '0';
         }
