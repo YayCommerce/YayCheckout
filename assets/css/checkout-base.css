@@ -507,7 +507,10 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 }
 
 /* The storefront label lets a click through to its input; the editor's stays clickable, to edit its text. */
-.yaycheckout-checkout--floating-labels .form-row > label,
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea))
+) > label,
 .yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > label {
 	pointer-events: none;
 }
