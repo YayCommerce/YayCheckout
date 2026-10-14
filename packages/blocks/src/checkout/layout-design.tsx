@@ -74,6 +74,7 @@ const ENUM_LABELS: Record< string, string > = {
 	medium: __( 'Medium', 'yaycheckout' ),
 	large: __( 'Large', 'yaycheckout' ),
 	floating: __( 'Floating', 'yaycheckout' ),
+	hidden: __( 'Hidden', 'yaycheckout' ),
 	border: __( 'Border only', 'yaycheckout' ),
 };
 

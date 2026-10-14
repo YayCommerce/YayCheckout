@@ -89,7 +89,7 @@ final class LayoutDesign {
      * theme preset; colours.background may also be a gradient. An empty typography.base_size prints
      * DesignStyles::DEFAULT_BASE_SIZE, not the theme's size. The inputs.size token is an abstract step; the
      * renderer decides its height, in em. The inputs.label token prints no custom property: it is the checkout
-     * wrapper's yaycheckout-checkout--floating-labels class. An empty checkboxes.checked fills a ticked box with the
+     * wrapper's yaycheckout-checkout--floating-labels or yaycheckout-checkout--hidden-labels class. An empty checkboxes.checked fills a ticked box with the
      * primary colour; its unticked border is inputs.border.
      */
     public static function schema(): array {
@@ -166,7 +166,7 @@ final class LayoutDesign {
                 'label'       => [
                     'type'    => 'enum',
                     'default' => '',
-                    'enum'    => [ '', 'floating' ],
+                    'enum'    => [ '', 'floating', 'hidden' ],
                 ],
             ],
             'checkboxes' => [
@@ -199,6 +199,11 @@ final class LayoutDesign {
     /** True when the inputs' labels sit inside the box and float up once the field is focused or filled. */
     public function has_floating_labels(): bool {
         return 'floating' === ( $this->sections['inputs']['label'] ?? '' );
+    }
+
+    /** True when the inputs' labels are hidden from view; screen readers still read them. */
+    public function has_hidden_labels(): bool {
+        return 'hidden' === ( $this->sections['inputs']['label'] ?? '' );
     }
 
     /**

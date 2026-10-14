@@ -19,6 +19,8 @@ if ( null !== $yaycheckout_layout ) {
 
     if ( $yaycheckout_layout->design->has_floating_labels() ) {
         $yaycheckout_class .= ' yaycheckout-checkout--floating-labels';
+    } elseif ( $yaycheckout_layout->design->has_hidden_labels() ) {
+        $yaycheckout_class .= ' yaycheckout-checkout--hidden-labels';
     }
 }
 
