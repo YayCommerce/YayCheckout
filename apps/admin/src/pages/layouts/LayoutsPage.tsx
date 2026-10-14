@@ -356,7 +356,7 @@ function LayoutsPageBody({
 
   return (
     <div className="space-y-4">
-      <NewLayoutModal open={newLayoutOpen} onOpenChange={setNewLayoutOpen} />
+      <NewLayoutModal open={newLayoutOpen} onOpenChange={setNewLayoutOpen} onCreated={openEditor} />
       <SetActiveModal
         layout={activatingLayout}
         onOpenChange={(open) => !open && setActivatingLayout(null)}

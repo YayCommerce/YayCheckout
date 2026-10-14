@@ -144,16 +144,13 @@ export type PreviewLink = {
 export const layoutNameSchema = z.string().trim().min(1, __('Name is required', 'yaycheckout'));
 
 /** New layout form. Mirrors LayoutRestController's template_slug rule; only the server checks the slug is in the catalogue. */
-export const newLayoutFormSchema = z
-  .object({
-    name: layoutNameSchema,
-    source: z.enum(['default', 'library']),
-    templateSlug: z.string().nullable(),
-  })
-  .refine((data) => data.source === 'default' || !!data.templateSlug, {
-    message: __('Pick a template', 'yaycheckout'),
-    path: ['templateSlug'],
-  });
+export const newLayoutFormSchema = z.object({
+  name: layoutNameSchema,
+  templateSlug: z
+    .string()
+    .nullable()
+    .refine((slug) => !!slug, __('Pick a template', 'yaycheckout')),
+});
 
 export type NewLayoutFormValues = z.infer<typeof newLayoutFormSchema>;
 
