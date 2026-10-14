@@ -6,7 +6,7 @@
 /* In the Edit button's column. */
 .editor-styles-wrapper .yaycheckout-step__hidden-note {
 	grid-column: 3;
-	grid-row: 1;
+	grid-row: 1 / span 2;
 	color: #757575;
 	font-size: 12px;
 	font-weight: 400;
