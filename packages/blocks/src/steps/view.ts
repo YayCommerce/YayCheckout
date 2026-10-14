@@ -301,9 +301,14 @@ function isChoiceList( radio: HTMLInputElement ): boolean {
 }
 
 function isShown( control: HTMLElement ): boolean {
-	// Select2 clips the real <select> off-screen; it is still the control that must validate.
+	// Select2 clips the real <select> and shows its container instead; the select validates
+	// only while that container is shown, so a select in a hidden address section is skipped.
 	if ( control.classList.contains( 'select2-hidden-accessible' ) ) {
-		return true;
+		const container = control.nextElementSibling;
+
+		return container instanceof HTMLElement && container.classList.contains( 'select2-container' )
+			? container.getClientRects().length > 0
+			: control.closest( '.form-row' )?.getClientRects().length !== 0;
 	}
 
 	return control.getClientRects().length > 0;
