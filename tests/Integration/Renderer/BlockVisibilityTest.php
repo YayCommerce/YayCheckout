@@ -145,7 +145,7 @@ class BlockVisibilityTest extends WP_UnitTestCase {
     public function test_render_filter_marks_place_order_hidden_until_last_step(): void {
         $setting = '{"yaycheckoutVisibility":{"action":"show","rules":[{"type":"step","step":"last"}]}}';
         $steps   = '<!-- wp:yaycheckout/steps --><!-- wp:yaycheckout/step {"title":"A"} /--><!-- wp:yaycheckout/step {"title":"B"} /--><!-- /wp:yaycheckout/steps -->';
-        LayoutFactory::serve( '<!-- wp:yaycheckout/checkout -->' . $steps . '<!-- wp:yaycheckout/place-order ' . $setting . ' /--><!-- /wp:yaycheckout/checkout -->' );
+        LayoutFactory::serve( '<!-- wp:yaycheckout/checkout -->' . $steps . '<!-- wp:yaycheckout/email /--><!-- wp:yaycheckout/payment /--><!-- wp:yaycheckout/place-order ' . $setting . ' /--><!-- /wp:yaycheckout/checkout -->' );
 
         $html = do_blocks( '<!-- wp:yaycheckout/place-order ' . $setting . ' /-->' );
 
