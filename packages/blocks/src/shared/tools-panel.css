@@ -2,3 +2,24 @@
 .yaycheckout-tools-panel .yaycheckout-tools-panel__colors {
 	grid-column: 1 / -1;
 }
+
+/* In a StyleSection, the collapsible panel is the frame and shows the title, so the ToolsPanel drops
+   its own border, padding and heading and keeps only its menu. */
+.yaycheckout-style-section .components-tools-panel {
+	border-top: 0;
+	margin-top: 0;
+	padding: 0;
+}
+
+.yaycheckout-style-section .components-tools-panel-header {
+	justify-content: flex-end;
+}
+
+.yaycheckout-style-section .components-tools-panel-header > h2 {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}

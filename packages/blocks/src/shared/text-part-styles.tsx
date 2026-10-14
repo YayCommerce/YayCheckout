@@ -19,6 +19,7 @@ import { useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { compileCSS } from '@wordpress/style-engine';
 import { getAt, hasValue, isPlainObject, setAt, type StyleObject } from './style-path';
+import { StyleSection } from './style-section';
 import './tools-panel.css';
 
 /**
@@ -134,114 +135,115 @@ export function TextPartPanels( { parts, panelIdPrefix, style, onChange }: TextP
 		);
 
 		return (
-			<ToolsPanel
-				key={ part }
-				label={ label }
-				panelId={ panelId }
-				className="yaycheckout-tools-panel"
-				resetAll={ () => set( part, [], undefined ) }
-			>
-				<div className="yaycheckout-tools-panel__colors">
-					<ColorGradientSettingsDropdown
-						__experimentalIsRenderedInSidebar
-						panelId={ panelId }
-						settings={ [
-							{
-								label: __( 'Text', 'yaycheckout' ),
-								colorValue: textColor,
-								onColorChange: ( next?: string ) => {
-									const preset = next ? getColorObjectByColorValue( colors, next ) : undefined;
-									set( part, [ 'color', 'text' ], preset?.slug ? `${ presetPrefix( 'color' ) }${ preset.slug }` : next || undefined );
+			<StyleSection key={ part } title={ label }>
+				<ToolsPanel
+					label={ label }
+					panelId={ panelId }
+					className="yaycheckout-tools-panel"
+					resetAll={ () => set( part, [], undefined ) }
+				>
+					<div className="yaycheckout-tools-panel__colors">
+						<ColorGradientSettingsDropdown
+							__experimentalIsRenderedInSidebar
+							panelId={ panelId }
+							settings={ [
+								{
+									label: __( 'Text', 'yaycheckout' ),
+									colorValue: textColor,
+									onColorChange: ( next?: string ) => {
+										const preset = next ? getColorObjectByColorValue( colors, next ) : undefined;
+										set( part, [ 'color', 'text' ], preset?.slug ? `${ presetPrefix( 'color' ) }${ preset.slug }` : next || undefined );
+									},
+									clearable: true,
+									isShownByDefault: true,
 								},
-								clearable: true,
-								isShownByDefault: true,
-							},
-						] }
-						colors={ palettes.colors }
-						disableCustomColors={ palettes.disableCustomColors }
-						enableAlpha
-					/>
-				</div>
-				{ fontFamilies.length > 0 &&
-					item(
-						[ 'fontFamily' ],
-						__( 'Font', 'yaycheckout' ),
-						<FontFamilyControl
-							__nextHasNoMarginBottom
+							] }
+							colors={ palettes.colors }
+							disableCustomColors={ palettes.disableCustomColors }
+							enableAlpha
+						/>
+					</div>
+					{ fontFamilies.length > 0 &&
+						item(
+							[ 'fontFamily' ],
+							__( 'Font', 'yaycheckout' ),
+							<FontFamilyControl
+								__nextHasNoMarginBottom
+								__next40pxDefaultSize
+								fontFamilies={ fontFamilies }
+								value={ fromPreset( typography( 'fontFamily' ), 'font-family', fontFamilies, 'fontFamily' ) ?? '' }
+								onChange={ ( next: string ) => {
+									const slug = fontFamilies.find( ( family ) => family.fontFamily === next )?.slug;
+									setTypography( 'fontFamily', slug ? `${ presetPrefix( 'font-family' ) }${ slug }` : next || undefined );
+								} }
+							/>
+						) }
+					{ item(
+						[ 'fontSize' ],
+						__( 'Size', 'yaycheckout' ),
+						<FontSizePicker
 							__next40pxDefaultSize
-							fontFamilies={ fontFamilies }
-							value={ fromPreset( typography( 'fontFamily' ), 'font-family', fontFamilies, 'fontFamily' ) ?? '' }
-							onChange={ ( next: string ) => {
-								const slug = fontFamilies.find( ( family ) => family.fontFamily === next )?.slug;
-								setTypography( 'fontFamily', slug ? `${ presetPrefix( 'font-family' ) }${ slug }` : next || undefined );
+							fontSizes={ fontSizes }
+							value={ fromPreset( typography( 'fontSize' ), 'font-size', fontSizes, 'size' ) }
+							onChange={ ( next: string | number | undefined, selected?: { slug?: string } ) => {
+								const slug =
+									selected?.slug ?? fontSizes.find( ( size ) => next !== undefined && size.size === String( next ) )?.slug;
+								setTypography( 'fontSize', slug ? `${ presetPrefix( 'font-size' ) }${ slug }` : next );
+							} }
+							withReset={ false }
+							withSlider
+						/>
+					) }
+					{ item(
+						[ 'fontStyle', 'fontWeight' ],
+						__( 'Appearance', 'yaycheckout' ),
+						<FontAppearanceControl
+							__next40pxDefaultSize
+							value={ { fontStyle: typography( 'fontStyle' ), fontWeight: typography( 'fontWeight' ) } }
+							onChange={ ( next: { fontStyle?: string; fontWeight?: string } ) => {
+								setTypography( 'fontStyle', next.fontStyle );
+								setTypography( 'fontWeight', next.fontWeight );
 							} }
 						/>
 					) }
-				{ item(
-					[ 'fontSize' ],
-					__( 'Size', 'yaycheckout' ),
-					<FontSizePicker
-						__next40pxDefaultSize
-						fontSizes={ fontSizes }
-						value={ fromPreset( typography( 'fontSize' ), 'font-size', fontSizes, 'size' ) }
-						onChange={ ( next: string | number | undefined, selected?: { slug?: string } ) => {
-							const slug =
-								selected?.slug ?? fontSizes.find( ( size ) => next !== undefined && size.size === String( next ) )?.slug;
-							setTypography( 'fontSize', slug ? `${ presetPrefix( 'font-size' ) }${ slug }` : next );
-						} }
-						withReset={ false }
-						withSlider
-					/>
-				) }
-				{ item(
-					[ 'fontStyle', 'fontWeight' ],
-					__( 'Appearance', 'yaycheckout' ),
-					<FontAppearanceControl
-						__next40pxDefaultSize
-						value={ { fontStyle: typography( 'fontStyle' ), fontWeight: typography( 'fontWeight' ) } }
-						onChange={ ( next: { fontStyle?: string; fontWeight?: string } ) => {
-							setTypography( 'fontStyle', next.fontStyle );
-							setTypography( 'fontWeight', next.fontWeight );
-						} }
-					/>
-				) }
-				{ item(
-					[ 'lineHeight' ],
-					__( 'Line height', 'yaycheckout' ),
-					<LineHeightControl
-						__next40pxDefaultSize
-						__unstableInputWidth="auto"
-						value={ typography( 'lineHeight' ) }
-						onChange={ ( next: string | undefined ) => setTypography( 'lineHeight', next ) }
-					/>
-				) }
-				{ item(
-					[ 'letterSpacing' ],
-					__( 'Letter spacing', 'yaycheckout' ),
-					<LetterSpacingControl
-						__next40pxDefaultSize
-						__unstableInputWidth="auto"
-						value={ typography( 'letterSpacing' ) }
-						onChange={ ( next: string | undefined ) => setTypography( 'letterSpacing', next ) }
-					/>
-				) }
-				{ item(
-					[ 'textDecoration' ],
-					__( 'Decoration', 'yaycheckout' ),
-					<TextDecorationControl
-						value={ typography( 'textDecoration' ) }
-						onChange={ toggle( 'textDecoration' ) }
-					/>
-				) }
-				{ item(
-					[ 'textTransform' ],
-					__( 'Letter case', 'yaycheckout' ),
-					<TextTransformControl
-						value={ typography( 'textTransform' ) }
-						onChange={ toggle( 'textTransform' ) }
-					/>
-				) }
-			</ToolsPanel>
+					{ item(
+						[ 'lineHeight' ],
+						__( 'Line height', 'yaycheckout' ),
+						<LineHeightControl
+							__next40pxDefaultSize
+							__unstableInputWidth="auto"
+							value={ typography( 'lineHeight' ) }
+							onChange={ ( next: string | undefined ) => setTypography( 'lineHeight', next ) }
+						/>
+					) }
+					{ item(
+						[ 'letterSpacing' ],
+						__( 'Letter spacing', 'yaycheckout' ),
+						<LetterSpacingControl
+							__next40pxDefaultSize
+							__unstableInputWidth="auto"
+							value={ typography( 'letterSpacing' ) }
+							onChange={ ( next: string | undefined ) => setTypography( 'letterSpacing', next ) }
+						/>
+					) }
+					{ item(
+						[ 'textDecoration' ],
+						__( 'Decoration', 'yaycheckout' ),
+						<TextDecorationControl
+							value={ typography( 'textDecoration' ) }
+							onChange={ toggle( 'textDecoration' ) }
+						/>
+					) }
+					{ item(
+						[ 'textTransform' ],
+						__( 'Letter case', 'yaycheckout' ),
+						<TextTransformControl
+							value={ typography( 'textTransform' ) }
+							onChange={ toggle( 'textTransform' ) }
+						/>
+					) }
+				</ToolsPanel>
+			</StyleSection>
 		);
 	};
 

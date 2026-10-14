@@ -6,6 +6,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { firstStepsBlock } from '../shared/layout-steps';
 import { plainText } from '../shared/plain-text';
 import { stepTitle } from '../shared/step-title';
+import { StyleSection } from '../shared/style-section';
 import './editor.css';
 
 type Variant = 'circles' | 'dots' | 'segments' | 'bar' | 'text';
@@ -183,30 +184,31 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<InspectorControls group="styles">
-				<PanelColorSettings
-					title={ __( 'Progress colors', 'yaycheckout' ) }
-					initialOpen={ false }
-					colorSettings={ [
-						{
-							label: __( 'Fill', 'yaycheckout' ),
-							value: attributes.fillColor,
-							onChange: ( value?: string ) => setAttributes( { fillColor: value ?? '' } ),
-							clearable: true,
-						},
-						{
-							label: __( 'Track', 'yaycheckout' ),
-							value: attributes.trackColor,
-							onChange: ( value?: string ) => setAttributes( { trackColor: value ?? '' } ),
-							clearable: true,
-						},
-						{
-							label: __( 'Upcoming text', 'yaycheckout' ),
-							value: attributes.upcomingTextColor,
-							onChange: ( value?: string ) => setAttributes( { upcomingTextColor: value ?? '' } ),
-							clearable: true,
-						},
-					] }
-				/>
+				<StyleSection title={ __( 'Progress colors', 'yaycheckout' ) }>
+					<PanelColorSettings
+						title={ __( 'Progress colors', 'yaycheckout' ) }
+						colorSettings={ [
+							{
+								label: __( 'Fill', 'yaycheckout' ),
+								value: attributes.fillColor,
+								onChange: ( value?: string ) => setAttributes( { fillColor: value ?? '' } ),
+								clearable: true,
+							},
+							{
+								label: __( 'Track', 'yaycheckout' ),
+								value: attributes.trackColor,
+								onChange: ( value?: string ) => setAttributes( { trackColor: value ?? '' } ),
+								clearable: true,
+							},
+							{
+								label: __( 'Upcoming text', 'yaycheckout' ),
+								value: attributes.upcomingTextColor,
+								onChange: ( value?: string ) => setAttributes( { upcomingTextColor: value ?? '' } ),
+								clearable: true,
+							},
+						] }
+					/>
+				</StyleSection>
 			</InspectorControls>
 			<div { ...blockProps }>
 				<ProgressBody attributes={ attributes } total={ stepIds.length }>
