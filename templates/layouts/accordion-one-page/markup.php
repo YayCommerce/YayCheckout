@@ -205,8 +205,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/order-summary-details -->
 
 <!-- wp:yaycheckout/order-summary-header -->
-<!-- wp:group {"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
-<div class="wp-block-group"><!-- wp:group {"style":{"spacing":{"blockGap":"2px"}},"layout":{"type":"flex","orientation":"vertical","justifyContent":"left","flexWrap":"nowrap"}} -->
+<!-- wp:group {"style":{"spacing":{"blockGap":"2px"}},"layout":{"type":"flex","orientation":"vertical","justifyContent":"left","flexWrap":"nowrap"}} -->
 <div class="wp-block-group"><!-- wp:yaycheckout/order-summary-toggle {"style":{"spacing":{"blockGap":"4px"},"color":{"text":"#3858e9"},"typography":{"fontSize":"12px","fontWeight":"500"}}} -->
 <!-- wp:paragraph {"style":{"color":{"text":"#3858e9"},"typography":{"fontSize":"12px","fontWeight":"500"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
 <p class="has-text-color" style="color:#3858e9;margin-top:0;margin-bottom:0;font-size:12px;font-weight:500"><?php esc_html_e( 'Show summary', 'yaycheckout' ); ?></p>
@@ -220,7 +219,6 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <div class="wp-block-group"><!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue', 'yaycheckout' ); ?>","yaycheckoutVisibility":{"action":"hide","rules":[{"type":"step","step":"last"}]},"style":{"color":{"background":"#3858e9","text":"#ffffff"},"typography":{"fontSize":"14px","fontWeight":"600","whiteSpace":"nowrap"},"border":{"radius":"2px"},"spacing":{"padding":{"left":"24px","right":"24px"}}}} /-->
 
 <!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>","yaycheckoutVisibility":{"action":"show","rules":[{"type":"step","step":"last"}]},"style":{"color":{"background":"#3858e9","text":"#ffffff"},"typography":{"fontSize":"14px","fontWeight":"600","whiteSpace":"nowrap"},"border":{"radius":"2px"},"spacing":{"padding":{"left":"24px","right":"24px"}}}} /--></div>
-<!-- /wp:group --></div>
 <!-- /wp:group -->
 <!-- /wp:yaycheckout/order-summary-header -->
 <!-- /wp:yaycheckout/order-summary --></div>
