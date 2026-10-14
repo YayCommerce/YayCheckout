@@ -90,7 +90,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	// The block order is the direction: a Header after Details sits below them, so they open upward.
 	const opensUp = headerIndex !== -1 && detailsIndex !== -1 && headerIndex > detailsIndex;
 
-	// Opt-in, never on load: converting markup the merchant didn't touch would reach the post through autosave.
+	// Opt-in, never on load: converting markup the merchant didn't touch would reach the post on the merchant's next save.
 	// The heading keeps the old one's text (plain, so escaped into rich text) and id, so a theme styling #order_review_heading still finds it.
 	const convert = () =>
 		replaceInnerBlocks( clientId, [
