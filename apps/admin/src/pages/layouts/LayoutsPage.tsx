@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils';
 import { useDebouncedSearch } from '@/hooks/useDebouncedSearch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -344,162 +344,144 @@ function LayoutsPageBody({
         onOpenChange={(open) => !open && setPreviewing(null)}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
-        <Card className="min-w-0">
-          <h2 className="text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
+      <Card className="min-w-0">
+        <h2 className="text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Segmented
-              size="sm"
-              value={view}
-              onValueChange={(next) => next && onViewChange(next as View)}
-              disabled={controlsDisabled}
-            >
-              <SegmentedItem value="listed">
-                {__('All', 'yaycheckout')}
-                <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
-                  <CountValue loading={countsFetching} value={counts.listed} />
-                </Badge>
-              </SegmentedItem>
-              <SegmentedItem value="active">
-                {__('Active', 'yaycheckout')}
-                <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
-                  <CountValue loading={countsFetching} value={counts.active} />
-                </Badge>
-              </SegmentedItem>
-              <SegmentedItem value="archived">
-                {__('Archive', 'yaycheckout')}
-                <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
-                  <CountValue loading={countsFetching} value={counts.archived} />
-                </Badge>
-              </SegmentedItem>
-            </Segmented>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Segmented
+            size="sm"
+            value={view}
+            onValueChange={(next) => next && onViewChange(next as View)}
+            disabled={controlsDisabled}
+          >
+            <SegmentedItem value="listed">
+              {__('All', 'yaycheckout')}
+              <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
+                <CountValue loading={countsFetching} value={counts.listed} />
+              </Badge>
+            </SegmentedItem>
+            <SegmentedItem value="active">
+              {__('Active', 'yaycheckout')}
+              <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
+                <CountValue loading={countsFetching} value={counts.active} />
+              </Badge>
+            </SegmentedItem>
+            <SegmentedItem value="archived">
+              {__('Archive', 'yaycheckout')}
+              <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
+                <CountValue loading={countsFetching} value={counts.archived} />
+              </Badge>
+            </SegmentedItem>
+          </Segmented>
 
-            <div className="flex items-center gap-3">
-              {showListControls && (
-                <InputGroup size="small" className="w-64">
-                  <InputGroupInput
-                    placeholder={__('Search layouts…', 'yaycheckout')}
-                    value={searchInput}
-                    onChange={(e) => onSearchInputChange(e.target.value)}
-                  />
-                  <InputGroupAddon align="inline-end">
-                    <Search className="size-4" />
-                  </InputGroupAddon>
-                </InputGroup>
-              )}
-              <Button size="sm" variant="primary-outline" onClick={() => setNewLayoutOpen(true)}>
-                <Plus className="size-4" />
-                {__('Add layout', 'yaycheckout')}
-              </Button>
-            </div>
+          <div className="flex items-center gap-3">
+            {showListControls && (
+              <InputGroup size="small" className="w-64">
+                <InputGroupInput
+                  placeholder={__('Search layouts…', 'yaycheckout')}
+                  value={searchInput}
+                  onChange={(e) => onSearchInputChange(e.target.value)}
+                />
+                <InputGroupAddon align="inline-end">
+                  <Search className="size-4" />
+                </InputGroupAddon>
+              </InputGroup>
+            )}
+            <Button size="sm" variant="primary-outline" onClick={() => setNewLayoutOpen(true)}>
+              <Plus className="size-4" />
+              {__('Add layout', 'yaycheckout')}
+            </Button>
           </div>
+        </div>
 
-          {listError && <p className="text-destructive text-sm">{listError.message}</p>}
+        {listError && <p className="text-destructive text-sm">{listError.message}</p>}
 
-          {listIsOtherTabPlaceholder ? (
-            <TableRowsSkeleton />
-          ) : !listData ? null : (
-            <div className={cn('min-w-0 transition-opacity', listFetching && 'opacity-60')}>
-              {listData.items.length === 0 ? (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon" />
-                    <EmptyTitle>
-                      {search
-                        ? __('No matching layouts', 'yaycheckout')
-                        : view === 'archived'
-                          ? __('Nothing archived', 'yaycheckout')
-                          : view === 'active'
-                            ? __('No active layouts', 'yaycheckout')
-                            : __('Nothing here yet', 'yaycheckout')}
-                    </EmptyTitle>
-                    <EmptyDescription>
-                      {search
-                        ? __('No layouts match your search. Try a different name.', 'yaycheckout')
-                        : view === 'archived'
-                          ? __('Layouts you archive will show up here.', 'yaycheckout')
-                          : view === 'active'
-                            ? __('Set a layout active to use it on your checkout.', 'yaycheckout')
-                            : counts.archived > 0
-                              ? __(
-                                  'All of your layouts are archived. Restore one to bring it back to this list, or start a new draft. Archiving never deletes anything.',
-                                  'yaycheckout',
-                                )
-                              : __('Create your first checkout layout to get started.', 'yaycheckout')}
-                    </EmptyDescription>
-                  </EmptyHeader>
-                  {view === 'listed' && !search && (
-                    <EmptyContent>
-                      <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
-                        {__('Add layout', 'yaycheckout')}
+        {listIsOtherTabPlaceholder ? (
+          <TableRowsSkeleton />
+        ) : !listData ? null : (
+          <div className={cn('min-w-0 transition-opacity', listFetching && 'opacity-60')}>
+            {listData.items.length === 0 ? (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon" />
+                  <EmptyTitle>
+                    {search
+                      ? __('No matching layouts', 'yaycheckout')
+                      : view === 'archived'
+                        ? __('Nothing archived', 'yaycheckout')
+                        : view === 'active'
+                          ? __('No active layouts', 'yaycheckout')
+                          : __('Nothing here yet', 'yaycheckout')}
+                  </EmptyTitle>
+                  <EmptyDescription>
+                    {search
+                      ? __('No layouts match your search. Try a different name.', 'yaycheckout')
+                      : view === 'archived'
+                        ? __('Layouts you archive will show up here.', 'yaycheckout')
+                        : view === 'active'
+                          ? __('Set a layout active to use it on your checkout.', 'yaycheckout')
+                          : counts.archived > 0
+                            ? __(
+                                'All of your layouts are archived. Restore one to bring it back to this list, or start a new draft. Archiving never deletes anything.',
+                                'yaycheckout',
+                              )
+                            : __('Create your first checkout layout to get started.', 'yaycheckout')}
+                  </EmptyDescription>
+                </EmptyHeader>
+                {view === 'listed' && !search && (
+                  <EmptyContent>
+                    <Button size="sm" onClick={() => setNewLayoutOpen(true)}>
+                      {__('Add layout', 'yaycheckout')}
+                    </Button>
+                    {counts.archived > 0 && (
+                      <Button size="sm" variant="outline" onClick={() => onViewChange('archived')}>
+                        {__('Restore from archive', 'yaycheckout')}
                       </Button>
-                      {counts.archived > 0 && (
-                        <Button size="sm" variant="outline" onClick={() => onViewChange('archived')}>
-                          {__('Restore from archive', 'yaycheckout')}
-                        </Button>
-                      )}
-                    </EmptyContent>
-                  )}
-                </Empty>
-              ) : (
-                <>
-                  <div className="overflow-x-auto rounded-lg border">
-                    <LayoutsTable
-                      items={listData.items}
-                      view={view}
-                      onEditLayout={openEditor}
-                      onSetActive={setActivatingLayout}
-                      onDeactivate={setDeactivatingLayout}
-                      onArchive={setArchivingLayout}
-                      onRestore={onRestore}
-                      onDelete={setDeletingLayout}
-                      onDuplicate={onDuplicate}
-                      onRename={setRenamingLayout}
-                      onAssign={setAssigningLayout}
-                      onPreview={onPreview}
-                      previewPending={previewLinkMutation.isPending}
-                      sort={sort}
-                      onSortChange={onSortChange}
-                      sortDisabled={controlsDisabled}
+                    )}
+                  </EmptyContent>
+                )}
+              </Empty>
+            ) : (
+              <>
+                <div className="overflow-x-auto rounded-lg border">
+                  <LayoutsTable
+                    items={listData.items}
+                    view={view}
+                    onEditLayout={openEditor}
+                    onSetActive={setActivatingLayout}
+                    onDeactivate={setDeactivatingLayout}
+                    onArchive={setArchivingLayout}
+                    onRestore={onRestore}
+                    onDelete={setDeletingLayout}
+                    onDuplicate={onDuplicate}
+                    onRename={setRenamingLayout}
+                    onAssign={setAssigningLayout}
+                    onPreview={onPreview}
+                    previewPending={previewLinkMutation.isPending}
+                    sort={sort}
+                    onSortChange={onSortChange}
+                    sortDisabled={controlsDisabled}
+                  />
+                </div>
+                {showListControls && (
+                  <div className="mt-3 flex items-center justify-end gap-4">
+                    <Pagination
+                      pageIndex={pageIndex}
+                      pageCount={pageCount}
+                      onPreviousPage={() => onPageIndexChange(pageIndex - 1)}
+                      onNextPage={() => onPageIndexChange(pageIndex + 1)}
+                      onPageChange={onPageIndexChange}
+                      canPreviousPage={pageIndex > 0}
+                      canNextPage={pageIndex + 1 < pageCount}
+                      disabled={controlsDisabled}
                     />
                   </div>
-                  {showListControls && (
-                    <div className="mt-3 flex items-center justify-end gap-4">
-                      <Pagination
-                        pageIndex={pageIndex}
-                        pageCount={pageCount}
-                        onPreviousPage={() => onPageIndexChange(pageIndex - 1)}
-                        onNextPage={() => onPageIndexChange(pageIndex + 1)}
-                        onPageChange={onPageIndexChange}
-                        canPreviousPage={pageIndex > 0}
-                        canNextPage={pageIndex + 1 < pageCount}
-                        disabled={controlsDisabled}
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </Card>
-
-        <aside className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{__('Health', 'yaycheckout')}</CardTitle>
-            </CardHeader>
-            <p className="text-muted-foreground text-sm">{__('Not available yet.', 'yaycheckout')}</p>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>{__('Compatibility', 'yaycheckout')}</CardTitle>
-            </CardHeader>
-            <p className="text-muted-foreground text-sm">{__('Not available yet.', 'yaycheckout')}</p>
-          </Card>
-        </aside>
-      </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </Card>
 
       <Dialog open={null !== editingLayoutId} onOpenChange={onEditorOpenChange}>
         <DialogContent className="!flex h-[92vh] w-[96vw] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[96vw]">
@@ -796,20 +778,8 @@ function TableRowsSkeleton() {
 
 function LayoutsPageSkeleton() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
-      <Card>
-        <TableRowsSkeleton />
-      </Card>
-      <aside className="space-y-4">
-        <Card>
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="mt-3 h-3 w-1/2" />
-        </Card>
-        <Card>
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="mt-3 h-3 w-1/2" />
-        </Card>
-      </aside>
-    </div>
+    <Card>
+      <TableRowsSkeleton />
+    </Card>
   );
 }
