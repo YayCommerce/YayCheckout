@@ -1,13 +1,22 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getCompatibility } from '@/lib/api/compatibility.api';
+import { getCheckoutProblems, getCompatibility } from '@/lib/api/compatibility.api';
+
+/** Prefix of every compatibility query: invalidate it when a layout, its content or safe mode changes. */
+export const COMPATIBILITY_KEY = ['compatibility'] as const;
 
 export const COMPATIBILITY_QUERIES = {
   report: queryOptions({
-    queryKey: ['compatibility', 'report'],
+    queryKey: [...COMPATIBILITY_KEY, 'report'],
     queryFn: () => getCompatibility(false),
     // Detection is a snapshot; Re-scan is the only way to take a new one.
     staleTime: Infinity,
+  }),
+  // A layout may have changed since the last read, so every visit asks again.
+  problems: queryOptions({
+    queryKey: [...COMPATIBILITY_KEY, 'problems'],
+    queryFn: getCheckoutProblems,
+    staleTime: 0,
   }),
 };
 

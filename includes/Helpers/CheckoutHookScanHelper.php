@@ -180,6 +180,12 @@ class CheckoutHookScanHelper {
     private function row( array $owner, array $entry ): array {
         $described = PluginHeaderHelper::describe( $owner['kind'], $owner['slug'], $owner['path'] );
         $touches   = array_values( array_unique( $owner['touches'] ) );
+        $status    = $entry['status'] ?? CompatibilityCatalogue::STATUS_UNVERIFIED;
+
+        // Past its fixed_in, a conflict no longer applies (as on the storefront, CheckoutHealth), and nothing else vouches for it.
+        if ( CompatibilityCatalogue::STATUS_CONFLICT === $status && ! CompatibilityCatalogue::conflicts( $entry, $described['version'] ) ) {
+            $status = CompatibilityCatalogue::STATUS_UNVERIFIED;
+        }
 
         return [
             'slug'     => $owner['slug'],
@@ -187,7 +193,7 @@ class CheckoutHookScanHelper {
             'version'  => $described['version'],
             'kind'     => $owner['kind'],
             'touches'  => $touches,
-            'status'   => $entry['status'] ?? CompatibilityCatalogue::STATUS_UNVERIFIED,
+            'status'   => $status,
             'notes'    => $entry['notes'] ?? $this->default_note( $touches ),
             'docs_url' => $entry['docs_url'] ?? null,
         ];

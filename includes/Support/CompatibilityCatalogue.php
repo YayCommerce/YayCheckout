@@ -15,9 +15,10 @@ final class CompatibilityCatalogue {
     public const STATUS_COMMUNITY  = 'community';
     public const STATUS_UNVERIFIED = 'unverified';
     public const STATUS_BLOCK_ONLY = 'block-only';
+    public const STATUS_CONFLICT   = 'conflict';
 
-    public const GATEWAY_STATUSES = [ self::STATUS_VERIFIED, self::STATUS_COMMUNITY, self::STATUS_UNVERIFIED, self::STATUS_BLOCK_ONLY ];
-    public const PLUGIN_STATUSES  = [ self::STATUS_VERIFIED, self::STATUS_COMMUNITY, self::STATUS_UNVERIFIED ];
+    public const GATEWAY_STATUSES = [ self::STATUS_VERIFIED, self::STATUS_COMMUNITY, self::STATUS_UNVERIFIED, self::STATUS_BLOCK_ONLY, self::STATUS_CONFLICT ];
+    public const PLUGIN_STATUSES  = [ self::STATUS_VERIFIED, self::STATUS_COMMUNITY, self::STATUS_UNVERIFIED, self::STATUS_CONFLICT ];
 
     public const SOURCE_REMOTE  = 'remote';
     public const SOURCE_BUNDLED = 'bundled';
@@ -79,8 +80,16 @@ final class CompatibilityCatalogue {
         ];
     }
 
+    /** Whether a catalogue entry still conflicts at the installed $version: marked `conflict`, and $version is below its `fixed_in`, if any. */
+    public static function conflicts( array $entry, string $version ): bool {
+        $fixed_in = (string) ( $entry['fixed_in'] ?? '' );
+
+        return self::STATUS_CONFLICT === ( $entry['status'] ?? null )
+            && ( '' === $fixed_in || version_compare( $version, $fixed_in, '<' ) );
+    }
+
     /**
-     * @return array{title: null, status: null, express_pay: null, notes: null, docs_url: null}
+     * @return array{title: null, status: null, express_pay: null, notes: null, docs_url: null, fixed_in: null}
      */
     public static function entry_defaults(): array {
         return [
@@ -89,6 +98,7 @@ final class CompatibilityCatalogue {
             'express_pay' => null,
             'notes'       => null,
             'docs_url'    => null,
+            'fixed_in'    => null,
         ];
     }
 

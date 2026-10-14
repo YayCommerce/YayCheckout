@@ -24,7 +24,7 @@ class SettingsRepository {
         return $this->get();
     }
 
-    /** Safe mode on: the storefront is WooCommerce's stock checkout. */
+    /** Safe mode on: a layout with a problem gives way to WooCommerce's checkout (Renderer\CheckoutPage). */
     public function is_safe_mode(): bool {
         return ! empty( $this->get()->general['safe_mode'] );
     }

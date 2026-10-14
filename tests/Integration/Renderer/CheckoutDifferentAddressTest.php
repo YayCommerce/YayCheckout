@@ -2,6 +2,7 @@
 namespace YayCheckout\Tests\Integration\Renderer;
 
 use WP_UnitTestCase;
+use YayCheckout\Renderer\CheckoutPage;
 use YayCheckout\Tests\Support\LayoutFactory;
 
 /** Shipping mode copies the shipping address into billing on submit; billing mode copies nothing. */
@@ -11,10 +12,11 @@ class CheckoutDifferentAddressTest extends WP_UnitTestCase {
         parent::set_up();
         wc_load_cart();
         add_filter( 'woocommerce_cart_needs_shipping_address', '__return_true' );
-        LayoutFactory::serve( '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/billing /--><!-- wp:yaycheckout/different-address /--><!-- wp:yaycheckout/shipping /--><!-- /wp:yaycheckout/checkout -->' );
+        $id = LayoutFactory::serve( '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/billing /--><!-- wp:yaycheckout/different-address /--><!-- wp:yaycheckout/shipping /--><!-- wp:yaycheckout/email /--><!-- wp:yaycheckout/payment /--><!-- wp:yaycheckout/place-order /--><!-- /wp:yaycheckout/checkout -->' );
 
         $_POST = [
             'woocommerce-process-checkout-nonce' => 'x',
+            CheckoutPage::FORM_FIELD             => (string) $id,
             'ship_to_different_address'          => '1',
             'billing_email'                      => 'shopper@example.com',
             'shipping_first_name'                => 'Ada',

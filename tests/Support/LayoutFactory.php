@@ -6,9 +6,9 @@ use YayCheckout\Models\Layout;
 /** Fixtures the layout suites share. */
 final class LayoutFactory {
 
-    /** The smallest publishable markup: the root block alone, in the self-closing form core stores. */
+    /** The smallest publishable markup: the root block with the two blocks publish_error() requires. */
     public static function checkout_markup(): string {
-        return '<!-- wp:yaycheckout/checkout /-->';
+        return '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/email /--><!-- wp:yaycheckout/payment /--><!-- wp:yaycheckout/place-order /--><!-- /wp:yaycheckout/checkout -->';
     }
 
     /**
@@ -49,11 +49,18 @@ final class LayoutFactory {
         return $id;
     }
 
-    /** Clears CheckoutPage's memoised layout; the singleton outlives a test. */
+    /** Clears what CheckoutPage memoises per request (the layout, the rendered HTML); the singleton outlives a test. */
     public static function forget_served_layout(): void {
-        $memo = new \ReflectionProperty( \YayCheckout\Renderer\CheckoutPage::class, 'layout' );
-        $memo->setAccessible( true );
-        $memo->setValue( \YayCheckout\Renderer\CheckoutPage::get_instance(), false );
+        $fresh_values = [
+            'layout' => false,
+            'html'   => '',
+        ];
+
+        foreach ( $fresh_values as $property => $fresh ) {
+            $memo = new \ReflectionProperty( \YayCheckout\Renderer\CheckoutPage::class, $property );
+            $memo->setAccessible( true );
+            $memo->setValue( \YayCheckout\Renderer\CheckoutPage::get_instance(), $fresh );
+        }
     }
 
     /** A shop manager (WooCommerce's manage_woocommerce role), made current. */

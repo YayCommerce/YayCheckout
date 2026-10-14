@@ -3,13 +3,23 @@ import { z } from 'zod';
 // Wire schemas: the PHP shape of GET /compatibility, exactly.
 
 /** Mirrors CompatibilityCatalogue::GATEWAY_STATUSES / PLUGIN_STATUSES in PHP. */
-const gatewayStatusWireSchema = z.enum(['verified', 'community', 'unverified', 'block-only']);
-const pluginStatusWireSchema = z.enum(['verified', 'community', 'unverified']);
+const gatewayStatusWireSchema = z.enum(['verified', 'community', 'unverified', 'block-only', 'conflict']);
+const pluginStatusWireSchema = z.enum(['verified', 'community', 'unverified', 'conflict']);
 /** Mirrors CheckoutHookScanHelper::HOOKS buckets. */
 const touchWireSchema = z.enum(['fields', 'templates', 'gateways', 'order_review', 'submission']);
 const storeTypeWireSchema = z.enum(['classic', 'block']);
 const ownerKindWireSchema = z.enum(['plugin', 'mu-plugin', 'theme']);
 const catalogueSourceWireSchema = z.enum(['remote', 'bundled']);
+/** Mirrors one entry of CheckoutHealth::reported_problems(). */
+const checkoutProblemWireSchema = z
+  .object({
+    reason: z.string(),
+    detail: z.string().nullable(),
+    blocks: z.boolean(),
+    layout_id: z.number().int().nullable(),
+    layout_title: z.string().nullable(),
+  })
+  .strict();
 
 export const compatibilityWireSchema = z
   .object({
@@ -26,6 +36,7 @@ export const compatibilityWireSchema = z
           })
           .strict(),
         safe_mode: z.boolean(),
+        checkout_problems: z.array(checkoutProblemWireSchema),
       })
       .strict(),
     gateways: z.array(
@@ -65,6 +76,16 @@ export const compatibilityWireSchema = z
 
 export type CompatibilityWire = z.infer<typeof compatibilityWireSchema>;
 
+/** GET /compatibility/problems: the store's safe mode and checkout problems, without the rest of the report. */
+export const checkoutProblemsWireSchema = z
+  .object({
+    safe_mode: z.boolean(),
+    checkout_problems: z.array(checkoutProblemWireSchema),
+  })
+  .strict();
+
+export type CheckoutProblemWire = z.infer<typeof checkoutProblemWireSchema>;
+
 // App types, camelCase.
 
 export type GatewayStatus = z.infer<typeof gatewayStatusWireSchema>;
@@ -78,6 +99,17 @@ export type StoreEnvironment = {
   wordpressVersion: string;
   theme: { name: string; version: string; isBlockTheme: boolean };
   safeMode: boolean;
+  /** Why layouts are unsafe to serve: one per broken active layout, then a store-level one with no layout; empty when there is none. */
+  checkoutProblems: CheckoutProblem[];
+};
+
+export type CheckoutProblem = {
+  reason: string;
+  detail: string | null;
+  /** False only for a render failure that isn't the breaker: with safe mode on, the layout is still served. */
+  blocks: boolean;
+  layoutId: number | null;
+  layoutTitle: string | null;
 };
 
 export type GatewayRow = {

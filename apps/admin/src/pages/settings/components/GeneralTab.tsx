@@ -24,7 +24,10 @@ export function GeneralTab() {
         render={({ field }) => (
           <SettingRow
             title={__('Safe mode', 'yaycheckout')}
-            description={__('Falls back to the native WooCommerce checkout. Your layouts stay saved.', 'yaycheckout')}
+            description={__(
+              'If the active layout has a problem that could break checkout, shoppers get the native WooCommerce checkout instead. Problems show on the Compatibility page.',
+              'yaycheckout',
+            )}
           >
             <Switch checked={field.value} onCheckedChange={field.onChange} />
           </SettingRow>

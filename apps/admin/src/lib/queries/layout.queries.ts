@@ -27,6 +27,7 @@ import {
   restoreLayout,
   saveLayoutRules,
 } from '@/lib/api/layout.api';
+import { COMPATIBILITY_KEY } from '@/lib/queries/compatibility.queries';
 import { LISTED_LAYOUT_STATUSES, type LayoutListResponse } from '@/lib/schema/layout.schema';
 
 export const LAYOUT_KEYS = {
@@ -124,6 +125,8 @@ export function useActivateLayoutMutation() {
     mutationFn: activateLayout,
     onSuccess: () => {
       invalidateListedLayouts(queryClient);
+      // The Compatibility report and the Layouts page's alert list the active layouts' problems.
+      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_KEY });
     },
   });
 }
@@ -136,6 +139,7 @@ export function useDeactivateLayoutMutation() {
     mutationFn: deactivateLayout,
     onSuccess: () => {
       invalidateListedLayouts(queryClient);
+      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_KEY });
     },
   });
 }
@@ -149,6 +153,7 @@ export function useArchiveLayoutMutation() {
     mutationFn: archiveLayout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_KEY });
     },
   });
 }
@@ -209,6 +214,7 @@ export function useRenameLayoutMutation() {
     onSuccess: (_layout, { id }) => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.detail(id) });
+      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_KEY });
     },
   });
 }
@@ -222,6 +228,7 @@ export function useResetLayoutMutation() {
     mutationFn: resetLayout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
+      queryClient.invalidateQueries({ queryKey: COMPATIBILITY_KEY });
     },
   });
 }

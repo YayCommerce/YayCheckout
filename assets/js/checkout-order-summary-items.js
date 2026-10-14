@@ -72,6 +72,8 @@ jQuery(function ($) {
                 security: $wrapper.data('yaycheckoutCartNonce'),
                 cart_item_key: key,
                 quantity: quantity,
+                // The layout that rendered this form, so the request keeps it if safe mode has since stood down (CheckoutPage::FORM_FIELD).
+                yaycheckout_layout: $('form.checkout input[name="yaycheckout_layout"]').val(),
             },
             dataType: 'json',
         })

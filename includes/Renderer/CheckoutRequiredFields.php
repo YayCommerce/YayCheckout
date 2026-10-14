@@ -28,8 +28,11 @@ class CheckoutRequiredFields {
 
     private const SCRIPT_HANDLE = 'yaycheckout-field-requirements';
 
-    /** @var array{address: array, all: array, order_note: array|null}|null|false False until first read; null when standing down. */
-    private $fields = false;
+    /** @var array{address: array, all: array, order_note: array|null}|null Read from $fields_layout; null when standing down. */
+    private $fields = null;
+
+    /** @var Layout|null|false The layout $fields was read from; false until first read. A render that fails stands down mid-request, so the layout can change. */
+    private $fields_layout = false;
 
     protected function __construct() {
         // Not gated on the page: checkout POST validates at wp_loaded, before is_page() works, and would drop the layout's required flags.
@@ -149,11 +152,13 @@ class CheckoutRequiredFields {
      * @return array{address: array, all: array, order_note: array|null}|null Null when no layout is served, so WooCommerce keeps its own rules.
      */
     private function fields(): ?array {
-        if ( false !== $this->fields ) {
+        $layout = CheckoutPage::get_instance()->layout();
+
+        if ( $layout === $this->fields_layout ) {
             return $this->fields;
         }
 
-        $layout = CheckoutPage::get_instance()->layout();
+        $this->fields_layout = $layout;
 
         if ( ! $layout instanceof Layout || '' === trim( $layout->content ) ) {
             $this->fields = null;

@@ -1,8 +1,48 @@
+import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { storeTypeLabel } from '@/lib/helpers/compatibility.helper';
+import { editLayoutPath } from '@/lib/helpers/layout.helper';
 import type { StoreEnvironment } from '@/lib/schema/compatibility.schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+/** Which checkout shoppers get; with problems, one red line each, with a link to the layout's editor when it is the layout's own. */
+function Rendering({ safeMode, checkoutProblems }: StoreEnvironment) {
+  if (checkoutProblems.length === 0) {
+    return __('YayCheckout layout', 'yaycheckout');
+  }
+
+  return (
+    <div className="text-destructive space-y-1">
+      {checkoutProblems.map(({ reason, detail, blocks, layoutId, layoutTitle }) => (
+        <p key={`${layoutId ?? 'store'}-${reason}`} title={detail ?? undefined}>
+          {sprintf(
+            /* translators: %s: why the layout is not served, or may break checkout */
+            safeMode && blocks
+              ? __('Native checkout — %s', 'yaycheckout')
+              : __('YayCheckout layout — %s', 'yaycheckout'),
+            reason,
+          )}
+          {layoutId !== null && (
+            <>
+              {' '}
+              <Link to={editLayoutPath(layoutId)} className="font-medium underline underline-offset-2">
+                {layoutTitle
+                  ? sprintf(
+                      /* translators: %s: layout name */
+                      __('Edit %s', 'yaycheckout'),
+                      layoutTitle,
+                    )
+                  : __('Edit layout', 'yaycheckout')}
+              </Link>
+            </>
+          )}
+        </p>
+      ))}
+    </div>
+  );
+}
 
 export function StoreSection({ store }: { store: StoreEnvironment }) {
   const themeLabel = `${store.theme.name} ${store.theme.version}`.trim();
@@ -14,15 +54,12 @@ export function StoreSection({ store }: { store: StoreEnvironment }) {
       )
     : themeLabel;
 
-  const rows: [string, string][] = [
+  const rows: [string, ReactNode][] = [
     [__('Store type', 'yaycheckout'), storeTypeLabel(store.storeType)],
     [__('WooCommerce', 'yaycheckout'), store.woocommerceVersion],
     [__('WordPress', 'yaycheckout'), store.wordpressVersion],
     [__('Theme', 'yaycheckout'), theme],
-    [
-      __('Rendering', 'yaycheckout'),
-      store.safeMode ? __('Native checkout — safe mode is on', 'yaycheckout') : __('YayCheckout layout', 'yaycheckout'),
-    ],
+    [__('Rendering', 'yaycheckout'), <Rendering key="rendering" {...store} />],
   ];
 
   return (

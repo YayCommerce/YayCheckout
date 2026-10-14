@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Models\Layout;
 use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -115,7 +116,13 @@ class CheckoutFragments {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/review-order-skipped.php';
     }
 
-    /** Swaps the fragments of this layout's sections for this layout's HTML. */
+    /**
+     * Swaps the fragments of this layout's sections for this layout's HTML.
+     * A layout that throws here is reported like one that throws on the page (CheckoutPage::absorb()); with
+     * safe mode on, the response swaps nothing and the form keeps what it shows.
+     *
+     * @throws \Throwable A layout failure during a preview, or with safe mode off.
+     */
     public function fragments( $fragments ) {
         $layout = CheckoutPage::get_instance()->layout();
 
@@ -123,6 +130,27 @@ class CheckoutFragments {
             return $fragments;
         }
 
+        $level = ob_get_level();
+
+        try {
+            return $this->layout_fragments( $fragments, $layout );
+        } catch ( \Throwable $ex ) {
+            // A builder opens a buffer before it renders; left open, its half-printed HTML would end up in the AJAX response.
+            while ( ob_get_level() > $level ) {
+                ob_end_clean();
+            }
+
+            if ( ! CheckoutPage::get_instance()->absorb( $layout, $ex, false ) ) {
+                throw $ex;
+            }
+
+            // Reported, not blocking, as on the page: it may fail for this cart only. The form keeps its layout
+            // (CheckoutPage::posted_layout_id()), so nothing is swapped: WooCommerce's own fragments don't fit it.
+            return [];
+        }
+    }
+
+    private function layout_fragments( array $fragments, Layout $layout ): array {
         $rendered = array_flip( LayoutMarkupReader::slots( $layout->content ) );
         $summary  = self::summary_block_fragments( $layout->content );
 

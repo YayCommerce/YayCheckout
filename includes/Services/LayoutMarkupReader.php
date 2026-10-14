@@ -19,6 +19,8 @@ class LayoutMarkupReader {
     public const BILLING            = 'yaycheckout/billing';
     public const SHIPPING           = 'yaycheckout/shipping';
     private const DIFFERENT_ADDRESS = 'yaycheckout/different-address';
+    private const PLACE_ORDER       = 'yaycheckout/place-order';
+    private const PAYMENT           = 'yaycheckout/payment';
 
     /**
      * A Key is a posted field name and an order meta key. PHP rewrites spaces
@@ -248,6 +250,19 @@ class LayoutMarkupReader {
     public static function publish_error( string $markup ): string {
         if ( ! self::has_checkout( $markup ) ) {
             return __( 'Add a Checkout block to this layout before activating it.', 'yaycheckout' );
+        }
+
+        // WooCommerce always requires billing_email (RequiredFieldOverlay::is_required()): without the field no order goes through.
+        if ( ! has_block( self::EMAIL, $markup ) ) {
+            return __( 'Add an Email field to this layout before activating it.', 'yaycheckout' );
+        }
+
+        if ( ! has_block( self::PLACE_ORDER, $markup ) ) {
+            return __( 'Add a Place order block to this layout before activating it.', 'yaycheckout' );
+        }
+
+        if ( ! has_block( self::PAYMENT, $markup ) ) {
+            return __( 'Add a Payment block to this layout before activating it.', 'yaycheckout' );
         }
 
         $keys = [];

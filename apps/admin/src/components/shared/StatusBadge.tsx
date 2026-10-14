@@ -13,6 +13,7 @@ const BADGES: Record<GatewayStatus, { label: string; variant: BadgeVariant; clas
   community: { label: __('Community', 'yaycheckout'), variant: 'outline', className: 'border-dashed' },
   unverified: { label: __('Unverified', 'yaycheckout'), variant: 'dimmed' },
   'block-only': { label: __('Block only', 'yaycheckout'), variant: 'warning-soft' },
+  conflict: { label: __('Conflict', 'yaycheckout'), variant: 'destructive-soft' },
 };
 
 /** @param title Gateway name; when set, renders a larger pill that leads with it, tinted by the status. */

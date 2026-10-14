@@ -49,9 +49,18 @@ class LayoutRepository {
      * @param array $context Shopper facts; see LayoutAssignment::matches().
      */
     public function active( array $context ): ?Layout {
-        $layouts = array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
+        $layouts = $this->active_layouts();
 
         return Plan::is_pro() ? LayoutAssignment::pick( $layouts, $context ) : ( $layouts[0] ?? null );
+    }
+
+    /**
+     * The active layouts, most recently activated first.
+     *
+     * @return Layout[]
+     */
+    public function active_layouts(): array {
+        return array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
     }
 
     /**
