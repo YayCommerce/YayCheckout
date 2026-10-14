@@ -229,7 +229,7 @@ $yaycheckout_secondary_fields = static function ( string $type ): void {
 <hr class="wp-block-separator has-text-color has-alpha-channel-opacity has-background" style="margin-top:0;margin-bottom:0;background-color:#dddddd;color:#dddddd"/>
 <!-- /wp:separator -->
 
-<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Pay', 'yaycheckout' ); ?>","style":{"typography":{"fontSize":"15px","fontWeight":"600","textAlign":"center"},"border":{"radius":"2px"},"dimensions":{"width":"100%"}}} /-->
+<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Pay', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022 \u0022 data-suffix=\u0022\u0022\u003e <?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","style":{"typography":{"fontSize":"15px","fontWeight":"600","textAlign":"center"},"border":{"radius":"2px"},"dimensions":{"width":"100%"}}} /-->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"16px"}},"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"center"}} -->
 <div class="wp-block-group"><!-- wp:paragraph {"style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
