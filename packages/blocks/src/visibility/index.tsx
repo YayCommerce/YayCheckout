@@ -7,7 +7,6 @@ import {
 	Button,
 	Flex,
 	FlexBlock,
-	Notice,
 	PanelBody,
 	SelectControl,
 	ToggleControl,
@@ -18,7 +17,7 @@ import {
 import { createHigherOrderComponent } from '@wordpress/compose';
 import { createReduxStore, register, select as selectNow, useDispatch, useSelect } from '@wordpress/data';
 import { PluginSidebar, PluginSidebarMoreMenuItem } from '@wordpress/editor';
-import { useEffect, useMemo, useRef, type ComponentType } from '@wordpress/element';
+import { Fragment, useEffect, useMemo, useRef, type ComponentType } from '@wordpress/element';
 import { addFilter } from '@wordpress/hooks';
 import { __, sprintf } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
@@ -51,23 +50,11 @@ type StepOption = { value: number | 'last'; label: string };
 
 const STEP = stepMeta.name;
 
-/**
- * Blocks holding WooCommerce fields, whose required rules stay while a container hides: the notice warns
- * about any of them. Not shared/hide-when-empty.tsx's check, a block set to required, which misses Billing
- * and Shipping: they hold required fields without a `required` attribute of their own.
- */
-const FIELD_BLOCKS = [
-	'yaycheckout/billing',
-	'yaycheckout/shipping',
-	'yaycheckout/field',
-	'yaycheckout/email',
-	'yaycheckout/order-note',
-	'yaycheckout/extra-field',
-];
-
 const CONDITIONAL_CLASS = 'is-yaycheckout-conditional';
 
 const PREVIEW_HIDDEN_CLASS = 'is-yaycheckout-preview-hidden';
+
+const PREVIEW_COLLAPSED_CLASS = 'is-yaycheckout-preview-collapsed';
 
 const PLUGIN = 'yaycheckout-visibility-preview';
 
@@ -162,61 +149,6 @@ function draftOf( value: unknown ): DraftSetting | null {
 	};
 }
 
-function money( amount: number ): string {
-	return `${ editorData.currencySymbol }${ amount }`;
-}
-
-/** One line saying when the block shows, e.g. "Hidden on the last step" or "Shown when logged in and a coupon is applied". */
-function summary( setting: VisibilitySetting | null, draft: DraftSetting ): string {
-	if ( ! setting ) {
-		return draft.action === 'show'
-			? __( 'Add a condition. Until then, the block always shows.', 'yaycheckout' )
-			: __( 'Add a condition. Until then, the block never hides.', 'yaycheckout' );
-	}
-
-	let where = '';
-	const when: string[] = [];
-
-	setting.rules.forEach( ( rule ) => {
-		switch ( rule.type ) {
-			case 'step':
-				where =
-					rule.step === 'last'
-						? __( 'on the last step', 'yaycheckout' )
-						: /* translators: %d: step number. */ sprintf( __( 'on step %d', 'yaycheckout' ), rule.step );
-				break;
-			case 'needs_shipping':
-				when.push( __( 'the cart needs shipping', 'yaycheckout' ) );
-				break;
-			case 'has_coupon':
-				when.push( __( 'a coupon is applied', 'yaycheckout' ) );
-				break;
-			case 'subtotal':
-				when.push(
-					rule.op === 'gte'
-						? /* translators: %s: amount with currency symbol. */ sprintf( __( 'the subtotal is at least %s', 'yaycheckout' ), money( rule.amount ) )
-						: /* translators: %s: amount with currency symbol. */ sprintf( __( 'the subtotal is below %s', 'yaycheckout' ), money( rule.amount ) )
-				);
-				break;
-			case 'logged_in':
-				when.push( __( 'logged in', 'yaycheckout' ) );
-				break;
-		}
-	} );
-
-	const conditions = [
-		where,
-		/* translators: %s: conditions joined by "and", e.g. "logged in and a coupon is applied". */
-		when.length > 0 ? sprintf( __( 'when %s', 'yaycheckout' ), when.join( __( ' and ', 'yaycheckout' ) ) ) : '',
-	]
-		.filter( Boolean )
-		.join( ' ' );
-
-	return setting.action === 'show'
-		? /* translators: %s: when the block shows, e.g. "on the last step". */ sprintf( __( 'Shown %s', 'yaycheckout' ), conditions )
-		: /* translators: %s: when the block hides, e.g. "on the last step". */ sprintf( __( 'Hidden %s', 'yaycheckout' ), conditions );
-}
-
 /** The store's currency symbol as an input's suffix. */
 function CurrencySuffix() {
 	return <InputControlSuffixWrapper>{ editorData.currencySymbol }</InputControlSuffixWrapper>;
@@ -306,23 +238,9 @@ function RuleRow( { rule, used, steps, onChange, onRemove }: RuleRowProps ) {
 	);
 }
 
-function VisibilityPanel( { clientId, attributes, setAttributes }: LayoutPanelProps ) {
+function VisibilityPanel( { attributes, setAttributes }: LayoutPanelProps ) {
 	const draft = draftOf( attributes[ ATTRIBUTE ] );
-	const setting = normalize( attributes[ ATTRIBUTE ] );
 	const steps = useStepOptions();
-	const { hasSteps, hasFields } = useSelect(
-		( select ) => {
-			const { getBlockName, getClientIdsOfDescendants } = select( blockEditorStore );
-
-			return {
-				hasSteps: firstStepsBlock( select ) !== undefined,
-				hasFields: [ clientId, ...( getClientIdsOfDescendants( [ clientId ] ) as string[] ) ].some( ( id ) =>
-					FIELD_BLOCKS.includes( getBlockName( id ) )
-				),
-			};
-		},
-		[ clientId ]
-	);
 
 	const write = ( next: DraftSetting | null ) => setAttributes( { [ ATTRIBUTE ]: next ?? undefined } );
 	const rules = draft?.rules ?? [];
@@ -347,14 +265,16 @@ function VisibilityPanel( { clientId, attributes, setAttributes }: LayoutPanelPr
 				{ draft && (
 					<>
 						{ rules.map( ( rule, index ) => (
-							<RuleRow
-								key={ rule.type }
-								rule={ rule }
-								used={ used }
-								steps={ steps }
-								onChange={ ( next ) => write( { ...draft, rules: rules.map( ( kept, at ) => ( at === index ? next : kept ) ) } ) }
-								onRemove={ () => write( { ...draft, rules: rules.filter( ( _, at ) => at !== index ) } ) }
-							/>
+							<Fragment key={ rule.type }>
+								{ index > 0 && <p className="yaycheckout-visibility__and">{ __( 'and', 'yaycheckout' ) }</p> }
+								<RuleRow
+									rule={ rule }
+									used={ used }
+									steps={ steps }
+									onChange={ ( next ) => write( { ...draft, rules: rules.map( ( kept, at ) => ( at === index ? next : kept ) ) } ) }
+									onRemove={ () => write( { ...draft, rules: rules.filter( ( _, at ) => at !== index ) } ) }
+								/>
+							</Fragment>
 						) ) }
 						{ unused.length > 0 && (
 							<Button
@@ -364,17 +284,6 @@ function VisibilityPanel( { clientId, attributes, setAttributes }: LayoutPanelPr
 							>
 								{ __( 'Add condition', 'yaycheckout' ) }
 							</Button>
-						) }
-						<p className="yaycheckout-visibility__summary">{ summary( setting, draft ) }</p>
-						{ ! hasSteps && used.includes( 'step' ) && (
-							<Notice status="warning" isDismissible={ false }>
-								{ __( 'This layout has no Steps block, so step conditions never match.', 'yaycheckout' ) }
-							</Notice>
-						) }
-						{ hasFields && (
-							<Notice status="info" isDismissible={ false }>
-								{ __( 'Fields inside stay required while this block is hidden.', 'yaycheckout' ) }
-							</Notice>
 						) }
 					</>
 				) }
@@ -386,11 +295,12 @@ function VisibilityPanel( { clientId, attributes, setAttributes }: LayoutPanelPr
 addLayoutPanel( 'yaycheckout/visibility', ( name ) => ! EXCLUDED.includes( name ), ATTRIBUTE, { type: 'object' }, VisibilityPanel );
 
 /** The preview sidebar's inputs; in memory only, never in the post. */
-type Preview = VisibilityState & { open: boolean; step: 'off' | number | 'last' };
+type Preview = VisibilityState & { open: boolean; step: 'off' | number | 'last'; collapse: boolean };
 
 const NO_PREVIEW: Preview = {
 	open: false,
 	step: 'off',
+	collapse: false,
 	logged_in: false,
 	needs_shipping: false,
 	has_coupon: false,
@@ -419,14 +329,6 @@ const previewStore = createReduxStore( STORE, {
 
 register( previewStore );
 
-/** Whether the preview dims anything: the sidebar is open and a step, a toggle or an amount is set. */
-function isPreviewing( preview: Preview ): boolean {
-	return (
-		preview.open &&
-		( preview.step !== 'off' || preview.logged_in || preview.needs_shipping || preview.has_coupon || preview.subtotal > 0 )
-	);
-}
-
 /**
  * Whether the preview inputs would hide a block with this setting. With Step off, step conditions are left
  * out, so the preview shows what the other inputs alone decide.
@@ -445,17 +347,21 @@ type ListBlockProps = { attributes: Record< string, unknown >; className?: strin
 
 type ConditionalBlockProps = ListBlockProps & { BlockListBlock: ComponentType< ListBlockProps >; setting: VisibilitySetting };
 
-/** A block with a setting: the Conditional tag, and the preview's dimming. */
+/** A block with a setting: the Conditional tag, and the preview's dimming or collapsing. */
 function ConditionalBlock( { BlockListBlock, setting, ...props }: ConditionalBlockProps ) {
-	const hidden = useSelect(
+	const previewClass = useSelect(
 		( select ) => {
 			const preview: Preview = select( STORE ).getPreview();
 
-			return isPreviewing( preview ) && previewHides( setting, preview, stepIds( select ).length );
+			if ( ! preview.open || ! previewHides( setting, preview, stepIds( select ).length ) ) {
+				return '';
+			}
+
+			return preview.collapse ? PREVIEW_COLLAPSED_CLASS : PREVIEW_HIDDEN_CLASS;
 		},
 		[ setting ]
 	);
-	const className = [ props.className, CONDITIONAL_CLASS, hidden ? PREVIEW_HIDDEN_CLASS : '' ].filter( Boolean ).join( ' ' );
+	const className = [ props.className, CONDITIONAL_CLASS, previewClass ].filter( Boolean ).join( ' ' );
 
 	return (
 		<BlockListBlock
@@ -548,6 +454,13 @@ function PreviewSidebar() {
 							value={ preview.subtotal }
 							suffix={ <CurrencySuffix /> }
 							onChange={ ( value?: string ) => setPreview( { subtotal: toAmount( value ) } ) }
+						/>
+						<ToggleControl
+							__nextHasNoMarginBottom
+							label={ __( 'Hide dimmed blocks', 'yaycheckout' ) }
+							help={ __( 'Shows the layout without them. Select them from List View.', 'yaycheckout' ) }
+							checked={ preview.collapse }
+							onChange={ ( checked: boolean ) => setPreview( { collapse: checked } ) }
 						/>
 					</VStack>
 				</PanelBody>
