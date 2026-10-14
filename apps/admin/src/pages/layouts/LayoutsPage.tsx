@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Loader2, Plus, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, Plus, Search } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { __ } from '@wordpress/i18n';
 
-import { formatDateTime } from '@/lib/helpers/date.helper';
+import { formatDateAtTime } from '@/lib/helpers/date.helper';
 import { editLayoutIdFrom, withEditLayout } from '@/lib/helpers/layout.helper';
 import { isPro } from '@/lib/plan';
 import {
@@ -57,13 +57,17 @@ import { RenameModal } from '@/pages/layouts/RenameModal';
 import { SetActiveModal } from '@/pages/layouts/SetActiveModal';
 import PageLayout from '@/pages/PageLayout';
 
-type View = 'listed' | 'archived';
+type View = 'listed' | 'active' | 'archived';
+
+/** Last-updated sort; null keeps the server's default order, newest created first. */
+type Sort = 'asc' | 'desc' | null;
 
 const MIN_ITEMS_FOR_LIST_CONTROLS = 10;
 
 export default function LayoutsPage() {
   const [view, setView] = useState<View>('listed');
   const [pageIndex, setPageIndex] = useState(0);
+  const [sort, setSort] = useState<Sort>(null);
   const {
     input: searchInput,
     search,
@@ -77,10 +81,17 @@ export default function LayoutsPage() {
     setPageIndex(0);
   }
 
+  function onSortChange(next: Sort) {
+    setSort(next);
+    setPageIndex(0);
+  }
+
   const list = useLayoutsQuery({
     status: view === 'archived' ? ['trash'] : LISTED_LAYOUT_STATUSES,
+    active: view === 'active',
     search,
     page: pageIndex + 1,
+    ...(sort && { orderBy: 'modified' as const, order: sort }),
   });
   const countsQuery = useLayoutCountsQuery();
 
@@ -117,6 +128,8 @@ export default function LayoutsPage() {
           onSearchInputChange={onSearchInputChange}
           pageIndex={pageIndex}
           onPageIndexChange={setPageIndex}
+          sort={sort}
+          onSortChange={onSortChange}
         />
       )}
     </PageLayout>
@@ -137,6 +150,8 @@ function LayoutsPageBody({
   onSearchInputChange,
   pageIndex,
   onPageIndexChange,
+  sort,
+  onSortChange,
 }: {
   listData: LayoutListResponse | undefined;
   listError: Error | null;
@@ -153,6 +168,8 @@ function LayoutsPageBody({
   onSearchInputChange: (value: string) => void;
   pageIndex: number;
   onPageIndexChange: (pageIndex: number) => void;
+  sort: Sort;
+  onSortChange: (sort: Sort) => void;
 }) {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -195,6 +212,9 @@ function LayoutsPageBody({
       onSuccess: () => {
         setDeactivatingLayout(null);
         toast.success(__('Layout deactivated.', 'yaycheckout'));
+
+        // The row leaves the Active tab.
+        if (view === 'active') stepBackIfPageEmptied();
       },
     });
   }
@@ -283,7 +303,8 @@ function LayoutsPageBody({
 
   const controlsDisabled = listIsOtherTabPlaceholder;
 
-  const showListControls = (view === 'archived' ? counts.archived : counts.listed) >= MIN_ITEMS_FOR_LIST_CONTROLS;
+  const viewCount = view === 'archived' ? counts.archived : view === 'active' ? counts.active : counts.listed;
+  const showListControls = viewCount >= MIN_ITEMS_FOR_LIST_CONTROLS;
   // totalPages is 0 for an empty result.
   const pageCount = Math.max(1, listData?.totalPages ?? 1);
 
@@ -335,9 +356,15 @@ function LayoutsPageBody({
               disabled={controlsDisabled}
             >
               <SegmentedItem value="listed">
-                {__('Active list', 'yaycheckout')}
+                {__('All', 'yaycheckout')}
                 <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
                   <CountValue loading={countsFetching} value={counts.listed} />
+                </Badge>
+              </SegmentedItem>
+              <SegmentedItem value="active">
+                {__('Active', 'yaycheckout')}
+                <Badge variant="dimmed" className="h-5.5 min-w-5.5 rounded-full px-1 font-normal">
+                  <CountValue loading={countsFetching} value={counts.active} />
                 </Badge>
               </SegmentedItem>
               <SegmentedItem value="archived">
@@ -383,19 +410,23 @@ function LayoutsPageBody({
                         ? __('No matching layouts', 'yaycheckout')
                         : view === 'archived'
                           ? __('Nothing archived', 'yaycheckout')
-                          : __('Nothing here yet', 'yaycheckout')}
+                          : view === 'active'
+                            ? __('No active layouts', 'yaycheckout')
+                            : __('Nothing here yet', 'yaycheckout')}
                     </EmptyTitle>
                     <EmptyDescription>
                       {search
                         ? __('No layouts match your search. Try a different name.', 'yaycheckout')
                         : view === 'archived'
                           ? __('Layouts you archive will show up here.', 'yaycheckout')
-                          : counts.archived > 0
-                            ? __(
-                                'All of your layouts are archived. Restore one to bring it back to this list, or start a new draft. Archiving never deletes anything.',
-                                'yaycheckout',
-                              )
-                            : __('Create your first checkout layout to get started.', 'yaycheckout')}
+                          : view === 'active'
+                            ? __('Set a layout active to use it on your checkout.', 'yaycheckout')
+                            : counts.archived > 0
+                              ? __(
+                                  'All of your layouts are archived. Restore one to bring it back to this list, or start a new draft. Archiving never deletes anything.',
+                                  'yaycheckout',
+                                )
+                              : __('Create your first checkout layout to get started.', 'yaycheckout')}
                     </EmptyDescription>
                   </EmptyHeader>
                   {view === 'listed' && !search && (
@@ -428,6 +459,9 @@ function LayoutsPageBody({
                       onAssign={setAssigningLayout}
                       onPreview={onPreview}
                       previewPending={previewLinkMutation.isPending}
+                      sort={sort}
+                      onSortChange={onSortChange}
+                      sortDisabled={controlsDisabled}
                     />
                   </div>
                   {showListControls && (
@@ -531,6 +565,9 @@ function LayoutsTable({
   onAssign,
   onPreview,
   previewPending,
+  sort,
+  onSortChange,
+  sortDisabled,
 }: {
   items: LayoutSummary[];
   view: View;
@@ -545,7 +582,12 @@ function LayoutsTable({
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
   previewPending: boolean;
+  sort: Sort;
+  onSortChange: (sort: Sort) => void;
+  sortDisabled: boolean;
 }) {
+  const SortIcon = sort === 'desc' ? ArrowDown : sort === 'asc' ? ArrowUp : ArrowUpDown;
+
   return (
     <Table>
       <TableHeader>
@@ -553,7 +595,18 @@ function LayoutsTable({
           <TableHead>{__('Name', 'yaycheckout')}</TableHead>
           {isPro && <TableHead>{__('Assignment', 'yaycheckout')}</TableHead>}
           <TableHead>{__('Status', 'yaycheckout')}</TableHead>
-          <TableHead>{__('Last updated', 'yaycheckout')}</TableHead>
+          <TableHead aria-sort={sort === 'desc' ? 'descending' : sort === 'asc' ? 'ascending' : 'none'}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="-ml-2.5 h-7"
+              disabled={sortDisabled}
+              onClick={() => onSortChange(sort === 'desc' ? 'asc' : 'desc')}
+            >
+              {__('Last updated', 'yaycheckout')}
+              <SortIcon className={cn('size-3.5', !sort && 'text-muted-foreground')} />
+            </Button>
+          </TableHead>
           <TableHead>{__('Actions', 'yaycheckout')}</TableHead>
         </TableRow>
       </TableHeader>
@@ -612,8 +665,11 @@ function LayoutTableRow({
 }) {
   return (
     <TableRow>
-      <TableCell className="max-w-[320px] truncate font-medium" title={layout.title}>
-        {layout.title}
+      <TableCell className="font-medium">
+        {/* On the div, not the cell: auto table layout ignores a cell's max-width, so the title would widen the column. */}
+        <div className="max-w-[320px] truncate" title={layout.title}>
+          {layout.title}
+        </div>
       </TableCell>
       {isPro && (
         <TableCell className="max-w-70">
@@ -624,7 +680,7 @@ function LayoutTableRow({
         <LayoutStatusBadge layout={layout} />
       </TableCell>
       <TableCell className="text-muted-foreground whitespace-nowrap">
-        {formatDateTime(layout.updatedAt) || '—'}
+        {formatDateAtTime(layout.updatedAt) || '—'}
       </TableCell>
       <TableCell>
         <LayoutRowActions
