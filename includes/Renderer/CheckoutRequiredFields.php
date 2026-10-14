@@ -50,40 +50,9 @@ class CheckoutRequiredFields {
         }
 
         return RequiredFieldOverlay::apply_order_note(
-            RequiredFieldOverlay::apply( $fields, $layout_fields['address'], $this->locale_hidden_keys( $fields ) ),
+            RequiredFieldOverlay::apply( $fields, $layout_fields['address'], CheckoutFieldUsage::locale_hidden_keys( $fields ) ),
             $layout_fields['order_note']
         );
-    }
-
-    /**
-     * Billing and shipping keys the country locale hides, for the country WooCommerce built
-     * each fieldset for (WC_Checkout::initialize_checkout_fields()).
-     *
-     * @return string[]
-     */
-    private function locale_hidden_keys( array $fields ): array {
-        if ( ! function_exists( 'WC' ) ) {
-            return [];
-        }
-
-        $hidden = [];
-
-        foreach ( RequiredFieldOverlay::ADDRESS_FIELDSETS as $fieldset ) {
-            if ( empty( $fields[ $fieldset ] ) || ! is_array( $fields[ $fieldset ] ) ) {
-                continue;
-            }
-
-            $country = WC()->checkout()->get_value( $fieldset . '_country' );
-            $country = is_string( $country ) && '' !== $country ? $country : WC()->countries->get_base_country();
-
-            foreach ( array_keys( $fields[ $fieldset ] ) as $key ) {
-                if ( CheckoutFieldDefaults::hidden_for_country( (string) $key, $country ) ) {
-                    $hidden[] = (string) $key;
-                }
-            }
-        }
-
-        return $hidden;
     }
 
     public function filter_form_field( $field, $key, $args ) {
