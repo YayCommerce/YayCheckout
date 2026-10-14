@@ -1,21 +1,19 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { Check, Clock, Lock } from 'lucide-react';
 import { __, _n } from '@wordpress/i18n';
 
 import { isPro } from '@/lib/plan';
-import { isPickable, useTemplate, useTemplateLibraryQuery } from '@/lib/queries/template.queries';
+import { isPickable, useTemplate, useTemplates } from '@/lib/queries/template.queries';
 import type { Template } from '@/lib/schema/template.schema';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { focusVariants } from '@/components/ui/variants/focus.variants';
 import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
-import { TemplateThumbnail } from './TemplateThumbnail';
+import { TemplatePreview } from './TemplatePreview';
 
 const ALL_CATEGORIES = __('All', 'yaycheckout');
 
 type GridProps = {
   templates: Template[];
-  isLoading: boolean;
   selectedSlug: string | null | undefined;
   onSelect: (slug: string | null) => void;
 };
@@ -31,22 +29,30 @@ function tileTitle(template: Template): string | undefined {
   return undefined;
 }
 
-/** Sits on the thumbnail's corner, so the name keeps the tile's width. */
-function ComingSoonBadge() {
+/**
+ * Veils a card that can't be picked and names why, centred on the preview. It lightens on hover so the
+ * page still reads while it scrolls.
+ */
+function UnavailableOverlay({ template }: { template: Template }) {
+  const Icon = template.locked ? Lock : Clock;
+
   return (
-    <Badge variant="dimmed-outline" className="bg-background absolute top-1 right-1">
-      {__('Coming soon', 'yaycheckout')}
-    </Badge>
+    <div className="bg-background/60 group-hover:bg-background/25 group-focus-visible:bg-background/25 pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-[1px] transition-colors duration-300 group-hover:backdrop-blur-none">
+      <span className="bg-foreground text-background inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium shadow-sm">
+        <Icon className="size-3.5" aria-hidden="true" />
+        {template.locked ? __('Pro', 'yaycheckout') : __('Coming soon', 'yaycheckout')}
+      </span>
+    </div>
   );
 }
 
 const COMING_SOON_TITLE = __('This template is coming soon', 'yaycheckout');
 
 /**
- * Template grid. Free sees its unlocked templates plus a greyed strip of the
- * locked ones; Pro the full grid, filterable by category. Coming soon templates
- * show in place but can't be picked. A filter that hides the selection clears
- * it (onSelect(null)).
+ * Template cards, each previewing its mock page. Free sees its unlocked templates,
+ * then the locked ones under an upgrade row; Pro the full grid, filterable by
+ * category. Locked and Coming soon cards preview in full but can't be picked. A
+ * filter that hides the selection clears it (onSelect(null)).
  */
 export function TemplatePicker({
   selectedSlug,
@@ -55,8 +61,8 @@ export function TemplatePicker({
   selectedSlug: string | null | undefined;
   onSelect: (slug: string | null) => void;
 }) {
-  const { data, isPending: isLoadingTemplates } = useTemplateLibraryQuery();
-  const gridProps = { templates: data?.templates ?? [], isLoading: isLoadingTemplates, selectedSlug, onSelect };
+  const templates = useTemplates();
+  const gridProps = { templates, selectedSlug, onSelect };
 
   return (
     <div className="flex flex-col gap-3 rounded-md border p-4">
@@ -64,9 +70,9 @@ export function TemplatePicker({
         <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
           {isPro ? __('Pro — full grid, filterable', 'yaycheckout') : __('Templates included in Lite', 'yaycheckout')}
         </span>
-        {isPro && data && (
+        {isPro && (
           <span className="text-muted-foreground text-xs">
-            {data.templates.length} {_n('template', 'templates', data.templates.length, 'yaycheckout')}
+            {templates.length} {_n('template', 'templates', templates.length, 'yaycheckout')}
           </span>
         )}
       </div>
@@ -76,21 +82,22 @@ export function TemplatePicker({
   );
 }
 
-function ProTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: GridProps) {
+function ProTemplateGrid({ templates, selectedSlug, onSelect }: GridProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL_CATEGORIES);
   const selected = useTemplate(selectedSlug);
 
-  const categories = useMemo(() => [ALL_CATEGORIES, ...new Set(templates.map((t) => t.category))], [templates]);
+  const categories = useMemo(() => [ALL_CATEGORIES, ...new Set(templates.flatMap((t) => t.categories))], [templates]);
 
   const shownTemplates = useMemo(
-    () => (categoryFilter === ALL_CATEGORIES ? templates : templates.filter((t) => t.category === categoryFilter)),
+    () =>
+      categoryFilter === ALL_CATEGORIES ? templates : templates.filter((t) => t.categories.includes(categoryFilter)),
     [templates, categoryFilter],
   );
 
   function onCategoryChange(category: string) {
     setCategoryFilter(category);
 
-    if (selected && category !== ALL_CATEGORIES && selected.category !== category) {
+    if (selected && category !== ALL_CATEGORIES && !selected.categories.includes(category)) {
       onSelect(null);
     }
   }
@@ -115,91 +122,102 @@ function ProTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: GridP
         ))}
       </div>
 
-      {isLoading ? (
-        <PickerSkeleton />
-      ) : (
-        <div className="grid h-84 scrollbar-none grid-cols-5 content-start gap-3 overflow-y-auto pt-0.5 pl-0.5">
-          {shownTemplates.map((template) => (
-            <TemplateTile
-              key={template.slug}
-              template={template}
-              isSelected={template.slug === selectedSlug}
-              onSelect={onSelect}
-              withProTag
-            />
-          ))}
-        </div>
-      )}
+      <ScrollArea>
+        <TemplateCards templates={shownTemplates} selectedSlug={selectedSlug} onSelect={onSelect} />
+      </ScrollArea>
     </>
   );
 }
 
-/** One pickable template. `withProTag` gives the name a row that holds ProTag when the template is locked. */
+/** The scroll box every grid sits in, so the dialog's name field and footer stay in view. */
+function ScrollArea({ children }: { children: ReactNode }) {
+  return <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto p-0.5">{children}</div>;
+}
+
+function CardGrid({ children }: { children: ReactNode }) {
+  return <div className="grid grid-cols-3 content-start gap-4">{children}</div>;
+}
+
+/**
+ * Built templates first, then Coming soon, each in catalogue order. Display only: the catalogue's own
+ * order decides which templates Free unlocks.
+ */
+function byAvailableFirst(templates: Template[]): Template[] {
+  return [...templates].sort((a, b) => Number(b.available) - Number(a.available));
+}
+
+function TemplateCards({ templates, selectedSlug, onSelect }: GridProps) {
+  return (
+    <CardGrid>
+      {byAvailableFirst(templates).map((template) => (
+        <TemplateTile
+          key={template.slug}
+          template={template}
+          isSelected={template.slug === selectedSlug}
+          onSelect={onSelect}
+        />
+      ))}
+    </CardGrid>
+  );
+}
+
+/** The selected card's corner mark, the check most pickers use. */
+function SelectedCheck() {
+  return (
+    <span className="bg-primary text-primary-foreground ring-background absolute top-2 right-2 flex size-6 items-center justify-center rounded-full shadow-md ring-2">
+      <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />
+    </span>
+  );
+}
+
+/** One template card. Locked and Coming soon cards are veiled but still preview, since the preview is the pitch. */
 function TemplateTile({
   template,
   isSelected,
   onSelect,
-  withProTag = false,
 }: {
   template: Template;
   isSelected: boolean;
   onSelect: (slug: string) => void;
-  withProTag?: boolean;
 }) {
-  const name = <span className="text-xs font-medium">{template.name}</span>;
-
   return (
     <button
       type="button"
       disabled={!isPickable(template)}
       onClick={() => onSelect(template.slug)}
       title={tileTitle(template)}
+      aria-pressed={isSelected}
       className={cn(
-        'transition-default flex flex-col items-start gap-2 rounded-md border p-2 text-left',
+        'group transition-default flex flex-col items-start gap-2 rounded-md border p-2 text-left',
         focusVariants({ variant: 'none' }),
-        isSelected && 'border-primary ring-primary ring-1',
-        isPickable(template) ? 'hover:border-muted-foreground' : 'cursor-not-allowed opacity-50',
+        isSelected
+          ? 'border-primary ring-primary bg-primary/5 ring-2'
+          : isPickable(template) && 'hover:border-muted-foreground',
+        !isPickable(template) && 'cursor-not-allowed',
       )}
     >
-      <div className="relative aspect-3/2 w-full overflow-hidden rounded-sm border">
-        <TemplateThumbnail slug={template.slug} />
-        {isComingSoon(template) && <ComingSoonBadge />}
+      <TemplatePreview template={template}>
+        {!isPickable(template) && <UnavailableOverlay template={template} />}
+        {isSelected && <SelectedCheck />}
+      </TemplatePreview>
+      <div className="flex w-full items-center justify-between gap-1">
+        <span className={cn('text-xs font-medium', isSelected && 'text-primary')}>{template.name}</span>
+        {template.locked && <ProTag />}
       </div>
-      {withProTag ? (
-        <div className="flex w-full items-center justify-between gap-1">
-          {name}
-          {template.locked && <ProTag />}
-        </div>
-      ) : (
-        name
-      )}
     </button>
   );
 }
 
-function FreeTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: GridProps) {
-  if (isLoading) {
-    return <PickerSkeleton />;
-  }
-
+function FreeTemplateGrid({ templates, selectedSlug, onSelect }: GridProps) {
   const unlockedTemplates = templates.filter((t) => !t.locked);
   const lockedTemplates = templates.filter((t) => t.locked);
 
   return (
-    <>
-      <div className="grid grid-cols-3 gap-3">
-        {unlockedTemplates.map((template) => (
-          <TemplateTile
-            key={template.slug}
-            template={template}
-            isSelected={template.slug === selectedSlug}
-            onSelect={onSelect}
-          />
-        ))}
-      </div>
+    <ScrollArea>
+      <TemplateCards templates={unlockedTemplates} selectedSlug={selectedSlug} onSelect={onSelect} />
 
       {lockedTemplates.length > 0 && (
-        <div className="border-muted-foreground/40 bg-muted/40 flex flex-col gap-3 rounded-md border border-dashed p-3">
+        <>
           <div className="flex items-center gap-2">
             <ProTag />
             <span className="text-muted-foreground flex-1 text-xs">
@@ -207,48 +225,9 @@ function FreeTemplateGrid({ templates, isLoading, selectedSlug, onSelect }: Grid
             </span>
             <UpgradeButton />
           </div>
-          <div className="grid grid-cols-4 gap-2 opacity-45">
-            {lockedTemplates.map((template) => (
-              <div key={template.slug} className="aspect-3/2 overflow-hidden rounded-sm border">
-                <TemplateThumbnail slug={template.slug} />
-              </div>
-            ))}
-          </div>
-        </div>
+          <TemplateCards templates={lockedTemplates} selectedSlug={selectedSlug} onSelect={onSelect} />
+        </>
       )}
-    </>
-  );
-}
-
-/**
- * Matches the loaded grid's boxes, so the dialog doesn't grow when templates arrive.
- * Free's card counts are a guess.
- */
-function PickerSkeleton() {
-  const card = (i: number) => (
-    <div key={i} className="flex flex-col gap-2 rounded-md border p-2">
-      <Skeleton className="aspect-3/2 w-full" />
-      <Skeleton className="h-4 w-2/3" />
-    </div>
-  );
-
-  if (isPro) {
-    return (
-      <div className="grid h-84 grid-cols-5 content-start gap-3 overflow-hidden">{[...Array(10).keys()].map(card)}</div>
-    );
-  }
-
-  return (
-    <>
-      <div className="grid grid-cols-3 gap-3">{[0, 1, 2].map(card)}</div>
-      <div className="flex flex-col gap-3 rounded-md border border-dashed p-3">
-        <Skeleton className="h-8 w-full" />
-        <div className="grid grid-cols-4 gap-2">
-          {[...Array(8).keys()].map((i) => (
-            <Skeleton key={i} className="aspect-3/2 w-full" />
-          ))}
-        </div>
-      </div>
-    </>
+    </ScrollArea>
   );
 }

@@ -11,6 +11,7 @@
 #   info               - Show current version info
 #   clean              - Remove admin build artifacts (blocks output is left)
 #   backlog            - List docs/backlog/ items and their open boxes
+#   previews [mock]    - Capture templates/layouts/*/preview.html from the HTML mock
 #   help               - Show this help message
 #
 
@@ -407,6 +408,11 @@ cmd_clean() {
     print_success "Clean complete"
 }
 
+# Captures each template's picker preview from the HTML mock; the script owns the default mock path.
+cmd_previews() {
+    python3 -I "$PLUGIN_DIR/scripts/capture-template-previews.py" ${1:+--mock "$1"}
+}
+
 # Lists docs/backlog/: open items with their unticked boxes, then items whose boxes are all ticked.
 cmd_backlog() {
     local dir="$PLUGIN_DIR/docs/backlog"
@@ -476,6 +482,7 @@ cmd_help() {
     echo "  info                         Show current version info"
     echo "  clean                        Remove admin build artifacts (blocks output is left)"
     echo "  backlog                      List docs/backlog/ items and their open boxes"
+    echo "  previews [mock-path]         Capture templates/layouts/*/preview.html from the HTML mock"
     echo "  help                         Show this help message"
     echo ""
     echo "Examples:"
@@ -500,6 +507,7 @@ main() {
         info)    cmd_info "$@" ;;
         clean)   cmd_clean "$@" ;;
         backlog) cmd_backlog "$@" ;;
+        previews) cmd_previews "$@" ;;
         help|*)  cmd_help ;;
     esac
 }
