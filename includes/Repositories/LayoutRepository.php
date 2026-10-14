@@ -63,19 +63,25 @@ class LayoutRepository {
     public function query( LayoutQuery $query ): array {
         add_filter( 'posts_search', [ $this, 'match_search_to_title' ], 10, 2 );
 
-        $wp_query = new \WP_Query(
-            [
-                'post_type'              => Layout::POST_TYPE,
-                'post_status'            => $query->statuses(),
-                's'                      => $query->search(),
-                'posts_per_page'         => $query->per_page(),
-                'paged'                  => $query->page(),
-                'orderby'                => 'date ID',
-                'order'                  => 'DESC',
-                'update_post_meta_cache' => true,
-                'update_post_term_cache' => false,
-            ]
-        );
+        $args = [
+            'post_type'              => Layout::POST_TYPE,
+            'post_status'            => $query->statuses(),
+            's'                      => $query->search(),
+            'posts_per_page'         => $query->per_page(),
+            'paged'                  => $query->page(),
+            'orderby'                => $query->orderby() . ' ID',
+            'order'                  => $query->order(),
+            'update_post_meta_cache' => true,
+            'update_post_term_cache' => false,
+        ];
+
+        if ( $query->active_only() ) {
+            // An empty post__in means no filter to WP_Query, so [ 0 ] keeps an empty active set empty.
+            $active_ids       = $this->active_ids();
+            $args['post__in'] = $active_ids === [] ? [ 0 ] : $active_ids;
+        }
+
+        $wp_query = new \WP_Query( $args );
 
         remove_filter( 'posts_search', [ $this, 'match_search_to_title' ], 10 );
 

@@ -46,6 +46,11 @@ export type LayoutListParams = {
   status?: LayoutStatus[];
   search?: string;
   page?: number;
+  /** Only layouts in the active set. */
+  active?: boolean;
+  /** 'date' is creation time, the server's default; 'modified' is last updated. */
+  orderBy?: 'date' | 'modified';
+  order?: 'asc' | 'desc';
 };
 
 export async function getLayouts(params: LayoutListParams = {}): Promise<LayoutListResponse> {
@@ -53,6 +58,9 @@ export async function getLayouts(params: LayoutListParams = {}): Promise<LayoutL
   if (params.status?.length) searchParams.status = params.status.join(',');
   if (params.search) searchParams.search = params.search;
   if (params.page != null) searchParams.page = String(params.page);
+  if (params.active) searchParams.active = '1';
+  if (params.orderBy) searchParams.orderby = params.orderBy;
+  if (params.order) searchParams.order = params.order;
 
   const wire = layoutListResponseWireSchema.parse(
     await api.get('layouts', Object.keys(searchParams).length ? { searchParams } : undefined).json(),

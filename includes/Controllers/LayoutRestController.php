@@ -218,7 +218,9 @@ class LayoutRestController extends BaseRestController {
         try {
             $query = LayoutQuery::of_statuses( (array) $request->get_param( 'status' ) )
                 ->with_search( (string) $request->get_param( 'search' ) )
-                ->with_pagination( (int) $request->get_param( 'page' ) );
+                ->with_pagination( (int) $request->get_param( 'page' ) )
+                ->with_active_only( (bool) $request->get_param( 'active' ) )
+                ->with_order( (string) $request->get_param( 'orderby' ), (string) $request->get_param( 'order' ) );
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( $ex->getMessage() );
         }
@@ -428,7 +430,7 @@ class LayoutRestController extends BaseRestController {
      */
     private function list_args(): array {
         return [
-            'status' => [
+            'status'  => [
                 'default'           => LayoutStatus::listed(),
                 'validate_callback' => static function ( $value ) {
                     return is_string( $value ) || is_array( $value );
@@ -441,13 +443,13 @@ class LayoutRestController extends BaseRestController {
                     return array_values( array_filter( array_map( 'sanitize_key', (array) $value ) ) );
                 },
             ],
-            'search' => [
+            'search'  => [
                 'required'          => false,
                 'type'              => 'string',
                 'default'           => '',
                 'sanitize_callback' => 'sanitize_text_field',
             ],
-            'page'   => [
+            'page'    => [
                 'required'          => false,
                 'type'              => 'integer',
                 'default'           => 1,
@@ -455,6 +457,23 @@ class LayoutRestController extends BaseRestController {
                 'validate_callback' => static function ( $value ) {
                     return is_numeric( $value ) && (int) $value >= 1;
                 },
+            ],
+            'active'  => [
+                'required' => false,
+                'type'     => 'boolean',
+                'default'  => false,
+            ],
+            'orderby' => [
+                'required' => false,
+                'type'     => 'string',
+                'enum'     => [ 'date', 'modified' ],
+                'default'  => 'date',
+            ],
+            'order'   => [
+                'required' => false,
+                'type'     => 'string',
+                'enum'     => [ 'asc', 'desc' ],
+                'default'  => 'desc',
             ],
         ];
     }
