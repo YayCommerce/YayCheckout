@@ -791,7 +791,7 @@ function LayoutTableRow({
   );
 }
 
-/** Per-row actions. Archive is disabled on the active row, so deactivating stays an explicit choice. Publishing is the editor's job. */
+/** Per-row actions. Activate turns into Deactivate on an active row. Archive is disabled on the active row, so deactivating stays an explicit choice. Publishing is the editor's job. */
 function LayoutRowActions({
   layout,
   view,
@@ -846,10 +846,16 @@ function LayoutRowActions({
       <Button size="sm" variant="outline" disabled={previewPending} onClick={() => onPreview(layout)}>
         {__('Preview', 'yaycheckout')}
       </Button>
-      {/* Disabled rather than hidden so the action column keeps its shape. */}
-      <Button size="sm" variant="outline" disabled={layout.isActive} onClick={() => onSetActive(layout)}>
-        {__('Set active', 'yaycheckout')}
-      </Button>
+      {/* One button, two states; the min width keeps the column aligned across rows. */}
+      {layout.isActive ? (
+        <Button size="sm" variant="destructive-outline" className="min-w-25" onClick={() => onDeactivate(layout)}>
+          {__('Deactivate', 'yaycheckout')}
+        </Button>
+      ) : (
+        <Button size="sm" variant="outline" className="min-w-25" onClick={() => onSetActive(layout)}>
+          {__('Activate', 'yaycheckout')}
+        </Button>
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -865,10 +871,7 @@ function LayoutRowActions({
           <DropdownMenuItem onSelect={() => onAssign(layout)}>{__('Assignment', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onRename(layout)}>{__('Rename', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" disabled={!layout.isActive} onSelect={() => onDeactivate(layout)}>
-            {__('Deactivate', 'yaycheckout')}
-          </DropdownMenuItem>
-          <DropdownMenuItem disabled={layout.isActive} onSelect={() => onArchive(layout)}>
+          <DropdownMenuItem variant="destructive" disabled={layout.isActive} onSelect={() => onArchive(layout)}>
             {__('Archive', 'yaycheckout')}
           </DropdownMenuItem>
         </DropdownMenuContent>

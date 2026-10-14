@@ -60,7 +60,7 @@ export function LayoutBulkBar({
               </DropdownMenuItem>
             </>
           ) : activeCount > 0 ? (
-            <DropdownMenuItem onSelect={() => onAction('deactivate')}>
+            <DropdownMenuItem variant="destructive" onSelect={() => onAction('deactivate')}>
               {activeCount < selected.length
                 ? sprintf(
                     /* translators: %d: number of selected layouts that are active */
@@ -70,7 +70,9 @@ export function LayoutBulkBar({
                 : __('Deactivate', 'yaycheckout')}
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem onSelect={() => onAction('archive')}>{__('Archive', 'yaycheckout')}</DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" onSelect={() => onAction('archive')}>
+              {__('Archive', 'yaycheckout')}
+            </DropdownMenuItem>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
