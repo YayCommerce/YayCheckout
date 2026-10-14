@@ -143,10 +143,18 @@ function CardGrid({ children }: { children: ReactNode }) {
   return <div className="grid grid-cols-3 content-start gap-4">{children}</div>;
 }
 
+/**
+ * Built templates first, then Coming soon, each in catalogue order. Display only: the catalogue's own
+ * order decides which templates Free unlocks.
+ */
+function byAvailableFirst(templates: Template[]): Template[] {
+  return [...templates].sort((a, b) => Number(b.available) - Number(a.available));
+}
+
 function TemplateCards({ templates, selectedSlug, onSelect }: Omit<GridProps, 'isLoading'>) {
   return (
     <CardGrid>
-      {templates.map((template) => (
+      {byAvailableFirst(templates).map((template) => (
         <TemplateTile
           key={template.slug}
           template={template}

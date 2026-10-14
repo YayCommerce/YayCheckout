@@ -75,18 +75,19 @@ When a merchant picks a template, in the New layout modal's library step or the 
 
    Their `title` tooltips are unchanged.
 10. The selected card has a 2px primary ring with a `bg-primary/5` tint, a filled primary check circle on the preview's top-right corner, its name in `text-primary`, and `aria-pressed="true"`.
-11. Pro: the category chips and the "N templates" count stay, and all templates show as cards in one grid. A filter that hides the current selection still calls `onSelect(null)`.
-12. Free shows, in order:
+11. Every grid lists available templates first, then Coming soon ones, each group in catalogue order. The sort is display-only; `LayoutTemplateCatalogue::catalogue()`'s order still decides Free's unlocked templates and the wizard's default pick.
+12. Pro: the category chips and the "N templates" count stay, and all templates show as cards in one grid. A filter that hides the current selection still calls `onSelect(null)`.
+13. Free shows, in order:
     - the 3 unlocked cards;
     - a row with `ProTag`, "8 more templates" (`_n`) and `UpgradeButton`;
     - the 8 locked cards, at the same size.
 
     The dashed greyed strip no longer exists.
-13. When `previewUrl` is `''` or the iframe fires `error`, the frame shows a `bg-muted` box with the template name centred, and no iframe.
-14. While templates load, the picker shows 6 skeleton cards in 3 columns, each a 4:3 box plus a name bar.
-15. `TemplateThumbnail.tsx`, `TemplateThumbnailPrimitives.tsx` and `template-thumbnail-sketches.tsx` are deleted, and no file in `apps/` imports them.
-16. `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit` passes, and `composer lint` passes on the changed PHP files.
-17. End-to-end verification:
+14. When `previewUrl` is `''` or the iframe fires `error`, the frame shows a `bg-muted` box with the template name centred, and no iframe.
+15. While templates load, the picker shows 6 skeleton cards in 3 columns, each a 4:3 box plus a name bar.
+16. `TemplateThumbnail.tsx`, `TemplateThumbnailPrimitives.tsx` and `template-thumbnail-sketches.tsx` are deleted, and no file in `apps/` imports them.
+17. `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit` passes, and `composer lint` passes on the changed PHP files.
+18. End-to-end verification:
     - Run `./scripts/run.sh previews`, then `./scripts/run.sh dev`.
     - In wp-admin → YayCheckout → Layouts → New layout → From library, the dialog is wide with 3 columns of cards, each showing its template's mock page; Classic two-column shows the "Storefront" header, the contact form and the order summary card.
     - Hover Classic two-column: the card scrolls smoothly to the Place order area and returns on leave. DevTools' Network tab shows only `preview.html` requests (no unpkg, no blob scripts), and the iframes' consoles log nothing.
@@ -126,7 +127,7 @@ When a merchant picks a template, in the New layout modal's library step or the 
 - `includes/Controllers/LayoutTemplateCatalogue.php`: `templates()` adds `preview_url`. A private `preview_url( string $slug ): string` uses `path( $slug, 'preview.html' )` and `YAYCHECKOUT_PLUGIN_URL`. The `@return` shape is updated.
 - `apps/admin/src/lib/schema/template.schema.ts` and `lib/api/template.api.ts`: wire `preview_url: z.string()`, mapped to `previewUrl` on `Template`. Today `getTemplateLibrary()` returns the parsed wire as-is, since every key was one word; it gains the mapping.
 - `apps/admin/src/components/shared/template-picker/TemplatePreview.tsx` (new): the 4:3 frame, the iframe, the scale and height measuring, the hover-scroll CSS variables (`--preview-shift`, `--preview-duration`) and the muted fallback.
-- `apps/admin/src/components/shared/template-picker/TemplatePicker.tsx`: card grid, Free and Pro layouts, and the skeleton as in criteria 5–14. It uses `TemplatePreview` in place of `TemplateThumbnail`.
+- `apps/admin/src/components/shared/template-picker/TemplatePicker.tsx`: card grid, Free and Pro layouts, and the skeleton as in criteria 5–15. It uses `TemplatePreview` in place of `TemplateThumbnail`.
 - `apps/admin/src/pages/layouts/new-layout/NewLayoutModal.tsx`: on the library step the dialog width is `sm:max-w-5xl`.
 - Deleted: `TemplateThumbnail.tsx`, `TemplateThumbnailPrimitives.tsx`, `template-thumbnail-sketches.tsx`.
 
@@ -146,7 +147,7 @@ When a merchant picks a template, in the New layout modal's library step or the 
 **UI:** the shared `TemplatePicker` in the New layout modal's library step and the setup wizard's Start from step, built with the SPA's existing stack (Tailwind, shadcn `Badge` and `Skeleton`, `ProTag` and `UpgradeButton`).
 
 **Edge cases and failure modes:**
-- Preview file missing (a new slug before the script is re-run): `preview_url` is `''` and the card shows the muted name box (criterion 13).
+- Preview file missing (a new slug before the script is re-run): `preview_url` is `''` and the card shows the muted name box (criterion 14).
 - The iframe load fails or is blocked: the fallback box.
 - `contentDocument` unreadable (for example a host that serves `templates/` with headers that change the origin): the iframe keeps a 1280×960 height and the card shows the top with no scroll.
 - Windows or Linux without `-apple-system`: system-font fallback. Accepted; the page shapes are what matters.
