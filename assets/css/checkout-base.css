@@ -195,7 +195,9 @@ html.yaycheckout-has-pinned body {
  * Help text shows inline under its field instead of as WooCommerce's focus popup. WooCommerce
  * toggles this span with jQuery slideUp()/slideDown(), which write height, overflow, padding,
  * margin and display inline; the !important declarations only outrank those inline styles.
- * The editor's field preview prints the same classes.
+ * The editor's field preview prints the same classes. Every kind of field (text, select, radio,
+ * checkbox) takes the layout's Help text design (DesignStyles); unset, the text is the inherited
+ * colour at 75% and 0.875em.
  */
 .yaycheckout-checkout .form-row .description {
 	display: block !important;
@@ -205,10 +207,9 @@ html.yaycheckout-has-pinned body {
 	margin: 0.25em 0 0 !important;
 	position: static;
 	background: none;
-	color: inherit;
+	color: var(--yaycheckout-help-text-color, color-mix(in srgb, currentColor 75%, transparent));
 	border-radius: 0;
-	font-size: 0.875em;
-	opacity: 0.75;
+	font-size: var(--yaycheckout-help-text-size, 0.875em);
 }
 
 .yaycheckout-checkout .form-row .description::before {

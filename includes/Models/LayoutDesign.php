@@ -90,7 +90,7 @@ final class LayoutDesign {
      * DesignStyles::DEFAULT_BASE_SIZE, not the theme's size. The inputs.size token is an abstract step; the
      * renderer decides its height, in em. The inputs.label token prints no custom property: it is the checkout
      * wrapper's yaycheckout-checkout--floating-labels or yaycheckout-checkout--hidden-labels class. An empty checkboxes.checked fills a ticked box with the
-     * primary colour; its unticked border is inputs.border.
+     * primary colour; its unticked border is inputs.border. help_text styles the help text under every kind of field.
      */
     public static function schema(): array {
         return [
@@ -199,6 +199,18 @@ final class LayoutDesign {
                 'checked'      => [
                     'type'    => 'color',
                     'default' => '',
+                ],
+            ],
+            'help_text'  => [
+                'color' => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'size'  => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 10,
+                    'max'     => 20,
                 ],
             ],
         ];
