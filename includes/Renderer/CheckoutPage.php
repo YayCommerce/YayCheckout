@@ -305,7 +305,8 @@ class CheckoutPage {
             // Shipping packages only exist after a calculation; session totals alone leave the order table without shipping rows.
             WC()->cart->calculate_totals();
 
-            echo do_blocks( $layout->content ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block markup, rendered and escaped by each block.
+            // finalize() decides the blocks whose visibility depends on a block rendered after them.
+            echo BlockVisibility::get_instance()->finalize( do_blocks( $layout->content ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block markup, rendered and escaped by each block.
             ?>
         </div>
         <?php

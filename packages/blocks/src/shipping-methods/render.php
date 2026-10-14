@@ -24,7 +24,7 @@ if ( '' !== $yaycheckout_style ) {
     $yaycheckout_wrapper_base['style'] = $yaycheckout_style;
 }
 
-$yaycheckout_wrapper = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
+$yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper(
     $yaycheckout_wrapper_base,
     $attributes,
     \YayCheckout\Renderer\CheckoutFragments::shipping_empty()

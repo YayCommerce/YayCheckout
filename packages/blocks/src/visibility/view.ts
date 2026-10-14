@@ -1,14 +1,33 @@
 /**
- * Keeps each conditional block's visibility in step with the checkout: re-decided when a step opens and
- * after every update_order_review, which swaps the footer's state element. BlockVisibility::filter_block()
- * printed each block as it is with step 1 open; without this script the page stays that way.
+ * Keeps each conditional block's visibility in step with the checkout: re-decided when a step opens, after
+ * every update_order_review, which swaps the footer's state element, after a country change, and when
+ * Field Value fires REFRESH_EVENT. BlockVisibility printed each block as it is with step 1 open; without
+ * this script the page stays that way.
+ *
+ * PHP owns what "empty" means for a watchable block: BlockEmptiness marks wrappers and CheckoutFragments
+ * marks the fragments it swaps; for a Field, WooCommerce's address-i18n.js (a dependency) hides the row for
+ * the country. This script only reads those markers.
  */
 
 import { currentStep } from '../shared/checkout-root';
 import { onDomReady } from '../shared/dom-ready';
 import { jquery } from '../shared/jquery';
 import { readJsonElement } from '../shared/json-element';
-import { DATA_ATTR, HIDDEN_CLASS, isVisible, normalize, STATE_ID, type VisibilityState } from '../shared/visibility-rules';
+import {
+	BLOCK_ID_ATTR,
+	blockIds,
+	DATA_ATTR,
+	EMPTY_ATTR,
+	emptyIds,
+	HIDDEN_CLASS,
+	isVisible,
+	LIVE_ATTR,
+	LOCALE_ATTR,
+	normalize,
+	REFRESH_EVENT,
+	STATE_ID,
+	type VisibilityState,
+} from '../shared/visibility-rules';
 
 type State = VisibilityState & { step_count: number };
 
@@ -26,6 +45,27 @@ function openStep( stepCount: number ): number {
 	return current && Number.isInteger( step ) && step > 0 ? step : stepCount;
 }
 
+// A swapped fragment carries the fresh marker; its block wrapper still holds the first paint's.
+function syncLiveMarkers(): void {
+	document.querySelectorAll( `[${ LIVE_ATTR }]` ).forEach( ( fragment ) => {
+		fragment.closest( `[${ BLOCK_ID_ATTR }]` )?.toggleAttribute( EMPTY_ATTR, fragment.hasAttribute( EMPTY_ATTR ) );
+	} );
+}
+
+// address-i18n.js hides a Field's row with .hide() when the country's locale hides the field. The row's own
+// display is read, not whether it is visible, which a hidden ancestor would make false for every row.
+function syncLocaleMarkers(): void {
+	document.querySelectorAll< HTMLElement >( `[${ LOCALE_ATTR }][${ BLOCK_ID_ATTR }]` ).forEach( ( wrapper ) => {
+		const row = wrapper.matches( '.form-row[id$="_field"]' )
+			? wrapper
+			: wrapper.querySelector< HTMLElement >( '.form-row[id$="_field"]' );
+
+		if ( row ) {
+			wrapper.toggleAttribute( EMPTY_ATTR, getComputedStyle( row ).display === 'none' );
+		}
+	} );
+}
+
 let state: State | null = null;
 
 function apply(): void {
@@ -35,6 +75,9 @@ function apply(): void {
 	if ( ! current ) {
 		return;
 	}
+
+	syncLiveMarkers();
+	syncLocaleMarkers();
 
 	const stepCount = Number( current.step_count ) || 0;
 	const step = openStep( stepCount );
@@ -49,7 +92,9 @@ function apply(): void {
 		}
 
 		if ( setting ) {
-			block.classList.toggle( HIDDEN_CLASS, ! isVisible( setting, current, step, stepCount ) );
+			const empty = emptyIds( document, blockIds( setting ) );
+
+			block.classList.toggle( HIDDEN_CLASS, ! isVisible( setting, current, step, stepCount, empty ) );
 		}
 	} );
 }
@@ -64,4 +109,7 @@ onDomReady( () => {
 		state = readState() ?? state;
 		apply();
 	} );
+
+	// Bound after address-i18n.js (a dependency), so its show/hide has already run on country_to_state_changing.
+	jquery( document.body )?.on( `country_to_state_changing ${ REFRESH_EVENT }`, apply );
 } );

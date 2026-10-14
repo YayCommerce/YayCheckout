@@ -35,7 +35,7 @@ $yaycheckout_href      = function_exists( 'wc_get_checkout_url' ) ? wp_login_url
 $yaycheckout_login_url = class_exists( 'WC_AJAX' ) ? WC_AJAX::get_endpoint( 'yaycheckout_login' ) : '';
 $yaycheckout_state_url = class_exists( 'WC_AJAX' ) ? WC_AJAX::get_endpoint( 'yaycheckout_login_state' ) : '';
 $yaycheckout_trigger   = \YayCheckout\Renderer\CheckoutLogin::TRIGGER_CLASS;
-$yaycheckout_wrapper   = \YayCheckout\Renderer\HideWhenEmpty::wrapper(
+$yaycheckout_wrapper   = \YayCheckout\Renderer\BlockEmptiness::wrapper(
     array(
         'class'          => 'yaycheckout-login',
         'data-behavior'  => $yaycheckout_behavior,

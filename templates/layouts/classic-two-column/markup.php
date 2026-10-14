@@ -5,7 +5,7 @@
  *
  * To update it, build the layout in the block editor, copy it from the Code editor and
  * paste it here, then put back the PHP: translated text, the logo-or-title choice, the
- * cart link, the shield icon's guard, the policy links and the address sections. Keep the markup as the editor saves it: a
+ * cart link, the lock icon's guard, the policy links and the address sections. Keep the markup as the editor saves it: a
  * hand edit that differs by one class or style makes the editor flag the block as invalid.
  *
  * The address order follows WooCommerce's Shipping destination when the layout is created: Shipping first,
@@ -110,7 +110,9 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:paragraph -->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"6px"}},"layout":{"type":"flex","flexWrap":"nowrap"}} -->
-<div class="wp-block-group"><?php if ( WP_Block_Type_Registry::get_instance()->is_registered( 'core/icon' ) ) : ?>
+<div class="wp-block-group"><?php if ( \YayCheckout\Blocks\IconRegistry::has( 'lock' ) ) : ?>
+<!-- wp:icon {"icon":"yaycheckout/lock","style":{"color":{"text":"#2f8a48"},"dimensions":{"width":"16px"}}} /-->
+<?php elseif ( WP_Block_Type_Registry::get_instance()->is_registered( 'core/icon' ) ) : ?>
 <!-- wp:icon {"icon":"core/shield","style":{"color":{"text":"#2f8a48"},"dimensions":{"width":"16px"}}} /-->
 <?php endif; ?>
 
