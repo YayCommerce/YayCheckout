@@ -35,7 +35,9 @@ class Layout {
     public ?string $published_at = null;
     /** GMT post_date while post_status is 'future'; null otherwise. */
     public ?string $scheduled_at = null;
-    public bool $is_active       = false;
+    /** GMT post_modified; LayoutRepository fills it in when core left it zero. */
+    public ?string $updated_at = null;
+    public bool $is_active     = false;
 
     /** LayoutStatus value; the wire status as-is. */
     public string $post_status = LayoutStatus::DRAFT;
@@ -66,6 +68,7 @@ class Layout {
         $layout->post_status  = (string) $post->post_status;
         $layout->published_at = LayoutStatus::PUBLISHED === $layout->post_status ? (string) $post->post_date_gmt : null;
         $layout->scheduled_at = LayoutStatus::SCHEDULED === $layout->post_status ? (string) $post->post_date_gmt : null;
+        $layout->updated_at   = (string) $post->post_modified_gmt;
         $layout->is_active    = $is_active;
         $layout->rules        = (array) self::meta_value( $meta, self::META_RULES, [] );
         $layout->design       = LayoutDesign::from_meta( self::meta_value( $meta, self::META_DESIGN, null ) );
@@ -90,6 +93,7 @@ class Layout {
             'size'         => strlen( $this->content ),
             'published_at' => DateHelper::to_iso8601( $this->published_at ),
             'scheduled_at' => DateHelper::to_iso8601( $this->scheduled_at ),
+            'updated_at'   => DateHelper::to_iso8601( $this->updated_at ),
             'rules'        => $this->rules,
         ];
     }

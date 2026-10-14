@@ -27,7 +27,8 @@ const DEFAULT_VALUES: NewLayoutFormValues = {
 export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      {/* The library step widens the dialog for its preview cards; the step lives in NewLayoutForm so closing resets it. */}
+      <DialogContent className="sm:max-w-2xl sm:has-data-[step=library]:max-w-5xl">
         <NewLayoutForm onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
@@ -44,9 +45,13 @@ function NewLayoutForm({ onClose }: { onClose: () => void }) {
 
   const mutation = useCreateLayoutDraftMutation();
 
-  // Must reset `source` too, or Create layout would submit a stale library selection.
+  // Must reset `source` too, or Create layout would submit a stale library selection. A name the
+  // template filled in goes back to the default; a name the merchant typed stays.
   function backToSource() {
     form.setValue('source', 'default');
+    if (!form.getFieldState('name').isDirty) {
+      form.setValue('name', DEFAULT_VALUES.name, { shouldValidate: true });
+    }
     setStep('source');
   }
 
@@ -83,7 +88,7 @@ function NewLayoutForm({ onClose }: { onClose: () => void }) {
       </DialogHeader>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onValid)}>
+        <form data-step={step} onSubmit={form.handleSubmit(onValid)}>
           {step === 'source' ? (
             <SourceStep
               onChooseLibrary={() => setStep('library')}

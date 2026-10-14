@@ -5,11 +5,19 @@ import { __ } from '@wordpress/i18n';
 import { layoutFor, SHIPPING_LAYOUTS } from './layouts';
 import { StylePanels } from './style-panels';
 import { shippingStyleVars } from './style-paths';
+import {
+	SectionDescription,
+	SectionHeadingToolbar,
+	sectionTextCSS,
+	SectionTextPanels,
+	SectionTitle,
+} from '../shared/section-heading';
 import '../shared/section-preview.css';
 
 interface ShippingMethodsAttributes {
 	label: string;
 	showTitle?: boolean;
+	headingLevel?: number;
 	description?: string;
 	layout?: string;
 	style?: Record< string, unknown >;
@@ -17,12 +25,13 @@ interface ShippingMethodsAttributes {
 }
 
 interface EditProps {
+	clientId: string;
 	attributes: ShippingMethodsAttributes;
 	setAttributes: ( attributes: Partial< ShippingMethodsAttributes > ) => void;
 }
 
-export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { label, layout, style, textColor } = attributes;
+export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
+	const { label, headingLevel, layout, style, textColor } = attributes;
 	const showTitle = attributes.showTitle !== false;
 	const description = attributes.description ?? '';
 	const selectedLayout = layoutFor( layout );
@@ -34,10 +43,13 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		style: shippingStyleVars( style, textColor ),
 	} );
 	const heading = label || __( 'Shipping methods', 'yaycheckout' );
-	const trimmedDescription = description.trim();
+	const textCSS = sectionTextCSS( clientId, style );
 
 	return (
 		<>
+			{ showTitle && (
+				<SectionHeadingToolbar level={ headingLevel } onChange={ ( level ) => setAttributes( { headingLevel: level } ) } />
+			) }
 			<InspectorControls>
 				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<ToggleControl
@@ -69,6 +81,12 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<InspectorControls group="styles">
+				<SectionTextPanels
+					style={ style }
+					onChange={ ( next ) => setAttributes( { style: next } ) }
+					showTitle={ showTitle }
+					showDescription={ description.trim() !== '' }
+				/>
 				<StylePanels
 					keys={ selectedLayout.settings }
 					style={ style }
@@ -76,10 +94,11 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				/>
 			</InspectorControls>
 			<div { ...blockProps }>
-				{ showTitle && <h3 className="yaycheckout-section-preview__heading">{ heading }</h3> }
-				{ trimmedDescription !== '' && (
-					<p className="yaycheckout-section-description">{ trimmedDescription }</p>
+				{ textCSS && <style>{ textCSS }</style> }
+				{ showTitle && (
+					<SectionTitle level={ headingLevel } text={ heading } className="yaycheckout-section-preview__heading" />
 				) }
+				<SectionDescription text={ description } />
 				{ /* Same row markup the storefront prints, so the block CSS draws it the same way. */ }
 				<ul id="shipping_method" className="woocommerce-shipping-methods yaycheckout-shipping-methods__list">
 					{ [

@@ -1,11 +1,6 @@
-import { AddressSectionEdit } from '../shared/address-section-edit';
-import type { BlockGapStyles } from '../shared/block-gap';
+import { AddressSectionEdit, type AddressSectionAttributes } from '../shared/address-section-edit';
 
-interface BillingAttributes {
-	title: string;
-	showTitle: boolean;
-	style?: BlockGapStyles;
-}
+type BillingAttributes = AddressSectionAttributes;
 
 interface EditProps {
 	attributes: BillingAttributes;

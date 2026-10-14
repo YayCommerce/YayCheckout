@@ -9,6 +9,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The layout templates a merchant creates from, which ones this plan unlocks, and their files:
  * templates/layouts/<slug>/markup.php and design.json. A template missing either is Coming soon.
+ * preview.html, the picker's preview of the mock, sits beside them and availability ignores it.
  */
 class LayoutTemplateCatalogue {
 
@@ -18,13 +19,14 @@ class LayoutTemplateCatalogue {
     /** Free picks the first N; the rest render locked. */
     private const FREE_UNLOCKED_COUNT = 3;
 
-    /** @return array{ slug: string, name: string, category: string, locked: bool, available: bool }[] */
+    /** @return array{ slug: string, name: string, categories: string[], locked: bool, available: bool, preview_url: string }[] */
     public static function templates( bool $is_pro ): array {
         $templates = self::catalogue();
 
         foreach ( $templates as $index => &$template ) {
-            $template['locked']    = ! $is_pro && $index >= self::FREE_UNLOCKED_COUNT;
-            $template['available'] = self::is_available( $template['slug'] );
+            $template['locked']      = ! $is_pro && $index >= self::FREE_UNLOCKED_COUNT;
+            $template['available']   = self::is_available( $template['slug'] );
+            $template['preview_url'] = self::preview_url( $template['slug'] );
         }
 
         return $templates;
@@ -97,68 +99,82 @@ class LayoutTemplateCatalogue {
         return self::path( $slug, $name );
     }
 
-    /** Unchecked: callers check $slug against the catalogue first. */
-    private static function path( string $slug, string $name ): string {
-        return YAYCHECKOUT_PLUGIN_DIR . 'templates/layouts/' . $slug . '/' . $name;
+    /** The URL of the template's preview.html, or '' when it has none. Called only with catalogue slugs. */
+    private static function preview_url( string $slug ): string {
+        if ( ! is_file( self::path( $slug, 'preview.html' ) ) ) {
+            return '';
+        }
+
+        return YAYCHECKOUT_PLUGIN_URL . self::relative_path( $slug, 'preview.html' ) . '?ver=' . YAYCHECKOUT_VERSION;
     }
 
-    /** @return array{ slug: string, name: string, category: string }[] */
+    /** Unchecked: callers check $slug against the catalogue first. */
+    private static function path( string $slug, string $name ): string {
+        return YAYCHECKOUT_PLUGIN_DIR . self::relative_path( $slug, $name );
+    }
+
+    /** A template file's path inside the plugin, shared by its file path and its URL. */
+    private static function relative_path( string $slug, string $name ): string {
+        return 'templates/layouts/' . $slug . '/' . $name;
+    }
+
+    /** @return array{ slug: string, name: string, categories: string[] }[] */
     private static function catalogue(): array {
         return [
             [
-                'slug'     => 'classic-two-column',
-                'name'     => 'Classic two-column',
-                'category' => 'Two column',
+                'slug'       => 'classic-two-column',
+                'name'       => 'Classic two-column',
+                'categories' => [ 'Two column' ],
             ],
             [
-                'slug'     => 'split-express',
-                'name'     => 'Split express',
-                'category' => 'Two column',
+                'slug'       => 'split-express',
+                'name'       => 'Split express',
+                'categories' => [ 'Two column' ],
             ],
             [
-                'slug'     => 'editorial-fashion',
-                'name'     => 'Editorial fashion',
-                'category' => 'Two column',
+                'slug'       => 'editorial-fashion',
+                'name'       => 'Editorial fashion',
+                'categories' => [ 'Two column' ],
             ],
             [
-                'slug'     => 'multi-step-wizard',
-                'name'     => 'Multi-step wizard',
-                'category' => 'Multi-step',
+                'slug'       => 'multi-step-wizard',
+                'name'       => 'Multi-step wizard',
+                'categories' => [ 'Multi-step', 'One column' ],
             ],
             [
-                'slug'     => 'accordion-one-page',
-                'name'     => 'Accordion one-page',
-                'category' => 'One column',
+                'slug'       => 'accordion-one-page',
+                'name'       => 'Accordion one-page',
+                'categories' => [ 'One column' ],
             ],
             [
-                'slug'     => 'upsell-cross-sell',
-                'name'     => 'Upsell & cross-sell',
-                'category' => 'Two column',
+                'slug'       => 'upsell-cross-sell',
+                'name'       => 'Upsell & cross-sell',
+                'categories' => [ 'Two column' ],
             ],
             [
-                'slug'     => 'minimal-steps',
-                'name'     => 'Minimal steps',
-                'category' => 'Multi-step',
+                'slug'       => 'minimal-steps',
+                'name'       => 'Minimal steps',
+                'categories' => [ 'Multi-step', 'One column' ],
             ],
             [
-                'slug'     => 'live-receipt',
-                'name'     => 'Live receipt',
-                'category' => 'Two column',
+                'slug'       => 'live-receipt',
+                'name'       => 'Live receipt',
+                'categories' => [ 'Two column' ],
             ],
             [
-                'slug'     => 'soft-steps',
-                'name'     => 'Soft steps',
-                'category' => 'Multi-step',
+                'slug'       => 'soft-steps',
+                'name'       => 'Soft steps',
+                'categories' => [ 'Multi-step', 'One column' ],
             ],
             [
-                'slug'     => 'material-stepper',
-                'name'     => 'Material stepper',
-                'category' => 'Two column',
+                'slug'       => 'material-stepper',
+                'name'       => 'Material stepper',
+                'categories' => [ 'Two column' ],
             ],
             [
-                'slug'     => 'digital-product',
-                'name'     => 'Digital product',
-                'category' => 'Digital goods',
+                'slug'       => 'digital-product',
+                'name'       => 'Digital product',
+                'categories' => [ 'Digital goods' ],
             ],
         ];
     }
