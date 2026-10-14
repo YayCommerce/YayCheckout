@@ -11,11 +11,11 @@
 | `tests/Integration/LayoutTemplateCatalogueTest.php` | `test_a_template_without_files_is_coming_soon` names an unbuilt slug. If that's this slug, move it to one still without files |
 | `docs/architecture.md` | the templates bullet (around line 46): add one sentence describing this template's structure, after the existing ones |
 
-That's all. `is_available()` turns the template on once both files exist. The REST controller, the SPA picker and its thumbnail (`SKETCHES` in `apps/admin/src/components/shared/template-picker/template-thumbnail-sketches.tsx`) already know every slug.
+That's all. `is_available()` turns the template on once both files exist. The REST controller and the SPA picker already know every slug, and the picker's preview (`templates/layouts/<slug>/preview.html`, from `./scripts/run.sh previews`) already exists for every slug in the mock.
 
 **A brand-new slug** also needs:
-- an entry in `catalogue()` with slug, name and category. Its position decides Free vs Pro: the first `FREE_UNLOCKED_COUNT` entries are Free. Ask the user where it goes.
-- a sketch in `SKETCHES`. Without one it falls back to `FALLBACK`.
+- an entry in `catalogue()` with slug, name and categories (one or more filter chips). Its position decides Free vs Pro: the first `FREE_UNLOCKED_COUNT` entries are Free. Ask the user where it goes.
+- a `preview.html`: run `./scripts/run.sh previews` once the catalogue entry exists. Without one the card shows the template's name on a plain box.
 
 **Only if the address or summary structure changes** (rare):
 - the mirrors named in the `classic-two-column/markup.php` docblock: `packages/blocks/src/shared/address-template.ts`, `address-fields.ts` and `order-summary/edit.tsx`;

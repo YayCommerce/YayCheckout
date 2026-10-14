@@ -113,7 +113,7 @@ Read [references/pitfalls.md](references/pitfalls.md) next. Every item in it shi
 Follow [references/checklist.md](references/checklist.md) § Files.
 
 - **Existing slug:** add the coming-soon test slug change if it applies, and the `docs/architecture.md` sentence.
-- **New slug:** also add the catalogue entry and the picker sketch.
+- **New slug:** also add the catalogue entry, then run `./scripts/run.sh previews` so the picker has its preview.
 
 ## Phase 6: Verify and fidelity pass
 

@@ -8,7 +8,6 @@ use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
-use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -75,28 +74,6 @@ class LayoutRestController extends BaseRestController {
                     'methods'             => \WP_REST_Server::READABLE,
                     'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_layout_counts' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
-                ],
-            ]
-        );
-
-        register_rest_route(
-            self::REST_NAMESPACE,
-            '/layouts/templates',
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_templates' ], $request ),
-                    'permission_callback' => [ $this, 'permission_callback' ],
-                    'args'                => [
-                        'plan' => [
-                            'required'          => false,
-                            'type'              => 'string',
-                            'sanitize_callback' => 'sanitize_key',
-                            'validate_callback' => static function ( $value ) {
-                                return in_array( $value, [ 'free', 'pro' ], true );
-                            },
-                        ],
-                    ],
                 ],
             ]
         );
@@ -275,16 +252,6 @@ class LayoutRestController extends BaseRestController {
         }
 
         return $layout->to_array();
-    }
-
-    /** The "From library" template catalogue for the New layout modal. `plan` lets the SPA preview its build-time edition; omitted, the real plan decides. */
-    public function get_templates( \WP_REST_Request $request ) {
-        $plan_param = $request->get_param( 'plan' );
-        $is_pro     = $plan_param ? ( 'pro' === $plan_param ) : Plan::is_pro();
-
-        return [
-            'templates' => LayoutTemplateCatalogue::templates( $is_pro ),
-        ];
     }
 
     /**

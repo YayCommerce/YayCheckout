@@ -1,7 +1,23 @@
-import { api } from '@/lib/api/api';
-import { plan } from '@/lib/plan';
-import { templateLibrarySchema } from '@/lib/schema/template.schema';
+import { templateListWireSchema, type Template, type TemplateWire } from '@/lib/schema/template.schema';
 
-export async function getTemplateLibrary() {
-  return templateLibrarySchema.parse(await api.get('layouts/templates', { searchParams: { plan } }).json());
+function templateFromWire(wire: TemplateWire): Template {
+  return {
+    slug: wire.slug,
+    name: wire.name,
+    categories: wire.categories,
+    locked: wire.locked,
+    available: wire.available,
+    previewUrl: wire.preview_url,
+  };
+}
+
+let templates: Template[] | undefined;
+
+/**
+ * The template catalogue PHP prints into the page, for the installed plan. It can't change while the
+ * page is open, so it is parsed once and never fetched.
+ */
+export function getTemplates(): Template[] {
+  templates ??= templateListWireSchema.parse(window.yayCheckoutAdmin.templates).map(templateFromWire);
+  return templates;
 }

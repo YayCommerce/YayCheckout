@@ -27,7 +27,8 @@ const DEFAULT_VALUES: NewLayoutFormValues = {
 export function NewLayoutModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      {/* The library step widens the dialog for its preview cards; the step lives in NewLayoutForm so closing resets it. */}
+      <DialogContent className="sm:max-w-2xl sm:has-data-[step=library]:max-w-5xl">
         <NewLayoutForm onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
@@ -87,7 +88,7 @@ function NewLayoutForm({ onClose }: { onClose: () => void }) {
       </DialogHeader>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onValid)}>
+        <form data-step={step} onSubmit={form.handleSubmit(onValid)}>
           {step === 'source' ? (
             <SourceStep
               onChooseLibrary={() => setStep('library')}
