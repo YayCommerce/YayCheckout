@@ -20,6 +20,7 @@ const ALLOWED_BLOCKS = [
 	'core/paragraph',
 	'core/heading',
 	'core/image',
+	'core/icon',
 	'core/group',
 	'core/spacer',
 	'yaycheckout/order-summary-total',
