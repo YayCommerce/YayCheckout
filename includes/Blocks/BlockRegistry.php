@@ -7,7 +7,6 @@ use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutDifferentAddress;
 use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Renderer\BlockVisibility;
-use YayCheckout\Renderer\HideWhenEmpty;
 use YayCheckout\Renderer\LiveValues;
 use YayCheckout\Renderer\PinToBottom;
 use YayCheckout\Support\Plan;
@@ -316,15 +315,6 @@ class BlockRegistry {
             ]
         );
 
-        // Enqueued by HideWhenEmpty::filter_container() for a container that watches blocks.
-        wp_register_script(
-            HideWhenEmpty::SCRIPT,
-            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-hide-when-empty.js',
-            [ 'jquery', 'wc-checkout', 'wc-address-i18n' ],
-            YAYCHECKOUT_VERSION,
-            true
-        );
-
         // Enqueued by PinToBottom::filter_group() for a pinned Group.
         wp_register_script( PinToBottom::SCRIPT, YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-pin-to-bottom.js', [], YAYCHECKOUT_VERSION, true );
 
@@ -336,11 +326,12 @@ class BlockRegistry {
             wp_register_style( LiveValues::STYLE, $live_value['url'] . '.css', [], $live_value['version'] );
         }
 
-        // Enqueued by BlockVisibility::filter_block() for a conditional block. Skipped without a build.
+        // Enqueued by BlockVisibility::filter_block() for a conditional block. Skipped without a build. After
+        // address-i18n.js, so a Field's row is already shown or hidden for the new country when it re-checks.
         $visibility = self::built_asset( 'visibility/view' );
 
         if ( null !== $visibility ) {
-            wp_register_script( BlockVisibility::SCRIPT, $visibility['url'] . '.js', array_merge( $visibility['dependencies'], [ 'jquery' ] ), $visibility['version'], true );
+            wp_register_script( BlockVisibility::SCRIPT, $visibility['url'] . '.js', array_merge( $visibility['dependencies'], [ 'jquery', 'wc-address-i18n' ] ), $visibility['version'], true );
         }
     }
 

@@ -393,9 +393,9 @@ class CheckoutFragments {
         return ! WC()->cart instanceof \WC_Cart || ! WC()->cart->needs_payment();
     }
 
-    /** HideWhenEmpty's markers for a fragment root, so the live script reads emptiness from the swapped HTML. */
+    /** BlockEmptiness's markers for a fragment root, so the visibility script reads emptiness from the swapped HTML. */
     private static function live_attributes( bool $is_empty ): string {
-        return ' ' . HideWhenEmpty::LIVE_ATTR . '="1"' . ( $is_empty ? ' ' . HideWhenEmpty::EMPTY_ATTR . '="1"' : '' );
+        return ' ' . BlockEmptiness::LIVE_ATTR . '="1"' . ( $is_empty ? ' ' . BlockEmptiness::EMPTY_ATTR . '="1"' : '' );
     }
 
     /**
@@ -684,7 +684,7 @@ class CheckoutFragments {
         $empty = CheckoutSavingsNote::is_zero();
 
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
-        echo '<div ' . HideWhenEmpty::wrapper( [], $block->attributes, $empty ) . '>';
+        echo '<div ' . BlockEmptiness::wrapper( [], $block->attributes, $empty ) . '>';
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sentence_html() escapes text and uses wc_price() HTML; live_attributes() is fixed.
         echo self::savings_note_html( $block->attributes );
         echo '</div>';
@@ -692,7 +692,7 @@ class CheckoutFragments {
 
     /**
      * The Savings note sentence for first paint and update_order_review. Empty of text while
-     * savings are zero so Hide when empty can hide the wrapper after the fragment swaps.
+     * savings are zero so a "Block is empty" condition can hide a block after the fragment swaps.
      *
      * @param array $attributes Block attributes.
      */

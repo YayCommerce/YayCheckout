@@ -12,7 +12,7 @@
 /*
  * Virtual-only (or otherwise no-shipping) carts: CheckoutFragments marks the rates
  * fragment empty. Hide the whole block — heading included — like Woo's classic checkout.
- * :has() follows update_order_review swaps without waiting on HideWhenEmpty's script.
+ * :has() follows update_order_review swaps without waiting on the visibility script.
  */
 .yaycheckout-checkout .yaycheckout-shipping-methods:has(.yaycheckout-shipping-methods__rates[data-yaycheckout-empty]) {
 	display: none !important;
