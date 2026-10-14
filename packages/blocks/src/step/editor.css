@@ -1,13 +1,15 @@
-/* Steps' "Show step headings" is off: the storefront hides this header, the editor fades it. */
-.editor-styles-wrapper .yaycheckout-step__header.is-hidden-on-checkout {
-	opacity: 0.5;
+/* The sidebar's Title, drawn like a text input. The sidebar sits outside the canvas, so no .editor-styles-wrapper. */
+.block-editor-block-inspector .yaycheckout-step__title-control {
+	min-height: 32px;
+	padding: 6px 8px;
+	border: 1px solid #949494;
+	border-radius: 2px;
+	font-size: 13px;
+	line-height: 1.4;
 }
 
-/* In the Edit button's column. */
-.editor-styles-wrapper .yaycheckout-step__hidden-note {
-	grid-column: 3;
-	grid-row: 1 / span 2;
-	color: #757575;
-	font-size: 12px;
-	font-weight: 400;
+.block-editor-block-inspector .yaycheckout-step__title-control:focus {
+	border-color: var(--wp-admin-theme-color, #3858e9);
+	box-shadow: 0 0 0 0.5px var(--wp-admin-theme-color, #3858e9);
+	outline: 2px solid transparent;
 }
