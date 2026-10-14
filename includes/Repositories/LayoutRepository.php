@@ -566,6 +566,9 @@ class LayoutRepository {
      * @throws \InvalidArgumentException With WordPress's message when the update fails.
      */
     private function update_post( array $fields ): void {
+        // Without edit_date, core re-dates a never-published draft to now, which moves it to the top of the list.
+        $fields['edit_date'] = true;
+
         $result = wp_update_post( wp_slash( $fields ), true );
 
         if ( is_wp_error( $result ) ) {
