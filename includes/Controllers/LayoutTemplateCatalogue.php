@@ -9,6 +9,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The layout templates a merchant creates from, which ones this plan unlocks, and their files:
  * templates/layouts/<slug>/markup.php and design.json. A template missing either is Coming soon.
+ * preview.html, the picker's preview of the mock, sits beside them and availability ignores it.
  */
 class LayoutTemplateCatalogue {
 
@@ -18,13 +19,14 @@ class LayoutTemplateCatalogue {
     /** Free picks the first N; the rest render locked. */
     private const FREE_UNLOCKED_COUNT = 3;
 
-    /** @return array{ slug: string, name: string, category: string, locked: bool, available: bool }[] */
+    /** @return array{ slug: string, name: string, category: string, locked: bool, available: bool, preview_url: string }[] */
     public static function templates( bool $is_pro ): array {
         $templates = self::catalogue();
 
         foreach ( $templates as $index => &$template ) {
-            $template['locked']    = ! $is_pro && $index >= self::FREE_UNLOCKED_COUNT;
-            $template['available'] = self::is_available( $template['slug'] );
+            $template['locked']      = ! $is_pro && $index >= self::FREE_UNLOCKED_COUNT;
+            $template['available']   = self::is_available( $template['slug'] );
+            $template['preview_url'] = self::preview_url( $template['slug'] );
         }
 
         return $templates;
@@ -95,6 +97,15 @@ class LayoutTemplateCatalogue {
         }
 
         return self::path( $slug, $name );
+    }
+
+    /** The URL of the template's preview.html, or '' when it has none. Called only with catalogue slugs. */
+    private static function preview_url( string $slug ): string {
+        if ( ! is_file( self::path( $slug, 'preview.html' ) ) ) {
+            return '';
+        }
+
+        return YAYCHECKOUT_PLUGIN_URL . 'templates/layouts/' . $slug . '/preview.html?ver=' . YAYCHECKOUT_VERSION;
     }
 
     /** Unchecked: callers check $slug against the catalogue first. */
