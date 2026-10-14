@@ -422,7 +422,7 @@ function SectionPanel( {
 	onChange: ( next: SectionTokens ) => void;
 } ) {
 	return (
-		<PanelBody title={ SECTIONS[ section ] }>
+		<PanelBody title={ SECTIONS[ section ] } initialOpen={ false }>
 			<Flex direction="column" align="stretch" gap={ 4 }>
 				<ColourSettings
 					panelId={ `${ SIDEBAR }-${ section }` }
