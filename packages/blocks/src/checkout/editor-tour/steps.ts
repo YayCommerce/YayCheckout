@@ -152,11 +152,11 @@ export function tourSteps(): TourStep[] {
 			id: 'colour',
 			title: __( 'Pick your brand colour', 'yaycheckout' ),
 			content: __(
-				'Click Primary and choose a colour. It colours your buttons, links and the selected options. Click outside the picker when you like it.',
+				'Click Primary and choose a colour. It colours your buttons and the selected options. Click outside the picker when you like it.',
 				'yaycheckout'
 			),
 			fallback: __(
-				'In Layout design, click Primary under Colours and choose a colour. It colours your buttons, links and the selected options.',
+				'In Layout design, click Primary under Colours and choose a colour. It colours your buttons and the selected options.',
 				'yaycheckout'
 			),
 			// ColourSettings tags each panel with its panelId.

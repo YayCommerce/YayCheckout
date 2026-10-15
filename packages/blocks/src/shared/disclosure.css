@@ -1,7 +1,7 @@
 .editor-styles-wrapper .yaycheckout-disclosure__toggle[data-mode="link"] {
 	display: block;
 	margin-bottom: 0.5em;
-	color: var(--wp--style--color--link, #2271b1);
+	color: var(--yaycheckout-link-color, var(--wp--style--color--link, #2271b1));
 }
 
 /* checkout-base.css draws the header; the preview's toggle is a span, so it needs the flex row spelled out. */

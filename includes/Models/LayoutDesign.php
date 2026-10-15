@@ -94,6 +94,9 @@ final class LayoutDesign {
      * to the input's. radios styles loose radios, and its colours are the fallback for Payment and Shipping's
      * indicators; an empty radio colour falls back to the input's or, for checked, to the primary colour.
      * help_text sizes the help text under every kind of field; its colour is colours.muted.
+     * colours.link and colours.link_hover colour the page's text links: the login and disclosure links, and any link in a paragraph, a
+     * heading or the terms that no block gives a link colour of its own. An empty link_hover falls back
+     * to link, and an empty link leaves each link its theme colour.
      */
     public static function schema(): array {
         return [
@@ -115,6 +118,14 @@ final class LayoutDesign {
                     'default' => '',
                 ],
                 'muted'      => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'link'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'link_hover' => [
                     'type'    => 'color',
                     'default' => '',
                 ],

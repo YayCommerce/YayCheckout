@@ -1,6 +1,11 @@
+/* The design's link colours (elements), else the theme's link colour. */
 .yaycheckout-login__trigger {
-	color: var(--wp--style--color--link, currentColor);
+	color: var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor));
 	text-decoration: underline;
+}
+
+.yaycheckout-login__trigger:is(:hover, :focus) {
+	color: var(--yaycheckout-link-hover-color, var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor)));
 }
 
 button.yaycheckout-login__trigger {
@@ -141,15 +146,17 @@ button.yaycheckout-login__trigger {
 		text-decoration: none;
 	}
 
+	// No fallback: an unset link colour leaves the declaration invalid, so the colour inherits as before.
 	.yaycheckout-login__forgot {
 		margin-left: auto;
-		color: inherit;
+		color: var(--yaycheckout-link-color);
 		font-size: 14px;
 		line-height: 1;
 		text-decoration: none;
 		text-underline-offset: 4px;
 
 		&:hover {
+			color: var(--yaycheckout-link-hover-color, var(--yaycheckout-link-color));
 			text-decoration: underline;
 		}
 
