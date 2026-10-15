@@ -1,6 +1,6 @@
 <?php
 /**
- * Prints the wallet buttons from wc_get_pay_buttons() when there is a cart.
+ * Prints the wallet buttons that gateways add on ExpressPay::HOOK when there is a cart.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
@@ -16,8 +16,11 @@ $yaycheckout_has_cart = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart
 // Buffered so an empty result prints nothing.
 ob_start();
 
-if ( $yaycheckout_has_cart && function_exists( 'wc_get_pay_buttons' ) ) {
-    wc_get_pay_buttons();
+if ( $yaycheckout_has_cart ) {
+    // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Woo's classic checkout hooks.
+    do_action( \YayCheckout\Renderer\ExpressPay::HOOK );
+    do_action( \YayCheckout\Renderer\ExpressPay::AFTER_HOOK );
+    // phpcs:enable
 }
 
 $yaycheckout_buttons = (string) ob_get_clean();
@@ -28,9 +31,18 @@ if ( '' === trim( $yaycheckout_buttons ) ) {
     return;
 }
 
-$yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper( [ 'class' => 'yaycheckout-express-pay' ], $attributes );
+// Empty until a gateway's script shows a button: gateways print hidden containers and fill them after load.
+// view.ts clears the marker then, and style.css hides the block while it is set, so it is printed even
+// without a blockId, which BlockEmptiness needs to print it.
+$yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper(
+    [
+        'class'                                          => 'yaycheckout-express-pay',
+        \YayCheckout\Renderer\BlockEmptiness::EMPTY_ATTR => '1',
+    ],
+    $attributes
+);
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
-    <?php echo $yaycheckout_buttons; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The gateways' own button markup, printed as wc_get_pay_buttons() would. ?>
+    <?php echo $yaycheckout_buttons; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The gateways' own button markup, printed as the classic checkout would. ?>
 </div>

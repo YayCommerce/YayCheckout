@@ -403,7 +403,7 @@ function VisibilityPanel( { clientId, attributes, setAttributes }: LayoutPanelPr
 				<SelectControl
 					__nextHasNoMarginBottom
 					__next40pxDefaultSize
-					label={ __( 'Visibility', 'yaycheckout' ) }
+					label={ __( 'Display', 'yaycheckout' ) }
 					value={ draft?.action ?? 'always' }
 					options={ [
 						{ value: 'always', label: __( 'Always', 'yaycheckout' ) },

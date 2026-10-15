@@ -1,0 +1,108 @@
+/* The editor tour sits outside the canvas, in the editor's own document. */
+
+/* Under the card and core's popovers, so both show above the dim. */
+.yaycheckout-tour__spotlight {
+	position: fixed;
+	z-index: 99999;
+	border-radius: 8px;
+	box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+	pointer-events: none;
+	transition:
+		top 0.3s ease,
+		left 0.3s ease,
+		width 0.3s ease,
+		height 0.3s ease;
+}
+
+/* Just under core's popovers (1000000): a colour picker the card points at opens over it. */
+.yaycheckout-tour__centred,
+.yaycheckout-tour__anchored {
+	position: fixed;
+	z-index: 999999;
+}
+
+.yaycheckout-tour__centred {
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.yaycheckout-tour__card {
+	box-sizing: border-box;
+	width: 340px; /* CARD_WIDTH in tour.tsx */
+	max-width: calc(100vw - 32px);
+	padding: 16px 20px 20px;
+	border-radius: 12px;
+	background: #fff;
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+	color: #1e1e1e;
+	animation: yaycheckout-tour-in 0.2s ease;
+}
+
+.yaycheckout-tour__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 4px;
+}
+
+.yaycheckout-tour__count {
+	color: #757575;
+	font-size: 12px;
+}
+
+.yaycheckout-tour__title {
+	margin: 0 0 8px;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+.yaycheckout-tour__content {
+	margin: 0 0 20px;
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+.yaycheckout-tour__foot {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.yaycheckout-tour__dots {
+	display: flex;
+	flex: 1;
+	gap: 6px;
+}
+
+.yaycheckout-tour__dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 3px;
+	background: #ddd;
+	transition:
+		width 0.2s ease,
+		background 0.2s ease;
+}
+
+.yaycheckout-tour__dot.is-current {
+	width: 18px;
+	background: var(--wp-admin-theme-color, #3858e9);
+}
+
+@keyframes yaycheckout-tour-in {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.yaycheckout-tour__spotlight,
+	.yaycheckout-tour__dot,
+	.yaycheckout-tour__card {
+		transition: none;
+		animation: none;
+	}
+}

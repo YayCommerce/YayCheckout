@@ -1,11 +1,13 @@
 <?php
 namespace YayCheckout\Blocks;
 
+use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Engine\Register\ScriptName;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutDifferentAddress;
 use YayCheckout\Renderer\CheckoutLogin;
+use YayCheckout\Renderer\ExpressPay;
 use YayCheckout\Renderer\BlockVisibility;
 use YayCheckout\Renderer\LiveValues;
 use YayCheckout\Renderer\PinToBottom;
@@ -74,6 +76,7 @@ class BlockRegistry {
         'order-summary-total',
         'savings-note',
         'field-value',
+        'terms',
         'place-order',
         'slot',
     ];
@@ -81,6 +84,7 @@ class BlockRegistry {
     protected function __construct() {
         add_action( 'init', [ $this, 'register_blocks' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_design_data' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'editor_express_pay_data' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_live_value_editor' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_visibility_editor' ] );
         add_action( 'enqueue_block_assets', [ $this, 'enqueue_live_value_editor_style' ] );
@@ -198,6 +202,23 @@ class BlockRegistry {
     }
 
     /**
+     * Whether a gateway can fill the Express Pay block, on its own handle. Only in the layout editor, the one
+     * that offers the block, since ExpressPay::has_buttons() loads every gateway and reads hooks they add after init.
+     */
+    public function editor_express_pay_data(): void {
+        if ( 'layout' !== $this->editor( null ) ) {
+            return;
+        }
+
+        $data = [
+            'hasButtons'  => ExpressPay::has_buttons(),
+            'settingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout' ),
+        ];
+
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/express-pay', 'editorScript' ), 'window.yayCheckoutExpressPay', $data );
+    }
+
+    /**
      * Adds `design` to window.yayCheckoutBlocks: LayoutDesign's rules, which the Layout design sidebar edits
      * the layout's design with. Only in the block editor, since register_blocks() runs on every request and
      * nothing else reads it.
@@ -220,6 +241,21 @@ class BlockRegistry {
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.design', $design );
         // The live value picker's Cart totals and Counts.
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.liveValues', LiveValues::cart_values() );
+        // The layout editor's Logged in / Logged out switch; other editors keep editor-data.ts's default.
+        if ( Layout::POST_TYPE !== get_post_type() ) {
+            return;
+        }
+
+        self::inline_data(
+            generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
+            'window.yayCheckoutBlocks.view',
+            [
+                'current'       => LayoutEditorEmbed::is_logged_out_view() ? LayoutEditorEmbed::VIEW_LOGGED_OUT : LayoutEditorEmbed::VIEW_MAIN,
+                'loginRequired' => CheckoutLogin::login_required(),
+                'queryArg'      => LayoutEditorEmbed::QUERY_VIEW,
+                'urls'          => LayoutEditorEmbed::view_urls( (int) get_the_ID() ),
+            ]
+        );
     }
 
     /**

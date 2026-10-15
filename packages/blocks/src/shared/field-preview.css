@@ -5,9 +5,16 @@
 	font-weight: inherit;
 }
 
-.editor-styles-wrapper .yaycheckout-field-preview__choices,
-.editor-styles-wrapper .yaycheckout-field-preview__check {
+.editor-styles-wrapper .yaycheckout-field-preview__choices {
+	display: flex;
+	flex-direction: column;
 	margin-top: 8px;
+}
+
+.editor-styles-wrapper .yaycheckout-field-preview__single-check {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
 }
 
 .editor-styles-wrapper .yaycheckout-field-preview__choice {
@@ -21,4 +28,11 @@
 .editor-styles-wrapper .yaycheckout-field-preview__hidden {
 	opacity: 0.7;
 	font-size: 0.875em;
+}
+
+.editor-styles-wrapper .yaycheckout-field-preview__empty-options {
+	margin: 8px 0 0;
+	opacity: 0.7;
+	font-size: 0.875em;
+	font-style: italic;
 }

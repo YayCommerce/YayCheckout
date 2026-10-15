@@ -332,8 +332,8 @@ class LayoutRepository {
 
     /**
      * Creates a layout draft from a catalogue template: its markup, which is a complete checkout, so
-     * activating it as-is lets a shopper place an order, and its design. The post type's template only
-     * applies to auto-drafts, not to this insert.
+     * activating it as-is lets a shopper place an order, its design, and its logged-out view. The post
+     * type's template only applies to auto-drafts, not to this insert.
      *
      * @throws \InvalidArgumentException When the template is not available, the layout limit is reached or the insert fails.
      */
@@ -343,12 +343,13 @@ class LayoutRepository {
             LayoutTemplateCatalogue::markup( $template_slug ),
             [],
             LayoutTemplateCatalogue::design( $template_slug ),
-            $template_slug
+            $template_slug,
+            LayoutTemplateCatalogue::logged_out_markup( $template_slug )
         );
     }
 
     /**
-     * Copies a layout's content, assignment rules, design and template into a new draft layout.
+     * Copies a layout's content, logged-out view, assignment rules, design and template into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -356,18 +357,20 @@ class LayoutRepository {
         $source = $this->find_or_throw( $id );
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template, $source->logged_out_content );
     }
 
     /**
-     * Creates a draft from an export file's title, markup, assignment rules and design, verbatim.
+     * Creates a draft from an export file's title, markup, assignment rules, design and logged-out view, as the current user
+     * may store them (kses-filtered without unfiltered_html).
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
-     * @param array $rules Already sanitized (Layout::sanitize_rules()); [] for none.
+     * @param array  $rules              Already sanitized (Layout::sanitize_rules()); [] for none.
+     * @param string $logged_out_content The logged-out view's markup; '' when none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    public function import( string $title, string $content, array $rules, LayoutDesign $design ): Layout {
-        return $this->insert_draft( $title, $content, $rules, $design, '' );
+    public function import( string $title, string $content, array $rules, LayoutDesign $design, string $logged_out_content = '' ): Layout {
+        return $this->insert_draft( $title, $content, $rules, $design, '', $logged_out_content );
     }
 
     /**
@@ -450,13 +453,25 @@ class LayoutRepository {
     }
 
     /**
+     * The logged-out view as the current user may store it: kses-filtered unless they have unfiltered_html, as core's
+     * content_save_pre filters post_content. Core never filters meta, so every writer of Layout::META_LOGGED_OUT calls this.
+     *
+     * @param string $markup Unslashed.
+     */
+    public static function filter_logged_out_content( string $markup ): string {
+        // wp_filter_post_kses() is content_save_pre's filter and takes slashed data.
+        return current_user_can( 'unfiltered_html' ) ? $markup : wp_unslash( wp_filter_post_kses( wp_slash( $markup ) ) );
+    }
+
+    /**
      * The one insert path for a new draft, so the cap and slashing cannot drift.
      *
      * @param array  $rules         Already sanitized; written with the post, like the design, so the draft never exists without them.
      * @param string $template_slug The catalogue template it comes from; '' when none (an import).
+     * @param string $logged_out_content The logged-out view's markup; '' when none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug ): Layout {
+    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug, string $logged_out_content = '' ): Layout {
         $meta = [ Layout::META_DESIGN => $design->to_meta() ];
 
         if ( [] !== $rules ) {
@@ -465,6 +480,10 @@ class LayoutRepository {
 
         if ( '' !== $template_slug ) {
             $meta[ Layout::META_TEMPLATE ] = $template_slug;
+        }
+
+        if ( '' !== $logged_out_content ) {
+            $meta[ Layout::META_LOGGED_OUT ] = self::filter_logged_out_content( $logged_out_content );
         }
 
         // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.

@@ -54,6 +54,20 @@ class LayoutMarkupReader {
         ],
     ];
 
+    /**
+     * Tags an Extra Field checkbox label keeps: what LABEL_FORMATS in packages/blocks/src/shared/text-formats.ts
+     * saves, a link included, for "I agree to the terms".
+     */
+    public const LABEL_TAGS = [
+        'strong' => [],
+        'em'     => [],
+        'a'      => [
+            'href'   => true,
+            'target' => true,
+            'rel'    => true,
+        ],
+    ];
+
     /** Section block => slot name it occupies. */
     private const SECTION_SLOTS = [
         self::EMAIL                    => 'email',
@@ -131,25 +145,43 @@ class LayoutMarkupReader {
 
     /**
      * Merchant extra fields by Key. A block without a valid Key renders
-     * nothing, so it is skipped.
+     * nothing, so it is skipped. `section` is 'billing' or 'shipping' for a
+     * field inside that address section, at any depth, else ''.
      *
      * @return array<string, array>
      */
     public static function extra_fields( string $markup ): array {
+        return self::extra_fields_in( parse_blocks( $markup ), '' );
+    }
+
+    /** The extra_fields() of $blocks, which sit in address section $section ('' for none). */
+    private static function extra_fields_in( array $blocks, string $section ): array {
         $fields = [];
 
-        foreach ( self::blocks( $markup ) as $block ) {
-            $key = self::EXTRA_FIELD === $block['blockName'] ? self::extra_field_key( $block['attrs'] ) : '';
+        foreach ( $blocks as $block ) {
+            $name  = $block['blockName'] ?? '';
+            $attrs = is_array( $block['attrs'] ?? null ) ? $block['attrs'] : [];
+            $key   = self::EXTRA_FIELD === $name ? self::extra_field_key( $attrs ) : '';
 
-            if ( '' === $key ) {
-                continue;
+            if ( '' !== $key ) {
+                $fields[ $key ] = self::field_entry( $key, self::text( $attrs, 'type', 'text' ), $attrs ) + [
+                    'options'  => self::options( $attrs['options'] ?? [] ),
+                    'remember' => ! empty( $attrs['rememberValue'] ),
+                    'multiple' => self::checkbox_multiple( $attrs ),
+                    'section'  => $section,
+                ];
             }
 
-            $attrs          = $block['attrs'];
-            $fields[ $key ] = self::field_entry( $key, self::text( $attrs, 'type', 'text' ), $attrs ) + [
-                'options'  => self::options( $attrs['options'] ?? [] ),
-                'remember' => ! empty( $attrs['rememberValue'] ),
-            ];
+            if ( self::BILLING === $name ) {
+                $inner = 'billing';
+            } elseif ( self::SHIPPING === $name ) {
+                $inner = 'shipping';
+            } else {
+                $inner = $section;
+            }
+
+            // Document order, so a Key used twice keeps its last field; publish_error() refuses that layout anyway.
+            $fields = array_replace( $fields, self::extra_fields_in( $block['innerBlocks'] ?? [], $inner ) );
         }
 
         return $fields;
@@ -298,6 +330,20 @@ class LayoutMarkupReader {
     }
 
     /**
+     * Whether an Extra Field checkbox shows one box per option: its checkboxMode, else whether it has an
+     * option, as before the attribute existed. packages/blocks/src/extra-field/checkbox-mode.ts copies it.
+     */
+    public static function checkbox_multiple( array $attrs ): bool {
+        $mode = self::text( $attrs, 'checkboxMode' );
+
+        if ( in_array( $mode, [ 'single', 'multiple' ], true ) ) {
+            return 'multiple' === $mode;
+        }
+
+        return [] !== self::options( $attrs['options'] ?? [] );
+    }
+
+    /**
      * Every block in the markup, parents before children, in document order.
      * Loose HTML between blocks (null blockName) is dropped.
      */
@@ -340,17 +386,17 @@ class LayoutMarkupReader {
 
     /**
      * A string attribute edited on the canvas with the display-text toolbar, as HTML safe to echo: only the
-     * tags in RICH_TEXT_TAGS survive, any other tag is stripped to its text. The editor's entities (&amp;)
+     * tags in $tags (RICH_TEXT_TAGS by default) survive, any other tag is stripped to its text. The editor's entities (&amp;)
      * stay as they are, so print it without escaping again. $fallback, plain text, while the attribute
      * holds no text.
      */
-    public static function rich_text( array $attrs, string $name, string $fallback = '' ): string {
+    public static function rich_text( array $attrs, string $name, string $fallback = '', array $tags = self::RICH_TEXT_TAGS ): string {
         if ( '' === self::plain_text( $attrs, $name ) ) {
             return esc_html( $fallback );
         }
 
         add_filter( 'safecss_filter_attr_allow_css', [ self::class, 'allow_rgb_color' ], 10, 2 );
-        $html = wp_kses( self::text( $attrs, $name ), self::RICH_TEXT_TAGS );
+        $html = wp_kses( self::text( $attrs, $name ), $tags );
         remove_filter( 'safecss_filter_attr_allow_css', [ self::class, 'allow_rgb_color' ], 10 );
 
         return trim( $html );

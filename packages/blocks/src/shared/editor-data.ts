@@ -29,6 +29,18 @@ export type EditorDesign = {
 	customCssMaxBytes: number;
 };
 
+/** The layout editor's view switch, from BlockRegistry::editor_design_data(). */
+export type EditorView = {
+	/** LayoutEditorEmbed::VIEW_MAIN or VIEW_LOGGED_OUT; the latter edits the markup a guest who must log in sees (Layout::META_LOGGED_OUT). */
+	current: 'main' | 'logged-out';
+	/** CheckoutLogin::login_required(): WooCommerce makes guests log in before checkout. */
+	loginRequired: boolean;
+	/** LayoutEditorEmbed::QUERY_VIEW. */
+	queryArg: string;
+	/** The embedded editor for each view of this layout: LayoutEditorEmbed::view_urls(). */
+	urls: Record< 'main' | 'logged-out', string >;
+};
+
 type EditorData = {
 	isPro: boolean;
 	postType: string;
@@ -38,6 +50,7 @@ type EditorData = {
 	design: EditorDesign | null;
 	/** Cart value key => label, from LiveValues::cart_values(); printed in the block editor only. */
 	liveValues: Record< string, string >;
+	view: EditorView;
 };
 
 declare global {
@@ -54,5 +67,6 @@ export const editorData: EditorData = {
 	currencySymbol: '',
 	design: null,
 	liveValues: {},
+	view: { current: 'main', loginRequired: false, queryArg: '', urls: { main: '', 'logged-out': '' } },
 	...window.yayCheckoutBlocks,
 };

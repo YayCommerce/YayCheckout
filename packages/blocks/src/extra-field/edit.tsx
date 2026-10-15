@@ -1,5 +1,17 @@
 import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { BaseControl, Button, Flex, FlexBlock, Notice, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
+import {
+	BaseControl,
+	Button,
+	Flex,
+	FlexBlock,
+	Notice,
+	PanelBody,
+	SelectControl,
+	TextControl,
+	ToggleControl,
+	__experimentalToggleGroupControl as ToggleGroupControl,
+	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
+} from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -8,6 +20,8 @@ import { FieldTextControls } from '../shared/field-text-controls';
 import { FieldPreview, type FieldOption } from '../shared/field-preview';
 import { RequiredIndicatorControls } from '../shared/required-indicator-controls';
 import { DisclosureControls, DisclosurePreview, disclosureMode, type DisclosureMode } from '../shared/disclosure';
+import { LABEL_FORMATS } from '../shared/text-formats';
+import { checkboxMode, type CheckboxMode } from './checkbox-mode';
 import { EXTRA_FIELD_LABEL } from './defaults';
 import './editor.css';
 
@@ -30,6 +44,7 @@ interface ExtraFieldAttributes {
 	requiredMark: string;
 	optionalText: string;
 	type: string;
+	checkboxMode?: CheckboxMode;
 	options: FieldOption[];
 	disclosure: DisclosureMode;
 	disclosureText: string;
@@ -61,6 +76,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		optionalText = '',
 		type,
 		options,
+		checkboxMode: checkboxModeAttribute,
 		disclosure = 'none',
 		disclosureText = '',
 		rememberValue = false,
@@ -81,7 +97,10 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const mode = disclosureMode( fieldKey.trim(), required, disclosure );
 	// render.php names an unlabelled extra field "Extra field", so its link or header does too.
 	const disclosureLabel = label || EXTRA_FIELD_LABEL;
-	const showOptions = CHOICE_TYPES.includes( type );
+	const isCheckbox = type === 'checkbox';
+	const checkboxModeValue = checkboxMode( checkboxModeAttribute, options );
+	// A single checkbox has no options; switching back to Multiple finds the ones it had.
+	const showOptions = CHOICE_TYPES.includes( type ) && ! ( isCheckbox && checkboxModeValue === 'single' );
 	const trimmedKey = fieldKey.trim();
 	const isDuplicate = useSelect(
 		( select ) =>
@@ -121,41 +140,32 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						onChange={ ( value ) => setAttributes( { fieldKey: value } ) }
 						help={ __( 'Posted name stored on the order, e.g. vat_number.', 'yaycheckout' ) }
 					/>
-					<FieldTextControls
-						label={ label }
-						placeholder={ placeholder }
-						description={ description }
-						setAttributes={ setAttributes }
-						showPlaceholder={ type !== 'datetime' }
-					/>
-					<RequiredIndicatorControls
-						required={ required }
-						requiredMark={ requiredMark }
-						optionalText={ optionalText }
-						onRequiredChange={ ( value ) => setAttributes( { required: value } ) }
-						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
-						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
-					/>
-					<DisclosureControls
-						fieldKey={ fieldKey.trim() }
-						label={ disclosureLabel }
-						required={ required }
-						disclosure={ disclosure }
-						disclosureText={ disclosureText }
-						setAttributes={ setAttributes }
-					/>
-					<ToggleControl
-						label={ __( 'Remember value', 'yaycheckout' ) }
-						help={ __( 'Keeps what the shopper entered if they reload the checkout. Cleared once the order is placed.', 'yaycheckout' ) }
-						checked={ rememberValue }
-						onChange={ ( value ) => setAttributes( { rememberValue: value } ) }
-					/>
 					<SelectControl
 						label={ __( 'Type', 'yaycheckout' ) }
 						value={ type }
 						options={ TYPE_OPTIONS }
 						onChange={ ( value ) => setAttributes( { type: value } ) }
 					/>
+					{ isCheckbox && (
+						<ToggleGroupControl
+							__next40pxDefaultSize
+							__nextHasNoMarginBottom
+							isBlock
+							label={ __( 'Checkbox', 'yaycheckout' ) }
+							value={ checkboxModeValue }
+							onChange={ ( value ) => setAttributes( { checkboxMode: value as CheckboxMode } ) }
+							help={
+								( checkboxModeValue === 'single'
+									? __( 'One yes/no box with the label beside it.', 'yaycheckout' )
+									: __( 'The label above, then one box per option.', 'yaycheckout' ) ) +
+								' ' +
+								__( 'Edit the label on the canvas; it can hold a link.', 'yaycheckout' )
+							}
+						>
+							<ToggleGroupControlOption value="single" label={ __( 'Single checkbox', 'yaycheckout' ) } />
+							<ToggleGroupControlOption value="multiple" label={ __( 'Multiple choices', 'yaycheckout' ) } />
+						</ToggleGroupControl>
+					) }
 					{ showOptions && (
 						<>
 							<BaseControl.VisualLabel>{ __( 'Options', 'yaycheckout' ) }</BaseControl.VisualLabel>
@@ -194,6 +204,36 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							</Button>
 						</>
 					) }
+					<FieldTextControls
+						label={ label }
+						placeholder={ placeholder }
+						description={ description }
+						setAttributes={ setAttributes }
+						showLabel={ ! isCheckbox }
+						showPlaceholder={ type !== 'datetime' && ! isCheckbox }
+					/>
+					<RequiredIndicatorControls
+						required={ required }
+						requiredMark={ requiredMark }
+						optionalText={ optionalText }
+						onRequiredChange={ ( value ) => setAttributes( { required: value } ) }
+						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
+						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
+					/>
+					<DisclosureControls
+						fieldKey={ fieldKey.trim() }
+						label={ disclosureLabel }
+						required={ required }
+						disclosure={ disclosure }
+						disclosureText={ disclosureText }
+						setAttributes={ setAttributes }
+					/>
+					<ToggleControl
+						label={ __( 'Remember value', 'yaycheckout' ) }
+						help={ __( 'Keeps what the shopper entered if they reload the checkout. Cleared once the order is placed.', 'yaycheckout' ) }
+						checked={ rememberValue }
+						onChange={ ( value ) => setAttributes( { rememberValue: value } ) }
+					/>
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
@@ -209,6 +249,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						placeholder={ placeholder }
 						description={ description }
 						options={ options }
+						emptyOptionsHint={ __( 'Add options in the block settings.', 'yaycheckout' ) }
+						multiple={ checkboxModeValue === 'multiple' }
+						labelFormats={ isCheckbox ? LABEL_FORMATS : undefined }
 						inheritLabelFont
 					/>
 				</DisclosurePreview>

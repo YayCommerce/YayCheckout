@@ -8,7 +8,9 @@ import {
 	__experimentalToolsPanelItem as ToolsPanelItem,
 } from '@wordpress/components';
 import { useRef } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import {
+	COLOR_STATE_GROUPS,
 	isColorSetting,
 	pxNumber,
 	RANGE_LIMITS,
@@ -17,6 +19,7 @@ import {
 	type ShippingSettingKey,
 } from './setting-controls';
 import { getStyleSetting, setStyleSetting } from './style-paths';
+import { StateColourItem } from '../shared/state-colour-item';
 import '../shared/tools-panel.css';
 import { hasValue, type StyleObject } from '../shared/style-path';
 
@@ -42,6 +45,12 @@ export function StylePanels( { keys, style, onChange }: StylePanelsProps ) {
 		onChange( latest.current );
 	};
 
+	/** A colour setting's stored value for the picker; none when unset. */
+	const colorOf = ( key: ShippingSettingKey ) => {
+		const value = getStyleSetting( style, key );
+		return typeof value === 'string' && value !== '' ? value : undefined;
+	};
+
 	return (
 		<>
 			{ SETTING_PANELS.map( ( panel ) => {
@@ -53,6 +62,10 @@ export function StylePanels( { keys, style, onChange }: StylePanelsProps ) {
 				const panelId = `yaycheckout-shipping-methods-${ panel.id }`;
 				const colorKeys = shown.filter( isColorSetting );
 				const rangeKeys = shown.filter( ( key ) => ! isColorSetting( key ) );
+				// Each row's states the layout lists: two or more are one tabbed item, a Default alone a plain one.
+				const rows = COLOR_STATE_GROUPS.map( ( group ) => group.filter( ( key ) => colorKeys.includes( key ) ) );
+				const plainKeys = rows.filter( ( row ) => row.length === 1 ).flat();
+				const stateRows = rows.filter( ( row ) => row.length > 1 );
 
 				return (
 					<ToolsPanel
@@ -64,23 +77,39 @@ export function StylePanels( { keys, style, onChange }: StylePanelsProps ) {
 					>
 						{ colorKeys.length > 0 && (
 							<div className="yaycheckout-tools-panel__colors">
-								<ColorGradientSettingsDropdown
-									__experimentalIsRenderedInSidebar
-									panelId={ panelId }
-									settings={ colorKeys.map( ( key ) => {
-										const value = getStyleSetting( style, key );
-										return {
+								{ plainKeys.length > 0 && (
+									<ColorGradientSettingsDropdown
+										__experimentalIsRenderedInSidebar
+										panelId={ panelId }
+										settings={ plainKeys.map( ( key ) => ( {
 											label: SETTING_LABELS[ key ],
-											colorValue: typeof value === 'string' && value !== '' ? value : undefined,
+											colorValue: colorOf( key ),
 											onColorChange: ( next?: string ) => set( key, next || undefined ),
 											clearable: true,
 											isShownByDefault: true,
-										};
-									} ) }
-									colors={ palettes.colors }
-									disableCustomColors={ palettes.disableCustomColors }
-									enableAlpha
-								/>
+										} ) ) }
+										colors={ palettes.colors }
+										disableCustomColors={ palettes.disableCustomColors }
+										enableAlpha
+									/>
+								) }
+								{ stateRows.map( ( row ) => (
+									<StateColourItem
+										key={ row[ 0 ] }
+										label={ SETTING_LABELS[ row[ 0 ] ] }
+										panelId={ panelId }
+										states={ row.map( ( key, index ) => ( {
+											key,
+											label: index === 0 ? __( 'Default', 'yaycheckout' ) : SETTING_LABELS[ key ],
+											colorValue: colorOf( key ),
+											onColorChange: ( next?: string ) => set( key, next || undefined ),
+										} ) ) }
+										colors={ palettes.colors }
+										disableCustomColors={ palettes.disableCustomColors }
+										enableAlpha
+										onReset={ () => row.forEach( ( key ) => set( key, undefined ) ) }
+									/>
+								) ) }
 							</div>
 						) }
 						{ rangeKeys.map( ( key ) => (

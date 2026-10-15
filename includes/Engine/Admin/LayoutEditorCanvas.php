@@ -69,6 +69,12 @@ body.yaycheckout-has-layout-actions :is(
 	.edit-post-post-status .editor-post-panel__row:has(.components-checkbox-control)
 ) {
 	display: none;
+}
+.yaycheckout-layout-view {
+	margin-inline-start: 8px;
+}
+.yaycheckout-layout-view .components-toggle-group-control {
+	white-space: nowrap;
 }';
 
     protected function __construct() {

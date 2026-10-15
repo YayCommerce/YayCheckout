@@ -31,19 +31,29 @@ export function isColorSetting( key: PaymentSettingKey ): key is ColorSettingKey
 	return ( COLOR_SETTING_KEYS as readonly string[] ).includes( key );
 }
 
-/** Each setting's label inside its Styles panel. */
+/**
+ * Colours shown as one row with a tab per state, the Default first (StateColourItem). A layout that lists only
+ * a row's Default shows it as a plain colour.
+ */
+export const COLOR_STATE_GROUPS: ColorSettingKey[][] = [
+	[ 'backgroundColor', 'backgroundColorSelected', 'backgroundColorHover' ],
+	[ 'radioColor', 'radioColorSelected' ],
+	[ 'borderColor', 'borderColorSelected', 'borderColorHover' ],
+];
+
+/** Each setting's label inside its Styles panel; a state's is its tab's, in its COLOR_STATE_GROUPS row. */
 export const SETTING_LABELS: Record< PaymentSettingKey, string > = {
 	gap: __( 'Gap', 'yaycheckout' ),
 	borderWidth: __( 'Width', 'yaycheckout' ),
 	borderRadius: __( 'Radius', 'yaycheckout' ),
 	backgroundColor: __( 'Background', 'yaycheckout' ),
-	backgroundColorSelected: __( 'Background (selected)', 'yaycheckout' ),
-	backgroundColorHover: __( 'Background (hover)', 'yaycheckout' ),
+	backgroundColorSelected: __( 'Selected', 'yaycheckout' ),
+	backgroundColorHover: __( 'Hover', 'yaycheckout' ),
 	radioColor: __( 'Radio', 'yaycheckout' ),
-	radioColorSelected: __( 'Radio (selected)', 'yaycheckout' ),
+	radioColorSelected: __( 'Selected', 'yaycheckout' ),
 	borderColor: __( 'Color', 'yaycheckout' ),
-	borderColorSelected: __( 'Color (selected)', 'yaycheckout' ),
-	borderColorHover: __( 'Color (hover)', 'yaycheckout' ),
+	borderColorSelected: __( 'Selected', 'yaycheckout' ),
+	borderColorHover: __( 'Hover', 'yaycheckout' ),
 };
 
 export interface SettingsPanel {

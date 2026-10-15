@@ -158,9 +158,10 @@ html.yaycheckout-has-pinned body {
 	margin-block-start: 12px;
 }
 
-.yaycheckout-checkout .form-row :is(label, .yaycheckout-field-preview__label) {
+.yaycheckout-checkout .form-row :is(label, .yaycheckout-field-preview__label, .yaycheckout-extra-field__label) {
 	display: block;
 	margin-block: 0 4px;
+	color: var(--yaycheckout-input-label-color, inherit);
 	font-weight: 500;
 	line-height: 1.4;
 }
@@ -171,7 +172,16 @@ html.yaycheckout-has-pinned body {
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
+	color: inherit;
 	font-weight: inherit;
+}
+
+/* An Extra Field with Multiple choices: one option per line. */
+.yaycheckout-checkout .yaycheckout-extra-field__choices {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
 }
 
 /* RequiredIndicator::span() and WooCommerce's own mark. */
@@ -193,7 +203,8 @@ html.yaycheckout-has-pinned body {
  * Help text shows inline under its field instead of as WooCommerce's focus popup. WooCommerce
  * toggles this span with jQuery slideUp()/slideDown(), which write height, overflow, padding,
  * margin and display inline; the !important declarations only outrank those inline styles.
- * The editor's field preview prints the same classes.
+ * The editor's field preview prints the same classes. Every kind of field (text, select, radio,
+ * checkbox) takes the layout's Muted colour and its Help text size (DesignStyles); an unset size is 0.875em.
  */
 .yaycheckout-checkout .form-row .description {
 	display: block !important;
@@ -203,10 +214,9 @@ html.yaycheckout-has-pinned body {
 	margin: 0.25em 0 0 !important;
 	position: static;
 	background: none;
-	color: inherit;
+	color: var(--yaycheckout-design-muted);
 	border-radius: 0;
-	font-size: 0.875em;
-	opacity: 0.75;
+	font-size: var(--yaycheckout-help-text-size, 0.875em);
 }
 
 .yaycheckout-checkout .form-row .description::before {
@@ -222,6 +232,15 @@ html.yaycheckout-has-pinned body {
 	font: inherit;
 	color: var(--wp--style--color--link, currentColor);
 	cursor: pointer;
+}
+
+/* A link toggle takes the design's link colours (elements); a collapsible or checkbox toggle is a row, not a link. */
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="link"] {
+	color: var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor));
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="link"]:is(:hover, :focus) {
+	color: var(--yaycheckout-link-hover-color, var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor)));
 }
 
 /* Collapsible: a full-width header that opens and closes the panel below it. */
@@ -307,8 +326,18 @@ html.yaycheckout-has-pinned body {
 	line-height: 1.4;
 }
 
-.yaycheckout-checkout textarea {
-	min-height: calc(var(--yaycheckout-input-height, 40px) * 2);
+/*
+ * A textarea starts about three lines tall and grows with its text, where the browser supports field-sizing, up to
+ * a cap that scrolls. Its text does not centre like an input's, so it keeps its own vertical padding, which a size
+ * token does not zero. Every checkout textarea carries .input-text, and the class lifts this rule above the shared one.
+ */
+.yaycheckout-checkout textarea.input-text {
+	display: block;
+	min-height: calc(var(--yaycheckout-input-height, 40px) * 2.5);
+	max-height: 20em;
+	padding-block: 0.625em;
+	line-height: 1.5;
+	field-sizing: content;
 	resize: vertical;
 }
 
@@ -360,10 +389,12 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 }
 
 /*
- * Drawn checkbox and radio, as in the layout templates: the input's border and background, the
- * primary colour once checked. A checkbox's size, corner, border width and checked colour come from
- * the layout's Checkboxes design (DesignStyles); its corner never takes the input radius. Radios keep
- * their own size. Payment and Shipping hide their real radio and draw their own indicator.
+ * Drawn checkbox and radio, as in the layout templates. Each reads its own section of the layout's design
+ * (DesignStyles): a checkbox the Checkboxes design (size, corner, border width, unticked border and
+ * background, checked colour), a loose radio the Radios design (size, border width, unticked border and
+ * background, checked colour). Their unticked border and background fall back to the input's, and the
+ * checked colour to the primary colour. A checkbox's corner never takes the input radius. Payment and
+ * Shipping hide their real radio and draw their own indicator, whose colours fall back to the Radios design.
  */
 .yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]) {
 	-webkit-appearance: none;
@@ -383,7 +414,9 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	width: var(--yaycheckout-checkbox-size, 16px);
 	height: var(--yaycheckout-checkbox-size, 16px);
 	border-width: var(--yaycheckout-checkbox-border-width, 1px);
+	border-color: var(--yaycheckout-checkbox-border-color, var(--yaycheckout-input-border-color, var(--yaycheckout-border-color)));
 	border-radius: var(--yaycheckout-checkbox-radius, var(--yaycheckout-neutral-radius));
+	background-color: var(--yaycheckout-checkbox-background, var(--yaycheckout-input-background, var(--yaycheckout-color-background, #fff)));
 	background-size: min(12px, calc(var(--yaycheckout-checkbox-size, 16px) * 0.75));
 }
 
@@ -394,13 +427,16 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 }
 
 .yaycheckout-checkout input[type="radio"] {
-	width: 18px;
-	height: 18px;
+	width: var(--yaycheckout-radio-size, 18px);
+	height: var(--yaycheckout-radio-size, 18px);
+	border-width: var(--yaycheckout-radio-border-width, 1px);
+	border-color: var(--yaycheckout-radio-border-color, var(--yaycheckout-input-border-color, var(--yaycheckout-border-color)));
 	border-radius: 50%;
+	background-color: var(--yaycheckout-radio-background, var(--yaycheckout-input-background, var(--yaycheckout-color-background, #fff)));
 }
 
 .yaycheckout-checkout input[type="radio"]:checked {
-	border: 5px solid var(--yaycheckout-primary-color);
+	border: 5px solid var(--yaycheckout-radio-checked-color, var(--yaycheckout-primary-color));
 }
 
 .yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):disabled {
@@ -425,13 +461,15 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 /*
  * A focused field draws one edge in the layout's input focus colour (DesignStyles), falling back to the
  * primary colour: its border recolours and a flush ring thickens it, with no gap between the two. The
- * Border only focus style sets the ring width to 0.
+ * Thin border focus style sets the ring width to 0. Its fill takes the layout's input focus background, falling back
+ * to the input background.
  */
 .yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code):focus,
 .yaycheckout-checkout .select2-container:is(.select2-container--focus, .select2-container--open) .select2-selection--single {
 	border-color: var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline: var(--yaycheckout-input-focus-ring-width, 1px) solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline-offset: 0;
+	background-color: var(--yaycheckout-input-focus-background, var(--yaycheckout-input-background, var(--yaycheckout-color-background, transparent)));
 }
 
 /* Keyboard focus on a button, checkbox or radio: an offset ring, in the input focus colour for the controls. */
@@ -443,6 +481,14 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 .yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):focus-visible {
 	outline: 2px solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline-offset: 1px;
+}
+
+/*
+ * A click focuses the control too, and themes outline every :focus (Twenty Twenty-Five every element, Storefront
+ * links and buttons); only a keyboard ring shows.
+ */
+.yaycheckout-checkout :is(button, .button, a, [role="button"], input[type="checkbox"], input[type="radio"]):focus:not(:focus-visible) {
+	outline: 0;
 }
 
 /* WooCommerce marks the row, not the input, when a field fails validation; its focus edge turns red too. */
@@ -491,7 +537,7 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	margin: 0;
 	overflow: hidden;
 	clip-path: none;
-	color: var(--yaycheckout-input-color, inherit);
+	color: var(--yaycheckout-input-label-color, var(--yaycheckout-input-color, inherit));
 	font-weight: 400;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -518,6 +564,16 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 .yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__code {
 	min-height: var(--yaycheckout-floating-height);
 	padding-block: 1.375em var(--yaycheckout-input-padding-block, 0.375em);
+}
+
+/* A textarea keeps its taller box and its bottom padding under a floating label. */
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > .input-text),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea))
+) textarea.input-text {
+	min-height: calc(var(--yaycheckout-floating-height) * 2.25);
+	padding-bottom: 0.625em;
 }
 
 /* Floated: small, at the top of the box. A select always shows a value, so its label never rests. */
@@ -558,6 +614,27 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__label {
 		transition: none;
 	}
+}
+
+/*
+ * Hidden labels (the layout's inputs.label token): the same rows as floating labels lose their label from view, with
+ * the declarations of WordPress's .screen-reader-text, so screen readers still name the field. Checkbox and radio rows
+ * keep theirs. The Coupon form's label is screen-reader-only already (coupon-form/style.css).
+ */
+.yaycheckout-checkout--hidden-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
+) > :is(label, .yaycheckout-field-preview__label) {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
 }
 
 /* Notices: WooCommerce's classic list markup, and the banner markup it prints on block themes (wc-blocks-style draws its layout). */

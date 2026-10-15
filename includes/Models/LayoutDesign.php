@@ -89,8 +89,14 @@ final class LayoutDesign {
      * theme preset; colours.background may also be a gradient. An empty typography.base_size prints
      * DesignStyles::DEFAULT_BASE_SIZE, not the theme's size. The inputs.size token is an abstract step; the
      * renderer decides its height, in em. The inputs.label token prints no custom property: it is the checkout
-     * wrapper's yaycheckout-checkout--floating-labels class. An empty checkboxes.checked fills a ticked box with the
-     * primary colour; its unticked border is inputs.border.
+     * wrapper's yaycheckout-checkout--floating-labels or yaycheckout-checkout--hidden-labels class. An empty checkboxes.checked fills a ticked box with the
+     * primary colour. checkboxes.border and checkboxes.background colour an unticked checkbox, and each falls back
+     * to the input's. radios styles loose radios, and its colours are the fallback for Payment and Shipping's
+     * indicators; an empty radio colour falls back to the input's or, for checked, to the primary colour.
+     * help_text sizes the help text under every kind of field; its colour is colours.muted.
+     * colours.link and colours.link_hover colour the page's text links: the login and disclosure links, and any link in a paragraph, a
+     * heading or the terms that no block gives a link colour of its own. An empty link_hover falls back
+     * to link, and an empty link leaves each link its theme colour.
      */
     public static function schema(): array {
         return [
@@ -111,6 +117,18 @@ final class LayoutDesign {
                     'type'    => 'color',
                     'default' => '',
                 ],
+                'muted'      => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'link'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'link_hover' => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
             ],
             'typography' => [
                 'font_family' => [
@@ -126,47 +144,55 @@ final class LayoutDesign {
                 ],
             ],
             'inputs'     => [
-                'style'       => [
+                'style'            => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'boxed', 'underline' ],
                 ],
-                'size'        => [
+                'size'             => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'small', 'medium', 'large' ],
                 ],
-                'radius'      => [
+                'radius'           => [
                     'type'    => 'int',
                     'default' => null,
                     'min'     => 0,
                     'max'     => 24,
                 ],
-                'background'  => [
+                'background'       => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'text'        => [
+                'text_color'       => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'border'      => [
+                'label_color'      => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'focus'       => [
+                'border'           => [
                     'type'    => 'color',
                     'default' => '',
                 ],
-                'focus_style' => [
+                'focus_border'     => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'focus_background' => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'focus_style'      => [
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'border' ],
                 ],
-                'label'       => [
+                'label'            => [
                     'type'    => 'enum',
                     'default' => '',
-                    'enum'    => [ '', 'floating' ],
+                    'enum'    => [ '', 'floating', 'hidden' ],
                 ],
             ],
             'checkboxes' => [
@@ -188,9 +214,51 @@ final class LayoutDesign {
                     'min'     => 1,
                     'max'     => 3,
                 ],
+                'border'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'background'   => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
                 'checked'      => [
                     'type'    => 'color',
                     'default' => '',
+                ],
+            ],
+            'radios'     => [
+                'size'         => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 14,
+                    'max'     => 24,
+                ],
+                'border_width' => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 1,
+                    'max'     => 3,
+                ],
+                'border'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'background'   => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'checked'      => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+            ],
+            'help_text'  => [
+                'size' => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 10,
+                    'max'     => 20,
                 ],
             ],
         ];
@@ -199,6 +267,11 @@ final class LayoutDesign {
     /** True when the inputs' labels sit inside the box and float up once the field is focused or filled. */
     public function has_floating_labels(): bool {
         return 'floating' === ( $this->sections['inputs']['label'] ?? '' );
+    }
+
+    /** True when the inputs' labels are hidden from view; screen readers still read them. */
+    public function has_hidden_labels(): bool {
+        return 'hidden' === ( $this->sections['inputs']['label'] ?? '' );
     }
 
     /**
@@ -210,6 +283,16 @@ final class LayoutDesign {
     public static function from_meta( $value ): self {
         $value  = is_array( $value ) ? $value : [];
         $design = new self();
+
+        // Layouts saved before the rename store the focus border colour as inputs.focus.
+        if ( is_array( $value['inputs'] ?? null ) && isset( $value['inputs']['focus'] ) && ! isset( $value['inputs']['focus_border'] ) ) {
+            $value['inputs']['focus_border'] = $value['inputs']['focus'];
+        }
+
+        // Layouts saved before the rename store the input text colour as inputs.text.
+        if ( is_array( $value['inputs'] ?? null ) && isset( $value['inputs']['text'] ) && ! isset( $value['inputs']['text_color'] ) ) {
+            $value['inputs']['text_color'] = $value['inputs']['text'];
+        }
 
         foreach ( self::schema() as $section => $rules ) {
             $design->sections[ $section ] = self::project_section( $rules, $value[ $section ] ?? null );

@@ -80,7 +80,12 @@
 .yaycheckout-step__title {
 	grid-column: 2;
 	grid-row: 1;
-	font-weight: 700;
+	font-weight: 600;
+}
+
+/* No summary line: the title spans both rows, so it centres on the badge. */
+.yaycheckout-step__header:not(:has(> .yaycheckout-step__summary:not([hidden]))) > .yaycheckout-step__title {
+	grid-row: 1 / span 2;
 }
 
 .yaycheckout-step__summary {

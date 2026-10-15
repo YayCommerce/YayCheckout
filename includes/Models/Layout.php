@@ -15,10 +15,11 @@ class Layout {
 
     public const POST_TYPE = 'yay_checkout_layout';
 
-    public const META_RULES     = '_yaycheckout_rules';
-    public const META_SELF_TEST = '_yaycheckout_self_test';
-    public const META_DESIGN    = '_yaycheckout_design';
-    public const META_TEMPLATE  = '_yaycheckout_template';
+    public const META_RULES      = '_yaycheckout_rules';
+    public const META_SELF_TEST  = '_yaycheckout_self_test';
+    public const META_DESIGN     = '_yaycheckout_design';
+    public const META_TEMPLATE   = '_yaycheckout_template';
+    public const META_LOGGED_OUT = '_yaycheckout_logged_out_content';
 
     public const OPTION_ACTIVE = 'yaycheckout_active_layout';
 
@@ -30,6 +31,9 @@ class Layout {
 
     /** The post_content: block markup. */
     public string $content = '';
+
+    /** What a guest who must log in sees instead of $content; '' when the merchant has not saved one. */
+    public string $logged_out_content = '';
 
     /** GMT post_date while post_status is 'publish'; null otherwise. */
     public ?string $published_at = null;
@@ -73,6 +77,8 @@ class Layout {
         $layout->rules        = (array) self::meta_value( $meta, self::META_RULES, [] );
         $layout->design       = LayoutDesign::from_meta( self::meta_value( $meta, self::META_DESIGN, null ) );
         $layout->template     = (string) self::meta_value( $meta, self::META_TEMPLATE, '' );
+
+        $layout->logged_out_content = (string) self::meta_value( $meta, self::META_LOGGED_OUT, '' );
 
         return $layout;
     }

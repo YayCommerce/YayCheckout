@@ -1,8 +1,9 @@
 <?php
 /**
- * Prints WooCommerce's terms, Place order button and checkout nonce; without a
- * cart, only the disabled button. The button is the block's root element, so
- * its style supports land on it. Its label may hold live values, filled here so
+ * Prints the Place order button, WooCommerce's submit hooks and checkout nonce;
+ * without a cart, only the disabled button. The terms and privacy text are the
+ * Terms block's (terms/render.php), so they never widen the button's row. The
+ * button is the block's root element, so its style supports land on it. Its label may hold live values, filled here so
  * value and data-value carry their text; live-value/view.ts keeps the spans
  * when WooCommerce resets the label to data-value.
  *
@@ -42,10 +43,6 @@ if ( ! $yaycheckout_has_cart ) {
 ?>
 <div class="form-row place-order">
     <?php
-    if ( function_exists( 'wc_get_template' ) ) {
-        wc_get_template( 'checkout/terms.php' );
-    }
-
     // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
     do_action( 'woocommerce_review_order_before_submit' );
 

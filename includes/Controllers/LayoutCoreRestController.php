@@ -3,7 +3,9 @@ namespace YayCheckout\Controllers;
 
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Enums\LayoutStatus;
+use YayCheckout\Models\Layout;
 use YayCheckout\PostTypes\LayoutPostType;
+use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Services\LayoutMarkupReader;
 
 defined( 'ABSPATH' ) || exit;
@@ -68,6 +70,15 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
             return $prepared;
         }
 
+        // The logged-out view saves into its meta; post_content, which the checks below read, stays as stored.
+        if ( LayoutEditorEmbed::is_logged_out_view( $request ) && isset( $prepared->post_content ) ) {
+            // Unslashed here; update_item() slashes later.
+            $prepared->meta_input = [
+                Layout::META_LOGGED_OUT => LayoutRepository::filter_logged_out_content( $prepared->post_content ),
+            ];
+            unset( $prepared->post_content );
+        }
+
         $stored  = isset( $prepared->ID ) ? get_post( $prepared->ID ) : null;
         $status  = $prepared->post_status ?? ( $stored ? $stored->post_status : '' );
         $content = $prepared->post_content ?? ( $stored ? $stored->post_content : '' );
@@ -83,5 +94,28 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
         }
 
         return $prepared;
+    }
+
+    /** In the logged-out view the editor loads that view's markup as the post content, or its template's when none is saved. */
+    public function prepare_item_for_response( $item, $request ) {
+        if ( ! LayoutEditorEmbed::is_logged_out_view( $request ) || 'edit' !== $request['context'] ) {
+            return parent::prepare_item_for_response( $item, $request );
+        }
+
+        // Skips rendering the main markup into content.rendered, which is replaced below.
+        add_filter( 'the_content', '__return_empty_string', PHP_INT_MIN );
+        $response = parent::prepare_item_for_response( $item, $request );
+        remove_filter( 'the_content', '__return_empty_string', PHP_INT_MIN );
+
+        $data   = $response->get_data();
+        $markup = (string) get_post_meta( $item->ID, Layout::META_LOGGED_OUT, true );
+
+        if ( isset( $data['content'] ) ) {
+            $data['content']['raw']      = '' !== $markup ? $markup : LayoutTemplateCatalogue::logged_out_markup( (string) get_post_meta( $item->ID, Layout::META_TEMPLATE, true ) );
+            $data['content']['rendered'] = '';
+            $response->set_data( $data );
+        }
+
+        return $response;
     }
 }

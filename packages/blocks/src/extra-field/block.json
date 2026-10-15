@@ -61,6 +61,10 @@
       "type": "boolean",
       "default": false
     },
+    "checkboxMode": {
+      "type": "string",
+      "enum": [ "single", "multiple" ]
+    },
     "options": {
       "type": "array",
       "default": [],

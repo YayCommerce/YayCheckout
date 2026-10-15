@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Layout endpoints under /yaycheckout/v1/layouts. Draft saves stay on core's wp/v2 endpoints
- * (autosave, revisions); everything else the admin app needs lives here.
+ * (revisions); everything else the admin app needs lives here.
  */
 class LayoutRestController extends BaseRestController {
 

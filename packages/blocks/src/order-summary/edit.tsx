@@ -21,7 +21,6 @@ import { isCheckoutSection, useBlocksAllowedExcept } from '../shared/allowed-blo
 import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 import { SectionLabel } from '../shared/section-label';
 import { isNewShape, useSummaryCollapse } from './shape';
-import './editor.css';
 
 type InitialState = 'collapsed' | 'open';
 
@@ -73,14 +72,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	);
 	const { moveBlockToPosition, replaceInnerBlocks } = useDispatch( blockEditorStore );
 	const { getBlocks } = useSelect( blockEditorStore );
-	const blockProps = useBlockProps( {
-		className: [
-			'yaycheckout-order-summary',
-			collapsible && initialState === 'collapsed' ? 'is-preview-collapsed' : '',
-		]
-			.filter( Boolean )
-			.join( ' ' ),
-	} );
+	const blockProps = useBlockProps( { className: 'yaycheckout-order-summary' } );
 	const oldShapeAllowed = useBlocksAllowedExcept( isCheckoutSection );
 	const { children, ...innerBlocksProps } = useInnerBlocksProps( blockProps, {
 		allowedBlocks: newShape ? NEW_SHAPE_CHILDREN : oldShapeAllowed,
@@ -90,7 +82,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	// The block order is the direction: a Header after Details sits below them, so they open upward.
 	const opensUp = headerIndex !== -1 && detailsIndex !== -1 && headerIndex > detailsIndex;
 
-	// Opt-in, never on load: converting markup the merchant didn't touch would reach the post through autosave.
+	// Opt-in, never on load: converting markup the merchant didn't touch would reach the post on the merchant's next save.
 	// The heading keeps the old one's text (plain, so escaped into rich text) and id, so a theme styling #order_review_heading still finds it.
 	const convert = () =>
 		replaceInnerBlocks( clientId, [
@@ -109,20 +101,12 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	return (
 		<div { ...innerBlocksProps }>
 			{ css && <style>{ css }</style> }
-			<SectionLabel
-				label={ label }
-				defaultLabel={ __( 'Your order', 'yaycheckout' ) }
-				setAttributes={ setAttributes }
-				showHeading={ ! newShape }
-				help={
-					newShape
-						? __( "Read by screen readers as the name of the header's open/close button.", 'yaycheckout' )
-						: undefined
-				}
-			/>
+			{ ! newShape && (
+				<SectionLabel label={ label } defaultLabel={ __( 'Your order', 'yaycheckout' ) } setAttributes={ setAttributes } />
+			) }
 			<InspectorControls>
 				{ newShape ? (
-					<PanelBody title={ __( 'Collapsing', 'yaycheckout' ) }>
+					<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 						<ToggleControl
 							label={ __( 'Collapsible', 'yaycheckout' ) }
 							checked={ collapsible }
@@ -146,7 +130,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 								<ToggleGroupControlOption value="open" label={ __( 'Open', 'yaycheckout' ) } />
 							</ToggleGroupControl>
 						) }
-						{ headerId && (
+						{ collapsible && headerId && (
 							<ToggleGroupControl
 								label={ __( 'Opens', 'yaycheckout' ) }
 								value={ opensUp ? 'up' : 'down' }

@@ -32,7 +32,7 @@ class CheckoutExtraFields {
     protected function __construct() {
         add_action( 'woocommerce_after_checkout_validation', [ $this, 'validate' ], 10, 2 );
         // Fires before WooCommerce saves the new order, so meta set here is saved with it.
-        add_action( 'woocommerce_checkout_create_order', [ $this, 'persist' ] );
+        add_action( 'woocommerce_checkout_create_order', [ $this, 'persist' ], 10, 2 );
         add_action( 'woocommerce_admin_order_data_after_billing_address', [ $this, 'print_admin' ] );
         add_action( 'woocommerce_order_details_after_order_table', [ $this, 'print_customer' ] );
         add_action( 'wc_ajax_yaycheckout_remember_extra_fields', [ $this, 'remember' ] );
@@ -87,7 +87,7 @@ class CheckoutExtraFields {
     }
 
     public function validate( $data, \WP_Error $errors ): void {
-        foreach ( $this->submission()['errors'] as $key => $message ) {
+        foreach ( $this->submission( $data )['errors'] as $key => $message ) {
             $errors->add( 'yaycheckout_extra_' . $key, $message );
         }
     }
@@ -96,10 +96,14 @@ class CheckoutExtraFields {
      * One meta per field plus a snapshot of the rows, so order screens keep the
      * label and display text after the layout changes. WooCommerce reuses a
      * pending or failed order on retry, so the previous attempt's values are
-     * removed first; otherwise a field cleared on retry would keep its old value.
+     * removed first; otherwise a field cleared on retry would keep its old value,
+     * or one in a section the retry no longer uses.
+     *
+     * @param \WC_Order $order Order being created.
+     * @param mixed     $data  WooCommerce's posted checkout data.
      */
-    public function persist( \WC_Order $order ): void {
-        $submission = $this->submission();
+    public function persist( \WC_Order $order, $data = [] ): void {
+        $submission = $this->submission( $data );
 
         if ( [] !== $submission['errors'] ) {
             return;
@@ -137,10 +141,23 @@ class CheckoutExtraFields {
         $this->print_rows( $order, false );
     }
 
-    /** @return array{rows: array, errors: array<string, string>} */
-    private function submission(): array {
+    /**
+     * @param  mixed $data WooCommerce's posted checkout data.
+     * @return array{rows: array, errors: array<string, string>}
+     */
+    private function submission( $data ): array {
         // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Woo verifies the checkout nonce before these hooks; only the layout's Keys are read and ExtraFieldSubmission sanitizes them.
-        return ExtraFieldSubmission::collect( $this->fields(), wp_unslash( $_POST ) );
+        return ExtraFieldSubmission::collect( $this->submitted_fields( is_array( $data ) ? $data : [] ), wp_unslash( $_POST ) );
+    }
+
+    /**
+     * The fields this order uses: those inside an address section the order doesn't use
+     * (CheckoutFieldUsage::unused_sections()) are left out, so a required one there can't block the order.
+     */
+    private function submitted_fields( array $data ): array {
+        $unused = CheckoutFieldUsage::unused_sections( $data );
+
+        return array_filter( $this->fields(), static fn( $field ) => ! in_array( $field['section'], $unused, true ) );
     }
 
     /** The served layout's extra fields, or none when the renderer stands down. get_value() asks once per field, so it is memoised. */

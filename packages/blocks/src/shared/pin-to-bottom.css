@@ -1,0 +1,68 @@
+/*
+ * Marks a pinned Group in the layout editor (pin-to-bottom.tsx). Lives in the Checkout block's editorStyle,
+ * so it reaches both the editor's own document (List View) and the canvas iframe.
+ */
+
+/*
+ * List View: the pin core draws for a sticky block, after the row's label. PinnedListViewStyle sets
+ * --yaycheckout-list-view-pin on the pinned rows only; elsewhere content is none and no pin is drawn.
+ * currentColor turns it white on a selected row, as core's own icons do.
+ */
+.block-editor-list-view-leaf .block-editor-list-view-block-select-button__label-wrapper::after {
+	content: var(--yaycheckout-list-view-pin, none);
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	background: currentColor;
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10.97 10.159a3.382 3.382 0 0 0-2.857.955l1.724 1.723-2.836 2.913L7 17h1.25l2.913-2.837 1.723 1.723a3.38 3.38 0 0 0 .606-.825c.33-.63.446-1.343.35-2.032L17 10.695 13.305 7l-2.334 3.159Z'/%3E%3C/svg%3E") center / 24px no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10.97 10.159a3.382 3.382 0 0 0-2.857.955l1.724 1.723-2.836 2.913L7 17h1.25l2.913-2.837 1.723 1.723a3.38 3.38 0 0 0 .606-.825c.33-.63.446-1.343.35-2.032L17 10.695 13.305 7l-2.334 3.159Z'/%3E%3C/svg%3E") center / 24px no-repeat;
+}
+
+/*
+ * Canvas: a pin badge just outside the Group's top-left corner, where Visibility's eye (top-right) can't
+ * cover it; hovered, it becomes a tag holding the data attribute's translated text. Core draws the
+ * selection outline with ::after and Visibility's marker is ::before too, so a Group that is also
+ * conditional shows only the Conditional marker here; its List View row still shows the pin.
+ */
+.editor-styles-wrapper .is-yaycheckout-pinned {
+	position: relative;
+}
+
+.editor-styles-wrapper .is-yaycheckout-pinned:not(.is-yaycheckout-conditional)::before {
+	content: "";
+	position: absolute;
+	top: -8px;
+	right: auto;
+	bottom: auto;
+	left: -8px;
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	border: 0;
+	outline: 0;
+	box-shadow: none;
+	z-index: 2;
+	padding: 0;
+	border-radius: 50%;
+	background: #1e1e1e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='5 5 14 14' fill='%23fff'%3E%3Cpath d='M10.97 10.159a3.382 3.382 0 0 0-2.857.955l1.724 1.723-2.836 2.913L7 17h1.25l2.913-2.837 1.723 1.723a3.38 3.38 0 0 0 .606-.825c.33-.63.446-1.343.35-2.032L17 10.695 13.305 7l-2.334 3.159Z'/%3E%3C/svg%3E") center / 11px no-repeat;
+	opacity: 0.6;
+	color: #fff;
+	font: 500 11px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	letter-spacing: 0;
+	text-transform: none;
+	pointer-events: none;
+}
+
+.editor-styles-wrapper .is-yaycheckout-pinned:not(.is-yaycheckout-conditional):hover::before {
+	content: attr(data-yaycheckout-pinned);
+	top: auto;
+	left: 0;
+	bottom: 100%;
+	width: auto;
+	height: auto;
+	padding: 2px 6px 2px 22px;
+	border-radius: 2px 2px 0 0;
+	background-position: 5px center;
+	background-size: 13px;
+	opacity: 1;
+}

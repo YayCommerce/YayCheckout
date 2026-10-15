@@ -119,7 +119,7 @@ class CheckoutDifferentAddress {
     }
 
     public function filter_posted_data( $data ) {
-        if ( ! is_array( $data ) || ! $this->copies() ) {
+        if ( ! is_array( $data ) || ! self::billing_copied() ) {
             return $data;
         }
 
@@ -131,21 +131,24 @@ class CheckoutDifferentAddress {
     }
 
     public function filter_fields( $fields ) {
-        if ( ! is_array( $fields ) || ! isset( $fields['billing'] ) || ! is_array( $fields['billing'] ) || ! $this->copies() ) {
+        if ( ! is_array( $fields ) || ! isset( $fields['billing'] ) || ! is_array( $fields['billing'] ) || ! self::billing_copied() ) {
             return $fields;
         }
 
-        foreach ( self::COPIED_KEYS as $key ) {
-            if ( isset( $fields['billing'][ 'billing_' . $key ] ) && is_array( $fields['billing'][ 'billing_' . $key ] ) ) {
-                $fields['billing'][ 'billing_' . $key ]['required'] = false;
+        foreach ( CheckoutFieldUsage::copied_billing_keys() as $key ) {
+            if ( isset( $fields['billing'][ $key ] ) && is_array( $fields['billing'][ $key ] ) ) {
+                $fields['billing'][ $key ]['required'] = false;
             }
         }
 
         return $fields;
     }
 
-    /** Shipping is main, a layout is served, and the shopper posted "same address for billing". */
-    private function copies(): bool {
+    /**
+     * Shipping is main, a layout is served, and the shopper posted "same address for billing", so the
+     * Billing section isn't used for this request. CheckoutExtraFields skips the extra fields inside it.
+     */
+    public static function billing_copied(): bool {
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce verifies the checkout nonce before it reads posted data.
         $same = isset( $_POST[ self::SAME_BILLING_FIELD ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::SAME_BILLING_FIELD ] ) ) : '';
 

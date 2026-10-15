@@ -20,6 +20,11 @@ $yaycheckout_wrapper_base = [
     'data-layout' => \YayCheckout\Renderer\CheckoutFragments::payment_layout( $attributes ),
 ];
 
+// A layout saved before the setting has no value: only the selected gateway's description shows.
+if ( ! empty( $attributes['showAllDescriptions'] ) ) {
+    $yaycheckout_wrapper_base['data-descriptions'] = 'all';
+}
+
 // Title and Description styles.
 $yaycheckout_text_class = \YayCheckout\Renderer\SectionTextStyles::wrapper_class( $attributes, 'yaycheckout/payment' );
 if ( '' !== $yaycheckout_text_class ) {

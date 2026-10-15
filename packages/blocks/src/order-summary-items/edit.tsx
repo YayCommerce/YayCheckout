@@ -1,8 +1,22 @@
-import { InspectorControls, PanelColorSettings, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, RangeControl, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
+import {
+	__experimentalColorGradientSettingsDropdown as ColorGradientSettingsDropdown,
+	__experimentalUseMultipleOriginColorsAndGradients as useMultipleOriginColorsAndGradients,
+	InspectorControls,
+	useBlockProps,
+} from '@wordpress/block-editor';
+import {
+	PanelBody,
+	RangeControl,
+	SelectControl,
+	TextControl,
+	ToggleControl,
+	__experimentalToolsPanel as ToolsPanel,
+	__experimentalToolsPanelItem as ToolsPanelItem,
+} from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 import { plainText } from '../shared/plain-text';
+import '../shared/tools-panel.css';
 import './editor.css';
 
 interface OrderSummaryItemsAttributes {
@@ -27,6 +41,8 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< OrderSummaryItemsAttributes > ) => void;
 	clientId: string;
 }
+
+const BADGE_PANEL = 'yaycheckout-order-summary-items-badge';
 
 // Mirrors CheckoutFragments::order_items_badge_style(): the badge settings as --yaycheckout-badge-* vars.
 function badgeStyle( { badgeBackgroundColor, badgeTextColor, badgeSize }: OrderSummaryItemsAttributes ) {
@@ -59,6 +75,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	} = attributes;
 	// As order_items_html(): a badge needs a thumbnail to sit on.
 	const badge = quantityDisplay === 'badge' && showThumbnails;
+	const palettes = useMultipleOriginColorsAndGradients();
 	const css = useBlockGapCSS( `#block-${ clientId } > .yaycheckout-order-summary-items`, style );
 	const productPlaceholder = __( 'Product', 'yaycheckout' );
 	const subtotalPlaceholder = __( 'Subtotal', 'yaycheckout' );
@@ -66,28 +83,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
-					<ToggleControl
-						label={ __( 'Show labels', 'yaycheckout' ) }
-						checked={ showLabels }
-						onChange={ ( value ) => setAttributes( { showLabels: value } ) }
-					/>
-					{ showLabels && (
-						<>
-							<TextControl
-								label={ __( 'Product label', 'yaycheckout' ) }
-								value={ productLabel ?? '' }
-								placeholder={ productPlaceholder }
-								onChange={ ( value ) => setAttributes( { productLabel: value } ) }
-							/>
-							<TextControl
-								label={ __( 'Subtotal label', 'yaycheckout' ) }
-								value={ subtotalLabel ?? '' }
-								placeholder={ subtotalPlaceholder }
-								onChange={ ( value ) => setAttributes( { subtotalLabel: value } ) }
-							/>
-						</>
-					) }
+				<PanelBody title={ __( 'Product', 'yaycheckout' ) }>
 					<ToggleControl
 						label={ __( 'Show thumbnails', 'yaycheckout' ) }
 						checked={ showThumbnails }
@@ -118,8 +114,10 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						checked={ showShortDescription }
 						onChange={ ( value ) => setAttributes( { showShortDescription: value } ) }
 					/>
+				</PanelBody>
+				<PanelBody title={ __( 'Quantity', 'yaycheckout' ) }>
 					<SelectControl
-						label={ __( 'Quantity', 'yaycheckout' ) }
+						label={ __( 'Show as', 'yaycheckout' ) }
 						value={ quantityDisplay }
 						options={ [
 							{ label: __( 'Inline', 'yaycheckout' ), value: 'inline' },
@@ -141,36 +139,82 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						onChange={ ( value ) => setAttributes( { showStepper: value } ) }
 					/>
 				</PanelBody>
+				<PanelBody title={ __( 'Column labels', 'yaycheckout' ) } initialOpen={ false }>
+					<ToggleControl
+						label={ __( 'Show labels', 'yaycheckout' ) }
+						checked={ showLabels }
+						onChange={ ( value ) => setAttributes( { showLabels: value } ) }
+					/>
+					{ showLabels && (
+						<>
+							<TextControl
+								label={ __( 'Product label', 'yaycheckout' ) }
+								value={ productLabel ?? '' }
+								placeholder={ productPlaceholder }
+								onChange={ ( value ) => setAttributes( { productLabel: value } ) }
+							/>
+							<TextControl
+								label={ __( 'Subtotal label', 'yaycheckout' ) }
+								value={ subtotalLabel ?? '' }
+								placeholder={ subtotalPlaceholder }
+								onChange={ ( value ) => setAttributes( { subtotalLabel: value } ) }
+							/>
+						</>
+					) }
+				</PanelBody>
 			</InspectorControls>
 			{ badge && (
 				<InspectorControls group="styles">
-					<PanelColorSettings
-						title={ __( 'Quantity badge', 'yaycheckout' ) }
-						initialOpen={ false }
-						colorSettings={ [
-							{
-								label: __( 'Background', 'yaycheckout' ),
-								value: badgeBackgroundColor,
-								onChange: ( value?: string ) => setAttributes( { badgeBackgroundColor: value ?? '' } ),
-							},
-							{
-								label: __( 'Text', 'yaycheckout' ),
-								value: badgeTextColor,
-								onChange: ( value?: string ) => setAttributes( { badgeTextColor: value ?? '' } ),
-							},
-						] }
+					<ToolsPanel
+						label={ __( 'Quantity badge', 'yaycheckout' ) }
+						panelId={ BADGE_PANEL }
+						className="yaycheckout-tools-panel"
+						resetAll={ () => setAttributes( { badgeBackgroundColor: '', badgeTextColor: '', badgeSize: undefined } ) }
 					>
-						<RangeControl
-							__nextHasNoMarginBottom
+						<div className="yaycheckout-tools-panel__colors">
+							<ColorGradientSettingsDropdown
+								__experimentalIsRenderedInSidebar
+								panelId={ BADGE_PANEL }
+								settings={ [
+									{
+										label: __( 'Background', 'yaycheckout' ),
+										colorValue: badgeBackgroundColor || undefined,
+										onColorChange: ( value?: string ) => setAttributes( { badgeBackgroundColor: value ?? '' } ),
+										clearable: true,
+										isShownByDefault: true,
+									},
+									{
+										label: __( 'Text', 'yaycheckout' ),
+										colorValue: badgeTextColor || undefined,
+										onColorChange: ( value?: string ) => setAttributes( { badgeTextColor: value ?? '' } ),
+										clearable: true,
+										isShownByDefault: true,
+									},
+								] }
+								colors={ palettes.colors }
+								disableCustomColors={ palettes.disableCustomColors }
+							/>
+						</div>
+						<ToolsPanelItem
+							panelId={ BADGE_PANEL }
 							label={ __( 'Size', 'yaycheckout' ) }
-							value={ badgeSize }
-							min={ 16 }
-							max={ 32 }
-							initialPosition={ 20 }
-							allowReset
-							onChange={ ( value ) => setAttributes( { badgeSize: value } ) }
-						/>
-					</PanelColorSettings>
+							hasValue={ () => typeof badgeSize === 'number' }
+							onDeselect={ () => setAttributes( { badgeSize: undefined } ) }
+							isShownByDefault
+						>
+							<RangeControl
+								__nextHasNoMarginBottom
+								__next40pxDefaultSize
+								label={ __( 'Size', 'yaycheckout' ) }
+								value={ badgeSize }
+								min={ 16 }
+								max={ 32 }
+								initialPosition={ 20 }
+								allowReset
+								onChange={ ( value ) => setAttributes( { badgeSize: value } ) }
+							/>
+						</ToolsPanelItem>
+					</ToolsPanel>
 				</InspectorControls>
 			) }
 			<div { ...useBlockProps( { style: badgeStyle( attributes ) } ) }>
