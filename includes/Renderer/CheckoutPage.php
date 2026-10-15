@@ -73,6 +73,8 @@ class CheckoutPage {
             wp_dequeue_style( $handle );
         }
 
+        ExpressPay::run_stripe_classic_script();
+
         ( new CheckoutBaseStyles() )->enqueue( true, $this->layout()->design );
 
         if ( $this->layout()->design->has_floating_labels() ) {
