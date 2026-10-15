@@ -90,7 +90,10 @@ final class LayoutDesign {
      * DesignStyles::DEFAULT_BASE_SIZE, not the theme's size. The inputs.size token is an abstract step; the
      * renderer decides its height, in em. The inputs.label token prints no custom property: it is the checkout
      * wrapper's yaycheckout-checkout--floating-labels or yaycheckout-checkout--hidden-labels class. An empty checkboxes.checked fills a ticked box with the
-     * primary colour; its unticked border is inputs.border. help_text styles the help text under every kind of field.
+     * primary colour. checkboxes.border and checkboxes.background colour an unticked checkbox, and each falls back
+     * to the input's. radios styles loose radios, and its colours are the fallback for Payment and Shipping's
+     * indicators; an empty radio colour falls back to the input's or, for checked, to the primary colour.
+     * help_text styles the help text under every kind of field.
      */
     public static function schema(): array {
         return [
@@ -195,6 +198,40 @@ final class LayoutDesign {
                     'default' => null,
                     'min'     => 1,
                     'max'     => 3,
+                ],
+                'border'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'background'   => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'checked'      => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+            ],
+            'radios'     => [
+                'size'         => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 14,
+                    'max'     => 24,
+                ],
+                'border_width' => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 1,
+                    'max'     => 3,
+                ],
+                'border'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'background'   => [
+                    'type'    => 'color',
+                    'default' => '',
                 ],
                 'checked'      => [
                     'type'    => 'color',

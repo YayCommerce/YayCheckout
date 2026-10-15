@@ -19,5 +19,12 @@
 		"border": "#757575",
 		"label": "floating"
 	},
+	"radios": {
+		"size": null,
+		"border_width": null,
+		"border": "",
+		"background": "",
+		"checked": ""
+	},
 	"custom_css": ""
 }

@@ -371,10 +371,12 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 }
 
 /*
- * Drawn checkbox and radio, as in the layout templates: the input's border and background, the
- * primary colour once checked. A checkbox's size, corner, border width and checked colour come from
- * the layout's Checkboxes design (DesignStyles); its corner never takes the input radius. Radios keep
- * their own size. Payment and Shipping hide their real radio and draw their own indicator.
+ * Drawn checkbox and radio, as in the layout templates. Each reads its own section of the layout's design
+ * (DesignStyles): a checkbox the Checkboxes design (size, corner, border width, unticked border and
+ * background, checked colour), a loose radio the Radios design (size, border width, unticked border and
+ * background, checked colour). Their unticked border and background fall back to the input's, and the
+ * checked colour to the primary colour. A checkbox's corner never takes the input radius. Payment and
+ * Shipping hide their real radio and draw their own indicator, whose colours fall back to the Radios design.
  */
 .yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]) {
 	-webkit-appearance: none;
@@ -394,7 +396,9 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	width: var(--yaycheckout-checkbox-size, 16px);
 	height: var(--yaycheckout-checkbox-size, 16px);
 	border-width: var(--yaycheckout-checkbox-border-width, 1px);
+	border-color: var(--yaycheckout-checkbox-border-color, var(--yaycheckout-input-border-color, var(--yaycheckout-border-color)));
 	border-radius: var(--yaycheckout-checkbox-radius, var(--yaycheckout-neutral-radius));
+	background-color: var(--yaycheckout-checkbox-background, var(--yaycheckout-input-background, var(--yaycheckout-color-background, #fff)));
 	background-size: min(12px, calc(var(--yaycheckout-checkbox-size, 16px) * 0.75));
 }
 
@@ -405,13 +409,16 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 }
 
 .yaycheckout-checkout input[type="radio"] {
-	width: 18px;
-	height: 18px;
+	width: var(--yaycheckout-radio-size, 18px);
+	height: var(--yaycheckout-radio-size, 18px);
+	border-width: var(--yaycheckout-radio-border-width, 1px);
+	border-color: var(--yaycheckout-radio-border-color, var(--yaycheckout-input-border-color, var(--yaycheckout-border-color)));
 	border-radius: 50%;
+	background-color: var(--yaycheckout-radio-background, var(--yaycheckout-input-background, var(--yaycheckout-color-background, #fff)));
 }
 
 .yaycheckout-checkout input[type="radio"]:checked {
-	border: 5px solid var(--yaycheckout-primary-color);
+	border: 5px solid var(--yaycheckout-radio-checked-color, var(--yaycheckout-primary-color));
 }
 
 .yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):disabled {
@@ -456,6 +463,11 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 .yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):focus-visible {
 	outline: 2px solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline-offset: 1px;
+}
+
+/* A click focuses the control too, and themes such as Twenty Twenty-Five outline every :focus; only the keyboard ring above shows. */
+.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):focus:not(:focus-visible) {
+	outline: 0;
 }
 
 /* WooCommerce marks the row, not the input, when a field fails validation; its focus edge turns red too. */
