@@ -29,6 +29,13 @@
 		"border_width": 1,
 		"checked": ""
 	},
+	"radios": {
+		"size": null,
+		"border_width": null,
+		"border": "#757575",
+		"background": "",
+		"checked": ""
+	},
 	"help_text": {
 		"size": null
 	},

@@ -169,9 +169,9 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <?php endif; ?>
 <?php endif; ?>
 
-<!-- wp:yaycheckout/shipping-methods {"label":"<?php esc_html_e( 'Shipping options', 'yaycheckout' ); ?>","layout":"box","style":{"yaycheckout":{"background":"#ffffff","radio":"var(--yaycheckout-design-muted)","radius":"4px"}}} /-->
+<!-- wp:yaycheckout/shipping-methods {"label":"<?php esc_html_e( 'Shipping options', 'yaycheckout' ); ?>","layout":"box","style":{"yaycheckout":{"background":"#ffffff","radius":"4px"}}} /-->
 
-<!-- wp:yaycheckout/payment {"label":"<?php esc_html_e( 'Payment options', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'All transactions are secure and encrypted.', 'yaycheckout' ); ?>","layout":"box","style":{"color":{"background":"#ffffff"},"border":{"radius":"4px"},"yaycheckout":{"radio":"var(--yaycheckout-design-muted)"}}} /-->
+<!-- wp:yaycheckout/payment {"label":"<?php esc_html_e( 'Payment options', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'All transactions are secure and encrypted.', 'yaycheckout' ); ?>","layout":"box","style":{"color":{"background":"#ffffff"},"border":{"radius":"4px"}}} /-->
 
 <!-- wp:yaycheckout/order-note {"placeholder":"<?php esc_html_e( 'Notes about your order.', 'yaycheckout' ); ?>","disclosure":"checkbox","disclosureText":"<?php esc_html_e( 'Add a note to your order', 'yaycheckout' ); ?>"} /-->
 

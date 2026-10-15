@@ -150,7 +150,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <h1 class="wp-block-heading" style="margin-top:0;margin-bottom:0;font-size:23px;font-weight:400;line-height:1.3"><?php esc_html_e( 'How fast?', 'yaycheckout' ); ?></h1>
 <!-- /wp:heading -->
 
-<!-- wp:yaycheckout/shipping-methods {"showTitle":false,"layout":"cards","style":{"yaycheckout":{"radio":"var(--yaycheckout-design-muted)","radius":"4px"}}} /-->
+<!-- wp:yaycheckout/shipping-methods {"showTitle":false,"layout":"cards","style":{"yaycheckout":{"radius":"4px"}}} /-->
 
 <!-- wp:group {"style":{"color":{"background":"#f0f0f1"},"border":{"radius":"4px"},"spacing":{"padding":{"top":"14px","right":"16px","bottom":"14px","left":"16px"},"blockGap":"12px"}},"layout":{"type":"flex","flexWrap":"nowrap","verticalAlignment":"top"}} -->
 <div class="wp-block-group has-background" style="border-radius:4px;background-color:#f0f0f1;padding-top:14px;padding-right:16px;padding-bottom:14px;padding-left:16px"><!-- wp:paragraph {"style":{"layout":{"selfStretch":"fit","flexSize":null},"typography":{"fontSize":"13px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
@@ -168,7 +168,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <h1 class="wp-block-heading" style="margin-top:0;margin-bottom:0;font-size:23px;font-weight:400;line-height:1.3"><?php esc_html_e( 'How would you like to pay?', 'yaycheckout' ); ?></h1>
 <!-- /wp:heading -->
 
-<!-- wp:yaycheckout/payment {"showTitle":false,"layout":"grid","style":{"border":{"radius":"4px"},"yaycheckout":{"radio":"var(--yaycheckout-design-muted)"}}} /-->
+<!-- wp:yaycheckout/payment {"showTitle":false,"layout":"grid","style":{"border":{"radius":"4px"}}} /-->
 <?php if ( '' !== $yaycheckout_terms_sentence ) : ?>
 
 <!-- wp:paragraph {"style":{"typography":{"fontSize":"12px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->

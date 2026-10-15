@@ -170,7 +170,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/step -->
 
 <!-- wp:yaycheckout/step {"borderColor":"yaycheckout-border","title":"<?php esc_html_e( 'Shipping options', 'yaycheckout' ); ?>","style":{"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"16px","right":"20px","bottom":"16px","left":"20px"},"blockGap":"12px"}}} -->
-<!-- wp:yaycheckout/shipping-methods {"showTitle":false,"layout":"box","style":{"yaycheckout":{"background":"#ffffff","radio":"var(--yaycheckout-design-muted)","radius":"4px"}}} /-->
+<!-- wp:yaycheckout/shipping-methods {"showTitle":false,"layout":"box","style":{"yaycheckout":{"background":"#ffffff","radius":"4px"}}} /-->
 
 <!-- wp:yaycheckout/order-note {"placeholder":"<?php esc_html_e( 'Notes about your order.', 'yaycheckout' ); ?>","disclosure":"checkbox","disclosureText":"<?php esc_html_e( 'Add a note to your order', 'yaycheckout' ); ?>"} /-->
 
@@ -180,7 +180,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/step -->
 
 <!-- wp:yaycheckout/step {"borderColor":"yaycheckout-border","title":"<?php esc_html_e( 'Payment', 'yaycheckout' ); ?>","style":{"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"16px","right":"20px","bottom":"16px","left":"20px"},"blockGap":"12px"}}} -->
-<!-- wp:yaycheckout/payment {"showTitle":false,"layout":"box","style":{"color":{"background":"#ffffff"},"border":{"radius":"4px"},"yaycheckout":{"radio":"var(--yaycheckout-design-muted)"}}} /-->
+<!-- wp:yaycheckout/payment {"showTitle":false,"layout":"box","style":{"color":{"background":"#ffffff"},"border":{"radius":"4px"}}} /-->
 <?php if ( '' !== $yaycheckout_terms_sentence ) : ?>
 
 <!-- wp:paragraph {"style":{"typography":{"fontSize":"12px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->

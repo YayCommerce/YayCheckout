@@ -32,7 +32,7 @@
 	"radios": {
 		"size": null,
 		"border_width": null,
-		"border": "",
+		"border": "#757575",
 		"background": "",
 		"checked": ""
 	},
