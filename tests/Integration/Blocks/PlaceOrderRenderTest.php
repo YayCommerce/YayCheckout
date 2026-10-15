@@ -25,7 +25,7 @@ class PlaceOrderRenderTest extends WP_UnitTestCase {
         $this->assertStringNotContainsString( 'button alt', $html );
     }
 
-    public function test_with_cart_prints_terms_hooks_and_nonce(): void {
+    public function test_with_cart_prints_submit_row_and_nonce(): void {
         wc_load_cart();
         $html = do_blocks( '<!-- wp:yaycheckout/place-order {"buttonText":"Pay now"} /-->' );
 

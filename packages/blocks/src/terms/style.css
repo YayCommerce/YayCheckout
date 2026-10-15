@@ -1,0 +1,20 @@
+/* WooCommerce's terms markup sets its own sizes; the block's typography and colours win. */
+.wp-block-yaycheckout-terms .woocommerce-terms-and-conditions-wrapper,
+.wp-block-yaycheckout-terms .woocommerce-privacy-policy-text,
+.wp-block-yaycheckout-terms .woocommerce-privacy-policy-text p,
+.wp-block-yaycheckout-terms .woocommerce-form__label {
+	font: inherit;
+	color: inherit;
+	letter-spacing: inherit;
+	text-transform: inherit;
+	text-align: inherit;
+}
+
+.wp-block-yaycheckout-terms .woocommerce-privacy-policy-text p {
+	margin: 0 0 0.5em;
+}
+
+.wp-block-yaycheckout-terms .form-row {
+	margin: 0;
+	padding: 0;
+}

@@ -175,6 +175,8 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <p class="has-text-color" style="color:#757575;margin-top:0;margin-bottom:0;font-size:12px"><?php echo wp_kses_post( $yaycheckout_terms_sentence ); ?></p>
 <!-- /wp:paragraph -->
 <?php endif; ?>
+
+<!-- wp:yaycheckout/terms {"style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px"}}} /-->
 <!-- /wp:yaycheckout/step -->
 <!-- /wp:yaycheckout/steps --></div>
 <!-- /wp:group -->

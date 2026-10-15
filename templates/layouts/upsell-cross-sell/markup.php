@@ -179,6 +179,8 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:paragraph -->
 <?php endif; ?>
 
+<!-- wp:yaycheckout/terms {"style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px"}}} /-->
+
 <!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022 · \u0022 data-suffix=\u0022\u0022\u003e · <?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","style":{"typography":{"fontSize":"15px","fontWeight":"600","textAlign":"center"},"border":{"radius":"2px"},"dimensions":{"width":"var:preset|dimension|100"}}} /--></div>
 <!-- /wp:group --></div>
 <!-- /wp:group --></div>

@@ -10,6 +10,7 @@ import paymentMeta from '../payment/block.json';
 import placeOrderMeta from '../place-order/block.json';
 import shippingMeta from '../shipping/block.json';
 import shippingMethodsMeta from '../shipping-methods/block.json';
+import termsMeta from '../terms/block.json';
 
 /**
  * What a newly inserted Checkout holds. A template only fills a block that has no
@@ -22,6 +23,7 @@ const defaultTemplate = () => [
 	[ shippingMeta.name, {}, addressTemplate( 'shipping' ) ],
 	[ shippingMethodsMeta.name ],
 	[ paymentMeta.name ],
+	[ termsMeta.name ],
 	[ placeOrderMeta.name ],
 ];
 
