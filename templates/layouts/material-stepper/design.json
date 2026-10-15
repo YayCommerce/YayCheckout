@@ -1,0 +1,45 @@
+{
+	"colours": {
+		"primary": "#3858e9",
+		"text": "#1e1e1e",
+		"background": "#f0f0f1",
+		"border": "#dddddd"
+	},
+	"typography": {
+		"font_family": "system",
+		"base_size": 14
+	},
+	"inputs": {
+		"style": "boxed",
+		"size": "large",
+		"radius": 4,
+		"background": "#ffffff",
+		"text_color": "#1e1e1e",
+		"label_color": "#1e1e1e",
+		"border": "#757575",
+		"focus_border": "#3858e9",
+		"focus_background": "",
+		"focus_style": "",
+		"label": ""
+	},
+	"checkboxes": {
+		"size": 18,
+		"radius": 2,
+		"border_width": 2,
+		"border": "#757575",
+		"background": "#ffffff",
+		"checked": ""
+	},
+	"radios": {
+		"size": 20,
+		"border_width": 2,
+		"border": "#757575",
+		"background": "",
+		"checked": "#3858e9"
+	},
+	"help_text": {
+		"color": "#757575",
+		"size": 12
+	},
+	"custom_css": ""
+}
