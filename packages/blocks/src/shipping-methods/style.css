@@ -11,7 +11,8 @@
  * merchant sets selected/hover.
  * Unset radio and radio-selected fall back to the layout's Radios design (--yaycheckout-radio-border-color,
  * --yaycheckout-radio-checked-color), then to each layout's own neutral fallback. The indicator's fill is the Radios
- * design's background (--yaycheckout-radio-background), transparent when unset.
+ * design's background (--yaycheckout-radio-background), transparent when unset, and its size and border width
+ * follow the Radios design (--yaycheckout-radio-size, --yaycheckout-radio-border-width) too.
  */
 
 /*
@@ -72,11 +73,11 @@
 
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__indicator {
 	flex: none;
-	width: 18px;
-	height: 18px;
+	width: var(--yaycheckout-radio-size, 18px);
+	height: var(--yaycheckout-radio-size, 18px);
 	border-radius: 999px;
 	background-color: var(--yaycheckout-radio-background, transparent);
-	box-shadow: inset 0 0 0 1px var(--yaycheckout-shipping-indicator, var(--yaycheckout-border-color));
+	box-shadow: inset 0 0 0 var(--yaycheckout-radio-border-width, 1px) var(--yaycheckout-shipping-indicator, var(--yaycheckout-border-color));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__body {
@@ -322,9 +323,9 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 22px;
-	height: 22px;
-	box-shadow: inset 0 0 0 1px var(--yaycheckout-shipping-indicator, color-mix(in srgb, currentColor 35%, transparent));
+	width: var(--yaycheckout-radio-size, 22px);
+	height: var(--yaycheckout-radio-size, 22px);
+	box-shadow: inset 0 0 0 var(--yaycheckout-radio-border-width, 1px) var(--yaycheckout-shipping-indicator, color-mix(in srgb, currentColor 35%, transparent));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="checkmark"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
@@ -381,7 +382,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="lines"] .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 1px var(--yaycheckout-shipping-indicator, currentColor);
+	box-shadow: inset 0 0 0 var(--yaycheckout-radio-border-width, 1px) var(--yaycheckout-shipping-indicator, currentColor);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="lines"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
