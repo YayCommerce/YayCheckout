@@ -4,84 +4,56 @@ import { __ } from '@wordpress/i18n';
 
 import type { Settings } from '@/lib/schema/settings.schema';
 import { Button } from '@/components/ui/button';
-import { FormField } from '@/components/ui/form';
+import { FormControl, FormField } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { RerunSetupWizard } from '@/components/setup-wizard/SetupWizard';
-import { DocLink } from './DocLink';
 import { SettingRow } from './SettingRow';
+import { SettingsSection } from './SettingsSection';
 
-// Share usage data is stored, but nothing sends it yet.
+// Safe mode and share usage data stay in the schema but are hidden from merchants for now.
 export function GeneralTab() {
   const { control } = useFormContext<Settings>();
   // Unmounted on close, so each re-run starts again at Scan.
   const [isRerunOpen, setIsRerunOpen] = useState(false);
 
   return (
-    <div>
-      <FormField
-        control={control}
-        name="general.safeMode"
-        render={({ field }) => (
-          <SettingRow
-            title={__('Safe mode', 'yaycheckout')}
-            description={__('Falls back to the native WooCommerce checkout. Your layouts stay saved.', 'yaycheckout')}
-          >
-            <Switch checked={field.value} onCheckedChange={field.onChange} />
-          </SettingRow>
-        )}
-      />
+    <>
+      <SettingsSection
+        title={__('Data and privacy', 'yaycheckout')}
+        description={__('What happens to your data when YayCheckout is deleted.', 'yaycheckout')}
+      >
+        <FormField
+          control={control}
+          name="general.deleteDataOnUninstall"
+          render={({ field }) => (
+            <SettingRow
+              label={__('Delete all data on uninstall', 'yaycheckout')}
+              description={__(
+                'Removes layouts, tokens and settings when the plugin is deleted. Off by default.',
+                'yaycheckout',
+              )}
+            >
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+            </SettingRow>
+          )}
+        />
+      </SettingsSection>
 
-      <FormField
-        control={control}
-        name="general.shareUsageData"
-        render={({ field }) => (
-          <SettingRow
-            title={__('Share anonymous usage data', 'yaycheckout')}
-            description={
-              <>
-                {__(
-                  'Which blocks you use, WooCommerce and theme versions, and self-test results. No orders, customers, store URL or licence data.',
-                  'yaycheckout',
-                )}{' '}
-                <DocLink href={window.yayCheckoutMeta.checkoutMeta.docsUrl}>
-                  {__('What is sent', 'yaycheckout')}
-                </DocLink>
-              </>
-            }
-          >
-            <Switch checked={field.value} onCheckedChange={field.onChange} />
-          </SettingRow>
-        )}
-      />
-
-      <FormField
-        control={control}
-        name="general.deleteDataOnUninstall"
-        render={({ field }) => (
-          <SettingRow
-            title={__('Delete all data on uninstall', 'yaycheckout')}
-            description={__(
-              'Removes layouts, tokens and settings when the plugin is deleted. Off by default.',
-              'yaycheckout',
-            )}
-          >
-            <Switch checked={field.value} onCheckedChange={field.onChange} />
-          </SettingRow>
-        )}
-      />
-
-      <SettingRow
+      <SettingsSection
         title={__('Setup wizard', 'yaycheckout')}
         description={__(
           'Re-scan your store and start a new draft from a template. Your other layouts are not changed.',
           'yaycheckout',
         )}
-      >
-        <Button type="button" variant="outline" size="sm" onClick={() => setIsRerunOpen(true)}>
-          {__('Re-run setup wizard', 'yaycheckout')}
-        </Button>
-      </SettingRow>
+        action={
+          <Button type="button" variant="outline" size="sm" onClick={() => setIsRerunOpen(true)}>
+            {__('Re-run setup wizard', 'yaycheckout')}
+          </Button>
+        }
+      />
       {isRerunOpen && <RerunSetupWizard onClose={() => setIsRerunOpen(false)} />}
-    </div>
+    </>
   );
 }

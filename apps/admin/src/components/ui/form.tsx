@@ -57,7 +57,7 @@ function useFormField() {
   };
 }
 
-function FormItem({ className, ...props }: React.ComponentProps<'div'>) {
+function FormItem({ className, ...props }: React.ComponentProps<typeof Field>) {
   const id = React.useId();
   return (
     <FormItemContext.Provider value={{ id }}>

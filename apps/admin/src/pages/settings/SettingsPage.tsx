@@ -19,13 +19,19 @@ import { IntegrationsTab } from './components/IntegrationsTab';
 import { SettingsFooter } from './components/SettingsFooter';
 import { SETTINGS_SUB_MENUS, type SettingsSubMenu } from './settings-sub-menus';
 
-const TAB_LABELS: Record<SettingsSubMenu, string> = {
-  general: __('General', 'yaycheckout'),
-  integrations: __('Integrations', 'yaycheckout'),
-  advanced: __('Advanced', 'yaycheckout'),
-};
+// A function, so __() runs after the locale data loads rather than at import.
+function tabLabel(tab: SettingsSubMenu): string {
+  switch (tab) {
+    case 'general':
+      return __('General', 'yaycheckout');
+    case 'integrations':
+      return __('Integrations', 'yaycheckout');
+    case 'advanced':
+      return __('Advanced', 'yaycheckout');
+  }
+}
 
-const TAB_PANEL_CLASS = 'bg-card rounded-md border';
+const TAB_PANEL_CLASS = 'flex flex-col gap-4';
 
 // One react-hook-form spans all tabs.
 export default function SettingsPage() {
@@ -62,19 +68,19 @@ export default function SettingsPage() {
 
   return (
     <PageLayout
-      heading={__('Settings', 'yaycheckout')}
+      title={__('Settings', 'yaycheckout')}
       description={__('Configure checkout behaviour, integrations and advanced options.', 'yaycheckout')}
     >
       <Form {...form}>
         <form id="settings-form" onSubmit={form.handleSubmit(onSubmit)}>
           <TabsPrimitive.Root value={activeTab} onValueChange={(value) => navigate(`/settings/${value}`)}>
             <div className="flex flex-col gap-4 sm:flex-row">
-              <div className="w-full sm:w-37.5">
+              <div className="w-full sm:w-48 sm:shrink-0">
                 <TabsPrimitive.List asChild>
                   <SideNavMenuList mode="tabs" className="flex w-full flex-wrap items-start justify-start sm:flex-col">
                     {SETTINGS_SUB_MENUS.map((tab) => (
                       <TabsPrimitive.Trigger key={tab} value={tab} asChild>
-                        <SideNavMenuItem className="w-fit p-3 sm:w-full">{TAB_LABELS[tab]}</SideNavMenuItem>
+                        <SideNavMenuItem className="w-fit p-3 sm:w-full">{tabLabel(tab)}</SideNavMenuItem>
                       </TabsPrimitive.Trigger>
                     ))}
                   </SideNavMenuList>
