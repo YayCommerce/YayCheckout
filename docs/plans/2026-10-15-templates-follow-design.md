@@ -182,6 +182,9 @@ Where row A removes a value that was a near-match rather than equal (Minimal ste
   - Soft steps' `#757575` paragraphs are unset (row A). Its `field-value` and `login` text become Muted (row D).
   - The `steps-progress` `trackColor` becomes `var(--yaycheckout-design-border)`, and `fillColor` is removed.
   - `upcomingTextColor` `#949494`, `#f5f5f7` and `borderHover` `#949494` stay (row F).
+  - On these white pages, shipping/payment `background` `#ffffff` is removed (row A). Minimal steps' pinned footer group `#ffffff` binds to `yaycheckout-background`, because it must stay opaque.
+  - Soft steps' back button (transparent background, primary text) is the block's default, so both colours are removed. Its toggle and cart icon `#1e1e1e` are unset.
+  - Minimal steps' toggle `#757575` becomes Muted on the toggle, and its count paragraph inherits.
 
 - [ ] **Step 2: Verify**
 
