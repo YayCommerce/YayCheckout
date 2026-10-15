@@ -53,6 +53,16 @@ const SECTIONS: Record< Section, string > = {
 	help_text: __( 'Help text', 'yaycheckout' ),
 };
 
+/** Each section's colour panel. A section of colours only shows that panel alone, under the section's name. */
+const COLOUR_PANELS: Record< Section, string > = {
+	colours: __( 'Colours', 'yaycheckout' ),
+	typography: __( 'Text colours', 'yaycheckout' ),
+	inputs: __( 'Input colours', 'yaycheckout' ),
+	checkboxes: __( 'Checkbox colours', 'yaycheckout' ),
+	radios: __( 'Radio colours', 'yaycheckout' ),
+	help_text: __( 'Help text colour', 'yaycheckout' ),
+};
+
 const TOKEN_LABELS: Record< string, string > = {
 	primary: __( 'Primary', 'yaycheckout' ),
 	text: __( 'Text', 'yaycheckout' ),
@@ -265,11 +275,13 @@ function isColourRule( rule: DesignRule ): boolean {
  * prints nothing, so the theme's colour shows. A fill (the background) also takes gradients.
  */
 function ColourSettings( {
+	label,
 	panelId,
 	rules,
 	values,
 	onChange,
 }: {
+	label: string;
 	/** One per panel, so each panel's colour items register with its own ToolsPanel. */
 	panelId: string;
 	rules: Record< string, DesignRule >;
@@ -336,7 +348,7 @@ function ColourSettings( {
 
 	return (
 		<ToolsPanel
-			label={ __( 'Custom colours', 'yaycheckout' ) }
+			label={ label }
 			panelId={ panelId }
 			hasInnerWrapper
 			className="color-block-support-panel"
@@ -438,33 +450,45 @@ function SectionPanel( {
 	fontHelp?: string;
 	onChange: ( next: SectionTokens ) => void;
 } ) {
+	// A token that no longer shows on the checkout: an underline input has no radius, a hidden label no colour.
+	const rules = Object.fromEntries(
+		Object.entries( design.schema[ section ] ).filter(
+			( [ token ] ) =>
+				! ( 'radius' === token && 'underline' === values.style ) &&
+				! ( 'label_color' === token && 'hidden' === values.label )
+		)
+	);
+	const colours = (
+		<ColourSettings
+			label={ COLOUR_PANELS[ section ] }
+			panelId={ `${ SIDEBAR }-${ section }` }
+			rules={ rules }
+			values={ values }
+			onChange={ onChange }
+		/>
+	);
+	const others = Object.entries( rules ).filter( ( [ , rule ] ) => ! isColourRule( rule ) );
+
+	if ( ! others.length ) {
+		return colours;
+	}
+
+	// The choices that shape the part come first, its colours after.
 	return (
 		<PanelBody title={ SECTIONS[ section ] } initialOpen={ false }>
 			<Flex direction="column" align="stretch" gap={ 4 }>
-				<ColourSettings
-					panelId={ `${ SIDEBAR }-${ section }` }
-					rules={ design.schema[ section ] }
-					values={ values }
-					onChange={ onChange }
-				/>
-				{ Object.entries( design.schema[ section ] ).map( ( [ token, rule ] ) => {
-						// Colours are in ColourSettings, and an underline input has no radius.
-						if ( isColourRule( rule ) || ( 'radius' === token && 'underline' === values.style ) ) {
-							return null;
-						}
-
-						return (
-							<TokenControl
-								key={ token }
-								design={ design }
-								token={ token }
-								rule={ rule }
-								value={ values[ token ] }
-								help={ 'font_family' === token ? fontHelp : undefined }
-								onChange={ ( next ) => onChange( { ...values, [ token ]: next } ) }
-							/>
-						);
-					} ) }
+				{ others.map( ( [ token, rule ] ) => (
+					<TokenControl
+						key={ token }
+						design={ design }
+						token={ token }
+						rule={ rule }
+						value={ values[ token ] }
+						help={ 'font_family' === token ? fontHelp : undefined }
+						onChange={ ( next ) => onChange( { ...values, [ token ]: next } ) }
+					/>
+				) ) }
+				{ colours }
 			</Flex>
 		</PanelBody>
 	);

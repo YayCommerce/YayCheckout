@@ -120,14 +120,15 @@ export function TextPartPanels( { parts, panelIdPrefix, style, onChange }: TextP
 		const toggle = ( key: TypographyKey ) => ( next: string | undefined ) =>
 			setTypography( key, next === typography( key ) ? undefined : next );
 		const textColor = fromPreset( getAt( style, [ 'yaycheckout', part, 'color', 'text' ] ), 'color', colors, 'color' );
-		const item = ( keys: TypographyKey[], itemLabel: string, control: JSX.Element ) => (
+		// Text colour, Font and Size show; the rest wait in the panel menu until picked or set.
+		const item = ( keys: TypographyKey[], itemLabel: string, control: JSX.Element, isShownByDefault = false ) => (
 			<ToolsPanelItem
 				key={ keys.join() }
 				panelId={ panelId }
 				label={ itemLabel }
 				hasValue={ () => keys.some( has ) }
 				onDeselect={ () => keys.forEach( ( key ) => setTypography( key, undefined ) ) }
-				isShownByDefault
+				isShownByDefault={ isShownByDefault }
 			>
 				{ control }
 			</ToolsPanelItem>
@@ -175,7 +176,8 @@ export function TextPartPanels( { parts, panelIdPrefix, style, onChange }: TextP
 								const slug = fontFamilies.find( ( family ) => family.fontFamily === next )?.slug;
 								setTypography( 'fontFamily', slug ? `${ presetPrefix( 'font-family' ) }${ slug }` : next || undefined );
 							} }
-						/>
+						/>,
+						true
 					) }
 				{ item(
 					[ 'fontSize' ],
@@ -191,7 +193,8 @@ export function TextPartPanels( { parts, panelIdPrefix, style, onChange }: TextP
 						} }
 						withReset={ false }
 						withSlider
-					/>
+					/>,
+					true
 				) }
 				{ item(
 					[ 'fontStyle', 'fontWeight' ],

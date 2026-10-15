@@ -74,7 +74,8 @@ export function StylePanels( { keys, style, onChange }: StylePanelsProps ) {
 											colorValue: typeof value === 'string' && value !== '' ? value : undefined,
 											onColorChange: ( next?: string ) => set( key, next || undefined ),
 											clearable: true,
-											isShownByDefault: true,
+											// The selected and hover colours wait in the panel menu until set.
+											isShownByDefault: ! /(Selected|Hover)$/.test( key ),
 										};
 									} ) }
 									colors={ palettes.colors }
