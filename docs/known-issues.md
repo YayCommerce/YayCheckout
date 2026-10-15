@@ -27,8 +27,8 @@
 
 ## The admin lint fails on `dev/edd`
 
-- **Symptom:** `pnpm --filter @yaycheckout/admin-page lint` exits 1. eslint reports 4 warnings and exits 0: three from Tailwind's `enforce-canonical-classes` rule (in `apps/admin/src/components/ui/dialog.tsx` and `apps/admin/src/pages/layouts/LayoutsPage.tsx`) and an unused `result` in `apps/admin/src/pages/tools/components/ImportCard.tsx`. Prettier then fails on `apps/admin/src/lib/utils.ts`, `apps/admin/src/styles/custom-header.css` and `apps/admin/tsconfig.node.json`, and warns that it ignores five `importOrder*` options.
-- **Cause:** code that landed without the lint passing. The `importOrder*` options in `apps/admin/package.json` belong to an import-sort plugin the config doesn't load.
+- **Symptom:** `pnpm --filter @yaycheckout/admin-page lint` exits 1. eslint reports 6 warnings and exits 0: five from Tailwind's `enforce-canonical-classes` rule (in `apps/admin/src/components/ui/dialog.tsx` and `apps/admin/src/pages/layouts/LayoutsPage.tsx`) and an unused `result` in `apps/admin/src/pages/tools/components/ImportCard.tsx`. Prettier then fails on `apps/admin/src/lib/utils.ts`, `apps/admin/src/styles/custom-header.css` and `apps/admin/tsconfig.node.json`, and warns that it ignores five `importOrder*` options.
+- **Cause:** code that landed without the lint passing. Five `importOrder*` options in `apps/admin/package.json` are ones `@ianvs/prettier-plugin-sort-imports` 4 no longer accepts.
 - **Workaround:** check only your own files: `npx --no-install eslint <files>` and `npx --no-install prettier --check <files>` from `apps/admin`. Your change must not add a finding.
 - **Remove when:** the lint exits 0 on `dev/edd`.
 
@@ -87,3 +87,10 @@
 - **Cause:** `.claude/settings.json` runs `.claude/hooks/guard-generated-paths.sh` only for the Edit, Write, MultiEdit and NotebookEdit tools, and the script needs `jq` to read the tool's input.
 - **Workaround:** never write into `vendor/`, `vendor-prefixed/`, `node_modules/`, `assets/dist/` or `release/` from the shell; change the input and rerun its build (hard rule 1 in `CLAUDE.md`). Install `jq`.
 - **Remove when:** the guard also checks shell commands, or the generated directories are made read-only.
+
+## The harness check fails on `dev/edd`
+
+- **Symptom:** `./scripts/check-harness.sh` exits 1 with 27 `[backticked_paths] MISSING` lines, from `docs/architecture.md`, `docs/conventions.md` and `.claude/rules/blocks.md`.
+- **Cause:** `check_backticked_paths` resolves every backticked name with a slash against the repo root, so paths relative to `packages/blocks/src/`, WooCommerce template paths, block names and data store names count as missing.
+- **Workaround:** compare the output with `dev/edd`'s; your change must not add a line.
+- **Remove when:** the check exits 0 on `dev/edd`.

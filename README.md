@@ -77,7 +77,7 @@ The team's skills cover a change from idea to PR. Each one is called by name, an
 
 A typical change runs `/yaybrainstorming`, then `/yayplan`, then you implement it, running `/yayplancheck` after each phase. Before the final review, `/yayplancheck` asks whether to run `/yaytidy` first. A change may also skip the design and go straight to `/yayplan`. A review finding you don't fix in the PR goes to the backlog with `/yaybacklog add`, and the PR that fixes it later ticks its boxes with `/yaybacklog check`.
 
-**Status lifecycle.** Specs and plans stay in the repo as history. An agent acts only on a spec whose Status is `accepted` or a plan whose Status is `active`. The Status words and when each one is set belong to the templates: [the design template](.claude/skills/yaybrainstorming/references/design-template.md) for specs, and [the plan template](.claude/skills/yayplan/references/plan-template.md) for plans.
+**Status lifecycle.** A spec or plan is deleted once its work ships; git history keeps it. An agent acts only on a spec whose Status is `accepted` or a plan whose Status is `active`. The Status words and when each one is set belong to the templates: [the design template](.claude/skills/yaybrainstorming/references/design-template.md) for specs, and [the plan template](.claude/skills/yayplan/references/plan-template.md) for plans.
 
 **Decision records.** Write one when a change makes or reverses a choice that is costly to undo and that the code can't justify by itself. [The decision-record practice](docs/decisions/2026-10-05-decision-record-practice.md) gives the examples, the file name and the four headings. The record lands in the PR that makes the change.
 
@@ -109,7 +109,7 @@ A typical change runs `/yaybrainstorming`, then `/yayplan`, then you implement i
 
 **Shared skills.** The YayCommerce plugins share the five skills, and their canonical copy lives in [YayCommerce/YayLoyalty](https://github.com/YayCommerce/YayLoyalty/tree/dev/edd/.claude/skills). This repo copies each skill's directory whole and never edits it: a fix lands in YayLoyalty first, then the directory here is replaced. See [the harness record](docs/decisions/2026-10-05-harness-with-review-backlog.md).
 
-**Mechanical checks.** Run `./scripts/check-harness.sh` before merging a PR that changes a harness file. It checks paths, links, headers, rule globs, skill names, decision records and backlog items, prints one line per finding, and exits 1 if there is any.
+**Mechanical checks.** Run `./scripts/check-harness.sh` before merging a PR that changes a harness file. It checks paths, links, headers, rule globs, skill names, decision records and backlog items, prints one line per finding, and exits 1 if there is any. It fails on `dev/edd` today ([known issue](docs/known-issues.md)); your change must not add a finding.
 
 **Prompt audit.** Run `/doctor prompt-audit` in Claude Code after upgrading Claude Code and before merging a PR that changes `CLAUDE.md`, a rule or a skill. Every finding gets a fix, or a reason to keep the text.
 
