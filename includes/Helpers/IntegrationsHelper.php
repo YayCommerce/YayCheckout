@@ -28,7 +28,7 @@ class IntegrationsHelper {
                 __( 'Boost conversions, increase AOV, and create urgency with powerful sales-boosting tools for WooCommerce.', 'yaycheckout' ),
                 'YAYBOOST_VERSION',
                 self::YAYBOOST_ICON_URL,
-                'https://wordpress.org/plugins/yayboost-sales-booster-for-woocommerce/'
+                'https://docs.yaycommerce.com/yayboost'
             ),
             self::describe(
                 'yayloyalty',
@@ -48,7 +48,7 @@ class IntegrationsHelper {
      * One entry of the wire shape.
      *
      * @param string|null $icon_url       Null shows the plugin's initials instead.
-     * @param string|null $learn_more_url Defaults to YayCheckout's docs.
+     * @param string|null $learn_more_url The plugin's own YayCommerce docs; without them, YayCheckout's.
      */
     private static function describe( string $slug, string $name, string $description, string $version_const, ?string $icon_url = null, ?string $learn_more_url = null ): array {
         // detected == active for core entries; both emitted so a filter-added one can differ.
