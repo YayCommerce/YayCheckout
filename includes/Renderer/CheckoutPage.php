@@ -55,6 +55,10 @@ class CheckoutPage {
         // PHP_INT_MAX: must run after block themes swap in template-canvas.php.
         add_filter( 'template_include', [ $this, 'page_template' ], PHP_INT_MAX );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], self::SCRIPTS_PRIORITY );
+
+        if ( has_block( ExpressPay::BLOCK, $this->layout()->content ) ) {
+            add_filter( 'wc_stripe_express_checkout_params', [ ExpressPay::class, 'stripe_params' ] );
+        }
     }
 
     public function page_template(): string {
@@ -72,8 +76,6 @@ class CheckoutPage {
         foreach ( [ 'woocommerce-general', 'woocommerce-blocktheme', 'woocommerce-layout', 'woocommerce-smallscreen' ] as $handle ) {
             wp_dequeue_style( $handle );
         }
-
-        ExpressPay::run_stripe_classic_script();
 
         ( new CheckoutBaseStyles() )->enqueue( true, $this->layout()->design );
 

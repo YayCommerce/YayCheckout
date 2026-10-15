@@ -9,14 +9,13 @@ defined( 'ABSPATH' ) || exit;
  */
 class ExpressPay {
 
+    public const BLOCK = 'yaycheckout/express-pay';
+
     /** WooCommerce prints wc_get_pay_buttons() here; Stripe prints its Express Checkout container here. */
     public const HOOK = 'woocommerce_checkout_before_customer_details';
 
-    /** Stripe's classic Express Checkout script, which stands down while its params say the page holds the Checkout block. */
-    private const STRIPE_SCRIPT = 'wc_stripe_express_checkout';
-
-    /** WooCommerce's PaymentGatewayFeature::PAY_BUTTON, written out for versions without the enum. */
-    private const PAY_BUTTON = 'pay_button';
+    /** HOOK's pair, fired right after it: a gateway may open markup on HOOK and close it here (PayPal's Fastlane loader). */
+    public const AFTER_HOOK = 'woocommerce_checkout_after_customer_details';
 
     /**
      * Whether an enabled gateway can put buttons in the block: one supports Woo's pay buttons, or something
@@ -33,7 +32,8 @@ class ExpressPay {
         }
 
         foreach ( WC()->payment_gateways()->payment_gateways() as $gateway ) {
-            if ( 'yes' === $gateway->enabled && $gateway->supports( self::PAY_BUTTON ) ) {
+            // WooCommerce's PaymentGatewayFeature::PAY_BUTTON, written out for versions without the enum.
+            if ( 'yes' === $gateway->enabled && $gateway->supports( 'pay_button' ) ) {
                 return true;
             }
         }
@@ -42,15 +42,18 @@ class ExpressPay {
     }
 
     /**
-     * Stripe reads has_block() on the checkout page, which is true while the page holds WooCommerce's Checkout
-     * block, and then leaves the buttons to that block. Our template prints in its place, so the classic
-     * script must run. Called after Stripe enqueues; does nothing without Stripe.
+     * Stripe's classic Express Checkout params, filtered by wc_stripe_express_checkout_params. Stripe sets
+     * has_block while the checkout page holds WooCommerce's Checkout block and its classic script then leaves
+     * the buttons to that block; our template prints in its place, so the script must run.
+     *
+     * @param mixed $params Stripe's params.
+     * @return mixed
      */
-    public static function run_stripe_classic_script(): void {
-        wp_add_inline_script(
-            self::STRIPE_SCRIPT,
-            'if ( window.wc_stripe_express_checkout_params ) { window.wc_stripe_express_checkout_params.has_block = ""; }',
-            'before'
-        );
+    public static function stripe_params( $params ) {
+        if ( is_array( $params ) ) {
+            $params['has_block'] = false;
+        }
+
+        return $params;
     }
 }

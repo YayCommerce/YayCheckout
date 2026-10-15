@@ -9,8 +9,11 @@ import { onDomReady } from '../shared/dom-ready';
 import { jquery } from '../shared/jquery';
 import { EMPTY_ATTR, REFRESH_EVENT } from '../shared/visibility-rules';
 
-/** What a gateway's button is made of; hidden inputs (Stripe's order attribution) are not a button. */
-const BUTTON_SELECTOR = 'iframe, button, a, img, input:not([type="hidden"])';
+/**
+ * What a gateway's button is made of: Stripe, Google Pay and PayPal mount iframes, others a button. The block
+ * fires a generic checkout hook, so a link, image or field another plugin prints there is not a button.
+ */
+const BUTTON_SELECTOR = 'iframe, button';
 
 /** Whether no element between el and the wrapper is display: none. The wrapper is hidden while empty, so it is not asked. */
 function shownWithin( el: Element, wrapper: Element ): boolean {
@@ -35,7 +38,18 @@ function sync( wrapper: Element ): void {
 onDomReady( () => {
 	document.querySelectorAll( '.yaycheckout-express-pay' ).forEach( ( wrapper ) => {
 		sync( wrapper );
-		new MutationObserver( () => sync( wrapper ) ).observe( wrapper, {
+
+		// Gateways' iframes resize several times while loading: one check per frame, not per mutation.
+		let queued = false;
+		new MutationObserver( () => {
+			if ( ! queued ) {
+				queued = true;
+				requestAnimationFrame( () => {
+					queued = false;
+					sync( wrapper );
+				} );
+			}
+		} ).observe( wrapper, {
 			subtree: true,
 			childList: true,
 			attributes: true,

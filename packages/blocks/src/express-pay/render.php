@@ -17,7 +17,10 @@ $yaycheckout_has_cart = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart
 ob_start();
 
 if ( $yaycheckout_has_cart ) {
-    do_action( \YayCheckout\Renderer\ExpressPay::HOOK ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Woo's classic checkout hook.
+    // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Woo's classic checkout hooks.
+    do_action( \YayCheckout\Renderer\ExpressPay::HOOK );
+    do_action( \YayCheckout\Renderer\ExpressPay::AFTER_HOOK );
+    // phpcs:enable
 }
 
 $yaycheckout_buttons = (string) ob_get_clean();
@@ -29,8 +32,15 @@ if ( '' === trim( $yaycheckout_buttons ) ) {
 }
 
 // Empty until a gateway's script shows a button: gateways print hidden containers and fill them after load.
-// view.ts clears the marker then, and style.css hides the block while it is set.
-$yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper( [ 'class' => 'yaycheckout-express-pay' ], $attributes, true );
+// view.ts clears the marker then, and style.css hides the block while it is set, so it is printed even
+// without a blockId, which BlockEmptiness needs to print it.
+$yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper(
+    [
+        'class'                                          => 'yaycheckout-express-pay',
+        \YayCheckout\Renderer\BlockEmptiness::EMPTY_ATTR => '1',
+    ],
+    $attributes
+);
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>

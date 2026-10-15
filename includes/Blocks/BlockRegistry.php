@@ -201,10 +201,14 @@ class BlockRegistry {
     }
 
     /**
-     * Whether a gateway can fill the Express Pay block, on its own handle. Only in the block editor, since
-     * ExpressPay::has_buttons() loads the gateways and reads hooks the gateways add after init.
+     * Whether a gateway can fill the Express Pay block, on its own handle. Only in the layout editor, the one
+     * that offers the block, since ExpressPay::has_buttons() loads every gateway and reads hooks they add after init.
      */
     public function editor_express_pay_data(): void {
+        if ( 'layout' !== $this->editor( null ) ) {
+            return;
+        }
+
         $data = [
             'hasButtons'  => ExpressPay::has_buttons(),
             'settingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout' ),
