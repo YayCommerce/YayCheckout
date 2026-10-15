@@ -19,7 +19,7 @@
   - `design.json` values.
   - Deliberately fixed colours (see the mapping, row F).
 - **Acceptance criteria:**
-  1. No template's `markup.php` contains `#3858e9`, `#dddddd` or `#f0f0f0`. Editorial's contains no `#d9472f`. `#757575` stays only inside Split express's dark column.
+  1. No template's `markup.php` contains `#3858e9` or `#dddddd`, and `#f0f0f0` only as Upsell's savings-note background. Editorial's contains no `#d9472f`. `#757575` stays only inside Split express's dark column.
   2. The block picker offers "Design: Muted". With text `#1e1e1e` and background `#ffffff`, it computes to about `rgb(120, 120, 120)`.
   3. A Joined, Cards, Card grid or Single box shipping/payment row with no hover colour set tints on hover to `color-mix(in srgb, currentColor 6%, <row background>)`.
   4. Every template still opens in the editor with no invalid block, and still publishes.
@@ -51,9 +51,9 @@ Apply the first row that matches, separately for each value in each template. "T
 | A | equals what the block's CSS already defaults to | **Remove it.** This covers: step-button and place-order with `color.background` = primary and `color.text` `#ffffff`; return-to-cart text = primary; steps-progress `fillColor` = primary; step `color.background` `#ffffff`; order-summary-items `badgeTextColor` `#ffffff`; shipping/payment `border` = border token; shipping/payment `radio` = radios.border token; shipping/payment `background` `#ffffff` when colours.background is `#ffffff`; shipping/payment `backgroundHover` `#f0f0f0` (after Task 2); text on a block that inherits page text (core paragraph, group, heading, icon; savings-note) unless it is specific (rows C and F): this includes `#1e1e1e` and the `#757575` grey. Inside such a block's HTML, drop the inline `color:#757575` and `color:#1e1e1e` from links and spans, keeping their other declarations. |
 | B | is the outline coupon (transparent, primary text, primary 1px border) | Remove those colours and the border, and add `"className":"is-style-outline"`. The outline style draws all three from primary. |
 | C | equals a token but no default covers it | **Design swatch:** `yaycheckout-primary` / `-text` / `-background` / `-border` in the stored form above. Examples: group/step/summary borders `#dddddd`; separator background; toggle, icon and paragraph text = primary; badge background = primary; place-order or coupon background = text; minimal-steps back-button background and border; steps-progress `trackColor` = border. |
-| D | is `#757575` on a light area of a YayCheckout block | **Muted:** core colour attributes get `"textColor":"yaycheckout-muted"`; this covers terms, login, field-value, return-to-cart, order-summary-toggle/-breakdown and steps-progress text. Shipping/payment `radio` becomes `"var(--yaycheckout-design-muted)"`. Core blocks never reach this row: row A unsets their grey. |
+| D | is `#757575` on a light area of a YayCheckout block | **Muted:** core colour attributes get `"textColor":"yaycheckout-muted"`; this covers terms, login, field-value, return-to-cart, order-summary-toggle/-breakdown and steps-progress text. A steps-progress whose upcoming steps fall back to the block's fixed `#757575` (Multi-step wizard's segments) gets `"upcomingTextColor":"var(--yaycheckout-design-muted)"`. Shipping/payment `radio` becomes `"var(--yaycheckout-design-muted)"`. Core blocks never reach this row: row A unsets their grey. |
 | E | is a `#ffffff` panel or a group/billing/shipping background on a page whose background isn't white | **Keep `#ffffff`.** The user chose white panels. |
-| F | is deliberately fixed | **Keep.** This covers: `#2f8a48` trust icons and text; everything inside an inverted column (Editorial's primary summary column, Split express's `#1e1e1e` column), meaning white text, `rgba(255,255,255,…)`, `#2f2f2f`, `#949494`, `#f0f0f0` and the `#757575` coupon border; `#cccccc` breadcrumb separators and Live receipt's `#cccccc` rules; the soft greys `#f0f0f1`, `#f5f5f7` and `#949494` in Minimal steps, Soft steps and Split express; `#ffffff` text on a primary fill. An inverted column's own background still follows row C (`yaycheckout-primary`, or `yaycheckout-text` for `#1e1e1e`). |
+| F | is deliberately fixed | **Keep.** This covers: `#2f8a48` trust icons and text; everything inside an inverted column (Editorial's primary summary column, Split express's `#1e1e1e` column), meaning white text, `rgba(255,255,255,…)`, `#2f2f2f`, `#949494`, `#f0f0f0` and the `#757575` coupon border; `#cccccc` breadcrumb separators and Live receipt's `#cccccc` rules; the soft greys `#f0f0f1`, `#f5f5f7` and `#949494` in Minimal steps, Soft steps and Split express, and Upsell's savings-note background `#f0f0f0`; `#ffffff` text on a primary fill. An inverted column's own background still follows row C (`yaycheckout-primary`, or `yaycheckout-text` for `#1e1e1e`). |
 
 Where row A removes a value that was a near-match rather than equal (Minimal steps' `#dddddd` against its border token `#e0e0e0`), accept the token's value.
 
@@ -147,11 +147,13 @@ Where row A removes a value that was a near-match rather than equal (Minimal ste
 
 - [ ] **Step 2: Verify**
 
-  Run `grep -nE '#3858e9|#dddddd|#f0f0f0|#757575' templates/layouts/{accordion-one-page,classic-two-column,live-receipt,multi-step-wizard,upsell-cross-sell}/markup.php`. Expected: no output.
+  Run `grep -nE '#3858e9|#dddddd|#f0f0f0|#757575' templates/layouts/{accordion-one-page,classic-two-column,live-receipt,multi-step-wizard,upsell-cross-sell}/markup.php`. Expected: only Upsell's savings-note line (row F).
 
   Run `composer lint -- <the five files>`. Expected: no errors.
 
-  Run `composer test -- --filter LayoutTemplateCatalogueTest`. Use the per-site socket from `docs/known-issues.md`. Expected: OK.
+  Run `composer test -- --filter LayoutTemplateCatalogueTest`. Use the per-site socket from `docs/known-issues.md`. Expected: no new failure. On `dev/edd` it already fails with `classic-two-column: help_text` (that `design.json` has no `help_text` section).
+
+  The editor validity check is lenient: `wp.blocks.parse()` auto-recovers. Also run `wp.blocks.validateBlock(block)[0]` on every parsed block. Expected: no invalid block except Live receipt's four numbered pill paragraphs, which are already invalid on `dev/edd`.
 
   For each of the five, create a new layout from the library and open it. Run the validity check from `.claude/skills/build-checkout-template/references/checklist.md` step 4. Expected: `[]`.
 
