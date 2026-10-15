@@ -12,6 +12,16 @@
  * --yaycheckout-radio-checked-color), then to each layout's own neutral fallback.
  */
 
+/*
+ * The indicator colours, resolved once on the wrapper where the block's own colours are set: the block's Radio
+ * colour, then the layout's Radios design. Unticked has no last fallback, so each layout keeps its own neutral one.
+ */
+.yaycheckout-checkout .yaycheckout-payment {
+	--yaycheckout-payment-indicator: var(--yaycheckout-payment-radio, var(--yaycheckout-radio-border-color));
+	--yaycheckout-payment-indicator-selected: var(--yaycheckout-payment-radio-selected, var(--yaycheckout-radio-checked-color, var(--yaycheckout-primary-color, #3858e9)));
+}
+
+
 /* Hide the block, heading included, while #payment is marked empty (order needs no payment). */
 .yaycheckout-checkout .yaycheckout-payment:has(#payment[data-yaycheckout-empty]) {
 	display: none !important;
@@ -110,11 +120,11 @@
 	width: 18px;
 	height: 18px;
 	border-radius: 999px;
-	box-shadow: inset 0 0 0 1px var(--yaycheckout-payment-radio, var(--yaycheckout-radio-border-color, var(--yaycheckout-border-color)));
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-payment-indicator, var(--yaycheckout-border-color));
 }
 
 .yaycheckout-checkout .yaycheckout-payment #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) > label::before {
-	box-shadow: inset 0 0 0 5px var(--yaycheckout-payment-radio-selected, var(--yaycheckout-radio-checked-color, var(--yaycheckout-primary-color, #3858e9)));
+	box-shadow: inset 0 0 0 5px var(--yaycheckout-payment-indicator-selected);
 }
 
 /*
@@ -283,11 +293,11 @@
 	justify-content: center;
 	width: 22px;
 	height: 22px;
-	box-shadow: inset 0 0 0 1px var(--yaycheckout-payment-radio, var(--yaycheckout-radio-border-color, color-mix(in srgb, currentColor 35%, transparent)));
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-payment-indicator, color-mix(in srgb, currentColor 35%, transparent));
 }
 
 .yaycheckout-checkout .yaycheckout-payment[data-layout="checkmark"] #payment .wc_payment_methods > li:is(:has(input:checked), :only-child) > label::before {
-	background-color: var(--yaycheckout-payment-radio-selected, var(--yaycheckout-radio-checked-color, var(--yaycheckout-primary-color, #3858e9)));
+	background-color: var(--yaycheckout-payment-indicator-selected);
 	box-shadow: none;
 	background-image: var(--yaycheckout-check-icon);
 	background-position: center;
@@ -334,7 +344,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-payment[data-layout="lines"] #payment .wc_payment_methods > li > label::before {
-	box-shadow: inset 0 0 0 1px var(--yaycheckout-payment-radio, var(--yaycheckout-radio-border-color, currentColor));
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-payment-indicator, currentColor);
 }
 
 /* Single box: one outline around the list; selected row gets a tint, outer border stays. */
