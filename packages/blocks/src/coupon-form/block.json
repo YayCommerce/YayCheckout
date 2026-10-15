@@ -23,14 +23,6 @@
       "type": "string",
       "default": ""
     },
-    "buttonBackgroundColor": {
-      "type": "string",
-      "default": ""
-    },
-    "buttonTextColor": {
-      "type": "string",
-      "default": ""
-    },
     "disclosure": {
       "type": "string",
       "enum": [ "none", "link", "collapsible", "checkbox" ],

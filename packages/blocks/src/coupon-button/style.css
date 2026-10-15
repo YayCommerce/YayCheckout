@@ -1,14 +1,14 @@
 /*
  * The .yaycheckout-checkout prefix outranks checkout-base.css's button rule (0,2,0). Until the merchant
- * picks a colour here, the Coupon Form's Button colors apply, then the primary token; the colour support
- * adds .has-background and .has-text-color for a preset or a custom pick alike.
+ * picks a colour here, the primary token applies; the colour support adds .has-background and
+ * .has-text-color for a preset or a custom pick alike.
  */
 .yaycheckout-checkout .wp-block-yaycheckout-coupon-button:not(.has-background) {
-	background: var(--yaycheckout-coupon-button-background, var(--yaycheckout-primary-color));
+	background: var(--yaycheckout-primary-color);
 }
 
 .yaycheckout-checkout .wp-block-yaycheckout-coupon-button:not(.has-text-color) {
-	color: var(--yaycheckout-coupon-button-text, #fff);
+	color: #fff;
 }
 
 .yaycheckout-checkout .wp-block-yaycheckout-coupon-button.is-style-outline:not(.has-background) {
@@ -16,7 +16,7 @@
 }
 
 .yaycheckout-checkout .wp-block-yaycheckout-coupon-button.is-style-outline:not(.has-text-color) {
-	color: var(--yaycheckout-coupon-button-background, var(--yaycheckout-primary-color));
+	color: var(--yaycheckout-primary-color);
 }
 
 .yaycheckout-checkout .wp-block-yaycheckout-coupon-button.is-style-outline:not(.has-border-color) {
