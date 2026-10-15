@@ -10,7 +10,8 @@
 - `includes/Pro/Controllers/LayoutExportRestController.php`
 - `includes/Pro/Services/LayoutImportReview.php`
 - `includes/Pro/Controllers/LayoutImportRestController.php`
-- `includes/Repositories/LayoutRepository.php` (shared: `import()` has one caller, `LayoutImportRestController::import_layout()`)
+- `includes/Repositories/LayoutRepository.php` (shared: `import()` has one caller, `LayoutImportRestController::import_layout()`; `insert_draft()` also serves `create()` and `duplicate()`)
+- `includes/Controllers/LayoutCoreRestController.php` (added in review: its kses step moved to `LayoutRepository::filter_logged_out_content()`)
 - `apps/admin/src/lib/schema/tools.schema.ts`
 - `docs/architecture.md`, the backlog file (deleted)
 
@@ -22,13 +23,14 @@
 - **Out of scope:** the editor's Import / Export panel (it stays hidden in the logged-out view, and its import ignores the key), reset to template, and revisions.
 - **Acceptance criteria:**
   1. `GET /yaycheckout/v1/layouts/{id}/export` returns `layouts[0].logged_out_content`, equal to `Layout::$logged_out_content`. That is `''` for a layout with no logged-out view.
-  2. `POST /layouts/import` with that file creates a draft whose `_yaycheckout_logged_out_content` meta equals the file's value. For a file with no key, or with `''`, the draft has no such meta.
+  2. `POST /layouts/import` with that file creates a draft whose `_yaycheckout_logged_out_content` meta equals the file's value, kses-filtered when the importing user lacks `unfiltered_html`, as `post_content` is. For a file with no key, or with `''`, the draft has no such meta.
   3. A non-string `logged_out_content` imports as `''`. It doesn't stop the import.
   4. The SPA Tools page exports and imports both a current file (one with `design` and `logged_out_content`) and an older file without those keys, with no Zod error.
   5. End to end: save a logged-out view on layout A. Export it from the Tools page and import the file. The new draft's preview with `yc-view=logged-out` shows A's logged-out blocks.
 - **Decided with the user:**
   - `layoutExportWireSchema` is `.strict()` and has lacked `design` since #66, so the Tools page probably rejects every export today. This plan adds `design` too.
   - Add the `LayoutImportReview` test.
+  - Added in review (yaytidy, 2026-10-15): import wrote the logged-out view unfiltered, while the editor kses-filters it for users without `unfiltered_html`. That filter is now `LayoutRepository::filter_logged_out_content()`, called by `insert_draft()` and by `LayoutCoreRestController::prepare_item_for_database()`, so import and duplicate filter it too.
 
 ## Global constraints
 
@@ -41,6 +43,7 @@
 
 - An older export with no `logged_out_content` key must import exactly as it does today, writing no meta. (Task 1 test, plus Step 5's second check.)
 - A hand-edited file with `"logged_out_content": 5` or `null` must import, as `''`. (Task 1 test.)
+- A shop manager without `unfiltered_html` imports a file whose logged-out view holds `<script>`: the stored meta has none, as with `post_content`. An admin's import keeps it. (Checked on the dev site through import and the editor's logged-out save, both roles.)
 - The SPA's strict schema must accept files with and without `design` and `logged_out_content`. (Task 2 Step 2.)
 
 ---
@@ -49,10 +52,10 @@
 
 **Files:**
 - Test: `tests/Integration/Pro/LayoutImportReviewTest.php` (namespace `YayCheckout\Tests\Integration\Pro`, extends `WP_UnitTestCase`, styled like `tests/Integration/LayoutTemplateCatalogueTest.php`)
-- Modify: `includes/Pro/Services/LayoutImportReview.php`, `includes/Pro/Controllers/LayoutExportRestController.php`, `includes/Repositories/LayoutRepository.php:362-371`, `includes/Pro/Controllers/LayoutImportRestController.php:95`
+- Modify: `includes/Pro/Services/LayoutImportReview.php`, `includes/Pro/Controllers/LayoutExportRestController.php`, `includes/Repositories/LayoutRepository.php:362-371`, `includes/Pro/Controllers/LayoutImportRestController.php:95`, `includes/Controllers/LayoutCoreRestController.php` (added in review)
 
 **Interfaces:**
-- Produces: `LayoutImportReview::from_envelope()` returns `{ title, content, rules, design, logged_out_content: string }`. `LayoutRepository::import( string $title, string $content, array $rules, LayoutDesign $design, string $logged_out_content = '' ): Layout`. Export entries add `'logged_out_content' => $layout->logged_out_content`.
+- Produces: `LayoutImportReview::from_envelope()` returns `{ title, content, rules, design, logged_out_content: string }`. `LayoutRepository::import( string $title, string $content, array $rules, LayoutDesign $design, string $logged_out_content = '' ): Layout`. Export entries add `'logged_out_content' => $layout->logged_out_content`. Added in review: `public static LayoutRepository::filter_logged_out_content( string $markup ): string` (unslashed in and out; unchanged with `unfiltered_html`, else `wp_filter_post_kses()`), the one filter for every writer of `Layout::META_LOGGED_OUT`.
 
 - [x] **Step 1: Write the failing test**
 

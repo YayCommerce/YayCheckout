@@ -68,8 +68,7 @@ class LayoutImportReview {
     /**
      * The design is projected, never refused: a bad value only changes how the layout looks, so a missing
      * or malformed section imports as empty and an invalid token reads as its empty default. A file from before
-     * layout designs has none. The logged-out view is kept verbatim like the markup, and reads as none ('') when missing
-     * or not a string; it takes no order, so it needs no Checkout block.
+     * layout designs has none. The logged-out view takes no order, so it needs no Checkout block.
      *
      * @return array { title, content, rules, design, logged_out_content }
      * @throws \InvalidArgumentException When the envelope is not a YayCheckout export.

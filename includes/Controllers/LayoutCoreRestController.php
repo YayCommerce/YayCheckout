@@ -5,6 +5,7 @@ use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Models\Layout;
 use YayCheckout\PostTypes\LayoutPostType;
+use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Services\LayoutMarkupReader;
 
 defined( 'ABSPATH' ) || exit;
@@ -71,9 +72,9 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
 
         // The logged-out view saves into its meta; post_content, which the checks below read, stays as stored.
         if ( LayoutEditorEmbed::is_logged_out_view( $request ) && isset( $prepared->post_content ) ) {
-            // Core's content_save_pre never sees meta. Unslashed here (update_item() slashes later), and kses wants it slashed.
+            // Unslashed here; update_item() slashes later.
             $prepared->meta_input = [
-                Layout::META_LOGGED_OUT => current_user_can( 'unfiltered_html' ) ? $prepared->post_content : wp_unslash( wp_filter_post_kses( wp_slash( $prepared->post_content ) ) ),
+                Layout::META_LOGGED_OUT => LayoutRepository::filter_logged_out_content( $prepared->post_content ),
             ];
             unset( $prepared->post_content );
         }

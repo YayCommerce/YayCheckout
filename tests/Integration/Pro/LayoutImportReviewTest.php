@@ -4,6 +4,7 @@ namespace YayCheckout\Tests\Integration\Pro;
 use WP_UnitTestCase;
 use YayCheckout\Models\Layout;
 use YayCheckout\Pro\Services\LayoutImportReview;
+use YayCheckout\Tests\Support\LayoutFactory;
 
 /** An imported layout keeps the file's logged-out view, and a file without a readable one imports with none. */
 class LayoutImportReviewTest extends WP_UnitTestCase {
@@ -17,7 +18,7 @@ class LayoutImportReviewTest extends WP_UnitTestCase {
                 array_merge(
                     [
                         'title'   => 'T',
-                        'content' => '<!-- wp:yaycheckout/checkout /-->',
+                        'content' => LayoutFactory::checkout_markup(),
                     ],
                     $layout
                 ),

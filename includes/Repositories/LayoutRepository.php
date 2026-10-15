@@ -360,7 +360,8 @@ class LayoutRepository {
     }
 
     /**
-     * Creates a draft from an export file's title, markup, assignment rules, design and logged-out view, verbatim.
+     * Creates a draft from an export file's title, markup, assignment rules, design and logged-out view, as the current user
+     * may store them (kses-filtered without unfiltered_html).
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
      * @param array  $rules              Already sanitized (Layout::sanitize_rules()); [] for none.
@@ -451,6 +452,17 @@ class LayoutRepository {
     }
 
     /**
+     * The logged-out view as the current user may store it: kses-filtered unless they have unfiltered_html, as core's
+     * content_save_pre filters post_content. Core never filters meta, so every writer of Layout::META_LOGGED_OUT calls this.
+     *
+     * @param string $markup Unslashed.
+     */
+    public static function filter_logged_out_content( string $markup ): string {
+        // wp_filter_post_kses() is content_save_pre's filter and takes slashed data.
+        return current_user_can( 'unfiltered_html' ) ? $markup : wp_unslash( wp_filter_post_kses( wp_slash( $markup ) ) );
+    }
+
+    /**
      * The one insert path for a new draft, so the cap and slashing cannot drift.
      *
      * @param array  $rules         Already sanitized; written with the post, like the design, so the draft never exists without them.
@@ -470,7 +482,7 @@ class LayoutRepository {
         }
 
         if ( '' !== $logged_out_content ) {
-            $meta[ Layout::META_LOGGED_OUT ] = $logged_out_content;
+            $meta[ Layout::META_LOGGED_OUT ] = self::filter_logged_out_content( $logged_out_content );
         }
 
         // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.
