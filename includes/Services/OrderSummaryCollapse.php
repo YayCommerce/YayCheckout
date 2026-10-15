@@ -52,12 +52,12 @@ class OrderSummaryCollapse {
         return self::$memo[ $key ];
     }
 
-    /** Whether a Summary Toggle sits anywhere in these parsed blocks, as in a header that holds its own Toggle. */
+    /** Whether a Summary Toggle sits anywhere in these parsed blocks; a header without one is its own tab stop. */
     public static function has_toggle( array $blocks ): bool {
         return in_array( self::TOGGLE, array_column( LayoutMarkupReader::flatten( $blocks ), 'blockName' ), true );
     }
 
-    /** Order Summary's Label while the merchant leaves it empty; it names the header's button too. */
+    /** Order Summary's Label while the merchant leaves it empty. */
     public static function default_label(): string {
         return __( 'Your order', 'yaycheckout' );
     }

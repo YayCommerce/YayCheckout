@@ -24,9 +24,6 @@
       "default": "collapsed"
     }
   },
-  "providesContext": {
-    "yaycheckout/orderSummaryLabel": "label"
-  },
   "supports": {
     "html": false,
     "multiple": false,
