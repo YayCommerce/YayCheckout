@@ -11,6 +11,9 @@
  * A swatch's colour is --yaycheckout-design-<token>, not its own preset's var(): the editor resolves a palette
  * colour that names a preset through that preset, so a swatch naming itself never returns.
  *
+ * Muted is not a token: it is derived, the text colour 60% of the way from the background, for secondary text
+ * that follows the design. It has a preset and classes like the tokens, and no setting.
+ *
  * Core prints the has-*-color classes only for theme.json presets, so these print their own, as core does.
  */
 :root,
@@ -19,10 +22,12 @@
 	--yaycheckout-design-text: var(--yaycheckout-color-text, var(--wp--preset--color--contrast, #1e1e1e));
 	--yaycheckout-design-background: var(--yaycheckout-color-background, var(--wp--preset--color--base, #fff));
 	--yaycheckout-design-border: var(--yaycheckout-color-border, color-mix(in srgb, currentColor 45%, transparent));
+	--yaycheckout-design-muted: color-mix(in srgb, var(--yaycheckout-design-text) 60%, var(--yaycheckout-design-background));
 	--wp--preset--color--yaycheckout-primary: var(--yaycheckout-design-primary);
 	--wp--preset--color--yaycheckout-text: var(--yaycheckout-design-text);
 	--wp--preset--color--yaycheckout-background: var(--yaycheckout-design-background);
 	--wp--preset--color--yaycheckout-border: var(--yaycheckout-design-border);
+	--wp--preset--color--yaycheckout-muted: var(--yaycheckout-design-muted);
 }
 
 .has-yaycheckout-primary-color {
@@ -41,6 +46,10 @@
 	color: var(--wp--preset--color--yaycheckout-border) !important;
 }
 
+.has-yaycheckout-muted-color {
+	color: var(--wp--preset--color--yaycheckout-muted) !important;
+}
+
 .has-yaycheckout-primary-background-color {
 	background-color: var(--wp--preset--color--yaycheckout-primary) !important;
 }
@@ -57,6 +66,10 @@
 	background-color: var(--wp--preset--color--yaycheckout-border) !important;
 }
 
+.has-yaycheckout-muted-background-color {
+	background-color: var(--wp--preset--color--yaycheckout-muted) !important;
+}
+
 .has-yaycheckout-primary-border-color {
 	border-color: var(--wp--preset--color--yaycheckout-primary) !important;
 }
@@ -71,4 +84,8 @@
 
 .has-yaycheckout-border-border-color {
 	border-color: var(--wp--preset--color--yaycheckout-border) !important;
+}
+
+.has-yaycheckout-muted-border-color {
+	border-color: var(--wp--preset--color--yaycheckout-muted) !important;
 }
