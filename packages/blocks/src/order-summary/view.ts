@@ -49,7 +49,8 @@ function flip(): void {
 	details.hidden = ! open;
 	details.closest( '.yaycheckout-order-summary' )?.classList.toggle( 'is-open', open );
 
-	for ( const control of document.querySelectorAll( `${ HEADER_BUTTON }, ${ TOGGLE }` ) ) {
+	// A header that holds a Toggle prints its overlay aria-hidden, with no state to keep.
+	for ( const control of document.querySelectorAll( `${ HEADER_BUTTON }:not([aria-hidden]), ${ TOGGLE }` ) ) {
 		control.setAttribute( 'aria-expanded', open ? 'true' : 'false' );
 	}
 }
