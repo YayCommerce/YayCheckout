@@ -7,8 +7,9 @@
  * Methods styles from the Styles tab set --yaycheckout-payment-* on the wrapper: gap, radius,
  * border-width, bg, bg-selected, bg-hover, radio, radio-selected, border, border-selected and border-hover.
  * Native radios are clipped; label::before draws the indicator so Radio colours paint.
- * An unset bg-selected tints the row with the primary colour at 4%, except Cards with checkmark and
- * Divider lines, which keep one background unless the merchant sets selected/hover.
+ * An unset bg-selected tints the row with the primary colour at 4%, and an unset bg-hover with the text
+ * colour at 6%, except in Cards with checkmark and Divider lines, which keep one background unless the
+ * merchant sets selected/hover.
  * Unset radio and radio-selected fall back to the layout's Radios design (--yaycheckout-radio-border-color,
  * --yaycheckout-radio-checked-color), then to each layout's own neutral fallback.
  */
@@ -169,7 +170,7 @@
 .yaycheckout-checkout .yaycheckout-payment:is(:not([data-layout]), [data-layout="joined"]) #payment .wc_payment_methods > li:hover:not(:has(input:checked)):not(:only-child) {
 	z-index: 1;
 	border-color: var(--yaycheckout-payment-border-hover, var(--yaycheckout-payment-border, var(--yaycheckout-border-color)));
-	background-color: var(--yaycheckout-payment-bg-hover, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, transparent)));
+	background-color: var(--yaycheckout-payment-bg-hover, color-mix(in srgb, currentColor 6%, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff))));
 }
 
 .yaycheckout-checkout .yaycheckout-payment:is(:not([data-layout]), [data-layout="joined"]) #payment .wc_payment_methods > li > label {
@@ -201,7 +202,7 @@
 
 .yaycheckout-checkout .yaycheckout-payment[data-layout="cards"] #payment .wc_payment_methods > li:hover:not(:has(input:checked)):not(:only-child) {
 	border-color: var(--yaycheckout-payment-border-hover, var(--yaycheckout-payment-border, var(--yaycheckout-border-color)));
-	background-color: var(--yaycheckout-payment-bg-hover, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff)));
+	background-color: var(--yaycheckout-payment-bg-hover, color-mix(in srgb, currentColor 6%, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff))));
 }
 
 .yaycheckout-checkout .yaycheckout-payment[data-layout="cards"] #payment .wc_payment_methods > li > label {
@@ -233,7 +234,7 @@
 
 .yaycheckout-checkout .yaycheckout-payment[data-layout="grid"] #payment .wc_payment_methods > li:hover:not(:has(input:checked)):not(:only-child) {
 	border-color: var(--yaycheckout-payment-border-hover, var(--yaycheckout-payment-border, var(--yaycheckout-border-color)));
-	background-color: var(--yaycheckout-payment-bg-hover, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff)));
+	background-color: var(--yaycheckout-payment-bg-hover, color-mix(in srgb, currentColor 6%, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff))));
 }
 
 .yaycheckout-checkout .yaycheckout-payment[data-layout="grid"] #payment .wc_payment_methods > li > label {
@@ -376,7 +377,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-payment[data-layout="box"] #payment .wc_payment_methods > li:hover:not(:has(input:checked)):not(:only-child) {
-	background-color: var(--yaycheckout-payment-bg-hover, transparent);
+	background-color: var(--yaycheckout-payment-bg-hover, color-mix(in srgb, currentColor 6%, var(--yaycheckout-payment-bg, var(--yaycheckout-color-background, #fff))));
 }
 
 .yaycheckout-checkout .yaycheckout-payment[data-layout="box"] #payment .wc_payment_methods > li > label {
