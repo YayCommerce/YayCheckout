@@ -210,6 +210,28 @@ class DesignStyles {
             )
         );
 
+        $radios = $sections['radios'];
+
+        if ( null !== $radios['size'] ) {
+            $vars['radio-size'] = $radios['size'] . 'px';
+        }
+
+        if ( null !== $radios['border_width'] ) {
+            $vars['radio-border-width'] = $radios['border_width'] . 'px';
+        }
+
+        $vars = array_merge(
+            $vars,
+            array_filter(
+                [
+                    'radio-border-color'  => $radios['border'],
+                    'radio-background'    => $radios['background'],
+                    'radio-checked-color' => $radios['checked'],
+                ],
+                $not_empty
+            )
+        );
+
         $help_text = $sections['help_text'];
 
         if ( '' !== $help_text['color'] ) {
