@@ -71,6 +71,8 @@ Where row A removes a value that was a near-match rather than equal (Minimal ste
 
 > Revised after review: Muted first shipped as a derived swatch only, and did not appear in the Design panel's Colours. It is now a token, `colours.muted` (default `''`). It is in `LayoutDesign::schema()`, prints `--yaycheckout-color-muted` from `DesignStyles::vars()` and `design-css.ts`, and is in every template's `design.json` as `"muted": ""`. `--yaycheckout-design-muted` reads that token first, then the 60% mix. The palette builds the swatch from the schema like the other four.
 
+> Revised again: the `help_text.color` token is removed. Help text under every field is the Muted colour (`checkout-base.css`), and `help_text` keeps only `size`.
+
 **Files:**
 - Modify: `assets/css/design-presets.css`
 - Modify: `packages/blocks/src/checkout/layout-design.tsx`, in `addDesignPalette()`, near line 221

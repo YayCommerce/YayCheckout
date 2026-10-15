@@ -235,10 +235,6 @@ class DesignStyles {
 
         $help_text = $sections['help_text'];
 
-        if ( '' !== $help_text['color'] ) {
-            $vars['help-text-color'] = $help_text['color'];
-        }
-
         if ( null !== $help_text['size'] ) {
             $vars['help-text-size'] = $help_text['size'] . 'px';
         }

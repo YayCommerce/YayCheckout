@@ -93,7 +93,7 @@ final class LayoutDesign {
      * primary colour. checkboxes.border and checkboxes.background colour an unticked checkbox, and each falls back
      * to the input's. radios styles loose radios, and its colours are the fallback for Payment and Shipping's
      * indicators; an empty radio colour falls back to the input's or, for checked, to the primary colour.
-     * help_text styles the help text under every kind of field.
+     * help_text sizes the help text under every kind of field; its colour is colours.muted.
      */
     public static function schema(): array {
         return [
@@ -243,11 +243,7 @@ final class LayoutDesign {
                 ],
             ],
             'help_text'  => [
-                'color' => [
-                    'type'    => 'color',
-                    'default' => '',
-                ],
-                'size'  => [
+                'size' => [
                     'type'    => 'int',
                     'default' => null,
                     'min'     => 10,
