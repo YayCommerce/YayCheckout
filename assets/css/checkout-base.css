@@ -318,8 +318,18 @@ html.yaycheckout-has-pinned body {
 	line-height: 1.4;
 }
 
-.yaycheckout-checkout textarea {
-	min-height: calc(var(--yaycheckout-input-height, 40px) * 2);
+/*
+ * A textarea starts about three lines tall and grows with its text, where the browser supports field-sizing, up to
+ * a cap that scrolls. Its text does not centre like an input's, so it keeps its own vertical padding, which a size
+ * token does not zero. Every checkout textarea carries .input-text, and the class lifts this rule above the shared one.
+ */
+.yaycheckout-checkout textarea.input-text {
+	display: block;
+	min-height: calc(var(--yaycheckout-input-height, 40px) * 2.5);
+	max-height: 20em;
+	padding-block: 0.625em;
+	line-height: 1.5;
+	field-sizing: content;
 	resize: vertical;
 }
 
@@ -543,6 +553,16 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 .yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__code {
 	min-height: var(--yaycheckout-floating-height);
 	padding-block: 1.375em var(--yaycheckout-input-padding-block, 0.375em);
+}
+
+/* A textarea keeps its taller box and its bottom padding under a floating label. */
+.yaycheckout-checkout--floating-labels .form-row:is(
+	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > .input-text),
+	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
+	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea))
+) textarea.input-text {
+	min-height: calc(var(--yaycheckout-floating-height) * 2.25);
+	padding-bottom: 0.625em;
 }
 
 /* Floated: small, at the top of the box. A select always shows a value, so its label never rests. */
