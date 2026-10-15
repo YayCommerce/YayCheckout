@@ -131,8 +131,8 @@ $yaycheckout_ship_label = 'shipping' === $yaycheckout_main ? __( 'SHIP TO', 'yay
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"12px"}}} -->
 <div class="wp-block-group"><!-- wp:group {"style":{"spacing":{"blockGap":"10px"}},"layout":{"type":"flex","flexWrap":"nowrap","verticalAlignment":"center"}} -->
-<div class="wp-block-group"><!-- wp:paragraph {"align":"center","style":{"color":{"background":"#3858e9","text":"#ffffff"},"typography":{"fontSize":"11px","fontWeight":"600","lineHeight":"1"},"border":{"radius":"9999px"},"dimensions":{"minHeight":"22px"},"layout":{"selfStretch":"fixed","flexSize":"22px"},"spacing":{"margin":{"top":"0","bottom":"0"},"padding":{"top":"5px","bottom":"5px","left":"0","right":"0"}}}} -->
-<p class="has-text-align-center has-text-color has-background" style="color:#ffffff;background-color:#3858e9;border-radius:9999px;margin-top:0;margin-bottom:0;padding-top:5px;padding-right:0;padding-bottom:5px;padding-left:0;min-height:22px;font-size:11px;font-weight:600;line-height:1">1</p>
+<div class="wp-block-group"><!-- wp:paragraph {"align":"center","style":{"color":{"background":"#3858e9","text":"#ffffff"},"typography":{"fontSize":"11px","fontWeight":"600","lineHeight":"22px"},"border":{"radius":"9999px"},"dimensions":{"minHeight":"22px","width":"22px"},"layout":{"selfStretch":"fixed","flexSize":"22px"},"spacing":{"margin":{"top":"0","bottom":"0"},"padding":{"top":"0","bottom":"0","left":"0","right":"0"}}}} -->
+<p class="has-text-align-center has-text-color has-background" style="color:#ffffff;background-color:#3858e9;border-radius:9999px;margin-top:0;margin-bottom:0;padding-top:0;padding-right:0;padding-bottom:0;padding-left:0;width:22px;min-height:22px;font-size:11px;font-weight:600;line-height:22px;box-sizing:border-box;flex-shrink:0">1</p>
 <!-- /wp:paragraph -->
 
 <!-- wp:heading {"style":{"typography":{"fontSize":"16px","fontWeight":"600","lineHeight":"1.4"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
@@ -145,8 +145,8 @@ $yaycheckout_ship_label = 'shipping' === $yaycheckout_main ? __( 'SHIP TO', 'yay
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"12px"}}} -->
 <div class="wp-block-group"><!-- wp:group {"style":{"spacing":{"blockGap":"10px"}},"layout":{"type":"flex","flexWrap":"nowrap","verticalAlignment":"center"}} -->
-<div class="wp-block-group"><!-- wp:paragraph {"align":"center","style":{"color":{"background":"#3858e9","text":"#ffffff"},"typography":{"fontSize":"11px","fontWeight":"600","lineHeight":"1"},"border":{"radius":"9999px"},"dimensions":{"minHeight":"22px"},"layout":{"selfStretch":"fixed","flexSize":"22px"},"spacing":{"margin":{"top":"0","bottom":"0"},"padding":{"top":"5px","bottom":"5px","left":"0","right":"0"}}}} -->
-<p class="has-text-align-center has-text-color has-background" style="color:#ffffff;background-color:#3858e9;border-radius:9999px;margin-top:0;margin-bottom:0;padding-top:5px;padding-right:0;padding-bottom:5px;padding-left:0;min-height:22px;font-size:11px;font-weight:600;line-height:1">2</p>
+<div class="wp-block-group"><!-- wp:paragraph {"align":"center","style":{"color":{"background":"#3858e9","text":"#ffffff"},"typography":{"fontSize":"11px","fontWeight":"600","lineHeight":"22px"},"border":{"radius":"9999px"},"dimensions":{"minHeight":"22px","width":"22px"},"layout":{"selfStretch":"fixed","flexSize":"22px"},"spacing":{"margin":{"top":"0","bottom":"0"},"padding":{"top":"0","bottom":"0","left":"0","right":"0"}}}} -->
+<p class="has-text-align-center has-text-color has-background" style="color:#ffffff;background-color:#3858e9;border-radius:9999px;margin-top:0;margin-bottom:0;padding-top:0;padding-right:0;padding-bottom:0;padding-left:0;width:22px;min-height:22px;font-size:11px;font-weight:600;line-height:22px;box-sizing:border-box;flex-shrink:0">2</p>
 <!-- /wp:paragraph -->
 
 <!-- wp:heading {"style":{"typography":{"fontSize":"16px","fontWeight":"600","lineHeight":"1.4"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
@@ -167,8 +167,8 @@ $yaycheckout_ship_label = 'shipping' === $yaycheckout_main ? __( 'SHIP TO', 'yay
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"12px"}}} -->
 <div class="wp-block-group"><!-- wp:group {"style":{"spacing":{"blockGap":"10px"}},"layout":{"type":"flex","flexWrap":"nowrap","verticalAlignment":"center"}} -->
-<div class="wp-block-group"><!-- wp:paragraph {"align":"center","style":{"color":{"background":"#3858e9","text":"#ffffff"},"typography":{"fontSize":"11px","fontWeight":"600","lineHeight":"1"},"border":{"radius":"9999px"},"dimensions":{"minHeight":"22px"},"layout":{"selfStretch":"fixed","flexSize":"22px"},"spacing":{"margin":{"top":"0","bottom":"0"},"padding":{"top":"5px","bottom":"5px","left":"0","right":"0"}}}} -->
-<p class="has-text-align-center has-text-color has-background" style="color:#ffffff;background-color:#3858e9;border-radius:9999px;margin-top:0;margin-bottom:0;padding-top:5px;padding-right:0;padding-bottom:5px;padding-left:0;min-height:22px;font-size:11px;font-weight:600;line-height:1">3</p>
+<div class="wp-block-group"><!-- wp:paragraph {"align":"center","style":{"color":{"background":"#3858e9","text":"#ffffff"},"typography":{"fontSize":"11px","fontWeight":"600","lineHeight":"22px"},"border":{"radius":"9999px"},"dimensions":{"minHeight":"22px","width":"22px"},"layout":{"selfStretch":"fixed","flexSize":"22px"},"spacing":{"margin":{"top":"0","bottom":"0"},"padding":{"top":"0","bottom":"0","left":"0","right":"0"}}}} -->
+<p class="has-text-align-center has-text-color has-background" style="color:#ffffff;background-color:#3858e9;border-radius:9999px;margin-top:0;margin-bottom:0;padding-top:0;padding-right:0;padding-bottom:0;padding-left:0;width:22px;min-height:22px;font-size:11px;font-weight:600;line-height:22px;box-sizing:border-box;flex-shrink:0">3</p>
 <!-- /wp:paragraph -->
 
 <!-- wp:heading {"style":{"typography":{"fontSize":"16px","fontWeight":"600","lineHeight":"1.4"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
@@ -181,8 +181,8 @@ $yaycheckout_ship_label = 'shipping' === $yaycheckout_main ? __( 'SHIP TO', 'yay
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"12px"}}} -->
 <div class="wp-block-group"><!-- wp:group {"style":{"spacing":{"blockGap":"10px"}},"layout":{"type":"flex","flexWrap":"nowrap","verticalAlignment":"center"}} -->
-<div class="wp-block-group"><!-- wp:paragraph {"align":"center","style":{"color":{"background":"#3858e9","text":"#ffffff"},"typography":{"fontSize":"11px","fontWeight":"600","lineHeight":"1"},"border":{"radius":"9999px"},"dimensions":{"minHeight":"22px"},"layout":{"selfStretch":"fixed","flexSize":"22px"},"spacing":{"margin":{"top":"0","bottom":"0"},"padding":{"top":"5px","bottom":"5px","left":"0","right":"0"}}}} -->
-<p class="has-text-align-center has-text-color has-background" style="color:#ffffff;background-color:#3858e9;border-radius:9999px;margin-top:0;margin-bottom:0;padding-top:5px;padding-right:0;padding-bottom:5px;padding-left:0;min-height:22px;font-size:11px;font-weight:600;line-height:1">4</p>
+<div class="wp-block-group"><!-- wp:paragraph {"align":"center","style":{"color":{"background":"#3858e9","text":"#ffffff"},"typography":{"fontSize":"11px","fontWeight":"600","lineHeight":"22px"},"border":{"radius":"9999px"},"dimensions":{"minHeight":"22px","width":"22px"},"layout":{"selfStretch":"fixed","flexSize":"22px"},"spacing":{"margin":{"top":"0","bottom":"0"},"padding":{"top":"0","bottom":"0","left":"0","right":"0"}}}} -->
+<p class="has-text-align-center has-text-color has-background" style="color:#ffffff;background-color:#3858e9;border-radius:9999px;margin-top:0;margin-bottom:0;padding-top:0;padding-right:0;padding-bottom:0;padding-left:0;width:22px;min-height:22px;font-size:11px;font-weight:600;line-height:22px;box-sizing:border-box;flex-shrink:0">4</p>
 <!-- /wp:paragraph -->
 
 <!-- wp:heading {"style":{"typography":{"fontSize":"16px","fontWeight":"600","lineHeight":"1.4"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
@@ -200,8 +200,8 @@ $yaycheckout_ship_label = 'shipping' === $yaycheckout_main ? __( 'SHIP TO', 'yay
 <div class="wp-block-column" style="flex-basis:380px"><!-- wp:group {"style":{"position":{"type":"sticky","top":"24px"},"spacing":{"blockGap":"0"}}} -->
 <div class="wp-block-group"><!-- wp:group {"style":{"color":{"background":"#ffffff","text":"#1e1e1e"},"border":{"color":"#dddddd","width":"1px","style":"solid","radius":{"topLeft":"4px","topRight":"4px","bottomLeft":"0px","bottomRight":"0px"}},"spacing":{"padding":{"top":"28px","right":"28px","bottom":"24px","left":"28px"},"blockGap":"18px"},"typography":{"fontSize":"12px","lineHeight":"1.6","fontFamily":"Menlo, Consolas, monaco, monospace"}}} -->
 <div class="wp-block-group has-border-color has-text-color has-background" style="border-color:#dddddd;border-style:solid;border-width:1px;border-top-left-radius:4px;border-top-right-radius:4px;border-bottom-left-radius:0;border-bottom-right-radius:0;color:#1e1e1e;background-color:#ffffff;padding-top:28px;padding-right:28px;padding-bottom:24px;padding-left:28px;font-size:12px;font-family:Menlo, Consolas, monaco, monospace;line-height:1.6"><!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>","showTitle":false,"style":{"spacing":{"blockGap":"18px"}}} -->
-<!-- wp:yaycheckout/order-summary-header -->
-<!-- wp:group {"style":{"spacing":{"blockGap":"2px"}},"layout":{"type":"flex","orientation":"vertical","justifyContent":"center"}} -->
+<!-- wp:yaycheckout/order-summary-header {"layout":{"type":"flex","justifyContent":"center","verticalAlignment":"center","flexWrap":"wrap"}} -->
+<!-- wp:group {"style":{"spacing":{"blockGap":"2px"}},"layout":{"type":"flex","orientation":"vertical","justifyContent":"center","flexWrap":"nowrap"}} -->
 <div class="wp-block-group"><?php if ( has_custom_logo() ) : ?>
 <!-- wp:site-logo {"width":28} /-->
 <?php else : ?>
