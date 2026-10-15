@@ -21,8 +21,8 @@ class LayoutImportReview {
     public const RULES_NONE     = 'none';
 
     /**
-     * @return array { title, content, rules, design } rules as the file holds them, unchecked (see rules_from_file());
-     *               design projected through LayoutDesign::from_meta().
+     * @return array { title, content, rules, design, logged_out_content } rules as the file holds them, unchecked (see rules_from_file());
+     *               design projected through LayoutDesign::from_meta(); logged_out_content '' when the file has none.
      * @throws \InvalidArgumentException When the file is not an export or has no Checkout block.
      */
     public static function from_envelope( array $envelope ): array {
@@ -68,9 +68,10 @@ class LayoutImportReview {
     /**
      * The design is projected, never refused: a bad value only changes how the layout looks, so a missing
      * or malformed section imports as empty and an invalid token reads as its empty default. A file from before
-     * layout designs has none.
+     * layout designs has none. The logged-out view is kept verbatim like the markup, and reads as none ('') when missing
+     * or not a string; it takes no order, so it needs no Checkout block.
      *
-     * @return array { title, content, rules, design }
+     * @return array { title, content, rules, design, logged_out_content }
      * @throws \InvalidArgumentException When the envelope is not a YayCheckout export.
      */
     private static function layout( array $envelope ): array {
@@ -86,10 +87,11 @@ class LayoutImportReview {
         }
 
         return [
-            'title'   => $layout['title'],
-            'content' => $layout['content'],
-            'rules'   => $layout['rules'] ?? null,
-            'design'  => LayoutDesign::from_meta( $layout['design'] ?? null ),
+            'title'              => $layout['title'],
+            'content'            => $layout['content'],
+            'rules'              => $layout['rules'] ?? null,
+            'design'             => LayoutDesign::from_meta( $layout['design'] ?? null ),
+            'logged_out_content' => is_string( $layout['logged_out_content'] ?? null ) ? $layout['logged_out_content'] : '',
         ];
     }
 }

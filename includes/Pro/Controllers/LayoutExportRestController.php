@@ -53,14 +53,15 @@ class LayoutExportRestController extends BaseRestController {
                 'format'         => Layout::EXPORT_FORMAT,
                 'plugin_version' => YAYCHECKOUT_VERSION,
                 'exported_at'    => $exported_at,
-                // Title, markup, assignment rules and design; status, active flag and dates are site state and stay behind.
+                // Title, markup, assignment rules, design and logged-out view; status, active flag and dates are site state and stay behind.
                 // Rules name roles by slug: another store may not have them, and such a condition never matches there.
                 'layouts'        => [
                     [
-                        'title'   => $layout->title,
-                        'content' => $layout->content,
-                        'rules'   => $layout->rules,
-                        'design'  => $layout->design->to_meta(),
+                        'title'              => $layout->title,
+                        'content'            => $layout->content,
+                        'rules'              => $layout->rules,
+                        'design'             => $layout->design->to_meta(),
+                        'logged_out_content' => $layout->logged_out_content,
                     ],
                 ],
             ]

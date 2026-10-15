@@ -19,6 +19,10 @@ export const layoutExportWireSchema = z
           content: z.string(),
           // Unchecked: PHP drops rules it cannot read and still imports the layout.
           rules: z.unknown().optional(),
+          // Unchecked: PHP projects it through LayoutDesign::from_meta() and never refuses it.
+          design: z.unknown().optional(),
+          // Optional, like design: older files lack it, and PHP reads a missing one as no logged-out view.
+          logged_out_content: z.string().optional(),
         })
         .strict(),
     ),
