@@ -10,13 +10,15 @@ import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
 import { errorMessage } from '../shared/error-message';
 import { layoutStateStore } from './layout-state';
+import LayoutViewSwitch, { isLoggedOutView } from './layout-view';
 import { useLayoutProblem } from './publish-guard';
 
 /** LayoutEditorCanvas hides core's status controls only under this class, so they stay if the buttons can't mount. */
 const MOUNTED_CLASS = 'yaycheckout-has-layout-actions';
 
-/** The header's settings area: editor-header from WordPress 6.6, edit-post-header in 6.5. */
+/** The header's settings area (right) and toolbar (left): editor-header from WordPress 6.6, edit-post-header in 6.5. */
 const HEADER_SELECTOR = '.editor-header__settings, .edit-post-header__settings';
+const TOOLBAR_SELECTOR = '.editor-header__toolbar, .edit-post-header__toolbar';
 
 type Action = 'activate' | 'deactivate';
 
@@ -52,8 +54,11 @@ function copyFor( action: Action, title: string ) {
 		  };
 }
 
-/** A container prepended to the header once it renders; the header can appear after the plugin. */
-function useHeaderSlot( enabled: boolean ): HTMLElement | null {
+/**
+ * A container added to a header area once it renders; the header can appear after the plugin.
+ * The settings slot also tags the body with MOUNTED_CLASS.
+ */
+function useHeaderSlot( enabled: boolean, area: 'settings' | 'toolbar' ): HTMLElement | null {
 	const [ slot, setSlot ] = useState< HTMLElement | null >( null );
 
 	useEffect( () => {
@@ -61,18 +66,23 @@ function useHeaderSlot( enabled: boolean ): HTMLElement | null {
 			return;
 		}
 
+		const isSettings = area === 'settings';
 		const container = document.createElement( 'div' );
-		container.className = 'yaycheckout-layout-actions';
+		container.className = isSettings ? 'yaycheckout-layout-actions' : 'yaycheckout-layout-view';
 
 		const mount = () => {
-			const header = document.querySelector( HEADER_SELECTOR );
+			const header = document.querySelector( isSettings ? HEADER_SELECTOR : TOOLBAR_SELECTOR );
 
 			if ( ! header ) {
 				return false;
 			}
 
-			header.prepend( container );
-			document.body.classList.add( MOUNTED_CLASS );
+			if ( isSettings ) {
+				header.prepend( container );
+				document.body.classList.add( MOUNTED_CLASS );
+			} else {
+				header.append( container );
+			}
 			setSlot( container );
 			return true;
 		};
@@ -86,9 +96,11 @@ function useHeaderSlot( enabled: boolean ): HTMLElement | null {
 		return () => {
 			observer.disconnect();
 			container.remove();
-			document.body.classList.remove( MOUNTED_CLASS );
+			if ( isSettings ) {
+				document.body.classList.remove( MOUNTED_CLASS );
+			}
 		};
-	}, [ enabled ] );
+	}, [ enabled, area ] );
 
 	return slot;
 }
@@ -123,7 +135,8 @@ function LayoutActions() {
 	const [ confirm, setConfirm ] = useState< Action | null >( null );
 	const [ isBusy, setBusy ] = useState( false );
 	const [ isPreviewing, setPreviewing ] = useState( false );
-	const slot = useHeaderSlot( isLayout );
+	const slot = useHeaderSlot( isLayout, 'settings' );
+	const viewSlot = useHeaderSlot( isLayout, 'toolbar' );
 
 	useEffect( () => {
 		if ( ! isLayout || ! postId ) {
@@ -177,7 +190,7 @@ function LayoutActions() {
 		}
 	};
 
-	/** Previews the saved markup; unsaved edits are left alone and don't show. */
+	/** Previews the saved markup of the view being edited; unsaved edits are left alone and don't show. */
 	const preview = async () => {
 		// Opened inside the click: a tab opened after the await is a popup the browser blocks.
 		const tab = window.open( '', '_blank' );
@@ -188,11 +201,17 @@ function LayoutActions() {
 				method: 'POST',
 			} );
 
+			const url = new URL( link.url );
+
+			if ( isLoggedOutView() ) {
+				url.searchParams.set( editorData.view.queryArg, editorData.view.current );
+			}
+
 			if ( tab ) {
 				tab.opener = null;
-				tab.location.href = link.url;
+				tab.location.href = url.toString();
 			} else {
-				window.open( link.url, '_blank', 'noopener' );
+				window.open( url.toString(), '_blank', 'noopener' );
 			}
 		} catch ( error ) {
 			tab?.close();
@@ -208,7 +227,10 @@ function LayoutActions() {
 	const toggle: Action | null = isActive === null ? null : isActive ? 'deactivate' : 'activate';
 	const modal = confirm && copyFor( confirm, title );
 
-	return createPortal(
+	return (
+		<>
+			{ viewSlot && createPortal( <LayoutViewSwitch />, viewSlot ) }
+			{ createPortal(
 		<>
 			<Flex gap={ 2 } expanded={ false }>
 				<Button
@@ -258,6 +280,8 @@ function LayoutActions() {
 			) }
 		</>,
 		slot
+			) }
+		</>
 	);
 }
 

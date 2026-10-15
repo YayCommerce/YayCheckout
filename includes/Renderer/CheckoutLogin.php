@@ -48,9 +48,18 @@ class CheckoutLogin {
      * Mirrors form-checkout.php and woocommerce_checkout_coupon_form().
      */
     public static function must_log_in(): bool {
+        return ! is_user_logged_in() && self::login_required();
+    }
+
+    /** WooCommerce's settings make a guest log in first: no guest checkout, and no account creation at checkout. False without WooCommerce. */
+    public static function login_required(): bool {
+        if ( ! function_exists( 'WC' ) ) {
+            return false;
+        }
+
         $checkout = WC()->checkout();
 
-        return ! is_user_logged_in() && ! $checkout->is_registration_enabled() && $checkout->is_registration_required();
+        return ! $checkout->is_registration_enabled() && $checkout->is_registration_required();
     }
 
     /**

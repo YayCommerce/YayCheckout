@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Blocks;
 
+use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Engine\Register\ScriptName;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
@@ -221,6 +222,21 @@ class BlockRegistry {
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.design', $design );
         // The live value picker's Cart totals and Counts.
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.liveValues', LiveValues::cart_values() );
+        // The layout editor's Logged in / Logged out switch; other editors keep editor-data.ts's default.
+        if ( Layout::POST_TYPE !== get_post_type() ) {
+            return;
+        }
+
+        self::inline_data(
+            generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
+            'window.yayCheckoutBlocks.view',
+            [
+                'current'       => LayoutEditorEmbed::is_logged_out_view() ? LayoutEditorEmbed::VIEW_LOGGED_OUT : LayoutEditorEmbed::VIEW_MAIN,
+                'loginRequired' => CheckoutLogin::login_required(),
+                'queryArg'      => LayoutEditorEmbed::QUERY_VIEW,
+                'urls'          => LayoutEditorEmbed::view_urls( (int) get_the_ID() ),
+            ]
+        );
     }
 
     /**

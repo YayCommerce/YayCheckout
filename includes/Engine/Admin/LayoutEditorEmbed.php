@@ -19,6 +19,15 @@ class LayoutEditorEmbed {
     /** Sent by the embed's apiFetch; read by LayoutCoreRestController::delete_item_permissions_check(). */
     public const REST_HEADER = 'X-YayCheckout-Embed';
 
+    /** The arg that opens the logged-out view, the markup a guest who must log in sees: on post.php, and on a preview link (CheckoutPage::resolve()). */
+    public const QUERY_VIEW = 'yc-view';
+
+    public const VIEW_MAIN       = 'main';
+    public const VIEW_LOGGED_OUT = 'logged-out';
+
+    /** Carries QUERY_VIEW to the editor's REST calls; read by LayoutCoreRestController. */
+    public const VIEW_HEADER = 'X-YayCheckout-View';
+
     protected function __construct() {
         add_filter( 'admin_body_class', [ $this, 'admin_body_class' ] );
         add_action( 'admin_head', [ $this, 'print_embed_styles' ] );
@@ -31,11 +40,17 @@ class LayoutEditorEmbed {
             return;
         }
 
+        $headers = [ self::REST_HEADER => '1' ];
+
+        if ( self::is_logged_out_view() ) {
+            $headers[ self::VIEW_HEADER ] = self::VIEW_LOGGED_OUT;
+        }
+
         wp_add_inline_script(
             'wp-api-fetch',
             sprintf(
-                'wp.apiFetch.use( function ( options, next ) { return next( { ...options, headers: { ...( options.headers || {} ), %s: "1" } } ); } );',
-                wp_json_encode( self::REST_HEADER )
+                'wp.apiFetch.use( function ( options, next ) { return next( { ...options, headers: { ...( options.headers || {} ), ...%s } } ); } );',
+                wp_json_encode( $headers )
             )
         );
     }
@@ -94,6 +109,40 @@ class LayoutEditorEmbed {
             }
         </style>
         <?php
+    }
+
+    /**
+     * Whether the logged-out view is asked for: the REST call's header, else the page's
+     * query arg, which covers the editor's server-side preload and a preview link.
+     */
+    public static function is_logged_out_view( ?\WP_REST_Request $request = null ): bool {
+        if ( null !== $request && null !== $request->get_header( self::VIEW_HEADER ) ) {
+            return self::VIEW_LOGGED_OUT === $request->get_header( self::VIEW_HEADER );
+        }
+
+        return isset( $_GET[ self::QUERY_VIEW ] ) && self::VIEW_LOGGED_OUT === sanitize_key( wp_unslash( $_GET[ self::QUERY_VIEW ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+    }
+
+    /**
+     * The embedded editor for each view of a layout, keyed like the editor's view switch. The main
+     * URL is also built by editorUrl in the SPA's apps/admin/src/pages/layouts/LayoutsPage.tsx: change both together.
+     *
+     * @return array{main: string, logged-out: string}
+     */
+    public static function view_urls( int $post_id ): array {
+        $main = add_query_arg(
+            [
+                'post'           => $post_id,
+                'action'         => 'edit',
+                self::QUERY_FLAG => '1',
+            ],
+            admin_url( 'post.php' )
+        );
+
+        return [
+            self::VIEW_MAIN       => $main,
+            self::VIEW_LOGGED_OUT => add_query_arg( self::QUERY_VIEW, self::VIEW_LOGGED_OUT, $main ),
+        ];
     }
 
     /**

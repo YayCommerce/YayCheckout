@@ -31,7 +31,8 @@ $yaycheckout_wrapper = get_block_wrapper_attributes(
     ]
 );
 
-if ( ! function_exists( 'WC' ) ) {
+// No form: without WooCommerce, or in the merchant's logged-out view, whose blocks replace WooCommerce's login prompt.
+if ( ! function_exists( 'WC' ) || \YayCheckout\Renderer\CheckoutPage::get_instance()->is_logged_out_view() ) {
     ?>
     <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
         <?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner block markup, already rendered and escaped by core. ?>

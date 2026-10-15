@@ -3,8 +3,9 @@
  * Server render for yaycheckout/login.
  *
  * Prints nothing unless the WooCommerce checkout login reminder is on and
- * the shopper is logged out. Attributes are read with defaults so markup
- * saved before an attribute existed still renders.
+ * the shopper is logged out, or the layout renders its logged-out view.
+ * Attributes are read with defaults so markup saved before an attribute
+ * existed still renders.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; login is a leaf.
@@ -15,7 +16,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! \YayCheckout\Renderer\CheckoutLogin::reminder_shown() ) {
+// In the logged-out view the merchant placed it as the way in, so it shows whatever the reminder setting says.
+if ( ! \YayCheckout\Renderer\CheckoutLogin::reminder_shown() && ! \YayCheckout\Renderer\CheckoutPage::get_instance()->is_logged_out_view() ) {
     return;
 }
 
