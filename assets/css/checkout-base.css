@@ -371,9 +371,10 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 }
 
 /*
- * Drawn checkbox and radio, as in the layout templates: the input's border and background, the
- * primary colour once checked. A checkbox's size, corner, border width and checked colour come from
- * the layout's Checkboxes design (DesignStyles); its corner never takes the input radius. Radios keep
+ * Drawn checkbox and radio, as in the layout templates: the Checkboxes design's unticked border and
+ * background, falling back to the input's, then the primary colour once checked. Loose radios read the
+ * unticked colours too. A checkbox's size, corner, border width and checked colour come from the
+ * layout's Checkboxes design (DesignStyles); its corner never takes the input radius. Radios keep
  * their own size. Payment and Shipping hide their real radio and draw their own indicator.
  */
 .yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]) {
@@ -382,8 +383,8 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	box-sizing: border-box;
 	flex: none;
 	margin: 0;
-	border: 1px solid var(--yaycheckout-input-border-color, var(--yaycheckout-border-color));
-	background: var(--yaycheckout-input-background, var(--yaycheckout-color-background, #fff)) center no-repeat;
+	border: 1px solid var(--yaycheckout-checkbox-border-color, var(--yaycheckout-input-border-color, var(--yaycheckout-border-color)));
+	background: var(--yaycheckout-checkbox-background, var(--yaycheckout-input-background, var(--yaycheckout-color-background, #fff))) center no-repeat;
 	vertical-align: middle;
 	cursor: pointer;
 	transition: background-color 100ms, border-color 100ms, border-width 100ms;

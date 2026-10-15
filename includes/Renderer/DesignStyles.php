@@ -198,6 +198,14 @@ class DesignStyles {
             $vars['checkbox-border-width'] = $checkboxes['border_width'] . 'px';
         }
 
+        if ( '' !== $checkboxes['border'] ) {
+            $vars['checkbox-border-color'] = $checkboxes['border'];
+        }
+
+        if ( '' !== $checkboxes['background'] ) {
+            $vars['checkbox-background'] = $checkboxes['background'];
+        }
+
         if ( '' !== $checkboxes['checked'] ) {
             $vars['checkbox-checked-color'] = $checkboxes['checked'];
         }

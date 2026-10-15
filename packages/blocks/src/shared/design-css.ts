@@ -131,6 +131,18 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 		out.push( [ 'checkbox-border-width', `${ checkboxes.border_width }px` ] );
 	}
 
+	const checkboxBorder = String( checkboxes.border ?? '' );
+
+	if ( '' !== checkboxBorder ) {
+		out.push( [ 'checkbox-border-color', checkboxBorder ] );
+	}
+
+	const checkboxBackground = String( checkboxes.background ?? '' );
+
+	if ( '' !== checkboxBackground ) {
+		out.push( [ 'checkbox-background', checkboxBackground ] );
+	}
+
 	const checked = String( checkboxes.checked ?? '' );
 
 	if ( '' !== checked ) {
