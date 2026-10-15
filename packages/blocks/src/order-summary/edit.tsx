@@ -3,7 +3,6 @@ import { cloneBlock, createBlock } from '@wordpress/blocks';
 import {
 	Notice,
 	PanelBody,
-	TextControl,
 	ToggleControl,
 	__experimentalToggleGroupControl as ToggleGroupControl,
 	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
@@ -153,12 +152,6 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 								<ToggleGroupControlOption value="up" label={ __( 'Up', 'yaycheckout' ) } />
 							</ToggleGroupControl>
 						) }
-						<TextControl
-							label={ __( 'Label', 'yaycheckout' ) }
-							value={ label }
-							help={ __( "Read by screen readers as the name of the header's open/close button.", 'yaycheckout' ) }
-							onChange={ ( value ) => setAttributes( { label: value } ) }
-						/>
 					</PanelBody>
 				) : (
 					<PanelBody>
