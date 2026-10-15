@@ -8,7 +8,7 @@
 
 - **Rule:** every meta key, option name, transient and the post type is a class constant on the class that owns it (`Layout::POST_TYPE`, `Layout::OPTION_ACTIVE`, `CheckoutExtraFields::META_SNAPSHOT`, `CompatibilityCatalogue::TRANSIENT`). Call sites use the constant, never the string.
 - **Why:** a mistyped key reads nothing and raises no error, so the store silently forgets its active layout. A mistyped constant is a fatal error.
-- **In code:** `includes/Models/`, and the owning class elsewhere. `uninstall.php` is the one exception: it runs without the autoloader, so it repeats `yaycheckout_settings`, `general.delete_data_on_uninstall` and `yay_checkout_layout` as literals, and its docblock names the constants they copy. A per-user editor preference in `core/preferences` (the editor tour's `yaycheckout` / `editorTourDone`) is a constant in the module that reads it; core stores it, so there is nothing to uninstall.
+- **In code:** `includes/Models/`, and the owning class elsewhere. `uninstall.php` is the one exception: it runs without the autoloader, so it repeats `yaycheckout_settings`, `general.delete_data_on_uninstall` and `yay_checkout_layout` as literals, and its docblock names the constants they copy. A per-user editor preference in `core/preferences` (the editor tour's `yaycheckout` / `editorTourDone` and `featureToursSeen`) is a constant in the module that reads it; core stores it, so there is nothing to uninstall.
 
 ## Settings and design are declared once
 
