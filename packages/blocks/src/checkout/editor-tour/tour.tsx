@@ -1,8 +1,8 @@
 import { Button } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { createPortal, useEffect, useMemo, useRef, useState } from '@wordpress/element';
+import { createPortal, useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { tourSteps, type Placement, type TourStep } from './steps';
+import { type Placement, type TourStep } from './steps';
 import { useTargetRect } from './use-target';
 
 /** Space between the target and the edge of its lit-up area. */
@@ -103,12 +103,14 @@ function Step( {
 	go,
 	onClose,
 	onRect,
+	startLabel,
 }: {
 	step: TourStep;
 	index: number;
 	steps: TourStep[];
 	go: ( next: number ) => void;
 	onClose: () => void;
+	startLabel: string;
 	/** Hands the target's place to the spotlight, which outlives the step so it can glide to the next one. */
 	onRect: ( rect: DOMRect | null ) => void;
 } ) {
@@ -196,7 +198,7 @@ function Step( {
 					</Button>
 				) : (
 					<Button ref={ primary } variant="primary" onClick={ () => ( isLast ? onClose() : go( index + 1 ) ) }>
-						{ isFirst && __( 'Start tour', 'yaycheckout' ) }
+						{ isFirst && ! isLast && startLabel }
 						{ isLast && __( 'Finish', 'yaycheckout' ) }
 						{ ! isFirst && ! isLast && __( 'Next', 'yaycheckout' ) }
 					</Button>
@@ -217,12 +219,26 @@ function Step( {
 	);
 }
 
-export default function Tour( { onClose }: { onClose: () => void } ) {
-	const steps = useMemo( tourSteps, [] );
+export default function Tour( {
+	steps,
+	onClose,
+	startLabel = __( 'Start tour', 'yaycheckout' ),
+}: {
+	steps: TourStep[];
+	onClose: () => void;
+	/** The first step's button. */
+	startLabel?: string;
+} ) {
 	const [ index, setIndex ] = useState( 0 );
 	const [ rect, setRect ] = useState< DOMRect | null >( null );
 
 	const go = ( next: number ) => {
+		// A guided last step moves on by itself: past the end, the tour is over.
+		if ( next >= steps.length ) {
+			onClose();
+			return;
+		}
+
 		steps[ next ].open?.();
 		setIndex( next );
 	};
@@ -238,6 +254,7 @@ export default function Tour( { onClose }: { onClose: () => void } ) {
 				go={ go }
 				onClose={ onClose }
 				onRect={ setRect }
+				startLabel={ startLabel }
 			/>
 		</>
 	);
