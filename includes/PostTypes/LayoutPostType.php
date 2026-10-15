@@ -4,12 +4,13 @@ namespace YayCheckout\PostTypes;
 use YayCheckout\Controllers\LayoutCoreRestController;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
+use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Registers the checkout layout post type. show_ui stays on because the SPA embeds its editor screen, and
+ * Registers the checkout layout post type and its guest view's. show_ui stays on because the SPA embeds its editor screen, and
  * show_in_rest so the editor saves drafts through core's wp/v2.
  */
 class LayoutPostType {
@@ -21,6 +22,7 @@ class LayoutPostType {
 
     protected function __construct() {
         add_action( 'init', [ $this, 'register' ] );
+        add_filter( 'wp_insert_post_data', [ $this, 'sanitize_guest_view' ] );
     }
 
     public function register() {
@@ -48,25 +50,7 @@ class LayoutPostType {
                 // Every cap → CAPABILITY, so core's REST and our controllers check the same thing.
                 'capability_type'       => 'post',
                 'map_meta_cap'          => false,
-                'capabilities'          => array_fill_keys(
-                    [
-                        'edit_post',
-                        'read_post',
-                        'delete_post',
-                        'edit_posts',
-                        'edit_others_posts',
-                        'delete_posts',
-                        'delete_others_posts',
-                        'delete_published_posts',
-                        'delete_private_posts',
-                        'publish_posts',
-                        'read_private_posts',
-                        'edit_private_posts',
-                        'edit_published_posts',
-                        'create_posts',
-                    ],
-                    self::CAPABILITY
-                ),
+                'capabilities'          => self::capabilities(),
 
                 /*
                  * Seed a Checkout root on new layouts. Inserting another one
@@ -102,6 +86,71 @@ class LayoutPostType {
                     return current_user_can( self::CAPABILITY );
                 },
             ]
+        );
+
+        // What a blocked guest sees: one post per layout (post_parent), edited in core's block editor like the layout.
+        // Always published (LayoutRepository::save_guest_view()); LayoutCoreRestController gates reads and applies its publish rule to layouts only.
+        register_post_type(
+            Layout::GUEST_VIEW_POST_TYPE,
+            [
+                'labels'                => [
+                    'name'          => __( 'Guest views', 'yaycheckout' ),
+                    'singular_name' => __( 'Guest view', 'yaycheckout' ),
+                ],
+                'public'                => false,
+                'show_ui'               => true,
+                'show_in_menu'          => false,
+                'show_in_rest'          => true,
+                'rest_base'             => Layout::GUEST_VIEW_POST_TYPE,
+                'rest_controller_class' => LayoutCoreRestController::class,
+                'supports'              => [ 'title', 'editor', 'revisions' ],
+                'has_archive'           => false,
+                'rewrite'               => false,
+                'query_var'             => false,
+                'can_export'            => true,
+                'delete_with_user'      => false,
+                'capability_type'       => 'post',
+                'map_meta_cap'          => false,
+                'capabilities'          => self::capabilities(),
+            ]
+        );
+    }
+
+    /**
+     * Every write of a guest view, from the editor, a revision restore or LayoutRepository, keeps only
+     * Layout::GUEST_VIEW_BLOCKS. $data arrives slashed.
+     *
+     * @param array $data
+     * @return array
+     */
+    public function sanitize_guest_view( $data ) {
+        if ( Layout::GUEST_VIEW_POST_TYPE === ( $data['post_type'] ?? '' ) && isset( $data['post_content'] ) ) {
+            $data['post_content'] = wp_slash( LayoutMarkupReader::sanitize_guest_view( wp_unslash( $data['post_content'] ) ) );
+        }
+
+        return $data;
+    }
+
+    /** @return array<string, string> Every cap a layout or guest view checks, mapped to CAPABILITY. */
+    private static function capabilities(): array {
+        return array_fill_keys(
+            [
+                'edit_post',
+                'read_post',
+                'delete_post',
+                'edit_posts',
+                'edit_others_posts',
+                'delete_posts',
+                'delete_others_posts',
+                'delete_published_posts',
+                'delete_private_posts',
+                'publish_posts',
+                'read_private_posts',
+                'edit_private_posts',
+                'edit_published_posts',
+                'create_posts',
+            ],
+            self::CAPABILITY
         );
     }
 }

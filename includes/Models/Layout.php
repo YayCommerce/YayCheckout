@@ -15,10 +15,39 @@ class Layout {
 
     public const POST_TYPE = 'yay_checkout_layout';
 
+    /**
+     * What a blocked guest sees, one post per layout: its post_parent is the layout. A post of its own, not meta,
+     * so the layout editor's Guest view is core's block editor on that post. See docs/decisions/2026-10-14-guest-view-in-child-post.md.
+     */
+    public const GUEST_VIEW_POST_TYPE = 'yay_checkout_guest';
+
+    /** The post types the layout editor opens: a layout and its guest view. */
+    public const EDITOR_POST_TYPES = [ self::POST_TYPE, self::GUEST_VIEW_POST_TYPE ];
+
     public const META_RULES     = '_yaycheckout_rules';
     public const META_SELF_TEST = '_yaycheckout_self_test';
     public const META_DESIGN    = '_yaycheckout_design';
     public const META_TEMPLATE  = '_yaycheckout_template';
+
+    /**
+     * The blocks a guest view may hold: none posts a form, since a guest WooCommerce blocks from checking out has none to
+     * submit. BlockRegistry::allowed_blocks() offers only these in the guest view's editor, and
+     * LayoutMarkupReader::sanitize_guest_view() strips the rest whenever a guest view is written.
+     */
+    public const GUEST_VIEW_BLOCKS = [
+        'core/heading',
+        'core/paragraph',
+        'core/image',
+        'core/group',
+        'core/columns',
+        'core/column',
+        'core/buttons',
+        'core/button',
+        'core/separator',
+        'core/spacer',
+        'yaycheckout/login',
+        'yaycheckout/return-to-cart',
+    ];
 
     public const OPTION_ACTIVE = 'yaycheckout_active_layout';
 

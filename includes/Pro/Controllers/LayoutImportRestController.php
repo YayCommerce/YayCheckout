@@ -92,7 +92,7 @@ class LayoutImportRestController extends BaseRestController {
         try {
             $layout = LayoutImportReview::from_envelope( (array) $request->get_param( 'file' ) );
             $rules  = LayoutImportReview::rules_from_file( $layout['rules'] );
-            $draft  = $this->layouts->import( $layout['title'], $layout['content'], $rules['rules'], $layout['design'] );
+            $draft  = $this->layouts->import( $layout['title'], $layout['content'], $rules['rules'], $layout['design'], $layout['guest_view'] );
 
             return new \WP_REST_Response(
                 array_merge(

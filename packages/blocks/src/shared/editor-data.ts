@@ -29,6 +29,15 @@ export type EditorDesign = {
 	customCssMaxBytes: number;
 };
 
+/** The posts the view switch moves between; BlockRegistry::guest_view_posts() prints it, in a layout's or a guest view's editor only. */
+export type EditorGuestView = {
+	layoutId: number;
+	guestId: number;
+	/** Each post's editor URL, with the manager's embed flag when this page has it. */
+	layoutUrl: string;
+	guestUrl: string;
+};
+
 type EditorData = {
 	isPro: boolean;
 	postType: string;
@@ -36,6 +45,7 @@ type EditorData = {
 	/** The store's currency symbol, decoded, for amounts the merchant types (the Visibility panel's subtotal). */
 	currencySymbol: string;
 	design: EditorDesign | null;
+	guestView: EditorGuestView | null;
 	/** Cart value key => label, from LiveValues::cart_values(); printed in the block editor only. */
 	liveValues: Record< string, string >;
 };
@@ -53,6 +63,7 @@ export const editorData: EditorData = {
 	upgradeUrl: '',
 	currencySymbol: '',
 	design: null,
+	guestView: null,
 	liveValues: {},
 	...window.yayCheckoutBlocks,
 };

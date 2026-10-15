@@ -40,6 +40,11 @@ class LayoutRepository {
         return null !== $post && Layout::POST_TYPE === get_post_type( $post );
     }
 
+    /** The layout a layout-editor post belongs to: a layout's own id, or a guest view's post_parent. */
+    public static function layout_id_of( \WP_Post $post ): int {
+        return Layout::GUEST_VIEW_POST_TYPE === $post->post_type ? (int) $post->post_parent : $post->ID;
+    }
+
     /** Whether the layout is in the active set. Cheap per row: the option is in alloptions cache. */
     public function is_active( int $id ): bool {
         return in_array( $id, $this->active_ids(), true );
@@ -343,12 +348,13 @@ class LayoutRepository {
             LayoutTemplateCatalogue::markup( $template_slug ),
             [],
             LayoutTemplateCatalogue::design( $template_slug ),
-            $template_slug
+            $template_slug,
+            LayoutTemplateCatalogue::guest_view()
         );
     }
 
     /**
-     * Copies a layout's content, assignment rules, design and template into a new draft layout.
+     * Copies a layout's content, assignment rules, design, guest view and template into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -356,25 +362,26 @@ class LayoutRepository {
         $source = $this->find_or_throw( $id );
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template, $this->guest_view( $id ) );
     }
 
     /**
-     * Creates a draft from an export file's title, markup, assignment rules and design, verbatim.
+     * Creates a draft from an export file's title, markup, assignment rules, design and guest view, verbatim.
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
-     * @param array $rules Already sanitized (Layout::sanitize_rules()); [] for none.
+     * @param array  $rules      Already sanitized (Layout::sanitize_rules()); [] for none.
+     * @param string $guest_view The file's guest view; LayoutPostType::sanitize_guest_view() filters it on write. '' for none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    public function import( string $title, string $content, array $rules, LayoutDesign $design ): Layout {
-        return $this->insert_draft( $title, $content, $rules, $design, '' );
+    public function import( string $title, string $content, array $rules, LayoutDesign $design, string $guest_view ): Layout {
+        return $this->insert_draft( $title, $content, $rules, $design, '', $guest_view );
     }
 
     /**
-     * Puts a layout's blocks and design back to its template's, or to the default template's when it has
+     * Puts a layout's blocks, design and guest view back to its template's, or to the default template's when it has
      * none still available. The plan lock is not checked: it governs creating, not the merchant's own layout.
-     * Title, status, rules, the template and the active flag stay. WordPress stores the old markup as a
-     * revision, so the editor can undo it; the design meta has no revisions.
+     * Title, status, rules, the template and the active flag stay. WordPress stores the old markup and guest view
+     * as revisions, so the editor can undo them; the design meta has no revisions.
      *
      * @throws \InvalidArgumentException When the layout is missing or the update fails.
      */
@@ -397,6 +404,7 @@ class LayoutRepository {
 
         // update_post_meta() unslashes too; a template's custom CSS may hold backslashes.
         update_post_meta( $id, Layout::META_DESIGN, wp_slash( LayoutTemplateCatalogue::design( $slug )->to_meta() ) );
+        $this->save_guest_view( $id, LayoutTemplateCatalogue::guest_view() );
 
         return $this->find( $id );
     }
@@ -454,9 +462,10 @@ class LayoutRepository {
      *
      * @param array  $rules         Already sanitized; written with the post, like the design, so the draft never exists without them.
      * @param string $template_slug The catalogue template it comes from; '' when none (an import).
+     * @param string $guest_view    The guest view's markup; '' for none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug ): Layout {
+    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug, string $guest_view ): Layout {
         $meta = [ Layout::META_DESIGN => $design->to_meta() ];
 
         if ( [] !== $rules ) {
@@ -490,6 +499,10 @@ class LayoutRepository {
             throw new \InvalidArgumentException( $new_id->get_error_message() );
         }
 
+        if ( '' !== $guest_view ) {
+            $this->save_guest_view( (int) $new_id, $guest_view );
+        }
+
         return $this->find( (int) $new_id );
     }
 
@@ -511,9 +524,91 @@ class LayoutRepository {
             throw new \InvalidArgumentException( __( 'Deactivate this layout before deleting it.', 'yaycheckout' ) );
         }
 
+        $guest_id = $this->guest_view_id( $id );
+
         if ( ! wp_delete_post( $id, true ) ) {
             throw new \RuntimeException( sprintf( 'Layout %d could not be deleted.', $id ) );
         }
+
+        // Core deletes no child of a non-hierarchical post.
+        if ( $guest_id > 0 ) {
+            wp_delete_post( $guest_id, true );
+        }
+    }
+
+    /** The layout's guest view post (Layout::GUEST_VIEW_POST_TYPE), or 0 when it has none. */
+    public function guest_view_id( int $layout_id ): int {
+        $post = $this->guest_view_post( $layout_id );
+
+        return null !== $post ? $post->ID : 0;
+    }
+
+    /** What a blocked guest sees for this layout, as block markup; '' when it has no guest view. */
+    public function guest_view( int $layout_id ): string {
+        $post = $this->guest_view_post( $layout_id );
+
+        return null !== $post ? $post->post_content : '';
+    }
+
+    private function guest_view_post( int $layout_id ): ?\WP_Post {
+        $posts = get_posts(
+            [
+                'post_type'              => Layout::GUEST_VIEW_POST_TYPE,
+                'post_parent'            => $layout_id,
+                'post_status'            => 'any',
+                'numberposts'            => 1,
+                'orderby'                => 'ID',
+                'order'                  => 'ASC',
+                'update_post_meta_cache' => false,
+                'update_post_term_cache' => false,
+            ]
+        );
+
+        return $posts[0] ?? null;
+    }
+
+    /**
+     * Writes the layout's guest view, creating its post when it has none, and returns the post's id. An update
+     * is revisioned like any post. LayoutPostType::sanitize_guest_view() filters the markup.
+     *
+     * @throws \InvalidArgumentException When WordPress refuses the write.
+     */
+    public function save_guest_view( int $layout_id, string $markup ): int {
+        $guest_id = $this->guest_view_id( $layout_id );
+
+        if ( $guest_id > 0 ) {
+            // Core revisions after the update, so a guest view never edited has no revision of the old markup.
+            wp_save_post_revision( $guest_id );
+            $this->update_post(
+                [
+                    'ID'           => $guest_id,
+                    'post_content' => $markup,
+                ]
+            );
+
+            return $guest_id;
+        }
+
+        // Slashed for the same reason as insert_draft(). Published, so the editor's autosave goes to an autosave
+        // revision: on a draft it would overwrite the post, putting unsaved edits on the storefront.
+        $new_id = wp_insert_post(
+            wp_slash(
+                [
+                    'post_type'    => Layout::GUEST_VIEW_POST_TYPE,
+                    'post_status'  => LayoutStatus::PUBLISHED,
+                    'post_title'   => __( 'Guest view', 'yaycheckout' ),
+                    'post_parent'  => $layout_id,
+                    'post_content' => $markup,
+                ]
+            ),
+            true
+        );
+
+        if ( is_wp_error( $new_id ) ) {
+            throw new \InvalidArgumentException( $new_id->get_error_message() );
+        }
+
+        return (int) $new_id;
     }
 
     /**

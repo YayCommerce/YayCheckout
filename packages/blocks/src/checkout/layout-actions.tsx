@@ -7,9 +7,11 @@ import { createPortal, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { store as noticesStore } from '@wordpress/notices';
 import { registerPlugin } from '@wordpress/plugins';
+import { addQueryArgs } from '@wordpress/url';
 import { editorData } from '../shared/editor-data';
 import { errorMessage } from '../shared/error-message';
 import { layoutStateStore } from './layout-state';
+import { GUEST_VIEW_ARG, useIsGuestView, ViewSwitch } from './layout-view';
 import { useLayoutProblem } from './publish-guard';
 
 /** LayoutEditorCanvas hides core's status controls only under this class, so they stay if the buttons can't mount. */
@@ -113,7 +115,11 @@ function LayoutActions() {
 			isLocked: editor.isPostSavingLocked(),
 		};
 	}, [] );
+	const isGuest = useIsGuestView();
 	const isLayout = postType === editorData.postType;
+	const inEditor = isLayout || isGuest;
+	// A guest view previews and reports its layout's state; Activate and Deactivate stay with the layout itself.
+	const layoutId = isGuest ? editorData.guestView?.layoutId ?? 0 : postId;
 	const { message: problem } = useLayoutProblem();
 	const { savePost } = useDispatch( editorStore );
 	const { receiveEntityRecords } = useDispatch( coreStore );
@@ -123,20 +129,20 @@ function LayoutActions() {
 	const [ confirm, setConfirm ] = useState< Action | null >( null );
 	const [ isBusy, setBusy ] = useState( false );
 	const [ isPreviewing, setPreviewing ] = useState( false );
-	const slot = useHeaderSlot( isLayout );
+	const slot = useHeaderSlot( inEditor );
 
 	useEffect( () => {
-		if ( ! isLayout || ! postId ) {
+		if ( ! isLayout || ! layoutId ) {
 			return;
 		}
 
-		apiFetch< LayoutWire >( { path: `/yaycheckout/v1/layouts/${ postId }` } )
+		apiFetch< LayoutWire >( { path: `/yaycheckout/v1/layouts/${ layoutId }` } )
 			.then( ( layout ) => setActive( layout.is_active ) )
 			// Unknown state: Save stays, Activate and Deactivate stay hidden.
 			.catch( () => setActive( null ) );
-	}, [ isLayout, postId ] );
+	}, [ isLayout, layoutId ] );
 
-	if ( ! isLayout || ! slot ) {
+	if ( ! inEditor || ! slot ) {
 		return null;
 	}
 
@@ -184,15 +190,16 @@ function LayoutActions() {
 		setPreviewing( true );
 		try {
 			const link = await apiFetch< PreviewLinkWire >( {
-				path: `/yaycheckout/v1/layouts/${ postId }/preview-link`,
+				path: `/yaycheckout/v1/layouts/${ layoutId }/preview-link`,
 				method: 'POST',
 			} );
+			const url = isGuest ? addQueryArgs( link.url, { [ GUEST_VIEW_ARG ]: 'guest' } ) : link.url;
 
 			if ( tab ) {
 				tab.opener = null;
-				tab.location.href = link.url;
+				tab.location.href = url;
 			} else {
-				window.open( link.url, '_blank', 'noopener' );
+				window.open( url, '_blank', 'noopener' );
 			}
 		} catch ( error ) {
 			tab?.close();
@@ -205,12 +212,13 @@ function LayoutActions() {
 	};
 
 	// Unknown state (null) offers neither: Save alone.
-	const toggle: Action | null = isActive === null ? null : isActive ? 'deactivate' : 'activate';
+	const toggle: Action | null = isGuest || isActive === null ? null : isActive ? 'deactivate' : 'activate';
 	const modal = confirm && copyFor( confirm, title );
 
 	return createPortal(
 		<>
 			<Flex gap={ 2 } expanded={ false }>
+				<ViewSwitch />
 				<Button
 					__next40pxDefaultSize
 					variant="tertiary"

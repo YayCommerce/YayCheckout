@@ -41,8 +41,10 @@ class LayoutEditorCanvas {
 .block-editor-block-list__layout.is-root-container.is-root-container > :where(:not(.alignleft):not(.alignright):not(.alignfull)),
 .block-editor-block-list__layout.is-root-container.is-root-container > .alignwide {
 	max-width: none;
-}
-.editor-visual-editor__post-title-wrapper,
+}';
+
+    /** A layout's and a guest view's title is set for them, so neither canvas offers one. Before WordPress 6.5 the wrapper is edit-post's. */
+    private const TITLE_CSS = '.editor-visual-editor__post-title-wrapper,
 .edit-post-visual-editor__post-title-wrapper {
 	display: none;
 }';
@@ -78,13 +80,14 @@ body.yaycheckout-has-layout-actions :is(
         add_action( 'enqueue_block_assets', [ $this, 'canvas_base_styles' ] );
     }
 
-    /** The storefront's base stylesheet and the edited layout's design tokens, without the merchant's custom CSS. */
+    /** The storefront's base stylesheet and the edited layout's design tokens, without the merchant's custom CSS. A guest view takes its layout's. */
     public function canvas_base_styles(): void {
         if ( ! $this->is_layout_editor() ) {
             return;
         }
 
-        $layout = ( new LayoutRepository() )->find( (int) get_the_ID() );
+        $post   = get_post();
+        $layout = null !== $post ? ( new LayoutRepository() )->find( LayoutRepository::layout_id_of( $post ) ) : null;
 
         ( new CheckoutBaseStyles() )->enqueue( false, null !== $layout ? $layout->design : LayoutDesign::from_meta( [] ) );
     }
@@ -92,7 +95,7 @@ body.yaycheckout-has-layout-actions :is(
     private function is_layout_editor(): bool {
         $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-        return null !== $screen && $screen->is_block_editor() && Layout::POST_TYPE === $screen->post_type;
+        return null !== $screen && $screen->is_block_editor() && in_array( $screen->post_type, Layout::EDITOR_POST_TYPES, true );
     }
 
     public function editor_styles(): void {
@@ -104,19 +107,22 @@ body.yaycheckout-has-layout-actions :is(
     }
 
     /**
-     * No __unstableType: a theme style is dropped when the "Use theme styles" preference is off.
+     * No __unstableType: a theme style is dropped when the "Use theme styles" preference is off. A guest view keeps the
+     * theme's widths: on the storefront it fills the Checkout block's place, not the page.
      *
      * @param array                    $settings
      * @param \WP_Block_Editor_Context $context
      * @return array
      */
     public function canvas_styles( array $settings, $context ): array {
-        if ( ! LayoutRepository::is_layout( $context->post ) ) {
+        $post_type = $context->post instanceof \WP_Post ? $context->post->post_type : '';
+
+        if ( ! in_array( $post_type, Layout::EDITOR_POST_TYPES, true ) ) {
             return $settings;
         }
 
         $settings['styles']   = isset( $settings['styles'] ) ? $settings['styles'] : [];
-        $settings['styles'][] = [ 'css' => self::CANVAS_CSS ];
+        $settings['styles'][] = [ 'css' => Layout::POST_TYPE === $post_type ? self::CANVAS_CSS . "\n" . self::TITLE_CSS : self::TITLE_CSS ];
 
         return $settings;
     }

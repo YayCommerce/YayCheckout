@@ -3,7 +3,7 @@
  * Removes layouts and yaycheckout_* options, only when the merchant opted in.
  *
  * No autoloader here, so the literals below mirror Settings::OPTION_SETTINGS,
- * general.delete_data_on_uninstall and Layout::POST_TYPE. Keep them in sync.
+ * general.delete_data_on_uninstall, Layout::POST_TYPE and Layout::GUEST_VIEW_POST_TYPE. Keep them in sync.
  * Single site only.
  */
 
@@ -19,7 +19,7 @@ global $wpdb;
 
 // Not get_posts(): 'any' excludes trash, where archived layouts live.
 $yaycheckout_layout_ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-    $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s", 'yay_checkout_layout' )
+    $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type IN ( %s, %s )", 'yay_checkout_layout', 'yay_checkout_guest' )
 );
 
 foreach ( $yaycheckout_layout_ids as $yaycheckout_layout_id ) {

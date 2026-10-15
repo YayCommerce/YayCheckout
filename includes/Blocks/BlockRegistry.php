@@ -1,6 +1,8 @@
 <?php
 namespace YayCheckout\Blocks;
 
+use YayCheckout\Controllers\LayoutTemplateCatalogue;
+use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Engine\Register\ScriptName;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
@@ -9,6 +11,7 @@ use YayCheckout\Renderer\CheckoutLogin;
 use YayCheckout\Renderer\BlockVisibility;
 use YayCheckout\Renderer\LiveValues;
 use YayCheckout\Renderer\PinToBottom;
+use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -174,6 +177,8 @@ class BlockRegistry {
         $login_editor_data = [
             'reminderEnabled' => CheckoutLogin::reminder_enabled(),
             'settingsUrl'     => admin_url( 'admin.php?page=wc-settings&tab=account#woocommerce_enable_checkout_login_reminder' ),
+            // In a guest view a Login always prints (CheckoutLogin::in_guest_view()), so the editor drops its reminder warning there.
+            'guestPostType'   => Layout::GUEST_VIEW_POST_TYPE,
         ];
 
         self::inline_data( generate_block_asset_handle( 'yaycheckout/login', 'editorScript' ), 'window.yayCheckoutLogin', $login_editor_data );
@@ -199,9 +204,9 @@ class BlockRegistry {
     }
 
     /**
-     * Adds `design` to window.yayCheckoutBlocks: LayoutDesign's rules, which the Layout design sidebar edits
-     * the layout's design with. Only in the block editor, since register_blocks() runs on every request and
-     * nothing else reads it.
+     * Adds `design` and `guestView` to window.yayCheckoutBlocks: LayoutDesign's rules, which the Layout design sidebar
+     * edits the layout's design with, and the layout and guest view posts the view switch moves between. Only in the
+     * block editor, since register_blocks() runs on every request and nothing else reads it.
      */
     public function editor_design_data(): void {
         $design = [
@@ -221,6 +226,42 @@ class BlockRegistry {
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.design', $design );
         // The live value picker's Cart totals and Counts.
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.liveValues', LiveValues::cart_values() );
+        $guest_view = $this->guest_view_posts( get_post() );
+
+        if ( null !== $guest_view ) {
+            self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.guestView', $guest_view );
+        }
+    }
+
+    /**
+     * The posts the view switch moves between, for the post being edited; null outside both editors. Each URL keeps
+     * LayoutEditorEmbed::QUERY_FLAG when this page has it. Opening a layout that has no guest view yet gives it the
+     * default one, so the switch always has a post to open.
+     *
+     * @param \WP_Post|null $post
+     * @return array{layoutId: int, guestId: int, layoutUrl: string, guestUrl: string}|null
+     */
+    private function guest_view_posts( $post ): ?array {
+        if ( ! $post instanceof \WP_Post || ! in_array( $post->post_type, Layout::EDITOR_POST_TYPES, true ) || 'auto-draft' === $post->post_status ) {
+            return null;
+        }
+
+        $layouts   = new LayoutRepository();
+        $layout_id = LayoutRepository::layout_id_of( $post );
+        $guest_id  = Layout::GUEST_VIEW_POST_TYPE === $post->post_type ? $post->ID : $layouts->guest_view_id( $layout_id );
+        $guest_id  = $guest_id > 0 ? $guest_id : $layouts->save_guest_view( $layout_id, LayoutTemplateCatalogue::guest_view() );
+        $edit_url  = static function ( int $id ): string {
+            $url = (string) get_edit_post_link( $id, 'raw' );
+
+            return LayoutEditorEmbed::is_embed_request() ? add_query_arg( LayoutEditorEmbed::QUERY_FLAG, '1', $url ) : $url;
+        };
+
+        return [
+            'layoutId'  => $layout_id,
+            'guestId'   => $guest_id,
+            'layoutUrl' => $edit_url( $layout_id ),
+            'guestUrl'  => $edit_url( $guest_id ),
+        ];
     }
 
     /**
@@ -338,7 +379,7 @@ class BlockRegistry {
 
     /** Adds the YayCheckout inserter category in the layout editor. */
     public function register_category( $categories, $editor_context ) {
-        if ( 'layout' !== $this->editor( $editor_context ) ) {
+        if ( ! in_array( $this->editor( $editor_context ), [ 'layout', 'guest' ], true ) ) {
             return $categories;
         }
 
@@ -366,6 +407,8 @@ class BlockRegistry {
         switch ( $this->editor( $editor_context ) ) {
             case 'layout':
                 return self::without( $allowed_block_types, static fn( $name ) => 'woocommerce/checkout' === $name );
+            case 'guest':
+                return Layout::GUEST_VIEW_BLOCKS;
             case 'other':
                 return self::without( $allowed_block_types, static fn( $name ) => str_starts_with( $name, 'yaycheckout/' ) );
             default:
@@ -373,7 +416,7 @@ class BlockRegistry {
         }
     }
 
-    /** 'layout', 'other', or '' while Gutenberg has not said which editor this is. */
+    /** 'layout', 'guest' (a layout's guest view), 'other', or '' while Gutenberg has not said which editor this is. */
     private function editor( $editor_context ): string {
         $post      = $editor_context->post ?? null;
         $post_type = $post instanceof \WP_Post ? $post->post_type : '';
@@ -384,6 +427,10 @@ class BlockRegistry {
         }
 
         if ( '' !== $post_type ) {
+            if ( Layout::GUEST_VIEW_POST_TYPE === $post_type ) {
+                return 'guest';
+            }
+
             return Layout::POST_TYPE === $post_type ? 'layout' : 'other';
         }
 

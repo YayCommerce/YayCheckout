@@ -86,10 +86,11 @@ class LayoutImportReview {
         }
 
         return [
-            'title'   => $layout['title'],
-            'content' => $layout['content'],
-            'rules'   => $layout['rules'] ?? null,
-            'design'  => LayoutDesign::from_meta( $layout['design'] ?? null ),
+            'title'      => $layout['title'],
+            'content'    => $layout['content'],
+            'rules'      => $layout['rules'] ?? null,
+            'design'     => LayoutDesign::from_meta( $layout['design'] ?? null ),
+            'guest_view' => is_string( $layout['guest_view'] ?? null ) ? $layout['guest_view'] : '',
         ];
     }
 }

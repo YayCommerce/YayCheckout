@@ -3,13 +3,14 @@ namespace YayCheckout\Controllers;
 
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Enums\LayoutStatus;
+use YayCheckout\Models\Layout;
 use YayCheckout\PostTypes\LayoutPostType;
 use YayCheckout\Services\LayoutMarkupReader;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Core's wp/v2 controller for layouts, with reads gated like everything else and
+ * Core's wp/v2 controller for layouts and their guest views, with reads gated like everything else and
  * publishing held to the same layout rules. WP_REST_Posts_Controller serves any
  * 'publish' post to anyone before it consults the post type's capabilities, so
  * a logged-out request would otherwise get the layout markup.
@@ -72,7 +73,8 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
         $status  = $prepared->post_status ?? ( $stored ? $stored->post_status : '' );
         $content = $prepared->post_content ?? ( $stored ? $stored->post_content : '' );
 
-        if ( ! in_array( $status, LayoutStatus::live(), true ) ) {
+        // A guest view (Layout::GUEST_VIEW_POST_TYPE) shares this controller but holds no checkout.
+        if ( Layout::POST_TYPE !== $this->post_type || ! in_array( $status, LayoutStatus::live(), true ) ) {
             return $prepared;
         }
 
