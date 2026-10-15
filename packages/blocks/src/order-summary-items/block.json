@@ -25,7 +25,7 @@
     "itemData": {
       "type": "string",
       "enum": [ "list", "inline", "hidden" ],
-      "default": "list"
+      "default": "inline"
     },
     "showSku": {
       "type": "boolean",

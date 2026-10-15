@@ -246,7 +246,7 @@ $yaycheckout_ship_label = 'shipping' === $yaycheckout_main ? __( 'SHIP TO', 'yay
 <!-- /wp:group -->
 
 <!-- wp:group {"style":{"border":{"top":{"color":"#cccccc","width":"1px","style":"dashed"}},"spacing":{"padding":{"top":"18px"},"blockGap":"4px"}}} -->
-<div class="wp-block-group" style="border-top-color:#cccccc;border-top-style:dashed;border-top-width:1px;padding-top:18px"><!-- wp:yaycheckout/order-summary-items {"showLabels":false,"showThumbnails":false,"itemData":"inline","quantityDisplay":"inline","style":{"typography":{"fontSize":"12px","textTransform":"uppercase"},"spacing":{"blockGap":"4px"}}} /--></div>
+<div class="wp-block-group" style="border-top-color:#cccccc;border-top-style:dashed;border-top-width:1px;padding-top:18px"><!-- wp:yaycheckout/order-summary-items {"showLabels":false,"showThumbnails":false,"quantityDisplay":"inline","style":{"typography":{"fontSize":"12px","textTransform":"uppercase"},"spacing":{"blockGap":"4px"}}} /--></div>
 <!-- /wp:group -->
 
 <!-- wp:group {"style":{"border":{"top":{"color":"#cccccc","width":"1px","style":"dashed"}},"spacing":{"padding":{"top":"18px"},"blockGap":"4px"}}} -->
