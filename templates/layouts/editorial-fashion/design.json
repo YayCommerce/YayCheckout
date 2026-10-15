@@ -3,7 +3,8 @@
 		"primary": "#d9472f",
 		"text": "#1e1e1e",
 		"background": "#f6f1ea",
-		"border": "#1e1e1e"
+		"border": "#1e1e1e",
+		"muted": ""
 	},
 	"typography": {
 		"font_family": "system",

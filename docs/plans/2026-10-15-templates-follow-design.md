@@ -5,7 +5,7 @@
 **Status:** active
 **Goal:** A layout created from any prebuilt template restyles when the merchant changes a Design colour (primary, text, background, border), because its blocks no longer carry copies of those colours.
 **Spec:** none, planned from the request
-**Architecture:** First, delete a template colour when the block's CSS default already paints that token. If the colour equals a token but no default covers it, bind it to that token's "Design: X" swatch. Text on core blocks (paragraph, group, heading, icon) is left unset unless the colour is specific, so it inherits the body text. For the muted grey on YayCheckout blocks, which has no token, add a derived "Design: Muted" swatch: it is computed in CSS from text and background, and there is no stored setting. Colours that are deliberately fixed stay as hex. The shipping and payment hover gets a derived CSS default, so the templates' `#f0f0f0` can go.
+**Architecture:** First, delete a template colour when the block's CSS default already paints that token. If the colour equals a token but no default covers it, bind it to that token's "Design: X" swatch. Text on core blocks (paragraph, group, heading, icon) is left unset unless the colour is specific, so it inherits the body text. For the muted grey on YayCheckout blocks, which has no token, add a Muted colour token (`colours.muted`). Left empty, it is derived in CSS from text and background, and a merchant can override it in the Design panel. Colours that are deliberately fixed stay as hex. The shipping and payment hover gets a derived CSS default, so the templates' `#f0f0f0` can go.
 **Touches:** `assets/css/design-presets.css` (shared: the storefront and the editor canvas both load it, through `CheckoutBaseStyles`); `packages/blocks/src/checkout/layout-design.tsx`; `packages/blocks/src/{shipping-methods,payment}/style.css`; `templates/layouts/*/markup.php` (9 templates); `docs/architecture.md`; `.claude/skills/build-checkout-template/references/pitfalls.md`
 **Tests:** none. The change is CSS and template markup, which the CLAUDE.md test rule doesn't cover. The existing `LayoutTemplateCatalogueTest` runs as a check.
 
@@ -14,7 +14,7 @@
 - **Goal:** In a new layout made from a template, changing a Design colour changes every block that showed that colour.
 - **Out of scope:**
   - Migration: the plugin has no shipped users, so block defaults change directly and no stored layout needs updating.
-  - New stored Design tokens.
+  - New stored Design tokens other than `colours.muted`.
   - `preview.html`, which is built from the mock.
   - `design.json` values.
   - Deliberately fixed colours (see the mapping, row F).
@@ -68,6 +68,8 @@ Where row A removes a value that was a near-match rather than equal (Minimal ste
 ---
 
 ### Task 1: "Design: Muted" swatch
+
+> Revised after review: Muted first shipped as a derived swatch only, and did not appear in the Design panel's Colours. It is now a token, `colours.muted` (default `''`). It is in `LayoutDesign::schema()`, prints `--yaycheckout-color-muted` from `DesignStyles::vars()` and `design-css.ts`, and is in every template's `design.json` as `"muted": ""`. `--yaycheckout-design-muted` reads that token first, then the 60% mix. The palette builds the swatch from the schema like the other four.
 
 **Files:**
 - Modify: `assets/css/design-presets.css`

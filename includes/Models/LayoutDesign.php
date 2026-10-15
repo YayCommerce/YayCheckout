@@ -114,6 +114,10 @@ final class LayoutDesign {
                     'type'    => 'color',
                     'default' => '',
                 ],
+                'muted'      => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
             ],
             'typography' => [
                 'font_family' => [

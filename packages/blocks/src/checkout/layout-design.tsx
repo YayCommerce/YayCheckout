@@ -68,6 +68,7 @@ const TOKEN_LABELS: Record< string, string > = {
 	text: __( 'Text', 'yaycheckout' ),
 	background: __( 'Background', 'yaycheckout' ),
 	border: __( 'Border', 'yaycheckout' ),
+	muted: __( 'Muted', 'yaycheckout' ),
 	font_family: __( 'Font', 'yaycheckout' ),
 	base_size: __( 'Base size', 'yaycheckout' ),
 	style: __( 'Style', 'yaycheckout' ),
@@ -206,7 +207,7 @@ function isLayoutEditor(): boolean {
 
 /**
  * The colour tokens as swatches in every colour picker of the layout editor, as the presets design-presets.css
- * prints, then Muted, which that stylesheet derives from text and background and no setting holds. A swatch's colour is a custom property no other swatch shares, so a pick matches its slug (or stores
+ * prints. A swatch's colour is a custom property no other swatch shares, so a pick matches its slug (or stores
  * that var()) and the block follows later Design changes. The editor's own document loads the same stylesheet
  * and design, so the swatches show the design's colours.
  *
@@ -229,11 +230,6 @@ function addDesignPalette( design: EditorDesign ) {
 			// Not the preset's own var(): the editor resolves a colour naming a preset through it, so it would never return.
 			color: `var(--yaycheckout-design-${ token })`,
 		};
-	} );
-	swatches.push( {
-		name: __( 'Design: Muted', 'yaycheckout' ),
-		slug: DESIGN_PRESET_PREFIX + 'muted',
-		color: 'var(--yaycheckout-design-muted)',
 	} );
 	const groupLabel = __( 'Checkout', 'yaycheckout' );
 

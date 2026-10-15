@@ -128,6 +128,7 @@ class DesignStyles {
                 'color-text'    => $colours['text'],
                 LayoutDesign::is_gradient( $background ) ? 'background-gradient' : 'color-background' => $background,
                 'color-border'  => $colours['border'],
+                'color-muted'   => $colours['muted'],
             ],
             $not_empty
         );

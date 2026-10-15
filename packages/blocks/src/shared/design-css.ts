@@ -59,6 +59,7 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 		[ 'color-text', String( colours.text ?? '' ) ],
 		[ isGradient( background ) ? 'background-gradient' : 'color-background', background ],
 		[ 'color-border', String( colours.border ?? '' ) ],
+		[ 'color-muted', String( colours.muted ?? '' ) ],
 	];
 	const notEmpty = ( [ , value ]: [ string, string ] ) => '' !== value;
 	const out = pairs.filter( notEmpty );
