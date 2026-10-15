@@ -19,7 +19,7 @@
   - `design.json` values.
   - Deliberately fixed colours (see the mapping, row F).
 - **Acceptance criteria:**
-  1. No template's `markup.php` contains `#3858e9` or `#dddddd`, and `#f0f0f0` only as Upsell's savings-note background. Editorial's contains no `#d9472f`. `#757575` stays only inside Split express's dark column.
+  1. No template's `markup.php` contains `#3858e9` or `#dddddd`. `#f0f0f0` appears only as Upsell's savings-note background and Split express's dark-column text (row F). Editorial's contains no `#d9472f`. `#757575` stays only inside Split express's dark column.
   2. The block picker offers "Design: Muted". With text `#1e1e1e` and background `#ffffff`, it computes to about `rgb(120, 120, 120)`.
   3. A Joined, Cards, Card grid or Single box shipping/payment row with no hover colour set tints on hover to `color-mix(in srgb, currentColor 6%, <row background>)`.
   4. Every template still opens in the editor with no invalid block, and still publishes.
@@ -219,6 +219,10 @@ Where row A removes a value that was a near-match rather than equal (Minimal ste
   - The `#1e1e1e` border and radio on shipping/payment are removed (row A).
   - `#757575` and `#1e1e1e` on core paragraphs and icons are unset (row A). On YayCheckout blocks (terms, login, return-to-cart), `#757575` becomes Muted (row D).
   - Split express's separators become `yaycheckout-border`.
+  - Editorial's Divider lines layout falls back to the text colour, not the border, so its shipping/payment `border` binds to `var(--yaycheckout-design-border)`.
+  - Split express's white right-hand column is unset, because the page is white. Its badge text `#1e1e1e` binds to `var(--yaycheckout-design-text)`, so it matches the column, which now follows Text.
+  - Editorial's `design.json` `radios.checked` `#d9472f` (a copy of primary) becomes `''`, so the selected radio follows primary.
+  - The test order in Step 4 needs an active layout. A preview link can't place orders.
 
 - [ ] **Step 2: Add the rule to `pitfalls.md`**
 
