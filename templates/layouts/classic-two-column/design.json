@@ -25,5 +25,12 @@
 		"border_width": 1,
 		"checked": ""
 	},
+	"radios": {
+		"size": null,
+		"border_width": null,
+		"border": "",
+		"background": "",
+		"checked": ""
+	},
 	"custom_css": ""
 }
