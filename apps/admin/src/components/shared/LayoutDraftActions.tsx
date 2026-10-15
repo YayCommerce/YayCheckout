@@ -16,7 +16,7 @@ export function LayoutDraftActions({ layoutId, onClose }: { layoutId: number; on
   return (
     <div className="flex gap-2">
       <Button variant="outline" onClick={() => goTo(LAYOUTS_PATH)}>
-        {__('Go to Layouts', 'yaycheckout')}
+        {__('Go to layouts', 'yaycheckout')}
       </Button>
       <Button onClick={() => goTo(editLayoutPath(layoutId))}>{__('Open in editor', 'yaycheckout')}</Button>
     </div>

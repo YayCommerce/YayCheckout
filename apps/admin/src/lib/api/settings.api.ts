@@ -54,6 +54,7 @@ export function integrationFromWire(wire: IntegrationWire): Integration {
     detected: wire.detected,
     version: wire.version,
     active: wire.active,
+    iconUrl: wire.icon_url ?? null,
     learnMoreUrl: wire.learn_more_url,
   };
 }

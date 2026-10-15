@@ -1,23 +1,23 @@
 import { ReactNode } from 'react';
 
-/** Shared page frame: header with an actions slot, then stacked content. */
+/** Shared page frame: title, description and an actions slot, then stacked content. */
 export default function PageLayout({
-  heading,
+  title,
   description,
   actions,
   children,
 }: {
-  heading: string;
-  description?: string;
+  title: ReactNode;
+  description?: ReactNode;
   actions?: ReactNode;
   children?: ReactNode;
 }) {
   return (
     <div className="mx-auto max-w-7xl p-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-lg font-semibold">{heading}</h1>
-          {description ? <p className="text-muted-foreground text-sm">{description}</p> : null}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          {description ? <div className="text-muted-foreground text-sm">{description}</div> : null}
         </div>
         {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
       </div>

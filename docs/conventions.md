@@ -43,6 +43,16 @@
 - **Why:** the autoloader maps names to paths, so a mismatch fails silently. `components/` stays a list of what is genuinely shared, so a component there can be changed knowing who depends on it.
 - **In code:** the loader in `yaycheckout.php`; `apps/admin/src/pages/`, `apps/admin/src/components/`.
 
+## Admin headings, labels and copy
+
+- **Rule:**
+  - A page's title and description go through `PageLayout`. Its h1 is the only `text-2xl` on the page; a section is a `Card` with `CardTitle` and `CardDescription`.
+  - A settings section is a `SettingsSection`. A form-bound setting is a `SettingRow` inside `FormField`'s render prop, with the focusable element wrapped in `FormControl`. A switch row is horizontal (label on the left, switch on the right); a select, input or textarea row is vertical (label above). A row that triggers an action instead of holding a value is a `SettingActionRow`.
+  - UI copy is sentence case: "Save changes", not "Save Changes". Product and plugin names keep their capitals. A section or setting description is one short sentence ending in a period.
+  - A string translated outside a component runs `__()` inside a function, not at module load.
+- **Why:** the SPA follows YayLoyalty's admin, so merchants who run both see one pattern. `FormLabel` and `FormControl` give each control an accessible name and show its zod error. `__()` at import can run before the locale data loads.
+- **In code:** `apps/admin/src/pages/PageLayout.tsx`, `apps/admin/src/pages/settings/components/SettingsSection.tsx`, `apps/admin/src/pages/settings/components/SettingRow.tsx`.
+
 ## Logging
 
 - **Rule:** log faults, not expected outcomes. PHP logs through `Helpers\Logger` (WooCommerce's log, source `yaycheckout`); `Logger::exception()` records the route, class, file, line and trace, and `BaseRestController` calls it for every 500. A 4xx the merchant caused, such as the layout limit or unpublishable markup, is not logged. The SPA logs through `apps/admin/src/lib/logger.ts`, where the failure is handled (`apps/admin/src/lib/query-client.ts`, `apps/admin/src/pages/500.tsx`), not at every layer.

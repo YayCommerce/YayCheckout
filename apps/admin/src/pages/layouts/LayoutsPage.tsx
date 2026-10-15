@@ -112,7 +112,7 @@ export default function LayoutsPage() {
 
   return (
     <PageLayout
-      heading={__('Layouts', 'yaycheckout')}
+      title={__('Layouts', 'yaycheckout')}
       description={__('Create and activate checkout layouts.', 'yaycheckout')}
     >
       {/* isPending fires only on first load; keepPreviousData turns later fetches into isFetching. */}
@@ -399,7 +399,7 @@ function LayoutsPageBody({
       />
 
       <Card className="min-w-0">
-        <h2 className="text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
+        <h2 className="text-xl leading-none font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Segmented

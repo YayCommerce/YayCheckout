@@ -20,7 +20,7 @@ export default function CompatibilityPage() {
 
   return (
     <PageLayout
-      heading={__('Compatibility', 'yaycheckout')}
+      title={__('Compatibility', 'yaycheckout')}
       description={__('What this store runs and how it fits the checkout YayCheckout renders.', 'yaycheckout')}
       actions={
         <LoadingButton
