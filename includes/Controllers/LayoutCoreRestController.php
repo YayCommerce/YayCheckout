@@ -3,6 +3,7 @@ namespace YayCheckout\Controllers;
 
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Enums\LayoutStatus;
+use YayCheckout\Models\Layout;
 use YayCheckout\PostTypes\LayoutPostType;
 use YayCheckout\Services\LayoutMarkupReader;
 
@@ -68,6 +69,15 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
             return $prepared;
         }
 
+        // The logged-out view saves into its meta; post_content, which the checks below read, stays as stored.
+        if ( LayoutEditorEmbed::is_logged_out_view( $request ) && isset( $prepared->post_content ) ) {
+            // Core's content_save_pre never sees meta. Unslashed here (update_item() slashes later), and kses wants it slashed.
+            $prepared->meta_input = [
+                Layout::META_LOGGED_OUT => current_user_can( 'unfiltered_html' ) ? $prepared->post_content : wp_unslash( wp_filter_post_kses( wp_slash( $prepared->post_content ) ) ),
+            ];
+            unset( $prepared->post_content );
+        }
+
         $stored  = isset( $prepared->ID ) ? get_post( $prepared->ID ) : null;
         $status  = $prepared->post_status ?? ( $stored ? $stored->post_status : '' );
         $content = $prepared->post_content ?? ( $stored ? $stored->post_content : '' );
@@ -83,5 +93,40 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
         }
 
         return $prepared;
+    }
+
+    /** In the logged-out view the editor loads that view's markup as the post content, or a starter when none is saved. */
+    public function prepare_item_for_response( $item, $request ) {
+        if ( ! LayoutEditorEmbed::is_logged_out_view( $request ) || 'edit' !== $request['context'] ) {
+            return parent::prepare_item_for_response( $item, $request );
+        }
+
+        // Skips rendering the main markup into content.rendered, which is replaced below.
+        add_filter( 'the_content', '__return_empty_string', PHP_INT_MIN );
+        $response = parent::prepare_item_for_response( $item, $request );
+        remove_filter( 'the_content', '__return_empty_string', PHP_INT_MIN );
+
+        $data   = $response->get_data();
+        $markup = (string) get_post_meta( $item->ID, Layout::META_LOGGED_OUT, true );
+
+        if ( isset( $data['content'] ) ) {
+            $data['content']['raw']      = '' !== $markup ? $markup : self::logged_out_starter();
+            $data['content']['rendered'] = '';
+            $response->set_data( $data );
+        }
+
+        return $response;
+    }
+
+    /** The logged-out view before its first save: what WooCommerce prints there, as blocks the merchant can restyle. */
+    private static function logged_out_starter(): string {
+        return '<!-- wp:yaycheckout/checkout -->' . "\n"
+            . '<!-- wp:heading -->' . "\n"
+            . '<h2 class="wp-block-heading">' . esc_html__( 'Log in to check out', 'yaycheckout' ) . '</h2>' . "\n"
+            . '<!-- /wp:heading -->' . "\n\n"
+            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- WooCommerce's own message, so its translation applies.
+            . '<!-- wp:paragraph -->' . "\n" . '<p>' . esc_html__( 'You must be logged in to checkout.', 'woocommerce' ) . '</p>' . "\n" . '<!-- /wp:paragraph -->' . "\n\n"
+            . '<!-- wp:yaycheckout/login /-->' . "\n"
+            . '<!-- /wp:yaycheckout/checkout -->';
     }
 }

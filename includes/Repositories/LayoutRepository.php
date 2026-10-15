@@ -348,7 +348,7 @@ class LayoutRepository {
     }
 
     /**
-     * Copies a layout's content, assignment rules, design and template into a new draft layout.
+     * Copies a layout's content, logged-out view, assignment rules, design and template into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -356,7 +356,7 @@ class LayoutRepository {
         $source = $this->find_or_throw( $id );
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template, $source->logged_out_content );
     }
 
     /**
@@ -454,9 +454,10 @@ class LayoutRepository {
      *
      * @param array  $rules         Already sanitized; written with the post, like the design, so the draft never exists without them.
      * @param string $template_slug The catalogue template it comes from; '' when none (an import).
+     * @param string $logged_out_content The logged-out view's markup; '' when none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug ): Layout {
+    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug, string $logged_out_content = '' ): Layout {
         $meta = [ Layout::META_DESIGN => $design->to_meta() ];
 
         if ( [] !== $rules ) {
@@ -465,6 +466,10 @@ class LayoutRepository {
 
         if ( '' !== $template_slug ) {
             $meta[ Layout::META_TEMPLATE ] = $template_slug;
+        }
+
+        if ( '' !== $logged_out_content ) {
+            $meta[ Layout::META_LOGGED_OUT ] = $logged_out_content;
         }
 
         // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.

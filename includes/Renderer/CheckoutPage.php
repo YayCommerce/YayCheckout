@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Enums\ConditionType;
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
@@ -29,6 +30,9 @@ class CheckoutPage {
     /** @var Layout|null|false false until first resolved. */
     private $layout = false;
 
+    /** The resolved layout's content is its logged-out view. */
+    private bool $logged_out_view = false;
+
     protected function __construct() {
         add_action( 'wp', [ $this, 'maybe_take_over' ] );
     }
@@ -40,6 +44,13 @@ class CheckoutPage {
         }
 
         return $this->layout;
+    }
+
+    /** True when the layout renders its logged-out view: a guest WooCommerce makes log in, or a preview of that view. */
+    public function is_logged_out_view(): bool {
+        $this->layout();
+
+        return $this->logged_out_view;
     }
 
     /** True when this request is the checkout form and a layout renders it. Meaningful from `wp` on. */
@@ -91,7 +102,8 @@ class CheckoutPage {
 
         // Before the safe-mode check: safe mode protects shoppers, a preview is the merchant looking.
         if ( null !== $preview_id ) {
-            return ( new LayoutRepository() )->find( $preview_id );
+            // The merchant is logged in, so a preview shows the logged-out view only when asked for it.
+            return $this->with_view( ( new LayoutRepository() )->find( $preview_id ), LayoutEditorEmbed::is_logged_out_view() );
         }
 
         if ( ( new SettingsRepository() )->is_safe_mode() ) {
@@ -99,7 +111,20 @@ class CheckoutPage {
         }
 
         // Picked afresh by every request, AJAX and order submit too, with no pin: safe because every ConditionType reads a fact that holds for the life of the form.
-        return ( new LayoutRepository() )->active( $this->shopper_context() );
+        return $this->with_view( ( new LayoutRepository() )->active( $this->shopper_context() ), CheckoutLogin::must_log_in() );
+    }
+
+    /**
+     * Swaps in the logged-out view when wanted and saved, so every reader of $layout->content
+     * (fragments, fields, visibility) sees the markup that rendered. Unsaved, the layout renders as is.
+     */
+    private function with_view( ?Layout $layout, bool $wants ): ?Layout {
+        if ( null !== $layout && $wants && '' !== $layout->logged_out_content ) {
+            $layout->content       = $layout->logged_out_content;
+            $this->logged_out_view = true;
+        }
+
+        return $layout;
     }
 
     /**
