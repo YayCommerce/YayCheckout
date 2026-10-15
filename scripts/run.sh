@@ -327,6 +327,9 @@ cmd_release() {
         sed_inplace "s/^ \* Plugin Name: .*/ \* Plugin Name:       $plan_label - WooCommerce Checkout Builder/" "$temp_dir/$PLUGIN_SLUG.php"
     fi
 
+    # The source defaults to dev mode (Vite on :3040); a customer zip must load assets/dist.
+    sed_inplace "s/define( 'YAYCHECKOUT_IS_DEVELOPMENT', true )/define( 'YAYCHECKOUT_IS_DEVELOPMENT', false )/" "$temp_dir/$PLUGIN_SLUG.php"
+
     rm -f "$temp_dir/includes/Engine/Register/RegisterDev.php"
     rm -rf "$temp_dir/assets/dist/admin/.vite" 2>/dev/null || true
     find "$temp_dir" -name ".DS_Store" -delete 2>/dev/null || true
@@ -353,6 +356,11 @@ cmd_release() {
 
     if [ "$plan" = "pro" ] && [ "$pro_entries" -eq 0 ]; then
         print_error "Pro artifact is missing includes/Pro/"
+        exit 1
+    fi
+
+    if ! unzip -p "$zip_name" "$plan_slug/$PLUGIN_SLUG.php" | grep -q "define( 'YAYCHECKOUT_IS_DEVELOPMENT', false )"; then
+        print_error "Artifact does not set YAYCHECKOUT_IS_DEVELOPMENT to false"
         exit 1
     fi
 
