@@ -27,6 +27,8 @@
 		"size": 16,
 		"radius": 2,
 		"border_width": 1,
+		"border": "",
+		"background": "",
 		"checked": ""
 	},
 	"radios": {

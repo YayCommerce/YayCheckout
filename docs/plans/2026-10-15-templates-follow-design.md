@@ -155,7 +155,7 @@ Where row A removes a value that was a near-match rather than equal (Minimal ste
 
   Run `composer lint -- <the five files>`. Expected: no errors.
 
-  Run `composer test -- --filter LayoutTemplateCatalogueTest`. Use the per-site socket from `docs/known-issues.md`. Expected: no new failure. On `dev/edd` it already fails with `classic-two-column: help_text` (that `design.json` has no `help_text` section).
+  Run `composer test -- --filter LayoutTemplateCatalogueTest`. Use the per-site socket from `docs/known-issues.md`. Expected: OK. It used to fail with `classic-two-column: help_text` because some `design.json` files lacked sections; every template's `design.json` now equals its `to_meta()`.
 
   The editor validity check is lenient: `wp.blocks.parse()` auto-recovers. Also run `wp.blocks.validateBlock(block)[0]` on every parsed block. Expected: no invalid block except Live receipt's four numbered pill paragraphs, which are already invalid on `dev/edd`.
 
