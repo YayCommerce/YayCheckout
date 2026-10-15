@@ -108,9 +108,15 @@ $yaycheckout_legal        = '' !== $yaycheckout_terms_sentence
 <!-- /wp:group --></div>
 <!-- /wp:group -->
 
-<!-- wp:yaycheckout/email {"label":"<?php esc_html_e( 'Email address', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'you@example.com', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'Your download link and license key will be sent here.', 'yaycheckout' ); ?>","requiredMark":"*"} /-->
+<!-- wp:group {"style":{"spacing":{"blockGap":"6px"}}} -->
+<div class="wp-block-group"><!-- wp:paragraph {"style":{"typography":{"fontSize":"13px","fontWeight":"500"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p style="margin-top:0;margin-bottom:0;font-size:13px;font-weight:500"><?php esc_html_e( 'Email address', 'yaycheckout' ); ?> <span style="color:#cc1818">*</span></p>
+<!-- /wp:paragraph -->
 
-<!-- wp:yaycheckout/payment {"label":"<?php esc_html_e( 'Card information', 'yaycheckout' ); ?>","headingLevel":3,"layout":"joined","style":{"yaycheckout":{"title":{"typography":{"fontSize":"13px","fontWeight":"500"}},"backgroundSelected":"rgba(56,88,233,0.04)","backgroundHover":"#f0f0f0","border":"#757575","radio":"#757575","radioSelected":"#3858e9","radius":"4px"}}} /-->
+<!-- wp:yaycheckout/email {"label":"<?php esc_html_e( 'Email address', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'you@example.com', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'Your download link and license key will be sent here.', 'yaycheckout' ); ?>","requiredMark":"*"} /--></div>
+<!-- /wp:group -->
+
+<!-- wp:yaycheckout/payment {"label":"<?php esc_html_e( 'Card information', 'yaycheckout' ); ?>","headingLevel":3,"layout":"joined","style":{"color":{"background":"#ffffff","text":"#1e1e1e"},"yaycheckout":{"title":{"typography":{"fontSize":"13px","fontWeight":"500"}},"backgroundSelected":"rgba(56,88,233,0.04)","backgroundHover":"#f0f0f0","border":"#757575","radio":"#757575","radioSelected":"#3858e9","radius":"4px"}}} /-->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"12px"}}} -->
 <div class="wp-block-group"><!-- wp:paragraph {"style":{"typography":{"fontSize":"13px","fontWeight":"500"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
@@ -126,8 +132,8 @@ $yaycheckout_legal        = '' !== $yaycheckout_terms_sentence
 <!-- wp:yaycheckout/extra-field {"fieldKey":"vat_number","label":"<?php esc_html_e( 'VAT number', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'VAT number, e.g. DE123456789', 'yaycheckout' ); ?>","disclosure":"link","disclosureText":"<?php esc_html_e( '+ Add VAT number (business)', 'yaycheckout' ); ?>"} /--></div>
 <!-- /wp:group -->
 
-<!-- wp:group {"className":"yaycheckout-digital-product-submit","style":{"spacing":{"blockGap":"12px","margin":{"top":"0"}}}} -->
-<div class="wp-block-group yaycheckout-digital-product-submit" style="margin-top:0"><!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Pay', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022 \u0022 data-suffix=\u0022\u0022\u003e <?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","style":{"color":{"background":"#3858e9","text":"#ffffff"},"typography":{"fontSize":"15px","fontWeight":"600","textAlign":"center"},"border":{"radius":"4px"},"dimensions":{"width":"var:preset|dimension|100"}}} /-->
+<!-- wp:group {"className":"yaycheckout-digital-product-submit","style":{"spacing":{"blockGap":"12px","margin":{"top":"16px"}}}} -->
+<div class="wp-block-group yaycheckout-digital-product-submit" style="margin-top:16px"><!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Pay', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022 \u0022 data-suffix=\u0022\u0022\u003e <?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","style":{"color":{"background":"#3858e9","text":"#ffffff"},"typography":{"fontSize":"15px","fontWeight":"600","textAlign":"center"},"border":{"radius":"4px"},"dimensions":{"width":"var:preset|dimension|100"}}} /-->
 
 <!-- wp:paragraph {"align":"center","style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px","lineHeight":"1.5"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
 <p class="has-text-align-center has-text-color" style="color:#757575;margin-top:0;margin-bottom:0;font-size:12px;line-height:1.5"><?php echo wp_kses_post( $yaycheckout_legal ); ?></p>
