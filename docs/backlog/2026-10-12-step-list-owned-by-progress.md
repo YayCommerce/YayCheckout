@@ -4,7 +4,7 @@
 
 **Update when:** a Done when condition is met (tick its box), the code it describes changes, or the suggested fix changes. Once every box is ticked, the item is done: remove the file.
 
-**Source:** /yaytidy on the Go to Step block (`docs/plans/2026-10-12-go-to-step-block.md`), 2026-10-12, branch `alan/feat/go-to-step-block`, PR #90. Kept out of that PR so it only adds the block.
+**Source:** /yaytidy on the Go to Step block, 2026-10-12, branch `alan/feat/go-to-step-block`, PR #90. Kept out of that PR so it only adds the block.
 
 ## Today
 
