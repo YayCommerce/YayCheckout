@@ -1,17 +1,29 @@
 import apiFetch from '@wordpress/api-fetch';
 import {
 	store as blockEditorStore,
+	__experimentalColorGradientControl as ColorGradientControl,
 	__experimentalColorGradientSettingsDropdown as ColorGradientSettingsDropdown,
 	__experimentalUseMultipleOriginColorsAndGradients as useMultipleOriginColorsAndGradients,
 	getColorClassName,
 } from '@wordpress/block-editor';
 import {
+	Button,
+	ColorIndicator,
+	Dropdown,
 	Flex,
+	FlexItem,
 	PanelBody,
+	Path,
 	RangeControl,
 	SelectControl,
+	SVG,
+	TabPanel,
 	TextareaControl,
+	__experimentalDropdownContentWrapper as DropdownContentWrapper,
+	__experimentalHStack as HStack,
 	__experimentalToolsPanel as ToolsPanel,
+	__experimentalToolsPanelItem as ToolsPanelItem,
+	__experimentalZStack as ZStack,
 } from '@wordpress/components';
 import { select, useDispatch, useSelect } from '@wordpress/data';
 import { addFilter } from '@wordpress/hooks';
@@ -82,6 +94,8 @@ const TOKEN_LABELS: Record< string, string > = {
 	border_width: __( 'Border width', 'yaycheckout' ),
 	checked: __( 'Checked', 'yaycheckout' ),
 	color: __( 'Colour', 'yaycheckout' ),
+	link: __( 'Link', 'yaycheckout' ),
+	link_hover: __( 'Link hover', 'yaycheckout' ),
 };
 
 const ENUM_LABELS: Record< string, string > = {
@@ -205,6 +219,12 @@ function isLayoutEditor(): boolean {
 }
 
 /**
+ * The colour tokens offered to blocks as no swatch, so design-presets.css has no preset for them: a block colours
+ * its links with its own Link colour, not the layout's.
+ */
+const NO_SWATCH_TOKENS = [ 'link', 'link_hover' ];
+
+/**
  * The colour tokens as swatches in every colour picker of the layout editor, as the presets design-presets.css
  * prints. A swatch's colour is a custom property no other swatch shares, so a pick matches its slug (or stores
  * that var()) and the block follows later Design changes. The editor's own document loads the same stylesheet
@@ -219,17 +239,19 @@ function isLayoutEditor(): boolean {
  * way core would (a block's own, then the root's), less a block attribute's `settings`.
  */
 function addDesignPalette( design: EditorDesign ) {
-	const swatches: Swatch[] = Object.keys( design.schema.colours ).map( ( token ) => {
-		const slug = DESIGN_PRESET_PREFIX + token;
+	const swatches: Swatch[] = Object.keys( design.schema.colours )
+		.filter( ( token ) => ! NO_SWATCH_TOKENS.includes( token ) )
+		.map( ( token ) => {
+			const slug = DESIGN_PRESET_PREFIX + token;
 
-		return {
-			/* translators: %s: a design colour, such as Primary */
-			name: sprintf( __( 'Design: %s', 'yaycheckout' ), TOKEN_LABELS[ token ] ?? token ),
-			slug,
-			// Not the preset's own var(): the editor resolves a colour naming a preset through it, so it would never return.
-			color: `var(--yaycheckout-design-${ token })`,
-		};
-	} );
+			return {
+				/* translators: %s: a design colour, such as Primary */
+				name: sprintf( __( 'Design: %s', 'yaycheckout' ), TOKEN_LABELS[ token ] ?? token ),
+				slug,
+				// Not the preset's own var(): the editor resolves a colour naming a preset through it, so it would never return.
+				color: `var(--yaycheckout-design-${ token })`,
+			};
+		} );
 	const groupLabel = __( 'Checkout', 'yaycheckout' );
 
 	addFilter(
@@ -268,11 +290,141 @@ function isColourRule( rule: DesignRule ): boolean {
 	return 'color' === rule.type || 'fill' === rule.type;
 }
 
+/** Where core opens a sidebar colour popover. */
+const SIDEBAR_POPOVER = { placement: 'left-start', offset: 36, shift: true } as const;
+
+/** Core's reset icon (@wordpress/icons `reset`), which the blocks don't bundle. */
+const RESET_ICON = (
+	<SVG xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+		<Path d="M7 11.5h10V13H7z" />
+	</SVG>
+);
+
+type ColourState = {
+	/** The token this state stores. */
+	token: string;
+	label: string;
+	colorValue?: string;
+	colorSlug?: string;
+	onColorChange: ( next?: string, slug?: string ) => void;
+};
+
+/**
+ * One colour with a state per tab (Default and Hover), as core's block Elements → Link item: a row with an
+ * indicator per state, and a popover with a tab per state. Built from public components, since core's own
+ * (ColorGradientDropdownItem) is private; the classes are core's, so the row matches the items beside it.
+ */
+function StateColourItem( {
+	label,
+	panelId,
+	states,
+	colors,
+	disableCustomColors,
+	onReset,
+}: {
+	label: string;
+	panelId: string;
+	states: ColourState[];
+	colors: ColourOrigin[] | undefined;
+	disableCustomColors?: boolean;
+	onReset: () => void;
+} ) {
+	const hasValue = () => states.some( ( state ) => undefined !== state.colorValue );
+
+	return (
+		<ToolsPanelItem
+			className="block-editor-color-gradient-item block-editor-tools-panel-color-gradient-settings__item"
+			hasValue={ hasValue }
+			label={ label }
+			onDeselect={ onReset }
+			isShownByDefault
+			panelId={ panelId }
+		>
+			<Dropdown
+				popoverProps={ SIDEBAR_POPOVER }
+				className="block-editor-tools-panel-color-gradient-settings__dropdown"
+				renderToggle={ ( { onToggle, isOpen } ) => (
+					<>
+						<Button
+							__next40pxDefaultSize
+							onClick={ onToggle }
+							className={ `block-editor-panel-color-gradient-settings__dropdown${ isOpen ? ' is-open' : '' }` }
+							aria-expanded={ isOpen }
+						>
+							<HStack justify="flex-start">
+								<ZStack isLayered={ false } offset={ -8 }>
+									{ states.map( ( state ) => (
+										<Flex key={ state.token } expanded={ false }>
+											<ColorIndicator colorValue={ state.colorValue } />
+										</Flex>
+									) ) }
+								</ZStack>
+								<FlexItem className="block-editor-panel-color-gradient-settings__color-name" title={ label }>
+									{ label }
+								</FlexItem>
+							</HStack>
+						</Button>
+						{ hasValue() && (
+							<Button
+								__next40pxDefaultSize
+								label={ __( 'Reset', 'yaycheckout' ) }
+								className="block-editor-panel-color-gradient-settings__reset"
+								size="small"
+								icon={ RESET_ICON }
+								onClick={ () => {
+									onReset();
+									if ( isOpen ) {
+										onToggle();
+									}
+								} }
+							/>
+						) }
+					</>
+				) }
+				renderContent={ () => (
+					<DropdownContentWrapper paddingSize="none">
+						<div className="block-editor-panel-color-gradient-settings__dropdown-content">
+							<TabPanel
+								className="yaycheckout-layout-design__state-tabs"
+								tabs={ states.map( ( state ) => ( { name: state.token, title: state.label } ) ) }
+							>
+								{ ( tab ) => {
+									const state = states.find( ( item ) => item.token === tab.name ) ?? states[ 0 ];
+
+									return (
+										<ColorGradientControl
+											key={ state.token }
+											showTitle={ false }
+											enableAlpha={ false }
+											__experimentalIsRenderedInSidebar
+											colors={ colors }
+											disableCustomColors={ disableCustomColors }
+											colorValue={ state.colorValue }
+											colorSlug={ state.colorSlug }
+											onColorChange={ state.onColorChange }
+											clearable={ undefined !== state.colorValue }
+											headingLevel={ 3 }
+										/>
+									);
+								} }
+							</TabPanel>
+						</div>
+					</DropdownContentWrapper>
+				) }
+			/>
+		</ToolsPanelItem>
+	);
+}
+
+/** The suffix that makes a colour token another token's hover state, as colours.link_hover is colours.link's. */
+const HOVER_SUFFIX = '_hover';
+
 /**
  * A section's colour tokens as the block editor's colour items, in a ToolsPanel styled like a block's Color panel.
  * A theme swatch is stored as its preset's custom property, so the layout follows later palette changes; a
  * custom pick is stored as written. Clear, or clicking the selected swatch again, unsets the colour (''), which
- * prints nothing, so the theme's colour shows. A fill (the background) also takes gradients.
+ * prints nothing, so the theme's colour shows. A fill (the background) also takes gradients. A token with a
+ * `<token>_hover` sibling is one item with a tab per state (StateColourItem).
  */
 function ColourSettings( {
 	label,
@@ -321,30 +473,74 @@ function ColourSettings( {
 		return null;
 	}
 
-	const settings = tokens.map( ( [ token, rule ] ) => {
-		const value = String( values[ token ] ?? '' );
-		const isFill = 'fill' === rule.type;
-		const gradient = isFill && isGradient( value );
-		const colorPreset = gradient ? undefined : presetOf( value, 'color', palettes.colors );
-		const gradientPreset = gradient ? presetOf( value, 'gradient', palettes.gradients ) : undefined;
+	const isColour = ( token: string ) => tokens.some( ( [ key ] ) => key === token );
+	const isStateful = ( token: string ) => isColour( token + HOVER_SUFFIX );
+	const isHoverState = ( token: string ) =>
+		token.endsWith( HOVER_SUFFIX ) && isColour( token.slice( 0, -HOVER_SUFFIX.length ) );
 
-		return {
-			label: TOKEN_LABELS[ token ] ?? token,
-			colorValue: gradient || '' === value ? undefined : colorPreset?.color ?? value,
-			colorSlug: colorPreset?.slug,
-			onColorChange: ( next?: string, slug?: string ) => change( token, 'color', next, slug ),
-			...( isFill
-				? {
-						gradientValue: gradient ? gradientPreset?.gradient ?? value : undefined,
-						gradientSlug: gradientPreset?.slug,
-						onGradientChange: ( next?: string, slug?: string ) => change( token, 'gradient', next, slug ),
-				  }
-				: {} ),
-			// Clear empties the token (''), so the theme's colour shows.
-			clearable: true,
-			isShownByDefault: true,
-		};
-	} );
+	/** A colour token's value for the picker: a preset's colour and slug, or the colour as stored; none when empty. */
+	const colourOf = ( value: string ) => {
+		const preset = presetOf( value, 'color', palettes.colors );
+
+		return { colorValue: '' === value ? undefined : preset?.color ?? value, colorSlug: preset?.slug };
+	};
+
+	const stateItems = tokens
+		.filter( ( [ token ] ) => isStateful( token ) )
+		.map( ( [ token ] ) => {
+			const states: ColourState[] = [
+				[ token, __( 'Default', 'yaycheckout' ) ],
+				[ token + HOVER_SUFFIX, __( 'Hover', 'yaycheckout' ) ],
+			].map( ( [ key, stateLabel ] ) => ( {
+				token: key,
+				label: stateLabel,
+				...colourOf( String( values[ key ] ?? '' ) ),
+				onColorChange: ( next?: string, slug?: string ) => change( key, 'color', next, slug ),
+			} ) );
+
+			return (
+				<StateColourItem
+					key={ token }
+					label={ TOKEN_LABELS[ token ] ?? token }
+					panelId={ panelId }
+					states={ states }
+					colors={ palettes.colors }
+					disableCustomColors={ palettes.disableCustomColors }
+					onReset={ () =>
+						onChange( {
+							...latest.current,
+							[ token ]: rules[ token ].default,
+							[ token + HOVER_SUFFIX ]: rules[ token + HOVER_SUFFIX ].default,
+						} )
+					}
+				/>
+			);
+		} );
+
+	const settings = tokens
+		.filter( ( [ token ] ) => ! isStateful( token ) && ! isHoverState( token ) )
+		.map( ( [ token, rule ] ) => {
+			const value = String( values[ token ] ?? '' );
+			const isFill = 'fill' === rule.type;
+			const gradient = isFill && isGradient( value );
+			const gradientPreset = gradient ? presetOf( value, 'gradient', palettes.gradients ) : undefined;
+
+			return {
+				label: TOKEN_LABELS[ token ] ?? token,
+				...( gradient ? {} : colourOf( value ) ),
+				onColorChange: ( next?: string, slug?: string ) => change( token, 'color', next, slug ),
+				...( isFill
+					? {
+							gradientValue: gradient ? gradientPreset?.gradient ?? value : undefined,
+							gradientSlug: gradientPreset?.slug,
+							onGradientChange: ( next?: string, slug?: string ) => change( token, 'gradient', next, slug ),
+					  }
+					: {} ),
+				// Clear empties the token (''), so the theme's colour shows.
+				clearable: true,
+				isShownByDefault: true,
+			};
+		} );
 
 	return (
 		<ToolsPanel
@@ -363,16 +559,19 @@ function ColourSettings( {
 			}
 		>
 			<div className="color-block-support-panel__inner-wrapper">
-				<ColorGradientSettingsDropdown
-					__experimentalIsRenderedInSidebar
-					panelId={ panelId }
-					settings={ settings }
-					colors={ palettes.colors }
-					gradients={ palettes.gradients }
-					disableCustomColors={ palettes.disableCustomColors }
-					disableCustomGradients={ palettes.disableCustomGradients }
-					enableAlpha={ false }
-				/>
+				{ settings.length > 0 && (
+					<ColorGradientSettingsDropdown
+						__experimentalIsRenderedInSidebar
+						panelId={ panelId }
+						settings={ settings }
+						colors={ palettes.colors }
+						gradients={ palettes.gradients }
+						disableCustomColors={ palettes.disableCustomColors }
+						disableCustomGradients={ palettes.disableCustomGradients }
+						enableAlpha={ false }
+					/>
+				) }
+				{ stateItems }
 			</div>
 		</ToolsPanel>
 	);

@@ -13,6 +13,14 @@ const PAGE_SELECTOR = 'body.yaycheckout-page, .editor-styles-wrapper';
 const HEADING_SELECTOR =
 	'body.yaycheckout-page :is(h1, h2, h3, h4, h5, h6):not([class*="-font-family"]), .editor-styles-wrapper :is(h1, h2, h3, h4, h5, h6):not([class*="-font-family"])';
 
+/** Mirrors DesignStyles::LINK_SELECTOR in PHP. */
+const LINK_SELECTOR =
+	'body.yaycheckout-page :is(p, h1, h2, h3, h4, h5, h6, .wp-block-yaycheckout-terms) a:not(.has-link-color a, .wp-element-button), .editor-styles-wrapper :is(p, h1, h2, h3, h4, h5, h6, .wp-block-yaycheckout-terms) a:not(.has-link-color a, .wp-element-button)';
+
+/** Mirrors DesignStyles::LINK_HOVER_SELECTOR in PHP. */
+const LINK_HOVER_SELECTOR =
+	'body.yaycheckout-page :is(p, h1, h2, h3, h4, h5, h6, .wp-block-yaycheckout-terms) a:not(.has-link-color a, .wp-element-button):is(:hover, :focus), .editor-styles-wrapper :is(p, h1, h2, h3, h4, h5, h6, .wp-block-yaycheckout-terms) a:not(.has-link-color a, .wp-element-button):is(:hover, :focus)';
+
 /** The font lists DesignStyles reads from LayoutDesign in PHP. */
 export type DesignFonts = {
 	/** Slug => CSS font-family name; '' is the theme's font. */
@@ -156,6 +164,13 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 
 	out.push( ...radioColours.filter( notEmpty ) );
 
+	const linkColours: [ string, string ][] = [
+		[ 'link-color', String( colours.link ?? '' ) ],
+		[ 'link-hover-color', String( colours.link_hover ?? '' ) ],
+	];
+
+	out.push( ...linkColours.filter( notEmpty ) );
+
 	if ( null !== tokens.help_text.size ) {
 		out.push( [ 'help-text-size', `${ tokens.help_text.size }px` ] );
 	}
@@ -188,6 +203,15 @@ export function designCss( tokens: DesignTokens, fonts: DesignFonts ): string {
 
 	if ( names.includes( 'font-family' ) ) {
 		css += `${ HEADING_SELECTOR } {\n\tfont-family: inherit;\n}\n`;
+	}
+
+	if ( names.includes( 'link-color' ) ) {
+		css += `${ LINK_SELECTOR } {\n\tcolor: var(--yaycheckout-link-color);\n}\n`;
+	}
+
+	// An empty hover colour keeps the link colour, so the theme's hover colour doesn't show either.
+	if ( names.includes( 'link-color' ) || names.includes( 'link-hover-color' ) ) {
+		css += `${ LINK_HOVER_SELECTOR } {\n\tcolor: var(--yaycheckout-link-hover-color, var(--yaycheckout-link-color));\n}\n`;
 	}
 
 	return css;

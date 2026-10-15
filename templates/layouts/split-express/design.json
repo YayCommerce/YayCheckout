@@ -4,7 +4,9 @@
 		"text": "#1e1e1e",
 		"background": "#ffffff",
 		"border": "#dddddd",
-		"muted": ""
+		"muted": "",
+		"link": "",
+		"link_hover": ""
 	},
 	"typography": {
 		"font_family": "",

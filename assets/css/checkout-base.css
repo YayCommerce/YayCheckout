@@ -234,6 +234,15 @@ html.yaycheckout-has-pinned body {
 	cursor: pointer;
 }
 
+/* A link toggle takes the design's link colours (elements); a collapsible or checkbox toggle is a row, not a link. */
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="link"] {
+	color: var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor));
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="link"]:is(:hover, :focus) {
+	color: var(--yaycheckout-link-hover-color, var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor)));
+}
+
 /* Collapsible: a full-width header that opens and closes the panel below it. */
 .yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="collapsible"] {
 	display: flex;

@@ -12,7 +12,8 @@ defined( 'ABSPATH' ) || exit;
  * inputs.label is the one token with no property here: it switches a layout of rules on, so it is a class on the
  * checkout wrapper (checkout/render.php, and checkout/edit.tsx on the canvas).
  *
- * The page rule and, with a font, the heading rule are the only selectors printed here. The page rule sets the
+ * The page rule, with a font the heading rule, and with a link colour the link rules are the only selectors printed
+ * here. The page rule sets the
  * page's background, text colour and font, which a stylesheet can't read from an unset property
  * without resetting the theme's own (background isn't inherited, and an unset
  * inherited property on body takes html's value, not the theme's body value).
@@ -41,6 +42,17 @@ class DesignStyles {
      * font of its own is left out.
      */
     private const HEADING_SELECTOR = 'body.yaycheckout-page :is(h1, h2, h3, h4, h5, h6):not([class*="-font-family"]), .editor-styles-wrapper :is(h1, h2, h3, h4, h5, h6):not([class*="-font-family"])';
+
+    /**
+     * The links in paragraphs, headings and the terms, which take the link colour instead of the theme's. A link
+     * inside a block with a link colour of its own (core's has-link-color, on the block or a group around it) is
+     * left out, and so is a button. Printed only with a colour: the theme's own link colour is no custom property a
+     * fallback could read.
+     */
+    private const LINK_SELECTOR = 'body.yaycheckout-page :is(p, h1, h2, h3, h4, h5, h6, .wp-block-yaycheckout-terms) a:not(.has-link-color a, .wp-element-button), .editor-styles-wrapper :is(p, h1, h2, h3, h4, h5, h6, .wp-block-yaycheckout-terms) a:not(.has-link-color a, .wp-element-button)';
+
+    /** The same links, hovered or focused. */
+    private const LINK_HOVER_SELECTOR = 'body.yaycheckout-page :is(p, h1, h2, h3, h4, h5, h6, .wp-block-yaycheckout-terms) a:not(.has-link-color a, .wp-element-button):is(:hover, :focus), .editor-styles-wrapper :is(p, h1, h2, h3, h4, h5, h6, .wp-block-yaycheckout-terms) a:not(.has-link-color a, .wp-element-button):is(:hover, :focus)';
 
     /** Page property => the token it takes, printed only when vars() set that token. */
     private const PAGE_PROPERTIES = [
@@ -94,6 +106,15 @@ class DesignStyles {
 
         if ( isset( $vars['font-family'] ) ) {
             $css .= self::HEADING_SELECTOR . " {\n\tfont-family: inherit;\n}\n";
+        }
+
+        if ( isset( $vars['link-color'] ) ) {
+            $css .= self::LINK_SELECTOR . " {\n\tcolor: var(--yaycheckout-link-color);\n}\n";
+        }
+
+        // An empty hover colour keeps the link colour, so the theme's hover colour doesn't show either.
+        if ( isset( $vars['link-color'] ) || isset( $vars['link-hover-color'] ) ) {
+            $css .= self::LINK_HOVER_SELECTOR . " {\n\tcolor: var(--yaycheckout-link-hover-color, var(--yaycheckout-link-color));\n}\n";
         }
 
         if ( ! $with_custom_css ) {
@@ -228,6 +249,17 @@ class DesignStyles {
                     'radio-border-color'  => $radios['border'],
                     'radio-background'    => $radios['background'],
                     'radio-checked-color' => $radios['checked'],
+                ],
+                $not_empty
+            )
+        );
+
+        $vars = array_merge(
+            $vars,
+            array_filter(
+                [
+                    'link-color'       => $colours['link'],
+                    'link-hover-color' => $colours['link_hover'],
                 ],
                 $not_empty
             )
