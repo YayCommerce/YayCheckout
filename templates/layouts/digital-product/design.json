@@ -1,0 +1,45 @@
+{
+	"colours": {
+		"primary": "#3858e9",
+		"text": "#1e1e1e",
+		"background": "#1e1e1e",
+		"border": "#dddddd"
+	},
+	"typography": {
+		"font_family": "system",
+		"base_size": 14
+	},
+	"inputs": {
+		"style": "boxed",
+		"size": "large",
+		"radius": 4,
+		"background": "#ffffff",
+		"text_color": "#1e1e1e",
+		"label_color": "",
+		"border": "#757575",
+		"focus_border": "#3858e9",
+		"focus_background": "",
+		"focus_style": "",
+		"label": ""
+	},
+	"checkboxes": {
+		"size": null,
+		"radius": null,
+		"border_width": null,
+		"border": "",
+		"background": "",
+		"checked": ""
+	},
+	"radios": {
+		"size": null,
+		"border_width": null,
+		"border": "",
+		"background": "",
+		"checked": ""
+	},
+	"help_text": {
+		"color": "#757575",
+		"size": 12
+	},
+	"custom_css": ".yaycheckout-digital-product {\n\tbox-sizing: border-box;\n\talign-items: center;\n}\n\n.yaycheckout-digital-product-card {\n\twidth: 100%;\n\tmax-width: 920px;\n\toverflow: hidden;\n\tbox-shadow: 0 9px 30px rgba(0, 0, 0, 0.2);\n}\n\n.yaycheckout-digital-product-aside {\n\tdisplay: flex;\n\tflex-direction: column;\n\tmin-height: 100%;\n\tbox-sizing: border-box;\n}\n\n.yaycheckout-digital-product-aside > .wp-block-yaycheckout-order-summary {\n\tflex: 1 1 auto;\n\tdisplay: flex;\n\tflex-direction: column;\n}\n\n.yaycheckout-digital-product-aside .wp-block-yaycheckout-order-summary-details {\n\tflex: 1 1 auto;\n\tdisplay: flex;\n\tflex-direction: column;\n}\n\n.yaycheckout-digital-product-totals {\n\tmargin-top: auto;\n}\n\n.yaycheckout-digital-product-aside .yaycheckout-coupon-form__code {\n\theight: 36px;\n\tmin-height: 36px;\n}\n\n.yaycheckout-digital-product-aside .yaycheckout-coupon-form__apply {\n\theight: 36px;\n\tmin-height: 36px;\n}\n\n.yaycheckout-digital-product-form {\n\tdisplay: flex;\n\tflex-direction: column;\n\tmin-height: 100%;\n\tbox-sizing: border-box;\n}\n\n.yaycheckout-digital-product-submit {\n\tmargin-top: auto;\n}\n\n.yaycheckout-digital-product .yaycheckout-place-order {\n\tdisplay: flex;\n\talign-items: center;\n\tjustify-content: center;\n\theight: 48px;\n\tbox-sizing: border-box;\n\twhite-space: nowrap;\n}\n\n.yaycheckout-digital-product .wp-block-columns {\n\talign-items: stretch;\n}"
+}
