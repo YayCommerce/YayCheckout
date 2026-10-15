@@ -11,29 +11,314 @@ button.yaycheckout-login__trigger {
 	cursor: pointer;
 }
 
+/*
+ * A fixed shadcn-style look: of the layout's design tokens it reads only the primary colour (the button and the
+ * ticked checkbox), which follows the theme's primary when the layout sets none (design-presets.css). The
+ * near-black is shadcn's, for a page without checkout-base.css. Text on it is white, as on Place Order.
+ * Each rule sets what themes commonly restyle on inputs and buttons, so theme CSS doesn't leak in.
+ */
 .yaycheckout-login__dialog {
-	border: 1px solid;
-	padding: 1.5rem;
-	max-width: 28rem;
+	--yc-login-fg: #09090b;
+	--yc-login-muted: #71717a;
+	--yc-login-border: #e4e4e7;
+	--yc-login-input: #e4e4e7;
+	--yc-login-ring: rgb(161 161 170 / 50%);
+	--yc-login-ring-border: #a1a1aa;
+	--yc-login-primary: var(--yaycheckout-primary-color, #18181b);
+	--yc-login-primary-hover: color-mix(in srgb, var(--yc-login-primary) 90%, transparent);
+	--yc-login-primary-fg: #fff;
+	--yc-login-danger: #dc2626;
+	--yc-login-shadow-xs: 0 1px 2px rgb(0 0 0 / 5%);
+
+	box-sizing: border-box;
+	position: relative;
 	width: calc(100% - 2rem);
+	max-width: 24rem;
+	margin: auto;
+	padding: 24px;
+	border: 1px solid var(--yc-login-border);
+	border-radius: 12px;
+	background: #fff;
+	box-shadow: var(--yc-login-shadow-xs), 0 10px 30px -10px rgb(0 0 0 / 20%);
+	color: var(--yc-login-fg);
+	font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	font-size: 14px;
+	line-height: 1.43;
+	letter-spacing: normal;
+	text-transform: none;
+
+	// Fade and zoom from 95%, as shadcn's dialog. allow-discrete keeps the dialog in the top layer while it closes.
+	opacity: 0;
+	transform: scale(0.95);
+	transition:
+		opacity 200ms ease-out,
+		transform 200ms ease-out,
+		overlay 200ms allow-discrete,
+		display 200ms allow-discrete;
+
+	&[open] {
+		opacity: 1;
+		transform: none;
+
+		@starting-style {
+			opacity: 0;
+			transform: scale(0.95);
+		}
+	}
 
 	&::backdrop {
-		background: rgb(0 0 0 / 45%);
+		background-color: transparent;
+		transition:
+			background-color 200ms ease-out,
+			overlay 200ms allow-discrete,
+			display 200ms allow-discrete;
 	}
 
-	.form-row {
-		margin: 0 0 1rem;
+	&[open]::backdrop {
+		background-color: rgb(0 0 0 / 50%);
+
+		@starting-style {
+			background-color: transparent;
+		}
+	}
+
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+	}
+
+	form {
+		margin: 0;
+	}
+
+	.yaycheckout-login__header {
+		margin: 0 0 24px;
+		padding-right: 24px;
+	}
+
+	.yaycheckout-login__title {
+		margin: 0;
+		padding: 0;
+		color: inherit;
+		font-family: inherit;
+		font-size: 20px;
+		font-weight: 600;
+		line-height: 1.4;
+		letter-spacing: -0.01em;
+		text-transform: none;
+	}
+
+	.yaycheckout-login__description {
+		margin: 6px 0 0;
+		color: var(--yc-login-muted);
+		font-size: 14px;
+	}
+
+	.yaycheckout-login__field {
+		display: grid;
+		gap: 8px;
+		margin: 0 0 16px;
+		padding: 0;
+	}
+
+	.yaycheckout-login__label-row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	label {
+		margin: 0;
+		color: inherit;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 1;
+	}
+
+	.required {
+		color: var(--yc-login-muted);
+		text-decoration: none;
+	}
+
+	.yaycheckout-login__forgot {
+		margin-left: auto;
+		color: inherit;
+		font-size: 14px;
+		line-height: 1;
+		text-decoration: none;
+		text-underline-offset: 4px;
+
+		&:hover {
+			text-decoration: underline;
+		}
+
+		&:focus-visible {
+			border-radius: 2px;
+			outline: none;
+			box-shadow: 0 0 0 3px var(--yc-login-ring);
+		}
+	}
+
+	.input-text {
+		display: block;
+		width: 100%;
+		height: 36px;
+		min-height: 0;
+		margin: 0;
+		padding: 4px 12px;
+		border: 1px solid var(--yc-login-input);
+		border-radius: 6px;
+		background: transparent;
+		box-shadow: var(--yc-login-shadow-xs);
+		color: inherit;
+		font: inherit;
+		outline: none;
+		transition: color 150ms, border-color 150ms, box-shadow 150ms;
+
+		&::placeholder {
+			color: var(--yc-login-muted);
+		}
+
+		&:focus-visible {
+			border-color: var(--yc-login-ring-border);
+			box-shadow: 0 0 0 3px var(--yc-login-ring);
+		}
+	}
+
+	.yaycheckout-login__remember {
+		margin: 0 0 16px;
+		padding: 0;
+
+		label {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			cursor: pointer;
+		}
+	}
+
+	input[type="checkbox"] {
+		-webkit-appearance: none;
+		appearance: none;
+		flex: none;
+		width: 16px;
+		height: 16px;
+		margin: 0;
+		border: 1px solid var(--yc-login-input);
+		border-radius: 4px;
+		background: transparent center / 12px no-repeat;
+		box-shadow: var(--yc-login-shadow-xs);
+		cursor: pointer;
+		outline: none;
+		transition: background-color 150ms, border-color 150ms, box-shadow 150ms;
+
+		&:checked {
+			border-color: var(--yc-login-primary);
+			background-color: var(--yc-login-primary);
+			background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+		}
+
+		&:focus-visible {
+			border-color: var(--yc-login-ring-border);
+			box-shadow: 0 0 0 3px var(--yc-login-ring);
+		}
+	}
+
+	.yaycheckout-login__error {
+		margin: 0 0 16px;
+		color: var(--yc-login-danger);
+		font-size: 14px;
+	}
+
+	.yaycheckout-login__submit {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		height: 36px;
+		margin: 0;
+		padding: 8px 16px;
+		border: 0;
+		border-radius: 6px;
+		background: var(--yc-login-primary);
+		box-shadow: var(--yc-login-shadow-xs);
+		color: var(--yc-login-primary-fg);
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 1.43;
+		letter-spacing: normal;
+		text-decoration: none;
+		text-transform: none;
+		cursor: pointer;
+		outline: none;
+		transition: background-color 150ms, box-shadow 150ms;
+
+		&:hover {
+			background: var(--yc-login-primary-hover);
+			color: var(--yc-login-primary-fg);
+		}
+
+		&:focus-visible {
+			box-shadow: 0 0 0 3px var(--yc-login-ring);
+		}
+
+		&:disabled {
+			opacity: 0.5;
+			pointer-events: none;
+		}
+	}
+
+	.yaycheckout-login__close {
+		position: absolute;
+		top: 16px;
+		right: 16px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		border-radius: 4px;
+		background: transparent;
+		box-shadow: none;
+		color: inherit;
+		font-family: inherit;
+		font-size: 20px;
+		line-height: 1;
+		opacity: 0.7;
+		cursor: pointer;
+		outline: none;
+		transition: opacity 150ms, box-shadow 150ms;
+
+		&:hover {
+			background: transparent;
+			color: inherit;
+			opacity: 1;
+		}
+
+		&:focus-visible {
+			opacity: 1;
+			box-shadow: 0 0 0 3px var(--yc-login-ring);
+		}
 	}
 }
 
-.yaycheckout-login__close {
-	float: right;
-	background: none;
-	border: 0;
-	cursor: pointer;
-	font: inherit;
+@media (prefers-reduced-motion: reduce) {
+	.yaycheckout-login__dialog,
+	.yaycheckout-login__dialog::backdrop,
+	.yaycheckout-login__dialog * {
+		transition: none;
+	}
 }
 
-.yaycheckout-login__error {
-	color: #b32d2e;
+// Forced colours drop backgrounds and borders: the native checkbox stays legible.
+@media (forced-colors: active) {
+	.yaycheckout-login__dialog input[type="checkbox"] {
+		-webkit-appearance: auto;
+		appearance: auto;
+	}
 }
