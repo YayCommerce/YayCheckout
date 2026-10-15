@@ -465,6 +465,11 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	outline-offset: 1px;
 }
 
+/* A click focuses the control too, and themes such as Twenty Twenty-Five outline every :focus; only the keyboard ring above shows. */
+.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):focus:not(:focus-visible) {
+	outline: 0;
+}
+
 /* WooCommerce marks the row, not the input, when a field fails validation; its focus edge turns red too. */
 .yaycheckout-checkout .form-row.woocommerce-invalid {
 	--yaycheckout-input-focus-color: var(--wc-red, #cc1818);
