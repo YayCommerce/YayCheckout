@@ -827,7 +827,7 @@ class CheckoutFragments {
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own header word, so its translation still applies.
             'subtotal_label'         => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
             'show_thumbnails'        => self::bool_attr( $attributes, 'showThumbnails', true ),
-            'item_data'              => $choice( 'itemData', [ 'list', 'inline', 'hidden' ] ),
+            'item_data'              => $choice( 'itemData', [ 'inline', 'list', 'hidden' ] ),
             'show_sku'               => self::bool_attr( $attributes, 'showSku', false ),
             'show_unit_price'        => self::bool_attr( $attributes, 'showUnitPrice', false ),
             'show_short_description' => self::bool_attr( $attributes, 'showShortDescription', false ),

@@ -96,7 +96,7 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
         return $prepared;
     }
 
-    /** In the logged-out view the editor loads that view's markup as the post content, or a starter when none is saved. */
+    /** In the logged-out view the editor loads that view's markup as the post content, or its template's when none is saved. */
     public function prepare_item_for_response( $item, $request ) {
         if ( ! LayoutEditorEmbed::is_logged_out_view( $request ) || 'edit' !== $request['context'] ) {
             return parent::prepare_item_for_response( $item, $request );
@@ -111,23 +111,11 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
         $markup = (string) get_post_meta( $item->ID, Layout::META_LOGGED_OUT, true );
 
         if ( isset( $data['content'] ) ) {
-            $data['content']['raw']      = '' !== $markup ? $markup : self::logged_out_starter();
+            $data['content']['raw']      = '' !== $markup ? $markup : LayoutTemplateCatalogue::logged_out_markup( (string) get_post_meta( $item->ID, Layout::META_TEMPLATE, true ) );
             $data['content']['rendered'] = '';
             $response->set_data( $data );
         }
 
         return $response;
-    }
-
-    /** The logged-out view before its first save: what WooCommerce prints there, as blocks the merchant can restyle. */
-    private static function logged_out_starter(): string {
-        return '<!-- wp:yaycheckout/checkout -->' . "\n"
-            . '<!-- wp:heading -->' . "\n"
-            . '<h2 class="wp-block-heading">' . esc_html__( 'Log in to check out', 'yaycheckout' ) . '</h2>' . "\n"
-            . '<!-- /wp:heading -->' . "\n\n"
-            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- WooCommerce's own message, so its translation applies.
-            . '<!-- wp:paragraph -->' . "\n" . '<p>' . esc_html__( 'You must be logged in to checkout.', 'woocommerce' ) . '</p>' . "\n" . '<!-- /wp:paragraph -->' . "\n\n"
-            . '<!-- wp:yaycheckout/login /-->' . "\n"
-            . '<!-- /wp:yaycheckout/checkout -->';
     }
 }

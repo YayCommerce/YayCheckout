@@ -11,7 +11,7 @@ description: Builds a YayCheckout layout template (templates/layouts/<slug>/mark
 
 # Build a checkout template from the HTML mock
 
-A layout template is two files. `templates/layouts/<slug>/markup.php` holds block markup exactly as the block editor saves it, with a little PHP. `design.json` holds the layout's design tokens. `LayoutTemplateCatalogue::is_available()` makes the template available once both exist. The mock is a design handoff: an HTML bundle holding eleven numbered checkout templates. It shows what to build. It isn't code to copy, because the result must be blocks the merchant can edit.
+A layout template is two files. `templates/layouts/<slug>/markup.php` holds block markup exactly as the block editor saves it, with a little PHP. `design.json` holds the layout's design tokens. `LayoutTemplateCatalogue::is_available()` makes the template available once both exist. An optional third file, `logged-out.php`, is the template's logged-out view; without it, layouts from the template start with the shared `templates/layouts/logged-out.php`. The mock is a design handoff: an HTML bundle holding eleven numbered checkout templates. It shows what to build. It isn't code to copy, because the result must be blocks the merchant can edit.
 
 The work happens in phases, and two of them end at a checkpoint where you stop and wait for the user. Mapping is the cheapest place to catch a misreading; a wrong mapping found in the editor costs a rebuild. Keep a todo list with one item per phase so the user can see where you are.
 

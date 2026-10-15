@@ -152,11 +152,13 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 								label: __( 'Background', 'yaycheckout' ),
 								value: badgeBackgroundColor,
 								onChange: ( value?: string ) => setAttributes( { badgeBackgroundColor: value ?? '' } ),
+								clearable: true,
 							},
 							{
 								label: __( 'Text', 'yaycheckout' ),
 								value: badgeTextColor,
 								onChange: ( value?: string ) => setAttributes( { badgeTextColor: value ?? '' } ),
+								clearable: true,
 							},
 						] }
 					>

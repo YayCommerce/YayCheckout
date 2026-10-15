@@ -9,12 +9,16 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The layout templates a merchant creates from, which ones this plan unlocks, and their files:
  * templates/layouts/<slug>/markup.php and design.json. A template missing either is Coming soon.
- * preview.html, the picker's preview of the mock, sits beside them and availability ignores it.
+ * preview.html, the picker's preview of the mock, sits beside them and availability ignores it,
+ * as it does the optional logged-out.php, the template's own logged-out view.
  */
 class LayoutTemplateCatalogue {
 
     /** Template 01, which a Default layout and a Reset without a usable template also get. */
     public const DEFAULT_SLUG = 'classic-two-column';
+
+    /** A template's optional logged-out view, and the shared one beside the template folders. */
+    private const LOGGED_OUT_FILE = 'logged-out.php';
 
     /** Free picks the first N; the rest render locked. */
     private const FREE_UNLOCKED_COUNT = 3;
@@ -70,6 +74,21 @@ class LayoutTemplateCatalogue {
      */
     public static function markup( string $slug ): string {
         $file = self::file( $slug, 'markup.php' );
+
+        ob_start();
+        include $file;
+
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * The logged-out view a layout from $slug starts with: the template's logged-out.php, or the shared
+     * templates/layouts/logged-out.php when the template has none or $slug is not an available template.
+     */
+    public static function logged_out_markup( string $slug ): string {
+        $file = self::is_available( $slug ) && is_file( self::path( $slug, self::LOGGED_OUT_FILE ) )
+            ? self::path( $slug, self::LOGGED_OUT_FILE )
+            : YAYCHECKOUT_PLUGIN_DIR . 'templates/layouts/' . self::LOGGED_OUT_FILE;
 
         ob_start();
         include $file;
