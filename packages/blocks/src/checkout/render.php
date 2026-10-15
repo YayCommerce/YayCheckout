@@ -42,6 +42,24 @@ if ( ! function_exists( 'WC' ) ) {
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Verbatim from WooCommerce's form-checkout.php so its filter and translation still apply.
 if ( \YayCheckout\Renderer\CheckoutLogin::must_log_in() ) {
+    // A blocked guest gets the layout's guest view in a div, not the form, so checkout.js never attaches.
+    $yaycheckout_guest_view = null !== $yaycheckout_layout ? ( new \YayCheckout\Repositories\LayoutRepository() )->guest_view( $yaycheckout_layout->id ) : '';
+
+    if ( '' !== trim( $yaycheckout_guest_view ) ) {
+        $yaycheckout_guest_wrapper = get_block_wrapper_attributes(
+            [
+                'class'                   => 'yaycheckout-checkout yaycheckout-checkout--guest',
+                'data-yaycheckout-layout' => $yaycheckout_layout_id,
+            ]
+        );
+        ?>
+        <div <?php echo $yaycheckout_guest_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+            <?php echo \YayCheckout\Renderer\CheckoutLogin::render_guest_view( $yaycheckout_guest_view ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The guest view's blocks, rendered and escaped by each block. ?>
+        </div>
+        <?php
+        return;
+    }
+
     if ( \YayCheckout\Renderer\CheckoutLogin::reminder_shown() ) {
         $yaycheckout_login = null;
 

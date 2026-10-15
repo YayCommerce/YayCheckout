@@ -25,6 +25,9 @@ class CheckoutLogin {
 
     public const NONCE_ACTION = 'yaycheckout-login';
 
+    /** True only while render_guest_view() prints, so a Login in the guest view knows where it is. */
+    private static bool $in_guest_view = false;
+
     protected function __construct() {
         // wc-ajax serves guests and logged-in shoppers on the same hook.
         add_action( 'wc_ajax_yaycheckout_login', [ $this, 'login' ] );
@@ -45,12 +48,30 @@ class CheckoutLogin {
 
     /**
      * A guest WooCommerce gives no checkout form: registration is required and not offered at checkout.
-     * Mirrors form-checkout.php and woocommerce_checkout_coupon_form().
+     * Mirrors form-checkout.php and woocommerce_checkout_coupon_form(). A preview link can force it, to show the Guest view.
      */
     public static function must_log_in(): bool {
         $checkout = WC()->checkout();
 
-        return ! is_user_logged_in() && ! $checkout->is_registration_enabled() && $checkout->is_registration_required();
+        return PreviewRequest::get_instance()->guest_view()
+            || ( ! is_user_logged_in() && ! $checkout->is_registration_enabled() && $checkout->is_registration_required() );
+    }
+
+    /**
+     * A layout's guest view, rendered. The only way it prints: a Login inside it always shows, since a blocked
+     * guest has no other way to log in, and it is reached only when must_log_in() is true.
+     */
+    public static function render_guest_view( string $markup ): string {
+        self::$in_guest_view = true;
+        $html                = do_blocks( $markup );
+        self::$in_guest_view = false;
+
+        return $html;
+    }
+
+    /** Whether a block is being printed by render_guest_view(). */
+    public static function in_guest_view(): bool {
+        return self::$in_guest_view;
     }
 
     /**

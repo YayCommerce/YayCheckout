@@ -1,6 +1,8 @@
 <?php
 namespace YayCheckout\Services;
 
+use YayCheckout\Models\Layout;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -223,6 +225,65 @@ class LayoutMarkupReader {
     /** Whether the layout has a Checkout block, without parsing it. */
     public static function has_checkout( string $markup ): bool {
         return has_block( self::CHECKOUT, $markup );
+    }
+
+    /**
+     * A guest view as it may be stored: only Layout::GUEST_VIEW_BLOCKS (at any depth), then kses'd like post_content
+     * is for a user without unfiltered_html.
+     */
+    public static function sanitize_guest_view( string $markup ): string {
+        if ( '' === trim( $markup ) ) {
+            return '';
+        }
+
+        return wp_kses_post( serialize_blocks( self::allowed_guest_blocks( parse_blocks( $markup ) ) ) );
+    }
+
+    /**
+     * The blocks that may stay in a guest view. A removed inner block takes its null slot out of innerContent,
+     * which serialize_blocks() reads one inner block per null. Whitespace between blocks stays; other freeform HTML goes.
+     */
+    private static function allowed_guest_blocks( array $blocks ): array {
+        $kept = [];
+
+        foreach ( $blocks as $block ) {
+            if ( empty( $block['blockName'] ) ) {
+                if ( '' === trim( (string) ( $block['innerHTML'] ?? '' ) ) ) {
+                    $kept[] = $block;
+                }
+
+                continue;
+            }
+
+            if ( ! in_array( $block['blockName'], Layout::GUEST_VIEW_BLOCKS, true ) ) {
+                continue;
+            }
+
+            $content = [];
+            $inner   = [];
+            $index   = 0;
+
+            foreach ( (array) $block['innerContent'] as $chunk ) {
+                if ( null !== $chunk ) {
+                    $content[] = $chunk;
+                    continue;
+                }
+
+                $child = $block['innerBlocks'][ $index++ ] ?? null;
+                $child = null === $child ? [] : self::allowed_guest_blocks( [ $child ] );
+
+                if ( [] !== $child ) {
+                    $content[] = null;
+                    $inner[]   = $child[0];
+                }
+            }
+
+            $block['innerContent'] = $content;
+            $block['innerBlocks']  = $inner;
+            $kept[]                = $block;
+        }
+
+        return $kept;
     }
 
     /** Whether the layout has an Order note block, without parsing it. */

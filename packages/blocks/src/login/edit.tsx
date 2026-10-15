@@ -1,5 +1,7 @@
 import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
 import { ExternalLink, Notice, PanelBody, SelectControl } from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
+import { store as editorStore } from '@wordpress/editor';
 import { __ } from '@wordpress/i18n';
 
 import { loginEditorData } from './editor-data';
@@ -96,6 +98,11 @@ export default function Edit( { attributes, setAttributes, isSelected }: EditPro
 		className: 'yaycheckout-login',
 		style: { fontSize: 'inherit', fontWeight: 'inherit' },
 	} );
+	// In a layout's guest view a Login always prints, whatever the reminder option says.
+	const inGuestView = useSelect(
+		( select ) => '' !== loginEditorData.guestPostType && select( editorStore ).getCurrentPostType() === loginEditorData.guestPostType,
+		[]
+	);
 	const value = editorValue( text, linkText );
 	const parts = previewParts( text, linkText );
 	const missingTrigger = ! hasTriggerSpan( value );
@@ -125,7 +132,7 @@ export default function Edit( { attributes, setAttributes, isSelected }: EditPro
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				{ ! loginEditorData.reminderEnabled && (
+				{ ! loginEditorData.reminderEnabled && ! inGuestView && (
 					<Notice className="yaycheckout-login__notice" status="warning" isDismissible={ false }>
 						{ __(
 							'Shoppers will not see this block until Enable log-in during checkout is turned on.',

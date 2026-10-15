@@ -1,0 +1,17 @@
+/* Covers the editor while the view switch loads the other post, so nothing typed meanwhile is lost. */
+.yaycheckout-view-switching {
+	position: fixed;
+	inset: 0;
+	z-index: 1000000;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	background: rgba(255, 255, 255, 0.7);
+	font-size: 13px;
+}
+
+.yaycheckout-view-switching .components-spinner {
+	margin: 0;
+}

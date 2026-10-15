@@ -3,7 +3,7 @@
  * Server render for yaycheckout/login.
  *
  * Prints nothing unless the WooCommerce checkout login reminder is on and
- * the shopper is logged out. Attributes are read with defaults so markup
+ * the shopper is logged out; inside a layout's guest view the reminder option is not asked. Attributes are read with defaults so markup
  * saved before an attribute existed still renders.
  *
  * @var array    $attributes Block attributes.
@@ -15,7 +15,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! \YayCheckout\Renderer\CheckoutLogin::reminder_shown() ) {
+// A Login inside a guest view always prints: a blocked guest has no other way to log in.
+if ( ! \YayCheckout\Renderer\CheckoutLogin::in_guest_view() && ! \YayCheckout\Renderer\CheckoutLogin::reminder_shown() ) {
     return;
 }
 

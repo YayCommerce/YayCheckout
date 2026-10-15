@@ -78,6 +78,17 @@ class LayoutTemplateCatalogue {
     }
 
     /**
+     * The default guest view, the same for every template: templates/layouts/guest-view.php, which is not part of a
+     * template's markup but the layout's guest view post (LayoutRepository::save_guest_view()).
+     */
+    public static function guest_view(): string {
+        ob_start();
+        require YAYCHECKOUT_PLUGIN_DIR . 'templates/layouts/guest-view.php';
+
+        return trim( (string) ob_get_clean() );
+    }
+
+    /**
      * The template's design, from its design.json projected through LayoutDesign::schema().
      *
      * @throws \InvalidArgumentException When $slug is not an available template.

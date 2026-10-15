@@ -23,6 +23,9 @@ class PreviewRequest {
     /** Cart-item data key marking sample products, so they can be stripped from every non-preview request. */
     public const CART_ITEM_FLAG = 'yaycheckout_preview';
 
+    /** Query argument that makes a preview show the layout's Guest view; copied by GUEST_VIEW_ARG in packages/blocks/src/checkout/layout-view.tsx. */
+    public const VIEW_ARG = 'yaycheckout_view';
+
     private const SAMPLE_PRODUCTS = 2;
 
     private string $token         = '';
@@ -30,6 +33,7 @@ class PreviewRequest {
     private ?int $layout_id       = null;
     private ?int $expires_at      = null;
     private bool $no_products     = false;
+    private bool $guest_view      = false;
 
     protected function __construct() {
         add_action( 'init', [ $this, 'read_token' ], 5 );
@@ -54,6 +58,14 @@ class PreviewRequest {
     /** True once the request carries a valid token and is the checkout page or a wc-ajax call. */
     public function active(): bool {
         return null !== $this->layout_id && ( $this->is_wc_ajax() || $this->on_checkout_page() );
+    }
+
+    /**
+     * True when a valid preview token comes with `yaycheckout_view=guest`: the preview then shows the
+     * Guest view, as CheckoutLogin::must_log_in() does for a blocked guest. Without a token it is false.
+     */
+    public function guest_view(): bool {
+        return $this->guest_view && $this->active();
     }
 
     /** No products were purchasable when the sample cart was built; the banner says so. */
@@ -82,6 +94,7 @@ class PreviewRequest {
 
         $this->layout_id  = $parsed['id'];
         $this->expires_at = $parsed['expires_at'];
+        $this->guest_view = isset( $_GET[ self::VIEW_ARG ] ) && 'guest' === $_GET[ self::VIEW_ARG ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The token is its own MAC; a non-string never equals 'guest'.
     }
 
     /**
@@ -208,6 +221,10 @@ class PreviewRequest {
             esc_html( self::state_label( $layout ) ),
             esc_html( human_time_diff( time(), (int) $this->expires_at ) )
         );
+
+        if ( $this->guest_view() ) {
+            echo ' ' . esc_html__( 'Showing the Guest view.', 'yaycheckout' );
+        }
 
         if ( $this->no_products ) {
             echo ' ' . esc_html__( 'No products to prefill the cart.', 'yaycheckout' );
