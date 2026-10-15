@@ -204,8 +204,7 @@ html.yaycheckout-has-pinned body {
  * toggles this span with jQuery slideUp()/slideDown(), which write height, overflow, padding,
  * margin and display inline; the !important declarations only outrank those inline styles.
  * The editor's field preview prints the same classes. Every kind of field (text, select, radio,
- * checkbox) takes the layout's Help text design (DesignStyles); unset, the text is the inherited
- * colour at 75% and 0.875em.
+ * checkbox) takes the layout's Muted colour and its Help text size (DesignStyles); an unset size is 0.875em.
  */
 .yaycheckout-checkout .form-row .description {
 	display: block !important;
@@ -215,7 +214,7 @@ html.yaycheckout-has-pinned body {
 	margin: 0.25em 0 0 !important;
 	position: static;
 	background: none;
-	color: var(--yaycheckout-help-text-color, color-mix(in srgb, currentColor 75%, transparent));
+	color: var(--yaycheckout-design-muted);
 	border-radius: 0;
 	font-size: var(--yaycheckout-help-text-size, 0.875em);
 }

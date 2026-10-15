@@ -128,6 +128,7 @@ class DesignStyles {
                 'color-text'    => $colours['text'],
                 LayoutDesign::is_gradient( $background ) ? 'background-gradient' : 'color-background' => $background,
                 'color-border'  => $colours['border'],
+                'color-muted'   => $colours['muted'],
             ],
             $not_empty
         );
@@ -233,10 +234,6 @@ class DesignStyles {
         );
 
         $help_text = $sections['help_text'];
-
-        if ( '' !== $help_text['color'] ) {
-            $vars['help-text-color'] = $help_text['color'];
-        }
 
         if ( null !== $help_text['size'] ) {
             $vars['help-text-size'] = $help_text['size'] . 'px';

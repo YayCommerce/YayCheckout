@@ -59,6 +59,7 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 		[ 'color-text', String( colours.text ?? '' ) ],
 		[ isGradient( background ) ? 'background-gradient' : 'color-background', background ],
 		[ 'color-border', String( colours.border ?? '' ) ],
+		[ 'color-muted', String( colours.muted ?? '' ) ],
 	];
 	const notEmpty = ( [ , value ]: [ string, string ] ) => '' !== value;
 	const out = pairs.filter( notEmpty );
@@ -154,12 +155,6 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 	];
 
 	out.push( ...radioColours.filter( notEmpty ) );
-
-	const helpColor = String( tokens.help_text.color ?? '' );
-
-	if ( '' !== helpColor ) {
-		out.push( [ 'help-text-color', helpColor ] );
-	}
 
 	if ( null !== tokens.help_text.size ) {
 		out.push( [ 'help-text-size', `${ tokens.help_text.size }px` ] );

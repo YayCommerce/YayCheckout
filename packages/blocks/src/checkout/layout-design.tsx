@@ -54,13 +54,12 @@ const SECTIONS: Record< Section, string > = {
 };
 
 /** Each section's colour panel. A section of colours only shows that panel alone, under the section's name. */
-const COLOUR_PANELS: Record< Section, string > = {
+const COLOUR_PANELS: Partial< Record< Section, string > > = {
 	colours: __( 'Colours', 'yaycheckout' ),
 	typography: __( 'Text colours', 'yaycheckout' ),
 	inputs: __( 'Input colours', 'yaycheckout' ),
 	checkboxes: __( 'Checkbox colours', 'yaycheckout' ),
 	radios: __( 'Radio colours', 'yaycheckout' ),
-	help_text: __( 'Help text colour', 'yaycheckout' ),
 };
 
 const TOKEN_LABELS: Record< string, string > = {
@@ -68,6 +67,7 @@ const TOKEN_LABELS: Record< string, string > = {
 	text: __( 'Text', 'yaycheckout' ),
 	background: __( 'Background', 'yaycheckout' ),
 	border: __( 'Border', 'yaycheckout' ),
+	muted: __( 'Muted', 'yaycheckout' ),
 	font_family: __( 'Font', 'yaycheckout' ),
 	base_size: __( 'Base size', 'yaycheckout' ),
 	style: __( 'Style', 'yaycheckout' ),
@@ -461,7 +461,7 @@ function SectionPanel( {
 	);
 	const colours = (
 		<ColourSettings
-			label={ COLOUR_PANELS[ section ] }
+			label={ COLOUR_PANELS[ section ] ?? SECTIONS[ section ] }
 			panelId={ `${ SIDEBAR }-${ section }` }
 			rules={ rules }
 			values={ values }

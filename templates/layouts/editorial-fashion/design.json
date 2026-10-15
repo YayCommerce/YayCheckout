@@ -3,7 +3,8 @@
 		"primary": "#d9472f",
 		"text": "#1e1e1e",
 		"background": "#f6f1ea",
-		"border": "#1e1e1e"
+		"border": "#1e1e1e",
+		"muted": ""
 	},
 	"typography": {
 		"font_family": "system",
@@ -35,10 +36,9 @@
 		"border_width": null,
 		"border": "#1e1e1e",
 		"background": "",
-		"checked": "#d9472f"
+		"checked": ""
 	},
 	"help_text": {
-		"color": "#757575",
 		"size": 12
 	},
 	"custom_css": ".yaycheckout-editorial-fashion a:hover {\n\tcolor: #d9472f;\n}\n\n.yaycheckout-editorial-fashion .wp-block-columns {\n\talign-items: stretch;\n}\n\n.yaycheckout-editorial-fashion .wp-block-columns > .wp-block-column.yaycheckout-editorial-fashion-bag[style*=\"flex-basis\"] {\n\tflex-grow: 1;\n\tflex-shrink: 1;\n\tmax-width: 560px;\n\tmin-height: 100vh;\n\tbox-sizing: border-box;\n}\n\n.yaycheckout-editorial-fashion-bag-inner {\n\tdisplay: flex;\n\tflex-direction: column;\n\tmin-height: calc(100vh - 80px);\n\tbox-sizing: border-box;\n}\n\n.yaycheckout-editorial-fashion-bag-inner,\n.yaycheckout-editorial-fashion-bag-inner > * {\n\twidth: 100%;\n\tmax-width: none !important;\n}\n\n.yaycheckout-editorial-fashion-bag-inner > .yaycheckout-editorial-fashion-coupon,\n.yaycheckout-editorial-fashion-bag-inner > .wp-block-yaycheckout-coupon-form {\n\tmargin-top: auto;\n}\n\n.yaycheckout-editorial-fashion-bag .yaycheckout-coupon-form__row {\n\twidth: 100%;\n}\n\n.yaycheckout-editorial-fashion-bag .yaycheckout-coupon-form__code {\n\theight: 44px;\n\tmin-height: 44px;\n\tpadding: 0 12px;\n\tborder: 1px solid rgba(255, 255, 255, 0.6);\n\tborder-radius: 0;\n\tbackground: transparent;\n\tcolor: #fff;\n\tbox-shadow: none;\n}\n\n.yaycheckout-editorial-fashion-bag .yaycheckout-coupon-form__code::placeholder {\n\tcolor: rgba(255, 255, 255, 0.7);\n}\n\n.yaycheckout-editorial-fashion-bag .yaycheckout-coupon-form__code:focus {\n\tborder-color: #fff;\n\toutline: none;\n\tbox-shadow: none;\n}\n\n.yaycheckout-editorial-fashion-bag .yaycheckout-coupon-form__apply {\n\theight: 44px;\n\tborder-radius: 0;\n}\n\n.yaycheckout-editorial-fashion .yaycheckout-place-order {\n\tdisplay: flex;\n\talign-items: center;\n\tjustify-content: space-between;\n\theight: 56px;\n\tpadding-inline: 24px;\n\tbox-sizing: border-box;\n\twhite-space: nowrap;\n}"
