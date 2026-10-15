@@ -332,8 +332,8 @@ class LayoutRepository {
 
     /**
      * Creates a layout draft from a catalogue template: its markup, which is a complete checkout, so
-     * activating it as-is lets a shopper place an order, and its design. The post type's template only
-     * applies to auto-drafts, not to this insert.
+     * activating it as-is lets a shopper place an order, its design, and its logged-out view. The post
+     * type's template only applies to auto-drafts, not to this insert.
      *
      * @throws \InvalidArgumentException When the template is not available, the layout limit is reached or the insert fails.
      */
@@ -343,7 +343,8 @@ class LayoutRepository {
             LayoutTemplateCatalogue::markup( $template_slug ),
             [],
             LayoutTemplateCatalogue::design( $template_slug ),
-            $template_slug
+            $template_slug,
+            LayoutTemplateCatalogue::logged_out_markup( $template_slug )
         );
     }
 
