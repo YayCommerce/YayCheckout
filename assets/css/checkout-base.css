@@ -483,8 +483,11 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	outline-offset: 1px;
 }
 
-/* A click focuses the control too, and themes such as Twenty Twenty-Five outline every :focus; only the keyboard ring above shows. */
-.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):focus:not(:focus-visible) {
+/*
+ * A click focuses the control too, and themes outline every :focus (Twenty Twenty-Five every element, Storefront
+ * links and buttons); only a keyboard ring shows.
+ */
+.yaycheckout-checkout :is(button, .button, a, [role="button"], input[type="checkbox"], input[type="radio"]):focus:not(:focus-visible) {
 	outline: 0;
 }
 

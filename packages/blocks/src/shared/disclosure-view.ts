@@ -78,7 +78,8 @@ function bind( toggle: HTMLElement ): void {
 		// Focus stays on the checkbox, so a keyboard shopper can untick it again.
 		box.addEventListener( 'change', () => setOpen( box.checked, false ) );
 	} else {
-		toggle.addEventListener( 'click', () => setOpen( panel.hidden, true ) );
+		// A link disappears, so focus moves to its field; a collapsible header keeps it, to close again.
+		toggle.addEventListener( 'click', () => setOpen( panel.hidden, isLink ) );
 	}
 
 	controls.forEach( ( control ) => {
