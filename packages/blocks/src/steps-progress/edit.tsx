@@ -13,6 +13,17 @@ type Variant = 'circles' | 'dots' | 'segments' | 'bar' | 'text';
 // Mirrors CheckoutStepsProgress::markup(): bar and text show a summary and hide the list.
 const hasSummary = ( variant: Variant ) => variant === 'bar' || variant === 'text';
 
+type ProgressColor = 'fillColor' | 'trackColor' | 'upcomingTextColor';
+
+/** The colours each style's style.css reads; Text only reads none, so it has no Progress colors panel. */
+const PROGRESS_COLORS: Record< Variant, ProgressColor[] > = {
+	circles: [ 'fillColor', 'trackColor', 'upcomingTextColor' ],
+	dots: [ 'fillColor', 'trackColor', 'upcomingTextColor' ],
+	segments: [ 'fillColor', 'trackColor', 'upcomingTextColor' ],
+	bar: [ 'fillColor', 'trackColor' ],
+	text: [],
+};
+
 interface Attributes {
 	variant: Variant;
 	showCount: boolean;
@@ -155,6 +166,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		);
 	}
 
+	const progressColors = PROGRESS_COLORS[ attributes.variant ] ?? PROGRESS_COLORS.circles;
+
 	return (
 		<>
 			<InspectorControls>
@@ -182,32 +195,38 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					) }
 				</PanelBody>
 			</InspectorControls>
-			<InspectorControls group="styles">
-				<PanelColorSettings
-					title={ __( 'Progress colors', 'yaycheckout' ) }
-					initialOpen={ false }
-					colorSettings={ [
-						{
-							label: __( 'Fill', 'yaycheckout' ),
-							value: attributes.fillColor,
-							onChange: ( value?: string ) => setAttributes( { fillColor: value ?? '' } ),
-							clearable: true,
-						},
-						{
-							label: __( 'Track', 'yaycheckout' ),
-							value: attributes.trackColor,
-							onChange: ( value?: string ) => setAttributes( { trackColor: value ?? '' } ),
-							clearable: true,
-						},
-						{
-							label: __( 'Upcoming text', 'yaycheckout' ),
-							value: attributes.upcomingTextColor,
-							onChange: ( value?: string ) => setAttributes( { upcomingTextColor: value ?? '' } ),
-							clearable: true,
-						},
-					] }
-				/>
-			</InspectorControls>
+			{ progressColors.length > 0 && (
+				<InspectorControls group="styles">
+					<PanelColorSettings
+						title={ __( 'Progress colors', 'yaycheckout' ) }
+						colorSettings={ [
+							{
+								key: 'fillColor',
+								label: __( 'Fill', 'yaycheckout' ),
+								value: attributes.fillColor,
+								onChange: ( value?: string ) => setAttributes( { fillColor: value ?? '' } ),
+								clearable: true,
+							},
+							{
+								key: 'trackColor',
+								label: __( 'Track', 'yaycheckout' ),
+								value: attributes.trackColor,
+								onChange: ( value?: string ) => setAttributes( { trackColor: value ?? '' } ),
+								clearable: true,
+							},
+							{
+								key: 'upcomingTextColor',
+								label: __( 'Upcoming text', 'yaycheckout' ),
+								value: attributes.upcomingTextColor,
+								onChange: ( value?: string ) => setAttributes( { upcomingTextColor: value ?? '' } ),
+								clearable: true,
+							},
+						]
+							.filter( ( setting ) => progressColors.includes( setting.key as ProgressColor ) )
+							.map( ( { key, ...setting } ) => setting ) }
+					/>
+				</InspectorControls>
+			) }
 			<div { ...blockProps }>
 				<ProgressBody attributes={ attributes } total={ stepIds.length }>
 					{ stepIds.map( ( stepId, index ) => (
