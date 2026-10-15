@@ -190,7 +190,7 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 <h2 class="wp-block-heading" style="margin-top:0;margin-bottom:0;font-size:28px;font-weight:400;font-family:Georgia, &quot;Times New Roman&quot;, serif;letter-spacing:-0.01em;line-height:1.1"><span style="color:#d9472f;font-style:italic;margin-right:10px">03</span><?php esc_html_e( 'Shipping options', 'yaycheckout' ); ?></h2>
 <!-- /wp:heading -->
 
-<!-- wp:yaycheckout/shipping-methods {"showTitle":false,"layout":"lines","style":{"yaycheckout":{"border":"#1e1e1e","radio":"#1e1e1e","radioSelected":"#d9472f"}}} /--></div>
+<!-- wp:yaycheckout/shipping-methods {"showTitle":false,"layout":"lines","style":{"yaycheckout":{"border":"#1e1e1e","radio":"#1e1e1e"}}} /--></div>
 <!-- /wp:group -->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"20px"}}} -->
@@ -198,7 +198,7 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 <h2 class="wp-block-heading" style="margin-top:0;margin-bottom:0;font-size:28px;font-weight:400;font-family:Georgia, &quot;Times New Roman&quot;, serif;letter-spacing:-0.01em;line-height:1.1"><span style="color:#d9472f;font-style:italic;margin-right:10px">04</span><?php esc_html_e( 'Payment options', 'yaycheckout' ); ?></h2>
 <!-- /wp:heading -->
 
-<!-- wp:yaycheckout/payment {"showTitle":false,"layout":"lines","style":{"yaycheckout":{"border":"#1e1e1e","radio":"#1e1e1e","radioSelected":"#d9472f"}}} /-->
+<!-- wp:yaycheckout/payment {"showTitle":false,"layout":"lines","style":{"yaycheckout":{"border":"#1e1e1e","radio":"#1e1e1e"}}} /-->
 
 <?php if ( 'billing_only' !== $yaycheckout_destination ) : ?>
 <!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Billing address is the same as shipping', 'yaycheckout' ); ?>","shipLabel":"<?php esc_html_e( 'Billing address is the same as shipping', 'yaycheckout' ); ?>"} /-->

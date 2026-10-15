@@ -6,7 +6,8 @@
  * data-layout: joined, cards, grid, checkmark, lines, box.
  * Methods styles from the Styles tab set --yaycheckout-shipping-* on the wrapper: gap, radius,
  * border-width, bg, bg-selected, bg-hover, radio, radio-selected, border, border-selected and border-hover.
- * Cards with checkmark and Divider lines keep one background unless the merchant sets selected/hover.
+ * An unset bg-selected tints the row with the primary colour at 4%, except Cards with checkmark and
+ * Divider lines, which keep one background unless the merchant sets selected/hover.
  * Unset radio and radio-selected fall back to the layout's Radios design (--yaycheckout-radio-border-color,
  * --yaycheckout-radio-checked-color), then to each layout's own neutral fallback.
  */
@@ -160,7 +161,7 @@
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="joined"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
 	z-index: 2;
 	border-color: var(--yaycheckout-shipping-border-selected, var(--yaycheckout-primary-color, #3858e9));
-	background-color: var(--yaycheckout-shipping-bg-selected, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, transparent)));
+	background-color: var(--yaycheckout-shipping-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 4%, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff))));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="joined"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
@@ -202,7 +203,7 @@
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="cards"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
 	border-color: var(--yaycheckout-shipping-border-selected, var(--yaycheckout-primary-color, #3858e9));
-	background-color: var(--yaycheckout-shipping-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff))));
+	background-color: var(--yaycheckout-shipping-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 4%, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff))));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="cards"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
@@ -243,7 +244,7 @@
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="grid"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
 	border-color: var(--yaycheckout-shipping-border-selected, var(--yaycheckout-primary-color, #3858e9));
-	background-color: var(--yaycheckout-shipping-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff))));
+	background-color: var(--yaycheckout-shipping-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 4%, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff))));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="grid"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
@@ -412,7 +413,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="box"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) {
-	background-color: var(--yaycheckout-shipping-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 8%, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff))));
+	background-color: var(--yaycheckout-shipping-bg-selected, color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 4%, var(--yaycheckout-shipping-bg, var(--yaycheckout-color-background, #fff))));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="box"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:hover:not(:has(input:checked)):not(:only-child) {
