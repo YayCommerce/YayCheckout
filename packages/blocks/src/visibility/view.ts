@@ -6,7 +6,8 @@
  *
  * PHP owns what "empty" means for a watchable block: BlockEmptiness marks wrappers and CheckoutFragments
  * marks the fragments it swaps; for a Field, WooCommerce's address-i18n.js (a dependency) hides the row for
- * the country. This script only reads those markers.
+ * the country; Express Pay's view script clears its marker once a gateway shows a button. This script only
+ * reads those markers.
  */
 
 import { currentStep } from '../shared/checkout-root';

@@ -1,5 +1,14 @@
+.editor-styles-wrapper .yaycheckout-express-pay__notice {
+	margin-bottom: 12px;
+}
+
+.editor-styles-wrapper .yaycheckout-express-pay__buttons {
+	display: flex;
+	gap: 8px;
+}
+
 .editor-styles-wrapper .yaycheckout-express-pay__button {
-	margin-bottom: 8px;
+	flex: 1;
 	padding: 10px 12px;
 	border: 1px solid #1e1e1e;
 	border-radius: 4px;
@@ -9,7 +18,14 @@
 	font-size: 13px;
 }
 
-.editor-styles-wrapper .yaycheckout-express-pay__button--link {
-	border-color: #3858e9;
-	background: #3858e9;
+.editor-styles-wrapper .yaycheckout-express-pay__button--google {
+	border-color: #dddddd;
+	background: #fff;
+	color: #1e1e1e;
+}
+
+.editor-styles-wrapper .yaycheckout-express-pay__button--paypal {
+	border-color: #ffc439;
+	background: #ffc439;
+	color: #1e1e1e;
 }
