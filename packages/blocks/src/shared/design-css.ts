@@ -131,23 +131,13 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 		out.push( [ 'checkbox-border-width', `${ checkboxes.border_width }px` ] );
 	}
 
-	const checkboxBorder = String( checkboxes.border ?? '' );
+	const checkboxColours: [ string, string ][] = [
+		[ 'checkbox-border-color', String( checkboxes.border ?? '' ) ],
+		[ 'checkbox-background', String( checkboxes.background ?? '' ) ],
+		[ 'checkbox-checked-color', String( checkboxes.checked ?? '' ) ],
+	];
 
-	if ( '' !== checkboxBorder ) {
-		out.push( [ 'checkbox-border-color', checkboxBorder ] );
-	}
-
-	const checkboxBackground = String( checkboxes.background ?? '' );
-
-	if ( '' !== checkboxBackground ) {
-		out.push( [ 'checkbox-background', checkboxBackground ] );
-	}
-
-	const checked = String( checkboxes.checked ?? '' );
-
-	if ( '' !== checked ) {
-		out.push( [ 'checkbox-checked-color', checked ] );
-	}
+	out.push( ...checkboxColours.filter( notEmpty ) );
 
 	const helpColor = String( tokens.help_text.color ?? '' );
 
