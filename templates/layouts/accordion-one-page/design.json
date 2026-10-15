@@ -34,7 +34,7 @@
 	"radios": {
 		"size": null,
 		"border_width": null,
-		"border": "#757575",
+		"border": "",
 		"background": "",
 		"checked": ""
 	},
