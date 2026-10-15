@@ -26,7 +26,7 @@ import { useIsLayoutEditor } from '../shared/layout-editor';
 import { errorMessage } from '../shared/error-message';
 import './layout-design.css';
 
-const SIDEBAR = 'yaycheckout-layout-design';
+export const SIDEBAR = 'yaycheckout-layout-design';
 const CSS_LOCK = 'yaycheckout-layout-design-css';
 
 type SectionTokens = Record< string, string | number | null >;
@@ -351,7 +351,8 @@ function ColourSettings( {
 			label={ label }
 			panelId={ panelId }
 			hasInnerWrapper
-			className="color-block-support-panel"
+			// The panelId as a class too: the editor tour finds the Colours panel by it.
+			className={ `color-block-support-panel ${ panelId }` }
 			__experimentalFirstVisibleItemClass="first"
 			__experimentalLastVisibleItemClass="last"
 			resetAll={ () =>
