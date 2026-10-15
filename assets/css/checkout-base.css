@@ -797,3 +797,8 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 		font-size: max(16px, 1em);
 	}
 }
+
+/* Some plugins and themes (Germanized) give every checkout .shop_table a grey background; the summary tables sit on the block's own. */
+.yaycheckout-page table.shop_table {
+	background-color: transparent;
+}

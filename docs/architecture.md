@@ -15,6 +15,7 @@ Commands and hard rules live in [CLAUDE.md](../CLAUDE.md). Citations give a path
   - priority 5: admin-shell boots and registers the adapter (see [the next section](#admin-shell-sync-and-scoping));
   - priority 10: `plugin_init()` shows a notice and stops if WooCommerce is missing. Otherwise it declares HPOS compatibility (`Engine\ActDeact::before_woocommerce_init`), builds the `YayCheckout` singleton and loads translations.
 - `includes/YayCheckout.php` wires everything by hand in its constructor, with no container. `boot_pro()` runs first so `Support\Plan::is_pro()` is settled before any component reads it; then REST, asset registration, the admin page, blocks, the post type, the layout guards, the editor embed, and the storefront renderers.
+- `includes/Integrations/` holds one class per third-party plugin YayCheckout needs fixes for, each booted from `YayCheckout.php` and hooking only while that plugin is active (`Integrations\Germanized` stops Germanized's cart-item thumbnail from breaking the Items block's rows). A fix for a plugin goes there, not in the renderer.
 - Activation stores nothing: settings and each layout's design derive from their schemas on read. `uninstall.php` deletes layouts and options named `yaycheckout_*` only when the merchant turned on `general.delete_data_on_uninstall`; the catalogue transient, extra-field order meta and the other sites of a network stay behind. It runs without the autoloader, so it repeats those keys as literals.
 
 ## Admin-shell sync and scoping
