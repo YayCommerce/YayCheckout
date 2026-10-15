@@ -41,12 +41,21 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		<>
 			<InspectorControls>
 				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
-					<ToggleControl
-						label={ __( 'Show chevron', 'yaycheckout' ) }
-						checked={ showChevron }
-						onChange={ ( value ) => setAttributes( { showChevron: value } ) }
-					/>
-					<p>{ __( 'Opens and closes the Order Summary while it is collapsible.', 'yaycheckout' ) }</p>
+					{ collapsible ? (
+						<ToggleControl
+							label={ __( 'Show chevron', 'yaycheckout' ) }
+							help={ __( 'Opens and closes the Order Summary.', 'yaycheckout' ) }
+							checked={ showChevron }
+							onChange={ ( value ) => setAttributes( { showChevron: value } ) }
+						/>
+					) : (
+						<p>
+							{ __(
+								'Opens and closes the Order Summary. Turn on Collapsible in the Order Summary block to use it.',
+								'yaycheckout'
+							) }
+						</p>
+					) }
 				</PanelBody>
 			</InspectorControls>
 			<div { ...innerBlocksProps }>

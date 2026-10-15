@@ -3,6 +3,7 @@ import { cloneBlock, createBlock } from '@wordpress/blocks';
 import {
 	Notice,
 	PanelBody,
+	TextControl,
 	ToggleControl,
 	__experimentalToggleGroupControl as ToggleGroupControl,
 	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
@@ -109,20 +110,12 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	return (
 		<div { ...innerBlocksProps }>
 			{ css && <style>{ css }</style> }
-			<SectionLabel
-				label={ label }
-				defaultLabel={ __( 'Your order', 'yaycheckout' ) }
-				setAttributes={ setAttributes }
-				showHeading={ ! newShape }
-				help={
-					newShape
-						? __( "Read by screen readers as the name of the header's open/close button.", 'yaycheckout' )
-						: undefined
-				}
-			/>
+			{ ! newShape && (
+				<SectionLabel label={ label } defaultLabel={ __( 'Your order', 'yaycheckout' ) } setAttributes={ setAttributes } />
+			) }
 			<InspectorControls>
 				{ newShape ? (
-					<PanelBody title={ __( 'Collapsing', 'yaycheckout' ) }>
+					<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 						<ToggleControl
 							label={ __( 'Collapsible', 'yaycheckout' ) }
 							checked={ collapsible }
@@ -146,7 +139,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 								<ToggleGroupControlOption value="open" label={ __( 'Open', 'yaycheckout' ) } />
 							</ToggleGroupControl>
 						) }
-						{ headerId && (
+						{ collapsible && headerId && (
 							<ToggleGroupControl
 								label={ __( 'Opens', 'yaycheckout' ) }
 								value={ opensUp ? 'up' : 'down' }
@@ -160,6 +153,12 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 								<ToggleGroupControlOption value="up" label={ __( 'Up', 'yaycheckout' ) } />
 							</ToggleGroupControl>
 						) }
+						<TextControl
+							label={ __( 'Label', 'yaycheckout' ) }
+							value={ label }
+							help={ __( "Read by screen readers as the name of the header's open/close button.", 'yaycheckout' ) }
+							onChange={ ( value ) => setAttributes( { label: value } ) }
+						/>
 					</PanelBody>
 				) : (
 					<PanelBody>

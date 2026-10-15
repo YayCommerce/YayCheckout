@@ -65,7 +65,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					/>
 					{ showTitle && (
 						<TextControl
-							label={ __( 'Label', 'yaycheckout' ) }
+							label={ __( 'Title', 'yaycheckout' ) }
 							value={ label }
 							onChange={ ( value ) => setAttributes( { label: value } ) }
 						/>
@@ -75,6 +75,8 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						value={ description }
 						onChange={ ( value ) => setAttributes( { description: value } ) }
 					/>
+				</PanelBody>
+				<PanelBody title={ __( 'Methods', 'yaycheckout' ) }>
 					<SelectControl
 						label={ __( 'Layout', 'yaycheckout' ) }
 						value={ selectedLayout.value }

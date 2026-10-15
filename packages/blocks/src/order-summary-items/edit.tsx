@@ -66,28 +66,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
-					<ToggleControl
-						label={ __( 'Show labels', 'yaycheckout' ) }
-						checked={ showLabels }
-						onChange={ ( value ) => setAttributes( { showLabels: value } ) }
-					/>
-					{ showLabels && (
-						<>
-							<TextControl
-								label={ __( 'Product label', 'yaycheckout' ) }
-								value={ productLabel ?? '' }
-								placeholder={ productPlaceholder }
-								onChange={ ( value ) => setAttributes( { productLabel: value } ) }
-							/>
-							<TextControl
-								label={ __( 'Subtotal label', 'yaycheckout' ) }
-								value={ subtotalLabel ?? '' }
-								placeholder={ subtotalPlaceholder }
-								onChange={ ( value ) => setAttributes( { subtotalLabel: value } ) }
-							/>
-						</>
-					) }
+				<PanelBody title={ __( 'Product', 'yaycheckout' ) }>
 					<ToggleControl
 						label={ __( 'Show thumbnails', 'yaycheckout' ) }
 						checked={ showThumbnails }
@@ -118,8 +97,10 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						checked={ showShortDescription }
 						onChange={ ( value ) => setAttributes( { showShortDescription: value } ) }
 					/>
+				</PanelBody>
+				<PanelBody title={ __( 'Quantity', 'yaycheckout' ) }>
 					<SelectControl
-						label={ __( 'Quantity', 'yaycheckout' ) }
+						label={ __( 'Show as', 'yaycheckout' ) }
 						value={ quantityDisplay }
 						options={ [
 							{ label: __( 'Inline', 'yaycheckout' ), value: 'inline' },
@@ -140,6 +121,29 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						checked={ showStepper }
 						onChange={ ( value ) => setAttributes( { showStepper: value } ) }
 					/>
+				</PanelBody>
+				<PanelBody title={ __( 'Column labels', 'yaycheckout' ) } initialOpen={ false }>
+					<ToggleControl
+						label={ __( 'Show labels', 'yaycheckout' ) }
+						checked={ showLabels }
+						onChange={ ( value ) => setAttributes( { showLabels: value } ) }
+					/>
+					{ showLabels && (
+						<>
+							<TextControl
+								label={ __( 'Product label', 'yaycheckout' ) }
+								value={ productLabel ?? '' }
+								placeholder={ productPlaceholder }
+								onChange={ ( value ) => setAttributes( { productLabel: value } ) }
+							/>
+							<TextControl
+								label={ __( 'Subtotal label', 'yaycheckout' ) }
+								value={ subtotalLabel ?? '' }
+								placeholder={ subtotalPlaceholder }
+								onChange={ ( value ) => setAttributes( { subtotalLabel: value } ) }
+							/>
+						</>
+					) }
 				</PanelBody>
 			</InspectorControls>
 			{ badge && (
