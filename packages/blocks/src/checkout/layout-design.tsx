@@ -1,29 +1,17 @@
 import apiFetch from '@wordpress/api-fetch';
 import {
 	store as blockEditorStore,
-	__experimentalColorGradientControl as ColorGradientControl,
 	__experimentalColorGradientSettingsDropdown as ColorGradientSettingsDropdown,
 	__experimentalUseMultipleOriginColorsAndGradients as useMultipleOriginColorsAndGradients,
 	getColorClassName,
 } from '@wordpress/block-editor';
 import {
-	Button,
-	ColorIndicator,
-	Dropdown,
 	Flex,
-	FlexItem,
 	PanelBody,
-	Path,
 	RangeControl,
 	SelectControl,
-	SVG,
-	TabPanel,
 	TextareaControl,
-	__experimentalDropdownContentWrapper as DropdownContentWrapper,
-	__experimentalHStack as HStack,
 	__experimentalToolsPanel as ToolsPanel,
-	__experimentalToolsPanelItem as ToolsPanelItem,
-	__experimentalZStack as ZStack,
 } from '@wordpress/components';
 import { select, useDispatch, useSelect } from '@wordpress/data';
 import { addFilter } from '@wordpress/hooks';
@@ -36,6 +24,7 @@ import { DEFAULT_BASE_SIZE, designCss, isGradient } from '../shared/design-css';
 import { editorData, type DesignRule, type EditorDesign } from '../shared/editor-data';
 import { useIsLayoutEditor } from '../shared/layout-editor';
 import { errorMessage } from '../shared/error-message';
+import { StateColourItem, type ColourState } from '../shared/state-colour-item';
 import './layout-design.css';
 
 export const SIDEBAR = 'yaycheckout-layout-design';
@@ -85,8 +74,6 @@ const TOKEN_LABELS: Record< string, string > = {
 	style: __( 'Style', 'yaycheckout' ),
 	size: __( 'Size', 'yaycheckout' ),
 	radius: __( 'Radius', 'yaycheckout' ),
-	focus_border: __( 'Focus border', 'yaycheckout' ),
-	focus_background: __( 'Focus background', 'yaycheckout' ),
 	focus_style: __( 'Focus style', 'yaycheckout' ),
 	label: __( 'Label', 'yaycheckout' ),
 	text_color: __( 'Input text', 'yaycheckout' ),
@@ -95,7 +82,6 @@ const TOKEN_LABELS: Record< string, string > = {
 	checked: __( 'Checked', 'yaycheckout' ),
 	color: __( 'Colour', 'yaycheckout' ),
 	link: __( 'Link', 'yaycheckout' ),
-	link_hover: __( 'Link hover', 'yaycheckout' ),
 };
 
 const ENUM_LABELS: Record< string, string > = {
@@ -290,145 +276,37 @@ function isColourRule( rule: DesignRule ): boolean {
 	return 'color' === rule.type || 'fill' === rule.type;
 }
 
-/** Where core opens a sidebar colour popover. */
-const SIDEBAR_POPOVER = { placement: 'left-start', offset: 36, shift: true } as const;
-
-/** Core's reset icon (@wordpress/icons `reset`), which the blocks don't bundle. */
-const RESET_ICON = (
-	<SVG xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-		<Path d="M7 11.5h10V13H7z" />
-	</SVG>
-);
-
-type ColourState = {
-	/** The token this state stores. */
-	token: string;
-	label: string;
-	colorValue?: string;
-	colorSlug?: string;
-	onColorChange: ( next?: string, slug?: string ) => void;
+/** Colour tokens shown as one row with a tab per state: section => the row's token => [ token, tab label ][]. */
+const STATE_GROUPS: Partial< Record< Section, Record< string, [ string, string ][] > > > = {
+	colours: {
+		link: [
+			[ 'link', __( 'Default', 'yaycheckout' ) ],
+			[ 'link_hover', __( 'Hover', 'yaycheckout' ) ],
+		],
+	},
+	inputs: {
+		background: [
+			[ 'background', __( 'Default', 'yaycheckout' ) ],
+			[ 'focus_background', __( 'Focus', 'yaycheckout' ) ],
+		],
+		border: [
+			[ 'border', __( 'Default', 'yaycheckout' ) ],
+			[ 'focus_border', __( 'Focus', 'yaycheckout' ) ],
+		],
+	},
 };
-
-/**
- * One colour with a state per tab (Default and Hover), as core's block Elements → Link item: a row with an
- * indicator per state, and a popover with a tab per state. Built from public components, since core's own
- * (ColorGradientDropdownItem) is private; the classes are core's, so the row matches the items beside it.
- */
-function StateColourItem( {
-	label,
-	panelId,
-	states,
-	colors,
-	disableCustomColors,
-	onReset,
-}: {
-	label: string;
-	panelId: string;
-	states: ColourState[];
-	colors: ColourOrigin[] | undefined;
-	disableCustomColors?: boolean;
-	onReset: () => void;
-} ) {
-	const hasValue = () => states.some( ( state ) => undefined !== state.colorValue );
-
-	return (
-		<ToolsPanelItem
-			className="block-editor-color-gradient-item block-editor-tools-panel-color-gradient-settings__item"
-			hasValue={ hasValue }
-			label={ label }
-			onDeselect={ onReset }
-			isShownByDefault
-			panelId={ panelId }
-		>
-			<Dropdown
-				popoverProps={ SIDEBAR_POPOVER }
-				className="block-editor-tools-panel-color-gradient-settings__dropdown"
-				renderToggle={ ( { onToggle, isOpen } ) => (
-					<>
-						<Button
-							__next40pxDefaultSize
-							onClick={ onToggle }
-							className={ `block-editor-panel-color-gradient-settings__dropdown${ isOpen ? ' is-open' : '' }` }
-							aria-expanded={ isOpen }
-						>
-							<HStack justify="flex-start">
-								<ZStack isLayered={ false } offset={ -8 }>
-									{ states.map( ( state ) => (
-										<Flex key={ state.token } expanded={ false }>
-											<ColorIndicator colorValue={ state.colorValue } />
-										</Flex>
-									) ) }
-								</ZStack>
-								<FlexItem className="block-editor-panel-color-gradient-settings__color-name" title={ label }>
-									{ label }
-								</FlexItem>
-							</HStack>
-						</Button>
-						{ hasValue() && (
-							<Button
-								__next40pxDefaultSize
-								label={ __( 'Reset', 'yaycheckout' ) }
-								className="block-editor-panel-color-gradient-settings__reset"
-								size="small"
-								icon={ RESET_ICON }
-								onClick={ () => {
-									onReset();
-									if ( isOpen ) {
-										onToggle();
-									}
-								} }
-							/>
-						) }
-					</>
-				) }
-				renderContent={ () => (
-					<DropdownContentWrapper paddingSize="none">
-						<div className="block-editor-panel-color-gradient-settings__dropdown-content">
-							<TabPanel
-								className="yaycheckout-layout-design__state-tabs"
-								tabs={ states.map( ( state ) => ( { name: state.token, title: state.label } ) ) }
-							>
-								{ ( tab ) => {
-									const state = states.find( ( item ) => item.token === tab.name ) ?? states[ 0 ];
-
-									return (
-										<ColorGradientControl
-											key={ state.token }
-											showTitle={ false }
-											enableAlpha={ false }
-											__experimentalIsRenderedInSidebar
-											colors={ colors }
-											disableCustomColors={ disableCustomColors }
-											colorValue={ state.colorValue }
-											colorSlug={ state.colorSlug }
-											onColorChange={ state.onColorChange }
-											clearable={ undefined !== state.colorValue }
-											headingLevel={ 3 }
-										/>
-									);
-								} }
-							</TabPanel>
-						</div>
-					</DropdownContentWrapper>
-				) }
-			/>
-		</ToolsPanelItem>
-	);
-}
-
-/** The suffix that makes a colour token another token's hover state, as colours.link_hover is colours.link's. */
-const HOVER_SUFFIX = '_hover';
 
 /**
  * A section's colour tokens as the block editor's colour items, in a ToolsPanel styled like a block's Color panel.
  * A theme swatch is stored as its preset's custom property, so the layout follows later palette changes; a
  * custom pick is stored as written. Clear, or clicking the selected swatch again, unsets the colour (''), which
- * prints nothing, so the theme's colour shows. A fill (the background) also takes gradients. A token with a
- * `<token>_hover` sibling is one item with a tab per state (StateColourItem).
+ * prints nothing, so the theme's colour shows. A fill (the background) also takes gradients. A STATE_GROUPS set
+ * is one item with a tab per state (StateColourItem).
  */
 function ColourSettings( {
 	label,
 	panelId,
+	stateGroups = {},
 	rules,
 	values,
 	onChange,
@@ -436,6 +314,8 @@ function ColourSettings( {
 	label: string;
 	/** One per panel, so each panel's colour items register with its own ToolsPanel. */
 	panelId: string;
+	/** The section's STATE_GROUPS. */
+	stateGroups?: Record< string, [ string, string ][] >;
 	rules: Record< string, DesignRule >;
 	values: SectionTokens;
 	onChange: ( next: SectionTokens ) => void;
@@ -474,9 +354,11 @@ function ColourSettings( {
 	}
 
 	const isColour = ( token: string ) => tokens.some( ( [ key ] ) => key === token );
-	const isStateful = ( token: string ) => isColour( token + HOVER_SUFFIX );
-	const isHoverState = ( token: string ) =>
-		token.endsWith( HOVER_SUFFIX ) && isColour( token.slice( 0, -HOVER_SUFFIX.length ) );
+	// A set shows as one item only while every state shows: SectionPanel leaves out tokens that don't apply.
+	const groups = Object.entries( stateGroups ).filter( ( [ , states ] ) =>
+		states.every( ( [ token ] ) => isColour( token ) )
+	);
+	const inGroup = ( token: string ) => groups.some( ( [ , states ] ) => states.some( ( [ key ] ) => key === token ) );
 
 	/** A colour token's value for the picker: a preset's colour and slug, or the colour as stored; none when empty. */
 	const colourOf = ( value: string ) => {
@@ -485,40 +367,34 @@ function ColourSettings( {
 		return { colorValue: '' === value ? undefined : preset?.color ?? value, colorSlug: preset?.slug };
 	};
 
-	const stateItems = tokens
-		.filter( ( [ token ] ) => isStateful( token ) )
-		.map( ( [ token ] ) => {
-			const states: ColourState[] = [
-				[ token, __( 'Default', 'yaycheckout' ) ],
-				[ token + HOVER_SUFFIX, __( 'Hover', 'yaycheckout' ) ],
-			].map( ( [ key, stateLabel ] ) => ( {
-				token: key,
-				label: stateLabel,
-				...colourOf( String( values[ key ] ?? '' ) ),
-				onColorChange: ( next?: string, slug?: string ) => change( key, 'color', next, slug ),
-			} ) );
+	const stateItems = groups.map( ( [ token, groupStates ] ) => {
+		const states: ColourState[] = groupStates.map( ( [ key, stateLabel ] ) => ( {
+			key,
+			label: stateLabel,
+			...colourOf( String( values[ key ] ?? '' ) ),
+			onColorChange: ( next?: string, slug?: string ) => change( key, 'color', next, slug ),
+		} ) );
 
-			return (
-				<StateColourItem
-					key={ token }
-					label={ TOKEN_LABELS[ token ] ?? token }
-					panelId={ panelId }
-					states={ states }
-					colors={ palettes.colors }
-					disableCustomColors={ palettes.disableCustomColors }
-					onReset={ () =>
-						onChange( {
-							...latest.current,
-							[ token ]: rules[ token ].default,
-							[ token + HOVER_SUFFIX ]: rules[ token + HOVER_SUFFIX ].default,
-						} )
-					}
-				/>
-			);
-		} );
+		return (
+			<StateColourItem
+				key={ token }
+				label={ TOKEN_LABELS[ token ] ?? token }
+				panelId={ panelId }
+				states={ states }
+				colors={ palettes.colors }
+				disableCustomColors={ palettes.disableCustomColors }
+				onReset={ () =>
+					onChange( {
+						...latest.current,
+						...Object.fromEntries( groupStates.map( ( [ key ] ) => [ key, rules[ key ].default ] ) ),
+					} )
+				}
+			/>
+		);
+	} );
 
 	const settings = tokens
-		.filter( ( [ token ] ) => ! isStateful( token ) && ! isHoverState( token ) )
+		.filter( ( [ token ] ) => ! inGroup( token ) )
 		.map( ( [ token, rule ] ) => {
 			const value = String( values[ token ] ?? '' );
 			const isFill = 'fill' === rule.type;
@@ -662,6 +538,7 @@ function SectionPanel( {
 		<ColourSettings
 			label={ COLOUR_PANELS[ section ] ?? SECTIONS[ section ] }
 			panelId={ `${ SIDEBAR }-${ section }` }
+			stateGroups={ STATE_GROUPS[ section ] }
 			rules={ rules }
 			values={ values }
 			onChange={ onChange }
