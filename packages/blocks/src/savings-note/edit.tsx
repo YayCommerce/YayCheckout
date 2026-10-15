@@ -26,7 +26,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Savings note', 'yaycheckout' ) }>
+				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
 					<TextControl
 						label={ __( 'Text', 'yaycheckout' ) }
 						help={ __( 'Use %s where the amount goes.', 'yaycheckout' ) }

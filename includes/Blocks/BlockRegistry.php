@@ -7,6 +7,7 @@ use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutDifferentAddress;
 use YayCheckout\Renderer\CheckoutLogin;
+use YayCheckout\Renderer\ExpressPay;
 use YayCheckout\Renderer\BlockVisibility;
 use YayCheckout\Renderer\LiveValues;
 use YayCheckout\Renderer\PinToBottom;
@@ -83,6 +84,7 @@ class BlockRegistry {
     protected function __construct() {
         add_action( 'init', [ $this, 'register_blocks' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_design_data' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'editor_express_pay_data' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_live_value_editor' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_visibility_editor' ] );
         add_action( 'enqueue_block_assets', [ $this, 'enqueue_live_value_editor_style' ] );
@@ -197,6 +199,23 @@ class BlockRegistry {
         ];
 
         self::inline_data( generate_block_asset_handle( 'yaycheckout/different-address', 'editorScript' ), 'window.yayCheckoutDifferentAddress', $different_address_editor_data );
+    }
+
+    /**
+     * Whether a gateway can fill the Express Pay block, on its own handle. Only in the layout editor, the one
+     * that offers the block, since ExpressPay::has_buttons() loads every gateway and reads hooks they add after init.
+     */
+    public function editor_express_pay_data(): void {
+        if ( 'layout' !== $this->editor( null ) ) {
+            return;
+        }
+
+        $data = [
+            'hasButtons'  => ExpressPay::has_buttons(),
+            'settingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout' ),
+        ];
+
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/express-pay', 'editorScript' ), 'window.yayCheckoutExpressPay', $data );
     }
 
     /**

@@ -8,7 +8,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * Watchable blocks (block.json support `yaycheckoutWatchable`) print BLOCK_ID_ATTR and, when
  * empty, EMPTY_ATTR on their wrapper; what "empty" means for each lives in its render.php and,
- * for Shipping methods and Payment, in CheckoutFragments. A block that prints nothing is empty.
+ * for Shipping methods and Payment, in CheckoutFragments, and for Express Pay, whose gateways fill it
+ * after load, also in its view.ts. A block that prints nothing is empty.
  * packages/blocks/src/shared/visibility-rules.ts mirrors the markers and empty_ids().
  */
 class BlockEmptiness {

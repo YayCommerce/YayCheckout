@@ -66,6 +66,10 @@ class CheckoutPage {
         // PHP_INT_MAX: must run after block themes swap in template-canvas.php.
         add_filter( 'template_include', [ $this, 'page_template' ], PHP_INT_MAX );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], self::SCRIPTS_PRIORITY );
+
+        if ( has_block( ExpressPay::BLOCK, $this->layout()->content ) ) {
+            add_filter( 'wc_stripe_express_checkout_params', [ ExpressPay::class, 'stripe_params' ] );
+        }
     }
 
     public function page_template(): string {

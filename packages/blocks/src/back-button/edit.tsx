@@ -25,7 +25,6 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		<>
 			<InspectorControls>
 				<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
-					<ArrowControl direction="back" value={ attributes.arrow } onChange={ ( arrow ) => setAttributes( { arrow } ) } />
 					<SelectControl
 						label={ __( 'On the first step', 'yaycheckout' ) }
 						value={ attributes.firstStep }
@@ -43,6 +42,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							onChange={ ( value ) => setAttributes( { cartText: value } ) }
 						/>
 					) }
+					<ArrowControl direction="back" value={ attributes.arrow } onChange={ ( arrow ) => setAttributes( { arrow } ) } />
 				</PanelBody>
 			</InspectorControls>
 			<StepNavButtonEdit

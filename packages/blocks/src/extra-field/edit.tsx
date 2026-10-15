@@ -140,36 +140,6 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						onChange={ ( value ) => setAttributes( { fieldKey: value } ) }
 						help={ __( 'Posted name stored on the order, e.g. vat_number.', 'yaycheckout' ) }
 					/>
-					<FieldTextControls
-						label={ label }
-						placeholder={ placeholder }
-						description={ description }
-						setAttributes={ setAttributes }
-						showLabel={ ! isCheckbox }
-						showPlaceholder={ type !== 'datetime' && ! isCheckbox }
-					/>
-					<RequiredIndicatorControls
-						required={ required }
-						requiredMark={ requiredMark }
-						optionalText={ optionalText }
-						onRequiredChange={ ( value ) => setAttributes( { required: value } ) }
-						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
-						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
-					/>
-					<DisclosureControls
-						fieldKey={ fieldKey.trim() }
-						label={ disclosureLabel }
-						required={ required }
-						disclosure={ disclosure }
-						disclosureText={ disclosureText }
-						setAttributes={ setAttributes }
-					/>
-					<ToggleControl
-						label={ __( 'Remember value', 'yaycheckout' ) }
-						help={ __( 'Keeps what the shopper entered if they reload the checkout. Cleared once the order is placed.', 'yaycheckout' ) }
-						checked={ rememberValue }
-						onChange={ ( value ) => setAttributes( { rememberValue: value } ) }
-					/>
 					<SelectControl
 						label={ __( 'Type', 'yaycheckout' ) }
 						value={ type }
@@ -234,6 +204,36 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							</Button>
 						</>
 					) }
+					<FieldTextControls
+						label={ label }
+						placeholder={ placeholder }
+						description={ description }
+						setAttributes={ setAttributes }
+						showLabel={ ! isCheckbox }
+						showPlaceholder={ type !== 'datetime' && ! isCheckbox }
+					/>
+					<RequiredIndicatorControls
+						required={ required }
+						requiredMark={ requiredMark }
+						optionalText={ optionalText }
+						onRequiredChange={ ( value ) => setAttributes( { required: value } ) }
+						onRequiredMarkChange={ ( value ) => setAttributes( { requiredMark: value } ) }
+						onOptionalTextChange={ ( value ) => setAttributes( { optionalText: value } ) }
+					/>
+					<DisclosureControls
+						fieldKey={ fieldKey.trim() }
+						label={ disclosureLabel }
+						required={ required }
+						disclosure={ disclosure }
+						disclosureText={ disclosureText }
+						setAttributes={ setAttributes }
+					/>
+					<ToggleControl
+						label={ __( 'Remember value', 'yaycheckout' ) }
+						help={ __( 'Keeps what the shopper entered if they reload the checkout. Cleared once the order is placed.', 'yaycheckout' ) }
+						checked={ rememberValue }
+						onChange={ ( value ) => setAttributes( { rememberValue: value } ) }
+					/>
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>

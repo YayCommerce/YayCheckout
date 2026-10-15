@@ -1,0 +1,16 @@
+/* Empty until a gateway shows a button (view.ts); the gateways' hidden containers would otherwise draw the merchant's box. */
+.yaycheckout-express-pay[data-yaycheckout-empty] {
+	display: none;
+}
+
+/*
+ * The layout places its own divider after the block, so Stripe's "— OR —" and its top margin give way.
+ * Stripe sets both inline, hence !important.
+ */
+.yaycheckout-express-pay #wc-stripe-express-checkout-button-separator {
+	display: none !important;
+}
+
+.yaycheckout-express-pay #wc-stripe-express-checkout-element {
+	margin-top: 0 !important;
+}
