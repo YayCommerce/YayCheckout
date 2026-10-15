@@ -52,7 +52,7 @@ const INPUT_SIZES: Record< string, [ string, string ] > = {
 
 /** Mirrors DesignStyles::vars() in PHP: custom property values by name, for the tokens that aren't empty, and always the font size. */
 function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: DesignFonts ): [ string, string ][] {
-	const { colours, typography, inputs, checkboxes } = tokens;
+	const { colours, typography, inputs, checkboxes, radios } = tokens;
 	const background = String( colours.background ?? '' );
 	const pairs: [ string, string ][] = [
 		[ 'color-primary', String( colours.primary ?? '' ) ],
@@ -131,11 +131,29 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 		out.push( [ 'checkbox-border-width', `${ checkboxes.border_width }px` ] );
 	}
 
-	const checked = String( checkboxes.checked ?? '' );
+	const checkboxColours: [ string, string ][] = [
+		[ 'checkbox-border-color', String( checkboxes.border ?? '' ) ],
+		[ 'checkbox-background', String( checkboxes.background ?? '' ) ],
+		[ 'checkbox-checked-color', String( checkboxes.checked ?? '' ) ],
+	];
 
-	if ( '' !== checked ) {
-		out.push( [ 'checkbox-checked-color', checked ] );
+	out.push( ...checkboxColours.filter( notEmpty ) );
+
+	if ( null !== radios.size ) {
+		out.push( [ 'radio-size', `${ radios.size }px` ] );
 	}
+
+	if ( null !== radios.border_width ) {
+		out.push( [ 'radio-border-width', `${ radios.border_width }px` ] );
+	}
+
+	const radioColours: [ string, string ][] = [
+		[ 'radio-border-color', String( radios.border ?? '' ) ],
+		[ 'radio-background', String( radios.background ?? '' ) ],
+		[ 'radio-checked-color', String( radios.checked ?? '' ) ],
+	];
+
+	out.push( ...radioColours.filter( notEmpty ) );
 
 	const helpColor = String( tokens.help_text.color ?? '' );
 

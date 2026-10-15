@@ -7,7 +7,19 @@
  * Methods styles from the Styles tab set --yaycheckout-shipping-* on the wrapper: gap, radius,
  * border-width, bg, bg-selected, bg-hover, radio, radio-selected, border, border-selected and border-hover.
  * Cards with checkmark and Divider lines keep one background unless the merchant sets selected/hover.
+ * Unset radio and radio-selected fall back to the layout's Radios design (--yaycheckout-radio-border-color,
+ * --yaycheckout-radio-checked-color), then to each layout's own neutral fallback.
  */
+
+/*
+ * The indicator colours, resolved once on the wrapper where the block's own colours are set: the block's Radio
+ * colour, then the layout's Radios design. Unticked has no last fallback, so each layout keeps its own neutral one.
+ */
+.yaycheckout-checkout .yaycheckout-shipping-methods {
+	--yaycheckout-shipping-indicator: var(--yaycheckout-shipping-radio, var(--yaycheckout-radio-border-color));
+	--yaycheckout-shipping-indicator-selected: var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-radio-checked-color, var(--yaycheckout-primary-color, #3858e9)));
+}
+
 
 /*
  * Virtual-only (or otherwise no-shipping) carts: CheckoutFragments marks the rates
@@ -60,7 +72,7 @@
 	width: 18px;
 	height: 18px;
 	border-radius: 999px;
-	box-shadow: inset 0 0 0 1px var(--yaycheckout-shipping-radio, var(--yaycheckout-border-color));
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-shipping-indicator, var(--yaycheckout-border-color));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods .yaycheckout-shipping-methods__body {
@@ -164,7 +176,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="joined"]) .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
+	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-indicator-selected);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods:is(:not([data-layout]), [data-layout="joined"]) .yaycheckout-shipping-methods__price {
@@ -205,7 +217,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="cards"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
+	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-indicator-selected);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="cards"] .yaycheckout-shipping-methods__price {
@@ -255,7 +267,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="grid"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
+	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-indicator-selected);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="grid"] .yaycheckout-shipping-methods__body {
@@ -308,11 +320,11 @@
 	justify-content: center;
 	width: 22px;
 	height: 22px;
-	box-shadow: inset 0 0 0 1px var(--yaycheckout-shipping-radio, color-mix(in srgb, currentColor 35%, transparent));
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-shipping-indicator, color-mix(in srgb, currentColor 35%, transparent));
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="checkmark"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
-	background-color: var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
+	background-color: var(--yaycheckout-shipping-indicator-selected);
 	box-shadow: none;
 	background-image: var(--yaycheckout-check-icon);
 	background-position: center;
@@ -365,11 +377,11 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="lines"] .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 1px var(--yaycheckout-shipping-radio, currentColor);
+	box-shadow: inset 0 0 0 1px var(--yaycheckout-shipping-indicator, currentColor);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="lines"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
+	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-indicator-selected);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="lines"] .yaycheckout-shipping-methods__price {
@@ -414,7 +426,7 @@
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="box"] .yaycheckout-shipping-methods__list > .yaycheckout-shipping-methods__option:is(:has(input:checked), :only-child) .yaycheckout-shipping-methods__indicator {
-	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-radio-selected, var(--yaycheckout-primary-color, #3858e9));
+	box-shadow: inset 0 0 0 5px var(--yaycheckout-shipping-indicator-selected);
 }
 
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="box"] .yaycheckout-shipping-methods__price {
