@@ -1,6 +1,6 @@
 # Section Heading Level, Title and Description Styles Implementation Plan
 
-**Status:** active
+**Status:** done 2026-10-14
 **Goal:** Billing, Shipping, Shipping Methods and Payment get a heading-level choice (H1–H6, default H3) and Styles-tab panels for their title and description: text colour plus core's typography controls. Billing and Shipping also get a Description field.
 **Branch:** work on `dev/edd` as asked; no new branch. Nothing is committed unless you ask. CLAUDE.md says changes reach `dev/edd` only through a PR, so say whether to commit there or open a PR when the work is done.
 **Tests:** none. These are block options and CSS, and none of it is logic the CLAUDE.md test rule lists. Exact manual checks are below.

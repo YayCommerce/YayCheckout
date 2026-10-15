@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. There is no spec; the Requirements below are the contract.
 
-**Status:** active
+**Status:** done 2026-10-14
 **Goal:** Every step after the open one is always inactive (`locked`), so going back to any earlier step resets every step after it.
 **Spec:** none, planned from the request
 **Architecture:** `packages/blocks/src/steps/view.ts` gets one `open( step )` that makes a step `current` and locks every step after it; Continue, Back and reopen all go through it. Because a step after the open one can no longer be `complete`, the `data-completed` and `data-reached` flags and `park()`'s re-check have nothing left to do and are removed, rather than kept alongside a second rule. Steps Progress and Go to Step need no script change: they already mirror `data-state` and only reopen a `complete` step (`canReopenStep()`).

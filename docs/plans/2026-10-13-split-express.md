@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. There is no new spec; the Requirements below are the contract. The HTML mock is the visual reference: `/Users/onyxlai/Downloads/WooCommerce Checkout Templates_v1.1.html`, template id `03`, label "Split express".
 
-**Status:** active
+**Status:** done 2026-10-14
 **Goal:** A merchant can create a layout from Split express, and it opens as a dark order summary on the left and the checkout form on the right.
 **Spec:** none, planned from the request. The accepted [docs/specs/2026-10-10-layout-templates-design.md](docs/specs/2026-10-10-layout-templates-design.md) left templates 02–11 Coming soon; that spec stays a record and is not edited.
 **Architecture:** A template is available only when `templates/layouts/<slug>/markup.php` and `design.json` both exist (`LayoutTemplateCatalogue::is_available()`). Slug `split-express` is already the second catalogue entry and is unlocked on Free, and the picker sketch already exists. Adding the two files is enough; no catalogue, REST, or SPA change. The markup is Gutenberg block comments in the shape Classic two-column already saves, not the mock's HTML.

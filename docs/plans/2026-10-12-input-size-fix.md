@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. No spec; the Requirements below come from the request and the measurements in the session that found the bug.
 
-**Status:** active
+**Status:** done 2026-10-13
 **Goal:** Make the layout design's Inputs → Size (Small / Medium / Large) visibly change the height of inputs, selects, the coupon field and buttons, with and without floating labels, and make every layout's base font size default to 16px.
 **Spec:** none, planned from the request
 **Architecture:** Today the size only sets `min-height` in px, and a fixed 8px padding + 1.4em line + border is already taller, so the setting is ignored (and floating labels floor at 3.25em, above Large). The fix makes each size an em height that the content can never exceed: when a size is set, the design prints the height, a floating height, and a zero vertical padding, so the box *is* the chosen height and the text centres in it. Em, not px, because that is how mature design systems size fields (Bootstrap, Material, Shopify checkout all derive height from font size), so a 22px-font layout gets proportionally larger fields instead of identical ones. When no size is set, nothing new is printed and the CSS fallbacks keep today's look exactly.

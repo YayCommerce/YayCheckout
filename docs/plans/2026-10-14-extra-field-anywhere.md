@@ -1,6 +1,6 @@
 # Extra Field: anywhere in the checkout, explicit single/multiple checkbox
 
-**Status:** active
+**Status:** done 2026-10-14
 **Branch:** `trace/feat/extra-field-anywhere` from `dev/edd`
 **Spec:** none, planned from the request and the answers below.
 

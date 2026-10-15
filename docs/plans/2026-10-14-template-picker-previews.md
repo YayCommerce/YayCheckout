@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. Read the spec linked below before starting; the plan argues from it.
 
-**Status:** active
+**Status:** done 2026-10-14
 **Goal:** Replace the template picker's SVG sketches with large cards that show each template's real mock page in a sandboxed iframe that scrolls on hover.
 **Spec:** [docs/specs/2026-10-14-template-picker-previews-design.md](../specs/2026-10-14-template-picker-previews-design.md)
 **Architecture:**
