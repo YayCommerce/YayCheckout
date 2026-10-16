@@ -120,14 +120,15 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 <p class="has-text-color" style="color:#ffffff;margin-top:0;margin-bottom:0;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;opacity:0.85"><?php esc_html_e( 'Your bag', 'yaycheckout' ); ?></p>
 <!-- /wp:paragraph -->
 
-<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"56px","fontWeight":"400","lineHeight":"0.95","fontFamily":"Georgia, \"Times New Roman\", serif","letterSpacing":"-0.02em"},"color":{"text":"#ffffff"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
-<h2 class="wp-block-heading has-text-color" style="color:#ffffff;margin-top:0;margin-bottom:0;font-size:56px;font-weight:400;font-family:Georgia, &quot;Times New Roman&quot;, serif;letter-spacing:-0.02em;line-height:0.95"><?php esc_html_e( '3 pieces,', 'yaycheckout' ); ?><br><?php esc_html_e( 'one look.', 'yaycheckout' ); ?></h2>
-<!-- /wp:heading --></div>
+ <!-- wp:heading {"style":{"typography":{"fontSize":"56px","fontWeight":"400","lineHeight":"0.95","fontFamily":"Georgia, \u0022Times New Roman\u0022, serif","letterSpacing":"-0.02em"},"color":{"text":"#ffffff"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#ffffff;margin-top:0;margin-bottom:0;font-family:Georgia, &quot;Times New Roman&quot;, serif;font-size:56px;font-weight:400;letter-spacing:-0.02em;line-height:0.95"><span data-yaycheckout-value="cart_item_count" data-fallback="" data-prefix="" data-suffix="" class="yaycheckout-live-value">Item count</span> <?php esc_html_e( 'pieces', 'yaycheckout' ); ?><br><?php esc_html_e( 'one look.', 'yaycheckout' ); ?></h2>
+<!-- /wp:heading -->
+</div>
 <!-- /wp:group -->
 
 <!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Your bag', 'yaycheckout' ); ?>","style":{"color":{"text":"#ffffff"},"spacing":{"blockGap":"14px"}}} -->
 <!-- wp:yaycheckout/order-summary-details {"lock":{"remove":true},"style":{"spacing":{"blockGap":"16px"}}} -->
-<!-- wp:yaycheckout/order-summary-items {"showLabels":false,"itemData":"inline","quantityDisplay":"stepper","stepperStyle":"round","stepperBorderColor":"#ffffff99","style":{"color":{"text":"#ffffff"},"border":{"top":{"color":"#ffffff59","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"14px","bottom":"14px"}},"typography":{"fontSize":"15px","fontFamily":"Georgia, \"Times New Roman\", serif"}}} /-->
+<!-- wp:yaycheckout/order-summary-items {"showLabels":false,"thumbnailRatio":"portrait","thumbnailSize":72,"thumbnailRadius":0,"itemData":"inline","quantityDisplay":"stepper","stepperStyle":"round","stepperBorderColor":"#ffffff99","style":{"color":{"text":"#ffffff"},"border":{"top":{"color":"#ffffff59","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"14px","bottom":"14px"}},"typography":{"fontSize":"15px","fontFamily":"Georgia, \"Times New Roman\", serif"}}} /-->
 
 <!-- wp:yaycheckout/order-summary-breakdown {"style":{"border":{"top":{"color":"#ffffff59","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"16px"}},"typography":{"fontSize":"14px"},"color":{"text":"#ffffff"},"yaycheckout":{"label":{"color":{"text":"#ffffffd9"}}}}} /-->
 

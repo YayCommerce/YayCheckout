@@ -17,8 +17,9 @@
 	align-items: center;
 }
 
+/* Thumbnail width and ratio come from the block's thumbnail settings (CheckoutFragments::order_items_style_vars()). */
 .yaycheckout-order-summary-items__item:has(> .product-thumbnail) {
-	grid-template-columns: 48px minmax(0, 1fr) auto;
+	grid-template-columns: var(--yaycheckout-thumbnail-size, 48px) minmax(0, 1fr) auto;
 }
 
 .yaycheckout-order-summary-items__header {
@@ -52,12 +53,14 @@
 	display: block;
 }
 
+/* Cropped to the ratio; with original (auto) the image keeps its own proportions. */
 .yaycheckout-order-summary-items .product-thumbnail img {
 	display: block;
-	width: 48px;
-	height: 48px;
+	width: var(--yaycheckout-thumbnail-size, 48px);
+	height: auto;
+	aspect-ratio: var(--yaycheckout-thumbnail-ratio, 1);
 	object-fit: cover;
-	border-radius: var(--yaycheckout-field-radius);
+	border-radius: var(--yaycheckout-thumbnail-radius, var(--yaycheckout-field-radius));
 }
 
 .yaycheckout-order-summary-items__hook {

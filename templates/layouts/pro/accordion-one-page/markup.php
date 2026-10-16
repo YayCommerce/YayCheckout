@@ -197,7 +197,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <div class="wp-block-group has-background" style="border-top-color:var(--wp--preset--color--yaycheckout-border);border-top-style:solid;border-top-width:1px;background-color:#ffffff"><!-- wp:group {"style":{"spacing":{"padding":{"top":"12px","right":"20px","bottom":"12px","left":"20px"}}},"layout":{"type":"constrained","contentSize":"640px"}} -->
 <div class="wp-block-group" style="padding-top:12px;padding-right:20px;padding-bottom:12px;padding-left:20px"><!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>","collapsible":true,"initialState":"collapsed"} -->
 <!-- wp:yaycheckout/order-summary-details {"lock":{"remove":true},"style":{"spacing":{"padding":{"top":"4px","bottom":"4px"},"blockGap":"12px"}}} -->
-<!-- wp:yaycheckout/order-summary-items {"showLabels":false,"quantityDisplay":"hidden","showBadge":true,"badgeBackgroundColor":"var(--yaycheckout-design-primary)"} /-->
+<!-- wp:yaycheckout/order-summary-items {"showLabels":false,"thumbnailSize":44,"thumbnailRadius":4,"quantityDisplay":"hidden","showBadge":true,"badgeBackgroundColor":"var(--yaycheckout-design-primary)"} /-->
 
 <!-- wp:yaycheckout/coupon-form {"placeholder":"<?php esc_html_e( 'Enter code', 'yaycheckout' ); ?>","disclosure":"collapsible","disclosureText":"<?php esc_html_e( 'Add coupons', 'yaycheckout' ); ?>"} -->
 <!-- wp:yaycheckout/coupon-button {"buttonText":"<?php esc_html_e( 'Apply', 'yaycheckout' ); ?>","className":"is-style-outline","style":{"typography":{"fontSize":"13px","fontWeight":"500"}}} /-->

@@ -827,8 +827,8 @@ class CheckoutFragments {
     }
 
     /**
-     * Inline --yaycheckout-badge-* and --yaycheckout-stepper-* vars from the Items block's badge and
-     * stepper attributes; empty when none are set. On the wrapper, which checkout.js keeps across
+     * Inline --yaycheckout-badge-*, --yaycheckout-stepper-* and --yaycheckout-thumbnail-* vars from the
+     * Items block's badge, stepper and thumbnail attributes; empty when none are set. On the wrapper, which checkout.js keeps across
      * refreshes. itemsStyleVars() in order-summary-items/edit.tsx mirrors it.
      *
      * @param array $attributes Block attributes.
@@ -850,13 +850,26 @@ class CheckoutFragments {
 
         // Attribute => [ var, min px, max px ].
         $sizes = [
-            'badgeSize'   => [ '--yaycheckout-badge-size', 16, 32 ],
-            'stepperSize' => [ '--yaycheckout-stepper-size', 20, 40 ],
+            'badgeSize'       => [ '--yaycheckout-badge-size', 16, 32 ],
+            'stepperSize'     => [ '--yaycheckout-stepper-size', 20, 40 ],
+            'thumbnailSize'   => [ '--yaycheckout-thumbnail-size', 40, 96 ],
+            'thumbnailRadius' => [ '--yaycheckout-thumbnail-radius', 0, 48 ],
         ];
         foreach ( $sizes as $key => list( $var, $min, $max ) ) {
             if ( isset( $attributes[ $key ] ) && is_numeric( $attributes[ $key ] ) ) {
                 $decls[] = $var . ':' . max( $min, min( $max, (int) $attributes[ $key ] ) ) . 'px';
             }
+        }
+
+        // Square, the default, is style.css's fallback; original keeps the image's own proportions.
+        $ratios = [
+            'portrait'  => '3 / 4',
+            'landscape' => '4 / 3',
+            'original'  => 'auto',
+        ];
+        $ratio  = $attributes['thumbnailRatio'] ?? null;
+        if ( is_string( $ratio ) && isset( $ratios[ $ratio ] ) ) {
+            $decls[] = '--yaycheckout-thumbnail-ratio:' . $ratios[ $ratio ];
         }
 
         return implode( ';', $decls );
