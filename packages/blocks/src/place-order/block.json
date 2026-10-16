@@ -16,6 +16,10 @@
   "attributes": {
     "buttonText": {
       "type": "string"
+    },
+    "spread": {
+      "type": "boolean",
+      "default": false
     }
   },
   "variations": [

@@ -204,8 +204,7 @@ html.yaycheckout-has-pinned body {
  * toggles this span with jQuery slideUp()/slideDown(), which write height, overflow, padding,
  * margin and display inline; the !important declarations only outrank those inline styles.
  * The editor's field preview prints the same classes. Every kind of field (text, select, radio,
- * checkbox) takes the layout's Help text design (DesignStyles); unset, the text is the inherited
- * colour at 75% and 0.875em.
+ * checkbox) takes the layout's Muted colour and its Help text size (DesignStyles); an unset size is 0.875em.
  */
 .yaycheckout-checkout .form-row .description {
 	display: block !important;
@@ -215,7 +214,7 @@ html.yaycheckout-has-pinned body {
 	margin: 0.25em 0 0 !important;
 	position: static;
 	background: none;
-	color: var(--yaycheckout-help-text-color, color-mix(in srgb, currentColor 75%, transparent));
+	color: var(--yaycheckout-design-muted);
 	border-radius: 0;
 	font-size: var(--yaycheckout-help-text-size, 0.875em);
 }
@@ -233,6 +232,15 @@ html.yaycheckout-has-pinned body {
 	font: inherit;
 	color: var(--wp--style--color--link, currentColor);
 	cursor: pointer;
+}
+
+/* A link toggle takes the design's link colours (elements); a collapsible or checkbox toggle is a row, not a link. */
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="link"] {
+	color: var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor));
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="link"]:is(:hover, :focus) {
+	color: var(--yaycheckout-link-hover-color, var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor)));
 }
 
 /* Collapsible: a full-width header that opens and closes the panel below it. */
@@ -294,9 +302,9 @@ html.yaycheckout-has-pinned body {
 /*
  * Text inputs, selects, textareas, the coupon code and the select2 box all draw as one input.
  * A section left at theme default leaves its token unset, so the fallback applies: the theme's
- * font and text colour, a border mixed from the text colour, a transparent background. The input
- * background, text and border colour tokens win over the layout's background, text and border
- * colour. A size token zeroes the vertical padding, so the box is exactly its height and the text
+ * font and text colour, a border mixed from the text colour, and a transparent background, never the
+ * layout's, so a field on a coloured block shows that block. The input text and border colour tokens
+ * win over the layout's text and border colour. A size token zeroes the vertical padding, so the box is exactly its height and the text
  * centres in it.
  */
 .yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code),
@@ -311,7 +319,7 @@ html.yaycheckout-has-pinned body {
 	border-width: var(--yaycheckout-input-border-width, 1px);
 	border-color: var(--yaycheckout-input-border-color, var(--yaycheckout-border-color));
 	border-radius: var(--yaycheckout-field-radius);
-	background-color: var(--yaycheckout-input-background, var(--yaycheckout-color-background, transparent));
+	background-color: var(--yaycheckout-input-background, transparent);
 	box-shadow: none;
 	color: var(--yaycheckout-input-color, inherit);
 	font: inherit;
@@ -461,7 +469,7 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	border-color: var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline: var(--yaycheckout-input-focus-ring-width, 1px) solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline-offset: 0;
-	background-color: var(--yaycheckout-input-focus-background, var(--yaycheckout-input-background, var(--yaycheckout-color-background, transparent)));
+	background-color: var(--yaycheckout-input-focus-background, var(--yaycheckout-input-background, transparent));
 }
 
 /* Keyboard focus on a button, checkbox or radio: an offset ring, in the input focus colour for the controls. */
@@ -475,8 +483,11 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	outline-offset: 1px;
 }
 
-/* A click focuses the control too, and themes such as Twenty Twenty-Five outline every :focus; only the keyboard ring above shows. */
-.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):focus:not(:focus-visible) {
+/*
+ * A click focuses the control too, and themes outline every :focus (Twenty Twenty-Five every element, Storefront
+ * links and buttons); only a keyboard ring shows.
+ */
+.yaycheckout-checkout :is(button, .button, a, [role="button"], input[type="checkbox"], input[type="radio"]):focus:not(:focus-visible) {
 	outline: 0;
 }
 
@@ -719,7 +730,8 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 
 /*
  * Buttons: Coupon's Apply, Login's submit, WooCommerce's .button and Place Order. No display:
- * Place Order's align classes set it. Block supports (inline styles, has-* classes) win.
+ * Place Order's style.css sets it. Block supports (inline styles, has-* classes) win. The design's buttons tokens
+ * replace each value; place-order, coupon-button, step-button and login read them with the same fallbacks.
  */
 .yaycheckout-checkout :is(.button, button[type="submit"]) {
 	box-sizing: border-box;
@@ -727,18 +739,22 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	padding: var(--yaycheckout-input-padding-block, 8px) 20px;
 	/* Transparent, so a background picked in the block's settings shows edge to edge. */
 	border: 1px solid transparent;
-	border-radius: var(--yaycheckout-neutral-radius);
-	background-color: var(--yaycheckout-primary-color);
-	color: #fff;
+	border-radius: var(--yaycheckout-button-radius, var(--yaycheckout-neutral-radius));
+	background-color: var(--yaycheckout-button-background, var(--yaycheckout-primary-color));
+	color: var(--yaycheckout-button-color, #fff);
 	font-family: inherit;
-	font-weight: 600;
+	font-weight: var(--yaycheckout-button-font-weight, 600);
 	line-height: 1.4;
+	text-transform: var(--yaycheckout-button-text-transform, none);
 	text-decoration: none;
 	cursor: pointer;
 }
 
+/* Darkened, until the design picks a hover colour. */
 .yaycheckout-checkout :is(.button, button[type="submit"]):hover {
-	filter: brightness(0.92);
+	background-color: var(--yaycheckout-button-hover-background, var(--yaycheckout-button-background, var(--yaycheckout-primary-color)));
+	color: var(--yaycheckout-button-hover-color, var(--yaycheckout-button-color, #fff));
+	filter: var(--yaycheckout-button-hover-filter, brightness(0.92));
 }
 
 .yaycheckout-checkout :is(.button, button[type="submit"]):disabled {

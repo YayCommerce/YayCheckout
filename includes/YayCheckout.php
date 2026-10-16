@@ -38,6 +38,7 @@ class YayCheckout {
         \YayCheckout\Renderer\CheckoutRequiredFields::get_instance();
         \YayCheckout\Renderer\CheckoutLogin::get_instance();
         \YayCheckout\Renderer\CheckoutDifferentAddress::get_instance();
+        \YayCheckout\Integrations\Germanized::get_instance();
     }
 
     public static function initialize() {

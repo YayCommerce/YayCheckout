@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture templates/layouts/<slug>/preview.html for every catalogue template from the HTML mock.
+"""Capture templates/layouts/<slug>/preview.html (templates/layouts/pro/<slug>/ for a Pro template) for every catalogue template from the HTML mock.
 
 Each mock template renders only with its own JS, so headless Chrome renders it once and the rendered
 DOM is saved with every script removed. The picker shows the result in an iframe that may not run
@@ -55,8 +55,16 @@ EXTERNAL = re.compile(r'''(?:\ssrc=["']|url\(\s*["']?)(?!data:|#)[^"')\s]''', re
 
 
 def catalogue():
+    """(slug, name, is_pro) for each entry; is_pro when the entry sets 'pro' => true, as LayoutTemplateCatalogue::catalogue() does."""
     source = open(CATALOGUE, encoding='utf-8').read()
-    return re.findall(r"'slug'\s*=>\s*'([^']+)',\s*'name'\s*=>\s*'([^']+)'", source)
+    # Each entry's text runs to the next 'slug', so its 'pro' key is found whatever else the entry holds.
+    entries = re.split(r"(?='slug'\s*=>)", source)[1:]
+    found = []
+    for entry in entries:
+        match = re.match(r"'slug'\s*=>\s*'([^']+)',\s*'name'\s*=>\s*'([^']+)'", entry)
+        if match:
+            found.append((match.group(1), match.group(2), bool(re.search(r"'pro'\s*=>\s*true", entry))))
+    return found
 
 
 def extract(mock, *args):
@@ -107,7 +115,8 @@ def main():
     if not os.path.isfile(a.chrome):
         sys.exit('Chrome not found: %s. Pass --chrome <path to the Chrome binary>.' % a.chrome)
 
-    slugs = {name: slug for slug, name in catalogue()}
+    slugs = {name: slug for slug, name, _ in catalogue()}
+    pro = {slug for slug, _, is_pro in catalogue() if is_pro}
     pairs, failed = [], False
     for mock_id, name in mock_templates(a.mock):
         if name not in slugs:
@@ -129,8 +138,10 @@ def main():
             print('%-20s FAILED, not written: %r' % (slug, bad))
             failed = True
             continue
-        os.makedirs(os.path.join(TEMPLATES, slug), exist_ok=True)
-        with open(os.path.join(TEMPLATES, slug, 'preview.html'), 'w', encoding='utf-8') as f:
+        # A Pro template lives under pro/, as LayoutTemplateCatalogue::relative_path() places it.
+        folder = os.path.join(TEMPLATES, 'pro', slug) if slug in pro else os.path.join(TEMPLATES, slug)
+        os.makedirs(folder, exist_ok=True)
+        with open(os.path.join(folder, 'preview.html'), 'w', encoding='utf-8') as f:
             f.write(HEADER + re.sub(r'<head\b[^>]*>', lambda m: m.group(0) + CSP, html, count=1))
         print('%-20s %d KB' % (slug, len(html.encode('utf-8')) // 1024))
 

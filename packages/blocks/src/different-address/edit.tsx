@@ -1,5 +1,5 @@
 import { InspectorControls, RichText, store as blockEditorStore, useBlockProps } from '@wordpress/block-editor';
-import { ExternalLink, Notice, PanelBody } from '@wordpress/components';
+import { ExternalLink, Notice, PanelBody, SelectControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __, sprintf } from '@wordpress/i18n';
 import { plainText } from '../shared/plain-text';
@@ -11,6 +11,8 @@ import './editor.css';
 interface DifferentAddressAttributes {
 	shipLabel: string;
 	sameLabel: string;
+	ticked: 'different' | 'same';
+	sameShipLabel: string;
 }
 
 interface EditProps {
@@ -47,7 +49,7 @@ function billingWarnings( editor: BlockEditorSelectors ): string[] {
 /** What the block shows for each WooCommerce Shipping destination; render.php prints the same. */
 const MODES: Record<
 	ShipToDestination,
-	{ mainAddress: string; unprinted: string; label: keyof DifferentAddressAttributes; placeholder: string }
+	{ mainAddress: string; unprinted: string; label: 'shipLabel' | 'sameLabel' | 'sameShipLabel'; placeholder: string }
 > = {
 	billing: {
 		mainAddress: __( 'Billing is the main address.', 'yaycheckout' ),
@@ -78,7 +80,11 @@ export default function Edit( { attributes, isSelected, setAttributes }: EditPro
 	const blockProps = useBlockProps( { className: 'yaycheckout-different-address' } );
 	const { destination, settingsUrl } = differentAddressEditorData;
 	const shippingIsMain = destination === 'shipping';
-	const mode = MODES[ destination ];
+	// Billing is main and ticking means the same address: "Use same address for shipping", as render.php prints it.
+	const sameShipping = destination === 'billing' && attributes.ticked === 'same';
+	const mode = sameShipping
+		? { ...MODES.billing, label: 'sameShipLabel' as const, placeholder: __( 'Use same address for shipping', 'yaycheckout' ) }
+		: MODES[ destination ];
 
 	const hasShipping = useSelect(
 		( select ) =>
@@ -110,6 +116,19 @@ export default function Edit( { attributes, isSelected, setAttributes }: EditPro
 							</ExternalLink>
 						) }
 					</p>
+					{ destination === 'billing' && (
+						<SelectControl
+							label={ __( 'Ticking the box', 'yaycheckout' ) }
+							value={ attributes.ticked }
+							options={ [
+								{ label: __( 'Ships to a different address', 'yaycheckout' ), value: 'different' },
+								{ label: __( 'Uses the same address', 'yaycheckout' ), value: 'same' },
+							] }
+							onChange={ ( value: string ) =>
+								setAttributes( { ticked: value as DifferentAddressAttributes[ 'ticked' ] } )
+							}
+						/>
+					) }
 					{ warnings.length > 0 && (
 						<Notice status="warning" isDismissible={ false }>
 							{ warnings.map( ( warning ) => (
@@ -126,7 +145,7 @@ export default function Edit( { attributes, isSelected, setAttributes }: EditPro
 					</Notice>
 				) }
 				<div className="yaycheckout-different-address__checkbox">
-					<input type="checkbox" checked={ shippingIsMain } disabled readOnly />
+					<input type="checkbox" checked={ shippingIsMain || sameShipping } disabled readOnly />
 					{ /* A span, not a label: typing Space would toggle a label's checkbox. */ }
 					<RichText
 						tagName="span"

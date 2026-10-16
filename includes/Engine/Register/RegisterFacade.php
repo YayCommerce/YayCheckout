@@ -10,7 +10,8 @@ use YayCheckout\Engine\Register\ScriptName;
 
 /**
  * Picks RegisterDev or RegisterProd by YAYCHECKOUT_IS_DEVELOPMENT. The
- * release ZIP strips RegisterDev.php, hence the class_exists() guards.
+ * release ZIP strips RegisterDev.php, so without it the built bundle loads
+ * even when the flag is true.
  */
 class RegisterFacade {
     use SingletonTrait;
@@ -21,10 +22,10 @@ class RegisterFacade {
         add_filter( 'pre_load_script_translations', [ $this, 'use_mo_file_for_script_translations' ], 10, 4 );
 
         $is_prod = ! defined( 'YAYCHECKOUT_IS_DEVELOPMENT' ) || YAYCHECKOUT_IS_DEVELOPMENT !== true;
-        if ( $is_prod && class_exists( '\YayCheckout\Engine\Register\RegisterProd' ) ) {
-            \YayCheckout\Engine\Register\RegisterProd::get_instance();
-        } elseif ( ! $is_prod && class_exists( '\YayCheckout\Engine\Register\RegisterDev' ) ) {
+        if ( ! $is_prod && class_exists( '\YayCheckout\Engine\Register\RegisterDev' ) ) {
             \YayCheckout\Engine\Register\RegisterDev::get_instance();
+        } elseif ( class_exists( '\YayCheckout\Engine\Register\RegisterProd' ) ) {
+            \YayCheckout\Engine\Register\RegisterProd::get_instance();
         }
     }
 

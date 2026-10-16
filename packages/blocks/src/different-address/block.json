@@ -21,6 +21,15 @@
     "sameLabel": {
       "type": "string",
       "default": ""
+    },
+    "ticked": {
+      "type": "string",
+      "default": "different",
+      "enum": [ "different", "same" ]
+    },
+    "sameShipLabel": {
+      "type": "string",
+      "default": ""
     }
   },
   "supports": {

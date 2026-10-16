@@ -117,7 +117,7 @@ interface DisclosurePreviewProps {
 }
 
 /**
- * On the canvas a hidden field shows the shopper's link or header, then the field faded but still editable.
+ * On the canvas a hidden field shows the shopper's link or header, then the field, still editable.
  * The text is the merchant's, else defaultDisclosureText().
  */
 export function DisclosurePreview( { mode, fieldKey, label, disclosureText, children }: DisclosurePreviewProps ) {

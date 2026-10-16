@@ -6,7 +6,7 @@ export const templateWireSchema = z
     slug: z.string(),
     name: z.string(),
     categories: z.array(z.string()),
-    locked: z.boolean(),
+    pro: z.boolean(),
     available: z.boolean(),
     preview_url: z.string(),
   })
@@ -21,7 +21,8 @@ export type Template = {
   name: string;
   /** One or more filter chips the template shows under. */
   categories: string[];
-  locked: boolean;
+  /** Built from Pro blocks. On Free it is listed locked: previewed, never pickable. */
+  pro: boolean;
   available: boolean;
   /** '' when the template has no preview file. */
   previewUrl: string;

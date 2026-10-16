@@ -12,7 +12,7 @@ export function WarningBanner({ warnings, gatewayTotal }: { warnings: Compatibil
   return (
     <div className="space-y-3">
       {blockOnly.length > 0 && (
-        <Alert variant="muted">
+        <Alert variant="default" className="border">
           <TriangleAlert />
           <AlertTitle>
             {sprintf(
@@ -37,7 +37,7 @@ export function WarningBanner({ warnings, gatewayTotal }: { warnings: Compatibil
         </Alert>
       )}
       {unverifiedPlugins.length > 0 && (
-        <Alert variant="muted">
+        <Alert variant="default" className="border">
           <TriangleAlert />
           <AlertTitle>
             {sprintf(

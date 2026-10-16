@@ -21,7 +21,6 @@ import { isCheckoutSection, useBlocksAllowedExcept } from '../shared/allowed-blo
 import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 import { SectionLabel } from '../shared/section-label';
 import { isNewShape, useSummaryCollapse } from './shape';
-import './editor.css';
 
 type InitialState = 'collapsed' | 'open';
 
@@ -73,14 +72,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 	);
 	const { moveBlockToPosition, replaceInnerBlocks } = useDispatch( blockEditorStore );
 	const { getBlocks } = useSelect( blockEditorStore );
-	const blockProps = useBlockProps( {
-		className: [
-			'yaycheckout-order-summary',
-			collapsible && initialState === 'collapsed' ? 'is-preview-collapsed' : '',
-		]
-			.filter( Boolean )
-			.join( ' ' ),
-	} );
+	const blockProps = useBlockProps( { className: 'yaycheckout-order-summary' } );
 	const oldShapeAllowed = useBlocksAllowedExcept( isCheckoutSection );
 	const { children, ...innerBlocksProps } = useInnerBlocksProps( blockProps, {
 		allowedBlocks: newShape ? NEW_SHAPE_CHILDREN : oldShapeAllowed,

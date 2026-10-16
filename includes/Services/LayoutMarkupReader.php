@@ -100,6 +100,23 @@ class LayoutMarkupReader {
     }
 
     /**
+     * The hook each WooCommerce Hook block fires, in document order, unique. Unvetted: WcHooks decides which may fire.
+     *
+     * @return string[]
+     */
+    public static function wc_hooks( string $markup ): array {
+        $hooks = [];
+
+        foreach ( self::blocks( $markup ) as $block ) {
+            if ( \YayCheckout\Renderer\WcHooks::BLOCK === $block['blockName'] ) {
+                $hooks[] = self::text( $block['attrs'], 'hook' );
+            }
+        }
+
+        return array_values( array_unique( array_filter( $hooks, 'strlen' ) ) );
+    }
+
+    /**
      * WooCommerce address fields by Key: the Email address block is billing_email, each Field
      * block with a Key is its own. A later block with the same Key wins.
      *
@@ -276,8 +293,11 @@ class LayoutMarkupReader {
      * Why the layout cannot be activated, or saved while live, or '' when it can. JavaScript copies of these rules live in
      * packages/blocks/src/checkout/publish-guard.ts, packages/blocks/src/shared/extra-field-keys.ts
      * and packages/blocks/src/extra-field/edit.tsx; change them together.
+     *
+     * @param string   $markup        The layout's block markup.
+     * @param string[] $locked_blocks The Pro blocks this site hasn't registered (BlockRegistry::locked_blocks()): in Free, the step blocks.
      */
-    public static function publish_error( string $markup ): string {
+    public static function publish_error( string $markup, array $locked_blocks ): string {
         if ( ! self::has_checkout( $markup ) ) {
             return __( 'Add a Checkout block to this layout before activating it.', 'yaycheckout' );
         }
@@ -285,6 +305,10 @@ class LayoutMarkupReader {
         $keys = [];
 
         foreach ( self::blocks( $markup ) as $block ) {
+            if ( in_array( $block['blockName'], $locked_blocks, true ) ) {
+                return __( 'This layout uses blocks from YayCheckout Pro. Remove them or upgrade to Pro before activating it.', 'yaycheckout' );
+            }
+
             if ( self::EXTRA_FIELD === $block['blockName'] ) {
                 $keys[] = trim( self::text( $block['attrs'], 'fieldKey' ) );
             }

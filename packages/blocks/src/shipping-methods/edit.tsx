@@ -2,6 +2,7 @@ import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { shippingSetupData } from './editor-data';
 import { layoutFor, SHIPPING_LAYOUTS } from './layouts';
 import { StylePanels } from './style-panels';
 import { shippingStyleVars } from './style-paths';
@@ -12,6 +13,7 @@ import {
 	SectionTextPanels,
 	SectionTitle,
 } from '../shared/section-heading';
+import { SetupNotice } from '../shared/setup-notice';
 import '../shared/section-preview.css';
 
 interface ShippingMethodsAttributes {
@@ -96,6 +98,14 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 				/>
 			</InspectorControls>
 			<div { ...blockProps }>
+				<SetupNotice
+					data={ shippingSetupData }
+					message={ __(
+						'No shipping zone or method is set up, so shoppers check out without choosing shipping and do not see this block.',
+						'yaycheckout'
+					) }
+					linkText={ __( 'Shipping settings', 'yaycheckout' ) }
+				/>
 				{ textCSS && <style>{ textCSS }</style> }
 				{ showTitle && (
 					<SectionTitle level={ headingLevel } text={ heading } className="yaycheckout-section-preview__heading" />

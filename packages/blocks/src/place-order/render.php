@@ -30,7 +30,7 @@ if ( '' === $yaycheckout_plain_label || $yaycheckout_default_label === $yaycheck
 $yaycheckout_label = trim( html_entity_decode( wp_strip_all_tags( $yaycheckout_label_html ), ENT_QUOTES, get_bloginfo( 'charset' ) ) );
 
 $yaycheckout_button = '<button type="submit" '
-    . get_block_wrapper_attributes( [ 'class' => 'yaycheckout-place-order wp-element-button' ] )
+    . get_block_wrapper_attributes( [ 'class' => 'yaycheckout-place-order wp-element-button' . ( empty( $attributes['spread'] ) ? '' : ' yaycheckout-place-order--spread' ) ] )
     . ' name="woocommerce_checkout_place_order" id="place_order" value="' . esc_attr( $yaycheckout_label ) . '" data-value="' . esc_attr( $yaycheckout_label ) . '"'
     . ( $yaycheckout_has_cart ? '' : ' disabled' )
     . '>' . $yaycheckout_label_html . '</button>';
@@ -43,8 +43,7 @@ if ( ! $yaycheckout_has_cart ) {
 ?>
 <div class="form-row place-order">
     <?php
-    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
-    do_action( 'woocommerce_review_order_before_submit' );
+    \YayCheckout\Renderer\WcHooks::in_place( 'woocommerce_review_order_before_submit' );
 
     // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's button filter; core escapes the wrapper attributes and the label is escaped or kses-filtered above.
     echo apply_filters(
@@ -53,8 +52,7 @@ if ( ! $yaycheckout_has_cart ) {
         $yaycheckout_button
     );
 
-    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
-    do_action( 'woocommerce_review_order_after_submit' );
+    \YayCheckout\Renderer\WcHooks::in_place( 'woocommerce_review_order_after_submit' );
 
     wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' );
     ?>

@@ -1,0 +1,10 @@
+/* Step Button and Back Button: the text alignment places the label and arrow when the Width setting makes the button wider than them. */
+.yaycheckout-step-button.has-text-align-center,
+.yaycheckout-back-button.has-text-align-center {
+	justify-content: center;
+}
+
+.yaycheckout-step-button.has-text-align-right,
+.yaycheckout-back-button.has-text-align-right {
+	justify-content: flex-end;
+}

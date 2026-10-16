@@ -6,7 +6,7 @@
 
 ## Status
 
-Rejected, 2026-10-09: the override ships in Free and Pro, as a meta holding every section (`null` follows the Design page) rather than a sparse Pro-only layer; see [docs/plans/2026-10-09-layout-design-override.md](../plans/2026-10-09-layout-design-override.md).
+Rejected, 2026-10-09: the override ships in Free and Pro, as a meta holding every section (`null` follows the Design page) rather than a sparse Pro-only layer. The plan that shipped it was later replaced by removing the global design.
 
 ## Context
 

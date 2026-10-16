@@ -7,7 +7,7 @@ import { LayoutConfirmDialog, type LayoutConfirmProps } from '@/pages/layouts/La
 /** Warns that deactivating leaves no layout active; the bulk Deactivate shows it too. */
 export function NoActiveLayoutAlert() {
   return (
-    <Alert variant="muted" destructive>
+    <Alert variant="outline" destructive className="border-destructive/30 bg-destructive/5">
       <TriangleAlert />
       <AlertDescription>
         {__(

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Writes templates/layouts/<slug>/design.json from the tokens you chose, projected through the live
+# Writes templates/layouts/<slug>/design.json (templates/layouts/pro/<slug>/ when the slug's catalogue entry
+# sets 'pro' => true, as LayoutTemplateCatalogue::relative_path() places it) from the tokens you chose, projected through the live
 # LayoutDesign::schema(): every section and key, in schema order, tab-indented. A token the schema
 # drops (unknown key, value outside its enum or range) is reported, so nothing is lost silently.
 #
@@ -10,7 +11,15 @@
 set -euo pipefail
 slug=${1:?slug}; tokens=${2:?tokens.json}
 root=$(git rev-parse --show-toplevel)
-out="$root/templates/layouts/$slug/design.json"
+# The slug's entry in LayoutTemplateCatalogue::catalogue() runs from its 'slug' line to the line closing it, "],".
+entry=$(awk -v slug="$slug" '$0 ~ "\x27slug\x27 *=> *\x27" slug "\x27" { on = 1 } on { print } on && /^ *\], *$/ { exit }' \
+    "$root/includes/Controllers/LayoutTemplateCatalogue.php")
+[ -n "$entry" ] || { echo "No catalogue entry for $slug in LayoutTemplateCatalogue::catalogue()" >&2; exit 1; }
+folder="$slug"
+if printf '%s\n' "$entry" | grep -qE "'pro' *=> *true"; then
+    folder="pro/$slug"
+fi
+out="$root/templates/layouts/$folder/design.json"
 mkdir -p "$(dirname "$out")"
 
 YC_TOKENS="$(cat "$tokens")" eval "${WP:-wp} eval '

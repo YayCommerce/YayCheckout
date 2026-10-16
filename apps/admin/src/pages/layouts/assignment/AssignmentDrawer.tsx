@@ -18,7 +18,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ProTag, UpgradeButton } from '@/components/pro/ProGate';
+import { ProBadge, UpgradeButton } from '@/components/pro/ProGate';
 import { LayoutStatusBadge } from '@/components/shared/LayoutStatusBadge';
 import {
   CONDITION_TYPE_KEYS,
@@ -63,7 +63,7 @@ function AssignmentHeader({ layout }: { layout: LayoutSummary }) {
     <SheetHeader>
       <div className="flex items-center gap-2">
         <SheetTitle>{__('Assignment', 'yaycheckout')}</SheetTitle>
-        {!isPro && <ProTag />}
+        {!isPro && <ProBadge />}
       </div>
       <div className="flex items-center gap-2">
         <SheetDescription className="truncate">{layout.title}</SheetDescription>
@@ -229,7 +229,7 @@ function LockedAssignment({ layout }: { layout: LayoutSummary }) {
         <div className="bg-background absolute inset-x-5 top-40 space-y-3 rounded-lg border p-5 shadow-lg">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-base font-semibold">{__('Assignment rules', 'yaycheckout')}</h3>
-            <ProTag />
+            <ProBadge />
           </div>
           <p className="text-sm">
             {__(
@@ -237,20 +237,13 @@ function LockedAssignment({ layout }: { layout: LayoutSummary }) {
               'yaycheckout',
             )}
           </p>
-          <div className="flex items-center gap-2 border-t pt-3">
-            <p className="text-muted-foreground flex-1 text-xs">
-              {__('Your rules are kept if you upgrade later.', 'yaycheckout')}
-            </p>
-            <SheetClose asChild>
-              <Button variant="outline">{__('Not now', 'yaycheckout')}</Button>
-            </SheetClose>
-            <UpgradeButton size="default" variant="primary" />
+          <div className="flex items-center pt-3">
+            <UpgradeButton />
           </div>
         </div>
       </div>
 
       <SheetFooter className="flex-row items-center justify-between">
-        <p className="text-muted-foreground text-sm">{__('Rules are read-only on Lite.', 'yaycheckout')}</p>
         <SheetClose asChild>
           <Button variant="outline">{__('Close', 'yaycheckout')}</Button>
         </SheetClose>

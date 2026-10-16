@@ -6,8 +6,15 @@
  *
  * window.yayCheckoutSameBilling comes from BlockRegistry: CheckoutDifferentAddress::SAME_BILLING_FIELD
  * and ::COPIED_KEYS. billing_email is never copied.
+ *
+ * "Use same address for shipping", printed when billing is main and the block's ticked is "same", holds
+ * the opposite of WooCommerce's hidden ship_to_different_address box, so checkout.js does the rest.
  */
 jQuery(function ($) {
+    $('#yaycheckout-same-shipping').on('change', function () {
+        $('#ship-to-different-address-checkbox').prop('checked', !this.checked).trigger('change');
+    });
+
     var data = window.yayCheckoutSameBilling;
 
     if (!data) {
