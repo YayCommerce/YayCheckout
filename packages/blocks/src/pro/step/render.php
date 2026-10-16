@@ -41,11 +41,26 @@ $yaycheckout_index = yaycheckout_step_index();
 $yaycheckout_state = 1 === $yaycheckout_index ? 'current' : 'locked';
 $yaycheckout_title = \YayCheckout\Renderer\LayoutSteps::step_title_html( $attributes );
 
+$yaycheckout_separator = isset( $attributes['summarySeparator'] ) && is_string( $attributes['summarySeparator'] ) && '' !== $attributes['summarySeparator']
+    ? $attributes['summarySeparator']
+    : ', ';
+$yaycheckout_omit      = [];
+
+if ( isset( $attributes['summaryOmit'] ) && is_array( $attributes['summaryOmit'] ) ) {
+    foreach ( $attributes['summaryOmit'] as $yaycheckout_key ) {
+        if ( is_string( $yaycheckout_key ) && '' !== $yaycheckout_key ) {
+            $yaycheckout_omit[] = $yaycheckout_key;
+        }
+    }
+}
+
 $yaycheckout_wrapper = get_block_wrapper_attributes(
     [
-        'class'      => 'yaycheckout-step' . \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/step', 'yaycheckout-step', ' > .yaycheckout-step__body', true ),
-        'data-state' => $yaycheckout_state,
-        'data-step'  => (string) $yaycheckout_index,
+        'class'                  => 'yaycheckout-step' . \YayCheckout\Renderer\BlockGap::wrapper_class( $attributes, 'yaycheckout/step', 'yaycheckout-step', ' > .yaycheckout-step__body', true ),
+        'data-state'             => $yaycheckout_state,
+        'data-step'              => (string) $yaycheckout_index,
+        'data-summary-separator' => $yaycheckout_separator,
+        'data-summary-omit'      => (string) wp_json_encode( $yaycheckout_omit ),
     ]
 );
 
