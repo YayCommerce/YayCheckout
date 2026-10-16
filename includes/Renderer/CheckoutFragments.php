@@ -1187,10 +1187,13 @@ class CheckoutFragments {
             <th><?php wc_cart_totals_coupon_label( $coupon ); ?></th>
             <?php if ( $chips ) : ?>
                 <?php
-                $amount_html = self::coupon_amount_html( $coupon );
-                // Woo's filter, given the amount without [Remove], so extensions that add to the row still apply.
+                // Woo's own row, so woocommerce_cart_totals_coupon_html gets the [Remove] link that extensions
+                // (a currency switcher) cut around; the link is then dropped, as the chip carries it.
+                ob_start();
+                wc_cart_totals_coupon_html( $coupon );
+                $coupon_html = preg_replace( '#\s*<a\b[^>]*\bwoocommerce-remove-coupon\b[^>]*>.*?</a>#s', '', (string) ob_get_clean() );
                 ?>
-            <td><?php echo wp_kses_post( apply_filters( 'woocommerce_cart_totals_coupon_html', $amount_html, $coupon, $amount_html ) ); ?></td>
+            <td><?php echo $coupon_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wc_cart_totals_coupon_html() output, already through wp_kses(). ?></td>
             <?php else : ?>
             <td><?php wc_cart_totals_coupon_html( $coupon ); ?></td>
             <?php endif; ?>
