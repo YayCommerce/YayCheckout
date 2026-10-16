@@ -180,8 +180,14 @@ class WcHooks {
         ],
     ];
 
+    /** The template WooCommerce prints its review-order hooks from; an Order Summary without blocks still prints it. */
+    private const REVIEW_TEMPLATE = 'checkout/review-order.php';
+
     /** @var array{0: string, 1: string[]}|null The layout content placed() last read, and its hooks. */
     private static ?array $placed = null;
+
+    /** @var array<int, array<string, \WP_Hook>> Hooks detached while REVIEW_TEMPLATE prints, one entry per open print. */
+    private static array $muted = [];
 
     /** @return array<string, string> Hook => its name in the editor's picker; the keys are HOOKS'. */
     public static function labels(): array {
@@ -380,6 +386,46 @@ class WcHooks {
      * @param string[] $hooks Hooks the template fires.
      */
     public static function without_placed( array $hooks, callable $render ): void {
+        $saved = self::detach_placed( $hooks );
+
+        try {
+            $render();
+        } finally {
+            self::reattach( $saved );
+        }
+    }
+
+    /**
+     * On woocommerce_before_template_part: WooCommerce's review table, printed by an Order Summary without
+     * blocks or built for update_order_review, fires the refreshed hooks a Hook block prints, so they are
+     * detached until the template ends.
+     *
+     * @param mixed $template_name The template being printed.
+     */
+    public static function mute_review_table( $template_name ): void {
+        if ( self::REVIEW_TEMPLATE === $template_name ) {
+            self::$muted[] = self::detach_placed( self::placed_refreshed() );
+        }
+    }
+
+    /**
+     * On woocommerce_after_template_part: puts back what mute_review_table() detached.
+     *
+     * @param mixed $template_name The template that was printed.
+     */
+    public static function unmute_review_table( $template_name ): void {
+        if ( self::REVIEW_TEMPLATE === $template_name && array() !== self::$muted ) {
+            self::reattach( array_pop( self::$muted ) );
+        }
+    }
+
+    /**
+     * Takes every callback off those $hooks a Hook block fires.
+     *
+     * @param string[] $hooks
+     * @return array<string, \WP_Hook> What reattach() puts back.
+     */
+    private static function detach_placed( array $hooks ): array {
         global $wp_filter;
 
         $saved = [];
@@ -390,13 +436,16 @@ class WcHooks {
             }
         }
 
-        try {
-            $render();
-        } finally {
-            foreach ( $saved as $hook => $wp_hook ) {
-                // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restores the hook detached above.
-                $wp_filter[ $hook ] = $wp_hook;
-            }
+        return $saved;
+    }
+
+    /** @param array<string, \WP_Hook> $saved From detach_placed(). */
+    private static function reattach( array $saved ): void {
+        global $wp_filter;
+
+        foreach ( $saved as $hook => $wp_hook ) {
+            // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restores the hook detach_placed() took off.
+            $wp_filter[ $hook ] = $wp_hook;
         }
     }
 

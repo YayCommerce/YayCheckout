@@ -101,6 +101,10 @@ class CheckoutFragments {
         add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'fragments' ], 20 );
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's template path filter.
         add_filter( 'wc_get_template', [ $this, 'skip_review_order_table' ], 10, 2 );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's template actions.
+        add_action( 'woocommerce_before_template_part', [ WcHooks::class, 'mute_review_table' ] );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's template actions.
+        add_action( 'woocommerce_after_template_part', [ WcHooks::class, 'unmute_review_table' ] );
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's coupon message filter.
         add_filter( 'woocommerce_coupon_message', [ $this, 'drop_applied_message' ], PHP_INT_MAX, 2 );
     }
@@ -122,8 +126,9 @@ class CheckoutFragments {
 
     /**
      * During update_order_review, Woo renders its whole review-order table before the fragments
-     * filter runs. A layout with Items, Order Summary Breakdown or Order Summary Total, or a WooCommerce Hook block
-     * for a review-order hook, discards it, so swap it for an empty template and its review-order hooks fire once, in our tables.
+     * filter runs. A layout with Items, Order Summary Breakdown or Order Summary Total discards it, so swap it for an empty
+     * template and its review-order hooks fire once, in our tables. A review-order hook a WooCommerce Hook block prints is
+     * kept out of the table by WcHooks::mute_review_table() instead, so an Order Summary without blocks keeps its table.
      */
     public function skip_review_order_table( $template, $template_name ) {
         if ( 'checkout/review-order.php' !== $template_name || ! doing_action( 'wc_ajax_update_order_review' ) ) {
@@ -141,7 +146,7 @@ class CheckoutFragments {
 
     /** Whether the layout prints its own review-order hooks, so WooCommerce's review table would only fire them again. */
     private static function replaces_review_table( string $markup ): bool {
-        return ! empty( self::summary_block_fragments( $markup ) ) || array() !== WcHooks::placed_refreshed();
+        return ! empty( self::summary_block_fragments( $markup ) );
     }
 
     /** Swaps the fragments of this layout's sections for this layout's HTML. */
