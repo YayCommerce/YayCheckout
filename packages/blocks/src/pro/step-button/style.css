@@ -1,20 +1,30 @@
+@import "../../shared/step-nav-button/style.css";
+
 .yaycheckout-step-button {
+	box-sizing: border-box;
 	display: flex;
 	align-items: center;
 	gap: 6px;
 	width: fit-content;
 	padding: 10px 18px;
 	border: 0;
-	border-radius: 6px;
-	background: var(--yaycheckout-primary-color, #3858e9);
-	color: #fff;
+	border-radius: var(--yaycheckout-button-radius, 6px);
+	background: var(--yaycheckout-button-background, var(--yaycheckout-primary-color, #3858e9));
+	color: var(--yaycheckout-button-color, #fff);
 	/* The surrounding text's font, which the block's typography settings override. A button doesn't inherit it by default. */
 	font: inherit;
+	font-weight: var(--yaycheckout-button-font-weight, inherit);
+	text-transform: var(--yaycheckout-button-text-transform, none);
 	cursor: pointer;
 }
 
-/* Classic themes (Storefront) repaint button:hover. */
-.yaycheckout-step-button:is(:hover, :focus) {
-	background: var(--yaycheckout-primary-color, #3858e9);
-	color: #fff;
+/* Classic themes (Storefront) repaint button:hover. The design's hover colours, else the default ones. */
+.yaycheckout-step-button:focus {
+	background: var(--yaycheckout-button-background, var(--yaycheckout-primary-color, #3858e9));
+	color: var(--yaycheckout-button-color, #fff);
+}
+
+.yaycheckout-step-button:hover {
+	background: var(--yaycheckout-button-hover-background, var(--yaycheckout-button-background, var(--yaycheckout-primary-color, #3858e9)));
+	color: var(--yaycheckout-button-hover-color, var(--yaycheckout-button-color, #fff));
 }

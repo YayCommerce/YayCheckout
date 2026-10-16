@@ -1,7 +1,28 @@
-/* Sized to its text like a <button>; the editor's root is a div, so it also takes a button's border-box, or a % width adds the padding on top. */
+/*
+ * A row sized to its label like a <button>; the editor's root is a div, so it also takes a button's border-box,
+ * or a % width adds the padding on top. Each live value is its own flex item, and the row drops the space typed
+ * before it, so the gap puts one back. The text alignment places the row; Spread pushes its parts to the ends.
+ */
 :where(.wp-block-yaycheckout-place-order) {
-	display: inline-block;
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	column-gap: 0.25em;
 	box-sizing: border-box;
+}
+
+.wp-block-yaycheckout-place-order.has-text-align-left {
+	justify-content: flex-start;
+}
+
+.wp-block-yaycheckout-place-order.has-text-align-right {
+	justify-content: flex-end;
+}
+
+.wp-block-yaycheckout-place-order.yaycheckout-place-order--spread {
+	flex-wrap: nowrap;
+	justify-content: space-between;
 }
 
 /* Classic themes (Storefront) set button { border: none }, which beats core's :where() border-style fallback. */
@@ -9,22 +30,44 @@
 	border-style: solid;
 }
 
-/* The primary token until the merchant picks a colour; the colour support adds these classes when they do. */
+/*
+ * The design's button shape and text, with checkout-base.css's fallbacks: on the canvas the button is a RichText
+ * div, which that file's button rule doesn't reach. Two classes, to outrank the theme's
+ * `:root :where(.wp-element-button)`, printed after it. The block's own border and typography settings win.
+ */
+.wp-block-yaycheckout-place-order.wp-element-button {
+	border-radius: var(--yaycheckout-button-radius, var(--yaycheckout-neutral-radius, 2px));
+	font-weight: var(--yaycheckout-button-font-weight, 600);
+	text-transform: var(--yaycheckout-button-text-transform, none);
+}
+
+/*
+ * The design's button colours, else the primary token, until the merchant picks a colour; the colour support adds
+ * these classes when they do. The same fallbacks as checkout-base.css's button rule.
+ */
 .wp-block-yaycheckout-place-order:not(.has-background),
-.wp-block-yaycheckout-place-order:not(.has-background):is(:hover, :focus) {
-	background: var(--yaycheckout-primary-color, #3858e9);
+.wp-block-yaycheckout-place-order:not(.has-background):focus {
+	background: var(--yaycheckout-button-background, var(--yaycheckout-primary-color, #3858e9));
+}
+
+.wp-block-yaycheckout-place-order:not(.has-background):hover {
+	background: var(--yaycheckout-button-hover-background, var(--yaycheckout-button-background, var(--yaycheckout-primary-color, #3858e9)));
 }
 
 .wp-block-yaycheckout-place-order:not(.has-text-color),
-.wp-block-yaycheckout-place-order:not(.has-text-color):is(:hover, :focus) {
-	color: #fff;
+.wp-block-yaycheckout-place-order:not(.has-text-color):focus {
+	color: var(--yaycheckout-button-color, #fff);
+}
+
+.wp-block-yaycheckout-place-order:not(.has-text-color):hover {
+	color: var(--yaycheckout-button-hover-color, var(--yaycheckout-button-color, #fff));
 }
 
 /* The align support's classes; floats from theme .alignleft rules would wrap the text after it around the button. */
 .wp-block-yaycheckout-place-order.alignleft,
 .wp-block-yaycheckout-place-order.aligncenter,
 .wp-block-yaycheckout-place-order.alignright {
-	display: block;
+	display: flex;
 	width: fit-content;
 	float: none;
 }

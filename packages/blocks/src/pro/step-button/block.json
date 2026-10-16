@@ -41,8 +41,15 @@
         "padding": true
       }
     },
+    "dimensions": {
+      "width": true,
+      "__experimentalDefaultControls": {
+        "width": true
+      }
+    },
     "typography": {
       "fontSize": true,
+      "textAlign": true,
       "lineHeight": true,
       "__experimentalFontFamily": true,
       "__experimentalFontWeight": true,

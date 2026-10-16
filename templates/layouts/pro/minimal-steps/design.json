@@ -43,5 +43,14 @@
 	"help_text": {
 		"size": null
 	},
-	"custom_css": ".yaycheckout-pinned .yaycheckout-step-button,\n.yaycheckout-pinned .yaycheckout-back-button {\n\twidth: 100%;\n\tbox-sizing: border-box;\n\tjustify-content: center;\n}"
+	"buttons": {
+		"background": "",
+		"text": "",
+		"hover_background": "",
+		"hover_text": "",
+		"radius": 2,
+		"font_weight": "semibold",
+		"text_transform": ""
+	},
+	"custom_css": ""
 }

@@ -91,8 +91,8 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>","collapsible":true,"style":{"border":{"bottom":{"color":"var:preset|color|yaycheckout-border","width":"1px","style":"solid"}},"spacing":{"blockGap":"0"}}} -->
 <!-- wp:yaycheckout/order-summary-header -->
 <!-- wp:group {"style":{"layout":{"selfStretch":"fill","flexSize":null},"spacing":{"padding":{"left":"24px","right":"24px"}}},"layout":{"type":"constrained","contentSize":"1080px"}} -->
-<div class="wp-block-group" style="padding-right:24px;padding-left:24px"><!-- wp:group {"className":"yaycheckout-soft-steps-bar","style":{"dimensions":{"minHeight":"56px"},"spacing":{"blockGap":"16px"}},"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
-<div class="wp-block-group yaycheckout-soft-steps-bar" style="min-height:56px"><?php if ( has_custom_logo() ) : ?>
+<div class="wp-block-group" style="padding-right:24px;padding-left:24px"><!-- wp:group {"style":{"dimensions":{"minHeight":"56px"},"spacing":{"blockGap":{"top":"8px","left":"16px"}}},"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
+<div class="wp-block-group" style="min-height:56px"><?php if ( has_custom_logo() ) : ?>
 <!-- wp:site-logo {"width":24} /-->
 <?php else : ?>
 <!-- wp:site-title {"level":0,"style":{"typography":{"fontSize":"17px","fontWeight":"600","letterSpacing":"-0.01em"}}} /-->
@@ -217,14 +217,14 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/step -->
 <!-- /wp:yaycheckout/steps -->
 
-<!-- wp:group {"className":"yaycheckout-soft-steps-actions","style":{"spacing":{"blockGap":"14px"}},"layout":{"type":"flex","orientation":"vertical","justifyContent":"stretch"}} -->
-<div class="wp-block-group yaycheckout-soft-steps-actions"><!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue', 'yaycheckout' ); ?>","style":{"typography":{"fontSize":"16px","fontWeight":"600"},"border":{"radius":"9999px"},"spacing":{"padding":{"top":"15px","bottom":"15px"}}},"yaycheckoutVisibility":{"action":"show","rules":[{"type":"step","step":1}]}} /-->
+<!-- wp:group {"style":{"spacing":{"blockGap":"14px"}},"layout":{"type":"flex","orientation":"vertical","justifyContent":"stretch"}} -->
+<div class="wp-block-group"><!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue', 'yaycheckout' ); ?>","style":{"dimensions":{"width":"var:preset|dimension|100"},"typography":{"textAlign":"center","fontSize":"16px"},"spacing":{"padding":{"top":"15px","bottom":"15px"}}},"yaycheckoutVisibility":{"action":"show","rules":[{"type":"step","step":1}]}} /-->
 
-<!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue to payment', 'yaycheckout' ); ?>","style":{"typography":{"fontSize":"16px","fontWeight":"600"},"border":{"radius":"9999px"},"spacing":{"padding":{"top":"15px","bottom":"15px"}}},"yaycheckoutVisibility":{"action":"show","rules":[{"type":"step","step":2}]}} /-->
+<!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue to payment', 'yaycheckout' ); ?>","style":{"dimensions":{"width":"var:preset|dimension|100"},"typography":{"textAlign":"center","fontSize":"16px"},"spacing":{"padding":{"top":"15px","bottom":"15px"}}},"yaycheckoutVisibility":{"action":"show","rules":[{"type":"step","step":2}]}} /-->
 
-<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022 · \u0022 data-suffix=\u0022\u0022\u003e <?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","style":{"typography":{"fontSize":"16px","fontWeight":"600","textAlign":"center"},"border":{"radius":"9999px"},"spacing":{"padding":{"top":"15px","bottom":"15px"}},"dimensions":{"width":"var:preset|dimension|100"}},"yaycheckoutVisibility":{"action":"show","rules":[{"type":"step","step":"last"}]}} /-->
+<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022 · \u0022 data-suffix=\u0022\u0022\u003e <?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","style":{"typography":{"fontSize":"16px","textAlign":"center"},"spacing":{"padding":{"top":"15px","bottom":"15px"}},"dimensions":{"width":"var:preset|dimension|100"}},"yaycheckoutVisibility":{"action":"show","rules":[{"type":"step","step":"last"}]}} /-->
 
-<!-- wp:yaycheckout/back-button {"buttonText":"<?php esc_html_e( 'Back', 'yaycheckout' ); ?>","firstStep":"hide","style":{"typography":{"fontSize":"15px","fontWeight":"500"},"border":{"radius":"9999px"},"spacing":{"padding":{"top":"12px","bottom":"12px"}}}} /--></div>
+<!-- wp:yaycheckout/back-button {"buttonText":"<?php esc_html_e( 'Back', 'yaycheckout' ); ?>","firstStep":"hide","style":{"dimensions":{"width":"var:preset|dimension|100"},"typography":{"textAlign":"center","fontSize":"15px","fontWeight":"500"},"border":{"radius":"9999px"},"spacing":{"padding":{"top":"12px","bottom":"12px"}}}} /--></div>
 <!-- /wp:group --></div>
 <!-- /wp:group -->
 <!-- /wp:yaycheckout/checkout -->
