@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Controllers;
 
+use YayCheckout\Blocks\BlockRegistry;
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Models\Layout;
@@ -87,7 +88,7 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
             return $prepared;
         }
 
-        $error = LayoutMarkupReader::publish_error( $content );
+        $error = LayoutMarkupReader::publish_error( $content, BlockRegistry::registered_names() );
 
         if ( '' !== $error ) {
             return new \WP_Error( 'yaycheckout_layout_unpublishable', $error, [ 'status' => 400 ] );

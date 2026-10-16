@@ -2,6 +2,7 @@
 namespace YayCheckout\Tests\Integration;
 
 use WP_UnitTestCase;
+use YayCheckout\Blocks\BlockRegistry;
 use YayCheckout\Controllers\LayoutTemplateCatalogue;
 use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Services\LayoutMarkupReader;
@@ -14,9 +15,10 @@ class LayoutTemplateCatalogueTest extends WP_UnitTestCase {
         $this->assertContains( LayoutTemplateCatalogue::DEFAULT_SLUG, array_column( $available, 'slug' ) );
 
         foreach ( array_column( $available, 'slug' ) as $slug ) {
-            $this->assertSame( '', LayoutMarkupReader::publish_error( LayoutTemplateCatalogue::markup( $slug ) ), $slug );
+            $this->assertSame( '', LayoutMarkupReader::publish_error( LayoutTemplateCatalogue::markup( $slug ), BlockRegistry::registered_names() ), $slug );
 
-            $decoded = wp_json_file_decode( YAYCHECKOUT_PLUGIN_DIR . "templates/layouts/{$slug}/design.json", [ 'associative' => true ] );
+            $folder  = is_dir( YAYCHECKOUT_PLUGIN_DIR . "templates/layouts/pro/{$slug}" ) ? "pro/{$slug}" : $slug;
+            $decoded = wp_json_file_decode( YAYCHECKOUT_PLUGIN_DIR . "templates/layouts/{$folder}/design.json", [ 'associative' => true ] );
             $this->assertIsArray( $decoded, $slug );
             foreach ( array_keys( LayoutDesign::schema() ) as $section ) {
                 $this->assertIsArray( $decoded[ $section ] ?? null, "{$slug}: {$section}" );
@@ -24,6 +26,13 @@ class LayoutTemplateCatalogueTest extends WP_UnitTestCase {
             // Same keys, order and types: nothing in the file was dropped or defaulted by the projection.
             $this->assertSame( $decoded, LayoutTemplateCatalogue::design( $slug )->to_meta(), $slug );
         }
+    }
+
+    public function test_free_lists_no_pro_template(): void {
+        $free = array_column( LayoutTemplateCatalogue::templates( false ), 'slug' );
+        $this->assertContains( LayoutTemplateCatalogue::DEFAULT_SLUG, $free );
+        $this->assertNotContains( 'multi-step-wizard', $free );
+        $this->assertContains( 'multi-step-wizard', array_column( LayoutTemplateCatalogue::templates( true ), 'slug' ) );
     }
 
     public function test_a_template_without_files_is_coming_soon(): void {

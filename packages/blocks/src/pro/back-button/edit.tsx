@@ -2,9 +2,9 @@ import { InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __ } from '@wordpress/i18n';
-import { ArrowControl } from '../shared/arrow-control';
-import { arrowGlyph, type Arrow } from '../shared/button-arrow';
-import { StepNavButtonEdit, type StepNavButtonAttributes } from '../shared/step-nav-button-edit';
+import { ArrowControl } from '../../shared/arrow-control';
+import { arrowGlyph, type Arrow } from '../../shared/button-arrow';
+import { StepNavButtonEdit, type StepNavButtonAttributes } from '../../shared/step-nav-button-edit';
 
 type FirstStep = 'cart' | 'hide';
 

@@ -39,7 +39,7 @@ if ( ! function_exists( 'yaycheckout_step_index' ) ) {
 
 $yaycheckout_index = yaycheckout_step_index();
 $yaycheckout_state = 1 === $yaycheckout_index ? 'current' : 'locked';
-$yaycheckout_title = \YayCheckout\Renderer\CheckoutStepsProgress::step_title_html( $attributes );
+$yaycheckout_title = \YayCheckout\Renderer\LayoutSteps::step_title_html( $attributes );
 
 $yaycheckout_wrapper = get_block_wrapper_attributes(
     [

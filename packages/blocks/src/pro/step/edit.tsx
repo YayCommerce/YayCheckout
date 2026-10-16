@@ -8,10 +8,10 @@ import {
 import { BaseControl, PanelBody } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { useBlocksAllowedExcept } from '../shared/allowed-blocks';
-import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
-import { stepTitle } from '../shared/step-title';
-import { TEXT_FORMATS_WITH_LIVE_VALUE } from '../shared/text-formats';
+import { useBlocksAllowedExcept } from '../../shared/allowed-blocks';
+import { useBlockGapCSS, type BlockGapStyles } from '../../shared/block-gap';
+import { stepTitle } from '../../shared/step-title';
+import { TEXT_FORMATS_WITH_LIVE_VALUE } from '../../shared/text-formats';
 import stepButtonMeta from '../step-button/block.json';
 import stepsMeta from '../steps/block.json';
 import './editor.css';

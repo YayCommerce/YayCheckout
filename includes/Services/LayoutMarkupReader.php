@@ -276,8 +276,12 @@ class LayoutMarkupReader {
      * Why the layout cannot be activated, or saved while live, or '' when it can. JavaScript copies of these rules live in
      * packages/blocks/src/checkout/publish-guard.ts, packages/blocks/src/shared/extra-field-keys.ts
      * and packages/blocks/src/extra-field/edit.tsx; change them together.
+     *
+     * @param string   $markup            The layout's block markup.
+     * @param string[] $registered_blocks The block names registered on this site. A YayCheckout block missing
+     *                                    from them is a Pro block on a Free install (BlockRegistry::registered_names()).
      */
-    public static function publish_error( string $markup ): string {
+    public static function publish_error( string $markup, array $registered_blocks ): string {
         if ( ! self::has_checkout( $markup ) ) {
             return __( 'Add a Checkout block to this layout before activating it.', 'yaycheckout' );
         }
@@ -285,6 +289,10 @@ class LayoutMarkupReader {
         $keys = [];
 
         foreach ( self::blocks( $markup ) as $block ) {
+            if ( str_starts_with( (string) $block['blockName'], 'yaycheckout/' ) && ! in_array( $block['blockName'], $registered_blocks, true ) ) {
+                return __( 'This layout uses blocks from YayCheckout Pro. Remove them or upgrade to Pro before activating it.', 'yaycheckout' );
+            }
+
             if ( self::EXTRA_FIELD === $block['blockName'] ) {
                 $keys[] = trim( self::text( $block['attrs'], 'fieldKey' ) );
             }

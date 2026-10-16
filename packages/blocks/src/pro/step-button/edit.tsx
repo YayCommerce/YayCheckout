@@ -1,9 +1,9 @@
 import { InspectorControls } from '@wordpress/block-editor';
 import { PanelBody } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { ArrowControl } from '../shared/arrow-control';
-import { arrowGlyph, type Arrow } from '../shared/button-arrow';
-import { StepNavButtonEdit, type StepNavButtonAttributes } from '../shared/step-nav-button-edit';
+import { ArrowControl } from '../../shared/arrow-control';
+import { arrowGlyph, type Arrow } from '../../shared/button-arrow';
+import { StepNavButtonEdit, type StepNavButtonAttributes } from '../../shared/step-nav-button-edit';
 
 interface StepButtonAttributes extends StepNavButtonAttributes {
 	arrow: Arrow;

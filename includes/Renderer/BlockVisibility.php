@@ -281,7 +281,7 @@ class BlockVisibility {
 
     /** The steps in the served layout's first Steps block; 0 without one. Memoised by layout_titles(). */
     private static function step_count(): int {
-        return count( CheckoutStepsProgress::layout_titles() );
+        return count( LayoutSteps::layout_titles() );
     }
 
     /**

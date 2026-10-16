@@ -7,8 +7,10 @@ use YayCheckout\Support\Plan;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The layout templates a merchant creates from, which ones this plan unlocks, and their files:
- * templates/layouts/<slug>/markup.php and design.json. A template missing either is Coming soon.
+ * The layout templates a merchant creates from, which ones this plan lists, and their files:
+ * templates/layouts/<slug>/markup.php and design.json, or templates/layouts/pro/<slug>/ for a Pro
+ * template (one built from Pro blocks), which Free neither lists nor ships. A template missing either
+ * file is Coming soon.
  * preview.html, the picker's preview of the mock, sits beside them and availability ignores it,
  * as it does the optional logged-out.php, the template's own logged-out view.
  */
@@ -20,25 +22,34 @@ class LayoutTemplateCatalogue {
     /** A template's optional logged-out view, and the shared one beside the template folders. */
     private const LOGGED_OUT_FILE = 'logged-out.php';
 
-    /** Free picks the first N; the rest render locked. */
-    private const FREE_UNLOCKED_COUNT = 3;
-
-    /** @return array{ slug: string, name: string, categories: string[], locked: bool, available: bool, preview_url: string }[] */
+    /**
+     * The templates this plan lists: all of them in Pro, only the non-Pro ones in Free.
+     *
+     * @return array{ slug: string, name: string, categories: string[], available: bool, preview_url: string }[]
+     */
     public static function templates( bool $is_pro ): array {
-        $templates = self::catalogue();
+        $templates = [];
 
-        foreach ( $templates as $index => &$template ) {
-            $template['locked']      = ! $is_pro && $index >= self::FREE_UNLOCKED_COUNT;
+        foreach ( self::catalogue() as $template ) {
+            if ( ! $is_pro && ! empty( $template['pro'] ) ) {
+                continue;
+            }
+
+            unset( $template['pro'] );
             $template['available']   = self::is_available( $template['slug'] );
             $template['preview_url'] = self::preview_url( $template['slug'] );
+            $templates[]             = $template;
         }
 
         return $templates;
     }
 
-    /** Whether $slug is in the catalogue and both of its files exist. */
+    /** Whether $slug is in the catalogue, on this plan, and both of its files exist. */
     public static function is_available( string $slug ): bool {
-        if ( ! in_array( $slug, array_column( self::catalogue(), 'slug' ), true ) ) {
+        $entry = self::entry( $slug );
+
+        // A Pro template on Free: its files are absent from the Free zip, and present in a dev tree without Pro booted.
+        if ( null === $entry || ( ! empty( $entry['pro'] ) && ! Plan::is_pro() ) ) {
             return false;
         }
 
@@ -47,19 +58,15 @@ class LayoutTemplateCatalogue {
 
     /**
      * Refuses a template this plan cannot build from. Shared by every route
-     * that creates from a template so the lock rule has one owner.
+     * that creates from a template so the plan rule has one owner.
      *
-     * @throws \InvalidArgumentException When $slug is unknown, locked on this plan or coming soon.
+     * @throws \InvalidArgumentException When $slug is unknown or not listed on this plan, or coming soon.
      */
     public static function assert_available( string $slug ): void {
         $template = array_column( self::templates( Plan::is_pro() ), null, 'slug' )[ $slug ] ?? null;
 
         if ( null === $template ) {
             throw new \InvalidArgumentException( __( 'Unknown template.', 'yaycheckout' ) );
-        }
-
-        if ( $template['locked'] ) {
-            throw new \InvalidArgumentException( __( 'This template is part of YayCheckout Pro.', 'yaycheckout' ) );
         }
 
         if ( ! $template['available'] ) {
@@ -132,12 +139,24 @@ class LayoutTemplateCatalogue {
         return YAYCHECKOUT_PLUGIN_DIR . self::relative_path( $slug, $name );
     }
 
-    /** A template file's path inside the plugin, shared by its file path and its URL. */
+    /** A template file's path inside the plugin, shared by its file path and its URL. Called only with catalogue slugs. */
     private static function relative_path( string $slug, string $name ): string {
-        return 'templates/layouts/' . $slug . '/' . $name;
+        $pro = ! empty( self::entry( $slug )['pro'] ) ? 'pro/' : '';
+
+        return 'templates/layouts/' . $pro . $slug . '/' . $name;
     }
 
-    /** @return array{ slug: string, name: string, categories: string[] }[] */
+    /** @return array{ slug: string, name: string, categories: string[], pro?: bool }|null */
+    private static function entry( string $slug ): ?array {
+        return array_column( self::catalogue(), null, 'slug' )[ $slug ] ?? null;
+    }
+
+    /**
+     * Every template, in the picker's order. `pro` marks one built from Pro blocks: it lives under
+     * templates/layouts/pro/, which the Free zip leaves out.
+     *
+     * @return array{ slug: string, name: string, categories: string[], pro?: bool }[]
+     */
     private static function catalogue(): array {
         return [
             [
@@ -159,11 +178,13 @@ class LayoutTemplateCatalogue {
                 'slug'       => 'multi-step-wizard',
                 'name'       => 'Multi-step wizard',
                 'categories' => [ 'Multi-step', 'One column' ],
+                'pro'        => true,
             ],
             [
                 'slug'       => 'accordion-one-page',
                 'name'       => 'Accordion one-page',
                 'categories' => [ 'One column' ],
+                'pro'        => true,
             ],
             [
                 'slug'       => 'upsell-cross-sell',
@@ -174,6 +195,7 @@ class LayoutTemplateCatalogue {
                 'slug'       => 'minimal-steps',
                 'name'       => 'Minimal steps',
                 'categories' => [ 'Multi-step', 'One column' ],
+                'pro'        => true,
             ],
             [
                 'slug'       => 'live-receipt',
@@ -184,11 +206,13 @@ class LayoutTemplateCatalogue {
                 'slug'       => 'soft-steps',
                 'name'       => 'Soft steps',
                 'categories' => [ 'Multi-step', 'One column' ],
+                'pro'        => true,
             ],
             [
                 'slug'       => 'material-stepper',
                 'name'       => 'Material stepper',
                 'categories' => [ 'Two column' ],
+                'pro'        => true,
             ],
             [
                 'slug'       => 'digital-product',

@@ -5,11 +5,11 @@
  * and required, so a form-wide checkValidity() would block step 1.
  */
 
-import { bindOnce } from '../shared/bind-once';
-import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor, currentStep } from '../shared/checkout-root';
-import { onDomReady } from '../shared/dom-ready';
-import { controlsText } from '../shared/form-text';
-import type { Control } from '../shared/jquery';
+import { bindOnce } from '../../shared/bind-once';
+import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor, currentStep } from '../../shared/checkout-root';
+import { onDomReady } from '../../shared/dom-ready';
+import { controlsText } from '../../shared/form-text';
+import type { Control } from '../../shared/jquery';
 
 const STEP = '.yaycheckout-step';
 const CURRENT = 'current';

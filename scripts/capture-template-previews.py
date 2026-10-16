@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture templates/layouts/<slug>/preview.html for every catalogue template from the HTML mock.
+"""Capture templates/layouts/<slug>/preview.html (templates/layouts/pro/<slug>/ for a Pro template) for every catalogue template from the HTML mock.
 
 Each mock template renders only with its own JS, so headless Chrome renders it once and the rendered
 DOM is saved with every script removed. The picker shows the result in an iframe that may not run
@@ -129,8 +129,10 @@ def main():
             print('%-20s FAILED, not written: %r' % (slug, bad))
             failed = True
             continue
-        os.makedirs(os.path.join(TEMPLATES, slug), exist_ok=True)
-        with open(os.path.join(TEMPLATES, slug, 'preview.html'), 'w', encoding='utf-8') as f:
+        # A Pro template lives under pro/, as LayoutTemplateCatalogue::relative_path() places it.
+        folder = os.path.join(TEMPLATES, 'pro', slug) if os.path.isdir(os.path.join(TEMPLATES, 'pro', slug)) else os.path.join(TEMPLATES, slug)
+        os.makedirs(folder, exist_ok=True)
+        with open(os.path.join(folder, 'preview.html'), 'w', encoding='utf-8') as f:
             f.write(HEADER + re.sub(r'<head\b[^>]*>', lambda m: m.group(0) + CSP, html, count=1))
         print('%-20s %d KB' % (slug, len(html.encode('utf-8')) // 1024))
 

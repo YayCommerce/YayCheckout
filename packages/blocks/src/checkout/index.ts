@@ -7,6 +7,7 @@ import './import-export';
 import './inserter-root';
 import './layout-actions';
 import './layout-design';
+import './locked-pro-blocks';
 import './publish-guard';
 import '../shared/pin-to-bottom';
 

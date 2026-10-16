@@ -1,21 +1,16 @@
 <?php
-namespace YayCheckout\Renderer;
+namespace YayCheckout\Pro\Renderer;
 
-use YayCheckout\Services\LayoutMarkupReader;
+use YayCheckout\Renderer\CheckoutFragments;
+use YayCheckout\Renderer\LayoutSteps;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Step list for the Steps Progress block.
- *
- * Steps Progress may sit inside or outside Checkout, so its titles come from the
- * rendered layout's first Steps block, not from block context. A layout holds
- * one Checkout, so that is also the first Steps block inside Checkout.
+ * The Steps Progress block's markup. Steps Progress may sit inside or outside Checkout, so its titles
+ * come from LayoutSteps, the served layout's first Steps block, not from block context.
  */
-class CheckoutStepsProgress {
-
-    private const STEPS = 'yaycheckout/steps';
-    private const STEP  = 'yaycheckout/step';
+class StepsProgress {
 
     /** Mirrors steps-progress/block.json "variant" enum; the first is the default. */
     private const VARIANTS = [ 'circles', 'dots', 'segments', 'bar', 'text' ];
@@ -26,26 +21,6 @@ class CheckoutStepsProgress {
         'trackColor'        => '--yaycheckout-steps-progress-track',
         'upcomingTextColor' => '--yaycheckout-steps-progress-upcoming-text',
     ];
-
-    /** @var string[]|null Memoised layout_titles(); null until first read. */
-    private static $titles = null;
-
-    /**
-     * Label stored on a step, or "Step" when the merchant left it empty.
-     */
-    public static function step_title( string $raw ): string {
-        return '' !== $raw ? $raw : __( 'Step', 'yaycheckout' );
-    }
-
-    /**
-     * A Step block's title as HTML safe to echo, with the display-text toolbar's formatting and live values,
-     * or "Step" while it holds no text. The step's header and Steps Progress print it alike.
-     *
-     * @param array $attrs The Step block's attributes.
-     */
-    public static function step_title_html( array $attrs ): string {
-        return LayoutMarkupReader::rich_text( $attrs, 'title', self::step_title( '' ) );
-    }
 
     /**
      * Style of the block being rendered; the default when the attribute is missing or unknown.
@@ -64,7 +39,7 @@ class CheckoutStepsProgress {
      * @param array $attributes Block attributes.
      */
     public static function markup( array $attributes = [] ): string {
-        $titles = self::layout_titles();
+        $titles = LayoutSteps::layout_titles();
 
         if ( [] === $titles ) {
             return '';
@@ -82,7 +57,7 @@ class CheckoutStepsProgress {
             $items .= '<li class="yaycheckout-steps-progress__item" data-state="' . ( $first ? 'current' : 'locked' ) . '" data-step="' . esc_attr( (string) $number ) . '"' . ( $first ? ' aria-current="step"' : '' ) . '>';
             $items .= '<' . $tag . ' class="yaycheckout-steps-progress__jump"' . ( $has_summary ? '' : ' type="button" disabled' ) . '>';
             $items .= '<span class="yaycheckout-steps-progress__marker">' . esc_html( (string) $number ) . '</span>';
-            // step_title_html() filtered it with wp_kses.
+            // LayoutSteps::step_title_html() filtered it with wp_kses.
             $items .= '<span class="yaycheckout-steps-progress__title">' . $label . '</span>';
             $items .= '</' . $tag . '></li>';
         }
@@ -145,38 +120,5 @@ class CheckoutStepsProgress {
         $track = $with_track ? '<div class="yaycheckout-steps-progress__track"><span class="yaycheckout-steps-progress__fill"></span></div>' : '';
 
         return '<div class="yaycheckout-steps-progress__summary">' . $track . $count . '</div>';
-    }
-
-    /**
-     * Titles of the rendered layout's first Steps block, as HTML safe to echo; empty without a layout or a
-     * Steps block. Go to Step reads it too, to count the steps.
-     *
-     * @return string[]
-     */
-    public static function layout_titles(): array {
-        if ( null === self::$titles ) {
-            $layout       = CheckoutPage::get_instance()->layout();
-            self::$titles = null !== $layout ? self::titles_in( $layout->content ) : [];
-        }
-
-        return self::$titles;
-    }
-
-    /**
-     * Titles of the first Steps block's Step children, in order, as step_title_html() prints them; empty without one.
-     *
-     * @return string[]
-     */
-    private static function titles_in( string $markup ): array {
-        $block  = LayoutMarkupReader::first_block( $markup, self::STEPS );
-        $titles = [];
-
-        foreach ( null !== $block ? $block['innerBlocks'] : [] as $child ) {
-            if ( self::STEP === ( $child['blockName'] ?? '' ) ) {
-                $titles[] = self::step_title_html( is_array( $child['attrs'] ?? null ) ? $child['attrs'] : [] );
-            }
-        }
-
-        return $titles;
     }
 }

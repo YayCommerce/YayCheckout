@@ -12,6 +12,7 @@ import {
 	extraFields,
 } from '../shared/extra-field-keys';
 import { editorData } from '../shared/editor-data';
+import { PRO_BLOCK_NAMES } from '../shared/pro-blocks';
 import checkoutMeta from './block.json';
 import { layoutStateStore } from './layout-state';
 import { isLoggedOutView } from './layout-view';
@@ -56,8 +57,8 @@ function focusKeyControl( attempts = 20 ) {
 }
 
 /**
- * Why the layout cannot take an order: no Checkout block at any depth, or an extra field
- * Key that is empty, malformed or shared. Mirrors LayoutMarkupReader::publish_error(). The
+ * Why the layout cannot take an order: no Checkout block at any depth, a Pro block on Free (a
+ * locked stub, checkout/locked-pro-blocks.tsx), or an extra field Key that is empty, malformed or shared. Mirrors LayoutMarkupReader::publish_error(). The
  * logged-out view takes no order and the server checks none of it, so it has no problem.
  * layout-actions.tsx reads it too, to hold Activate.
  */
@@ -73,6 +74,14 @@ export function useLayoutProblem(): LayoutProblem {
 			if ( blockEditor.getGlobalBlockCount( name ) === 0 ) {
 				return { message, clientId: '', blocksSave: true };
 			}
+		}
+
+		// No clientId: the notice's action is for extra field Keys.
+		if ( ! editorData.isPro && PRO_BLOCK_NAMES.some( ( name ) => blockEditor.getGlobalBlockCount( name ) > 0 ) ) {
+			return {
+				message: __( 'This layout uses blocks from YayCheckout Pro. Remove them or upgrade to Pro before activating it.', 'yaycheckout' ),
+				clientId: '',
+			};
 		}
 
 		const fields = extraFields( blockEditor );

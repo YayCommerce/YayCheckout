@@ -40,7 +40,7 @@ import {
 	type VisibilitySetting,
 	type VisibilityState,
 } from '../shared/visibility-rules';
-import stepMeta from '../step/block.json';
+import stepMeta from '../pro/step/block.json';
 import './editor.css';
 
 type RuleType = VisibilityRule[ 'type' ];

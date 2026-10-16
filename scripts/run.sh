@@ -316,10 +316,11 @@ cmd_release() {
     cp -r "$PLUGIN_DIR/vendor/composer" "$temp_dir/vendor/"
 
     # includes/Pro/ is the only Pro PHP and nothing else names it (scripts/check-pro-boundary.sh),
-    # so removing it leaves a working Free build.
+    # so removing it leaves a working Free build. The Pro blocks (built from packages/blocks/src/pro/)
+    # and the templates made from them go with it: Free registers neither.
     if [ "$plan" = "free" ]; then
-        rm -rf "$temp_dir/includes/Pro"
-        print_info "Free build: includes/Pro removed"
+        rm -rf "$temp_dir/includes/Pro" "$temp_dir/assets/dist/blocks/pro" "$temp_dir/templates/layouts/pro"
+        print_info "Free build: includes/Pro, assets/dist/blocks/pro and templates/layouts/pro removed"
     fi
 
     # Distinguish the editions in wp-admin.
@@ -345,18 +346,23 @@ cmd_release() {
     # Check the zip customers receive: a Pro leak is invisible in a dev tree,
     # which always contains every file.
     print_step "Verifying artifact..."
-    local pro_entries
-    pro_entries=$(unzip -l "$zip_name" | grep -c "includes/Pro/" || true)
+    local pro_entries pro_paths path
+    pro_paths="includes/Pro/ assets/dist/blocks/pro/ templates/layouts/pro/"
+    pro_entries=$(unzip -l "$zip_name" | grep -cE "includes/Pro/|assets/dist/blocks/pro/|templates/layouts/pro/" || true)
 
     if [ "$plan" = "free" ] && [ "$pro_entries" -ne 0 ]; then
         print_error "Free artifact contains pro code:"
-        unzip -l "$zip_name" | grep "includes/Pro/"
+        unzip -l "$zip_name" | grep -E "includes/Pro/|assets/dist/blocks/pro/|templates/layouts/pro/"
         exit 1
     fi
 
-    if [ "$plan" = "pro" ] && [ "$pro_entries" -eq 0 ]; then
-        print_error "Pro artifact is missing includes/Pro/"
-        exit 1
+    if [ "$plan" = "pro" ]; then
+        for path in $pro_paths; do
+            if ! unzip -l "$zip_name" | grep -q "$plan_slug/$path"; then
+                print_error "Pro artifact is missing $path"
+                exit 1
+            fi
+        done
     fi
 
     if ! unzip -p "$zip_name" "$plan_slug/$PLUGIN_SLUG.php" | grep -q "define( 'YAYCHECKOUT_IS_DEVELOPMENT', false )"; then

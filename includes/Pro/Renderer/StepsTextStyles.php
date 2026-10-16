@@ -1,12 +1,14 @@
 <?php
-namespace YayCheckout\Renderer;
+namespace YayCheckout\Pro\Renderer;
+
+use YayCheckout\Renderer\SummaryPartStyles;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * The Title and Summary styles of the Steps block, applied to every step header in it. The styles print
  * in core's block-supports stylesheet as one rule per part, under a unique wrapper class.
- * packages/blocks/src/steps/edit.tsx mirrors this for the editor.
+ * packages/blocks/src/pro/steps/edit.tsx mirrors this for the editor.
  */
 final class StepsTextStyles {
 

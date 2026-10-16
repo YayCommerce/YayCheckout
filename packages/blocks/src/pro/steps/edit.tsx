@@ -6,8 +6,8 @@ import {
 import { PanelBody, SelectControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import stepMeta from '../step/block.json';
-import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
-import { textPartCSS, TextPartPanels } from '../shared/text-part-styles';
+import { useBlockGapCSS, type BlockGapStyles } from '../../shared/block-gap';
+import { textPartCSS, TextPartPanels } from '../../shared/text-part-styles';
 
 interface StepsAttributes {
 	layout: string;

@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Repositories;
 
+use YayCheckout\Blocks\BlockRegistry;
 use YayCheckout\Controllers\LayoutTemplateCatalogue;
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Models\Layout;
@@ -210,7 +211,7 @@ class LayoutRepository {
      * @throws \InvalidArgumentException With LayoutMarkupReader::publish_error() when the markup may not go live.
      */
     private static function refuse_unpublishable( string $markup ): void {
-        $error = LayoutMarkupReader::publish_error( $markup );
+        $error = LayoutMarkupReader::publish_error( $markup, BlockRegistry::registered_names() );
 
         if ( '' !== $error ) {
             throw new \InvalidArgumentException( $error );

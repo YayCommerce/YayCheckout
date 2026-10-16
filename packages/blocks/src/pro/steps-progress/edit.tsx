@@ -3,14 +3,14 @@ import { Notice, PanelBody, SelectControl, ToggleControl } from '@wordpress/comp
 import { useSelect } from '@wordpress/data';
 import { createInterpolateElement, type ReactNode } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { firstStepsBlock } from '../shared/layout-steps';
-import { plainText } from '../shared/plain-text';
-import { stepTitle } from '../shared/step-title';
+import { firstStepsBlock } from '../../shared/layout-steps';
+import { plainText } from '../../shared/plain-text';
+import { stepTitle } from '../../shared/step-title';
 import './editor.css';
 
 type Variant = 'circles' | 'dots' | 'segments' | 'bar' | 'text';
 
-// Mirrors CheckoutStepsProgress::markup(): bar and text show a summary and hide the list.
+// Mirrors StepsProgress::markup(): bar and text show a summary and hide the list.
 const hasSummary = ( variant: Variant ) => variant === 'bar' || variant === 'text';
 
 type ProgressColor = 'fillColor' | 'trackColor' | 'upcomingTextColor';
@@ -32,7 +32,7 @@ interface Attributes {
 	upcomingTextColor: string;
 }
 
-/** Mirrors CheckoutStepsProgress::color_style(): each colour set becomes the variable style.css reads. */
+/** Mirrors StepsProgress::color_style(): each colour set becomes the variable style.css reads. */
 function progressStyle( { fillColor, trackColor, upcomingTextColor }: Attributes ) {
 	return {
 		...( fillColor ? { '--yaycheckout-steps-progress-fill': fillColor } : {} ),
@@ -57,7 +57,7 @@ function ProgressItem( { title, position }: { title: string; position: number } 
 			aria-current={ state === 'current' ? 'step' : undefined }
 		>
 			<span className="yaycheckout-steps-progress__marker">{ position }</span>
-			{ /* The step's rich title, as CheckoutStepsProgress::step_title_html() prints it; "Step" while it holds no text. */ }
+			{ /* The step's rich title, as LayoutSteps::step_title_html() prints it; "Step" while it holds no text. */ }
 			<RichText.Content
 				tagName="span"
 				className="yaycheckout-steps-progress__title"
@@ -80,7 +80,7 @@ function StepProgressItem( { stepId, position }: { stepId: string; position: num
 	return <ProgressItem title={ title } position={ position } />;
 }
 
-// Mirrors CheckoutStepsProgress::summary(), with step 1 open.
+// Mirrors StepsProgress::summary(), with step 1 open.
 function Summary( { total, withTrack, withCount }: { total: number; withTrack: boolean; withCount: boolean } ) {
 	return (
 		<div className="yaycheckout-steps-progress__summary">
@@ -108,7 +108,7 @@ function ProgressBody( { attributes, total, children }: { attributes: Attributes
 	return (
 		<>
 			{ hasSummary( variant ) && (
-				// Mirrors CheckoutStepsProgress::markup(): only the bar can leave the count out.
+				// Mirrors StepsProgress::markup(): only the bar can leave the count out.
 				<Summary total={ total } withTrack={ variant === 'bar' } withCount={ variant !== 'bar' || attributes.showCount !== false } />
 			) }
 			<ol className="yaycheckout-steps-progress__list">{ children }</ol>
@@ -116,7 +116,7 @@ function ProgressBody( { attributes, total, children }: { attributes: Attributes
 	);
 }
 
-// Mirrors CheckoutStepsProgress::markup(): the same wrapper, list and items.
+// Mirrors StepsProgress::markup(): the same wrapper, list and items.
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	// The store's own order array, so typing elsewhere doesn't re-render this block.
 	const stepIds: string[] | null = useSelect(

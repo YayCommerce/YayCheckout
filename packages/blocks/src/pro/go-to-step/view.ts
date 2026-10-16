@@ -4,9 +4,9 @@
  * Steps owns the open step. This script mirrors data-state and asks Steps to reopen.
  */
 
-import { bindOnce } from '../shared/bind-once';
-import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor, reopenStep } from '../shared/checkout-root';
-import { onDomReady } from '../shared/dom-ready';
+import { bindOnce } from '../../shared/bind-once';
+import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor, reopenStep } from '../../shared/checkout-root';
+import { onDomReady } from '../../shared/dom-ready';
 
 const BUTTON = 'button.yaycheckout-go-to-step__button';
 

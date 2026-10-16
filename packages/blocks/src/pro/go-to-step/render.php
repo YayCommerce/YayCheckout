@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 
 $yaycheckout_step = (int) ( $attributes['step'] ?? 1 );
 
-if ( $yaycheckout_step < 1 || $yaycheckout_step > count( \YayCheckout\Renderer\CheckoutStepsProgress::layout_titles() ) ) {
+if ( $yaycheckout_step < 1 || $yaycheckout_step > count( \YayCheckout\Renderer\LayoutSteps::layout_titles() ) ) {
     return;
 }
 

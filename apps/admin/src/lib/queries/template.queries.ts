@@ -6,9 +6,9 @@ export function useTemplates(): Template[] {
   return getTemplates();
 }
 
-/** Mirrors LayoutTemplateCatalogue::assert_available(): unlocked on this plan and not Coming soon. */
+/** Mirrors LayoutTemplateCatalogue::assert_available(): not Coming soon. PHP lists only this plan's templates. */
 export function isPickable(template: Template): boolean {
-  return !template.locked && template.available;
+  return template.available;
 }
 
 /** The catalogue row for `slug`; undefined when no template has that slug. */

@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 # Pro boundary guard: no file outside includes/Pro/ may name a YayCheckout\Pro\ class,
-# except the one guarded bootstrap in includes/YayCheckout.php.
+# except the one guarded bootstrap in includes/YayCheckout.php. A Free block's render.php
+# (packages/blocks/src/ outside pro/) counts too; a Pro block's, under pro/, may name Pro.
 #
 # Without it the boundary erodes until includes/Pro/ can no longer be removed to build
 # Free, a failure a dev tree, which always contains everything, never shows.
@@ -20,8 +21,9 @@ NC='\033[0m'
 
 # Comment lines are excluded: docblocks legitimately describe the rule, and a
 # guard that reported prose as a violation would train people to ignore it.
-matches=$(grep -rn 'YayCheckout\\Pro' includes --include='*.php' \
+matches=$(grep -rn 'YayCheckout\\Pro' includes packages/blocks/src --include='*.php' \
     | grep -v '^includes/Pro/' \
+    | grep -v '^packages/blocks/src/pro/' \
     | grep -vE ':[0-9]+:[[:space:]]*(\*|//|/\*|#)' \
     || true)
 count=$(printf '%s' "$matches" | grep -c . || true)

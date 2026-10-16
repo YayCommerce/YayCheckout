@@ -3,8 +3,8 @@ import { Notice, PanelBody, SelectControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __, sprintf } from '@wordpress/i18n';
-import { firstStepsBlock } from '../shared/layout-steps';
-import { stepTitle } from '../shared/step-title';
+import { firstStepsBlock } from '../../shared/layout-steps';
+import { stepTitle } from '../../shared/step-title';
 
 interface GoToStepAttributes {
 	step: number;
@@ -18,7 +18,7 @@ interface EditProps {
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps( { className: 'yaycheckout-go-to-step' } );
-	// Mirrors CheckoutStepsProgress::layout_titles(): the layout's first Steps block, in document order.
+	// Mirrors LayoutSteps::layout_titles(): the layout's first Steps block, in document order.
 	const titles: string[] | null = useSelect( ( select ) => {
 		const { getBlockAttributes, getBlockOrder } = select( blockEditorStore );
 		const stepsId = firstStepsBlock( select );

@@ -4,9 +4,9 @@
  * Steps owns the open step. This script mirrors each step's state and asks Steps to reopen one.
  */
 
-import { bindOnce } from '../shared/bind-once';
-import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor, reopenStep } from '../shared/checkout-root';
-import { onDomReady } from '../shared/dom-ready';
+import { bindOnce } from '../../shared/bind-once';
+import { canReopenStep, CHECKOUT_SELECTOR, checkoutFor, reopenStep } from '../../shared/checkout-root';
+import { onDomReady } from '../../shared/dom-ready';
 
 const ITEM = '.yaycheckout-steps-progress__item';
 
