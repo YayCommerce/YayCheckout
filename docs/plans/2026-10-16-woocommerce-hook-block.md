@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. On approval, copy this plan to `docs/plans/2026-10-16-woocommerce-hook-block.md` in the worktree `../yaycheckout-wc-hooks` and rename its branch first: `git -C ../yaycheckout-wc-hooks branch -m trace/feat/wc-hook-block` (no commits on it yet). All work happens in that worktree.
 
-**Status:** active
+**Status:** done 2026-10-16
 **Goal:** A Free `yaycheckout/wc-hook` block fires one chosen WooCommerce classic-checkout action wherever the merchant places it, so plugin output lands in its own block instead of inside (and breaking) another block's markup.
 **Spec:** none, planned from the request and the hook scout in this session.
 **Architecture:** One block with a hook picker, backed by one PHP catalogue `Renderer\WcHooks` (allowed hooks, labels, args, Woo core callbacks to skip, which hooks refresh on AJAX). Blocks that fire a hook in place today keep doing so unless the served layout has a Hook block for that hook (fallback), so no layout loses or doubles plugin output. Labels reach the editor as inline data from PHP, so there is no TypeScript copy of the catalogue.
