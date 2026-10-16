@@ -1,47 +1,56 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { LoaderCircle, RefreshCw } from 'lucide-react';
+import { LoaderCircle } from 'lucide-react';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { deriveWarnings, storeTypeLabel } from '@/lib/helpers/compatibility.helper';
-import { useCompatibilityQuery, useRescanMutation } from '@/lib/queries/compatibility.queries';
+import { deriveWarnings, FAILED_REPORT, hasUndetected, storeTypeLabel } from '@/lib/helpers/compatibility.helper';
+import { useCompatibilityQuery } from '@/lib/queries/compatibility.queries';
 import type { CompatibilityReport } from '@/lib/schema/compatibility.schema';
 import { Badge } from '@/components/ui/badge';
-import { Button, LoadingButton } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { NotDetected } from '@/components/shared/NotDetected';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { WarningBanner } from '@/components/shared/WarningBanner';
 
 const CHECKS: { label: string; renderValue: (report: CompatibilityReport) => ReactNode }[] = [
   {
     label: __('Store type', 'yaycheckout'),
-    renderValue: ({ store }) => (
-      <>
-        {storeTypeLabel(store.storeType)}{' '}
-        <span className="text-muted-foreground">
-          {store.storeType === 'block'
-            ? __('(the Checkout block is your checkout page)', 'yaycheckout')
-            : __('(checkout shortcode, not the Checkout block)', 'yaycheckout')}
-        </span>
-      </>
-    ),
+    renderValue: ({ store }) =>
+      store ? (
+        <>
+          {storeTypeLabel(store.storeType)}{' '}
+          <span className="text-muted-foreground">
+            {store.storeType === 'block'
+              ? __('(the Checkout block is your checkout page)', 'yaycheckout')
+              : __('(checkout shortcode, not the Checkout block)', 'yaycheckout')}
+          </span>
+        </>
+      ) : (
+        <NotDetected />
+      ),
   },
   {
     label: __('WooCommerce', 'yaycheckout'),
     // The plugin header's "WC requires at least" keeps older versions from loading, so a scan never sees one.
-    renderValue: ({ store }) => (
-      <span className="flex items-center gap-2">
-        {store.woocommerceVersion}
-        <Badge variant="success-outline">{__('Supported', 'yaycheckout')}</Badge>
-      </span>
-    ),
+    renderValue: ({ store }) =>
+      store ? (
+        <span className="flex items-center gap-2">
+          {store.woocommerceVersion}
+          <Badge variant="success-outline">{__('Supported', 'yaycheckout')}</Badge>
+        </span>
+      ) : (
+        <NotDetected />
+      ),
   },
   {
     label: __('Theme', 'yaycheckout'),
-    renderValue: ({ store }) => store.theme.name,
+    renderValue: ({ store }) => (store ? store.theme.name : <NotDetected />),
   },
   {
     label: __('Payment gateways', 'yaycheckout'),
     renderValue: ({ gateways }) =>
-      gateways.length === 0 ? (
+      gateways === null ? (
+        <NotDetected />
+      ) : gateways.length === 0 ? (
         __('none enabled', 'yaycheckout')
       ) : (
         <ul className="flex flex-wrap gap-2">
@@ -55,7 +64,7 @@ const CHECKS: { label: string; renderValue: (report: CompatibilityReport) => Rea
   },
 ];
 
-/** Fixed height for the error and results views, so the popup never jumps as they swap. */
+/** Fixed height, so the popup never jumps as the rows fill in. */
 const BODY_CLASS = 'flex h-120 flex-col gap-6';
 
 type CheckState = 'done' | 'checking' | 'pending';
@@ -66,14 +75,14 @@ const TICK_MS = 400;
 /**
  * Wizard step 1: the compatibility report as a table whose rows fill in one tick at a time.
  * Ticks start only once the report is in, so a slow request shows the first row still spinning.
+ * A failed request ticks through too, every row "Not detected", so the scan never blocks setup.
  */
 export function ScanStep({ onContinue }: { onContinue: () => void }) {
   const query = useCompatibilityQuery();
-  const rescan = useRescanMutation();
   // A report already cached (Back from a later step) was ticked through once; show it finished.
   const [ticked, setTicked] = useState(() => (query.data ? CHECKS.length : 0));
 
-  const report = rescan.isPending ? undefined : query.data;
+  const report = query.data ?? (query.error && !query.isFetching ? FAILED_REPORT : undefined);
 
   useEffect(() => {
     if (!report || ticked >= CHECKS.length) return;
@@ -81,34 +90,7 @@ export function ScanStep({ onContinue }: { onContinue: () => void }) {
     return () => clearTimeout(timer);
   }, [report, ticked]);
 
-  function onRerun() {
-    setTicked(0);
-    rescan.mutate();
-  }
-
-  // The request error itself (status, REST URL) is for the console, not the merchant.
-  if (query.error || rescan.error) {
-    return <ScanError isRescanning={rescan.isPending} onRerun={onRerun} />;
-  }
-
-  return <ScanResults report={report} ticked={ticked} onRerun={onRerun} onContinue={onContinue} />;
-}
-
-function ScanError({ isRescanning, onRerun }: { isRescanning: boolean; onRerun: () => void }) {
-  return (
-    <div className={BODY_CLASS}>
-      <p className="text-destructive text-sm">
-        {__("We couldn't scan your store. Check your connection and try again.", 'yaycheckout')}
-      </p>
-      <div className="mt-auto flex justify-between gap-2 border-t pt-4">
-        <LoadingButton variant="outline" loading={isRescanning} disabled={isRescanning} onClick={onRerun}>
-          <RefreshCw />
-          {__('Re-scan', 'yaycheckout')}
-        </LoadingButton>
-        <Button disabled>{__('Continue', 'yaycheckout')}</Button>
-      </div>
-    </div>
-  );
+  return <ScanResults report={report} ticked={ticked} onContinue={onContinue} />;
 }
 
 function checkState(index: number, ticked: number): CheckState {
@@ -120,12 +102,10 @@ function checkState(index: number, ticked: number): CheckState {
 function ScanResults({
   report,
   ticked,
-  onRerun,
   onContinue,
 }: {
   report: CompatibilityReport | undefined;
   ticked: number;
-  onRerun: () => void;
   onContinue: () => void;
 }) {
   const isDone = !!report && ticked >= CHECKS.length;
@@ -172,10 +152,6 @@ function ScanResults({
       </div>
 
       <div className="flex justify-end gap-2 border-t pt-4">
-        <Button variant="outline" disabled={!isDone} onClick={onRerun}>
-          <RefreshCw />
-          {__('Re-scan', 'yaycheckout')}
-        </Button>
         <Button disabled={!isDone} onClick={onContinue}>
           {__('Continue', 'yaycheckout')}
         </Button>
@@ -191,6 +167,20 @@ function wizardWarnings(report: CompatibilityReport) {
 
 function ScanSummary({ report }: { report: CompatibilityReport }) {
   const { blockOnly } = wizardWarnings(report);
+
+  if (hasUndetected(report)) {
+    return (
+      <header className="space-y-1">
+        <h2 className="text-lg font-semibold">{__('Scan complete — some checks could not be read', 'yaycheckout')}</h2>
+        <p className="text-muted-foreground text-sm">
+          {__(
+            'Nothing blocks setup. You can continue, and scan again later from the Compatibility page.',
+            'yaycheckout',
+          )}
+        </p>
+      </header>
+    );
+  }
 
   return (
     <header className="space-y-1">
@@ -232,7 +222,7 @@ function ScanNotes({ report }: { report: CompatibilityReport }) {
 
   return (
     <>
-      <WarningBanner warnings={warnings} gatewayTotal={report.gateways.length} />
+      <WarningBanner warnings={warnings} gatewayTotal={report.gateways?.length ?? 0} />
 
       {warnings.blockOnly.length > 0 && (
         <p className="text-muted-foreground text-sm">
