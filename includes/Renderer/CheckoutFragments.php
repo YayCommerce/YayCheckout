@@ -537,9 +537,10 @@ class CheckoutFragments {
     }
 
     /**
-     * Radios Woo's checkout.js listens for. The label is the method name after
-     * woocommerce_cart_shipping_method_full_label, and the price is its own element:
-     * core concatenates them, which leaves no node for a card layout to place.
+     * Radios Woo's checkout.js listens for. woocommerce_cart_shipping_method_full_label gets
+     * core's "Name: price" label, and the price then moves to its own element for a card layout
+     * to place. A label whose price a plugin rewrote (a currency switcher) prints whole, with no
+     * price element, so the price never shows twice.
      *
      * @param array<string, \WC_Shipping_Rate> $methods
      * @param mixed                            $chosen_method Session value for this package.
@@ -554,14 +555,22 @@ class CheckoutFragments {
 
             $slug     = sanitize_title( $method->id );
             $input_id = 'shipping_method_' . $index . '_' . $slug;
+            $price    = self::shipping_rate_price_html( $method );
+            $suffix   = '' !== $price ? ': ' . $price : '';
             $name     = apply_filters(
                 // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's rate-label filter.
                 'woocommerce_cart_shipping_method_full_label',
-                $method->get_label(),
+                $method->get_label() . $suffix,
                 $method
             );
-            $name  = is_string( $name ) ? $name : $method->get_label();
-            $price = self::shipping_rate_price_html( $method );
+            $name = is_string( $name ) ? $name : $method->get_label() . $suffix;
+            $at   = '' !== $suffix ? strpos( $name, $suffix ) : false;
+
+            if ( false !== $at ) {
+                $name = substr_replace( $name, '', $at, strlen( $suffix ) );
+            } else {
+                $price = '';
+            }
 
             $attr_index = (string) $index;
 
@@ -592,7 +601,7 @@ class CheckoutFragments {
         echo '</ul>';
     }
 
-    /** The price suffix wc_cart_totals_shipping_method_label() appends, without the method name. */
+    /** The price wc_cart_totals_shipping_method_label() appends after ": ", without the method name. */
     private static function shipping_rate_price_html( \WC_Shipping_Rate $method ): string {
         $has_cost  = 0 < $method->cost;
         $hide_cost = ! $has_cost && in_array( $method->get_method_id(), array( 'free_shipping', 'local_pickup' ), true );
