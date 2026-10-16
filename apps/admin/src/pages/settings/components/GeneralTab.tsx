@@ -13,7 +13,7 @@ import { SettingsSection } from './SettingsSection';
 // Safe mode and share usage data stay in the schema but are hidden from merchants for now.
 export function GeneralTab() {
   const { control } = useFormContext<Settings>();
-  // Unmounted on close, so each re-run starts again at Scan.
+  // Unmounted on close, so each re-run starts again at the template step.
   const [isRerunOpen, setIsRerunOpen] = useState(false);
 
   return (
@@ -44,7 +44,7 @@ export function GeneralTab() {
       <SettingsSection
         title={__('Setup wizard', 'yaycheckout')}
         description={__(
-          'Re-scan your store and start a new draft from a template. Your other layouts are not changed.',
+          'Start a new draft from a template. Your other layouts are not changed.',
           'yaycheckout',
         )}
         action={
