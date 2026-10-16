@@ -9,7 +9,8 @@
  * editor saves it: a hand edit that differs by one class or style makes the editor flag the
  * block as invalid.
  *
- * Left column is the terracotta bag panel; right column is the form on the page fill. Delivery is the
+ * Left column is the 560px terracotta bag panel, whose sticky content spans the screen's height with the
+ * Coupon Form at its foot; right column is the form on the page fill. Delivery is the
  * main address, chosen from WooCommerce's Shipping destination when the layout is created: Shipping
  * when shipping is main, Billing when billing is main or shipping is forced to billing. Different
  * Address follows Payment, then the other section; forced-to-billing has only Delivery. Both sections
@@ -96,12 +97,13 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
     ? __( 'Shipping address', 'yaycheckout' )
     : __( 'Billing address', 'yaycheckout' );
 ?>
-<!-- wp:group {"className":"yaycheckout-editorial-fashion","layout":{"type":"default"}} -->
-<div class="wp-block-group yaycheckout-editorial-fashion"><!-- wp:yaycheckout/checkout -->
+<!-- wp:group {"layout":{"type":"default"}} -->
+<div class="wp-block-group"><!-- wp:yaycheckout/checkout -->
 <!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"0px"}}}} -->
-<div class="wp-block-columns"><!-- wp:column {"width":"42%","className":"yaycheckout-editorial-fashion-bag","backgroundColor":"yaycheckout-primary","style":{"color":{"text":"#ffffff"},"spacing":{"padding":{"top":"32px","right":"40px","bottom":"48px","left":"40px"}}}} -->
-<div class="wp-block-column yaycheckout-editorial-fashion-bag has-yaycheckout-primary-background-color has-text-color has-background" style="color:#ffffff;padding-top:32px;padding-right:40px;padding-bottom:48px;padding-left:40px;flex-basis:42%"><!-- wp:group {"className":"yaycheckout-editorial-fashion-bag-inner","style":{"position":{"type":"sticky","top":"0px"},"spacing":{"blockGap":"32px"}},"layout":{"type":"default"}} -->
-<div class="wp-block-group yaycheckout-editorial-fashion-bag-inner"><!-- wp:group {"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
+<div class="wp-block-columns"><!-- wp:column {"width":"480px","backgroundColor":"yaycheckout-primary","style":{"color":{"text":"#ffffff"},"spacing":{"padding":{"top":"32px","right":"40px","bottom":"48px","left":"40px"}}}} -->
+<div class="wp-block-column has-yaycheckout-primary-background-color has-text-color has-background" style="color:#ffffff;padding-top:32px;padding-right:40px;padding-bottom:48px;padding-left:40px;flex-basis:480px"><!-- wp:group {"style":{"position":{"type":"sticky","top":"0px"},"spacing":{"blockGap":"32px"},"dimensions":{"minHeight":"calc(100vh - 80px)"}},"layout":{"type":"flex","orientation":"vertical","justifyContent":"stretch","verticalAlignment":"space-between"}} -->
+<div class="wp-block-group" style="min-height:calc(100vh - 80px)"><!-- wp:group {"style":{"spacing":{"blockGap":"32px"}},"layout":{"type":"default"}} -->
+<div class="wp-block-group"><!-- wp:group {"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
 <div class="wp-block-group"><?php if ( has_custom_logo() ) : ?>
 <!-- wp:site-logo /-->
 <?php else : ?>
@@ -131,9 +133,10 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 
 <!-- wp:yaycheckout/order-summary-total {"style":{"border":{"top":{"color":"rgba(255,255,255,0.35)","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"12px"},"margin":{"top":"4px"}},"color":{"text":"#ffffff"},"yaycheckout":{"label":{"typography":{"fontSize":"11px","letterSpacing":"0.16em","textTransform":"uppercase"},"color":{"text":"#ffffff"}},"value":{"typography":{"fontSize":"36px","fontWeight":"400","fontFamily":"Georgia, \"Times New Roman\", serif","letterSpacing":"-0.02em","lineHeight":"1"},"color":{"text":"#ffffff"}}}}} /-->
 <!-- /wp:yaycheckout/order-summary-details -->
-<!-- /wp:yaycheckout/order-summary -->
+<!-- /wp:yaycheckout/order-summary --></div>
+<!-- /wp:group -->
 
-<!-- wp:yaycheckout/coupon-form {"className":"yaycheckout-editorial-fashion-coupon","placeholder":"<?php esc_html_e( 'Enter code', 'yaycheckout' ); ?>","disclosure":"collapsible","disclosureText":"<?php esc_html_e( 'Add coupons', 'yaycheckout' ); ?>","style":{"color":{"text":"#ffffff"},"typography":{"fontSize":"13px"}}} -->
+<!-- wp:yaycheckout/coupon-form {"placeholder":"<?php esc_html_e( 'Enter code', 'yaycheckout' ); ?>","disclosure":"collapsible","disclosureText":"<?php esc_html_e( 'Add coupons', 'yaycheckout' ); ?>","style":{"color":{"text":"#ffffff"},"typography":{"fontSize":"13px"}}} -->
 <!-- wp:yaycheckout/coupon-button {"buttonText":"<?php esc_html_e( 'Apply', 'yaycheckout' ); ?>","textColor":"yaycheckout-primary","style":{"color":{"background":"#ffffff"},"border":{"color":"#ffffff","width":"1px","style":"solid","radius":"0px"},"typography":{"fontSize":"13px","fontWeight":"500"},"spacing":{"padding":{"top":"0px","right":"18px","bottom":"0px","left":"18px"}}}} /-->
 <!-- /wp:yaycheckout/coupon-form --></div>
 <!-- /wp:group --></div>
@@ -227,7 +230,7 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 
 <!-- wp:yaycheckout/terms {"textColor":"yaycheckout-muted","style":{"typography":{"fontSize":"12px"}}} /-->
 
-<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022\u0022 data-suffix=\u0022\u0022\u003e<?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","backgroundColor":"yaycheckout-text","style":{"color":{"text":"#ffffff"},"typography":{"fontSize":"13px","fontWeight":"600","letterSpacing":"0.16em","textTransform":"uppercase","textAlign":"left"},"border":{"radius":"0px"},"dimensions":{"width":"var:preset|dimension|100"}}} /-->
+<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022\u0022 data-suffix=\u0022\u0022\u003e<?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","backgroundColor":"yaycheckout-text","style":{"color":{"text":"#ffffff"},"typography":{"fontSize":"13px","fontWeight":"600","letterSpacing":"0.16em","textTransform":"uppercase"},"border":{"radius":"0px"},"dimensions":{"width":"var:preset|dimension|100"},"spacing":{"padding":{"top":"18px","right":"24px","bottom":"18px","left":"24px"}}},"spread":true} /-->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"20px"}},"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"center"}} -->
 <div class="wp-block-group"><!-- wp:paragraph {"style":{"typography":{"fontSize":"11px","letterSpacing":"0.12em","textTransform":"uppercase"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->

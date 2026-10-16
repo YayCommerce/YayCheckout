@@ -1,7 +1,28 @@
-/* Sized to its text like a <button>; the editor's root is a div, so it also takes a button's border-box, or a % width adds the padding on top. */
+/*
+ * A row sized to its label like a <button>; the editor's root is a div, so it also takes a button's border-box,
+ * or a % width adds the padding on top. Each live value is its own flex item, and the row drops the space typed
+ * before it, so the gap puts one back. The text alignment places the row; Spread pushes its parts to the ends.
+ */
 :where(.wp-block-yaycheckout-place-order) {
-	display: inline-block;
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	column-gap: 0.25em;
 	box-sizing: border-box;
+}
+
+.wp-block-yaycheckout-place-order.has-text-align-left {
+	justify-content: flex-start;
+}
+
+.wp-block-yaycheckout-place-order.has-text-align-right {
+	justify-content: flex-end;
+}
+
+.wp-block-yaycheckout-place-order.yaycheckout-place-order--spread {
+	flex-wrap: nowrap;
+	justify-content: space-between;
 }
 
 /* Classic themes (Storefront) set button { border: none }, which beats core's :where() border-style fallback. */
@@ -24,7 +45,7 @@
 .wp-block-yaycheckout-place-order.alignleft,
 .wp-block-yaycheckout-place-order.aligncenter,
 .wp-block-yaycheckout-place-order.alignright {
-	display: block;
+	display: flex;
 	width: fit-content;
 	float: none;
 }

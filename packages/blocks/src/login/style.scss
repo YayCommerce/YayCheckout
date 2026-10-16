@@ -1,4 +1,5 @@
-/* The design's link colours (elements), else the theme's link colour. */
+/* The design's link colours (elements), else the theme's link colour: the same fallback chain as checkout-base.css's
+   .yaycheckout-disclosure__toggle[data-mode="link"]; change them together. */
 .yaycheckout-login__trigger {
 	color: var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor));
 	text-decoration: underline;

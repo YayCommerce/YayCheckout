@@ -43,5 +43,5 @@
 	"help_text": {
 		"size": null
 	},
-	"custom_css": ".yaycheckout-pinned .yaycheckout-step-button,\n.yaycheckout-pinned .yaycheckout-back-button {\n\twidth: 100%;\n\tbox-sizing: border-box;\n\tjustify-content: center;\n}"
+	"custom_css": ""
 }
