@@ -26,6 +26,17 @@
     "title": {
       "type": "string",
       "default": ""
+    },
+    "summarySeparator": {
+      "type": "string",
+      "default": ", "
+    },
+    "summaryOmit": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
     }
   },
   "supports": {
