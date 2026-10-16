@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Helpers\CheckoutSetupHelper;
 use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -409,9 +410,33 @@ class CheckoutFragments {
         echo self::payment_methods_html();
     }
 
-    /** Shipping methods is empty when the cart needs no shipping; the "enter your address" and "no options" messages count as content. */
+    /**
+     * Shipping methods is empty when the cart needs no shipping; the "enter your address" and "no options" messages count as content.
+     * A store manager still sees it when shipping lacks a method, to read the setup hint.
+     */
     public static function shipping_empty(): bool {
-        return ! WC()->cart instanceof \WC_Cart || ! ( WC()->cart->needs_shipping() && WC()->cart->show_shipping() );
+        if ( ! WC()->cart instanceof \WC_Cart ) {
+            return true;
+        }
+
+        if ( self::shipping_setup_hinted() ) {
+            return false;
+        }
+
+        return ! ( WC()->cart->needs_shipping() && WC()->cart->show_shipping() );
+    }
+
+    /** A store manager with a cart that would ship, on a store with no shipping method to offer. */
+    private static function shipping_setup_hinted(): bool {
+        return current_user_can( 'manage_woocommerce' ) && CheckoutSetupHelper::shipping_needs_setup() && CheckoutSetupHelper::cart_has_shippable_item();
+    }
+
+    /** An info notice only store managers get: why the block has nothing to offer, with a link to fix it. */
+    private static function print_setup_hint( string $message, string $url, string $link_text ): void {
+        wc_print_notice(
+            '<strong>' . esc_html__( 'Only store managers see this.', 'yaycheckout' ) . '</strong> ' . esc_html( $message ) . ' <a href="' . esc_url( $url ) . '">' . esc_html( $link_text ) . '</a>',
+            'notice'
+        );
     }
 
     /** Payment is empty when the order needs no payment; the "no available payment methods" notice counts as content. */
@@ -442,7 +467,13 @@ class CheckoutFragments {
 
         echo '<div class="' . esc_attr( self::SHIPPING_RATES_CLASS ) . '"' . self::live_attributes( $empty ) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- live_attributes() prints fixed names and values.
 
-        if ( ! $empty ) {
+        if ( self::shipping_setup_hinted() ) {
+            self::print_setup_hint(
+                __( 'No shipping zone or method is set up, so shoppers check out without choosing shipping.', 'yaycheckout' ),
+                CheckoutSetupHelper::shipping_settings_url(),
+                __( 'Set up shipping', 'yaycheckout' )
+            );
+        } elseif ( ! $empty ) {
             self::print_shipping_extension_rows( 'woocommerce_review_order_before_shipping' );
             self::print_shipping_packages();
             self::print_shipping_extension_rows( 'woocommerce_review_order_after_shipping' );
@@ -491,9 +522,9 @@ class CheckoutFragments {
             if ( ! empty( $methods ) ) {
                 self::print_shipping_method_list( $methods, (int) $index, $chosen_method );
             } elseif ( ! $calculated || ! $formatted ) {
-                echo wp_kses_post( apply_filters( 'woocommerce_shipping_may_be_available_html', __( 'Enter your address to view shipping options.', 'woocommerce' ) ) );
+                wc_print_notice( apply_filters( 'woocommerce_shipping_may_be_available_html', __( 'Enter your address to view shipping options.', 'woocommerce' ) ), 'notice' );
             } else {
-                echo wp_kses_post( apply_filters( 'woocommerce_no_shipping_available_html', __( 'There are no shipping options available. Please ensure that your address has been entered correctly, or contact us if you need any help.', 'woocommerce' ) ) );
+                wc_print_notice( apply_filters( 'woocommerce_no_shipping_available_html', __( 'There are no shipping options available. Please ensure that your address has been entered correctly, or contact us if you need any help.', 'woocommerce' ) ), 'notice' );
             }
 
             if ( 1 < $package_count ) {
@@ -667,30 +698,37 @@ class CheckoutFragments {
         }
         ?>
 <div id="payment" class="woocommerce-checkout-payment"<?php echo self::live_attributes( $empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- live_attributes() prints fixed names and values. ?>>
-        <?php if ( ! $empty ) : ?>
+        <?php if ( ! $empty && ! empty( $available_gateways ) ) : ?>
     <ul class="wc_payment_methods payment_methods methods" aria-label="<?php esc_attr_e( 'Payment methods', 'yaycheckout' ); ?>">
             <?php
-            if ( ! empty( $available_gateways ) ) {
-                foreach ( $available_gateways as $gateway ) {
-                    wc_get_template( 'checkout/payment-method.php', [ 'gateway' => $gateway ] );
-                }
-            } else {
-                echo '<li>';
-                wc_print_notice(
-                    apply_filters(
-                        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
-                        'woocommerce_no_available_payment_methods_message',
-                        WC()->customer->get_billing_country()
-                            ? esc_html__( 'Sorry, it seems that there are no available payment methods. Please contact us if you require assistance or wish to make alternate arrangements.', 'yaycheckout' )
-                            : esc_html__( 'Please fill in your details above to see available payment methods.', 'yaycheckout' )
-                    ),
-                    'notice'
-                );
-                echo '</li>';
+            foreach ( $available_gateways as $gateway ) {
+                wc_get_template( 'checkout/payment-method.php', [ 'gateway' => $gateway ] );
             }
             ?>
     </ul>
-        <?php endif; ?>
+            <?php
+        elseif ( ! $empty ) :
+            // Outside the list, unlike Woo's payment.php, so the row styles never draw the notice as a selected method.
+            wc_print_notice(
+                apply_filters(
+                    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
+                    'woocommerce_no_available_payment_methods_message',
+                    WC()->customer->get_billing_country()
+                        ? esc_html__( 'Sorry, it seems that there are no available payment methods. Please contact us if you require assistance or wish to make alternate arrangements.', 'yaycheckout' )
+                        : esc_html__( 'Please fill in your details above to see available payment methods.', 'yaycheckout' )
+                ),
+                'notice'
+            );
+
+            if ( current_user_can( 'manage_woocommerce' ) && CheckoutSetupHelper::payment_needs_setup() ) {
+                self::print_setup_hint(
+                    __( 'No payment method is enabled, so shoppers cannot place an order.', 'yaycheckout' ),
+                    CheckoutSetupHelper::payment_settings_url(),
+                    __( 'Set up payments', 'yaycheckout' )
+                );
+            }
+        endif;
+        ?>
 </div>
         <?php
         if ( ! wp_doing_ajax() ) {

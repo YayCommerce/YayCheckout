@@ -2,6 +2,7 @@ import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { paymentSetupData } from './editor-data';
 import { layoutFor, PAYMENT_LAYOUTS } from './layouts';
 import { StylePanels } from './style-panels';
 import { paymentStyleVars } from './style-paths';
@@ -12,6 +13,7 @@ import {
 	SectionTextPanels,
 	SectionTitle,
 } from '../shared/section-heading';
+import { SetupNotice } from '../shared/setup-notice';
 import '../shared/section-preview.css';
 
 interface PaymentAttributes {
@@ -108,6 +110,11 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 				/>
 			</InspectorControls>
 			<div { ...blockProps } style={ wrapperStyle }>
+				<SetupNotice
+					data={ paymentSetupData }
+					message={ __( 'No payment method is enabled, so shoppers cannot place an order.', 'yaycheckout' ) }
+					linkText={ __( 'Payments', 'yaycheckout' ) }
+				/>
 				{ textCSS && <style>{ textCSS }</style> }
 				{ showTitle && (
 					<SectionTitle level={ headingLevel } text={ heading } className="yaycheckout-section-preview__heading" />
