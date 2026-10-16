@@ -31,7 +31,7 @@ final class LayoutFactory {
         );
 
         if ( is_wp_error( $id ) ) {
-            throw new \RuntimeException( $id->get_error_message() );
+            throw new \RuntimeException( esc_html( $id->get_error_message() ) );
         }
 
         return (int) $id;

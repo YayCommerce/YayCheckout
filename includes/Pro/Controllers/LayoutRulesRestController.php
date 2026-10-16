@@ -2,6 +2,7 @@
 namespace YayCheckout\Pro\Controllers;
 
 use YayCheckout\Controllers\BaseRestController;
+use YayCheckout\Helpers\ExceptionHelper;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -71,7 +72,7 @@ class LayoutRulesRestController extends BaseRestController {
         try {
             return [ 'rules' => $this->layouts->set_rules( $id, $input['rules'] ) ];
         } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
+            return $this->error_invalid_arguments( ExceptionHelper::message( $ex ) );
         }
     }
 }

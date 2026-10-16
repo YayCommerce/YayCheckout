@@ -29,6 +29,13 @@ RELEASE_DIR="$PLUGIN_DIR/release"
 # Owners: includes/Pro/ (YayCheckout::boot_pro()), assets/dist/blocks/pro/ (ProServiceProvider::built_blocks())
 # and templates/layouts/pro/ (LayoutTemplateCatalogue::relative_path()).
 PRO_PATHS="includes/Pro/ assets/dist/blocks/pro/ templates/layouts/pro/"
+# Admin-shell files the Free zip deletes: its licensing (with the EDD updater) and the Recommended Plugins
+# page. FREE_SHELL_PATCH first removes every reference to them; the artifact check enforces both.
+FREE_SHELL_STRIP="src/License/ src/Registry/ src/Contracts/AddonHostAdapter.php src/Menu/ExternalPluginMenuAdapter.php
+src/Pages/LicensesPage.php src/Pages/RecommendedPluginsPage.php views/license-card.php views/license-activate-card.php
+views/licenses-page.php views/recommended-plugins-data.php views/recommended-plugins-page.php
+assets/css/licenses.css assets/css/other-plugins.css assets/js/license.js assets/js/other-plugins.js"
+FREE_SHELL_PATCH="$PLUGIN_DIR/scripts/free-admin-shell.patch"
 PLUGIN_SLUG="yaycheckout"
 MAIN_FILE="$PLUGIN_DIR/$PLUGIN_SLUG.php"
 
@@ -378,6 +385,8 @@ cmd_release() {
     cp "$PLUGIN_DIR/YayCheckoutPluginAdapter.php" "$temp_dir/"
     cp "$PLUGIN_DIR/readme.txt" "$temp_dir/"
     cp "$PLUGIN_DIR/uninstall.php" "$temp_dir/"
+    # Plugin Check wants composer.json beside a shipped vendor/, so reviewers can see where it came from.
+    cp "$PLUGIN_DIR/composer.json" "$temp_dir/"
 
     cp -r "$PLUGIN_DIR/assets" "$temp_dir/"
     cp -r "$PLUGIN_DIR/includes" "$temp_dir/"
@@ -402,6 +411,25 @@ cmd_release() {
             find "${temp_dir:?}/$pro_path" -depth -type d -empty -delete
         done
         print_info "Free build: removed $PRO_PATHS (kept preview.html)"
+
+        # The patch drops the shell's licensing and Recommended Plugins wiring, and registers this copy
+        # at a low election version so a full shell from another YayCommerce plugin runs the shared menu.
+        # It is made against vendor-prefixed/ and fails on a changed shell: regenerate it then.
+        if ! patch -p1 -d "$temp_dir" --forward --no-backup-if-mismatch --quiet < "$FREE_SHELL_PATCH"; then
+            print_error "scripts/free-admin-shell.patch no longer applies: the admin-shell changed, regenerate the patch"
+            exit 1
+        fi
+        local shell_path
+        for shell_path in $FREE_SHELL_STRIP; do
+            rm -rf "${temp_dir:?}/vendor-prefixed/$shell_path"
+        done
+        for shell_path in src/AdminShell.php src/Menu/PagesRouter.php src/Menu/PluginSubmenu.php; do
+            if ! php -l "$temp_dir/vendor-prefixed/$shell_path" > /dev/null; then
+                print_error "Patched vendor-prefixed/$shell_path does not parse"
+                exit 1
+            fi
+        done
+        print_info "Free build: removed the admin-shell licensing and Recommended Plugins"
     fi
 
     # Distinguish the editions in wp-admin.
@@ -444,6 +472,19 @@ cmd_release() {
         print_error "Free artifact contains pro code:"
         unzip -l "$zip_name" | grep -E "$pro_pattern" | grep -vE '/$|/preview\.html$'
         exit 1
+    fi
+
+    if [ "$plan" = "free" ]; then
+        for path in $FREE_SHELL_STRIP; do
+            if unzip -l "$zip_name" | grep -q "$plan_slug/vendor-prefixed/$path"; then
+                print_error "Free artifact contains vendor-prefixed/$path"
+                exit 1
+            fi
+        done
+        if unzip -p "$zip_name" "$plan_slug/vendor-prefixed/*" | grep -qE 'AdminShell\\(License|Registry)\\|LicensesPage|RecommendedPluginsPage|ExternalPluginMenuAdapter'; then
+            print_error "Free artifact's admin-shell still names a removed class"
+            exit 1
+        fi
     fi
 
     if [ "$plan" = "pro" ]; then

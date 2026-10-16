@@ -110,7 +110,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <?php endif; ?>
 
 <!-- wp:paragraph {"style":{"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
-<p style="margin-top:0;margin-bottom:0"><a style="color:inherit;text-decoration:none" href="http://yaydevs.local/?page_id=8">Cart</a>   <span style="color:#cccccc">›</span>   <span style="font-weight:500">Checkout</span>   <span style="color:#cccccc">›</span>   Order received</p>
+<p style="margin-top:0;margin-bottom:0"><a style="color:inherit;text-decoration:none" href="<?php echo esc_url( wc_get_cart_url() ); ?>">Cart</a>   <span style="color:#cccccc">›</span>   <span style="font-weight:500">Checkout</span>   <span style="color:#cccccc">›</span>   Order received</p>
 <!-- /wp:paragraph -->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"6px"}},"layout":{"type":"flex","flexWrap":"nowrap"}} -->

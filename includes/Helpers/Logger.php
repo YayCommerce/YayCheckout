@@ -39,7 +39,7 @@ class Logger {
      */
     public static function exception( \Throwable $error, string $where, array $context = [] ): void {
         self::error(
-            sprintf( '%s: %s', $where, $error->getMessage() ),
+            sprintf( '%s: %s', $where, ExceptionHelper::message( $error ) ),
             array_merge(
                 $context,
                 [

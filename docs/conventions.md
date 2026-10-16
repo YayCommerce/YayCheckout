@@ -59,6 +59,12 @@
 - **Why:** support reads WooCommerce → Status → Logs, and expected outcomes there bury the failures that matter. In the browser, `error` and `warn` stay in production so a merchant's console screenshot shows the cause; `info` and `debug` run only in development, so nothing sensitive goes in their messages.
 - **In code:** `includes/Helpers/Logger.php`, `apps/admin/src/lib/logger.ts`.
 
+## Exception messages
+
+- **Rule:** a `throw` escapes a message that isn't a plain literal: `esc_html__()` for a translated one, `esc_html()` around anything else. Code that sends a message on, in a REST error, a bulk result or a log line, reads it through `Helpers\ExceptionHelper::message()`, which decodes it again.
+- **Why:** wordpress.org's Plugin Check fails an unescaped exception message (`ExceptionNotEscaped`) and doesn't read `phpcs.xml`. The messages only ever leave as JSON or log text, so without the decode an apostrophe would reach the SPA as `&#039;`.
+- **In code:** `includes/Helpers/ExceptionHelper.php`, `includes/Controllers/BaseRestController.php`.
+
 ## Comments
 
 - **Rule:**

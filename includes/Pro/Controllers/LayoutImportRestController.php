@@ -2,6 +2,7 @@
 namespace YayCheckout\Pro\Controllers;
 
 use YayCheckout\Controllers\BaseRestController;
+use YayCheckout\Helpers\ExceptionHelper;
 use YayCheckout\Models\Layout;
 use YayCheckout\Pro\Services\LayoutImportReview;
 use YayCheckout\Repositories\LayoutRepository;
@@ -70,7 +71,7 @@ class LayoutImportRestController extends BaseRestController {
         try {
             $layout = LayoutImportReview::from_envelope( (array) $request->get_param( 'file' ) );
         } catch ( \InvalidArgumentException $e ) {
-            return $this->error_invalid_arguments( $e->getMessage() );
+            return $this->error_invalid_arguments( ExceptionHelper::message( $e ) );
         }
 
         return [
@@ -102,7 +103,7 @@ class LayoutImportRestController extends BaseRestController {
                 201
             );
         } catch ( \InvalidArgumentException $e ) {
-            return $this->error_invalid_arguments( $e->getMessage() );
+            return $this->error_invalid_arguments( ExceptionHelper::message( $e ) );
         }
     }
 }
