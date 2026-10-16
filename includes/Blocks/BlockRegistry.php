@@ -12,6 +12,7 @@ use YayCheckout\Renderer\ExpressPay;
 use YayCheckout\Renderer\BlockVisibility;
 use YayCheckout\Renderer\LiveValues;
 use YayCheckout\Renderer\PinToBottom;
+use YayCheckout\Renderer\WcHooks;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -83,6 +84,7 @@ class BlockRegistry {
         'terms',
         'place-order',
         'slot',
+        'wc-hook',
     ];
 
     /**
@@ -104,6 +106,7 @@ class BlockRegistry {
         add_action( 'init', [ $this, 'register_blocks' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_design_data' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_express_pay_data' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'editor_wc_hooks_data' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_method_setup_data' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_live_value_editor' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_visibility_editor' ] );
@@ -247,6 +250,30 @@ class BlockRegistry {
         ];
 
         self::inline_data( generate_block_asset_handle( 'yaycheckout/express-pay', 'editorScript' ), 'window.yayCheckoutExpressPay', $data );
+    }
+
+    /**
+     * The WooCommerce Hook block's picker: each hook it may fire, its label, and whether anything prints on it.
+     * Only in the layout editor, the one that offers the block.
+     */
+    public function editor_wc_hooks_data(): void {
+        if ( 'layout' !== $this->editor( null ) ) {
+            return;
+        }
+
+        $labels = WcHooks::labels();
+        $hooks  = [];
+
+        foreach ( WcHooks::HOOKS as $hook => $meta ) {
+            $hooks[] = [
+                'hook'         => $hook,
+                'label'        => $labels[ $hook ] ?? $hook,
+                'group'        => $meta['group'],
+                'hasCallbacks' => WcHooks::has_callbacks( $hook ),
+            ];
+        }
+
+        self::inline_data( generate_block_asset_handle( WcHooks::BLOCK, 'editorScript' ), 'window.yayCheckoutWcHooks', [ 'hooks' => $hooks ] );
     }
 
     /**

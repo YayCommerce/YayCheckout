@@ -198,4 +198,10 @@ export const blockIcons: Record< string, JSX.Element > = {
 		</>
 	),
 	'yaycheckout/slot': icon( <rect x="4" y="4" width="16" height="16" rx="3" strokeDasharray="3 2.5" /> ),
+	'yaycheckout/wc-hook': icon(
+		<>
+			<path d="M12 3v9a4 4 0 1 1-4-4" />
+			<path d="M10 6l2-3 2 3" />
+		</>
+	),
 };

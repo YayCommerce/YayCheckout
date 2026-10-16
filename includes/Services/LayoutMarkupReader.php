@@ -100,6 +100,23 @@ class LayoutMarkupReader {
     }
 
     /**
+     * The hook each WooCommerce Hook block fires, in document order, unique. Unvetted: WcHooks decides which may fire.
+     *
+     * @return string[]
+     */
+    public static function wc_hooks( string $markup ): array {
+        $hooks = [];
+
+        foreach ( self::blocks( $markup ) as $block ) {
+            if ( \YayCheckout\Renderer\WcHooks::BLOCK === $block['blockName'] ) {
+                $hooks[] = self::text( $block['attrs'], 'hook' );
+            }
+        }
+
+        return array_values( array_unique( array_filter( $hooks, 'strlen' ) ) );
+    }
+
+    /**
      * WooCommerce address fields by Key: the Email address block is billing_email, each Field
      * block with a Key is its own. A later block with the same Key wins.
      *

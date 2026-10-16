@@ -101,6 +101,10 @@ class CheckoutFragments {
         add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'fragments' ], 20 );
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's template path filter.
         add_filter( 'wc_get_template', [ $this, 'skip_review_order_table' ], 10, 2 );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's template actions.
+        add_action( 'woocommerce_before_template_part', [ WcHooks::class, 'mute_review_table' ] );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's template actions.
+        add_action( 'woocommerce_after_template_part', [ WcHooks::class, 'unmute_review_table' ] );
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's coupon message filter.
         add_filter( 'woocommerce_coupon_message', [ $this, 'drop_applied_message' ], PHP_INT_MAX, 2 );
     }
@@ -122,8 +126,9 @@ class CheckoutFragments {
 
     /**
      * During update_order_review, Woo renders its whole review-order table before the fragments
-     * filter runs. A layout with Items, Order Summary Breakdown or Order Summary Total discards it, so swap it for an empty template
-     * and its review-order hooks fire once, in our tables.
+     * filter runs. A layout with Items, Order Summary Breakdown or Order Summary Total discards it, so swap it for an empty
+     * template and its review-order hooks fire once, in our tables. A review-order hook a WooCommerce Hook block prints is
+     * kept out of the table by WcHooks::mute_review_table() instead, so an Order Summary without blocks keeps its table.
      */
     public function skip_review_order_table( $template, $template_name ) {
         if ( 'checkout/review-order.php' !== $template_name || ! doing_action( 'wc_ajax_update_order_review' ) ) {
@@ -132,11 +137,16 @@ class CheckoutFragments {
 
         $layout = CheckoutPage::get_instance()->layout();
 
-        if ( null === $layout || empty( self::summary_block_fragments( $layout->content ) ) ) {
+        if ( null === $layout || ! self::replaces_review_table( $layout->content ) ) {
             return $template;
         }
 
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/review-order-skipped.php';
+    }
+
+    /** Whether the layout prints its own review-order hooks, so WooCommerce's review table would only fire them again. */
+    private static function replaces_review_table( string $markup ): bool {
+        return ! empty( self::summary_block_fragments( $markup ) );
     }
 
     /** Swaps the fragments of this layout's sections for this layout's HTML. */
@@ -150,7 +160,7 @@ class CheckoutFragments {
         $rendered = array_flip( LayoutMarkupReader::slots( $layout->content ) );
         $summary  = self::summary_block_fragments( $layout->content );
 
-        if ( ! empty( $summary ) ) {
+        if ( self::replaces_review_table( $layout->content ) ) {
             // Empty after skip_review_order_table(), and no element on the page matches it.
             unset( $fragments[ self::REVIEW_ORDER_TABLE ] );
         }
@@ -164,6 +174,8 @@ class CheckoutFragments {
         foreach ( $summary as [ $selector, $build, $attrs ] ) {
             $html[ $selector ] = self::$build( $attrs );
         }
+
+        $html = array_merge( $html, WcHooks::fragments() );
 
         // Matches nothing on a layout without a Coupon form.
         $html[ '.' . self::COUPON_CHIPS_CLASS ] = self::coupon_chips_html();
@@ -648,31 +660,29 @@ class CheckoutFragments {
         echo '<p class="woocommerce-shipping-contents"><small>' . esc_html( implode( ', ', $product_names ) ) . '</small></p>';
     }
 
-    /**
-     * Output from a review-order shipping hook. Plugins usually print <tr> rows
-     * (needs a table); anything else (div, notice) goes in a plain wrapper so it
-     * is not forced into <tbody>.
-     */
+    /** Output from a review-order shipping hook, unless a WooCommerce Hook block prints it instead. */
     private static function print_shipping_extension_rows( string $hook ): void {
         ob_start();
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Caller passes Woo's review-order shipping hooks.
-        do_action( $hook );
-        $html = (string) ob_get_clean();
+        WcHooks::in_place( $hook );
 
+        echo self::wrap_extension_html( (string) ob_get_clean(), 'yaycheckout-shipping-methods__extensions' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML plugins print on Woo's hooks.
+    }
+
+    /**
+     * What a plugin printed on a WooCommerce hook, in a wrapper of class $css_class, or '' when it printed nothing.
+     * Plugins usually print <tr> rows, which need a table; anything else (div, notice) goes in a plain
+     * wrapper so it is not forced into <tbody>.
+     */
+    public static function wrap_extension_html( string $html, string $css_class ): string {
         if ( '' === trim( $html ) ) {
-            return;
+            return '';
         }
 
         if ( 1 === preg_match( '/^\s*<tr[\s>]/i', $html ) ) {
-            echo '<table class="shop_table yaycheckout-shipping-methods__extensions"><tbody>';
-            echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML plugins print on Woo's review-order shipping hooks.
-            echo '</tbody></table>';
-            return;
+            return '<table class="shop_table ' . esc_attr( $css_class ) . '"><tbody>' . $html . '</tbody></table>';
         }
 
-        echo '<div class="yaycheckout-shipping-methods__extensions">';
-        echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML plugins print on Woo's review-order shipping hooks.
-        echo '</div>';
+        return '<div class="' . esc_attr( $css_class ) . '">' . $html . '</div>';
     }
 
     /** Gateway radios only; Place order is a separate block. */
@@ -693,8 +703,7 @@ class CheckoutFragments {
         ob_start();
 
         if ( ! wp_doing_ajax() ) {
-            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
-            do_action( 'woocommerce_review_order_before_payment' );
+            WcHooks::in_place( 'woocommerce_review_order_before_payment' );
         }
         ?>
 <div id="payment" class="woocommerce-checkout-payment"<?php echo self::live_attributes( $empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- live_attributes() prints fixed names and values. ?>>
@@ -732,8 +741,7 @@ class CheckoutFragments {
 </div>
         <?php
         if ( ! wp_doing_ajax() ) {
-            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
-            do_action( 'woocommerce_review_order_after_payment' );
+            WcHooks::in_place( 'woocommerce_review_order_after_payment' );
         }
 
         return (string) ob_get_clean();
@@ -1068,19 +1076,12 @@ class CheckoutFragments {
             . ' aria-label="' . esc_attr( sprintf( __( 'Remove %s from cart', 'yaycheckout' ), wp_strip_all_tags( $product->get_name() ) ) ) . '">&times;</a>';
     }
 
-    /** Fires a cart-contents hook and prints its output, if any, in a table of its own. */
+    /** Fires a cart-contents hook and prints its output, if any, in a wrapper of its own, unless a WooCommerce Hook block prints it instead. */
     private static function print_order_items_hook( string $hook ): void {
         ob_start();
-        do_action( $hook ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Woo's review-order hooks, named by the caller.
-        $output = (string) ob_get_clean();
+        WcHooks::in_place( $hook );
 
-        if ( '' === trim( $output ) ) {
-            return;
-        }
-
-        echo '<table class="shop_table ' . esc_attr( self::ORDER_ITEMS_CLASS . '__hook' ) . '"><tbody>';
-        echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Extensions' own review-order rows.
-        echo '</tbody></table>';
+        echo self::wrap_extension_html( (string) ob_get_clean(), self::ORDER_ITEMS_CLASS . '__hook' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Extensions' own review-order output.
     }
 
     /** A boolean block attribute, or $fallback when it is missing or not a boolean. */
@@ -1210,8 +1211,8 @@ class CheckoutFragments {
             <?php endif; ?>
         <?php endif; ?>
         <?php // The order-total row between these hooks is the Order Summary Total block's; extensions' rows stay here. ?>
-        <?php do_action( 'woocommerce_review_order_before_order_total' ); ?>
-        <?php do_action( 'woocommerce_review_order_after_order_total' ); ?>
+        <?php WcHooks::in_place( 'woocommerce_review_order_before_order_total' ); ?>
+        <?php WcHooks::in_place( 'woocommerce_review_order_after_order_total' ); ?>
     </tbody>
 </table>
         <?php
