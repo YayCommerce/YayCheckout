@@ -85,8 +85,8 @@ $yaycheckout_delivery_fields = static function ( string $type ): void {
 <div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"blockId":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
-<!-- wp:column {"verticalAlignment":"bottom","width":"25%"} -->
-<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_postcode","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'ZIP Code *', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:column {"verticalAlignment":"bottom"} -->
+<div class="wp-block-column is-vertically-aligned-bottom"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_postcode","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'ZIP Code *', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
