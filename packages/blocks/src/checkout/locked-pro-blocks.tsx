@@ -1,7 +1,14 @@
 import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { getBlockType, registerBlockType } from '@wordpress/blocks';
 import { __, sprintf } from '@wordpress/i18n';
-import { blockIcons } from '../shared/block-icons';
+import {
+	backButtonIcon,
+	goToStepIcon,
+	stepButtonIcon,
+	stepIcon,
+	stepsIcon,
+	stepsProgressIcon,
+} from '../shared/block-icons';
 import { editorData } from '../shared/editor-data';
 import { PRO_BLOCK_METAS } from '../shared/pro-blocks';
 import { ProUpgradeNotice } from '../shared/pro-upgrade-notice';
@@ -12,6 +19,16 @@ type BlockMetadata = Parameters< typeof registerBlockType >[ 0 ];
 
 /** The inserter group for the stubs, after YayCheckout's own. Mirrors BlockRegistry::PRO_CATEGORY, which registers it. */
 const PRO_CATEGORY = 'yaycheckout-pro';
+
+/** Each Pro block's icon, by the names in PRO_BLOCK_METAS. */
+const PRO_BLOCK_ICONS: Record< string, JSX.Element > = {
+	'yaycheckout/steps-progress': stepsProgressIcon,
+	'yaycheckout/steps': stepsIcon,
+	'yaycheckout/step': stepIcon,
+	'yaycheckout/step-button': stepButtonIcon,
+	'yaycheckout/back-button': backButtonIcon,
+	'yaycheckout/go-to-step': goToStepIcon,
+};
 
 /**
  * Each locked Pro block (editorData.lockedBlocks; in Free, all of them) as a stub, listed in the inserter under
@@ -47,7 +64,7 @@ for ( const meta of PRO_BLOCK_METAS ) {
 		registerBlockType( { ...meta, parent: undefined, ancestor: undefined, allowedBlocks: undefined } as unknown as BlockMetadata, {
 			category: PRO_CATEGORY,
 			description: __( 'Part of YayCheckout Pro.', 'yaycheckout' ),
-			icon: blockIcons[ meta.name ],
+			icon: PRO_BLOCK_ICONS[ meta.name ],
 			example: undefined,
 			edit: LockedProBlockEdit,
 			save: saveNestedBlocks,

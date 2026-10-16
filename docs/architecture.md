@@ -136,7 +136,7 @@ Commands and hard rules live in [CLAUDE.md](../CLAUDE.md). Citations give a path
   1. Sets the version when one is passed or typed: the `yaycheckout.php` header, `YAYCHECKOUT_VERSION`, and `Stable tag:` in `readme.txt`. Then sets `Tested up to:` in `readme.txt` and `WC tested up to:` in the header, from `--wp-tested=` and `--wc-tested=`, or from prompts on an interactive run.
   2. Runs the admin-shell prerelease sync, dumps a `--no-dev` authoritative autoloader, exports `YAYCHECKOUT_PLAN` and builds.
   3. Copies a fixed list into a folder named after the edition. Free deletes `includes/Pro/`, `assets/dist/blocks/pro/` and `templates/layouts/pro/`, keeping only each Pro template's `preview.html`; Pro renames the plugin in its header. From Composer it copies only `vendor/autoload.php`, `vendor/composer/` and `vendor-prefixed/`, no packages.
-  4. Strips `RegisterDev.php`, `assets/dist/admin/.vite`, source maps, `.DS_Store` and `.gitkeep`.
+  4. Strips `RegisterDev.php`, `assets/dist/admin/.vite`, source maps, `.DS_Store` and `.gitkeep`, plus each block `-rtl.css` that is identical to its LTR file. WordPress loads a block's `-rtl.css` only when the file exists.
   5. Zips into `release/` as `<slug>-<version>.zip`, checks the zip for `includes/Pro/`, `assets/dist/blocks/pro/` and `templates/layouts/pro/` entries (other than `preview.html`) against the plan, then dumps the autoloader again with dev maps. The packages stay `--no-dev` ([known issue](known-issues.md)).
   - It runs no lint, boundary check or tests; `composer check:boundary` runs the boundary check alone.
 - The copy list is the release: a runtime file outside it is silently absent from the zip. The list and its strip step live in `cmd_release` in `scripts/run.sh`.
