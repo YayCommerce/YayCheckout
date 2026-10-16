@@ -1,8 +1,79 @@
 .editor-styles-wrapper .yaycheckout-wc-hook {
-	min-height: 48px;
-	padding: 12px;
-	border: 1px dashed #c3c4c7;
-	color: #646970;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-height: 52px;
+	padding: 10px 14px;
+	border: 1px dashed color-mix(in srgb, var(--wp-admin-theme-color, #3858e9) 45%, transparent);
+	border-radius: 8px;
+	background: color-mix(in srgb, var(--wp-admin-theme-color, #3858e9) 4%, #fff);
+	color: #1e1e1e;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 	font-size: 13px;
-	text-align: center;
+	line-height: 1.4;
+	text-align: left;
 }
+
+.editor-styles-wrapper .yaycheckout-wc-hook.is-selected {
+	border-style: solid;
+}
+
+.editor-styles-wrapper .yaycheckout-wc-hook__icon {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--wp-admin-theme-color, #3858e9) 12%, #fff);
+	color: var(--wp-admin-theme-color, #3858e9);
+}
+
+.editor-styles-wrapper .yaycheckout-wc-hook__icon svg {
+	width: 20px;
+	height: 20px;
+}
+
+.editor-styles-wrapper .yaycheckout-wc-hook__text {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.editor-styles-wrapper .yaycheckout-wc-hook__eyebrow {
+	color: #757575;
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.editor-styles-wrapper .yaycheckout-wc-hook__label {
+	font-weight: 600;
+}
+
+.editor-styles-wrapper .yaycheckout-wc-hook__badge {
+	flex: none;
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: #f0f0f0;
+	color: #757575;
+	font-size: 11px;
+}
+
+.editor-styles-wrapper .yaycheckout-wc-hook__name {
+	overflow: hidden;
+	flex: 0 1 auto;
+	max-width: 45%;
+	padding: 2px 6px;
+	border-radius: 4px;
+	background: rgba(0, 0, 0, 0.04);
+	color: #757575;
+	font-family: Menlo, Consolas, monospace;
+	font-size: 11px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
