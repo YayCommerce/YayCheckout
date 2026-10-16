@@ -30,7 +30,7 @@ class LayoutImportReview {
 
         // First of LayoutMarkupReader::publish_error()'s rules; the rest wait for publish, as for any draft.
         if ( ! LayoutMarkupReader::has_checkout( $layout['content'] ) ) {
-            throw new \InvalidArgumentException( __( 'The file does not contain a checkout layout.', 'yaycheckout' ) );
+            throw new \InvalidArgumentException( esc_html__( 'The file does not contain a checkout layout.', 'yaycheckout' ) );
         }
 
         return $layout;
@@ -75,14 +75,14 @@ class LayoutImportReview {
      */
     private static function layout( array $envelope ): array {
         if ( Layout::EXPORT_FORMAT !== ( $envelope['format'] ?? null ) ) {
-            throw new \InvalidArgumentException( __( 'This file is not a YayCheckout layout export.', 'yaycheckout' ) );
+            throw new \InvalidArgumentException( esc_html__( 'This file is not a YayCheckout layout export.', 'yaycheckout' ) );
         }
 
         $layouts = is_array( $envelope['layouts'] ?? null ) ? $envelope['layouts'] : [];
         $layout  = 1 === count( $layouts ) ? reset( $layouts ) : null;
 
         if ( ! is_array( $layout ) || ! is_string( $layout['title'] ?? null ) || ! is_string( $layout['content'] ?? null ) ) {
-            throw new \InvalidArgumentException( __( 'The file must contain exactly one layout.', 'yaycheckout' ) );
+            throw new \InvalidArgumentException( esc_html__( 'The file must contain exactly one layout.', 'yaycheckout' ) );
         }
 
         return [

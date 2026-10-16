@@ -40,7 +40,7 @@ class LayoutQuery {
 
         foreach ( $unique as $status ) {
             if ( ! LayoutStatus::is_valid( $status ) ) {
-                throw new \InvalidArgumentException( sprintf( 'Unknown layout status: %s', $status ) );
+                throw new \InvalidArgumentException( esc_html( sprintf( 'Unknown layout status: %s', $status ) ) );
             }
         }
 
@@ -75,11 +75,11 @@ class LayoutQuery {
         $order = strtoupper( $order );
 
         if ( ! in_array( $orderby, [ 'date', 'modified' ], true ) ) {
-            throw new \InvalidArgumentException( sprintf( 'Unknown layout orderby: %s', $orderby ) );
+            throw new \InvalidArgumentException( esc_html( sprintf( 'Unknown layout orderby: %s', $orderby ) ) );
         }
 
         if ( ! in_array( $order, [ 'ASC', 'DESC' ], true ) ) {
-            throw new \InvalidArgumentException( sprintf( 'Unknown layout order: %s', $order ) );
+            throw new \InvalidArgumentException( esc_html( sprintf( 'Unknown layout order: %s', $order ) ) );
         }
 
         $clone          = clone $this;
