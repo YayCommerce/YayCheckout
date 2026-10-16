@@ -55,7 +55,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
     // One blockId per section, since a layout holds both; each matches BlockEmptiness::BLOCK_ID_PATTERN.
     $yaycheckout_state_id = 'billing' === $type ? 'bilstate' : 'shpstate';
     ?>
-<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"24px","left":"20px"}}}} -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"12px","left":"20px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_first_name","label":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -69,7 +69,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_2","label":"<?php esc_html_e( 'Apartment, suite, unit, etc.', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Apartment, suite, etc. (optional)', 'yaycheckout' ); ?>"} /-->
 
-<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"24px","left":"20px"}}}} -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"12px","left":"20px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -79,7 +79,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
-<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"24px","left":"20px"}}}} -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"12px","left":"20px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column {"yaycheckoutVisibility":{"action":"show","rules":[{"type":"block","block":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","is":"not_empty"}]}} -->
 <div class="wp-block-column"><!-- wp:yaycheckout/field {"blockId":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -101,8 +101,8 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 <div class="wp-block-group"><!-- wp:yaycheckout/checkout -->
 <!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"0px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column {"width":"480px","backgroundColor":"yaycheckout-primary","style":{"color":{"text":"#ffffff"},"spacing":{"padding":{"top":"32px","right":"40px","bottom":"48px","left":"40px"}}}} -->
-<div class="wp-block-column has-yaycheckout-primary-background-color has-text-color has-background" style="color:#ffffff;padding-top:32px;padding-right:40px;padding-bottom:48px;padding-left:40px;flex-basis:480px"><!-- wp:group {"style":{"position":{"type":"sticky","top":"0px"},"spacing":{"blockGap":"32px"},"dimensions":{"minHeight":"calc(100vh - 80px)"}},"layout":{"type":"flex","orientation":"vertical","justifyContent":"stretch","verticalAlignment":"space-between"}} -->
-<div class="wp-block-group" style="min-height:calc(100vh - 80px)"><!-- wp:group {"style":{"spacing":{"blockGap":"32px"}},"layout":{"type":"default"}} -->
+<div class="wp-block-column has-yaycheckout-primary-background-color has-text-color has-background" style="color:#ffffff;padding-top:32px;padding-right:40px;padding-bottom:48px;padding-left:40px;flex-basis:480px"><!-- wp:group {"style":{"position":{"type":"sticky","top":"0px"},"spacing":{"blockGap":"32px"}},"layout":{"type":"flex","orientation":"vertical","justifyContent":"stretch","verticalAlignment":"space-between"}} -->
+<div class="wp-block-group"><!-- wp:group {"style":{"spacing":{"blockGap":"32px"}},"layout":{"type":"default"}} -->
 <div class="wp-block-group"><!-- wp:group {"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
 <div class="wp-block-group"><?php if ( has_custom_logo() ) : ?>
 <!-- wp:site-logo /-->

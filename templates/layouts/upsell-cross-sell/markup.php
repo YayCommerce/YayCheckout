@@ -55,7 +55,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
     // One blockId per section, since a layout holds both; each matches BlockEmptiness::BLOCK_ID_PATTERN.
     $yaycheckout_state_id = 'billing' === $type ? 'bilstate' : 'shpstate';
     ?>
-<!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_first_name","label":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -71,7 +71,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_2","label":"<?php esc_html_e( 'Apartment, suite, unit, etc.', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Apartment, suite, unit, etc. (optional)', 'yaycheckout' ); ?>","disclosure":"link","disclosureText":"<?php esc_html_e( '+ Add apartment, suite, etc.', 'yaycheckout' ); ?>"} /-->
 
-<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
+<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns are-vertically-aligned-bottom"><!-- wp:column {"verticalAlignment":"bottom","width":"50%"} -->
 <div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:50%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -90,8 +90,8 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 };
 ?>
 <!-- wp:group {"tagName":"header","style":{"color":{"background":"#ffffff"},"border":{"bottom":{"color":"var:preset|color|yaycheckout-border","width":"1px","style":"solid"}},"spacing":{"padding":{"left":"24px","right":"24px"}}},"layout":{"type":"constrained","contentSize":"1112px"}} -->
-<header class="wp-block-group has-background" style="border-bottom-color:var(--wp--preset--color--yaycheckout-border);border-bottom-style:solid;border-bottom-width:1px;background-color:#ffffff;padding-right:24px;padding-left:24px"><!-- wp:group {"style":{"dimensions":{"minHeight":"64px"}},"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
-<div class="wp-block-group" style="min-height:64px"><?php if ( has_custom_logo() ) : ?>
+<header class="wp-block-group has-background" style="border-bottom-color:var(--wp--preset--color--yaycheckout-border);border-bottom-style:solid;border-bottom-width:1px;background-color:#ffffff;padding-right:24px;padding-left:24px"><!-- wp:group {"style":{"dimensions":{"minHeight":"64px"},"spacing":{"padding":{"top":"12px","bottom":"12px"},"blockGap":{"top":"8px","left":"16px"}}},"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
+<div class="wp-block-group" style="min-height:64px;padding-top:12px;padding-bottom:12px"><?php if ( has_custom_logo() ) : ?>
 <!-- wp:site-logo /-->
 <?php else : ?>
 <!-- wp:site-title {"level":0} /-->

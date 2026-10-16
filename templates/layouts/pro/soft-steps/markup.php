@@ -53,7 +53,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
     // One blockId per section, since a layout can hold both; each matches BlockEmptiness::BLOCK_ID_PATTERN.
     $yaycheckout_state_id = 'billing' === $type ? 'bilstate' : 'shpstate';
     ?>
-<!-- wp:columns {"isStackedOnMobile":false,"style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
+<!-- wp:columns {"isStackedOnMobile":false,"style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns is-not-stacked-on-mobile"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_first_name","label":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -67,7 +67,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_2","label":"<?php esc_html_e( 'Apartment, suite, etc.', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Apartment, suite, etc.', 'yaycheckout' ); ?>","disclosure":"link","disclosureText":"<?php esc_html_e( '+ Add apartment, suite, etc.', 'yaycheckout' ); ?>"} /-->
 
-<!-- wp:columns {"verticalAlignment":"bottom","isStackedOnMobile":false,"style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
+<!-- wp:columns {"verticalAlignment":"bottom","isStackedOnMobile":false,"style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns are-vertically-aligned-bottom is-not-stacked-on-mobile"><!-- wp:column {"verticalAlignment":"bottom"} -->
 <div class="wp-block-column is-vertically-aligned-bottom"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->

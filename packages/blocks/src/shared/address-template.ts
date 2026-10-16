@@ -26,9 +26,9 @@ function field( prefix: Prefix, { key, label, ...attrs }: FieldSeed ): TemplateA
 	return [ fieldMeta.name, { fieldKey, type: def.type, label, required: def.required, ...attrs } ];
 }
 
-// Matches the horizontal spacing between side-by-side fields in
-// templates/layouts/classic-two-column/markup.php.
-const COLUMN_GAP = { style: { spacing: { blockGap: { left: '12px' } } } };
+// Matches the spacing between side-by-side fields in templates/layouts/classic-two-column/markup.php. The top gap
+// is the section's field gap, which the fields keep when the columns stack on mobile.
+const COLUMN_GAP = { style: { spacing: { blockGap: { top: '12px', left: '12px' } } } };
 
 /** Core aligns each Column, not the row, so a row's verticalAlignment is copied onto its columns as the editor does. */
 function row(
