@@ -124,8 +124,8 @@ class LiveValues {
 
         foreach ( self::money() as $key => $amount ) {
             $values[ $key ] = [
-                // wc_price()'s markup and entities removed: the value is plain text, escaped where it prints.
-                'text'  => html_entity_decode( wp_strip_all_tags( wc_price( $amount ) ), ENT_QUOTES, 'UTF-8' ),
+                // The price's markup and entities removed: the value is plain text, escaped where it prints.
+                'text'  => html_entity_decode( wp_strip_all_tags( CheckoutFragments::price_html( $amount, null, $key ) ), ENT_QUOTES, 'UTF-8' ),
                 'empty' => 0.0 === round( $amount, wc_get_price_decimals() ),
             ];
         }

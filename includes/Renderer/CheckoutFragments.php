@@ -1049,7 +1049,9 @@ class CheckoutFragments {
         }
 
         if ( $options['show_unit_price'] ) {
-            $price = apply_filters( 'woocommerce_cart_item_price', WC()->cart->get_product_price( $product ), $cart_item, $cart_item_key );
+            // The amount WC_Cart::get_product_price() formats.
+            $unit  = WC()->cart->display_prices_including_tax() ? wc_get_price_including_tax( $product ) : wc_get_price_excluding_tax( $product );
+            $price = apply_filters( 'woocommerce_cart_item_price', self::price_html( (float) $unit, WC()->cart->get_product_price( $product ) ), $cart_item, $cart_item_key );
             /* translators: %s: product price */
             echo '<div class="product-unit-price">' . sprintf( esc_html__( '%s each', 'yaycheckout' ), $price ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered price HTML.
         }
@@ -1109,6 +1111,17 @@ class CheckoutFragments {
     /** A boolean block attribute, or $fallback when it is missing or not a boolean. */
     private static function bool_attr( array $attributes, string $name, bool $fallback ): bool {
         return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
+    }
+
+    /**
+     * An amount YayCheckout formats itself rather than through a WooCommerce filter (the Breakdown's shipping row,
+     * Items' unit price, live values, the Savings note): $html, or wc_price( $amount ), through yaycheckout_price_html,
+     * so a multi-currency plugin can print it as it prints WooCommerce's own amounts.
+     *
+     * @param string $key A live value's key (LiveValues::money()), so the cart's subtotal and total can match their rows.
+     */
+    public static function price_html( float $amount, ?string $html = null, string $key = '' ): string {
+        return (string) apply_filters( 'yaycheckout_price_html', $html ?? wc_price( $amount ), $amount, $key );
     }
 
     /** The amount half of Woo's wc_cart_totals_coupon_html() (wc-cart-functions.php), without its [Remove] link: the chip carries that. */
@@ -1370,7 +1383,7 @@ class CheckoutFragments {
             if ( 0.0 === round( $amount, wc_get_price_decimals() ) ) {
                 $value = '<strong>' . esc_html__( 'Free', 'woocommerce' ) . '</strong>';
             } else {
-                $value = wc_price( $amount );
+                $value = self::price_html( $amount );
             }
         } elseif ( WC()->customer && WC()->customer->has_calculated_shipping() ) {
             $value = esc_html__( 'No available delivery option', 'woocommerce' );
