@@ -117,18 +117,25 @@
 	white-space: nowrap;
 }
 
-/* Quantity stepper: − / input / + in one bordered 32px row, then the remove control. */
+/* The stepper and remove control: a row of their own under the name and its details. */
+.yaycheckout-order-summary-items__controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-block-start: 6px;
+}
+
+/* Quantity stepper: − / input / + in one bordered 32px box. */
 .yaycheckout-order-summary-items .yaycheckout-qty {
 	--yaycheckout-qty-border: color-mix(in srgb, currentColor 25%, transparent);
 
 	display: inline-flex;
 	align-items: stretch;
 	height: 32px;
-	margin-block-start: 6px;
 	border: 1px solid var(--yaycheckout-qty-border);
 	border-radius: var(--yaycheckout-field-radius);
 	overflow: hidden;
-	vertical-align: middle;
 }
 
 .yaycheckout-order-summary-items .yaycheckout-qty__button {
@@ -174,14 +181,10 @@
 }
 
 .yaycheckout-order-summary-items .yaycheckout-order-summary-items__remove {
-	display: inline-block;
-	margin-block-start: 6px;
-	margin-inline-start: 8px;
 	color: inherit;
 	font-size: 1.25em;
 	line-height: 32px;
 	text-decoration: none;
-	vertical-align: middle;
 	opacity: 0.6;
 }
 

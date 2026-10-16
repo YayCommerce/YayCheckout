@@ -262,7 +262,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 								<div className="product-short-description">{ __( 'A short product description.', 'yaycheckout' ) }</div>
 							) }
 							{ showStepper && (
-								<>
+								<div className="yaycheckout-order-summary-items__controls">
 									<div className="yaycheckout-qty">
 										<button type="button" className="yaycheckout-qty__button" disabled>
 											−
@@ -273,7 +273,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 										</button>
 									</div>
 									<span className="remove yaycheckout-order-summary-items__remove">×</span>
-								</>
+								</div>
 							) }
 						</div>
 						<div className="product-total">$20.00</div>

@@ -942,14 +942,18 @@ class CheckoutFragments {
 
             self::print_item_details( $options, $product, $cart_item, $cart_item_key );
 
-            if ( $stepper ) {
-                // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart quantity filter, so an extension that locks an item's quantity locks it here.
-                echo apply_filters( 'woocommerce_cart_item_quantity', self::stepper_html( $product, $cart_item, $cart_item_key ), $cart_item_key, $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in stepper_html(), then Woo's filtered HTML.
-            }
-
+            // A row of its own, so the stepper never flows onto the name's line when no detail line sits between them.
             if ( $options['show_stepper'] ) {
+                echo '<div class="' . esc_attr( self::ORDER_ITEMS_CLASS . '__controls' ) . '">';
+
+                if ( $stepper ) {
+                    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart quantity filter, so an extension that locks an item's quantity locks it here.
+                    echo apply_filters( 'woocommerce_cart_item_quantity', self::stepper_html( $product, $cart_item, $cart_item_key ), $cart_item_key, $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in stepper_html(), then Woo's filtered HTML.
+                }
+
                 // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart remove-link filter.
                 echo apply_filters( 'woocommerce_cart_item_remove_link', self::remove_link_html( $product, $cart_item_key ), $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in remove_link_html(), then Woo's filtered HTML.
+                echo '</div>';
             }
             ?>
         </div>
