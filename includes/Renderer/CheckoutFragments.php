@@ -786,9 +786,9 @@ class CheckoutFragments {
                 $wrapper['class'] = $class;
             }
 
-            $badge_style = self::order_items_badge_style( $block->attributes );
-            if ( '' !== $badge_style ) {
-                $wrapper['style'] = $badge_style;
+            $style_vars = self::order_items_style_vars( $block->attributes );
+            if ( '' !== $style_vars ) {
+                $wrapper['style'] = $style_vars;
             }
 
             $stepper = 'stepper' === self::order_items_options( $block->attributes )['quantity_display'];
@@ -819,18 +819,19 @@ class CheckoutFragments {
     }
 
     /**
-     * Inline --yaycheckout-badge-* vars from the Items block's badge attributes; empty when none
-     * are set. On the wrapper, which checkout.js keeps across refreshes. Mirrors badgeStyle() in
-     * order-summary-items/edit.tsx.
+     * Inline --yaycheckout-badge-* and --yaycheckout-stepper-* vars from the Items block's badge and
+     * stepper attributes; empty when none are set. On the wrapper, which checkout.js keeps across
+     * refreshes. itemsStyleVars() in order-summary-items/edit.tsx mirrors it.
      *
      * @param array $attributes Block attributes.
      */
-    private static function order_items_badge_style( array $attributes ): string {
+    private static function order_items_style_vars( array $attributes ): string {
         $decls = [];
 
         $colors = [
             'badgeBackgroundColor' => '--yaycheckout-badge-bg',
             'badgeTextColor'       => '--yaycheckout-badge-text',
+            'stepperBorderColor'   => '--yaycheckout-stepper-border',
         ];
         foreach ( $colors as $key => $var ) {
             $value = self::css_color( $attributes[ $key ] ?? null );
@@ -839,8 +840,15 @@ class CheckoutFragments {
             }
         }
 
-        if ( isset( $attributes['badgeSize'] ) && is_numeric( $attributes['badgeSize'] ) ) {
-            $decls[] = '--yaycheckout-badge-size:' . max( 16, min( 32, (int) $attributes['badgeSize'] ) ) . 'px';
+        // Attribute => [ var, min px, max px ].
+        $sizes = [
+            'badgeSize'   => [ '--yaycheckout-badge-size', 16, 32 ],
+            'stepperSize' => [ '--yaycheckout-stepper-size', 20, 40 ],
+        ];
+        foreach ( $sizes as $key => list( $var, $min, $max ) ) {
+            if ( isset( $attributes[ $key ] ) && is_numeric( $attributes[ $key ] ) ) {
+                $decls[] = $var . ':' . max( $min, min( $max, (int) $attributes[ $key ] ) ) . 'px';
+            }
         }
 
         return implode( ';', $decls );
@@ -850,7 +858,7 @@ class CheckoutFragments {
      * The Items block's attributes with their defaults. During AJAX they come from the parsed
      * layout, where an untouched attribute is missing, so each default matches block.json's.
      *
-     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_badge: bool, link_image: bool, link_name: bool}
+     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_badge: bool, link_image: bool, link_name: bool, stepper_style: string}
      */
     public static function order_items_options( array $attributes ): array {
         // The first choice is the default.
@@ -873,6 +881,7 @@ class CheckoutFragments {
             'show_badge'             => self::bool_attr( $attributes, 'showBadge', false ),
             'link_image'             => self::bool_attr( $attributes, 'linkImage', false ),
             'link_name'              => self::bool_attr( $attributes, 'linkName', false ),
+            'stepper_style'          => $choice( 'stepperStyle', [ 'boxed', 'round' ] ),
         ];
     }
 
@@ -888,10 +897,11 @@ class CheckoutFragments {
         }
 
         $options = self::order_items_options( $attributes );
-        // A badge sits on the thumbnail, so it needs one. It adds to Show as and hides nothing.
+        // A badge sits on the thumbnail, so it needs one. It is independent of quantity_display and hides nothing.
         $badge        = $options['show_badge'] && $options['show_thumbnails'];
         $stepper_mode = 'stepper' === $options['quantity_display'];
         $root         = self::ORDER_ITEMS_CLASS . ( 'inline' === $options['item_data'] ? ' ' . self::ORDER_ITEMS_CLASS . '--item-data-inline' : '' );
+        $root        .= $stepper_mode && 'round' === $options['stepper_style'] ? ' ' . self::ORDER_ITEMS_CLASS . '--stepper-round' : '';
 
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hooks and filters.
         ob_start();
@@ -921,9 +931,9 @@ class CheckoutFragments {
 
             // Links open in a new tab, so the shopper keeps the checkout and what they typed into it.
             $permalink  = $options['link_image'] || $options['link_name'] ? self::product_permalink( $product, $cart_item, $cart_item_key ) : '';
-            $link_open  = '<a class="' . esc_attr( self::ORDER_ITEMS_CLASS . '__link' ) . '" href="' . esc_url( $permalink ) . '" target="_blank" rel="noopener"';
             $link_name  = $options['link_name'] && '' !== $permalink;
             $link_image = $options['link_image'] && '' !== $permalink;
+            $link_open  = $link_name || $link_image ? '<a class="' . esc_attr( self::ORDER_ITEMS_CLASS . '__link' ) . '" href="' . esc_url( $permalink ) . '" target="_blank" rel="noopener"' : '';
             ?>
     <div class="<?php echo esc_attr( apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) . ' ' . self::ORDER_ITEMS_CLASS . '__item' ); ?>">
             <?php if ( $options['show_thumbnails'] ) : ?>

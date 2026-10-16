@@ -66,6 +66,18 @@
     },
     "badgeSize": {
       "type": "number"
+    },
+    "stepperStyle": {
+      "type": "string",
+      "enum": [ "boxed", "round" ],
+      "default": "boxed"
+    },
+    "stepperBorderColor": {
+      "type": "string",
+      "default": ""
+    },
+    "stepperSize": {
+      "type": "number"
     }
   },
   "supports": {
