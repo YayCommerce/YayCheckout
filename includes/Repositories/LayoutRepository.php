@@ -151,8 +151,13 @@ class LayoutRepository {
         return [
             'listed'   => $this->count( LayoutQuery::listed() ),
             'archived' => $this->count( LayoutQuery::archived() ),
-            'active'   => count( $this->active_ids() ),
+            'active'   => $this->active_count(),
         ];
+    }
+
+    /** How many layouts are in the active set, without the listing queries counts() runs. */
+    public function active_count(): int {
+        return count( $this->active_ids() );
     }
 
     /**
