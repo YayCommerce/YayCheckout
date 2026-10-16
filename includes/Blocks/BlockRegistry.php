@@ -264,7 +264,7 @@ class BlockRegistry {
         foreach ( WcHooks::HOOKS as $hook => $meta ) {
             $hooks[] = [
                 'hook'         => $hook,
-                'label'        => $labels[ $hook ],
+                'label'        => $labels[ $hook ] ?? $hook,
                 'group'        => $meta['group'],
                 'hasCallbacks' => WcHooks::has_callbacks( $hook ),
             ];

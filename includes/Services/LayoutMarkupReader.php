@@ -16,7 +16,6 @@ class LayoutMarkupReader {
     private const EXTRA_FIELD       = 'yaycheckout/extra-field';
     private const ORDER_NOTE        = 'yaycheckout/order-note';
     private const SLOT              = 'yaycheckout/slot';
-    private const WC_HOOK           = 'yaycheckout/wc-hook';
     public const BILLING            = 'yaycheckout/billing';
     public const SHIPPING           = 'yaycheckout/shipping';
     private const DIFFERENT_ADDRESS = 'yaycheckout/different-address';
@@ -109,7 +108,7 @@ class LayoutMarkupReader {
         $hooks = [];
 
         foreach ( self::blocks( $markup ) as $block ) {
-            if ( self::WC_HOOK === $block['blockName'] ) {
+            if ( \YayCheckout\Renderer\WcHooks::BLOCK === $block['blockName'] ) {
                 $hooks[] = self::text( $block['attrs'], 'hook' );
             }
         }

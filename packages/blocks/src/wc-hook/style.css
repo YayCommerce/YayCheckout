@@ -1,4 +1,4 @@
-/* Nothing printed on the hook, at first paint or after update_order_review swapped the content: no empty box. */
+/* Nothing printed on the hook, at first paint or after update_order_review swapped the content (WcHooks::CONTENT_CLASS): no empty box. */
 .yaycheckout-wc-hook[data-yaycheckout-empty],
 .yaycheckout-wc-hook:has(> .yaycheckout-wc-hook__content[data-yaycheckout-empty]) {
 	display: none;

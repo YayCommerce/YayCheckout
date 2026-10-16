@@ -1,3 +1,4 @@
+/** Mirrors the group values of WcHooks::HOOKS in PHP. */
 export type WcHookGroup = 'page' | 'customer' | 'review' | 'payment';
 
 export type WcHookOption = { hook: string; label: string; group: WcHookGroup; hasCallbacks: boolean };

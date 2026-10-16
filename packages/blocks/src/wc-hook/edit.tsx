@@ -2,6 +2,7 @@ import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wo
 import { Notice, PanelBody, SelectControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { type BlockEditorSelectors } from '../shared/section-fields';
 import metadata from './block.json';
 import { type WcHookGroup, wcHooksEditorData } from './editor-data';
 import './editor.css';
@@ -13,9 +14,11 @@ interface WcHookAttributes {
 interface EditProps {
 	attributes: WcHookAttributes;
 	setAttributes: ( attributes: Partial< WcHookAttributes > ) => void;
+	isSelected: boolean;
 }
 
-const GROUPS: WcHookGroup[] = [ 'page', 'customer', 'review', 'payment' ];
+// In the order WcHooks::HOOKS lists them.
+const GROUPS: WcHookGroup[] = [ ...new Set( wcHooksEditorData.hooks.map( ( entry ) => entry.group ) ) ];
 
 function groupLabel( group: WcHookGroup ): string {
 	switch ( group ) {
@@ -31,25 +34,26 @@ function groupLabel( group: WcHookGroup ): string {
 }
 
 /** A placeholder: what plugins print depends on the store, and only shows on the checkout. */
-export default function Edit( { attributes, setAttributes }: EditProps ) {
+export default function Edit( { attributes, setAttributes, isSelected }: EditProps ) {
 	const { hook } = attributes;
 	const option = wcHooksEditorData.hooks.find( ( entry ) => entry.hook === hook );
 	const blockProps = useBlockProps( { className: 'yaycheckout-wc-hook' } );
 
-	// Every Hook block in the layout firing this hook, this one included.
+	// Every Hook block in the layout firing this hook, this one included. The warning shows only in the
+	// sidebar, so the count is taken only while the block is selected.
 	const placedCount = useSelect(
 		( select ) => {
-			if ( ! option ) {
+			if ( ! option || ! isSelected ) {
 				return 0;
 			}
 
-			const { getBlockName, getBlockAttributes, getClientIdsWithDescendants } = select( blockEditorStore );
+			const editor = select( blockEditorStore ) as unknown as BlockEditorSelectors;
 
-			return ( getClientIdsWithDescendants() as string[] ).filter(
-				( id ) => getBlockName( id ) === metadata.name && getBlockAttributes( id )?.hook === hook
-			).length;
+			return editor
+				.getBlocksByName( metadata.name )
+				.filter( ( id ) => editor.getBlockAttributes( id )?.hook === hook ).length;
 		},
-		[ hook, option ]
+		[ hook, option, isSelected ]
 	);
 
 	const caption = option

@@ -132,11 +132,16 @@ class CheckoutFragments {
 
         $layout = CheckoutPage::get_instance()->layout();
 
-        if ( null === $layout || ( empty( self::summary_block_fragments( $layout->content ) ) && array() === WcHooks::placed_refreshed() ) ) {
+        if ( null === $layout || ! self::replaces_review_table( $layout->content ) ) {
             return $template;
         }
 
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/review-order-skipped.php';
+    }
+
+    /** Whether the layout prints its own review-order hooks, so WooCommerce's review table would only fire them again. */
+    private static function replaces_review_table( string $markup ): bool {
+        return ! empty( self::summary_block_fragments( $markup ) ) || array() !== WcHooks::placed_refreshed();
     }
 
     /** Swaps the fragments of this layout's sections for this layout's HTML. */
@@ -150,7 +155,7 @@ class CheckoutFragments {
         $rendered = array_flip( LayoutMarkupReader::slots( $layout->content ) );
         $summary  = self::summary_block_fragments( $layout->content );
 
-        if ( ! empty( $summary ) || array() !== WcHooks::placed_refreshed() ) {
+        if ( self::replaces_review_table( $layout->content ) ) {
             // Empty after skip_review_order_table(), and no element on the page matches it.
             unset( $fragments[ self::REVIEW_ORDER_TABLE ] );
         }
@@ -652,13 +657,8 @@ class CheckoutFragments {
 
     /** Output from a review-order shipping hook, unless a WooCommerce Hook block prints it instead. */
     private static function print_shipping_extension_rows( string $hook ): void {
-        if ( WcHooks::is_placed( $hook ) ) {
-            return;
-        }
-
         ob_start();
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Caller passes Woo's review-order shipping hooks.
-        do_action( $hook );
+        WcHooks::in_place( $hook );
 
         echo self::wrap_extension_html( (string) ob_get_clean(), 'yaycheckout-shipping-methods__extensions' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML plugins print on Woo's hooks.
     }
@@ -1033,23 +1033,12 @@ class CheckoutFragments {
             . ' aria-label="' . esc_attr( sprintf( __( 'Remove %s from cart', 'yaycheckout' ), wp_strip_all_tags( $product->get_name() ) ) ) . '">&times;</a>';
     }
 
-    /** Fires a cart-contents hook and prints its output, if any, in a table of its own, unless a WooCommerce Hook block prints it instead. */
+    /** Fires a cart-contents hook and prints its output, if any, in a wrapper of its own, unless a WooCommerce Hook block prints it instead. */
     private static function print_order_items_hook( string $hook ): void {
-        if ( WcHooks::is_placed( $hook ) ) {
-            return;
-        }
-
         ob_start();
-        do_action( $hook ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Woo's review-order hooks, named by the caller.
-        $output = (string) ob_get_clean();
+        WcHooks::in_place( $hook );
 
-        if ( '' === trim( $output ) ) {
-            return;
-        }
-
-        echo '<table class="shop_table ' . esc_attr( self::ORDER_ITEMS_CLASS . '__hook' ) . '"><tbody>';
-        echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Extensions' own review-order rows.
-        echo '</tbody></table>';
+        echo self::wrap_extension_html( (string) ob_get_clean(), self::ORDER_ITEMS_CLASS . '__hook' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Extensions' own review-order output.
     }
 
     /** A boolean block attribute, or $fallback when it is missing or not a boolean. */

@@ -183,7 +183,7 @@ class WcHooks {
     /** @var array{0: string, 1: string[]}|null The layout content placed() last read, and its hooks. */
     private static ?array $placed = null;
 
-    /** @return array<string, string> Hook => its name in the editor's picker. */
+    /** @return array<string, string> Hook => its name in the editor's picker; the keys are HOOKS'. */
     public static function labels(): array {
         return [
             'woocommerce_before_checkout_form'             => __( 'Before checkout form', 'yaycheckout' ),
@@ -272,21 +272,30 @@ class WcHooks {
 
     /** Whether anything besides core_callbacks() hooks $hook. For the editor's notice. */
     public static function has_callbacks( string $hook ): bool {
+        return self::callbacks_besides( $hook, self::core_callbacks( $hook ) ) > 0;
+    }
+
+    /**
+     * How many callbacks hook $hook, at any priority, other than those of $core attached to it.
+     *
+     * @param callable[] $core
+     */
+    public static function callbacks_besides( string $hook, array $core ): int {
         global $wp_filter;
 
         if ( ! isset( $wp_filter[ $hook ] ) ) {
-            return false;
+            return 0;
         }
 
         $count = count( array_merge( ...array_values( $wp_filter[ $hook ]->callbacks ) ) );
 
-        foreach ( self::core_callbacks( $hook ) as $callback ) {
+        foreach ( $core as $callback ) {
             if ( false !== has_action( $hook, $callback ) ) {
                 --$count;
             }
         }
 
-        return $count > 0;
+        return $count;
     }
 
     /**
@@ -297,7 +306,8 @@ class WcHooks {
     public static function placed(): array {
         $layout = CheckoutPage::get_instance()->layout();
 
-        if ( null === $layout ) {
+        // Most layouts have no Hook block; has_block() is a string search, so they skip the parse.
+        if ( null === $layout || ! has_block( self::BLOCK, $layout->content ) ) {
             return [];
         }
 
