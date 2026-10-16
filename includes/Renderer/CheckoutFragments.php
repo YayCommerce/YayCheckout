@@ -821,7 +821,7 @@ class CheckoutFragments {
     /**
      * Inline --yaycheckout-badge-* and --yaycheckout-stepper-* vars from the Items block's badge and
      * stepper attributes; empty when none are set. On the wrapper, which checkout.js keeps across
-     * refreshes. Mirrors itemsStyleVars() in order-summary-items/edit.tsx.
+     * refreshes. itemsStyleVars() in order-summary-items/edit.tsx mirrors it.
      *
      * @param array $attributes Block attributes.
      */
@@ -840,12 +840,15 @@ class CheckoutFragments {
             }
         }
 
-        if ( isset( $attributes['badgeSize'] ) && is_numeric( $attributes['badgeSize'] ) ) {
-            $decls[] = '--yaycheckout-badge-size:' . max( 16, min( 32, (int) $attributes['badgeSize'] ) ) . 'px';
-        }
-
-        if ( isset( $attributes['stepperSize'] ) && is_numeric( $attributes['stepperSize'] ) ) {
-            $decls[] = '--yaycheckout-stepper-size:' . max( 20, min( 40, (int) $attributes['stepperSize'] ) ) . 'px';
+        // Attribute => [ var, min px, max px ].
+        $sizes = [
+            'badgeSize'   => [ '--yaycheckout-badge-size', 16, 32 ],
+            'stepperSize' => [ '--yaycheckout-stepper-size', 20, 40 ],
+        ];
+        foreach ( $sizes as $key => list( $var, $min, $max ) ) {
+            if ( isset( $attributes[ $key ] ) && is_numeric( $attributes[ $key ] ) ) {
+                $decls[] = $var . ':' . max( $min, min( $max, (int) $attributes[ $key ] ) ) . 'px';
+            }
         }
 
         return implode( ';', $decls );
@@ -894,7 +897,7 @@ class CheckoutFragments {
         }
 
         $options = self::order_items_options( $attributes );
-        // A badge sits on the thumbnail, so it needs one. It adds to Show as and hides nothing.
+        // A badge sits on the thumbnail, so it needs one. It is independent of quantity_display and hides nothing.
         $badge        = $options['show_badge'] && $options['show_thumbnails'];
         $stepper_mode = 'stepper' === $options['quantity_display'];
         $root         = self::ORDER_ITEMS_CLASS . ( 'inline' === $options['item_data'] ? ' ' . self::ORDER_ITEMS_CLASS . '--item-data-inline' : '' );
@@ -928,9 +931,9 @@ class CheckoutFragments {
 
             // Links open in a new tab, so the shopper keeps the checkout and what they typed into it.
             $permalink  = $options['link_image'] || $options['link_name'] ? self::product_permalink( $product, $cart_item, $cart_item_key ) : '';
-            $link_open  = '<a class="' . esc_attr( self::ORDER_ITEMS_CLASS . '__link' ) . '" href="' . esc_url( $permalink ) . '" target="_blank" rel="noopener"';
             $link_name  = $options['link_name'] && '' !== $permalink;
             $link_image = $options['link_image'] && '' !== $permalink;
+            $link_open  = $link_name || $link_image ? '<a class="' . esc_attr( self::ORDER_ITEMS_CLASS . '__link' ) . '" href="' . esc_url( $permalink ) . '" target="_blank" rel="noopener"' : '';
             ?>
     <div class="<?php echo esc_attr( apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) . ' ' . self::ORDER_ITEMS_CLASS . '__item' ); ?>">
             <?php if ( $options['show_thumbnails'] ) : ?>

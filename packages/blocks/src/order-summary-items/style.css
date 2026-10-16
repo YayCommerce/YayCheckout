@@ -147,6 +147,7 @@
  */
 .yaycheckout-order-summary-items .yaycheckout-qty {
 	--yaycheckout-qty-border: var(--yaycheckout-stepper-border, color-mix(in srgb, currentColor 25%, transparent));
+	/* The 32px and Round's 24px fallbacks are the Size slider's start in edit.tsx. */
 	--yaycheckout-qty-size: var(--yaycheckout-stepper-size, 32px);
 
 	display: inline-flex;
@@ -206,7 +207,6 @@
 	align-items: center;
 	gap: 10px;
 	border: 0;
-	border-radius: 0;
 	overflow: visible;
 }
 
@@ -229,7 +229,7 @@
 .yaycheckout-order-summary-items .yaycheckout-order-summary-items__remove {
 	color: inherit;
 	font-size: 1.25em;
-	line-height: 32px;
+	line-height: 1;
 	text-decoration: none;
 	opacity: 0.6;
 }
