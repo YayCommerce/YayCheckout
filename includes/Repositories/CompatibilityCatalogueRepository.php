@@ -34,10 +34,7 @@ class CompatibilityCatalogueRepository {
                 'source'     => CompatibilityCatalogue::SOURCE_REMOTE,
                 'fetched_at' => DateHelper::now_iso8601(),
             ]
-            : CompatibilityCatalogue::bundled() + [
-                'source'     => CompatibilityCatalogue::SOURCE_BUNDLED,
-                'fetched_at' => null,
-            ];
+            : self::bundled();
 
         set_transient(
             CompatibilityCatalogue::TRANSIENT,
@@ -46,6 +43,18 @@ class CompatibilityCatalogueRepository {
         );
 
         return $catalogue;
+    }
+
+    /**
+     * The bundled list in the shape get() returns, for when the remote one can't be had.
+     *
+     * @return array{gateways: array, plugins: array, source: string, fetched_at: null}
+     */
+    public static function bundled(): array {
+        return CompatibilityCatalogue::bundled() + [
+            'source'     => CompatibilityCatalogue::SOURCE_BUNDLED,
+            'fetched_at' => null,
+        ];
     }
 
     private function fetch_remote(): ?array {

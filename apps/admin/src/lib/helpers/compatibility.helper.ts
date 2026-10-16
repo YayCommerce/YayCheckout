@@ -12,12 +12,25 @@ export function isBlockOnly(gateway: GatewayRow): boolean {
   return gateway.status === 'block-only';
 }
 
-/** What the banner counts. `community` is a hint, never a warning. */
+/** What the banner counts. `community` is a hint, never a warning; a failed detection warns of nothing. */
 export function deriveWarnings(report: CompatibilityReport): CompatibilityWarnings {
   return {
-    blockOnly: report.gateways.filter(isBlockOnly),
-    unverifiedPlugins: report.plugins.filter((plugin) => plugin.status === 'unverified'),
+    blockOnly: report.gateways?.filter(isBlockOnly) ?? [],
+    unverifiedPlugins: report.plugins?.filter((plugin) => plugin.status === 'unverified') ?? [],
   };
+}
+
+/** Stands in for the report when the request itself failed, so every check reads "Not detected". */
+export const FAILED_REPORT: CompatibilityReport = {
+  store: null,
+  gateways: null,
+  plugins: null,
+  catalogue: { source: 'bundled', fetchedAt: null },
+};
+
+/** True when any detection failed. */
+export function hasUndetected(report: CompatibilityReport): boolean {
+  return report.store === null || report.gateways === null || report.plugins === null;
 }
 
 /** How a store's checkout type reads to the merchant. */
