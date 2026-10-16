@@ -932,10 +932,9 @@ class CheckoutFragments {
             <?php endif; ?>
         <div class="product-name">
             <?php echo wp_kses_post( apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key ) ) . '&nbsp;'; ?>
-            <?php // The stepper's input shows the quantity, so inline it would say it twice. ?>
-            <?php if ( ! $badge && ! $stepper ) : ?>
-                <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered HTML. ?>
-            <?php endif; ?>
+            <?php // The badge and the stepper show the quantity, so inline it would say it twice; the filter still runs, as extensions (Germanized's units line) print their item info through it. ?>
+            <?php $inline_quantity = ! $badge && ! $stepper ? ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>' : ''; ?>
+            <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', $inline_quantity, $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered HTML. ?>
             <?php
             if ( 'hidden' !== $options['item_data'] ) {
                 echo wc_get_formatted_cart_item_data( $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo escapes item data.
