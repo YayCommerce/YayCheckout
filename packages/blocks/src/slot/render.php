@@ -19,6 +19,10 @@ ob_start();
 if ( '' !== $yaycheckout_slot_name ) {
     // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Slot names are merchant-chosen; the prefix is yaycheckout_slot_.
     do_action( 'yaycheckout_slot_' . $yaycheckout_slot_name );
+
+    if ( \YayCheckout\Renderer\CheckoutPage::BEFORE_FORM_SLOT === $yaycheckout_slot_name ) {
+        echo \YayCheckout\Renderer\CheckoutPage::before_form_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Whatever the hook's callbacks print, as do_action() would.
+    }
 }
 
 $yaycheckout_slot_content = (string) ob_get_clean();

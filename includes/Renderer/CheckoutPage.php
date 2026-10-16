@@ -27,8 +27,14 @@ class CheckoutPage {
 
     private const FLOATING_LABELS_SCRIPT = 'yaycheckout-floating-labels';
 
+    /** The Slot block name that prints woocommerce_before_checkout_form in place; without one, the Checkout block prints it above its form. */
+    public const BEFORE_FORM_SLOT = 'before_checkout_form';
+
     /** @var Layout|null|false false until first resolved. */
     private $layout = false;
+
+    /** Set once woocommerce_before_checkout_form has fired, so the Slot and the Checkout block never both fire it. */
+    private static bool $before_form_fired = false;
 
     /** The resolved layout's content is its logged-out view. */
     private bool $logged_out_view = false;
@@ -74,6 +80,34 @@ class CheckoutPage {
 
     public function page_template(): string {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php';
+    }
+
+    /**
+     * The output of woocommerce_before_checkout_form, or '' once it has fired this request, so extensions'
+     * notices there still show (YayCurrency's "paid in" notice). Woo's own login form, coupon form and notices
+     * come off it first: the Login and Coupon form blocks replace the first two, and the page never printed
+     * the third.
+     */
+    public static function before_form_html(): string {
+        if ( self::$before_form_fired ) {
+            return '';
+        }
+
+        self::$before_form_fired = true;
+
+        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's classic checkout hook.
+        foreach ( [ 'woocommerce_checkout_login_form', 'woocommerce_checkout_coupon_form', 'woocommerce_output_all_notices' ] as $callback ) {
+            $priority = has_action( 'woocommerce_before_checkout_form', $callback );
+            if ( false !== $priority ) {
+                remove_action( 'woocommerce_before_checkout_form', $callback, $priority );
+            }
+        }
+
+        ob_start();
+        do_action( 'woocommerce_before_checkout_form', WC()->checkout() );
+        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+
+        return (string) ob_get_clean();
     }
 
     /** Woo's checkout scripts, the base stylesheet, the design tokens and, for floating labels, their script. Woo only enqueues its scripts on is_checkout(); our template needs them regardless of theme. */
