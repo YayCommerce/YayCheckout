@@ -43,7 +43,7 @@ if ( '' === $yaycheckout_block ) {
         ?>
         <p class="form-row form-row-wide yaycheckout-different-address__same">
             <label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox">
-                <input class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" id="yaycheckout-same-shipping" <?php checked( ! $yaycheckout_ship_different ); ?> type="checkbox" value="1" /> <span><?php echo $yaycheckout_label; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered by wp_kses in LayoutMarkupReader::rich_text(). ?></span>
+                <input class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" id="yaycheckout-same-shipping" <?php checked( ! $yaycheckout_ship_different ); ?> type="checkbox" value="1" data-summary-key="ship_to_different_address" /> <span><?php echo $yaycheckout_label; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered by wp_kses in LayoutMarkupReader::rich_text(). ?></span>
             </label>
         </p>
         <div id="ship-to-different-address" hidden>

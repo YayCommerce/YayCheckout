@@ -133,9 +133,72 @@ function complete( step: HTMLElement ): boolean {
 		return false;
 	}
 
-	writeSummary( step, controlsText( controls ) );
+	const omit = summaryOmit( step );
+	const kept = controls.filter( ( control ) => {
+		const key = summaryKey( control );
+
+		return key === '' || ! omit.has( key );
+	} );
+
+	writeSummary( step, controlsText( kept, summarySeparator( step ) ) );
 	setState( step, COMPLETE );
 	return true;
+}
+
+/** The key a control contributes under for summaryOmit; '' means it cannot be omitted. */
+function summaryKey( control: Control ): string {
+	if ( control.dataset.summaryKey ) {
+		return control.dataset.summaryKey;
+	}
+
+	if ( control instanceof HTMLInputElement && control.classList.contains( 'yaycheckout-disclosure__checkbox' ) ) {
+		const panel = control.getAttribute( 'aria-controls' ) ?? '';
+		const suffix = '-disclosure-panel';
+
+		if ( panel.endsWith( suffix ) ) {
+			const key = panel.slice( 0, -suffix.length );
+
+			// Coupon form's disclosure key is yaycheckout-coupon-code; the omit picker uses coupon_code.
+			return key === 'yaycheckout-coupon-code' ? 'coupon_code' : key;
+		}
+	}
+
+	// Coupon input has no name; its id is how the storefront finds it.
+	if ( control.id === 'yaycheckout-coupon-code' ) {
+		return 'coupon_code';
+	}
+
+	const name = control.name;
+
+	if ( name === '' ) {
+		return '';
+	}
+
+	if ( name.endsWith( '[]' ) ) {
+		return name.slice( 0, -2 );
+	}
+
+	if ( name.startsWith( 'shipping_method[' ) ) {
+		return 'shipping_method';
+	}
+
+	return name;
+}
+
+function summarySeparator( step: HTMLElement ): string {
+	const value = step.dataset.summarySeparator;
+
+	return value === undefined || value === '' ? ', ' : value;
+}
+
+function summaryOmit( step: HTMLElement ): Set< string > {
+	try {
+		const parsed: unknown = JSON.parse( step.dataset.summaryOmit ?? '[]' );
+
+		return new Set( Array.isArray( parsed ) ? parsed.filter( ( key ): key is string => typeof key === 'string' ) : [] );
+	} catch {
+		return new Set();
+	}
 }
 
 function reopen( step: HTMLElement ): void {
