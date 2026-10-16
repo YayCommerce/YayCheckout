@@ -13,10 +13,13 @@
  * yet, so this template leaves them out.
  *
  * The address order follows WooCommerce's Shipping destination when the layout is created: Shipping in the
- * address card and Billing inside the Payment card behind Different Address, as in the mock, when shipping
- * is main; Billing then Shipping in the address card when billing is main; Billing alone when shipping is
- * forced to billing. Both sections print the same fields, from $yaycheckout_address_fields: 01's fields
- * without Company, with the apartment line behind a link.
+ * address card and Billing inside the Payment card behind "Billing address is the same as shipping", ticked,
+ * as in the mock, when shipping is main; Billing then Shipping in the address card behind its mirror,
+ * "Shipping address is the same as billing", ticked, when billing is main; Billing alone when shipping is
+ * forced to billing. The mock never draws the revealed section, so both sections print the same fields, from
+ * $yaycheckout_address_fields: 01's fields without Company, with the apartment line behind a link. The mock
+ * puts Phone beside Email in the contact card, but a Field block lives only in an address section, so Phone
+ * stays last in each section.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -85,7 +88,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
-<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'In case we need to contact you about your order', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>"} /-->
 <?php
 };
 ?>
@@ -134,7 +137,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- wp:yaycheckout/login {"textColor":"yaycheckout-muted","text":"<?php esc_html_e( 'Have an account? Log in', 'yaycheckout' ); ?>","linkText":"<?php esc_html_e( 'Log in', 'yaycheckout' ); ?>"} /--></div>
 <!-- /wp:group -->
 
-<!-- wp:yaycheckout/email {"placeholder":"<?php esc_html_e( 'you@example.com', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'You are currently checking out as a guest.', 'yaycheckout' ); ?>"} /--></div>
+<!-- wp:yaycheckout/email {"description":"<?php esc_html_e( 'You are currently checking out as a guest.', 'yaycheckout' ); ?>"} /--></div>
 <!-- /wp:group -->
 
 <!-- wp:group {"borderColor":"yaycheckout-border","style":{"color":{"background":"#ffffff"},"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"24px","right":"24px","bottom":"24px","left":"24px"},"blockGap":"16px"}}} -->
@@ -148,7 +151,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/billing -->
 <?php if ( 'billing' === $yaycheckout_destination ) : ?>
 
-<!-- wp:yaycheckout/different-address /-->
+<!-- wp:yaycheckout/different-address {"ticked":"same","sameShipLabel":"<?php esc_html_e( 'Shipping address is the same as billing', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:yaycheckout/shipping {"title":"<?php esc_html_e( 'Shipping address', 'yaycheckout' ); ?>","headingLevel":2,"style":{"yaycheckout":{"title":{"typography":{"fontSize":"20px","fontWeight":"400"}}}}} -->
 <?php $yaycheckout_address_fields( 'shipping' ); ?>

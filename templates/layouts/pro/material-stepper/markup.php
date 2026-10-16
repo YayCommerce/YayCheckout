@@ -46,7 +46,8 @@ if ( '' !== $yaycheckout_terms_link && '' !== $yaycheckout_privacy_link ) {
 $yaycheckout_destination = \YayCheckout\Renderer\CheckoutDifferentAddress::destination();
 $yaycheckout_step2_title = 'shipping' === $yaycheckout_destination ? __( 'Shipping address', 'yaycheckout' ) : __( 'Billing address', 'yaycheckout' );
 
-// Shipping and Billing hold the same fields; $type is 'shipping' or 'billing'. Phone lives on the Contact step.
+// Shipping and Billing hold the same fields; $type is 'shipping' or 'billing'. The mock puts Phone on the Contact
+// step, but a Field must sit in an address section, and a billing_phone there is blanked when billing copies shipping.
 $yaycheckout_address_fields = static function ( string $type ): void {
 	// The State column shows only while its State field isn't empty: a country without states leaves no gap.
 	// One blockId per section, since a layout can hold both; each matches BlockEmptiness::BLOCK_ID_PATTERN.
@@ -81,6 +82,8 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_postcode","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
+
+<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>"} /-->
 	<?php
 };
 ?>
@@ -121,8 +124,6 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- wp:yaycheckout/step {"title":"<?php esc_html_e( 'Contact information', 'yaycheckout' ); ?>","style":{"color":{"background":"transparent"},"border":{"width":"0px"},"spacing":{"padding":{"top":"16px","right":"0","bottom":"20px","left":"0"},"blockGap":"16px"}}} -->
 <!-- wp:group {"style":{"spacing":{"blockGap":"20px"}}} -->
 <div class="wp-block-group"><!-- wp:yaycheckout/email {"placeholder":"<?php esc_html_e( 'you@example.com', 'yaycheckout' ); ?>"} /-->
-
-<!-- wp:yaycheckout/field {"fieldKey":"billing_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:yaycheckout/login {"text":"<?php esc_html_e( 'You are currently checking out as a guest.', 'yaycheckout' ); ?>","linkText":"<?php esc_html_e( 'Sign in', 'yaycheckout' ); ?>","style":{"color":{"text":"#757575"},"typography":{"fontSize":"12px"}}} /-->
 

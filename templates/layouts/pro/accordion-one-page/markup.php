@@ -56,7 +56,9 @@ $yaycheckout_policy_links = array_filter(
 $yaycheckout_destination = \YayCheckout\Renderer\CheckoutDifferentAddress::destination();
 
 // Shipping and Billing hold the same fields; $type is 'shipping' or 'billing'. No Company. Phone is required.
-$yaycheckout_address_fields = static function ( string $type ): void {
+// The mock asks for Phone under Contact, but a Field block lives only inside Billing or Shipping, so it ends
+// the address; only the main section ($secondary false) carries the mock's "For delivery updates only." note.
+$yaycheckout_address_fields = static function ( string $type, bool $secondary = false ): void {
     // The State column shows only while its State field isn't empty: a country without states leaves no gap.
     // One blockId per section, since a layout holds both; each matches BlockEmptiness::BLOCK_ID_PATTERN.
     $yaycheckout_state_id = 'billing' === $type ? 'bilstate' : 'shpstate';
@@ -91,7 +93,11 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
+<?php if ( $secondary ) : ?>
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>","required":true} /-->
+<?php else : ?>
+<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'For delivery updates only.', 'yaycheckout' ); ?>","required":true} /-->
+<?php endif; ?>
 <?php
 };
 ?>
@@ -154,12 +160,12 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <?php if ( 'shipping' === $yaycheckout_destination ) : ?>
 
 <!-- wp:yaycheckout/billing {"showTitle":false} -->
-<?php $yaycheckout_address_fields( 'billing' ); ?>
+<?php $yaycheckout_address_fields( 'billing', true ); ?>
 <!-- /wp:yaycheckout/billing -->
 <?php else : ?>
 
 <!-- wp:yaycheckout/shipping {"showTitle":false} -->
-<?php $yaycheckout_address_fields( 'shipping' ); ?>
+<?php $yaycheckout_address_fields( 'shipping', true ); ?>
 <!-- /wp:yaycheckout/shipping -->
 <?php endif; ?>
 <?php endif; ?>
