@@ -189,6 +189,9 @@ class WcHooks {
     /** @var array<int, array<string, \WP_Hook>> Hooks detached while REVIEW_TEMPLATE prints, one entry per open print. */
     private static array $muted = [];
 
+    /** @var array<string, callable[]> Hook => callbacks that stay where the hook has always fired, see anchor(). */
+    private static array $anchored = [];
+
     /** @return array<string, string> Hook => its name in the editor's picker; the keys are HOOKS'. */
     public static function labels(): array {
         return [
@@ -255,7 +258,16 @@ class WcHooks {
         }
     }
 
-    /** What $hook prints without its core callbacks, or '' for a hook outside HOOKS. */
+    /**
+     * Keeps $callback where $hook has always fired when a Hook block takes the hook: the block that fires it
+     * in place, or WooCommerce's review table, still runs it, and the Hook block doesn't. For a callback that
+     * brackets that block's own output, such as one that switches something off for the Items rows and back on.
+     */
+    public static function anchor( string $hook, callable $callback ): void {
+        self::$anchored[ $hook ][] = $callback;
+    }
+
+    /** What $hook prints without its core and anchored callbacks, or '' for a hook outside HOOKS. */
     public static function fire( string $hook ): string {
         if ( ! self::is_allowed( $hook ) ) {
             return '';
@@ -266,7 +278,7 @@ class WcHooks {
         ob_start();
         self::with_hook_trimmed(
             $hook,
-            self::core_callbacks( $hook ),
+            array_merge( self::core_callbacks( $hook ), self::$anchored[ $hook ] ?? [] ),
             static function () use ( $hook, $args ) {
                 // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- One of HOOKS, WooCommerce's own names.
                 do_action( $hook, ...$args );
@@ -276,9 +288,9 @@ class WcHooks {
         return (string) ob_get_clean();
     }
 
-    /** Whether anything besides core_callbacks() hooks $hook. For the editor's notice. */
+    /** Whether anything besides core_callbacks() and anchored callbacks hooks $hook. For the editor's notice. */
     public static function has_callbacks( string $hook ): bool {
-        return self::callbacks_besides( $hook, self::core_callbacks( $hook ) ) > 0;
+        return self::callbacks_besides( $hook, array_merge( self::core_callbacks( $hook ), self::$anchored[ $hook ] ?? [] ) ) > 0;
     }
 
     /**
@@ -372,6 +384,19 @@ class WcHooks {
      */
     public static function in_place( string $hook, ...$args ): void {
         if ( self::is_placed( $hook ) ) {
+            $kept = self::kept_in_place( $hook );
+
+            if ( null !== $kept ) {
+                self::with_hook_as(
+                    $hook,
+                    $kept,
+                    static function () use ( $hook, $args ) {
+                        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- WooCommerce's hook, named by the caller.
+                        do_action( $hook, ...$args );
+                    }
+                );
+            }
+
             return;
         }
 
@@ -431,8 +456,15 @@ class WcHooks {
         $saved = [];
         foreach ( $hooks as $hook ) {
             if ( self::is_placed( $hook ) && isset( $wp_filter[ $hook ] ) ) {
+                $kept           = self::kept_in_place( $hook );
                 $saved[ $hook ] = $wp_filter[ $hook ];
-                unset( $wp_filter[ $hook ] );
+
+                if ( null === $kept ) {
+                    unset( $wp_filter[ $hook ] );
+                } else {
+                    // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- reattach() restores the original.
+                    $wp_filter[ $hook ] = $kept;
+                }
             }
         }
 
@@ -463,8 +495,7 @@ class WcHooks {
             return;
         }
 
-        $original = $wp_filter[ $hook ];
-        $trimmed  = clone $original;
+        $trimmed = clone $wp_filter[ $hook ];
 
         foreach ( $callbacks as $callback ) {
             $priority = $trimmed->has_filter( $hook, $callback );
@@ -473,14 +504,53 @@ class WcHooks {
             }
         }
 
+        self::with_hook_as( $hook, $trimmed, $render );
+    }
+
+    /** A copy of $hook holding only its anchored callbacks, or null when it has none attached. */
+    private static function kept_in_place( string $hook ): ?\WP_Hook {
+        global $wp_filter;
+
+        $anchored = self::$anchored[ $hook ] ?? [];
+
+        if ( array() === $anchored || ! isset( $wp_filter[ $hook ] ) ) {
+            return null;
+        }
+
+        $kept  = clone $wp_filter[ $hook ];
+        $found = false;
+
+        foreach ( $wp_filter[ $hook ]->callbacks as $priority => $callbacks ) {
+            foreach ( $callbacks as $callback ) {
+                if ( in_array( $callback['function'], $anchored, true ) ) {
+                    $found = true;
+                } else {
+                    $kept->remove_filter( $hook, $callback['function'], $priority );
+                }
+            }
+        }
+
+        return $found ? $kept : null;
+    }
+
+    /** Runs $render with $replacement standing in for $hook, then puts the original back, even when a callback throws. */
+    private static function with_hook_as( string $hook, \WP_Hook $replacement, callable $render ): void {
+        global $wp_filter;
+
+        $original = $wp_filter[ $hook ] ?? null;
+
         // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Swapped back in the finally below.
-        $wp_filter[ $hook ] = $trimmed;
+        $wp_filter[ $hook ] = $replacement;
 
         try {
             $render();
         } finally {
-            // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restores the hook swapped above.
-            $wp_filter[ $hook ] = $original;
+            if ( null === $original ) {
+                unset( $wp_filter[ $hook ] );
+            } else {
+                // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restores the hook swapped above.
+                $wp_filter[ $hook ] = $original;
+            }
         }
     }
 }

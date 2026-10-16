@@ -3,6 +3,7 @@ namespace YayCheckout\Integrations;
 
 use YayCheckout\Engine\Register\ScriptName;
 use YayCheckout\Renderer\CheckoutPage;
+use YayCheckout\Renderer\WcHooks;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -31,6 +32,9 @@ class Germanized {
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hooks, which the Items block fires around its rows.
         add_action( 'woocommerce_review_order_before_cart_contents', [ $this, 'skip_item_thumbnail' ] );
         add_action( 'woocommerce_review_order_after_cart_contents', [ $this, 'restore_item_thumbnail' ] );
+        // The switch brackets the Items rows, so it stays with them when a WooCommerce Hook block takes these hooks.
+        WcHooks::anchor( 'woocommerce_review_order_before_cart_contents', [ $this, 'skip_item_thumbnail' ] );
+        WcHooks::anchor( 'woocommerce_review_order_after_cart_contents', [ $this, 'restore_item_thumbnail' ] );
 
         // Germanized prints its checkout checkboxes after the payment methods, or before them when it turns its checkout adjustments off.
         add_action( 'woocommerce_review_order_before_payment', [ $this, 'skip_payment_checkboxes' ], 9 );
