@@ -3,6 +3,7 @@ namespace YayCheckout\Blocks;
 
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Engine\Register\ScriptName;
+use YayCheckout\Helpers\CheckoutSetupHelper;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutDifferentAddress;
@@ -103,6 +104,7 @@ class BlockRegistry {
         add_action( 'init', [ $this, 'register_blocks' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_design_data' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_express_pay_data' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'editor_method_setup_data' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_live_value_editor' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_visibility_editor' ] );
         add_action( 'enqueue_block_assets', [ $this, 'enqueue_live_value_editor_style' ] );
@@ -242,6 +244,30 @@ class BlockRegistry {
         ];
 
         self::inline_data( generate_block_asset_handle( 'yaycheckout/express-pay', 'editorScript' ), 'window.yayCheckoutExpressPay', $data );
+    }
+
+    /**
+     * Whether WooCommerce has a shipping method and an enabled gateway, each on its block's own handle.
+     * Only in the layout editor, since reading the gateways loads every one of them.
+     */
+    public function editor_method_setup_data(): void {
+        if ( 'layout' !== $this->editor( null ) ) {
+            return;
+        }
+
+        $shipping = [
+            'needsSetup'  => CheckoutSetupHelper::shipping_needs_setup(),
+            'settingsUrl' => CheckoutSetupHelper::shipping_settings_url(),
+        ];
+
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/shipping-methods', 'editorScript' ), 'window.yayCheckoutShippingSetup', $shipping );
+
+        $payment = [
+            'needsSetup'  => CheckoutSetupHelper::payment_needs_setup(),
+            'settingsUrl' => CheckoutSetupHelper::payment_settings_url(),
+        ];
+
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/payment', 'editorScript' ), 'window.yayCheckoutPaymentSetup', $payment );
     }
 
     /**
