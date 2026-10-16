@@ -28,6 +28,7 @@ import {
   restoreLayout,
   saveLayoutRules,
 } from '@/lib/api/layout.api';
+import { COMPATIBILITY_QUERIES } from '@/lib/queries/compatibility.queries';
 import { LISTED_LAYOUT_STATUSES, type LayoutListResponse } from '@/lib/schema/layout.schema';
 
 export const LAYOUT_KEYS = {
@@ -42,6 +43,12 @@ export const LAYOUT_KEYS = {
 export function invalidateListedLayouts(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
   queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list({ status: LISTED_LAYOUT_STATUSES }) });
+  invalidateActiveSet(queryClient);
+}
+
+/** After a mutation that can change the active set: the Compatibility report's Rendering row reads its size. */
+function invalidateActiveSet(queryClient: QueryClient) {
+  queryClient.invalidateQueries({ queryKey: COMPATIBILITY_QUERIES.report.queryKey });
 }
 
 export const LAYOUT_QUERIES = {
@@ -150,6 +157,7 @@ export function useArchiveLayoutMutation() {
     mutationFn: archiveLayout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
+      invalidateActiveSet(queryClient);
     },
   });
 }
@@ -181,6 +189,7 @@ export function useDeleteLayoutMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.counts });
       queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
+      invalidateActiveSet(queryClient);
     },
   });
 }
@@ -203,6 +212,7 @@ export function useBulkLayoutsMutation() {
       } else {
         queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.all });
       }
+      invalidateActiveSet(queryClient);
     },
   });
 }

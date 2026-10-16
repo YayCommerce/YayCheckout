@@ -244,7 +244,6 @@ function LockedAssignment({ layout }: { layout: LayoutSummary }) {
       </div>
 
       <SheetFooter className="flex-row items-center justify-between">
-        <p className="text-muted-foreground text-sm">{__('Rules are read-only on Lite.', 'yaycheckout')}</p>
         <SheetClose asChild>
           <Button variant="outline">{__('Close', 'yaycheckout')}</Button>
         </SheetClose>
