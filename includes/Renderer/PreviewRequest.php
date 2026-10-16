@@ -32,7 +32,8 @@ class PreviewRequest {
     private bool $no_products     = false;
 
     protected function __construct() {
-        add_action( 'init', [ $this, 'read_token' ], 5 );
+        // setup_theme, not init: ThemelessCheckout decides at 1 whether a preview swaps the theme out.
+        add_action( 'setup_theme', [ $this, 'read_token' ], 0 );
         // Before CheckoutPage::maybe_take_over() at 10: the 410 guard must win over the render.
         add_action( 'wp', [ $this, 'guard_and_attach' ], 5 );
         add_action( 'wp', [ $this, 'prefill_cart' ], 6 );
@@ -70,7 +71,7 @@ class PreviewRequest {
         $this->token           = sanitize_text_field( wp_unslash( $_GET[ PreviewToken::QUERY_ARG ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
         // Any request carrying the arg, valid or not: a token that expires while the page is open
-        // must not turn the sample cart into a real order. Here, not at `wp`, because the non-JS
+        // must not turn the sample cart into a real order. Before `wp`, because the non-JS
         // form POST is processed at wp_loaded.
         add_action( 'woocommerce_checkout_process', [ $this, 'refuse_order' ] );
 

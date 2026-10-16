@@ -2,8 +2,9 @@
 /**
  * Checkout page: the layout's blocks in our own document, with no theme header
  * or footer, on every theme. The root Checkout block is the form; everything
- * WooCommerce needs on the page is a block. The theme's styles still load
- * through wp_head().
+ * WooCommerce needs on the page is a block. wp_head() loads the bundled
+ * themeless theme's styles (ThemelessCheckout), or the site theme's when that
+ * is turned off.
  */
 
 defined( 'ABSPATH' ) || exit;
