@@ -105,11 +105,9 @@ export default function Edit( { attributes, setAttributes, clientId, context }: 
 					</BaseControl>
 					<TextControl
 						label={ __( 'Separator', 'yaycheckout' ) }
-						help={ __( 'Printed between the values. Spaces count. Empty keeps the comma.', 'yaycheckout' ) }
+						help={ __( 'Printed between the values. Spaces count. Empty keeps the comma on the storefront.', 'yaycheckout' ) }
 						value={ summarySeparator }
-						onChange={ ( value: string ) =>
-							setAttributes( { summarySeparator: value === '' ? ', ' : value } )
-						}
+						onChange={ ( value: string ) => setAttributes( { summarySeparator: value } ) }
 						__nextHasNoMarginBottom
 					/>
 					{ /* Values stay out in the order the fields were added; remove and re-add one to move it. */ }
