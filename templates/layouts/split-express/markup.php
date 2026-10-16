@@ -143,7 +143,7 @@ $yaycheckout_secondary_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/order-summary-header -->
 
 <!-- wp:yaycheckout/order-summary-details {"lock":{"remove":true}} -->
-<!-- wp:yaycheckout/order-summary-items {"showLabels":false,"quantityDisplay":"badge","badgeBackgroundColor":"#ffffff","badgeTextColor":"var(--yaycheckout-design-text)"} /-->
+<!-- wp:yaycheckout/order-summary-items {"showLabels":false,"quantityDisplay":"hidden","showBadge":true,"badgeBackgroundColor":"#ffffff","badgeTextColor":"var(--yaycheckout-design-text)"} /-->
 
 <!-- wp:yaycheckout/coupon-form {"placeholder":"<?php esc_html_e( 'Enter code', 'yaycheckout' ); ?>","disclosure":"collapsible","disclosureText":"<?php esc_html_e( 'Add coupons', 'yaycheckout' ); ?>","style":{"color":{"text":"#ffffff"}}} -->
 <!-- wp:yaycheckout/coupon-button {"buttonText":"<?php esc_html_e( 'Apply', 'yaycheckout' ); ?>","style":{"color":{"background":"transparent","text":"#ffffff"},"border":{"color":"#757575","width":"1px","style":"solid"},"typography":{"fontWeight":"500"}}} /-->

@@ -32,6 +32,7 @@ Each of these shipped once and needed a follow-up fix. The commit that fixed it 
 - **Text on core paragraphs and groups stays unset** unless it is a specific colour (primary, trust green, text on an inverted panel), so it takes the body text. Secondary text on YayCheckout blocks (terms, login, return to cart, summary labels, steps progress) uses "Design: Muted".
 - **Shipping/payment radios get no block colour.** Their unticked ring reads Design → Radios border, then the Inputs border, as loose radios do. Set `radios.border` only when it differs from `inputs.border`.
 - **Hex is only for colours the Design must not change:** inverted panels and what sits on them, the trust green, white cards on a grey page, soft greys.
+- **Write a translucent colour as hex with alpha, never `rgb()` or `rgba()`.** The storefront runs block styles through WordPress's `safecss_filter_attr()`, which drops any `rgb()`/`rgba()` value, while the editor keeps it. So the canvas looks right and the storefront doesn't: Editorial fashion's 35% white dividers printed solid white. Alpha is the hex pair: 0.35 → `59`, 0.6 → `99`, 0.85 → `d9` (`#ffffff59`). To check, `git grep -n 'rgba\?(' -- 'templates/layouts/**/markup.php'` prints nothing.
 
 ## Interaction
 
