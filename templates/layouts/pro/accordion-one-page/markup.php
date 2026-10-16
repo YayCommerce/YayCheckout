@@ -134,7 +134,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- wp:yaycheckout/email {"placeholder":"<?php esc_html_e( 'you@example.com', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'You are currently checking out as a guest.', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:group {"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"right"}} -->
-<div class="wp-block-group"><!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue', 'yaycheckout' ); ?>","style":{"typography":{"fontSize":"13px","fontWeight":"600"},"border":{"radius":"2px"}}} /--></div>
+<div class="wp-block-group"><!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue', 'yaycheckout' ); ?>","style":{"typography":{"fontSize":"13px"}}} /--></div>
 <!-- /wp:group -->
 <!-- /wp:yaycheckout/step -->
 
@@ -165,7 +165,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <?php endif; ?>
 
 <!-- wp:group {"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"right"}} -->
-<div class="wp-block-group"><!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue', 'yaycheckout' ); ?>","style":{"typography":{"fontSize":"13px","fontWeight":"600"},"border":{"radius":"2px"}}} /--></div>
+<div class="wp-block-group"><!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue', 'yaycheckout' ); ?>","style":{"typography":{"fontSize":"13px"}}} /--></div>
 <!-- /wp:group -->
 <!-- /wp:yaycheckout/step -->
 
@@ -175,7 +175,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- wp:yaycheckout/order-note {"placeholder":"<?php esc_html_e( 'Notes about your order.', 'yaycheckout' ); ?>","disclosure":"checkbox","disclosureText":"<?php esc_html_e( 'Add a note to your order', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:group {"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"right"}} -->
-<div class="wp-block-group"><!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue', 'yaycheckout' ); ?>","style":{"typography":{"fontSize":"13px","fontWeight":"600"},"border":{"radius":"2px"}}} /--></div>
+<div class="wp-block-group"><!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue', 'yaycheckout' ); ?>","style":{"typography":{"fontSize":"13px"}}} /--></div>
 <!-- /wp:group -->
 <!-- /wp:yaycheckout/step -->
 
@@ -218,9 +218,9 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:group -->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"8px"}},"layout":{"type":"flex","flexWrap":"nowrap","verticalAlignment":"center"}} -->
-<div class="wp-block-group"><!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue', 'yaycheckout' ); ?>","yaycheckoutVisibility":{"action":"hide","rules":[{"type":"step","step":"last"}]},"style":{"typography":{"fontSize":"14px","fontWeight":"600","whiteSpace":"nowrap"},"border":{"radius":"2px"},"spacing":{"padding":{"left":"24px","right":"24px"}}}} /-->
+<div class="wp-block-group"><!-- wp:yaycheckout/step-button {"buttonText":"<?php esc_html_e( 'Continue', 'yaycheckout' ); ?>","yaycheckoutVisibility":{"action":"hide","rules":[{"type":"step","step":"last"}]},"style":{"typography":{"fontSize":"14px","whiteSpace":"nowrap"},"spacing":{"padding":{"left":"24px","right":"24px"}}}} /-->
 
-<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>","yaycheckoutVisibility":{"action":"show","rules":[{"type":"step","step":"last"}]},"style":{"typography":{"fontSize":"14px","fontWeight":"600","whiteSpace":"nowrap"},"border":{"radius":"2px"},"spacing":{"padding":{"left":"24px","right":"24px"}}}} /--></div>
+<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>","yaycheckoutVisibility":{"action":"show","rules":[{"type":"step","step":"last"}]},"style":{"typography":{"fontSize":"14px","whiteSpace":"nowrap"},"spacing":{"padding":{"left":"24px","right":"24px"}}}} /--></div>
 <!-- /wp:group -->
 <!-- /wp:yaycheckout/order-summary-header -->
 <!-- /wp:yaycheckout/order-summary --></div>

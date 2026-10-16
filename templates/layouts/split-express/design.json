@@ -48,8 +48,8 @@
 		"text": "",
 		"hover_background": "",
 		"hover_text": "",
-		"radius": null,
-		"font_weight": "",
+		"radius": 2,
+		"font_weight": "semibold",
 		"text_transform": ""
 	},
 	"custom_css": ""

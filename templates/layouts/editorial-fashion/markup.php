@@ -137,7 +137,7 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 <!-- /wp:group -->
 
 <!-- wp:yaycheckout/coupon-form {"placeholder":"<?php esc_html_e( 'Enter code', 'yaycheckout' ); ?>","disclosure":"collapsible","disclosureText":"<?php esc_html_e( 'Add coupons', 'yaycheckout' ); ?>","style":{"color":{"text":"#ffffff"},"typography":{"fontSize":"13px"}}} -->
-<!-- wp:yaycheckout/coupon-button {"buttonText":"<?php esc_html_e( 'Apply', 'yaycheckout' ); ?>","textColor":"yaycheckout-primary","style":{"color":{"background":"#ffffff"},"border":{"color":"#ffffff","width":"1px","style":"solid","radius":"0px"},"typography":{"fontSize":"13px","fontWeight":"500"},"spacing":{"padding":{"top":"0px","right":"18px","bottom":"0px","left":"18px"}}}} /-->
+<!-- wp:yaycheckout/coupon-button {"buttonText":"<?php esc_html_e( 'Apply', 'yaycheckout' ); ?>","textColor":"yaycheckout-primary","style":{"color":{"background":"#ffffff"},"border":{"color":"#ffffff","width":"1px","style":"solid","radius":"0px"},"typography":{"fontSize":"13px","fontWeight":"500","textTransform":"none"},"spacing":{"padding":{"top":"0px","right":"18px","bottom":"0px","left":"18px"}}}} /-->
 <!-- /wp:yaycheckout/coupon-form --></div>
 <!-- /wp:group --></div>
 <!-- /wp:column -->
@@ -230,7 +230,7 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 
 <!-- wp:yaycheckout/terms {"textColor":"yaycheckout-muted","style":{"typography":{"fontSize":"12px"}}} /-->
 
-<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022\u0022 data-suffix=\u0022\u0022\u003e<?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","backgroundColor":"yaycheckout-text","style":{"color":{"text":"#ffffff"},"typography":{"fontSize":"13px","fontWeight":"600","letterSpacing":"0.16em","textTransform":"uppercase"},"border":{"radius":"0px"},"dimensions":{"width":"var:preset|dimension|100"},"spacing":{"padding":{"top":"18px","right":"24px","bottom":"18px","left":"24px"}}},"spread":true} /-->
+<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022\u0022 data-suffix=\u0022\u0022\u003e<?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","backgroundColor":"yaycheckout-text","style":{"color":{"text":"#ffffff"},"typography":{"fontSize":"13px","letterSpacing":"0.16em"},"dimensions":{"width":"var:preset|dimension|100"},"spacing":{"padding":{"top":"18px","right":"24px","bottom":"18px","left":"24px"}}},"spread":true} /-->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"20px"}},"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"center"}} -->
 <div class="wp-block-group"><!-- wp:paragraph {"style":{"typography":{"fontSize":"11px","letterSpacing":"0.12em","textTransform":"uppercase"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->

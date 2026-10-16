@@ -48,9 +48,9 @@
 		"text": "",
 		"hover_background": "",
 		"hover_text": "",
-		"radius": null,
-		"font_weight": "",
-		"text_transform": ""
+		"radius": 0,
+		"font_weight": "semibold",
+		"text_transform": "uppercase"
 	},
 	"custom_css": ""
 }

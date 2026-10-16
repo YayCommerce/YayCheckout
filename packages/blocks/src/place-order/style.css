@@ -31,6 +31,17 @@
 }
 
 /*
+ * The design's button shape and text, with checkout-base.css's fallbacks: on the canvas the button is a RichText
+ * div, which that file's button rule doesn't reach. Two classes, to outrank the theme's
+ * `:root :where(.wp-element-button)`, printed after it. The block's own border and typography settings win.
+ */
+.wp-block-yaycheckout-place-order.wp-element-button {
+	border-radius: var(--yaycheckout-button-radius, var(--yaycheckout-neutral-radius, 2px));
+	font-weight: var(--yaycheckout-button-font-weight, 600);
+	text-transform: var(--yaycheckout-button-text-transform, none);
+}
+
+/*
  * The design's button colours, else the primary token, until the merchant picks a colour; the colour support adds
  * these classes when they do. The same fallbacks as checkout-base.css's button rule.
  */
