@@ -39,6 +39,7 @@ class YayCheckout {
         \YayCheckout\Renderer\CheckoutLogin::get_instance();
         \YayCheckout\Renderer\CheckoutDifferentAddress::get_instance();
         \YayCheckout\Integrations\Germanized::get_instance();
+        \YayCheckout\Integrations\Brandy::get_instance();
     }
 
     public static function initialize() {

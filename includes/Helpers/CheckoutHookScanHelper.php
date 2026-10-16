@@ -85,7 +85,7 @@ class CheckoutHookScanHelper {
 
                 foreach ( $wp_filter[ $hook ]->callbacks as $callbacks ) {
                     foreach ( $callbacks as $callback ) {
-                        $file  = $this->resolve_file( $callback['function'] );
+                        $file  = self::callback_file( $callback['function'] );
                         $owner = null === $file ? null : $this->owner( $file );
 
                         if ( null === $owner ) {
@@ -110,8 +110,12 @@ class CheckoutHookScanHelper {
         return $rows;
     }
 
-    /** @param mixed $handler Anything add_filter() accepted. */
-    private function resolve_file( $handler ): ?string {
+    /**
+     * The file that defines a hook callback, or null when reflection can't place it.
+     *
+     * @param mixed $handler Anything add_filter() accepted.
+     */
+    public static function callback_file( $handler ): ?string {
         try {
             if ( $handler instanceof \Closure ) {
                 $reflection = new \ReflectionFunction( $handler );
