@@ -802,3 +802,10 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 .yaycheckout-page table.shop_table {
 	background-color: transparent;
 }
+
+/* Germanized prints its units, description and delivery time as <p>/<div> inside the item name; the theme's paragraph margins push them off the row. Style them like the SKU line. */
+.yaycheckout-page .yaycheckout-order-summary-items .wc-gzd-cart-info {
+	margin: 0;
+	font-size: 0.875em;
+	opacity: 0.75;
+}
