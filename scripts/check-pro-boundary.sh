@@ -52,4 +52,22 @@ if ! printf '%s' "$matches" | grep -q "^$BOOTSTRAP:"; then
     exit 1
 fi
 
-echo -e "${GREEN}✓ Pro boundary intact${NC} (1 guarded reference in $BOOTSTRAP)"
+# The Pro blocks are named in two hand-kept lists, BlockRegistry::PRO_BLOCKS (PHP) and
+# PRO_BLOCK_METAS (packages/blocks/src/shared/pro-blocks.ts), which must match the folders
+# under packages/blocks/src/pro/: a block missing from either list has no Free stub, or a stub
+# Free's inserter never offers.
+pro_dirs=$(ls -1 packages/blocks/src/pro | sort)
+pro_php=$(sed -n '/const PRO_BLOCKS = \[/,/\];/p' includes/Blocks/BlockRegistry.php \
+    | grep -oE "'yaycheckout/[a-z-]+'" | sed -E "s#'yaycheckout/([a-z-]+)'#\1#" | sort)
+pro_ts=$(grep -oE "'\.\./pro/[a-z-]+/block\.json'" packages/blocks/src/shared/pro-blocks.ts \
+    | sed -E "s#'\.\./pro/([a-z-]+)/block\.json'#\1#" | sort)
+
+if [ "$pro_dirs" != "$pro_php" ] || [ "$pro_dirs" != "$pro_ts" ]; then
+    echo -e "${RED}✗ Pro block lists out of step${NC}"
+    echo "  packages/blocks/src/pro/: $(echo $pro_dirs)"
+    echo "  BlockRegistry::PRO_BLOCKS: $(echo $pro_php)"
+    echo "  shared/pro-blocks.ts:      $(echo $pro_ts)"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ Pro boundary intact${NC} (1 guarded reference in $BOOTSTRAP; $(echo "$pro_dirs" | grep -c .) Pro blocks listed alike)"

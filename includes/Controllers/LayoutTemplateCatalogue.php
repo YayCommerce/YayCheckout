@@ -36,7 +36,7 @@ class LayoutTemplateCatalogue {
             }
 
             unset( $template['pro'] );
-            $template['available']   = self::is_available( $template['slug'] );
+            $template['available']   = self::is_available( $template['slug'], $is_pro );
             $template['preview_url'] = self::preview_url( $template['slug'] );
             $templates[]             = $template;
         }
@@ -44,12 +44,16 @@ class LayoutTemplateCatalogue {
         return $templates;
     }
 
-    /** Whether $slug is in the catalogue, on this plan, and both of its files exist. */
-    public static function is_available( string $slug ): bool {
+    /**
+     * Whether $slug is in the catalogue, usable on the plan, and both of its files exist.
+     *
+     * @param bool|null $is_pro The plan to check against; null for the installed one, Plan::is_pro().
+     */
+    public static function is_available( string $slug, ?bool $is_pro = null ): bool {
         $entry = self::entry( $slug );
 
         // A Pro template on Free: its files are absent from the Free zip, and present in a dev tree without Pro booted.
-        if ( null === $entry || ( ! empty( $entry['pro'] ) && ! Plan::is_pro() ) ) {
+        if ( null === $entry || ( ! empty( $entry['pro'] ) && ! ( $is_pro ?? Plan::is_pro() ) ) ) {
             return false;
         }
 

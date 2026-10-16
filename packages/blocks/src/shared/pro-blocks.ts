@@ -7,7 +7,8 @@ import stepsProgressMeta from '../pro/steps-progress/block.json';
 
 /**
  * The Pro blocks' metadata: the step blocks, built from packages/blocks/src/pro/ and left out of the Free
- * zip. Free registers them as locked stubs (checkout/locked-pro-blocks.tsx). Mirrors BlockRegistry::PRO_BLOCKS.
+ * zip. Free registers them as locked stubs (checkout/locked-pro-blocks.tsx). Lists the folders under src/pro/,
+ * as BlockRegistry::PRO_BLOCKS does; scripts/check-pro-boundary.sh fails when either differs from them.
  */
 export const PRO_BLOCK_METAS = [
 	stepsProgressMeta,

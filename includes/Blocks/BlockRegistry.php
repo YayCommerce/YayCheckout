@@ -29,7 +29,7 @@ class BlockRegistry {
 
     private const CATEGORY = 'yaycheckout';
 
-    /** Free's inserter group for the Pro blocks' locked stubs. Mirrors PRO_CATEGORY in packages/blocks/src/checkout/locked-pro-blocks.tsx. */
+    /** Free's inserter group for the Pro blocks' locked stubs, registered by register_category(). PRO_CATEGORY in packages/blocks/src/checkout/locked-pro-blocks.tsx copies it. */
     private const PRO_CATEGORY = 'yaycheckout-pro';
 
     /** Named by viewScript in packages/blocks/src/coupon-form/block.json; core enqueues it when the block renders. */
@@ -86,8 +86,9 @@ class BlockRegistry {
 
     /**
      * The Pro blocks: the step blocks, built under assets/dist/blocks/pro/. Free registers them only in
-     * JavaScript, as locked stubs, so allowed_blocks() adds them to the layout editor's list. Mirrors
-     * PRO_BLOCK_METAS in packages/blocks/src/shared/pro-blocks.ts.
+     * JavaScript, as locked stubs, so allowed_blocks() adds them to the layout editor's list. Lists the
+     * folders under packages/blocks/src/pro/, as PRO_BLOCK_METAS in packages/blocks/src/shared/pro-blocks.ts
+     * does; scripts/check-pro-boundary.sh checks both against those folders.
      */
     public const PRO_BLOCKS = [
         'yaycheckout/steps-progress',
@@ -458,7 +459,12 @@ class BlockRegistry {
             case 'layout':
                 $allowed = self::without( $allowed_block_types, static fn( $name ) => 'woocommerce/checkout' === $name );
 
-                return is_array( $allowed ) && ! Plan::is_pro() ? array_values( array_unique( array_merge( $allowed, self::PRO_BLOCKS ) ) ) : $allowed;
+                if ( ! is_array( $allowed ) || Plan::is_pro() ) {
+                    return $allowed;
+                }
+
+                // Free never registers the Pro blocks on the server, so their stubs are not in the list yet.
+                return array_merge( $allowed, self::PRO_BLOCKS );
             case 'other':
                 return self::without( $allowed_block_types, static fn( $name ) => str_starts_with( $name, 'yaycheckout/' ) );
             default:

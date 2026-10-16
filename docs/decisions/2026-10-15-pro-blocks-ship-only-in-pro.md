@@ -30,6 +30,6 @@ Accepted, 2026-10-15, by Trace Bui, who asked for the steps mechanism to be Pro 
 ## Consequences
 
 - Free carries no step behaviour, and the next Pro block follows the same path: a folder under `src/pro/`, its PHP under `includes/Pro/`, and its name in `BlockRegistry::PRO_BLOCKS` and `packages/blocks/src/shared/pro-blocks.ts`.
-- `BlockRegistry::PRO_BLOCKS` and `packages/blocks/src/shared/pro-blocks.ts` are two copies of the same list, and no check links them.
+- `BlockRegistry::PRO_BLOCKS` and `packages/blocks/src/shared/pro-blocks.ts` are two copies of the same list; `scripts/check-pro-boundary.sh` (run by `composer lint`) fails when they and the folders under `packages/blocks/src/pro/` differ.
 - A Pro to Free downgrade keeps the layout's content: the storefront prints an unregistered Steps or Step as its inner blocks, so the fields stay, but the layout can't be published again until its Pro blocks are removed.
 - A dev tree always contains Pro, so Free's stubs, publish rule and template list can be seen only in a Free zip, or with `includes/Pro/ProServiceProvider.php` absent.

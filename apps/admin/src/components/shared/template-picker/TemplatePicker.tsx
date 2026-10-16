@@ -62,7 +62,13 @@ export function TemplatePicker({
         )}
       </div>
 
-      {isPro ? <ProTemplateGrid {...gridProps} /> : <FreeTemplateGrid {...gridProps} />}
+      {isPro ? (
+        <ProTemplateGrid {...gridProps} />
+      ) : (
+        <ScrollArea>
+          <TemplateCards {...gridProps} />
+        </ScrollArea>
+      )}
     </div>
   );
 }
@@ -162,35 +168,27 @@ function TemplateTile({
   isSelected: boolean;
   onSelect: (slug: string) => void;
 }) {
+  const pickable = isPickable(template);
+
   return (
     <button
       type="button"
-      disabled={!isPickable(template)}
+      disabled={!pickable}
       onClick={() => onSelect(template.slug)}
-      title={template.available ? undefined : COMING_SOON_TITLE}
+      title={pickable ? undefined : COMING_SOON_TITLE}
       aria-pressed={isSelected}
       className={cn(
         'group transition-default flex flex-col items-start gap-2 rounded-md border p-2 text-left',
         focusVariants({ variant: 'none' }),
-        isSelected
-          ? 'border-primary ring-primary bg-primary/5 ring-2'
-          : isPickable(template) && 'hover:border-muted-foreground',
-        !isPickable(template) && 'cursor-not-allowed',
+        isSelected ? 'border-primary ring-primary bg-primary/5 ring-2' : pickable && 'hover:border-muted-foreground',
+        !pickable && 'cursor-not-allowed',
       )}
     >
       <TemplatePreview template={template}>
-        {!isPickable(template) && <ComingSoonOverlay />}
+        {!pickable && <ComingSoonOverlay />}
         {isSelected && <SelectedCheck />}
       </TemplatePreview>
       <span className={cn('text-xs font-medium', isSelected && 'text-primary')}>{template.name}</span>
     </button>
-  );
-}
-
-function FreeTemplateGrid(props: GridProps) {
-  return (
-    <ScrollArea>
-      <TemplateCards {...props} />
-    </ScrollArea>
   );
 }
