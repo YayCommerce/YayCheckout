@@ -1,6 +1,6 @@
 import apiFetch from '@wordpress/api-fetch';
 import { parse } from '@wordpress/blocks';
-import { Button, Dashicon, DropZone, ExternalLink, Flex, FormFileUpload, Modal, Notice } from '@wordpress/components';
+import { Button, Dashicon, DropZone, Flex, FormFileUpload, Modal, Notice } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { PluginDocumentSettingPanel, store as editorStore } from '@wordpress/editor';
 import { useRef, useState } from '@wordpress/element';
@@ -13,6 +13,7 @@ import { errorMessage } from '../shared/error-message';
 import type { LayoutDesignMeta } from './layout-design';
 import { isLoggedOutView } from './layout-view';
 import { filenameFromHeaders, isJsonFileName, saveFile } from '../shared/export-file';
+import { ProUpgradeNotice } from '../shared/pro-upgrade-notice';
 import './import-export.css';
 
 /** Locks Import / Export outside Pro. Cosmetic only: it hides UI, it guards no data. */
@@ -262,13 +263,10 @@ function LayoutImportExport() {
 		>
 			<Flex direction="column" align="stretch" gap={ 4 } className="yaycheckout-import-export">
 				{ ! IS_PRO && (
-					<p className="yaycheckout-import-export__help">
-						<span className="yaycheckout-import-export__pro-tag">
-							{ __( 'Pro', 'yaycheckout' ) }
-						</span>
-						{ __( 'Upgrade to PRO to unlock this feature now.', 'yaycheckout' ) }{ ' ' }
-						<ExternalLink href={ editorData.upgradeUrl }>{ __( 'Upgrade', 'yaycheckout' ) }</ExternalLink>
-					</p>
+					<ProUpgradeNotice
+						className="yaycheckout-import-export__help"
+						text={ __( 'Upgrade to PRO to unlock this feature now.', 'yaycheckout' ) }
+					/>
 				) }
 				<Flex direction="column" align="stretch" gap={ 2 }>
 					<h3 className="yaycheckout-import-export__heading">

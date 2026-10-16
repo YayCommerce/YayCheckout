@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Controllers;
 
+use YayCheckout\Blocks\BlockRegistry;
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Models\Layout;
@@ -87,7 +88,13 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
             return $prepared;
         }
 
-        $error = LayoutMarkupReader::publish_error( $content );
+        // Neither the markup nor the status changes, as when the logged-out view saves: the stored markup went
+        // live under these rules, and a rule it fails since (Pro blocks after a downgrade) must not block the save.
+        if ( ! isset( $prepared->post_content ) && null !== $stored && $stored->post_status === $status ) {
+            return $prepared;
+        }
+
+        $error = LayoutMarkupReader::publish_error( $content, BlockRegistry::locked_blocks() );
 
         if ( '' !== $error ) {
             return new \WP_Error( 'yaycheckout_layout_unpublishable', $error, [ 'status' => 400 ] );

@@ -57,14 +57,23 @@ export function FreeOnly({ children }: { children: ReactNode }) {
   return isPro ? null : <>{children}</>;
 }
 
-/** Pro chip that opens the upgrade page. */
+/** The Pro pill for a locked item. It only labels; an UpgradeButton beside it, or ProLinkBadge instead, opens the upgrade page. */
 export function ProBadge({ className }: { className?: string }) {
+  return (
+    <Badge variant="warning" className={cn('text-white', className)}>
+      {__('Pro', 'yaycheckout')}
+    </Badge>
+  );
+}
+
+/** The clickable Pro chip, "Pro ›" with an "Unlock this feature" tooltip, which opens the upgrade page. For a locked item with no UpgradeButton beside it. */
+export function ProLinkBadge({ className }: { className?: string }) {
   return (
     <YayCheckoutToolTip
       trigger={
         <Badge
           variant="warning"
-          className={cn('text-3 h-4.5 cursor-pointer rounded-sm p-1.5 pr-0.75 leading-6 text-white', className)}
+          className={cn('h-4.5 cursor-pointer rounded-sm p-1.5 pr-0.75 leading-6 text-white', className)}
           onClick={() => window.open(UPGRADE_URL)}
         >
           {__('Pro', 'yaycheckout')}
@@ -73,15 +82,6 @@ export function ProBadge({ className }: { className?: string }) {
       }
       content={__('Unlock this feature', 'yaycheckout')}
     />
-  );
-}
-
-/** Inert Pro chip for a locked item; ProBadge is the clickable one. */
-export function ProTag({ className }: { className?: string }) {
-  return (
-    <Badge variant="outline" className={cn('px-1.5 text-[10px]', className)}>
-      {__('PRO', 'yaycheckout')}
-    </Badge>
   );
 }
 
@@ -108,9 +108,7 @@ export function UpgradePrompt() {
         </EmptyMedia>
         <EmptyTitle className="flex items-center gap-1.5 font-bold">
           {__('YayCheckout', 'yaycheckout')}
-          <Badge variant="warning" className="text-white">
-            {__('Pro', 'yaycheckout')}
-          </Badge>
+          <ProBadge />
         </EmptyTitle>
         <EmptyDescription>{__('Upgrade to PRO to unlock this feature now', 'yaycheckout')}</EmptyDescription>
         <EmptyContent>

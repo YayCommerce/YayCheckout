@@ -29,6 +29,9 @@ class BlockRegistry {
 
     private const CATEGORY = 'yaycheckout';
 
+    /** Free's inserter group for the Pro blocks' locked stubs, registered by register_category(). PRO_CATEGORY in packages/blocks/src/checkout/locked-pro-blocks.tsx copies it. */
+    private const PRO_CATEGORY = 'yaycheckout-pro';
+
     /** Named by viewScript in packages/blocks/src/coupon-form/block.json; core enqueues it when the block renders. */
     public const COUPON_FORM_SCRIPT = 'yaycheckout-coupon-form';
 
@@ -79,6 +82,21 @@ class BlockRegistry {
         'terms',
         'place-order',
         'slot',
+    ];
+
+    /**
+     * The Pro blocks: the step blocks, built under assets/dist/blocks/pro/. Free registers them only in
+     * JavaScript, as locked stubs, so allowed_blocks() adds them to the layout editor's list. Lists the
+     * folders under packages/blocks/src/pro/, as PRO_BLOCK_METAS in packages/blocks/src/shared/pro-blocks.ts
+     * does; scripts/check-pro-boundary.sh checks both against those folders.
+     */
+    public const PRO_BLOCKS = [
+        'yaycheckout/steps-progress',
+        'yaycheckout/steps',
+        'yaycheckout/step',
+        'yaycheckout/step-button',
+        'yaycheckout/back-button',
+        'yaycheckout/go-to-step',
     ];
 
     protected function __construct() {
@@ -147,16 +165,22 @@ class BlockRegistry {
         );
     }
 
-    /** Registers every built block, in ORDER; without a build, registers none. */
+    /**
+     * Registers every built block, in ORDER; without a build, registers none. Pro blocks build under
+     * assets/dist/blocks/pro/, which this glob skips and the Free zip leaves out; Pro adds them through
+     * the `yaycheckout_built_blocks` filter, so ORDER still places them.
+     */
     public function register_blocks(): void {
         $this->register_view_scripts();
 
-        $metadata_files = glob( YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/*/block.json' );
-        $built          = [];
+        $built = self::built_dirs( 'assets/dist/blocks/*/block.json' );
 
-        foreach ( is_array( $metadata_files ) ? $metadata_files : [] as $metadata ) {
-            $built[ basename( dirname( $metadata ) ) ] = dirname( $metadata );
-        }
+        /**
+         * Filters the built block directories to register.
+         *
+         * @param array<string, string> $built Block directory name => absolute path of its built directory.
+         */
+        $built = apply_filters( 'yaycheckout_built_blocks', $built );
 
         foreach ( array_merge( array_intersect_key( array_flip( self::ORDER ), $built ), $built ) as $dir ) {
             register_block_type( $dir );
@@ -165,6 +189,8 @@ class BlockRegistry {
         // One bundle serves both editions, so the plan reaches it at runtime; PHP supplies the post type and upgrade link so the bundle never redeclares them.
         $editor_data = [
             'isPro'          => Plan::is_pro(),
+            // Pro blocks not registered here: the editor registers them as locked stubs. Set after every block registered above.
+            'lockedBlocks'   => self::locked_blocks(),
             'postType'       => Layout::POST_TYPE,
             'upgradeUrl'     => YAYCHECKOUT_UPGRADE_URL,
             'currencySymbol' => html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8' ),
@@ -216,6 +242,41 @@ class BlockRegistry {
         ];
 
         self::inline_data( generate_block_asset_handle( 'yaycheckout/express-pay', 'editorScript' ), 'window.yayCheckoutExpressPay', $data );
+    }
+
+    /**
+     * The block names registered on this site.
+     *
+     * @return string[]
+     */
+    public static function registered_names(): array {
+        return array_keys( \WP_Block_Type_Registry::get_instance()->get_all_registered() );
+    }
+
+    /**
+     * The Pro blocks this site hasn't registered: all of them in Free, none in a built Pro. They are the
+     * editor's locked stubs, and LayoutMarkupReader::publish_error() refuses a live layout holding one.
+     *
+     * @return string[]
+     */
+    public static function locked_blocks(): array {
+        return array_values( array_diff( self::PRO_BLOCKS, self::registered_names() ) );
+    }
+
+    /**
+     * Built block directories matching $pattern, a glob under the plugin directory: directory name => path.
+     *
+     * @return array<string, string>
+     */
+    public static function built_dirs( string $pattern ): array {
+        $metadata_files = glob( YAYCHECKOUT_PLUGIN_DIR . $pattern );
+        $built          = [];
+
+        foreach ( is_array( $metadata_files ) ? $metadata_files : [] as $metadata ) {
+            $built[ basename( dirname( $metadata ) ) ] = dirname( $metadata );
+        }
+
+        return $built;
     }
 
     /**
@@ -371,28 +432,36 @@ class BlockRegistry {
         }
     }
 
-    /** Adds the YayCheckout inserter category in the layout editor. */
+    /** Adds the YayCheckout inserter category in the layout editor, and a YayCheckout Pro one after it while there are locked stubs. */
     public function register_category( $categories, $editor_context ) {
         if ( 'layout' !== $this->editor( $editor_context ) ) {
             return $categories;
         }
 
-        return array_merge(
+        $ours = [
             [
-                [
-                    'slug'  => self::CATEGORY,
-                    'title' => __( 'YayCheckout', 'yaycheckout' ),
-                    'icon'  => null,
-                ],
+                'slug'  => self::CATEGORY,
+                'title' => __( 'YayCheckout', 'yaycheckout' ),
+                'icon'  => null,
             ],
-            $categories
-        );
+        ];
+
+        if ( [] !== self::locked_blocks() ) {
+            $ours[] = [
+                'slug'  => self::PRO_CATEGORY,
+                'title' => __( 'YayCheckout Pro', 'yaycheckout' ),
+                'icon'  => null,
+            ];
+        }
+
+        return array_merge( $ours, $categories );
     }
 
     /**
      * Keeps YayCheckout blocks to the layout editor, and WooCommerce's Checkout block (a second
      * checkout form inside the layout's own) out of it. Types stay registered so checkout-page.php
-     * can still do_blocks() the layout. An unknown editor is left alone: it may be the layout editor.
+     * can still do_blocks() the layout. The layout editor also offers locked_blocks(), the Pro blocks'
+     * stubs, which only JavaScript registers. An unknown editor is left alone: it may be the layout editor.
      *
      * @param  bool|string[] $allowed_block_types
      * @return bool|string[]
@@ -400,7 +469,10 @@ class BlockRegistry {
     public function allowed_blocks( $allowed_block_types, $editor_context ) {
         switch ( $this->editor( $editor_context ) ) {
             case 'layout':
-                return self::without( $allowed_block_types, static fn( $name ) => 'woocommerce/checkout' === $name );
+                $allowed = self::without( $allowed_block_types, static fn( $name ) => 'woocommerce/checkout' === $name );
+
+                // The locked stubs are registered only in JavaScript, so they are not in the list yet.
+                return is_array( $allowed ) ? array_merge( $allowed, self::locked_blocks() ) : $allowed;
             case 'other':
                 return self::without( $allowed_block_types, static fn( $name ) => str_starts_with( $name, 'yaycheckout/' ) );
             default:
@@ -435,7 +507,7 @@ class BlockRegistry {
     private static function without( $allowed_block_types, callable $drop ) {
         if ( true === $allowed_block_types ) {
             // true means "all"; subtract by naming every registered type.
-            $allowed_block_types = array_keys( \WP_Block_Type_Registry::get_instance()->get_all_registered() );
+            $allowed_block_types = self::registered_names();
         }
 
         if ( ! is_array( $allowed_block_types ) ) {

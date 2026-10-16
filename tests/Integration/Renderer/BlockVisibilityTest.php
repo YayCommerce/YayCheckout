@@ -92,7 +92,8 @@ class BlockVisibilityTest extends WP_UnitTestCase {
         $this->assertFalse( BlockVisibility::is_visible( $last, self::STATE, 1, 4 ) );
         $this->assertTrue( BlockVisibility::is_visible( $last, self::STATE, 4, 4 ) );
         $this->assertTrue( BlockVisibility::is_visible( $last, self::STATE, 1, 1 ) );  // One step: it is the last.
-        $this->assertFalse( BlockVisibility::is_visible( $last, self::STATE, 1, 0 ) ); // No Steps block: never matches.
+        $this->assertTrue( BlockVisibility::is_visible( $last, self::STATE, 1, 0 ) );  // No Steps block: step rules are skipped.
+        $this->assertTrue( BlockVisibility::is_visible( $two, self::STATE, 2, 0 ) );
         $this->assertFalse( BlockVisibility::is_visible( $two, self::STATE, 2, 4 ) );
         $this->assertTrue( BlockVisibility::is_visible( $two, self::STATE, 3, 4 ) );
     }

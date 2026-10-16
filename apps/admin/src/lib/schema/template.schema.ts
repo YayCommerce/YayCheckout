@@ -6,7 +6,6 @@ export const templateWireSchema = z
     slug: z.string(),
     name: z.string(),
     categories: z.array(z.string()),
-    locked: z.boolean(),
     available: z.boolean(),
     preview_url: z.string(),
   })
@@ -21,7 +20,6 @@ export type Template = {
   name: string;
   /** One or more filter chips the template shows under. */
   categories: string[];
-  locked: boolean;
   available: boolean;
   /** '' when the template has no preview file. */
   previewUrl: string;
