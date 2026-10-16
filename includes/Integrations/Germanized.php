@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Integrations;
 
+use YayCheckout\Engine\Register\ScriptName;
 use YayCheckout\Renderer\CheckoutPage;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -15,6 +16,12 @@ defined( 'ABSPATH' ) || exit;
 class Germanized {
 
     use SingletonTrait;
+
+    /** Germanized greys every `.woocommerce-checkout .shop_table`; YayCheckout's own tables sit on their block's background. */
+    private const TABLES_CSS = '.yaycheckout-page table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total, .yaycheckout-order-summary-items__hook, .yaycheckout-shipping-methods__extensions) { background-color: transparent; }';
+
+    /** Germanized's units, description and delivery time are <p>/<div> in the item name: no theme margins, and the look of the SKU line in order-summary-items/style.css. */
+    private const ITEM_INFO_CSS = '.yaycheckout-order-summary-items .wc-gzd-cart-info { margin: 0; font-size: 0.875em; opacity: 0.75; }';
 
     protected function __construct() {
         if ( ! function_exists( 'WC_germanized' ) ) {
@@ -34,6 +41,19 @@ class Germanized {
 
         // After init, where Germanized adds its submit button; before the layout renders.
         add_action( 'wp', [ $this, 'keep_place_order_button' ] );
+
+        // After CheckoutPage enqueues checkout-base at 20.
+        add_action( 'wp_enqueue_scripts', [ $this, 'add_styles' ], 21 );
+    }
+
+    /** This plugin's style fixes, printed only where a layout renders the checkout. */
+    public function add_styles(): void {
+        if ( ! CheckoutPage::get_instance()->takes_over() ) {
+            return;
+        }
+
+        wp_add_inline_style( ScriptName::STYLE_CHECKOUT_BASE, self::TABLES_CSS );
+        wp_add_inline_style( generate_block_asset_handle( 'yaycheckout/order-summary-items', 'style' ), self::ITEM_INFO_CSS );
     }
 
     /**

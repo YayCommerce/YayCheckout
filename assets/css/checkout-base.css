@@ -808,8 +808,3 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 		font-size: max(16px, 1em);
 	}
 }
-
-/* Some plugins and themes (Germanized) give every checkout .shop_table a grey background; YayCheckout's tables sit on their block's own. Others' tables keep theirs. */
-.yaycheckout-page table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total, .yaycheckout-order-summary-items__hook, .yaycheckout-shipping-methods__extensions) {
-	background-color: transparent;
-}

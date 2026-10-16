@@ -55,14 +55,9 @@
 	border: 0;
 }
 
-.yaycheckout-order-summary-items :is(.product-sku, .product-unit-price, .product-short-description, .wc-gzd-cart-info) {
+.yaycheckout-order-summary-items :is(.product-sku, .product-unit-price, .product-short-description) {
 	font-size: 0.875em;
 	opacity: 0.75;
-}
-
-/* Germanized prints its units, description and delivery time as <p>/<div> inside the name; the theme's paragraph margins would push them off the row. */
-.yaycheckout-order-summary-items .wc-gzd-cart-info {
-	margin: 0;
 }
 
 /* Inline item data: every "Label: value" pair on one wrapping line, separated by commas. */
