@@ -29,6 +29,9 @@ class BlockRegistry {
 
     private const CATEGORY = 'yaycheckout';
 
+    /** Free's inserter group for the Pro blocks' locked stubs. Mirrors PRO_CATEGORY in packages/blocks/src/checkout/locked-pro-blocks.tsx. */
+    private const PRO_CATEGORY = 'yaycheckout-pro';
+
     /** Named by viewScript in packages/blocks/src/coupon-form/block.json; core enqueues it when the block renders. */
     public const COUPON_FORM_SCRIPT = 'yaycheckout-coupon-form';
 
@@ -416,22 +419,29 @@ class BlockRegistry {
         }
     }
 
-    /** Adds the YayCheckout inserter category in the layout editor. */
+    /** Adds the YayCheckout inserter category in the layout editor, and in Free a YayCheckout Pro one after it for the locked stubs. */
     public function register_category( $categories, $editor_context ) {
         if ( 'layout' !== $this->editor( $editor_context ) ) {
             return $categories;
         }
 
-        return array_merge(
+        $ours = [
             [
-                [
-                    'slug'  => self::CATEGORY,
-                    'title' => __( 'YayCheckout', 'yaycheckout' ),
-                    'icon'  => null,
-                ],
+                'slug'  => self::CATEGORY,
+                'title' => __( 'YayCheckout', 'yaycheckout' ),
+                'icon'  => null,
             ],
-            $categories
-        );
+        ];
+
+        if ( ! Plan::is_pro() ) {
+            $ours[] = [
+                'slug'  => self::PRO_CATEGORY,
+                'title' => __( 'YayCheckout Pro', 'yaycheckout' ),
+                'icon'  => null,
+            ];
+        }
+
+        return array_merge( $ours, $categories );
     }
 
     /**

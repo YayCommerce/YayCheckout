@@ -10,11 +10,14 @@ import './locked-pro-blocks.css';
 
 type BlockMetadata = Parameters< typeof registerBlockType >[ 0 ];
 
+/** The inserter group for the stubs, after YayCheckout's own. Mirrors BlockRegistry::PRO_CATEGORY, which registers it. */
+const PRO_CATEGORY = 'yaycheckout-pro';
+
 /** Pro blocks that hold other blocks: their stubs keep a downgraded layout's inner blocks. */
 const CONTAINERS = [ 'yaycheckout/steps', 'yaycheckout/step' ];
 
 /**
- * Free only: each Pro block as a locked stub, listed in the inserter with a Pro tag. It holds no Pro
+ * Free only: each Pro block as a locked stub, listed in the inserter under YayCheckout Pro with its own title. It holds no Pro
  * behaviour, only the block's name, labels and attributes, so a layout made in Pro still parses. Inserting
  * one shows an upgrade card; LayoutMarkupReader::publish_error() refuses to publish a layout that has one.
  */
@@ -23,8 +26,7 @@ function registerLockedProBlocks(): void {
 		const isContainer = CONTAINERS.includes( meta.name );
 
 		registerBlockType( { ...meta, editorScript: undefined, viewScript: undefined, style: undefined, render: undefined } as unknown as BlockMetadata, {
-			/* translators: %s: block title. */
-			title: sprintf( __( '%s (Pro)', 'yaycheckout' ), meta.title ),
+			category: PRO_CATEGORY,
 			description: __( 'Multi-step checkout is part of YayCheckout Pro.', 'yaycheckout' ),
 			icon: blockIcons[ meta.name ],
 			example: undefined,
