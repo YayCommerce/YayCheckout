@@ -35,11 +35,18 @@ if ( '' === $yaycheckout_key ) {
     $yaycheckout_key = 'yaycheckout_field_' . $yaycheckout_field_i;
 }
 
+$yaycheckout_wrapper_base = array(
+    'class'                                           => 'yaycheckout-field form-row',
+    \YayCheckout\Renderer\BlockEmptiness::LOCALE_ATTR => '1',
+);
+
+// view.ts puts it back after address-i18n.js swaps in the country's placeholder.
+if ( '' !== $yaycheckout_placeholder ) {
+    $yaycheckout_wrapper_base['data-yaycheckout-placeholder'] = $yaycheckout_placeholder;
+}
+
 $yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper(
-    array(
-        'class'                                           => 'yaycheckout-field form-row',
-        \YayCheckout\Renderer\BlockEmptiness::LOCALE_ATTR => '1',
-    ),
+    $yaycheckout_wrapper_base,
     $attributes,
     \YayCheckout\Renderer\CheckoutFieldDefaults::hidden_for_country( $yaycheckout_key )
 );
