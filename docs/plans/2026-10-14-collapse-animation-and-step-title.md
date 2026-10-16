@@ -20,8 +20,8 @@ Constraints (CLAUDE.md): product PHP runs on PHP 7.4; never edit `assets/dist/`;
 
 | File | Responsibility |
 |---|---|
-| `packages/blocks/src/step/edit.tsx` | Step: no header when headings are hidden; sidebar title |
-| `packages/blocks/src/step/editor.css` | Drop the faded-header and hidden-note rules |
+| `packages/blocks/src/pro/step/edit.tsx` | Step: no header when headings are hidden; sidebar title |
+| `packages/blocks/src/pro/step/editor.css` | Drop the faded-header and hidden-note rules |
 | `.claude/rules/blocks.md` | Note the Step title is the one display text also edited in the sidebar |
 | `includes/Models/LayoutDesign.php` | New `motion` section, token `collapse` |
 | `includes/Renderer/DesignStyles.php` | Print `--yaycheckout-collapse-animation` |
@@ -30,7 +30,7 @@ Constraints (CLAUDE.md): product PHP runs on PHP 7.4; never edit `assets/dist/`;
 | `packages/blocks/src/shared/collapse.ts` (new) | The one animation helper every collapsible calls |
 | `packages/blocks/src/shared/disclosure-view.ts` | Animate a collapsible field's click |
 | `packages/blocks/src/order-summary/view.ts` | Animate the details in `flip()` |
-| `packages/blocks/src/steps/view.ts` | Animate the body in `setState()`; scroll after it settles |
+| `packages/blocks/src/pro/steps/view.ts` | Animate the body in `setState()`; scroll after it settles |
 | `docs/architecture.md` | Line 45's section list gains motion; storefront note on the collapse variable |
 
 ## Interfaces
@@ -61,12 +61,12 @@ Design token: `LayoutDesign::schema()['motion']['collapse'] = [ 'type' => 'enum'
 
 ## Task 1: Step title in the sidebar, no header when headings hide (PR 1)
 
-1. `packages/blocks/src/step/edit.tsx`: when `context['yaycheckout/showHeadings'] === false`, render no `.yaycheckout-step__header` (drop the `is-hidden-on-checkout` class and the "Hidden on the checkout" note).
+1. `packages/blocks/src/pro/step/edit.tsx`: when `context['yaycheckout/showHeadings'] === false`, render no `.yaycheckout-step__header` (drop the `is-hidden-on-checkout` class and the "Hidden on the checkout" note).
 2. Same file: add `<InspectorControls><PanelBody title={ __( 'Settings', 'yaycheckout' ) }>` holding a `BaseControl` labelled "Title" around a `RichText` (`tagName="div"`, `value={ title }`, same `onChange`, `placeholder={ stepTitle( '' ) }`, `allowedFormats={ TEXT_FORMATS_WITH_LIVE_VALUE }`, no `withoutInteractiveFormatting`). The control always shows; its help text shows only while headings hide: "Step headings are hidden. Steps Progress still shows this title." Style the box as a `components-text-control__input` look via a class in `step/editor.css` (sidebar styles sit outside `.editor-styles-wrapper`, so scope it under `.block-editor-block-inspector`).
-3. `packages/blocks/src/step/editor.css`: delete the `.is-hidden-on-checkout` and `.yaycheckout-step__hidden-note` rules.
+3. `packages/blocks/src/pro/step/editor.css`: delete the `.is-hidden-on-checkout` and `.yaycheckout-step__hidden-note` rules.
 4. `.claude/rules/blocks.md`, "Text a merchant types": add that the Step title is also edited in the Step's sidebar, so it stays editable while Steps hides headings.
 5. Verify: `pnpm build:blocks` succeeds. In wp-admin open a **new** layout (memory: never test on an existing draft, autosave writes it) from a Steps template (Accordion one-page), select a Step: the sidebar Title shows the title; type there, the canvas header updates; bold a word and add a Live value there, both survive switching back to the canvas. Turn Steps' "Show step headings" off: no step header on the canvas, the sidebar title still edits, and Steps Progress shows the new title. Save, preview: storefront unchanged except the title.
-6. Commit `packages/blocks/src/step/edit.tsx`, `packages/blocks/src/step/editor.css`, `.claude/rules/blocks.md`: `feat(step): edit the step title in the sidebar and hide hidden headings in the editor`.
+6. Commit `packages/blocks/src/pro/step/edit.tsx`, `packages/blocks/src/pro/step/editor.css`, `.claude/rules/blocks.md`: `feat(step): edit the step title in the sidebar and hide hidden headings in the editor`.
 
 ## Task 2: Motion design token (PR 2)
 
@@ -93,10 +93,10 @@ Design token: `LayoutDesign::schema()['motion']['collapse'] = [ 'type' => 'enum'
 
 ## Task 5: Steps accordion
 
-1. `packages/blocks/src/steps/view.ts` `setState( step, state )`: keep its body as `apply`; when the state changes from or to `current`, run it through `collapse( step.querySelector( ':scope > .yaycheckout-step__body' ), state === CURRENT, apply )`, otherwise call `apply()`. State writes still happen synchronously inside `apply`, so `currentStep()` and `syncBackButtons()` see the new state at once.
+1. `packages/blocks/src/pro/steps/view.ts` `setState( step, state )`: keep its body as `apply`; when the state changes from or to `current`, run it through `collapse( step.querySelector( ':scope > .yaycheckout-step__body' ), state === CURRENT, apply )`, otherwise call `apply()`. State writes still happen synchronously inside `apply`, so `currentStep()` and `syncBackButtons()` see the new state at once.
 2. Same file: `setState()` returns the `collapse()` promise (`Promise< void >`); the Continue and reopen paths call `revealStep()` after the closing step's promise resolves, so the scroll target doesn't move under a smooth scroll.
 3. Verify: Accordion one-page and a timeline Steps: Continue slides the current step shut and the next open, then scrolls only if its header is off-screen; Edit on a complete step and a Go to step block do the same in reverse; an invalid step doesn't animate. One-at-a-time and headings-hidden Steps switch instantly with no flicker. Place order still posts every step's fields.
-4. Commit `packages/blocks/src/steps/view.ts`: `feat(steps): animate opening and closing steps`.
+4. Commit `packages/blocks/src/pro/steps/view.ts`: `feat(steps): animate opening and closing steps`.
 
 Final check for PR 2: `./scripts/run.sh build` succeeds, `composer lint` passes (judge failures against `dev/edd`), and the Task 3–5 checks pass with the design set to Slide, Fade and None in turn.
 

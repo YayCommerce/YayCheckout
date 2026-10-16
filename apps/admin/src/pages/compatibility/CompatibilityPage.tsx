@@ -1,8 +1,7 @@
 import { RefreshCw } from 'lucide-react';
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 
 import { deriveWarnings } from '@/lib/helpers/compatibility.helper';
-import { formatDateTime } from '@/lib/helpers/date.helper';
 import { useCompatibilityQuery, useRescanMutation } from '@/lib/queries/compatibility.queries';
 import { LoadingButton } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -20,7 +19,7 @@ export default function CompatibilityPage() {
 
   return (
     <PageLayout
-      heading={__('Compatibility', 'yaycheckout')}
+      title={__('Compatibility', 'yaycheckout')}
       description={__('What this store runs and how it fits the checkout YayCheckout renders.', 'yaycheckout')}
       actions={
         <LoadingButton
@@ -43,15 +42,6 @@ export default function CompatibilityPage() {
           <StoreSection store={report.store} />
           <GatewaysSection gateways={report.gateways} />
           <PluginsSection plugins={report.plugins} />
-          <p className="text-muted-foreground text-xs">
-            {report.catalogue.source === 'bundled'
-              ? __("Compatibility list: built-in (couldn't reach yaycommerce.com)", 'yaycheckout')
-              : sprintf(
-                  /* translators: %s: date and time */
-                  __('Compatibility list updated %s', 'yaycheckout'),
-                  formatDateTime(report.catalogue.fetchedAt),
-                )}
-          </p>
         </>
       )}
     </PageLayout>

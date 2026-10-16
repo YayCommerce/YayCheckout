@@ -28,6 +28,8 @@ if ( function_exists( 'YayCheckout\\plugin_init' ) ) {
             deactivate_plugins( plugin_basename( __FILE__ ) );
         }
     );
+    // The other copy already loaded the autoloaders; loading this copy's too is a fatal redeclare.
+    return;
 }
 
 if ( ! defined( 'YAYCHECKOUT_FILE' ) ) {

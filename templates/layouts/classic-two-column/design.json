@@ -3,7 +3,10 @@
 		"primary": "#3858e9",
 		"text": "#1e1e1e",
 		"background": "#f0f0f1",
-		"border": "#dddddd"
+		"border": "#dddddd",
+		"muted": "",
+		"link": "",
+		"link_hover": ""
 	},
 	"typography": {
 		"font_family": "system",
@@ -17,12 +20,17 @@
 		"text_color": "#1e1e1e",
 		"label_color": "",
 		"border": "#757575",
+		"focus_border": "",
+		"focus_background": "",
+		"focus_style": "",
 		"label": ""
 	},
 	"checkboxes": {
 		"size": 16,
 		"radius": 2,
 		"border_width": 1,
+		"border": "",
+		"background": "",
 		"checked": ""
 	},
 	"radios": {
@@ -31,6 +39,9 @@
 		"border": "",
 		"background": "",
 		"checked": ""
+	},
+	"help_text": {
+		"size": null
 	},
 	"custom_css": ""
 }

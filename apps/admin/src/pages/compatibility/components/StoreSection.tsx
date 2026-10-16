@@ -1,6 +1,7 @@
 import { __, sprintf } from '@wordpress/i18n';
 
 import { storeTypeLabel } from '@/lib/helpers/compatibility.helper';
+import { isPro } from '@/lib/plan';
 import type { StoreEnvironment } from '@/lib/schema/compatibility.schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -19,10 +20,7 @@ export function StoreSection({ store }: { store: StoreEnvironment }) {
     [__('WooCommerce', 'yaycheckout'), store.woocommerceVersion],
     [__('WordPress', 'yaycheckout'), store.wordpressVersion],
     [__('Theme', 'yaycheckout'), theme],
-    [
-      __('Rendering', 'yaycheckout'),
-      store.safeMode ? __('Native checkout — safe mode is on', 'yaycheckout') : __('YayCheckout layout', 'yaycheckout'),
-    ],
+    [__('Rendering', 'yaycheckout'), renderingLabel(store)],
   ];
 
   return (
@@ -42,4 +40,14 @@ export function StoreSection({ store }: { store: StoreEnvironment }) {
       </CardContent>
     </Card>
   );
+}
+
+/** Which checkout shoppers get, in the order CheckoutPage::resolve() decides it. */
+function renderingLabel(store: StoreEnvironment) {
+  if (store.safeMode) return __('Native checkout — safe mode is on', 'yaycheckout');
+  if (store.activeLayouts === 0) return __('Theme checkout — no active layout', 'yaycheckout');
+  // Pro picks a layout by assignment rules; a shopper no rule matches gets the theme's checkout.
+  return isPro
+    ? __('YayCheckout layout (shoppers no rule matches see the theme checkout)', 'yaycheckout')
+    : __('YayCheckout layout', 'yaycheckout');
 }

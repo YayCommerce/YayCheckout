@@ -3,7 +3,10 @@
 		"primary": "#3858e9",
 		"text": "#1e1e1e",
 		"background": "#f0f0f1",
-		"border": "#dddddd"
+		"border": "#dddddd",
+		"muted": "",
+		"link": "",
+		"link_hover": ""
 	},
 	"typography": {
 		"font_family": "system",
@@ -26,10 +29,18 @@
 		"size": 16,
 		"radius": 2,
 		"border_width": 1,
+		"border": "",
+		"background": "",
+		"checked": ""
+	},
+	"radios": {
+		"size": null,
+		"border_width": null,
+		"border": "",
+		"background": "",
 		"checked": ""
 	},
 	"help_text": {
-		"color": "",
 		"size": null
 	},
 	"custom_css": ""

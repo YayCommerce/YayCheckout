@@ -25,8 +25,12 @@ Each of these shipped once and needed a follow-up fix. The commit that fixed it 
 
 - **`colours.background` is the page.** A coloured panel, such as Split express's `#1e1e1e` left column, sets its colour on its own column or group block. If the editor canvas shows the panel colour everywhere, the colour went into the tokens by mistake.
 - **Set `inputs.background` explicitly when the page isn't white.** Otherwise inputs inherit the page fill (3c4880d).
-- **Write `design.json` with `scripts/design_json.sh`.** The schema gains keys over time: `inputs.focus` and `focus_style` in 8cbc7a8, the `checkboxes` section in 13ba74f. A hand-written file goes stale and fails `LayoutTemplateCatalogueTest`.
-- **Take the checkbox values from the mock.** The per-template table in `docs/plans/2026-10-13-checkbox-design-settings.md` already holds them.
+- **Write `design.json` with this skill's `scripts/design_json.sh`.** The schema gains keys over time: `inputs.focus` and `focus_style` in 8cbc7a8, the `checkboxes` section in 13ba74f. A hand-written file goes stale and fails `LayoutTemplateCatalogueTest`.
+- **Take the checkbox values from the mock.**
+- **A block colour that equals a design token is not hex.** Leave it unset when the block's default already paints that token: primary step, place-order and coupon buttons, shipping/payment borders and hover, the step card's white. Otherwise use the "Design: X" swatch. Core attributes store the slug (`"textColor":"yaycheckout-muted"`, `"borderColor":"yaycheckout-border"`, or `var:preset|color|yaycheckout-border` on one side of a border). Custom colour attributes store `var(--yaycheckout-design-<token>)` (badge, steps-progress track, Divider lines' border).
+- **Text on core paragraphs and groups stays unset** unless it is a specific colour (primary, trust green, text on an inverted panel), so it takes the body text. Secondary text on YayCheckout blocks (terms, login, return to cart, summary labels, steps progress) uses "Design: Muted".
+- **Shipping/payment radios get no block colour.** Their unticked ring reads Design → Radios border, then the Inputs border, as loose radios do. Set `radios.border` only when it differs from `inputs.border`.
+- **Hex is only for colours the Design must not change:** inverted panels and what sits on them, the trust green, white cards on a grey page, soft greys.
 
 ## Interaction
 

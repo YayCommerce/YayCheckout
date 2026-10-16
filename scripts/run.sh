@@ -11,7 +11,7 @@
 #   info               - Show current version info
 #   clean              - Remove admin build artifacts (blocks output is left)
 #   backlog            - List docs/backlog/ items and their open boxes
-#   previews [mock]    - Capture templates/layouts/*/preview.html from the HTML mock
+#   previews [mock]    - Capture templates/layouts/{,pro/}*/preview.html from the HTML mock
 #   help               - Show this help message
 #
 
@@ -24,6 +24,11 @@ PLUGIN_DIR="$(dirname "$SCRIPT_DIR")"
 ADMIN_DIR="$PLUGIN_DIR/apps/admin"
 BLOCKS_DIR="$PLUGIN_DIR/packages/blocks"
 RELEASE_DIR="$PLUGIN_DIR/release"
+# Pro-only paths: the Free zip deletes them, except each preview.html (Free's picker shows Pro templates locked),
+# and the artifact check enforces it. Space-separated, each ending in /.
+# Owners: includes/Pro/ (YayCheckout::boot_pro()), assets/dist/blocks/pro/ (ProServiceProvider::built_blocks())
+# and templates/layouts/pro/ (LayoutTemplateCatalogue::relative_path()).
+PRO_PATHS="includes/Pro/ assets/dist/blocks/pro/ templates/layouts/pro/"
 PLUGIN_SLUG="yaycheckout"
 MAIN_FILE="$PLUGIN_DIR/$PLUGIN_SLUG.php"
 
@@ -316,16 +321,26 @@ cmd_release() {
     cp -r "$PLUGIN_DIR/vendor/composer" "$temp_dir/vendor/"
 
     # includes/Pro/ is the only Pro PHP and nothing else names it (scripts/check-pro-boundary.sh),
-    # so removing it leaves a working Free build.
+    # so removing it leaves a working Free build. The Pro blocks (built from packages/blocks/src/pro/)
+    # and the templates made from them go with it: Free registers neither. Only the templates'
+    # preview.html stays, a static page Free's picker shows behind a Pro badge.
     if [ "$plan" = "free" ]; then
-        rm -rf "$temp_dir/includes/Pro"
-        print_info "Free build: includes/Pro removed"
+        local pro_path
+        for pro_path in $PRO_PATHS; do
+            [ -d "${temp_dir:?}/$pro_path" ] || continue
+            find "${temp_dir:?}/$pro_path" -type f ! -name preview.html -delete
+            find "${temp_dir:?}/$pro_path" -depth -type d -empty -delete
+        done
+        print_info "Free build: removed $PRO_PATHS (kept preview.html)"
     fi
 
     # Distinguish the editions in wp-admin.
     if [ "$plan" = "pro" ]; then
         sed_inplace "s/^ \* Plugin Name: .*/ \* Plugin Name:       $plan_label - WooCommerce Checkout Builder/" "$temp_dir/$PLUGIN_SLUG.php"
     fi
+
+    # The source defaults to dev mode (Vite on :3040); a customer zip must load assets/dist.
+    sed_inplace "s/define( 'YAYCHECKOUT_IS_DEVELOPMENT', true )/define( 'YAYCHECKOUT_IS_DEVELOPMENT', false )/" "$temp_dir/$PLUGIN_SLUG.php"
 
     rm -f "$temp_dir/includes/Engine/Register/RegisterDev.php"
     rm -rf "$temp_dir/assets/dist/admin/.vite" 2>/dev/null || true
@@ -342,17 +357,27 @@ cmd_release() {
     # Check the zip customers receive: a Pro leak is invisible in a dev tree,
     # which always contains every file.
     print_step "Verifying artifact..."
-    local pro_entries
-    pro_entries=$(unzip -l "$zip_name" | grep -c "includes/Pro/" || true)
+    local pro_entries pro_pattern path
+    pro_pattern="${PRO_PATHS// /|}"
+    pro_entries=$(unzip -l "$zip_name" | grep -E "$pro_pattern" | grep -cvE '/$|/preview\.html$' || true)
 
     if [ "$plan" = "free" ] && [ "$pro_entries" -ne 0 ]; then
         print_error "Free artifact contains pro code:"
-        unzip -l "$zip_name" | grep "includes/Pro/"
+        unzip -l "$zip_name" | grep -E "$pro_pattern" | grep -vE '/$|/preview\.html$'
         exit 1
     fi
 
-    if [ "$plan" = "pro" ] && [ "$pro_entries" -eq 0 ]; then
-        print_error "Pro artifact is missing includes/Pro/"
+    if [ "$plan" = "pro" ]; then
+        for path in $PRO_PATHS; do
+            if ! unzip -l "$zip_name" | grep -q "$plan_slug/$path"; then
+                print_error "Pro artifact is missing $path"
+                exit 1
+            fi
+        done
+    fi
+
+    if ! unzip -p "$zip_name" "$plan_slug/$PLUGIN_SLUG.php" | grep -q "define( 'YAYCHECKOUT_IS_DEVELOPMENT', false )"; then
+        print_error "Artifact does not set YAYCHECKOUT_IS_DEVELOPMENT to false"
         exit 1
     fi
 
@@ -482,7 +507,7 @@ cmd_help() {
     echo "  info                         Show current version info"
     echo "  clean                        Remove admin build artifacts (blocks output is left)"
     echo "  backlog                      List docs/backlog/ items and their open boxes"
-    echo "  previews [mock-path]         Capture templates/layouts/*/preview.html from the HTML mock"
+    echo "  previews [mock-path]         Capture templates/layouts/{,pro/}*/preview.html from the HTML mock"
     echo "  help                         Show this help message"
     echo ""
     echo "Examples:"

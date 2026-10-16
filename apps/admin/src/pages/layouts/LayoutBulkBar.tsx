@@ -47,7 +47,7 @@ export function LayoutBulkBar({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button size="sm" variant="ghost" disabled={disabled}>
-            {__('Bulk Actions', 'yaycheckout')}
+            {__('Bulk actions', 'yaycheckout')}
             <ChevronsUpDown className="size-4" />
           </Button>
         </DropdownMenuTrigger>

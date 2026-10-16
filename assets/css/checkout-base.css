@@ -204,8 +204,7 @@ html.yaycheckout-has-pinned body {
  * toggles this span with jQuery slideUp()/slideDown(), which write height, overflow, padding,
  * margin and display inline; the !important declarations only outrank those inline styles.
  * The editor's field preview prints the same classes. Every kind of field (text, select, radio,
- * checkbox) takes the layout's Help text design (DesignStyles); unset, the text is the inherited
- * colour at 75% and 0.875em.
+ * checkbox) takes the layout's Muted colour and its Help text size (DesignStyles); an unset size is 0.875em.
  */
 .yaycheckout-checkout .form-row .description {
 	display: block !important;
@@ -215,7 +214,7 @@ html.yaycheckout-has-pinned body {
 	margin: 0.25em 0 0 !important;
 	position: static;
 	background: none;
-	color: var(--yaycheckout-help-text-color, color-mix(in srgb, currentColor 75%, transparent));
+	color: var(--yaycheckout-design-muted);
 	border-radius: 0;
 	font-size: var(--yaycheckout-help-text-size, 0.875em);
 }
@@ -233,6 +232,15 @@ html.yaycheckout-has-pinned body {
 	font: inherit;
 	color: var(--wp--style--color--link, currentColor);
 	cursor: pointer;
+}
+
+/* A link toggle takes the design's link colours (elements); a collapsible or checkbox toggle is a row, not a link. */
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="link"] {
+	color: var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor));
+}
+
+.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="link"]:is(:hover, :focus) {
+	color: var(--yaycheckout-link-hover-color, var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor)));
 }
 
 /* Collapsible: a full-width header that opens and closes the panel below it. */
@@ -475,8 +483,11 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	outline-offset: 1px;
 }
 
-/* A click focuses the control too, and themes such as Twenty Twenty-Five outline every :focus; only the keyboard ring above shows. */
-.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):focus:not(:focus-visible) {
+/*
+ * A click focuses the control too, and themes outline every :focus (Twenty Twenty-Five every element, Storefront
+ * links and buttons); only a keyboard ring shows.
+ */
+.yaycheckout-checkout :is(button, .button, a, [role="button"], input[type="checkbox"], input[type="radio"]):focus:not(:focus-visible) {
 	outline: 0;
 }
 

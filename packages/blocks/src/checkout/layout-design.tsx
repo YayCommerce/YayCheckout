@@ -24,6 +24,7 @@ import { DEFAULT_BASE_SIZE, designCss, isGradient } from '../shared/design-css';
 import { editorData, type DesignRule, type EditorDesign } from '../shared/editor-data';
 import { useIsLayoutEditor } from '../shared/layout-editor';
 import { errorMessage } from '../shared/error-message';
+import { StateColourItem, type ColourState } from '../shared/state-colour-item';
 import './layout-design.css';
 
 export const SIDEBAR = 'yaycheckout-layout-design';
@@ -54,13 +55,12 @@ const SECTIONS: Record< Section, string > = {
 };
 
 /** Each section's colour panel. A section of colours only shows that panel alone, under the section's name. */
-const COLOUR_PANELS: Record< Section, string > = {
+const COLOUR_PANELS: Partial< Record< Section, string > > = {
 	colours: __( 'Colours', 'yaycheckout' ),
 	typography: __( 'Text colours', 'yaycheckout' ),
 	inputs: __( 'Input colours', 'yaycheckout' ),
 	checkboxes: __( 'Checkbox colours', 'yaycheckout' ),
 	radios: __( 'Radio colours', 'yaycheckout' ),
-	help_text: __( 'Help text colour', 'yaycheckout' ),
 };
 
 const TOKEN_LABELS: Record< string, string > = {
@@ -68,13 +68,12 @@ const TOKEN_LABELS: Record< string, string > = {
 	text: __( 'Text', 'yaycheckout' ),
 	background: __( 'Background', 'yaycheckout' ),
 	border: __( 'Border', 'yaycheckout' ),
+	muted: __( 'Muted', 'yaycheckout' ),
 	font_family: __( 'Font', 'yaycheckout' ),
 	base_size: __( 'Base size', 'yaycheckout' ),
 	style: __( 'Style', 'yaycheckout' ),
 	size: __( 'Size', 'yaycheckout' ),
 	radius: __( 'Radius', 'yaycheckout' ),
-	focus_border: __( 'Focus border', 'yaycheckout' ),
-	focus_background: __( 'Focus background', 'yaycheckout' ),
 	focus_style: __( 'Focus style', 'yaycheckout' ),
 	label: __( 'Label', 'yaycheckout' ),
 	text_color: __( 'Input text', 'yaycheckout' ),
@@ -82,6 +81,7 @@ const TOKEN_LABELS: Record< string, string > = {
 	border_width: __( 'Border width', 'yaycheckout' ),
 	checked: __( 'Checked', 'yaycheckout' ),
 	color: __( 'Colour', 'yaycheckout' ),
+	link: __( 'Link', 'yaycheckout' ),
 };
 
 const ENUM_LABELS: Record< string, string > = {
@@ -205,6 +205,12 @@ function isLayoutEditor(): boolean {
 }
 
 /**
+ * The colour tokens offered to blocks as no swatch, so design-presets.css has no preset for them: a block colours
+ * its links with its own Link colour, not the layout's.
+ */
+const NO_SWATCH_TOKENS = [ 'link', 'link_hover' ];
+
+/**
  * The colour tokens as swatches in every colour picker of the layout editor, as the presets design-presets.css
  * prints. A swatch's colour is a custom property no other swatch shares, so a pick matches its slug (or stores
  * that var()) and the block follows later Design changes. The editor's own document loads the same stylesheet
@@ -219,17 +225,19 @@ function isLayoutEditor(): boolean {
  * way core would (a block's own, then the root's), less a block attribute's `settings`.
  */
 function addDesignPalette( design: EditorDesign ) {
-	const swatches: Swatch[] = Object.keys( design.schema.colours ).map( ( token ) => {
-		const slug = DESIGN_PRESET_PREFIX + token;
+	const swatches: Swatch[] = Object.keys( design.schema.colours )
+		.filter( ( token ) => ! NO_SWATCH_TOKENS.includes( token ) )
+		.map( ( token ) => {
+			const slug = DESIGN_PRESET_PREFIX + token;
 
-		return {
-			/* translators: %s: a design colour, such as Primary */
-			name: sprintf( __( 'Design: %s', 'yaycheckout' ), TOKEN_LABELS[ token ] ?? token ),
-			slug,
-			// Not the preset's own var(): the editor resolves a colour naming a preset through it, so it would never return.
-			color: `var(--yaycheckout-design-${ token })`,
-		};
-	} );
+			return {
+				/* translators: %s: a design colour, such as Primary */
+				name: sprintf( __( 'Design: %s', 'yaycheckout' ), TOKEN_LABELS[ token ] ?? token ),
+				slug,
+				// Not the preset's own var(): the editor resolves a colour naming a preset through it, so it would never return.
+				color: `var(--yaycheckout-design-${ token })`,
+			};
+		} );
 	const groupLabel = __( 'Checkout', 'yaycheckout' );
 
 	addFilter(
@@ -268,15 +276,37 @@ function isColourRule( rule: DesignRule ): boolean {
 	return 'color' === rule.type || 'fill' === rule.type;
 }
 
+/** Colour tokens shown as one row with a tab per state: section => the row's token => [ token, tab label ][]. */
+const STATE_GROUPS: Partial< Record< Section, Record< string, [ string, string ][] > > > = {
+	colours: {
+		link: [
+			[ 'link', __( 'Default', 'yaycheckout' ) ],
+			[ 'link_hover', __( 'Hover', 'yaycheckout' ) ],
+		],
+	},
+	inputs: {
+		background: [
+			[ 'background', __( 'Default', 'yaycheckout' ) ],
+			[ 'focus_background', __( 'Focus', 'yaycheckout' ) ],
+		],
+		border: [
+			[ 'border', __( 'Default', 'yaycheckout' ) ],
+			[ 'focus_border', __( 'Focus', 'yaycheckout' ) ],
+		],
+	},
+};
+
 /**
  * A section's colour tokens as the block editor's colour items, in a ToolsPanel styled like a block's Color panel.
  * A theme swatch is stored as its preset's custom property, so the layout follows later palette changes; a
  * custom pick is stored as written. Clear, or clicking the selected swatch again, unsets the colour (''), which
- * prints nothing, so the theme's colour shows. A fill (the background) also takes gradients.
+ * prints nothing, so the theme's colour shows. A fill (the background) also takes gradients. A STATE_GROUPS set
+ * is one item with a tab per state (StateColourItem).
  */
 function ColourSettings( {
 	label,
 	panelId,
+	stateGroups = {},
 	rules,
 	values,
 	onChange,
@@ -284,6 +314,8 @@ function ColourSettings( {
 	label: string;
 	/** One per panel, so each panel's colour items register with its own ToolsPanel. */
 	panelId: string;
+	/** The section's STATE_GROUPS. */
+	stateGroups?: Record< string, [ string, string ][] >;
 	rules: Record< string, DesignRule >;
 	values: SectionTokens;
 	onChange: ( next: SectionTokens ) => void;
@@ -321,30 +353,70 @@ function ColourSettings( {
 		return null;
 	}
 
-	const settings = tokens.map( ( [ token, rule ] ) => {
-		const value = String( values[ token ] ?? '' );
-		const isFill = 'fill' === rule.type;
-		const gradient = isFill && isGradient( value );
-		const colorPreset = gradient ? undefined : presetOf( value, 'color', palettes.colors );
-		const gradientPreset = gradient ? presetOf( value, 'gradient', palettes.gradients ) : undefined;
+	const isColour = ( token: string ) => tokens.some( ( [ key ] ) => key === token );
+	// A set shows as one item only while every state shows: SectionPanel leaves out tokens that don't apply.
+	const groups = Object.entries( stateGroups ).filter( ( [ , states ] ) =>
+		states.every( ( [ token ] ) => isColour( token ) )
+	);
+	const inGroup = ( token: string ) => groups.some( ( [ , states ] ) => states.some( ( [ key ] ) => key === token ) );
 
-		return {
-			label: TOKEN_LABELS[ token ] ?? token,
-			colorValue: gradient || '' === value ? undefined : colorPreset?.color ?? value,
-			colorSlug: colorPreset?.slug,
-			onColorChange: ( next?: string, slug?: string ) => change( token, 'color', next, slug ),
-			...( isFill
-				? {
-						gradientValue: gradient ? gradientPreset?.gradient ?? value : undefined,
-						gradientSlug: gradientPreset?.slug,
-						onGradientChange: ( next?: string, slug?: string ) => change( token, 'gradient', next, slug ),
-				  }
-				: {} ),
-			// Clear empties the token (''), so the theme's colour shows.
-			clearable: true,
-			isShownByDefault: true,
-		};
+	/** A colour token's value for the picker: a preset's colour and slug, or the colour as stored; none when empty. */
+	const colourOf = ( value: string ) => {
+		const preset = presetOf( value, 'color', palettes.colors );
+
+		return { colorValue: '' === value ? undefined : preset?.color ?? value, colorSlug: preset?.slug };
+	};
+
+	const stateItems = groups.map( ( [ token, groupStates ] ) => {
+		const states: ColourState[] = groupStates.map( ( [ key, stateLabel ] ) => ( {
+			key,
+			label: stateLabel,
+			...colourOf( String( values[ key ] ?? '' ) ),
+			onColorChange: ( next?: string, slug?: string ) => change( key, 'color', next, slug ),
+		} ) );
+
+		return (
+			<StateColourItem
+				key={ token }
+				label={ TOKEN_LABELS[ token ] ?? token }
+				panelId={ panelId }
+				states={ states }
+				colors={ palettes.colors }
+				disableCustomColors={ palettes.disableCustomColors }
+				onReset={ () =>
+					onChange( {
+						...latest.current,
+						...Object.fromEntries( groupStates.map( ( [ key ] ) => [ key, rules[ key ].default ] ) ),
+					} )
+				}
+			/>
+		);
 	} );
+
+	const settings = tokens
+		.filter( ( [ token ] ) => ! inGroup( token ) )
+		.map( ( [ token, rule ] ) => {
+			const value = String( values[ token ] ?? '' );
+			const isFill = 'fill' === rule.type;
+			const gradient = isFill && isGradient( value );
+			const gradientPreset = gradient ? presetOf( value, 'gradient', palettes.gradients ) : undefined;
+
+			return {
+				label: TOKEN_LABELS[ token ] ?? token,
+				...( gradient ? {} : colourOf( value ) ),
+				onColorChange: ( next?: string, slug?: string ) => change( token, 'color', next, slug ),
+				...( isFill
+					? {
+							gradientValue: gradient ? gradientPreset?.gradient ?? value : undefined,
+							gradientSlug: gradientPreset?.slug,
+							onGradientChange: ( next?: string, slug?: string ) => change( token, 'gradient', next, slug ),
+					  }
+					: {} ),
+				// Clear empties the token (''), so the theme's colour shows.
+				clearable: true,
+				isShownByDefault: true,
+			};
+		} );
 
 	return (
 		<ToolsPanel
@@ -363,16 +435,19 @@ function ColourSettings( {
 			}
 		>
 			<div className="color-block-support-panel__inner-wrapper">
-				<ColorGradientSettingsDropdown
-					__experimentalIsRenderedInSidebar
-					panelId={ panelId }
-					settings={ settings }
-					colors={ palettes.colors }
-					gradients={ palettes.gradients }
-					disableCustomColors={ palettes.disableCustomColors }
-					disableCustomGradients={ palettes.disableCustomGradients }
-					enableAlpha={ false }
-				/>
+				{ settings.length > 0 && (
+					<ColorGradientSettingsDropdown
+						__experimentalIsRenderedInSidebar
+						panelId={ panelId }
+						settings={ settings }
+						colors={ palettes.colors }
+						gradients={ palettes.gradients }
+						disableCustomColors={ palettes.disableCustomColors }
+						disableCustomGradients={ palettes.disableCustomGradients }
+						enableAlpha={ false }
+					/>
+				) }
+				{ stateItems }
 			</div>
 		</ToolsPanel>
 	);
@@ -461,8 +536,9 @@ function SectionPanel( {
 	);
 	const colours = (
 		<ColourSettings
-			label={ COLOUR_PANELS[ section ] }
+			label={ COLOUR_PANELS[ section ] ?? SECTIONS[ section ] }
 			panelId={ `${ SIDEBAR }-${ section }` }
+			stateGroups={ STATE_GROUPS[ section ] }
 			rules={ rules }
 			values={ values }
 			onChange={ onChange }

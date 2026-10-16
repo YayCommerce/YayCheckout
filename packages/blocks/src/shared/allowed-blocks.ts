@@ -1,12 +1,12 @@
 import { store as blocksStore } from '@wordpress/blocks';
 import { useSelect } from '@wordpress/data';
 import { useMemo } from '@wordpress/element';
-import backButtonMeta from '../back-button/block.json';
+import backButtonMeta from '../pro/back-button/block.json';
 import checkoutMeta from '../checkout/block.json';
 import emailMeta from '../email/block.json';
 import extraFieldMeta from '../extra-field/block.json';
-import stepsProgressMeta from '../steps-progress/block.json';
-import stepButtonMeta from '../step-button/block.json';
+import stepsProgressMeta from '../pro/steps-progress/block.json';
+import stepButtonMeta from '../pro/step-button/block.json';
 
 interface BlockTypeRules {
 	name: string;

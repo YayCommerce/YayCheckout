@@ -40,7 +40,7 @@ import {
 	type VisibilitySetting,
 	type VisibilityState,
 } from '../shared/visibility-rules';
-import stepMeta from '../step/block.json';
+import stepMeta from '../pro/step/block.json';
 import './editor.css';
 
 type RuleType = VisibilityRule[ 'type' ];
@@ -378,10 +378,15 @@ function VisibilityPanel( { clientId, attributes, setAttributes }: LayoutPanelPr
 	const picked = rules.flatMap( ( rule ) => ( rule.type === 'block' && rule.block ? [ rule.block ] : [] ) );
 	const free = targets.filter( ( target ) => target.blockId === '' || ! picked.includes( target.blockId ) );
 	const hasRequiredField = useHasRequiredField( clientId, picked );
-	// Each type once, except "block", offered while a target is left to pick.
-	const unused = ( Object.keys( typeLabels() ) as RuleType[] ).filter( ( type ) =>
-		type === 'block' ? free.length > 0 : ! rules.some( ( rule ) => rule.type === type )
-	);
+	// Each type once, except "block", offered while a target is left to pick. No "step" where Step is a
+	// locked Pro stub: the storefront skips step rules there.
+	const unused = ( Object.keys( typeLabels() ) as RuleType[] ).filter( ( type ) => {
+		if ( type === 'step' && editorData.lockedBlocks.includes( stepMeta.name ) ) {
+			return false;
+		}
+
+		return type === 'block' ? free.length > 0 : ! rules.some( ( rule ) => rule.type === type );
+	} );
 
 	const blockIdOf = ( target: Target ): string => {
 		if ( target.blockId !== '' ) {

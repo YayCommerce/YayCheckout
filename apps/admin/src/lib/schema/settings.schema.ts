@@ -49,6 +49,8 @@ export const integrationWireSchema = z.object({
   detected: z.boolean(),
   version: z.string().nullable(),
   active: z.boolean(),
+  // Optional: a filter-added entry may leave it out.
+  icon_url: z.string().url().nullable().optional(),
   learn_more_url: z.string().url().nullable(),
 });
 
@@ -87,5 +89,6 @@ export type Integration = {
   detected: boolean;
   version: string | null;
   active: boolean;
+  iconUrl: string | null;
   learnMoreUrl: string | null;
 };

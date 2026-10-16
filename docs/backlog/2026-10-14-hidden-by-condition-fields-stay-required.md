@@ -13,11 +13,11 @@
   - `Services\RequiredFieldOverlay::apply()` (through `CheckoutRequiredFields::filter_fields()`) keeps such an address Field or Order note required;
   - `Services\ExtraFieldSubmission::collect()` (through `CheckoutExtraFields::validate()`) reports such an Extra field as required;
   - `CheckoutExtraFields::persist()` saves whatever value was typed before the block hid.
-- `packages/blocks/src/steps/view.ts` `visibleControls()` skips controls that `isShown()` says are hidden. The shopper gets past every step, and the error appears only at Place order.
+- `packages/blocks/src/pro/steps/view.ts` `visibleControls()` skips controls that `isShown()` says are hidden. The shopper gets past every step, and the error appears only at Place order.
 - The editor warning in `packages/blocks/src/visibility/index.tsx` `VisibilityPanel` ("This block contains required fields…") has two gaps:
   - It shows only while a "Block is empty" condition is picked (`picked.length > 0`). Step, subtotal, coupon, needs shipping and logged-in conditions get no warning.
   - `useHasRequiredField()` counts only blocks with `attrs.required === true`. It skips the Email block and email-type Fields, which `RequiredFieldOverlay::is_required()` always requires.
-- This is accepted behaviour today. `docs/decisions/2026-10-13-block-visibility-in-block-markup.md` says that "a required field inside a hidden block still blocks the order", and the accepted spec `docs/specs/2026-10-13-block-visibility-conditions-design.md` rejected the alternative.
+- This is accepted behaviour today. `docs/decisions/2026-10-13-block-visibility-in-block-markup.md` says that "a required field inside a hidden block still blocks the order", and the accepted block visibility conditions design rejected the alternative.
 
 ## Why it matters
 
