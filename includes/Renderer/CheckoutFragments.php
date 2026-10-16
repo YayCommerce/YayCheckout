@@ -1051,7 +1051,7 @@ class CheckoutFragments {
         if ( $options['show_unit_price'] ) {
             // The amount WC_Cart::get_product_price() formats.
             $unit  = WC()->cart->display_prices_including_tax() ? wc_get_price_including_tax( $product ) : wc_get_price_excluding_tax( $product );
-            $price = apply_filters( 'woocommerce_cart_item_price', self::price_html( (float) $unit, WC()->cart->get_product_price( $product ) ), $cart_item, $cart_item_key );
+            $price = apply_filters( 'woocommerce_cart_item_price', self::price_html( (float) $unit, WC()->cart->get_product_price( $product ), 'unit_price', $product ), $cart_item, $cart_item_key );
             /* translators: %s: product price */
             echo '<div class="product-unit-price">' . sprintf( esc_html__( '%s each', 'yaycheckout' ), $price ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered price HTML.
         }
@@ -1115,19 +1115,21 @@ class CheckoutFragments {
 
     /**
      * An amount YayCheckout formats itself rather than through a WooCommerce filter (the Breakdown's shipping row,
-     * Items' unit price, live values, the Savings note): $html, or wc_price( $amount ), through yaycheckout_price_html,
-     * so a multi-currency plugin can print it as it prints WooCommerce's own amounts.
+     * Items' unit price, the Coupon form's chips, live values, the Savings note): $html, or wc_price( $amount ),
+     * through yaycheckout_price_html, so a multi-currency plugin can print it as it prints WooCommerce's own amounts.
      *
-     * @param string $key A live value's key (LiveValues::money()), so the cart's subtotal and total can match their rows.
+     * @param string           $key     A live value's key (LiveValues::money()), 'unit_price' or 'coupon', so an amount
+     *                                  can match the row WooCommerce prints for it.
+     * @param \WC_Product|null $product The product, for 'unit_price'.
      */
-    public static function price_html( float $amount, ?string $html = null, string $key = '' ): string {
-        return (string) apply_filters( 'yaycheckout_price_html', $html ?? wc_price( $amount ), $amount, $key );
+    public static function price_html( float $amount, ?string $html = null, string $key = '', ?\WC_Product $product = null ): string {
+        return (string) apply_filters( 'yaycheckout_price_html', $html ?? wc_price( $amount ), $amount, $key, $product );
     }
 
     /** The amount half of Woo's wc_cart_totals_coupon_html() (wc-cart-functions.php), without its [Remove] link: the chip carries that. */
     public static function coupon_amount_html( \WC_Coupon $coupon ): string {
         $amount = WC()->cart->get_coupon_discount_amount( $coupon->get_code(), WC()->cart->display_cart_ex_tax );
-        $html   = '-' . wc_price( $amount );
+        $html   = '-' . self::price_html( (float) $amount, null, 'coupon' );
 
         if ( $coupon->get_free_shipping() && empty( $amount ) ) {
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own string, so its translation still applies.

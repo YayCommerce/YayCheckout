@@ -26,10 +26,9 @@ class YayCurrency {
             return;
         }
 
-        add_filter( 'yaycheckout_visibility_subtotal', [ $this, 'store_currency_subtotal' ] );
-
         if ( class_exists( YayCurrencyHelper::class ) && class_exists( SupportHelper::class ) ) {
-            add_filter( 'yaycheckout_price_html', [ $this, 'fallback_price_html' ], 10, 3 );
+            add_filter( 'yaycheckout_visibility_subtotal', [ $this, 'store_currency_subtotal' ] );
+            add_filter( 'yaycheckout_price_html', [ $this, 'fallback_price_html' ], 10, 4 );
         }
     }
 
@@ -37,11 +36,12 @@ class YayCurrency {
      * An amount as YayCurrency prints WooCommerce's while the shopper pays in its fallback currency, as in its
      * WooCommerceCurrency::woocommerce_cart_subtotal(): the fallback currency's price, then the shopper's in "(~…)".
      *
-     * @param string $html   The amount's HTML as YayCheckout formats it.
-     * @param float  $amount The amount, in the store's currency while the shopper pays in the fallback one.
-     * @param string $key    A live value's key, or ''.
+     * @param string           $html    The amount's HTML as YayCheckout formats it.
+     * @param float            $amount  The amount, in the store's currency while the shopper pays in the fallback one.
+     * @param string           $key     A live value's key, 'unit_price', 'coupon', or ''.
+     * @param \WC_Product|null $product The product, for 'unit_price'.
      */
-    public function fallback_price_html( $html, $amount, $key = '' ): string {
+    public function fallback_price_html( $html, $amount, $key = '', $product = null ): string {
         $html = (string) $html;
 
         if ( ! YayCurrencyHelper::should_show_approximate_price() ) {
@@ -70,6 +70,11 @@ class YayCurrency {
         if ( 'cart_subtotal' === $key && WC()->cart instanceof \WC_Cart ) {
             return (string) apply_filters( 'woocommerce_cart_subtotal', $html, false, WC()->cart );
         }
+
+        // One of the product, as YayCurrency prints the line's subtotal: a price fixed per currency stays fixed.
+        if ( 'unit_price' === $key && $product instanceof \WC_Product && WC()->cart instanceof \WC_Cart ) {
+            return (string) apply_filters( 'woocommerce_cart_product_subtotal', $html, $product, 1, WC()->cart );
+        }
         // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
         $paid = YayCurrencyHelper::calculate_price_by_currency_html( $currencies['fallback_currency'], (float) $amount );
@@ -78,7 +83,10 @@ class YayCurrency {
             return $paid;
         }
 
-        $shown = YayCurrencyHelper::calculate_price_by_currency_html( $current, (float) $amount );
+        // A discount as YayCurrency converts a coupon's, without its rounding, so a chip matches its row.
+        $shown = in_array( $key, [ 'coupon', 'cart_discount_total' ], true )
+            ? YayCurrencyHelper::format_price( YayCurrencyHelper::calculate_price_by_currency( (float) $amount, true, $current ) )
+            : YayCurrencyHelper::calculate_price_by_currency_html( $current, (float) $amount );
 
         if ( SupportHelper::display_approximate_price_checkout_only() ) {
             return $shown;
@@ -89,34 +97,22 @@ class YayCurrency {
     }
 
     /**
-     * The cart's subtotal in the store's currency.
+     * The cart's subtotal in the store's currency: the subtotal as the cart shows it (with or without tax, after
+     * what plugins did to the lines' prices) back at YayCurrency's rate. YayCurrency compares its own minimums
+     * (free shipping, coupons) the same way, the minimum times the rate against the cart.
      *
      * @param float $subtotal The cart's subtotal as it shows, in the cart's currency.
      */
     public function store_currency_subtotal( $subtotal ): float {
         $subtotal = (float) $subtotal;
-        $cart     = function_exists( 'WC' ) ? WC()->cart : null;
+        $current  = YayCurrencyHelper::detect_current_currency();
 
-        // Already the store's currency: YayCurrency's "pay in the store's currency" mode, or that currency picked.
-        if ( ! $cart instanceof \WC_Cart || get_woocommerce_currency() === get_option( 'woocommerce_currency' ) ) {
+        // The cart is in the store's currency: that currency picked, or the shopper paying in the fallback one,
+        // where YayCurrency keeps the cart in the store's currency and only prints it in another.
+        if ( empty( $current['currency'] ) || get_option( 'woocommerce_currency' ) === $current['currency'] || YayCurrencyHelper::is_dis_checkout_diff_currency( $current ) ) {
             return $subtotal;
         }
 
-        // The lines at the products' own prices, before YayCurrency converts them: a rounded or fixed price in the cart's currency can't move the amount.
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.NamingConventions.ValidHookName -- YayCurrency's filter, named as it names it.
-        $store_subtotal = apply_filters( 'YayCurrency/StoreCurrency/GetCartSubtotal', null );
-        $cart_subtotal  = (float) $cart->get_subtotal();
-
-        // An older YayCurrency without the filter, or an empty cart: leave the subtotal as it is.
-        if ( ! is_numeric( $store_subtotal ) || $cart_subtotal <= 0 ) {
-            return $subtotal;
-        }
-
-        // The cart shows prices with tax: the cart's own share of tax on top.
-        if ( $cart->display_prices_including_tax() ) {
-            $store_subtotal *= $subtotal / $cart_subtotal;
-        }
-
-        return round( (float) $store_subtotal, (int) get_option( 'woocommerce_price_num_decimals', 2 ) );
+        return round( (float) YayCurrencyHelper::reverse_calculate_price_by_currency( $subtotal, $current ), (int) get_option( 'woocommerce_price_num_decimals', 2 ) );
     }
 }
