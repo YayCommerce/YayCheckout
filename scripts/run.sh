@@ -385,6 +385,8 @@ cmd_release() {
     cp "$PLUGIN_DIR/YayCheckoutPluginAdapter.php" "$temp_dir/"
     cp "$PLUGIN_DIR/readme.txt" "$temp_dir/"
     cp "$PLUGIN_DIR/uninstall.php" "$temp_dir/"
+    # Plugin Check wants composer.json beside a shipped vendor/, so reviewers can see where it came from.
+    cp "$PLUGIN_DIR/composer.json" "$temp_dir/"
 
     cp -r "$PLUGIN_DIR/assets" "$temp_dir/"
     cp -r "$PLUGIN_DIR/includes" "$temp_dir/"
