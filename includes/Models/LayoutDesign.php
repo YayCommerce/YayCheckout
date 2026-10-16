@@ -97,6 +97,9 @@ final class LayoutDesign {
      * colours.link and colours.link_hover colour the page's text links: the login and disclosure links, and any link in a paragraph, a
      * heading or the terms that no block gives a link colour of its own. An empty link_hover falls back
      * to link, and an empty link leaves each link its theme colour.
+     * buttons styles the primary buttons: Place Order, the Step button, Coupon's filled Apply, Login's submit and
+     * WooCommerce's .button. An empty background is the primary colour and an empty text white; an empty hover colour
+     * keeps its default colour, darkened, while either hover colour drops the darkening. A block's own colours win.
      */
     public static function schema(): array {
         return [
@@ -259,6 +262,40 @@ final class LayoutDesign {
                     'default' => null,
                     'min'     => 10,
                     'max'     => 20,
+                ],
+            ],
+            'buttons'    => [
+                'background'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'text'             => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'hover_background' => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'hover_text'       => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'radius'           => [
+                    'type'    => 'int',
+                    'default' => null,
+                    'min'     => 0,
+                    'max'     => 32,
+                ],
+                'font_weight'      => [
+                    'type'    => 'enum',
+                    'default' => '',
+                    'enum'    => [ '', 'normal', 'medium', 'semibold', 'bold' ],
+                ],
+                'text_transform'   => [
+                    'type'    => 'enum',
+                    'default' => '',
+                    'enum'    => [ '', 'uppercase' ],
                 ],
             ],
         ];

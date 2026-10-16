@@ -730,7 +730,8 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 
 /*
  * Buttons: Coupon's Apply, Login's submit, WooCommerce's .button and Place Order. No display:
- * Place Order's style.css sets it. Block supports (inline styles, has-* classes) win.
+ * Place Order's style.css sets it. Block supports (inline styles, has-* classes) win. The design's buttons tokens
+ * replace each value; place-order, coupon-button, step-button and login read them with the same fallbacks.
  */
 .yaycheckout-checkout :is(.button, button[type="submit"]) {
 	box-sizing: border-box;
@@ -738,18 +739,22 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	padding: var(--yaycheckout-input-padding-block, 8px) 20px;
 	/* Transparent, so a background picked in the block's settings shows edge to edge. */
 	border: 1px solid transparent;
-	border-radius: var(--yaycheckout-neutral-radius);
-	background-color: var(--yaycheckout-primary-color);
-	color: #fff;
+	border-radius: var(--yaycheckout-button-radius, var(--yaycheckout-neutral-radius));
+	background-color: var(--yaycheckout-button-background, var(--yaycheckout-primary-color));
+	color: var(--yaycheckout-button-color, #fff);
 	font-family: inherit;
-	font-weight: 600;
+	font-weight: var(--yaycheckout-button-font-weight, 600);
 	line-height: 1.4;
+	text-transform: var(--yaycheckout-button-text-transform, none);
 	text-decoration: none;
 	cursor: pointer;
 }
 
+/* Darkened, until the design picks a hover colour. */
 .yaycheckout-checkout :is(.button, button[type="submit"]):hover {
-	filter: brightness(0.92);
+	background-color: var(--yaycheckout-button-hover-background, var(--yaycheckout-button-background, var(--yaycheckout-primary-color)));
+	color: var(--yaycheckout-button-hover-color, var(--yaycheckout-button-color, #fff));
+	filter: var(--yaycheckout-button-hover-filter, brightness(0.92));
 }
 
 .yaycheckout-checkout :is(.button, button[type="submit"]):disabled {
