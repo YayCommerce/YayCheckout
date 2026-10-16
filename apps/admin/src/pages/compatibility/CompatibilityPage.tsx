@@ -1,12 +1,12 @@
 import { RefreshCw } from 'lucide-react';
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 
-import { deriveWarnings } from '@/lib/helpers/compatibility.helper';
-import { formatDateTime } from '@/lib/helpers/date.helper';
+import { deriveWarnings, FAILED_REPORT } from '@/lib/helpers/compatibility.helper';
 import { useCompatibilityQuery, useRescanMutation } from '@/lib/queries/compatibility.queries';
 import { LoadingButton } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { NotDetected } from '@/components/shared/NotDetected';
 import { WarningBanner } from '@/components/shared/WarningBanner';
 import PageLayout from '@/pages/PageLayout';
 import { GatewaysSection } from './components/GatewaysSection';
@@ -16,11 +16,12 @@ import { StoreSection } from './components/StoreSection';
 export default function CompatibilityPage() {
   const query = useCompatibilityQuery();
   const rescan = useRescanMutation();
-  const report = query.data;
+  // A failed first load still shows every section, each "Not detected"; Re-scan tries again.
+  const report = query.data ?? (query.error ? FAILED_REPORT : undefined);
 
   return (
     <PageLayout
-      heading={__('Compatibility', 'yaycheckout')}
+      title={__('Compatibility', 'yaycheckout')}
       description={__('What this store runs and how it fits the checkout YayCheckout renders.', 'yaycheckout')}
       actions={
         <LoadingButton
@@ -35,26 +36,42 @@ export default function CompatibilityPage() {
       }
     >
       {query.isPending && <CompatibilityPageSkeleton />}
-      {query.error && <p className="text-destructive text-sm">{query.error.message}</p>}
 
       {report && (
         <>
-          <WarningBanner warnings={deriveWarnings(report)} gatewayTotal={report.gateways.length} />
-          <StoreSection store={report.store} />
-          <GatewaysSection gateways={report.gateways} />
-          <PluginsSection plugins={report.plugins} />
-          <p className="text-muted-foreground text-xs">
-            {report.catalogue.source === 'bundled'
-              ? __("Compatibility list: built-in (couldn't reach yaycommerce.com)", 'yaycheckout')
-              : sprintf(
-                  /* translators: %s: date and time */
-                  __('Compatibility list updated %s', 'yaycheckout'),
-                  formatDateTime(report.catalogue.fetchedAt),
-                )}
-          </p>
+          <WarningBanner warnings={deriveWarnings(report)} gatewayTotal={report.gateways?.length ?? 0} />
+          {report.store ? (
+            <StoreSection store={report.store} />
+          ) : (
+            <NotDetectedSection title={__('Store', 'yaycheckout')} />
+          )}
+          {report.gateways ? (
+            <GatewaysSection gateways={report.gateways} />
+          ) : (
+            <NotDetectedSection title={__('Payment gateways', 'yaycheckout')} />
+          )}
+          {report.plugins ? (
+            <PluginsSection plugins={report.plugins} />
+          ) : (
+            <NotDetectedSection title={__('Plugins touching checkout', 'yaycheckout')} />
+          )}
         </>
       )}
     </PageLayout>
+  );
+}
+
+/** A section whose detection failed, under the same title its card has. */
+function NotDetectedSection({ title }: { title: string }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="text-sm">
+        <NotDetected />
+      </CardContent>
+    </Card>
   );
 }
 

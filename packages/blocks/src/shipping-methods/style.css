@@ -441,3 +441,8 @@
 .yaycheckout-checkout .yaycheckout-shipping-methods[data-layout="box"] .yaycheckout-shipping-methods__price {
 	margin-inline-start: auto;
 }
+
+/* WooCommerce's "no options" notices and the store manager's setup hint, classic or block-theme markup: the block's own spacing ends the last one. */
+.yaycheckout-checkout .yaycheckout-shipping-methods :is(.woocommerce-info, .wc-block-components-notice-banner):last-child {
+	margin-bottom: 0;
+}

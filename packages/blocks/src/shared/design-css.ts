@@ -58,9 +58,17 @@ const INPUT_SIZES: Record< string, [ string, string ] > = {
 	large: [ '3em', '3.5em' ],
 };
 
+/** Mirrors DesignStyles::BUTTON_FONT_WEIGHTS in PHP. */
+const BUTTON_FONT_WEIGHTS: Record< string, string > = {
+	normal: '400',
+	medium: '500',
+	semibold: '600',
+	bold: '700',
+};
+
 /** Mirrors DesignStyles::vars() in PHP: custom property values by name, for the tokens that aren't empty, and always the font size. */
 function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: DesignFonts ): [ string, string ][] {
-	const { colours, typography, inputs, checkboxes, radios } = tokens;
+	const { colours, typography, inputs, checkboxes, radios, buttons } = tokens;
 	const background = String( colours.background ?? '' );
 	const pairs: [ string, string ][] = [
 		[ 'color-primary', String( colours.primary ?? '' ) ],
@@ -165,7 +173,8 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 	out.push( ...radioColours.filter( notEmpty ) );
 
 	const linkColours: [ string, string ][] = [
-		[ 'link-color', String( colours.link ?? '' ) ],
+		// An empty link colour takes the primary colour; with neither, links keep the theme's.
+		[ 'link-color', String( colours.link || colours.primary || '' ) ],
 		[ 'link-hover-color', String( colours.link_hover ?? '' ) ],
 	];
 
@@ -173,6 +182,34 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 
 	if ( null !== tokens.help_text.size ) {
 		out.push( [ 'help-text-size', `${ tokens.help_text.size }px` ] );
+	}
+
+	const buttonHoverBackground = String( buttons.hover_background ?? '' );
+	const buttonHoverText = String( buttons.hover_text ?? '' );
+	const buttonColours: [ string, string ][] = [
+		[ 'button-background', String( buttons.background ?? '' ) ],
+		[ 'button-color', String( buttons.text ?? '' ) ],
+		[ 'button-hover-background', buttonHoverBackground ],
+		[ 'button-hover-color', buttonHoverText ],
+	];
+
+	out.push( ...buttonColours.filter( notEmpty ) );
+
+	// A hover colour of its own replaces the darkened default.
+	if ( '' !== buttonHoverBackground || '' !== buttonHoverText ) {
+		out.push( [ 'button-hover-filter', 'none' ] );
+	}
+
+	if ( null !== buttons.radius ) {
+		out.push( [ 'button-radius', `${ buttons.radius }px` ] );
+	}
+
+	if ( '' !== buttons.font_weight ) {
+		out.push( [ 'button-font-weight', BUTTON_FONT_WEIGHTS[ String( buttons.font_weight ) ] ] );
+	}
+
+	if ( '' !== buttons.text_transform ) {
+		out.push( [ 'button-text-transform', String( buttons.text_transform ) ] );
 	}
 
 	return out;

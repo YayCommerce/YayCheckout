@@ -1,4 +1,5 @@
-/* The design's link colours (elements), else the theme's link colour. */
+/* The design's link colours (elements), else the theme's link colour: the same fallback chain as checkout-base.css's
+   .yaycheckout-disclosure__toggle[data-mode="link"]; change them together. */
 .yaycheckout-login__trigger {
 	color: var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor));
 	text-decoration: underline;
@@ -17,8 +18,9 @@ button.yaycheckout-login__trigger {
 }
 
 /*
- * A fixed shadcn-style look: of the layout's design tokens it reads only the primary colour (the button and the
- * ticked checkbox), which follows the theme's primary when the layout sets none (design-presets.css). The
+ * A fixed shadcn-style look: of the layout's design tokens it reads only the primary colour (the ticked checkbox,
+ * and the button unless the design styles buttons), which follows the theme's primary when the layout sets none
+ * (design-presets.css), and the buttons tokens on the submit button, with checkout-base.css's fallbacks. The
  * near-black is shadcn's, for a page without checkout-base.css. Text on it is white, as on Place Order.
  * Each rule sets what themes commonly restyle on inputs and buttons, so theme CSS doesn't leak in.
  */
@@ -30,8 +32,10 @@ button.yaycheckout-login__trigger {
 	--yc-login-ring: rgb(161 161 170 / 50%);
 	--yc-login-ring-border: #a1a1aa;
 	--yc-login-primary: var(--yaycheckout-primary-color, #18181b);
-	--yc-login-primary-hover: color-mix(in srgb, var(--yc-login-primary) 90%, transparent);
-	--yc-login-primary-fg: #fff;
+	--yc-login-button: var(--yaycheckout-button-background, var(--yc-login-primary));
+	--yc-login-button-hover: var(--yaycheckout-button-hover-background, color-mix(in srgb, var(--yc-login-button) 90%, transparent));
+	--yc-login-button-fg: var(--yaycheckout-button-color, #fff);
+	--yc-login-button-hover-fg: var(--yaycheckout-button-hover-color, var(--yc-login-button-fg));
 	--yc-login-danger: #dc2626;
 	--yc-login-shadow-xs: 0 1px 2px rgb(0 0 0 / 5%);
 
@@ -247,24 +251,24 @@ button.yaycheckout-login__trigger {
 		margin: 0;
 		padding: 8px 16px;
 		border: 0;
-		border-radius: 6px;
-		background: var(--yc-login-primary);
+		border-radius: var(--yaycheckout-button-radius, 6px);
+		background: var(--yc-login-button);
 		box-shadow: var(--yc-login-shadow-xs);
-		color: var(--yc-login-primary-fg);
+		color: var(--yc-login-button-fg);
 		font-family: inherit;
 		font-size: 14px;
-		font-weight: 500;
+		font-weight: var(--yaycheckout-button-font-weight, 500);
 		line-height: 1.43;
 		letter-spacing: normal;
 		text-decoration: none;
-		text-transform: none;
+		text-transform: var(--yaycheckout-button-text-transform, none);
 		cursor: pointer;
 		outline: none;
 		transition: background-color 150ms, box-shadow 150ms;
 
 		&:hover {
-			background: var(--yc-login-primary-hover);
-			color: var(--yc-login-primary-fg);
+			background: var(--yc-login-button-hover);
+			color: var(--yc-login-button-hover-fg);
 		}
 
 		&:focus-visible {

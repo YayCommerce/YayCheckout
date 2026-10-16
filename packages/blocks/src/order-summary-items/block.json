@@ -22,6 +22,25 @@
       "type": "boolean",
       "default": true
     },
+    "thumbnailRatio": {
+      "type": "string",
+      "enum": [ "square", "portrait", "landscape", "original" ],
+      "default": "square"
+    },
+    "thumbnailSize": {
+      "type": "number"
+    },
+    "thumbnailRadius": {
+      "type": "number"
+    },
+    "linkImage": {
+      "type": "boolean",
+      "default": false
+    },
+    "linkName": {
+      "type": "boolean",
+      "default": false
+    },
     "itemData": {
       "type": "string",
       "enum": [ "list", "inline", "hidden" ],
@@ -41,10 +60,10 @@
     },
     "quantityDisplay": {
       "type": "string",
-      "enum": [ "inline", "badge" ],
+      "enum": [ "inline", "stepper", "hidden" ],
       "default": "inline"
     },
-    "showStepper": {
+    "showBadge": {
       "type": "boolean",
       "default": false
     },
@@ -57,6 +76,18 @@
       "default": ""
     },
     "badgeSize": {
+      "type": "number"
+    },
+    "stepperStyle": {
+      "type": "string",
+      "enum": [ "boxed", "round" ],
+      "default": "boxed"
+    },
+    "stepperBorderColor": {
+      "type": "string",
+      "default": ""
+    },
+    "stepperSize": {
       "type": "number"
     }
   },

@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Helpers\CheckoutSetupHelper;
 use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -100,6 +101,10 @@ class CheckoutFragments {
         add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'fragments' ], 20 );
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's template path filter.
         add_filter( 'wc_get_template', [ $this, 'skip_review_order_table' ], 10, 2 );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's template actions.
+        add_action( 'woocommerce_before_template_part', [ WcHooks::class, 'mute_review_table' ] );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's template actions.
+        add_action( 'woocommerce_after_template_part', [ WcHooks::class, 'unmute_review_table' ] );
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's coupon message filter.
         add_filter( 'woocommerce_coupon_message', [ $this, 'drop_applied_message' ], PHP_INT_MAX, 2 );
     }
@@ -121,8 +126,9 @@ class CheckoutFragments {
 
     /**
      * During update_order_review, Woo renders its whole review-order table before the fragments
-     * filter runs. A layout with Items, Order Summary Breakdown or Order Summary Total discards it, so swap it for an empty template
-     * and its review-order hooks fire once, in our tables.
+     * filter runs. A layout with Items, Order Summary Breakdown or Order Summary Total discards it, so swap it for an empty
+     * template and its review-order hooks fire once, in our tables. A review-order hook a WooCommerce Hook block prints is
+     * kept out of the table by WcHooks::mute_review_table() instead, so an Order Summary without blocks keeps its table.
      */
     public function skip_review_order_table( $template, $template_name ) {
         if ( 'checkout/review-order.php' !== $template_name || ! doing_action( 'wc_ajax_update_order_review' ) ) {
@@ -131,11 +137,16 @@ class CheckoutFragments {
 
         $layout = CheckoutPage::get_instance()->layout();
 
-        if ( null === $layout || empty( self::summary_block_fragments( $layout->content ) ) ) {
+        if ( null === $layout || ! self::replaces_review_table( $layout->content ) ) {
             return $template;
         }
 
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/review-order-skipped.php';
+    }
+
+    /** Whether the layout prints its own review-order hooks, so WooCommerce's review table would only fire them again. */
+    private static function replaces_review_table( string $markup ): bool {
+        return ! empty( self::summary_block_fragments( $markup ) );
     }
 
     /** Swaps the fragments of this layout's sections for this layout's HTML. */
@@ -149,7 +160,7 @@ class CheckoutFragments {
         $rendered = array_flip( LayoutMarkupReader::slots( $layout->content ) );
         $summary  = self::summary_block_fragments( $layout->content );
 
-        if ( ! empty( $summary ) ) {
+        if ( self::replaces_review_table( $layout->content ) ) {
             // Empty after skip_review_order_table(), and no element on the page matches it.
             unset( $fragments[ self::REVIEW_ORDER_TABLE ] );
         }
@@ -163,6 +174,8 @@ class CheckoutFragments {
         foreach ( $summary as [ $selector, $build, $attrs ] ) {
             $html[ $selector ] = self::$build( $attrs );
         }
+
+        $html = array_merge( $html, WcHooks::fragments() );
 
         // Matches nothing on a layout without a Coupon form.
         $html[ '.' . self::COUPON_CHIPS_CLASS ] = self::coupon_chips_html();
@@ -409,9 +422,33 @@ class CheckoutFragments {
         echo self::payment_methods_html();
     }
 
-    /** Shipping methods is empty when the cart needs no shipping; the "enter your address" and "no options" messages count as content. */
+    /**
+     * Shipping methods is empty when the cart needs no shipping; the "enter your address" and "no options" messages count as content.
+     * A store manager still sees it when shipping lacks a method, to read the setup hint.
+     */
     public static function shipping_empty(): bool {
-        return ! WC()->cart instanceof \WC_Cart || ! ( WC()->cart->needs_shipping() && WC()->cart->show_shipping() );
+        if ( ! WC()->cart instanceof \WC_Cart ) {
+            return true;
+        }
+
+        if ( self::shipping_setup_hinted() ) {
+            return false;
+        }
+
+        return ! ( WC()->cart->needs_shipping() && WC()->cart->show_shipping() );
+    }
+
+    /** A store manager with a cart that would ship, on a store with no shipping method to offer. */
+    private static function shipping_setup_hinted(): bool {
+        return current_user_can( 'manage_woocommerce' ) && CheckoutSetupHelper::shipping_needs_setup() && CheckoutSetupHelper::cart_has_shippable_item();
+    }
+
+    /** An info notice only store managers get: why the block has nothing to offer, with a link to fix it. */
+    private static function print_setup_hint( string $message, string $url, string $link_text ): void {
+        wc_print_notice(
+            '<strong>' . esc_html__( 'Only store managers see this.', 'yaycheckout' ) . '</strong> ' . esc_html( $message ) . ' <a href="' . esc_url( $url ) . '">' . esc_html( $link_text ) . '</a>',
+            'notice'
+        );
     }
 
     /** Payment is empty when the order needs no payment; the "no available payment methods" notice counts as content. */
@@ -442,7 +479,13 @@ class CheckoutFragments {
 
         echo '<div class="' . esc_attr( self::SHIPPING_RATES_CLASS ) . '"' . self::live_attributes( $empty ) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- live_attributes() prints fixed names and values.
 
-        if ( ! $empty ) {
+        if ( self::shipping_setup_hinted() ) {
+            self::print_setup_hint(
+                __( 'No shipping zone or method is set up, so shoppers check out without choosing shipping.', 'yaycheckout' ),
+                CheckoutSetupHelper::shipping_settings_url(),
+                __( 'Set up shipping', 'yaycheckout' )
+            );
+        } elseif ( ! $empty ) {
             self::print_shipping_extension_rows( 'woocommerce_review_order_before_shipping' );
             self::print_shipping_packages();
             self::print_shipping_extension_rows( 'woocommerce_review_order_after_shipping' );
@@ -491,9 +534,9 @@ class CheckoutFragments {
             if ( ! empty( $methods ) ) {
                 self::print_shipping_method_list( $methods, (int) $index, $chosen_method );
             } elseif ( ! $calculated || ! $formatted ) {
-                echo wp_kses_post( apply_filters( 'woocommerce_shipping_may_be_available_html', __( 'Enter your address to view shipping options.', 'woocommerce' ) ) );
+                wc_print_notice( apply_filters( 'woocommerce_shipping_may_be_available_html', __( 'Enter your address to view shipping options.', 'woocommerce' ) ), 'notice' );
             } else {
-                echo wp_kses_post( apply_filters( 'woocommerce_no_shipping_available_html', __( 'There are no shipping options available. Please ensure that your address has been entered correctly, or contact us if you need any help.', 'woocommerce' ) ) );
+                wc_print_notice( apply_filters( 'woocommerce_no_shipping_available_html', __( 'There are no shipping options available. Please ensure that your address has been entered correctly, or contact us if you need any help.', 'woocommerce' ) ), 'notice' );
             }
 
             if ( 1 < $package_count ) {
@@ -617,31 +660,29 @@ class CheckoutFragments {
         echo '<p class="woocommerce-shipping-contents"><small>' . esc_html( implode( ', ', $product_names ) ) . '</small></p>';
     }
 
-    /**
-     * Output from a review-order shipping hook. Plugins usually print <tr> rows
-     * (needs a table); anything else (div, notice) goes in a plain wrapper so it
-     * is not forced into <tbody>.
-     */
+    /** Output from a review-order shipping hook, unless a WooCommerce Hook block prints it instead. */
     private static function print_shipping_extension_rows( string $hook ): void {
         ob_start();
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Caller passes Woo's review-order shipping hooks.
-        do_action( $hook );
-        $html = (string) ob_get_clean();
+        WcHooks::in_place( $hook );
 
+        echo self::wrap_extension_html( (string) ob_get_clean(), 'yaycheckout-shipping-methods__extensions' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML plugins print on Woo's hooks.
+    }
+
+    /**
+     * What a plugin printed on a WooCommerce hook, in a wrapper of class $css_class, or '' when it printed nothing.
+     * Plugins usually print <tr> rows, which need a table; anything else (div, notice) goes in a plain
+     * wrapper so it is not forced into <tbody>.
+     */
+    public static function wrap_extension_html( string $html, string $css_class ): string {
         if ( '' === trim( $html ) ) {
-            return;
+            return '';
         }
 
         if ( 1 === preg_match( '/^\s*<tr[\s>]/i', $html ) ) {
-            echo '<table class="shop_table yaycheckout-shipping-methods__extensions"><tbody>';
-            echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML plugins print on Woo's review-order shipping hooks.
-            echo '</tbody></table>';
-            return;
+            return '<table class="shop_table ' . esc_attr( $css_class ) . '"><tbody>' . $html . '</tbody></table>';
         }
 
-        echo '<div class="yaycheckout-shipping-methods__extensions">';
-        echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML plugins print on Woo's review-order shipping hooks.
-        echo '</div>';
+        return '<div class="' . esc_attr( $css_class ) . '">' . $html . '</div>';
     }
 
     /** Gateway radios only; Place order is a separate block. */
@@ -662,40 +703,45 @@ class CheckoutFragments {
         ob_start();
 
         if ( ! wp_doing_ajax() ) {
-            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
-            do_action( 'woocommerce_review_order_before_payment' );
+            WcHooks::in_place( 'woocommerce_review_order_before_payment' );
         }
         ?>
 <div id="payment" class="woocommerce-checkout-payment"<?php echo self::live_attributes( $empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- live_attributes() prints fixed names and values. ?>>
-        <?php if ( ! $empty ) : ?>
+        <?php if ( ! $empty && ! empty( $available_gateways ) ) : ?>
     <ul class="wc_payment_methods payment_methods methods" aria-label="<?php esc_attr_e( 'Payment methods', 'yaycheckout' ); ?>">
             <?php
-            if ( ! empty( $available_gateways ) ) {
-                foreach ( $available_gateways as $gateway ) {
-                    wc_get_template( 'checkout/payment-method.php', [ 'gateway' => $gateway ] );
-                }
-            } else {
-                echo '<li>';
-                wc_print_notice(
-                    apply_filters(
-                        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
-                        'woocommerce_no_available_payment_methods_message',
-                        WC()->customer->get_billing_country()
-                            ? esc_html__( 'Sorry, it seems that there are no available payment methods. Please contact us if you require assistance or wish to make alternate arrangements.', 'yaycheckout' )
-                            : esc_html__( 'Please fill in your details above to see available payment methods.', 'yaycheckout' )
-                    ),
-                    'notice'
-                );
-                echo '</li>';
+            foreach ( $available_gateways as $gateway ) {
+                wc_get_template( 'checkout/payment-method.php', [ 'gateway' => $gateway ] );
             }
             ?>
     </ul>
-        <?php endif; ?>
+            <?php
+        elseif ( ! $empty ) :
+            // Outside the list, unlike Woo's payment.php, so the row styles never draw the notice as a selected method.
+            wc_print_notice(
+                apply_filters(
+                    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
+                    'woocommerce_no_available_payment_methods_message',
+                    WC()->customer->get_billing_country()
+                        ? esc_html__( 'Sorry, it seems that there are no available payment methods. Please contact us if you require assistance or wish to make alternate arrangements.', 'yaycheckout' )
+                        : esc_html__( 'Please fill in your details above to see available payment methods.', 'yaycheckout' )
+                ),
+                'notice'
+            );
+
+            if ( current_user_can( 'manage_woocommerce' ) && CheckoutSetupHelper::payment_needs_setup() ) {
+                self::print_setup_hint(
+                    __( 'No payment method is enabled, so shoppers cannot place an order.', 'yaycheckout' ),
+                    CheckoutSetupHelper::payment_settings_url(),
+                    __( 'Set up payments', 'yaycheckout' )
+                );
+            }
+        endif;
+        ?>
 </div>
         <?php
         if ( ! wp_doing_ajax() ) {
-            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
-            do_action( 'woocommerce_review_order_after_payment' );
+            WcHooks::in_place( 'woocommerce_review_order_after_payment' );
         }
 
         return (string) ob_get_clean();
@@ -748,12 +794,12 @@ class CheckoutFragments {
                 $wrapper['class'] = $class;
             }
 
-            $badge_style = self::order_items_badge_style( $block->attributes );
-            if ( '' !== $badge_style ) {
-                $wrapper['style'] = $badge_style;
+            $style_vars = self::order_items_style_vars( $block->attributes );
+            if ( '' !== $style_vars ) {
+                $wrapper['style'] = $style_vars;
             }
 
-            $stepper = self::order_items_options( $block->attributes )['show_stepper'];
+            $stepper = 'stepper' === self::order_items_options( $block->attributes )['quantity_display'];
 
             if ( $stepper ) {
                 $wrapper['data-yaycheckout-cart-nonce'] = wp_create_nonce( CartItemQuantity::NONCE_ACTION );
@@ -781,18 +827,19 @@ class CheckoutFragments {
     }
 
     /**
-     * Inline --yaycheckout-badge-* vars from the Items block's badge attributes; empty when none
-     * are set. On the wrapper, which checkout.js keeps across refreshes. Mirrors badgeStyle() in
-     * order-summary-items/edit.tsx.
+     * Inline --yaycheckout-badge-*, --yaycheckout-stepper-* and --yaycheckout-thumbnail-* vars from the
+     * Items block's badge, stepper and thumbnail attributes; empty when none are set. On the wrapper, which checkout.js keeps across
+     * refreshes. itemsStyleVars() in order-summary-items/edit.tsx mirrors it.
      *
      * @param array $attributes Block attributes.
      */
-    private static function order_items_badge_style( array $attributes ): string {
+    private static function order_items_style_vars( array $attributes ): string {
         $decls = [];
 
         $colors = [
             'badgeBackgroundColor' => '--yaycheckout-badge-bg',
             'badgeTextColor'       => '--yaycheckout-badge-text',
+            'stepperBorderColor'   => '--yaycheckout-stepper-border',
         ];
         foreach ( $colors as $key => $var ) {
             $value = self::css_color( $attributes[ $key ] ?? null );
@@ -801,8 +848,28 @@ class CheckoutFragments {
             }
         }
 
-        if ( isset( $attributes['badgeSize'] ) && is_numeric( $attributes['badgeSize'] ) ) {
-            $decls[] = '--yaycheckout-badge-size:' . max( 16, min( 32, (int) $attributes['badgeSize'] ) ) . 'px';
+        // Attribute => [ var, min px, max px ].
+        $sizes = [
+            'badgeSize'       => [ '--yaycheckout-badge-size', 16, 32 ],
+            'stepperSize'     => [ '--yaycheckout-stepper-size', 20, 40 ],
+            'thumbnailSize'   => [ '--yaycheckout-thumbnail-size', 40, 96 ],
+            'thumbnailRadius' => [ '--yaycheckout-thumbnail-radius', 0, 48 ],
+        ];
+        foreach ( $sizes as $key => list( $var, $min, $max ) ) {
+            if ( isset( $attributes[ $key ] ) && is_numeric( $attributes[ $key ] ) ) {
+                $decls[] = $var . ':' . max( $min, min( $max, (int) $attributes[ $key ] ) ) . 'px';
+            }
+        }
+
+        // Square, the default, is style.css's fallback; original keeps the image's own proportions.
+        $ratios = [
+            'portrait'  => '3 / 4',
+            'landscape' => '4 / 3',
+            'original'  => 'auto',
+        ];
+        $ratio  = $attributes['thumbnailRatio'] ?? null;
+        if ( is_string( $ratio ) && isset( $ratios[ $ratio ] ) ) {
+            $decls[] = '--yaycheckout-thumbnail-ratio:' . $ratios[ $ratio ];
         }
 
         return implode( ';', $decls );
@@ -812,7 +879,7 @@ class CheckoutFragments {
      * The Items block's attributes with their defaults. During AJAX they come from the parsed
      * layout, where an untouched attribute is missing, so each default matches block.json's.
      *
-     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_stepper: bool}
+     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_badge: bool, link_image: bool, link_name: bool, stepper_style: string}
      */
     public static function order_items_options( array $attributes ): array {
         // The first choice is the default.
@@ -831,8 +898,11 @@ class CheckoutFragments {
             'show_sku'               => self::bool_attr( $attributes, 'showSku', false ),
             'show_unit_price'        => self::bool_attr( $attributes, 'showUnitPrice', false ),
             'show_short_description' => self::bool_attr( $attributes, 'showShortDescription', false ),
-            'quantity_display'       => $choice( 'quantityDisplay', [ 'inline', 'badge' ] ),
-            'show_stepper'           => self::bool_attr( $attributes, 'showStepper', false ),
+            'quantity_display'       => $choice( 'quantityDisplay', [ 'inline', 'stepper', 'hidden' ] ),
+            'show_badge'             => self::bool_attr( $attributes, 'showBadge', false ),
+            'link_image'             => self::bool_attr( $attributes, 'linkImage', false ),
+            'link_name'              => self::bool_attr( $attributes, 'linkName', false ),
+            'stepper_style'          => $choice( 'stepperStyle', [ 'boxed', 'round' ] ),
         ];
     }
 
@@ -848,9 +918,11 @@ class CheckoutFragments {
         }
 
         $options = self::order_items_options( $attributes );
-        // A badge sits on the thumbnail; without one, the quantity shows inline rather than vanish.
-        $badge = 'badge' === $options['quantity_display'] && $options['show_thumbnails'];
-        $root  = self::ORDER_ITEMS_CLASS . ( 'inline' === $options['item_data'] ? ' ' . self::ORDER_ITEMS_CLASS . '--item-data-inline' : '' );
+        // A badge sits on the thumbnail, so it needs one. It is independent of quantity_display and hides nothing.
+        $badge        = $options['show_badge'] && $options['show_thumbnails'];
+        $stepper_mode = 'stepper' === $options['quantity_display'];
+        $root         = self::ORDER_ITEMS_CLASS . ( 'inline' === $options['item_data'] ? ' ' . self::ORDER_ITEMS_CLASS . '--item-data-inline' : '' );
+        $root        .= $stepper_mode && 'round' === $options['stepper_style'] ? ' ' . self::ORDER_ITEMS_CLASS . '--stepper-round' : '';
 
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hooks and filters.
         ob_start();
@@ -873,15 +945,30 @@ class CheckoutFragments {
                 continue;
             }
 
-            // A product with one allowed quantity gets no stepper; its quantity shows as the Quantity option says.
-            $stepper = $options['show_stepper']
+            // A product with one allowed quantity gets no stepper; its quantity shows inline instead.
+            $stepper = $stepper_mode
                 && ! $product->is_sold_individually()
                 && $product->get_min_purchase_quantity() !== $product->get_max_purchase_quantity();
+
+            // Links open in a new tab, so the shopper keeps the checkout and what they typed into it.
+            $permalink  = $options['link_image'] || $options['link_name'] ? self::product_permalink( $product, $cart_item, $cart_item_key ) : '';
+            $link_name  = $options['link_name'] && '' !== $permalink;
+            $link_image = $options['link_image'] && '' !== $permalink;
+            $link_open  = $link_name || $link_image ? '<a class="' . esc_attr( self::ORDER_ITEMS_CLASS . '__link' ) . '" href="' . esc_url( $permalink ) . '" target="_blank" rel="noopener"' : '';
             ?>
     <div class="<?php echo esc_attr( apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) . ' ' . self::ORDER_ITEMS_CLASS . '__item' ); ?>">
             <?php if ( $options['show_thumbnails'] ) : ?>
         <div class="product-thumbnail">
-                <?php echo apply_filters( 'woocommerce_cart_item_thumbnail', $product->get_image(), $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered image HTML, as cart/cart.php prints it. ?>
+                <?php
+                $thumbnail = apply_filters( 'woocommerce_cart_item_thumbnail', $product->get_image(), $cart_item, $cart_item_key );
+
+                if ( $link_image ) {
+                    // With the name linked too, the image link is skipped by keyboard and screen readers, so each product is one stop.
+                    $thumbnail = $link_open . ( $link_name ? ' tabindex="-1" aria-hidden="true"' : '' ) . '>' . $thumbnail . '</a>';
+                }
+
+                echo $thumbnail; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered image HTML, as cart/cart.php prints it, in a link escaped above.
+                ?>
                 <?php if ( $badge ) : ?>
             <span class="<?php echo esc_attr( self::ORDER_ITEMS_CLASS . '__badge' ); ?>"><span aria-hidden="true"><?php echo esc_html( $cart_item['quantity'] ); ?></span><span class="screen-reader-text">
                     <?php
@@ -893,11 +980,11 @@ class CheckoutFragments {
         </div>
             <?php endif; ?>
         <div class="product-name">
-            <?php echo wp_kses_post( apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key ) ) . '&nbsp;'; ?>
-            <?php // The stepper's input shows the quantity, so inline it would say it twice. ?>
-            <?php if ( ! $badge && ! $stepper ) : ?>
-                <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered HTML. ?>
-            <?php endif; ?>
+            <?php // Linked before the filter, as cart/cart.php does, so extensions get the input they get on the cart page. ?>
+            <?php echo wp_kses_post( apply_filters( 'woocommerce_cart_item_name', $link_name ? $link_open . '>' . $product->get_name() . '</a>' : $product->get_name(), $cart_item, $cart_item_key ) ) . '&nbsp;'; ?>
+            <?php // Hidden shows no quantity here, and the stepper's input already shows it; the filter still runs, as extensions (Germanized's units line) print their item info through it. ?>
+            <?php $inline_quantity = 'hidden' !== $options['quantity_display'] && ! $stepper ? ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>' : ''; ?>
+            <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', $inline_quantity, $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered HTML. ?>
             <?php
             if ( 'hidden' !== $options['item_data'] ) {
                 echo wc_get_formatted_cart_item_data( $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo escapes item data.
@@ -905,14 +992,18 @@ class CheckoutFragments {
 
             self::print_item_details( $options, $product, $cart_item, $cart_item_key );
 
-            if ( $stepper ) {
-                // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart quantity filter, so an extension that locks an item's quantity locks it here.
-                echo apply_filters( 'woocommerce_cart_item_quantity', self::stepper_html( $product, $cart_item, $cart_item_key ), $cart_item_key, $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in stepper_html(), then Woo's filtered HTML.
-            }
+            // A row of its own, so the stepper never flows onto the name's line when no detail line sits between them.
+            if ( $stepper_mode ) {
+                echo '<div class="' . esc_attr( self::ORDER_ITEMS_CLASS . '__controls' ) . '">';
 
-            if ( $options['show_stepper'] ) {
+                if ( $stepper ) {
+                    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart quantity filter, so an extension that locks an item's quantity locks it here.
+                    echo apply_filters( 'woocommerce_cart_item_quantity', self::stepper_html( $product, $cart_item, $cart_item_key ), $cart_item_key, $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in stepper_html(), then Woo's filtered HTML.
+                }
+
                 // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart remove-link filter.
                 echo apply_filters( 'woocommerce_cart_item_remove_link', self::remove_link_html( $product, $cart_item_key ), $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in remove_link_html(), then Woo's filtered HTML.
+                echo '</div>';
             }
             ?>
         </div>
@@ -930,6 +1021,12 @@ class CheckoutFragments {
         // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
         return (string) ob_get_clean();
+    }
+
+    /** The product page an item links to, or '' when the product has none a shopper may see, as cart/cart.php works it out. */
+    private static function product_permalink( \WC_Product $product, array $cart_item, string $cart_item_key ): string {
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart permalink filter.
+        return (string) apply_filters( 'woocommerce_cart_item_permalink', $product->is_visible() ? $product->get_permalink( $cart_item ) : '', $cart_item, $cart_item_key );
     }
 
     /** The SKU, unit price and short description under an item's name, each when its option is on. */
@@ -992,19 +1089,12 @@ class CheckoutFragments {
             . ' aria-label="' . esc_attr( sprintf( __( 'Remove %s from cart', 'yaycheckout' ), wp_strip_all_tags( $product->get_name() ) ) ) . '">&times;</a>';
     }
 
-    /** Fires a cart-contents hook and prints its output, if any, in a table of its own. */
+    /** Fires a cart-contents hook and prints its output, if any, in a wrapper of its own, unless a WooCommerce Hook block prints it instead. */
     private static function print_order_items_hook( string $hook ): void {
         ob_start();
-        do_action( $hook ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Woo's review-order hooks, named by the caller.
-        $output = (string) ob_get_clean();
+        WcHooks::in_place( $hook );
 
-        if ( '' === trim( $output ) ) {
-            return;
-        }
-
-        echo '<table class="shop_table ' . esc_attr( self::ORDER_ITEMS_CLASS . '__hook' ) . '"><tbody>';
-        echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Extensions' own review-order rows.
-        echo '</tbody></table>';
+        echo self::wrap_extension_html( (string) ob_get_clean(), self::ORDER_ITEMS_CLASS . '__hook' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Extensions' own review-order output.
     }
 
     /** A boolean block attribute, or $fallback when it is missing or not a boolean. */
@@ -1134,8 +1224,8 @@ class CheckoutFragments {
             <?php endif; ?>
         <?php endif; ?>
         <?php // The order-total row between these hooks is the Order Summary Total block's; extensions' rows stay here. ?>
-        <?php do_action( 'woocommerce_review_order_before_order_total' ); ?>
-        <?php do_action( 'woocommerce_review_order_after_order_total' ); ?>
+        <?php WcHooks::in_place( 'woocommerce_review_order_before_order_total' ); ?>
+        <?php WcHooks::in_place( 'woocommerce_review_order_after_order_total' ); ?>
     </tbody>
 </table>
         <?php

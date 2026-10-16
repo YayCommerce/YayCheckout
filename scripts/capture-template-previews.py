@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Capture templates/layouts/<slug>/preview.html for every catalogue template from the HTML mock.
+"""Capture templates/layouts/<slug>/preview.html (templates/layouts/pro/<slug>/ for a Pro template) for every catalogue template from the HTML mock.
 
 Each mock template renders only with its own JS, so headless Chrome renders it once and the rendered
-DOM is saved with every script removed. The picker shows the result in an iframe that may not run
+DOM is saved with every script and every unused CSS rule removed. The picker shows the result in an iframe that may not run
 scripts, and a preview must make no network request, so a file that fails the checks is not written.
 
 Usage:
@@ -53,10 +53,93 @@ FORBIDDEN = [
 # A src or url() whose value is not inline data or a fragment would make the preview fetch something.
 EXTERNAL = re.compile(r'''(?:\ssrc=["']|url\(\s*["']?)(?!data:|#)[^"')\s]''', re.I)
 
+# Every template inlines the mock's whole stylesheet. Shortly before --dump-dom, this keeps only the rules
+# whose selector matches something in the rendered page, and the keyframes they name. It cuts the source
+# text rather than reserialising the CSSOM, so a declaration Chrome doesn't parse still reaches other
+# browsers. A selector querySelector() can't test is kept. strip() removes the script with the others.
+PRUNED = 'data-css-pruned'
+PRUNE_CSS = '''<script>setTimeout(function () {
+  var STATE = /::?(hover|focus-visible|focus-within|focus|active|visited|link|before|after|placeholder|marker|selection|first-line|first-letter|backdrop|file-selector-button|-(webkit|moz|ms)-[\\w-]+)(\\([^)]*\\))?/g;
+  function split(text, sep) {
+    var parts = [], depth = 0, start = 0, quote = null;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (quote) { if (c === '\\\\') i++; else if (c === quote) quote = null; continue; }
+      if (c === '"' || c === "'") quote = c;
+      else if (c === '(' || c === '[') depth++;
+      else if (c === ')' || c === ']') depth--;
+      else if (c === sep && !depth) { parts.push(text.slice(start, i)); start = i + 1; }
+    }
+    parts.push(text.slice(start));
+    return parts;
+  }
+  function used(selectors) {
+    return split(selectors, ',').some(function (selector) {
+      var query = selector.replace(STATE, '').trim();
+      if (!query || /[>+~]$/.test(query)) query += '*';
+      try { return !!document.querySelector(query); } catch (e) { return true; }
+    });
+  }
+  // Top-level rules: a statement ending in ';', or a prelude and its {} block.
+  function rules(css) {
+    var found = [], i = 0;
+    while (i < css.length) {
+      while (i < css.length && /\\s/.test(css[i])) i++;
+      if (i >= css.length) break;
+      var start = i, depth = 0, quote = null, open = -1;
+      for (; i < css.length; i++) {
+        var c = css[i];
+        if (quote) { if (c === '\\\\') i++; else if (c === quote) quote = null; continue; }
+        if (c === '"' || c === "'") quote = c;
+        else if (c === ';' && open < 0) break;
+        else if (c === '{') { if (open < 0) open = i; depth++; }
+        else if (c === '}' && !--depth) break;
+      }
+      var text = css.slice(start, i + 1).trim();
+      found.push(open < 0 ? { text: text } : { text: text, prelude: css.slice(start, open).trim(), body: css.slice(open + 1, i) });
+      i++;
+    }
+    return found;
+  }
+  function prune(css) {
+    return rules(css).map(function (rule) {
+      if (!rule.prelude) return rule.text;
+      if (/^@(media|supports|container|layer)\\b/i.test(rule.prelude)) {
+        var inner = prune(rule.body);
+        return inner ? rule.prelude + '{' + inner + '}' : '';
+      }
+      if (/^@keyframes\\b/i.test(rule.prelude)) return rule;
+      if (rule.prelude[0] === '@') return rule.text;
+      return used(rule.prelude) ? rule.text : '';
+    });
+  }
+  function join(kept) {
+    var text = kept.filter(function (rule) { return typeof rule === 'string' && rule; }).join('\\n');
+    return kept.map(function (rule) {
+      if (typeof rule === 'string') return rule;
+      var name = rule.prelude.replace(/^@keyframes\\s+/i, '').trim();
+      return new RegExp('(^|[\\\\s,:])' + name.replace(/[^\\w-]/g, '') + '([\\\\s,;!}]|$)').test(text) ? rule.text : '';
+    }).filter(Boolean).join('\\n');
+  }
+  document.querySelectorAll('style').forEach(function (style) {
+    var css = join(prune(style.textContent.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '')));
+    if (css) style.textContent = css; else style.remove();
+  });
+  document.documentElement.setAttribute('%s', '');
+}, 7000);</script>''' % PRUNED
+
 
 def catalogue():
+    """(slug, name, is_pro) for each entry; is_pro when the entry sets 'pro' => true, as LayoutTemplateCatalogue::catalogue() does."""
     source = open(CATALOGUE, encoding='utf-8').read()
-    return re.findall(r"'slug'\s*=>\s*'([^']+)',\s*'name'\s*=>\s*'([^']+)'", source)
+    # Each entry's text runs to the next 'slug', so its 'pro' key is found whatever else the entry holds.
+    entries = re.split(r"(?='slug'\s*=>)", source)[1:]
+    found = []
+    for entry in entries:
+        match = re.match(r"'slug'\s*=>\s*'([^']+)',\s*'name'\s*=>\s*'([^']+)'", entry)
+        if match:
+            found.append((match.group(1), match.group(2), bool(re.search(r"'pro'\s*=>\s*true", entry))))
+    return found
 
 
 def extract(mock, *args):
@@ -75,6 +158,8 @@ def mock_templates(mock):
 
 def render(mock, chrome, mock_id, workdir):
     page = re.search(r'^\s*page:\s*(.+)$', extract(mock, mock_id, '--out', workdir), re.M).group(1).strip()
+    with open(page, 'a', encoding='utf-8') as f:
+        f.write(PRUNE_CSS)
     # Chrome writes allocator noise to stderr on every run.
     return subprocess.run([
         chrome, '--headless=new', '--disable-gpu', '--hide-scrollbars',
@@ -107,7 +192,8 @@ def main():
     if not os.path.isfile(a.chrome):
         sys.exit('Chrome not found: %s. Pass --chrome <path to the Chrome binary>.' % a.chrome)
 
-    slugs = {name: slug for slug, name in catalogue()}
+    slugs = {name: slug for slug, name, _ in catalogue()}
+    pro = {slug for slug, _, is_pro in catalogue() if is_pro}
     pairs, failed = [], False
     for mock_id, name in mock_templates(a.mock):
         if name not in slugs:
@@ -124,13 +210,20 @@ def main():
     for mock_id, slug in pairs:
         with tempfile.TemporaryDirectory() as workdir:
             html = strip(render(a.mock, a.chrome, mock_id, workdir))
+        if (' %s=""' % PRUNED) not in html:
+            print('%-20s FAILED, not written: the CSS was not pruned' % slug)
+            failed = True
+            continue
+        html = html.replace(' %s=""' % PRUNED, '', 1)
         bad = problem(html)
         if bad:
             print('%-20s FAILED, not written: %r' % (slug, bad))
             failed = True
             continue
-        os.makedirs(os.path.join(TEMPLATES, slug), exist_ok=True)
-        with open(os.path.join(TEMPLATES, slug, 'preview.html'), 'w', encoding='utf-8') as f:
+        # A Pro template lives under pro/, as LayoutTemplateCatalogue::relative_path() places it.
+        folder = os.path.join(TEMPLATES, 'pro', slug) if slug in pro else os.path.join(TEMPLATES, slug)
+        os.makedirs(folder, exist_ok=True)
+        with open(os.path.join(folder, 'preview.html'), 'w', encoding='utf-8') as f:
             f.write(HEADER + re.sub(r'<head\b[^>]*>', lambda m: m.group(0) + CSP, html, count=1))
         print('%-20s %d KB' % (slug, len(html.encode('utf-8')) // 1024))
 

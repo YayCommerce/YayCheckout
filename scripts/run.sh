@@ -6,12 +6,12 @@
 # Commands:
 #   dev                - Update admin shell + start Vite dev server (HMR on :3040) + blocks watcher
 #   build              - Build admin dashboard + blocks for production
-#   release [version]  - Create release ZIP package (prompts for version)
+#   release [version]  - Create release ZIP package (prompts for version and WP/WC tested up to)
 #   bump <version>     - Bump version number in plugin files
 #   info               - Show current version info
 #   clean              - Remove admin build artifacts (blocks output is left)
 #   backlog            - List docs/backlog/ items and their open boxes
-#   previews [mock]    - Capture templates/layouts/*/preview.html from the HTML mock
+#   previews [mock]    - Capture templates/layouts/{,pro/}*/preview.html from the HTML mock
 #   help               - Show this help message
 #
 
@@ -24,6 +24,18 @@ PLUGIN_DIR="$(dirname "$SCRIPT_DIR")"
 ADMIN_DIR="$PLUGIN_DIR/apps/admin"
 BLOCKS_DIR="$PLUGIN_DIR/packages/blocks"
 RELEASE_DIR="$PLUGIN_DIR/release"
+# Pro-only paths: the Free zip deletes them, except each preview.html (Free's picker shows Pro templates locked),
+# and the artifact check enforces it. Space-separated, each ending in /.
+# Owners: includes/Pro/ (YayCheckout::boot_pro()), assets/dist/blocks/pro/ (ProServiceProvider::built_blocks())
+# and templates/layouts/pro/ (LayoutTemplateCatalogue::relative_path()).
+PRO_PATHS="includes/Pro/ assets/dist/blocks/pro/ templates/layouts/pro/"
+# Admin-shell files the Free zip deletes: its licensing (with the EDD updater) and the Recommended Plugins
+# page. FREE_SHELL_PATCH first removes every reference to them; the artifact check enforces both.
+FREE_SHELL_STRIP="src/License/ src/Registry/ src/Contracts/AddonHostAdapter.php src/Menu/ExternalPluginMenuAdapter.php
+src/Pages/LicensesPage.php src/Pages/RecommendedPluginsPage.php views/license-card.php views/license-activate-card.php
+views/licenses-page.php views/recommended-plugins-data.php views/recommended-plugins-page.php
+assets/css/licenses.css assets/css/other-plugins.css assets/js/license.js assets/js/other-plugins.js"
+FREE_SHELL_PATCH="$PLUGIN_DIR/scripts/free-admin-shell.patch"
 PLUGIN_SLUG="yaycheckout"
 MAIN_FILE="$PLUGIN_DIR/$PLUGIN_SLUG.php"
 
@@ -187,6 +199,48 @@ prompt_release_version() {
     fi
 }
 
+# "Tested up to" lives in readme.txt for WordPress and in the plugin header for WooCommerce
+get_wp_tested() {
+    grep -E "^Tested up to:" "$PLUGIN_DIR/readme.txt" | sed -E "s/^Tested up to:[[:space:]]*//"
+}
+
+get_wc_tested() {
+    grep -E "^ \* WC tested up to:" "$MAIN_FILE" | sed -E "s/^ \* WC tested up to:[[:space:]]*//"
+}
+
+# Tested-up-to version: X.Y or X.Y.Z
+validate_tested_version() {
+    [[ "$1" =~ ^[0-9]+(\.[0-9]+){1,2}$ ]]
+}
+
+update_wp_tested() {
+    sed_inplace "s/^Tested up to: .*/Tested up to: $(sed_escape "$1")/" "$PLUGIN_DIR/readme.txt"
+    print_success "WordPress tested up to $1"
+}
+
+update_wc_tested() {
+    sed_inplace "s/^ \* WC tested up to: .*/ * WC tested up to: $(sed_escape "$1")/" "$MAIN_FILE"
+    print_success "WooCommerce tested up to $1"
+}
+
+# Prompt for one tested-up-to value: $1 label, $2 current value, $3 update function
+prompt_tested_version() {
+    local label=$1
+    local current=$2
+    local updater=$3
+    local value
+    while true; do
+        read -r -p "  $label tested up to [$current]: " value
+        value=${value:-$current}
+        validate_tested_version "$value" && break
+        print_error "Invalid version. Use: X.Y or X.Y.Z"
+    done
+
+    if [ "$value" != "$current" ]; then
+        "$updater" "$value"
+    fi
+}
+
 # ─── Commands ───────────────────────────────────────────────────────────
 
 cmd_dev() {
@@ -228,11 +282,15 @@ cmd_release() {
     local no_prompt=false
     local requested_version=""
     local plan="free"
+    local wp_tested=""
+    local wc_tested=""
     local arg
     for arg in "$@"; do
         case $arg in
-            --no-prompt) no_prompt=true ;;
-            --plan=*)    plan="${arg#--plan=}" ;;
+            --no-prompt)   no_prompt=true ;;
+            --plan=*)      plan="${arg#--plan=}" ;;
+            --wp-tested=*) wp_tested="${arg#--wp-tested=}" ;;
+            --wc-tested=*) wc_tested="${arg#--wc-tested=}" ;;
             *) [ -z "$requested_version" ] && requested_version="$arg" ;;
         esac
     done
@@ -260,6 +318,14 @@ cmd_release() {
         exit 1
     fi
 
+    for arg in "$wp_tested" "$wc_tested"; do
+        if [ -n "$arg" ] && ! validate_tested_version "$arg"; then
+            print_error "Invalid tested-up-to version: $arg"
+            echo "Use: X.Y or X.Y.Z"
+            exit 1
+        fi
+    done
+
     print_msg "$CYAN" "╔════════════════════════════════════════════╗"
     print_msg "$CYAN" "║       YayCheckout Release Packager          ║"
     print_msg "$CYAN" "╚════════════════════════════════════════════╝"
@@ -274,11 +340,27 @@ cmd_release() {
         version=$(get_version)
     fi
 
+    # A flag sets its value; without one, only an interactive run (no version, no --no-prompt) asks.
+    local interactive=false
+    [ "$no_prompt" = false ] && [ -z "$requested_version" ] && interactive=true
+    if [ -n "$wp_tested" ]; then
+        update_wp_tested "$wp_tested"
+    elif [ "$interactive" = true ]; then
+        prompt_tested_version "WordPress" "$(get_wp_tested)" update_wp_tested
+    fi
+    if [ -n "$wc_tested" ]; then
+        update_wc_tested "$wc_tested"
+    elif [ "$interactive" = true ]; then
+        prompt_tested_version "WooCommerce" "$(get_wc_tested)" update_wc_tested
+    fi
+
     local zip_name="${plan_slug}-${version}.zip"
 
     echo ""
     print_info "Plan: $plan"
     print_info "Version: $version"
+    print_info "WP tested up to: $(get_wp_tested)"
+    print_info "WC tested up to: $(get_wc_tested)"
     print_info "Output: release/$zip_name"
     echo ""
 
@@ -303,6 +385,8 @@ cmd_release() {
     cp "$PLUGIN_DIR/YayCheckoutPluginAdapter.php" "$temp_dir/"
     cp "$PLUGIN_DIR/readme.txt" "$temp_dir/"
     cp "$PLUGIN_DIR/uninstall.php" "$temp_dir/"
+    # Plugin Check wants composer.json beside a shipped vendor/, so reviewers can see where it came from.
+    cp "$PLUGIN_DIR/composer.json" "$temp_dir/"
 
     cp -r "$PLUGIN_DIR/assets" "$temp_dir/"
     cp -r "$PLUGIN_DIR/includes" "$temp_dir/"
@@ -316,10 +400,36 @@ cmd_release() {
     cp -r "$PLUGIN_DIR/vendor/composer" "$temp_dir/vendor/"
 
     # includes/Pro/ is the only Pro PHP and nothing else names it (scripts/check-pro-boundary.sh),
-    # so removing it leaves a working Free build.
+    # so removing it leaves a working Free build. The Pro blocks (built from packages/blocks/src/pro/)
+    # and the templates made from them go with it: Free registers neither. Only the templates'
+    # preview.html stays, a static page Free's picker shows behind a Pro badge.
     if [ "$plan" = "free" ]; then
-        rm -rf "$temp_dir/includes/Pro"
-        print_info "Free build: includes/Pro removed"
+        local pro_path
+        for pro_path in $PRO_PATHS; do
+            [ -d "${temp_dir:?}/$pro_path" ] || continue
+            find "${temp_dir:?}/$pro_path" -type f ! -name preview.html -delete
+            find "${temp_dir:?}/$pro_path" -depth -type d -empty -delete
+        done
+        print_info "Free build: removed $PRO_PATHS (kept preview.html)"
+
+        # The patch drops the shell's licensing and Recommended Plugins wiring, and registers this copy
+        # at a low election version so a full shell from another YayCommerce plugin runs the shared menu.
+        # It is made against vendor-prefixed/ and fails on a changed shell: regenerate it then.
+        if ! patch -p1 -d "$temp_dir" --forward --no-backup-if-mismatch --quiet < "$FREE_SHELL_PATCH"; then
+            print_error "scripts/free-admin-shell.patch no longer applies: the admin-shell changed, regenerate the patch"
+            exit 1
+        fi
+        local shell_path
+        for shell_path in $FREE_SHELL_STRIP; do
+            rm -rf "${temp_dir:?}/vendor-prefixed/$shell_path"
+        done
+        for shell_path in src/AdminShell.php src/Menu/PagesRouter.php src/Menu/PluginSubmenu.php; do
+            if ! php -l "$temp_dir/vendor-prefixed/$shell_path" > /dev/null; then
+                print_error "Patched vendor-prefixed/$shell_path does not parse"
+                exit 1
+            fi
+        done
+        print_info "Free build: removed the admin-shell licensing and Recommended Plugins"
     fi
 
     # Distinguish the editions in wp-admin.
@@ -336,6 +446,15 @@ cmd_release() {
     find "$temp_dir" -name "*.map" -delete 2>/dev/null || true
     find "$temp_dir" -name ".gitkeep" -delete 2>/dev/null || true
 
+    # wp-scripts writes an -rtl.css beside every block stylesheet, most of them identical to it.
+    # register_block_style_handle() uses the -rtl file only when it exists, so a copy can go.
+    local rtl_css
+    find "$temp_dir/assets/dist/blocks" -name "*-rtl.css" | while read -r rtl_css; do
+        if cmp -s "$rtl_css" "${rtl_css%-rtl.css}.css"; then
+            rm -f "$rtl_css"
+        fi
+    done
+
     print_step "Creating ZIP archive..."
     cd "$RELEASE_DIR"
     rm -f "$zip_name"
@@ -345,18 +464,36 @@ cmd_release() {
     # Check the zip customers receive: a Pro leak is invisible in a dev tree,
     # which always contains every file.
     print_step "Verifying artifact..."
-    local pro_entries
-    pro_entries=$(unzip -l "$zip_name" | grep -c "includes/Pro/" || true)
+    local pro_entries pro_pattern path
+    pro_pattern="${PRO_PATHS// /|}"
+    pro_entries=$(unzip -l "$zip_name" | grep -E "$pro_pattern" | grep -cvE '/$|/preview\.html$' || true)
 
     if [ "$plan" = "free" ] && [ "$pro_entries" -ne 0 ]; then
         print_error "Free artifact contains pro code:"
-        unzip -l "$zip_name" | grep "includes/Pro/"
+        unzip -l "$zip_name" | grep -E "$pro_pattern" | grep -vE '/$|/preview\.html$'
         exit 1
     fi
 
-    if [ "$plan" = "pro" ] && [ "$pro_entries" -eq 0 ]; then
-        print_error "Pro artifact is missing includes/Pro/"
-        exit 1
+    if [ "$plan" = "free" ]; then
+        for path in $FREE_SHELL_STRIP; do
+            if unzip -l "$zip_name" | grep -q "$plan_slug/vendor-prefixed/$path"; then
+                print_error "Free artifact contains vendor-prefixed/$path"
+                exit 1
+            fi
+        done
+        if unzip -p "$zip_name" "$plan_slug/vendor-prefixed/*" | grep -qE 'AdminShell\\(License|Registry)\\|LicensesPage|RecommendedPluginsPage|ExternalPluginMenuAdapter'; then
+            print_error "Free artifact's admin-shell still names a removed class"
+            exit 1
+        fi
+    fi
+
+    if [ "$plan" = "pro" ]; then
+        for path in $PRO_PATHS; do
+            if ! unzip -l "$zip_name" | grep -q "$plan_slug/$path"; then
+                print_error "Pro artifact is missing $path"
+                exit 1
+            fi
+        done
     fi
 
     if ! unzip -p "$zip_name" "$plan_slug/$PLUGIN_SLUG.php" | grep -q "define( 'YAYCHECKOUT_IS_DEVELOPMENT', false )"; then
@@ -395,6 +532,8 @@ cmd_bump() {
 cmd_info() {
     print_info "Plugin: $PLUGIN_SLUG"
     print_info "Version: $(get_version)"
+    print_info "WP tested up to: $(get_wp_tested)"
+    print_info "WC tested up to: $(get_wc_tested)"
     print_info "Plugin dir: $PLUGIN_DIR"
 }
 
@@ -484,13 +623,14 @@ cmd_help() {
     echo "Commands:"
     echo "  dev                          Update admin shell + Vite dev server (:3040) + blocks watcher"
     echo "  build                        Build admin dashboard + blocks for production"
-    echo "  release [version] [--plan=free|pro] [--no-prompt]"
+    echo "  release [version] [--plan=free|pro] [--wp-tested=X.Y] [--wc-tested=X.Y.Z] [--no-prompt]"
     echo "                               Create release ZIP in release/ (default --plan=free)"
+    echo "                               Prompts for version and WP/WC tested-up-to unless given"
     echo "  bump <version>               Bump version in plugin files"
     echo "  info                         Show current version info"
     echo "  clean                        Remove admin build artifacts (blocks output is left)"
     echo "  backlog                      List docs/backlog/ items and their open boxes"
-    echo "  previews [mock-path]         Capture templates/layouts/*/preview.html from the HTML mock"
+    echo "  previews [mock-path]         Capture templates/layouts/{,pro/}*/preview.html from the HTML mock"
     echo "  help                         Show this help message"
     echo ""
     echo "Examples:"
@@ -499,6 +639,7 @@ cmd_help() {
     echo "  ./scripts/run.sh release --plan=pro      # Pro package"
     echo "  ./scripts/run.sh release 1.0.1          # Bump to 1.0.1 and package"
     echo "  ./scripts/run.sh release --no-prompt    # Package current version"
+    echo "  ./scripts/run.sh release 1.0.1 --wp-tested=6.9 --wc-tested=10.8.0"
 }
 
 # ─── Main ───────────────────────────────────────────────────────────────

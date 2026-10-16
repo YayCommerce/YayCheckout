@@ -302,9 +302,9 @@ html.yaycheckout-has-pinned body {
 /*
  * Text inputs, selects, textareas, the coupon code and the select2 box all draw as one input.
  * A section left at theme default leaves its token unset, so the fallback applies: the theme's
- * font and text colour, a border mixed from the text colour, a transparent background. The input
- * background, text and border colour tokens win over the layout's background, text and border
- * colour. A size token zeroes the vertical padding, so the box is exactly its height and the text
+ * font and text colour, a border mixed from the text colour, and a transparent background, never the
+ * layout's, so a field on a coloured block shows that block. The input text and border colour tokens
+ * win over the layout's text and border colour. A size token zeroes the vertical padding, so the box is exactly its height and the text
  * centres in it.
  */
 .yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code),
@@ -319,7 +319,7 @@ html.yaycheckout-has-pinned body {
 	border-width: var(--yaycheckout-input-border-width, 1px);
 	border-color: var(--yaycheckout-input-border-color, var(--yaycheckout-border-color));
 	border-radius: var(--yaycheckout-field-radius);
-	background-color: var(--yaycheckout-input-background, var(--yaycheckout-color-background, transparent));
+	background-color: var(--yaycheckout-input-background, transparent);
 	box-shadow: none;
 	color: var(--yaycheckout-input-color, inherit);
 	font: inherit;
@@ -469,7 +469,7 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	border-color: var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline: var(--yaycheckout-input-focus-ring-width, 1px) solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline-offset: 0;
-	background-color: var(--yaycheckout-input-focus-background, var(--yaycheckout-input-background, var(--yaycheckout-color-background, transparent)));
+	background-color: var(--yaycheckout-input-focus-background, var(--yaycheckout-input-background, transparent));
 }
 
 /* Keyboard focus on a button, checkbox or radio: an offset ring, in the input focus colour for the controls. */
@@ -730,7 +730,8 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 
 /*
  * Buttons: Coupon's Apply, Login's submit, WooCommerce's .button and Place Order. No display:
- * Place Order's align classes set it. Block supports (inline styles, has-* classes) win.
+ * Place Order's style.css sets it. Block supports (inline styles, has-* classes) win. The design's buttons tokens
+ * replace each value; place-order, coupon-button, step-button and login read them with the same fallbacks.
  */
 .yaycheckout-checkout :is(.button, button[type="submit"]) {
 	box-sizing: border-box;
@@ -738,23 +739,40 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	padding: var(--yaycheckout-input-padding-block, 8px) 20px;
 	/* Transparent, so a background picked in the block's settings shows edge to edge. */
 	border: 1px solid transparent;
-	border-radius: var(--yaycheckout-neutral-radius);
-	background-color: var(--yaycheckout-primary-color);
-	color: #fff;
+	border-radius: var(--yaycheckout-button-radius, var(--yaycheckout-neutral-radius));
+	background-color: var(--yaycheckout-button-background, var(--yaycheckout-primary-color));
+	color: var(--yaycheckout-button-color, #fff);
 	font-family: inherit;
-	font-weight: 600;
+	font-weight: var(--yaycheckout-button-font-weight, 600);
 	line-height: 1.4;
+	text-transform: var(--yaycheckout-button-text-transform, none);
 	text-decoration: none;
 	cursor: pointer;
 }
 
+/* Darkened, until the design picks a hover colour. */
 .yaycheckout-checkout :is(.button, button[type="submit"]):hover {
-	filter: brightness(0.92);
+	background-color: var(--yaycheckout-button-hover-background, var(--yaycheckout-button-background, var(--yaycheckout-primary-color)));
+	color: var(--yaycheckout-button-hover-color, var(--yaycheckout-button-color, #fff));
+	filter: var(--yaycheckout-button-hover-filter, brightness(0.92));
 }
 
 .yaycheckout-checkout :is(.button, button[type="submit"]):disabled {
 	cursor: not-allowed;
 	opacity: 0.5;
+}
+
+/*
+ * The Checkout block isn't a core layout, so core's flow-layout trim doesn't reach its children: a first or last
+ * block (Columns' 1.75em bottom margin, a Group, a heading) would push its margin outside the form. A child's own
+ * margin setting is inline, so it still wins.
+ */
+.yaycheckout-checkout > :first-child {
+	margin-block-start: 0;
+}
+
+.yaycheckout-checkout > :last-child {
+	margin-block-end: 0;
 }
 
 /* Columns that lay out address fields side by side keep the fields' own spacing, not core's block margin. */

@@ -22,12 +22,7 @@ class ExpressPay {
      * besides wc_get_pay_buttons() hooks HOOK. For the editor's notice, so it errs towards no notice.
      */
     public static function has_buttons(): bool {
-        global $wp_filter;
-
-        $callbacks = isset( $wp_filter[ self::HOOK ] ) ? array_merge( ...array_values( $wp_filter[ self::HOOK ]->callbacks ) ) : [];
-        $core      = false !== has_action( self::HOOK, 'wc_get_pay_buttons' ) ? 1 : 0;
-
-        if ( count( $callbacks ) > $core ) {
+        if ( WcHooks::callbacks_besides( self::HOOK, [ 'wc_get_pay_buttons' ] ) > 0 ) {
             return true;
         }
 

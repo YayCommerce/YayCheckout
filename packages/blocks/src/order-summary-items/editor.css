@@ -1,7 +1,7 @@
-/* The canvas has no product image; a grey square stands in for the storefront thumbnail. */
+/* The canvas has no product image; a grey box of the thumbnail's width and ratio stands in for it. */
 .editor-styles-wrapper .yaycheckout-order-summary-items__placeholder {
-	width: 48px;
-	height: 48px;
-	border-radius: var(--yaycheckout-field-radius);
+	width: var(--yaycheckout-thumbnail-size, 48px);
+	aspect-ratio: var(--yaycheckout-thumbnail-ratio, 1);
+	border-radius: var(--yaycheckout-thumbnail-radius, var(--yaycheckout-field-radius));
 	background: #ddd;
 }

@@ -43,6 +43,8 @@ export type EditorView = {
 
 type EditorData = {
 	isPro: boolean;
+	/** BlockRegistry::locked_blocks(): the Pro blocks this site hasn't registered, which the editor offers as locked stubs. */
+	lockedBlocks: string[];
 	postType: string;
 	upgradeUrl: string;
 	/** The store's currency symbol, decoded, for amounts the merchant types (the Visibility panel's subtotal). */
@@ -62,6 +64,7 @@ declare global {
 /** Values BlockRegistry prints before this bundle runs; PHP owns every one of them. */
 export const editorData: EditorData = {
 	isPro: false,
+	lockedBlocks: [],
 	postType: '',
 	upgradeUrl: '',
 	currencySymbol: '',

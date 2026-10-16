@@ -9,18 +9,14 @@ import { getErrorMsg } from '@/lib/helpers/response.helper';
 import { logger } from '@/lib/logger';
 import { invalidateListedLayouts } from '@/lib/queries/layout.queries';
 import { useCompleteSetupMutation } from '@/lib/queries/setup.queries';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { StepBreadcrumb } from '@/components/shared/StepBreadcrumb';
 import { FinishStep } from './FinishStep';
-import { ScanStep } from './ScanStep';
 import { StartFromStep } from './StartFromStep';
 
-const STEPS = [__('Scan', 'yaycheckout'), __('Start from', 'yaycheckout')];
-
 /**
- * First-run setup popup, open while `showSetupWizard` is true. The pick stays in
+ * First-run setup popup, open while `showSetupWizard` is true: pick a template,
+ * then a confirmation of the draft it created. The pick stays in
  * memory until Create layout sends it in one save; Skip setup only marks setup
  * done. No close icon, Esc or outside click. Settings reopens it with
  * `RerunSetupWizard`.
@@ -36,13 +32,11 @@ export function RerunSetupWizard({ onClose }: { onClose: () => void }) {
 
 function SetupWizardDialog({ rerun = false, onClose }: { rerun?: boolean; onClose?: () => void }) {
   const [open, setOpen] = useState(true);
-  const [step, setStep] = useState(0);
   const [templateSlug, setTemplateSlug] = useState<string | null>();
   const [applyError, setApplyError] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const setup = useCompleteSetupMutation();
   const draft = setup.data?.layout;
-  const isFinished = step === STEPS.length;
 
   function close() {
     setOpen(false);
@@ -59,7 +53,6 @@ function SetupWizardDialog({ rerun = false, onClose }: { rerun?: boolean; onClos
     setApplyError(null);
     try {
       await setup.mutateAsync({ templateSlug, rerun });
-      setStep(STEPS.length);
     } catch (e) {
       // 409: an earlier Create layout whose response was lost, or another tab, already finished setup.
       if (e instanceof HTTPError && e.response.status === 409) {
@@ -82,34 +75,42 @@ function SetupWizardDialog({ rerun = false, onClose }: { rerun?: boolean; onClos
       >
         <DialogTitle className="sr-only">{__('Set up YayCheckout', 'yaycheckout')}</DialogTitle>
 
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <StepBreadcrumb labels={STEPS} current={step} />
-            {isFinished && <Badge variant="success-outline">{__('Done', 'yaycheckout')}</Badge>}
-          </div>
-          {!isFinished && (
-            <Button variant="link" size="sm" disabled={setup.isPending} onClick={onSkip}>
-              {__('Skip setup', 'yaycheckout')}
-            </Button>
-          )}
-        </div>
-
-        {step === 0 && <ScanStep onContinue={() => setStep(1)} />}
-        {step === 1 && (
-          <StartFromStep
-            templateSlug={templateSlug}
-            onTemplateChange={setTemplateSlug}
-            isApplying={setup.isPending}
-            error={applyError}
-            onBack={() => {
-              setApplyError(null);
-              setStep(0);
-            }}
-            onApply={onApply}
-          />
-        )}
-        {isFinished && draft && templateSlug && (
+        {draft && templateSlug ? (
           <FinishStep draft={draft} templateSlug={templateSlug} onClose={close} />
+        ) : (
+          <>
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <h2 className="text-lg font-semibold">
+                  {rerun
+                    ? __('Create a layout from a template', 'yaycheckout')
+                    : __('Welcome to YayCheckout', 'yaycheckout')}
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  {rerun
+                    ? __(
+                        'Pick a template to start from. It is saved as a draft, so your customers keep seeing the current checkout until you publish it.',
+                        'yaycheckout',
+                      )
+                    : __(
+                        'Pick a template for your first checkout layout. It is saved as a draft, so your customers keep seeing the WooCommerce checkout until you publish it.',
+                        'yaycheckout',
+                      )}
+                </p>
+              </div>
+              <Button variant="link" size="sm" disabled={setup.isPending} onClick={onSkip}>
+                {__('Skip setup', 'yaycheckout')}
+              </Button>
+            </div>
+
+            <StartFromStep
+              templateSlug={templateSlug}
+              onTemplateChange={setTemplateSlug}
+              isApplying={setup.isPending}
+              error={applyError}
+              onApply={onApply}
+            />
+          </>
         )}
       </DialogContent>
     </Dialog>

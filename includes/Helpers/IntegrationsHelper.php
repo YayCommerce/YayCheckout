@@ -12,6 +12,9 @@ class IntegrationsHelper {
     /** Entries follow the shape describe() emits. */
     public const FILTER = 'yaycheckout_integrations';
 
+    /** YayBoost's icon, bundled: wordpress.org disallows loading images from a remote host. */
+    private const YAYBOOST_ICON_PATH = 'assets/images/integrations/yayboost.png';
+
     /**
      * Wire shape consumed by the SPA; mirrored by integrationWireSchema.
      *
@@ -22,14 +25,18 @@ class IntegrationsHelper {
             self::describe(
                 'yayboost',
                 __( 'YayBoost', 'yaycheckout' ),
-                __( 'Order bumps you can place as a block.', 'yaycheckout' ),
-                'YAYBOOST_VERSION'
+                __( 'Boost conversions, increase AOV, and create urgency with powerful sales-boosting tools for WooCommerce.', 'yaycheckout' ),
+                'YAYBOOST_VERSION',
+                YAYCHECKOUT_PLUGIN_URL . self::YAYBOOST_ICON_PATH,
+                'https://docs.yaycommerce.com/yayboost'
             ),
             self::describe(
                 'yayloyalty',
                 __( 'YayLoyalty', 'yaycheckout' ),
                 __( 'Points balance and redemption at checkout.', 'yaycheckout' ),
-                'YAYLOYALTY_VERSION'
+                'YAYLOYALTY_VERSION',
+                // YayLoyalty has no icon of its own yet; it borrows YayBoost's.
+                YAYCHECKOUT_PLUGIN_URL . self::YAYBOOST_ICON_PATH
             ),
         ];
 
@@ -37,7 +44,13 @@ class IntegrationsHelper {
         return (array) apply_filters( self::FILTER, $list );
     }
 
-    private static function describe( string $slug, string $name, string $description, string $version_const ): array {
+    /**
+     * One entry of the wire shape.
+     *
+     * @param string|null $icon_url       Null shows the plugin's initials instead.
+     * @param string|null $learn_more_url The plugin's own YayCommerce docs; without them, YayCheckout's.
+     */
+    private static function describe( string $slug, string $name, string $description, string $version_const, ?string $icon_url = null, ?string $learn_more_url = null ): array {
         // detected == active for core entries; both emitted so a filter-added one can differ.
         $detected = defined( $version_const );
 
@@ -48,7 +61,8 @@ class IntegrationsHelper {
             'detected'       => $detected,
             'version'        => $detected ? (string) constant( $version_const ) : null,
             'active'         => $detected,
-            'learn_more_url' => YAYCHECKOUT_DOCS_URL,
+            'icon_url'       => $icon_url,
+            'learn_more_url' => $learn_more_url ?? YAYCHECKOUT_DOCS_URL,
         ];
     }
 }

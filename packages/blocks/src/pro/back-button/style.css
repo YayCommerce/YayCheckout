@@ -1,0 +1,35 @@
+@import "../../shared/step-nav-button/style.css";
+
+.yaycheckout-back-button {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: fit-content;
+	padding: 10px 0;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--yaycheckout-primary-color, #3858e9);
+	/* The surrounding text's font, which the block's typography settings override. A button doesn't inherit it by default. */
+	font: inherit;
+	/* One line, so a flex row beside it (Place Order's terms text) can't squeeze the label. */
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+/* Classic themes (Storefront) repaint button:hover. */
+.yaycheckout-back-button:is(:hover, :focus) {
+	background: transparent;
+	color: var(--yaycheckout-primary-color, #3858e9);
+}
+
+.yaycheckout-back-button[hidden] {
+	display: none;
+}
+
+/* The cart link looks like the button. */
+a.yaycheckout-back-button,
+a.yaycheckout-back-button:is(:hover, :focus) {
+	text-decoration: none;
+}

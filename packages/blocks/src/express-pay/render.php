@@ -17,10 +17,8 @@ $yaycheckout_has_cart = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart
 ob_start();
 
 if ( $yaycheckout_has_cart ) {
-    // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Woo's classic checkout hooks.
-    do_action( \YayCheckout\Renderer\ExpressPay::HOOK );
-    do_action( \YayCheckout\Renderer\ExpressPay::AFTER_HOOK );
-    // phpcs:enable
+    \YayCheckout\Renderer\WcHooks::in_place( \YayCheckout\Renderer\ExpressPay::HOOK );
+    \YayCheckout\Renderer\WcHooks::in_place( \YayCheckout\Renderer\ExpressPay::AFTER_HOOK );
 }
 
 $yaycheckout_buttons = (string) ob_get_clean();

@@ -1,0 +1,10 @@
+/*
+ * Core's rich text follows a live value that ends the label with a U+FEFF text node, so the caret can sit after
+ * it. In the row it is one more flex item: Spread would share the space with it, and the gap would count it.
+ * Moving the last live value after it keeps the chip at the end, and the margin takes back the gap it adds.
+ * The storefront never has the character. edit.tsx adds the class.
+ */
+.editor-styles-wrapper .yaycheckout-place-order--ends-with-value > span[data-rich-text-bogus]:last-of-type {
+	order: 1;
+	margin-inline-start: -0.25em;
+}

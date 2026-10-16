@@ -149,7 +149,7 @@ function matches( rule: VisibilityRule, state: VisibilityState, step: number, st
 		case 'block':
 			return empty.includes( rule.block ) === ( rule.is === 'empty' );
 		case 'step':
-			return stepCount > 0 && ( rule.step === step || ( rule.step === 'last' && step === stepCount ) );
+			return rule.step === step || ( rule.step === 'last' && step === stepCount );
 		case 'subtotal':
 			return rule.op === 'gte' ? state.subtotal >= rule.amount : state.subtotal < rule.amount;
 		default:
@@ -157,7 +157,7 @@ function matches( rule: VisibilityRule, state: VisibilityState, step: number, st
 	}
 }
 
-/** Mirrors BlockVisibility::is_visible() in PHP. */
+/** Mirrors BlockVisibility::is_visible() in PHP: without steps, step rules are skipped, and no rules left shows the block. */
 export function isVisible(
 	setting: VisibilitySetting,
 	state: VisibilityState,
@@ -165,5 +165,11 @@ export function isVisible(
 	stepCount: number,
 	empty: string[] = []
 ): boolean {
-	return ( setting.action === 'show' ) === setting.rules.every( ( rule ) => matches( rule, state, step, stepCount, empty ) );
+	const rules = stepCount > 0 ? setting.rules : setting.rules.filter( ( rule ) => rule.type !== 'step' );
+
+	if ( rules.length === 0 ) {
+		return true;
+	}
+
+	return ( setting.action === 'show' ) === rules.every( ( rule ) => matches( rule, state, step, stepCount, empty ) );
 }

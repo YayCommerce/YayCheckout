@@ -1,0 +1,56 @@
+{
+	"colours": {
+		"primary": "#3858e9",
+		"text": "#1e1e1e",
+		"background": "#ffffff",
+		"border": "#e0e0e0",
+		"muted": "",
+		"link": "",
+		"link_hover": ""
+	},
+	"typography": {
+		"font_family": "system",
+		"base_size": 14
+	},
+	"inputs": {
+		"style": "boxed",
+		"size": "large",
+		"radius": 2,
+		"background": "#ffffff",
+		"text_color": "#1e1e1e",
+		"label_color": "",
+		"border": "#757575",
+		"focus_border": "#3858e9",
+		"focus_background": "",
+		"focus_style": "",
+		"label": "hidden"
+	},
+	"checkboxes": {
+		"size": null,
+		"radius": null,
+		"border_width": null,
+		"border": "",
+		"background": "",
+		"checked": ""
+	},
+	"radios": {
+		"size": null,
+		"border_width": null,
+		"border": "",
+		"background": "",
+		"checked": ""
+	},
+	"help_text": {
+		"size": null
+	},
+	"buttons": {
+		"background": "",
+		"text": "",
+		"hover_background": "",
+		"hover_text": "",
+		"radius": 2,
+		"font_weight": "semibold",
+		"text_transform": ""
+	},
+	"custom_css": ""
+}

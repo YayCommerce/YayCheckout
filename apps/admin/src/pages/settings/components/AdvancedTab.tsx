@@ -8,12 +8,12 @@ import {
   type PreviewLinkLifetime,
   type Settings,
 } from '@/lib/schema/settings.schema';
-import { FormField } from '@/components/ui/form';
+import { FormControl, FormField } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { DocLink } from './DocLink';
-import { SettingRow } from './SettingRow';
+import { SettingActionRow, SettingRow } from './SettingRow';
+import { SettingsSection } from './SettingsSection';
 
 /** WooCommerce → Status → Logs, filtered to Helpers\Logger's source. */
 const LOGS_URL = `${window.yayCheckoutMeta.wpMeta.adminUrl}admin.php?page=wc-status&tab=logs&source=yaycheckout`;
@@ -28,90 +28,92 @@ function lifetimeLabel(minutes: PreviewLinkLifetime): string {
   return sprintf(_n('%d minute', '%d minutes', minutes, 'yaycheckout'), minutes);
 }
 
+// Force-enqueue classic checkout scripts stays in the schema but is hidden from merchants for now.
 export function AdvancedTab() {
   const { control } = useFormContext<Settings>();
 
   return (
-    <div>
-      <SettingRow
-        title={__('Debug log', 'yaycheckout')}
-        description={__('Records render errors and self-test runs.', 'yaycheckout')}
+    <>
+      <SettingsSection
+        title={__('Troubleshooting', 'yaycheckout')}
+        description={__('Tools for when a checkout does not render or behave as expected.', 'yaycheckout')}
       >
-        <DocLink href={LOGS_URL} className="inline-flex items-center gap-1 text-sm">
-          {__('Open logs', 'yaycheckout')}
-          <ExternalLink className="size-3.5" />
-        </DocLink>
-      </SettingRow>
+        <SettingActionRow
+          title={__('Debug log', 'yaycheckout')}
+          description={__('Records render errors and self-test runs.', 'yaycheckout')}
+        >
+          <DocLink href={LOGS_URL} className="inline-flex items-center gap-1 text-sm">
+            {__('Open logs', 'yaycheckout')}
+            <ExternalLink className="size-3.5" />
+          </DocLink>
+        </SettingActionRow>
+      </SettingsSection>
 
-      <FormField
-        control={control}
-        name="advanced.previewLinkLifetime"
-        render={({ field }) => (
-          <SettingRow
-            title={__('Preview link lifetime', 'yaycheckout')}
-            description={__(
-              'How long a shared preview URL keeps working. Applies to links created from now on.',
-              'yaycheckout',
-            )}
-          >
-            <Select value={String(field.value)} onValueChange={(value) => field.onChange(Number(value))}>
-              <SelectTrigger size="sm" className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PREVIEW_LINK_LIFETIME_OPTIONS.map((minutes) => (
-                  <SelectItem key={minutes} value={String(minutes)}>
-                    {lifetimeLabel(minutes)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </SettingRow>
-        )}
-      />
+      <SettingsSection
+        title={__('Preview links', 'yaycheckout')}
+        description={__('Links that let someone see a layout before it goes live.', 'yaycheckout')}
+      >
+        <FormField
+          control={control}
+          name="advanced.previewLinkLifetime"
+          render={({ field }) => (
+            <SettingRow
+              orientation="vertical"
+              label={__('Preview link lifetime', 'yaycheckout')}
+              description={__(
+                'How long a shared preview URL keeps working. Applies to links created from now on.',
+                'yaycheckout',
+              )}
+            >
+              <Select value={String(field.value)} onValueChange={(value) => field.onChange(Number(value))}>
+                <FormControl>
+                  <SelectTrigger size="sm" className="w-36!">
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {PREVIEW_LINK_LIFETIME_OPTIONS.map((minutes) => (
+                    <SelectItem key={minutes} value={String(minutes)}>
+                      {lifetimeLabel(minutes)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SettingRow>
+          )}
+        />
+      </SettingsSection>
 
-      <FormField
-        control={control}
-        name="advanced.forceEnqueueCheckoutScripts"
-        render={({ field }) => (
-          <SettingRow
-            title={__('Force-enqueue classic checkout scripts', 'yaycheckout')}
-            description={__(
-              'Loads wc-checkout and wc-country-select even when WooCommerce decides they are not needed.',
-              'yaycheckout',
-            )}
-            warning={__(
-              'Only turn this on if the self-test reports missing scripts. It can conflict with themes that enqueue them already.',
-              'yaycheckout',
-            )}
-          >
-            <Switch checked={field.value} onCheckedChange={field.onChange} />
-          </SettingRow>
-        )}
-      />
-
-      <FormField
-        control={control}
-        name="advanced.customCss"
-        render={({ field }) => (
-          <SettingRow
-            title={__('Custom CSS', 'yaycheckout')}
-            description={__(
-              "Printed on every checkout, before each layout's own custom CSS. Not shown in the editor.",
-              'yaycheckout',
-            )}
-          >
-            <Textarea
-              {...field}
-              rows={8}
-              maxLength={CUSTOM_CSS_MAX_BYTES}
-              placeholder=".yaycheckout-checkout { }"
-              spellCheck={false}
-              className="w-96 font-mono text-xs md:text-xs"
-            />
-          </SettingRow>
-        )}
-      />
-    </div>
+      <SettingsSection
+        title={__('Custom CSS', 'yaycheckout')}
+        description={__('Store-wide styles for every checkout layout.', 'yaycheckout')}
+      >
+        <FormField
+          control={control}
+          name="advanced.customCss"
+          render={({ field }) => (
+            <SettingRow
+              orientation="vertical"
+              label={__('CSS', 'yaycheckout')}
+              description={__(
+                "Printed on every checkout, before each layout's own custom CSS. Not shown in the editor.",
+                'yaycheckout',
+              )}
+            >
+              <FormControl>
+                <Textarea
+                  {...field}
+                  rows={8}
+                  maxLength={CUSTOM_CSS_MAX_BYTES}
+                  placeholder=".yaycheckout-checkout { }"
+                  spellCheck={false}
+                  className="w-full! max-w-2xl font-mono text-xs md:text-xs"
+                />
+              </FormControl>
+            </SettingRow>
+          )}
+        />
+      </SettingsSection>
+    </>
   );
 }

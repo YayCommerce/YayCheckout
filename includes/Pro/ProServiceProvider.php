@@ -4,6 +4,7 @@ namespace YayCheckout\Pro;
 use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Pro\Controllers\LayoutImportRestController;
 use YayCheckout\Pro\Controllers\LayoutRulesRestController;
+use YayCheckout\Blocks\BlockRegistry;
 use YayCheckout\Pro\Services\AssignmentStoreData;
 use YayCheckout\Support\Plan;
 
@@ -22,6 +23,17 @@ class ProServiceProvider {
 
         add_action( 'rest_api_init', [ $this, 'rest_endpoints' ] );
         add_filter( 'yaycheckout_localize_admin_data', [ $this, 'admin_data' ] );
+        add_filter( 'yaycheckout_built_blocks', [ $this, 'built_blocks' ] );
+    }
+
+    /**
+     * Adds the Pro blocks (the step blocks), built under assets/dist/blocks/pro/, which the Free zip leaves out.
+     *
+     * @param array<string, string> $built Block directory name => path.
+     * @return array<string, string>
+     */
+    public function built_blocks( array $built ): array {
+        return array_merge( $built, BlockRegistry::built_dirs( 'assets/dist/blocks/pro/*/block.json' ) );
     }
 
     /** Adds `store`: the roles the assignment picker lists. */

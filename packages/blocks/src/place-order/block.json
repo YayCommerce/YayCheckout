@@ -16,6 +16,10 @@
   "attributes": {
     "buttonText": {
       "type": "string"
+    },
+    "spread": {
+      "type": "boolean",
+      "default": false
     }
   },
   "variations": [
@@ -95,5 +99,6 @@
   },
   "editorScript": "file:./index.js",
   "render": "file:./render.php",
+  "editorStyle": "file:./index.css",
   "style": "file:./style-index.css"
 }

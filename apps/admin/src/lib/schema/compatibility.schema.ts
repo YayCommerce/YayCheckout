@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Wire schemas: the PHP shape of GET /compatibility, exactly.
+// Wire schemas: the PHP shape of GET /compatibility, exactly. A detection that threw is null.
 
 /** Mirrors CompatibilityCatalogue::GATEWAY_STATUSES / PLUGIN_STATUSES in PHP. */
 const gatewayStatusWireSchema = z.enum(['verified', 'community', 'unverified', 'block-only']);
@@ -26,34 +26,40 @@ export const compatibilityWireSchema = z
           })
           .strict(),
         safe_mode: z.boolean(),
+        active_layouts: z.number().int(),
       })
-      .strict(),
-    gateways: z.array(
-      z
-        .object({
-          id: z.string(),
-          title: z.string(),
-          status: gatewayStatusWireSchema,
-          express_pay: z.string().nullable(),
-          notes: z.string().nullable(),
-          docs_url: z.string().url().nullable(),
-        })
-        .strict(),
-    ),
-    plugins: z.array(
-      z
-        .object({
-          slug: z.string(),
-          name: z.string(),
-          version: z.string(),
-          kind: ownerKindWireSchema,
-          touches: z.array(touchWireSchema),
-          status: pluginStatusWireSchema,
-          notes: z.string().nullable(),
-          docs_url: z.string().url().nullable(),
-        })
-        .strict(),
-    ),
+      .strict()
+      .nullable(),
+    gateways: z
+      .array(
+        z
+          .object({
+            id: z.string(),
+            title: z.string(),
+            status: gatewayStatusWireSchema,
+            express_pay: z.string().nullable(),
+            notes: z.string().nullable(),
+            docs_url: z.string().url().nullable(),
+          })
+          .strict(),
+      )
+      .nullable(),
+    plugins: z
+      .array(
+        z
+          .object({
+            slug: z.string(),
+            name: z.string(),
+            version: z.string(),
+            kind: ownerKindWireSchema,
+            touches: z.array(touchWireSchema),
+            status: pluginStatusWireSchema,
+            notes: z.string().nullable(),
+            docs_url: z.string().url().nullable(),
+          })
+          .strict(),
+      )
+      .nullable(),
     catalogue: z
       .object({
         source: catalogueSourceWireSchema,
@@ -78,6 +84,7 @@ export type StoreEnvironment = {
   wordpressVersion: string;
   theme: { name: string; version: string; isBlockTheme: boolean };
   safeMode: boolean;
+  activeLayouts: number;
 };
 
 export type GatewayRow = {
@@ -100,10 +107,11 @@ export type PluginRow = {
   docsUrl: string | null;
 };
 
+/** null: that detection failed, shown as "Not detected". */
 export type CompatibilityReport = {
-  store: StoreEnvironment;
-  gateways: GatewayRow[];
-  plugins: PluginRow[];
+  store: StoreEnvironment | null;
+  gateways: GatewayRow[] | null;
+  plugins: PluginRow[] | null;
   catalogue: {
     source: z.infer<typeof catalogueSourceWireSchema>;
     /** ISO 8601 UTC; null on the bundled list. */

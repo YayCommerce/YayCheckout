@@ -392,3 +392,8 @@
 	gap: 12px;
 	width: 100%;
 }
+
+/* The "no available payment methods" notice and the store manager's setup hint: the block's own spacing ends the last one. */
+.yaycheckout-checkout .yaycheckout-payment #payment > :is(.woocommerce-info, .wc-block-components-notice-banner):last-child {
+	margin-bottom: 0;
+}

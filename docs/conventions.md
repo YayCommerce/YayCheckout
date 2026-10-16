@@ -43,11 +43,27 @@
 - **Why:** the autoloader maps names to paths, so a mismatch fails silently. `components/` stays a list of what is genuinely shared, so a component there can be changed knowing who depends on it.
 - **In code:** the loader in `yaycheckout.php`; `apps/admin/src/pages/`, `apps/admin/src/components/`.
 
+## Admin headings, labels and copy
+
+- **Rule:**
+  - A page's title and description go through `PageLayout`. Its h1 is the only `text-2xl` on the page; a section is a `Card` with `CardTitle` and `CardDescription`.
+  - A settings section is a `SettingsSection`. A form-bound setting is a `SettingRow` inside `FormField`'s render prop, with the focusable element wrapped in `FormControl`. A switch row is horizontal (label on the left, switch on the right); a select, input or textarea row is vertical (label above). A row that triggers an action instead of holding a value is a `SettingActionRow`.
+  - UI copy is sentence case: "Save changes", not "Save Changes". Product and plugin names keep their capitals. A section or setting description is one short sentence ending in a period.
+  - A string translated outside a component runs `__()` inside a function, not at module load.
+- **Why:** the SPA follows YayLoyalty's admin, so merchants who run both see one pattern. `FormLabel` and `FormControl` give each control an accessible name and show its zod error. `__()` at import can run before the locale data loads.
+- **In code:** `apps/admin/src/pages/PageLayout.tsx`, `apps/admin/src/pages/settings/components/SettingsSection.tsx`, `apps/admin/src/pages/settings/components/SettingRow.tsx`.
+
 ## Logging
 
 - **Rule:** log faults, not expected outcomes. PHP logs through `Helpers\Logger` (WooCommerce's log, source `yaycheckout`); `Logger::exception()` records the route, class, file, line and trace, and `BaseRestController` calls it for every 500. A 4xx the merchant caused, such as the layout limit or unpublishable markup, is not logged. The SPA logs through `apps/admin/src/lib/logger.ts`, where the failure is handled (`apps/admin/src/lib/query-client.ts`, `apps/admin/src/pages/500.tsx`), not at every layer.
 - **Why:** support reads WooCommerce → Status → Logs, and expected outcomes there bury the failures that matter. In the browser, `error` and `warn` stay in production so a merchant's console screenshot shows the cause; `info` and `debug` run only in development, so nothing sensitive goes in their messages.
 - **In code:** `includes/Helpers/Logger.php`, `apps/admin/src/lib/logger.ts`.
+
+## Exception messages
+
+- **Rule:** a `throw` escapes a message that isn't a plain literal: `esc_html__()` for a translated one, `esc_html()` around anything else. Code that sends a message on, in a REST error, a bulk result or a log line, reads it through `Helpers\ExceptionHelper::message()`, which decodes it again.
+- **Why:** wordpress.org's Plugin Check fails an unescaped exception message (`ExceptionNotEscaped`) and doesn't read `phpcs.xml`. The messages only ever leave as JSON or log text, so without the decode an apostrophe would reach the SPA as `&#039;`.
+- **In code:** `includes/Helpers/ExceptionHelper.php`, `includes/Controllers/BaseRestController.php`.
 
 ## Comments
 

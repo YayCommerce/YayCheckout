@@ -1,4 +1,4 @@
-import { Info, TriangleAlert } from 'lucide-react';
+import { Info, LayoutTemplate, TriangleAlert } from 'lucide-react';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import type { LayoutSummary } from '@/lib/schema/layout.schema';
@@ -117,14 +117,17 @@ function LayoutNames({ layouts }: { layouts: LayoutSummary[] }) {
   const hidden = layouts.length - NAMES_SHOWN;
 
   return (
-    <ul className="text-sm">
+    <ul className="divide-border divide-y rounded-lg border text-sm">
       {layouts.slice(0, NAMES_SHOWN).map((layout) => (
-        <li key={layout.id} className="truncate" title={layout.title}>
-          {layout.title}
+        <li key={layout.id} className="flex items-center gap-2.5 px-3 py-2">
+          <LayoutTemplate className="text-muted-foreground size-4 shrink-0" />
+          <span className="truncate font-medium" title={layout.title}>
+            {layout.title}
+          </span>
         </li>
       ))}
       {hidden > 0 && (
-        <li className="text-muted-foreground">
+        <li className="text-muted-foreground px-3 py-2">
           {sprintf(
             /* translators: %d: number of layouts not listed */
             _n('+%d more', '+%d more', hidden, 'yaycheckout'),

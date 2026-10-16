@@ -76,6 +76,14 @@ class DesignStyles {
         'large'  => [ '3em', '3.5em' ],
     ];
 
+    /** Per buttons.font_weight step: its CSS weight. Mirrored by the layout editor (design-css.ts). */
+    private const BUTTON_FONT_WEIGHTS = [
+        'normal'   => '400',
+        'medium'   => '500',
+        'semibold' => '600',
+        'bold'     => '700',
+    ];
+
     /**
      * The design as one stylesheet. Everything before the custom CSS is mirrored by the layout
      * editor (design-css.ts), which reprints it as the merchant edits the layout's design.
@@ -258,7 +266,8 @@ class DesignStyles {
             $vars,
             array_filter(
                 [
-                    'link-color'       => $colours['link'],
+                    // An empty link colour takes the primary colour; with neither, links keep the theme's.
+                    'link-color'       => '' !== $colours['link'] ? $colours['link'] : $colours['primary'],
                     'link-hover-color' => $colours['link_hover'],
                 ],
                 $not_empty
@@ -269,6 +278,37 @@ class DesignStyles {
 
         if ( null !== $help_text['size'] ) {
             $vars['help-text-size'] = $help_text['size'] . 'px';
+        }
+
+        $buttons = $sections['buttons'];
+        $vars    = array_merge(
+            $vars,
+            array_filter(
+                [
+                    'button-background'       => $buttons['background'],
+                    'button-color'            => $buttons['text'],
+                    'button-hover-background' => $buttons['hover_background'],
+                    'button-hover-color'      => $buttons['hover_text'],
+                ],
+                $not_empty
+            )
+        );
+
+        // A hover colour of its own replaces the darkened default.
+        if ( '' !== $buttons['hover_background'] || '' !== $buttons['hover_text'] ) {
+            $vars['button-hover-filter'] = 'none';
+        }
+
+        if ( null !== $buttons['radius'] ) {
+            $vars['button-radius'] = $buttons['radius'] . 'px';
+        }
+
+        if ( '' !== $buttons['font_weight'] ) {
+            $vars['button-font-weight'] = self::BUTTON_FONT_WEIGHTS[ $buttons['font_weight'] ];
+        }
+
+        if ( '' !== $buttons['text_transform'] ) {
+            $vars['button-text-transform'] = $buttons['text_transform'];
         }
 
         return $vars;
