@@ -18,6 +18,11 @@ if ( ! function_exists( 'WC' ) || ! WC()->cart instanceof WC_Cart || ! function_
 // Buffered so the merchant's padding, border or background don't draw an empty box.
 ob_start();
 wc_get_template( 'checkout/terms.php' );
+/**
+ * Prints inside the Terms block, after WooCommerce's terms: where an extension that replaces the
+ * terms checkbox prints its own (Integrations\Germanized prints its legal checkboxes here).
+ */
+do_action( 'yaycheckout_checkout_terms' );
 $yaycheckout_terms = (string) ob_get_clean();
 
 if ( '' === trim( wp_strip_all_tags( $yaycheckout_terms ) ) ) {
