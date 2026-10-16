@@ -2,6 +2,7 @@ import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-edi
 import { PanelBody, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { LIVE_VALUE_FORMAT } from '../live-value/constants';
+import './editor.css';
 
 interface PlaceOrderAttributes {
 	buttonText?: string;
@@ -15,8 +16,14 @@ interface EditProps {
 
 /** The button is the block's root element, so its style supports land on it. Mirrors the class and default label render.php prints on the <button>. */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
+	// Core pads a label that ends in a live value with a U+FEFF text node, for the caret, and editor.css keeps it out
+	// of the row's layout. The label holds no other format, so a closing </span> at the end is a live value.
+	const endsWithValue = /<\/span>$/.test( attributes.buttonText ?? '' );
 	const blockProps = useBlockProps( {
-		className: 'yaycheckout-place-order wp-element-button' + ( attributes.spread ? ' yaycheckout-place-order--spread' : '' ),
+		className:
+			'yaycheckout-place-order wp-element-button' +
+			( attributes.spread ? ' yaycheckout-place-order--spread' : '' ) +
+			( endsWithValue ? ' yaycheckout-place-order--ends-with-value' : '' ),
 	} );
 
 	return (

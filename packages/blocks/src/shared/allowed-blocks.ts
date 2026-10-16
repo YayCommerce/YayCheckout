@@ -7,6 +7,7 @@ import emailMeta from '../email/block.json';
 import extraFieldMeta from '../extra-field/block.json';
 import stepsProgressMeta from '../pro/steps-progress/block.json';
 import stepButtonMeta from '../pro/step-button/block.json';
+import wcHookMeta from '../wc-hook/block.json';
 
 interface BlockTypeRules {
 	name: string;
@@ -17,17 +18,18 @@ interface BlockTypeRules {
 const CHECKOUT = checkoutMeta.name;
 
 // The step buttons find the open step from anywhere in the layout, Email address posts billing_email
-// from anywhere in it, and Extra Field posts under its Key from anywhere, so all stay allowed inside an
-// address section.
+// from anywhere in it, Extra Field posts under its Key from anywhere, and a WooCommerce Hook block may
+// carry a billing or shipping form hook, so all stay allowed inside an address section.
 const ALLOWED_IN_ADDRESS_SECTIONS = new Set( [
 	stepButtonMeta.name,
 	backButtonMeta.name,
 	emailMeta.name,
 	extraFieldMeta.name,
+	wcHookMeta.name,
 ] );
 
 /**
- * A block whose ancestor rule names Checkout, other than the step buttons, Email address and Extra Field,
+ * A block whose ancestor rule names Checkout, other than the step buttons, Email address, Extra Field and WooCommerce Hook,
  * or Steps Progress, which may sit outside Checkout but stays out of address sections.
  */
 export function isCheckoutSection( type: BlockTypeRules ): boolean {

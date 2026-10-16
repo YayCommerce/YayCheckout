@@ -418,6 +418,15 @@ cmd_release() {
     find "$temp_dir" -name "*.map" -delete 2>/dev/null || true
     find "$temp_dir" -name ".gitkeep" -delete 2>/dev/null || true
 
+    # wp-scripts writes an -rtl.css beside every block stylesheet, most of them identical to it.
+    # register_block_style_handle() uses the -rtl file only when it exists, so a copy can go.
+    local rtl_css
+    find "$temp_dir/assets/dist/blocks" -name "*-rtl.css" | while read -r rtl_css; do
+        if cmp -s "$rtl_css" "${rtl_css%-rtl.css}.css"; then
+            rm -f "$rtl_css"
+        fi
+    done
+
     print_step "Creating ZIP archive..."
     cd "$RELEASE_DIR"
     rm -f "$zip_name"
