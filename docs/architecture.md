@@ -87,7 +87,7 @@ Commands and hard rules live in [CLAUDE.md](../CLAUDE.md). Citations give a path
 - `Renderer\PreviewRequest` reads the token on `setup_theme` at 0, so `ThemelessCheckout` can see it, and applies its rules on `wp` at 5, before `CheckoutPage`. A preview wins over safe mode.
   - **A bad token:** on the checkout page, a token that doesn't resolve answers 410 instead of falling back to the live layout. A wc-ajax call with such a token does fall back.
   - **Hooks:** the page hooks attach only on the checkout page or a wc-ajax call. The order refusal attaches on any request carrying the argument, valid or not, and covers the classic checkout (`woocommerce_checkout_process`), not the Store API.
-  - **Sample products:** an empty cart gets sample products marked with `PreviewRequest::CART_ITEM_FLAG`, saved in the viewer's WooCommerce cart. Any request without the argument strips them.
+  - **Sample products:** an empty cart gets sample products marked with `PreviewRequest::CART_ITEM_FLAG`, saved in the viewer's WooCommerce cart. Any request without the argument strips them, so every preview request refills an empty cart, wc-ajax calls included: the browser's own tokenless requests, such as its favicon fetch, run alongside the preview.
 
 ## Blocks and the embedded editor
 

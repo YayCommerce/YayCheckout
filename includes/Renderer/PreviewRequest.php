@@ -131,9 +131,15 @@ class PreviewRequest {
         wc_add_notice( __( 'Orders cannot be placed from a preview link.', 'yaycheckout' ), 'error' );
     }
 
-    /** Fills an empty cart with the two newest purchasable simple products so the order table has rows. A shopper's own cart is left alone. */
+    /**
+     * Fills an empty cart with the two newest purchasable simple products so the order table has rows. A shopper's own cart is left alone.
+     *
+     * Refills on wc-ajax calls too: a tokenless request running alongside the preview (the browser's
+     * favicon fetch, another tab) strips the sample items from the shared session, and the next
+     * update_order_review would otherwise render an empty order.
+     */
     public function prefill_cart(): void {
-        if ( ! $this->active() || $this->is_wc_ajax() || is_wc_endpoint_url() || ! WC()->cart->is_empty() ) {
+        if ( ! $this->active() || is_wc_endpoint_url() || ! WC()->cart->is_empty() ) {
             return;
         }
 
