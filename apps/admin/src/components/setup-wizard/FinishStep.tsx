@@ -1,12 +1,10 @@
+import { Check } from 'lucide-react';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { storeTypeLabel } from '@/lib/helpers/compatibility.helper';
-import { useCompatibilityQuery } from '@/lib/queries/compatibility.queries';
 import { useTemplate } from '@/lib/queries/template.queries';
 import type { Layout } from '@/lib/schema/layout.schema';
 import { LayoutDraftActions } from '@/components/shared/LayoutDraftActions';
-import { SuccessHeader } from '@/components/shared/SuccessHeader';
-import { SummaryStrip } from '@/components/shared/SummaryStrip';
+import { TemplatePreview } from '@/components/shared/template-picker/TemplatePreview';
 
 /** Wizard confirmation: the draft Start from created, and where to take it next. Nothing is live yet. */
 export function FinishStep({
@@ -18,41 +16,36 @@ export function FinishStep({
   templateSlug: string;
   onClose: () => void;
 }) {
-  const { data: report } = useCompatibilityQuery();
-
-  const templateName = useTemplate(templateSlug)?.name ?? templateSlug;
+  const template = useTemplate(templateSlug);
 
   return (
-    <div className="flex flex-col gap-6">
-      <SuccessHeader
-        title={__('Your layout is ready. Nothing is live yet.', 'yaycheckout')}
-        description={sprintf(
-          /* translators: 1: layout name, 2: template name */
-          __(
-            'One layout, "%1$s", built from %2$s. Your customers still see the native WooCommerce checkout.',
-            'yaycheckout',
-          ),
-          draft.title,
-          templateName,
-        )}
-        size="lg"
-      />
+    <div className="mx-auto flex max-w-xl flex-col items-center gap-6 py-4 text-center">
+      <span className="bg-success/10 text-success flex size-14 items-center justify-center rounded-full">
+        <Check className="size-7" />
+      </span>
 
-      <SummaryStrip
-        items={[
-          [__('Layout', 'yaycheckout'), draft.title],
-          [__('Started from', 'yaycheckout'), templateName],
-          [__('Renders on', 'yaycheckout'), report?.store ? storeTypeLabel(report.store.storeType) : '—'],
-          [__('Status', 'yaycheckout'), __('Inactive', 'yaycheckout')],
-        ]}
-      />
-
-      <div className="flex items-center justify-between gap-2 border-t pt-4">
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold">{__('Your layout is ready', 'yaycheckout')}</h2>
         <p className="text-muted-foreground text-sm">
-          {__('Publish from the editor when you are happy.', 'yaycheckout')}
+          {sprintf(
+            /* translators: 1: layout name, 2: template name */
+            __(
+              '"%1$s" was created from %2$s as a draft. Nothing is live yet: publish it from the editor when you are happy.',
+              'yaycheckout',
+            ),
+            draft.title,
+            template?.name ?? templateSlug,
+          )}
         </p>
-        <LayoutDraftActions layoutId={draft.id} onClose={onClose} />
       </div>
+
+      {template && (
+        <div className="group w-72">
+          <TemplatePreview template={template} />
+        </div>
+      )}
+
+      <LayoutDraftActions layoutId={draft.id} onClose={onClose} />
     </div>
   );
 }
