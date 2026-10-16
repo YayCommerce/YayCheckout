@@ -130,7 +130,7 @@ Commands and hard rules live in [CLAUDE.md](../CLAUDE.md). Citations give a path
 
 - `./scripts/run.sh build` type-checks and builds the SPA, then the blocks. Both must build for a release: without the blocks build, a zip ships an editor with no YayCheckout blocks.
 - `./scripts/run.sh release`, in order:
-  1. Sets the version when one is passed or typed: the `yaycheckout.php` header, `YAYCHECKOUT_VERSION`, and `Stable tag:` in `readme.txt`.
+  1. Sets the version when one is passed or typed: the `yaycheckout.php` header, `YAYCHECKOUT_VERSION`, and `Stable tag:` in `readme.txt`. Then sets `Tested up to:` in `readme.txt` and `WC tested up to:` in the header, from `--wp-tested=` and `--wc-tested=`, or from prompts on an interactive run.
   2. Runs the admin-shell prerelease sync, dumps a `--no-dev` authoritative autoloader, exports `YAYCHECKOUT_PLAN` and builds.
   3. Copies a fixed list into a folder named after the edition. Free deletes `includes/Pro/`, `assets/dist/blocks/pro/` and `templates/layouts/pro/`, keeping only each Pro template's `preview.html`; Pro renames the plugin in its header. From Composer it copies only `vendor/autoload.php`, `vendor/composer/` and `vendor-prefixed/`, no packages.
   4. Strips `RegisterDev.php`, `assets/dist/admin/.vite`, source maps, `.DS_Store` and `.gitkeep`.

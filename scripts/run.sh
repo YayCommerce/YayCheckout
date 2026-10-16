@@ -6,7 +6,7 @@
 # Commands:
 #   dev                - Update admin shell + start Vite dev server (HMR on :3040) + blocks watcher
 #   build              - Build admin dashboard + blocks for production
-#   release [version]  - Create release ZIP package (prompts for version)
+#   release [version]  - Create release ZIP package (prompts for version and WP/WC tested up to)
 #   bump <version>     - Bump version number in plugin files
 #   info               - Show current version info
 #   clean              - Remove admin build artifacts (blocks output is left)
@@ -192,6 +192,48 @@ prompt_release_version() {
     fi
 }
 
+# "Tested up to" lives in readme.txt for WordPress and in the plugin header for WooCommerce
+get_wp_tested() {
+    grep -E "^Tested up to:" "$PLUGIN_DIR/readme.txt" | sed -E "s/^Tested up to:[[:space:]]*//"
+}
+
+get_wc_tested() {
+    grep -E "^ \* WC tested up to:" "$MAIN_FILE" | sed -E "s/^ \* WC tested up to:[[:space:]]*//"
+}
+
+# Tested-up-to version: X.Y or X.Y.Z
+validate_tested_version() {
+    [[ "$1" =~ ^[0-9]+(\.[0-9]+){1,2}$ ]]
+}
+
+update_wp_tested() {
+    sed_inplace "s/^Tested up to: .*/Tested up to: $(sed_escape "$1")/" "$PLUGIN_DIR/readme.txt"
+    print_success "WordPress tested up to $1"
+}
+
+update_wc_tested() {
+    sed_inplace "s/^ \* WC tested up to: .*/ * WC tested up to: $(sed_escape "$1")/" "$MAIN_FILE"
+    print_success "WooCommerce tested up to $1"
+}
+
+# Prompt for one tested-up-to value: $1 label, $2 current value, $3 update function
+prompt_tested_version() {
+    local label=$1
+    local current=$2
+    local updater=$3
+    local value
+    while true; do
+        read -r -p "  $label tested up to [$current]: " value
+        value=${value:-$current}
+        validate_tested_version "$value" && break
+        print_error "Invalid version. Use: X.Y or X.Y.Z"
+    done
+
+    if [ "$value" != "$current" ]; then
+        "$updater" "$value"
+    fi
+}
+
 # ─── Commands ───────────────────────────────────────────────────────────
 
 cmd_dev() {
@@ -233,11 +275,15 @@ cmd_release() {
     local no_prompt=false
     local requested_version=""
     local plan="free"
+    local wp_tested=""
+    local wc_tested=""
     local arg
     for arg in "$@"; do
         case $arg in
-            --no-prompt) no_prompt=true ;;
-            --plan=*)    plan="${arg#--plan=}" ;;
+            --no-prompt)   no_prompt=true ;;
+            --plan=*)      plan="${arg#--plan=}" ;;
+            --wp-tested=*) wp_tested="${arg#--wp-tested=}" ;;
+            --wc-tested=*) wc_tested="${arg#--wc-tested=}" ;;
             *) [ -z "$requested_version" ] && requested_version="$arg" ;;
         esac
     done
@@ -265,6 +311,14 @@ cmd_release() {
         exit 1
     fi
 
+    for arg in "$wp_tested" "$wc_tested"; do
+        if [ -n "$arg" ] && ! validate_tested_version "$arg"; then
+            print_error "Invalid tested-up-to version: $arg"
+            echo "Use: X.Y or X.Y.Z"
+            exit 1
+        fi
+    done
+
     print_msg "$CYAN" "╔════════════════════════════════════════════╗"
     print_msg "$CYAN" "║       YayCheckout Release Packager          ║"
     print_msg "$CYAN" "╚════════════════════════════════════════════╝"
@@ -279,11 +333,27 @@ cmd_release() {
         version=$(get_version)
     fi
 
+    # A flag sets its value; without one, only an interactive run (no version, no --no-prompt) asks.
+    local interactive=false
+    [ "$no_prompt" = false ] && [ -z "$requested_version" ] && interactive=true
+    if [ -n "$wp_tested" ]; then
+        update_wp_tested "$wp_tested"
+    elif [ "$interactive" = true ]; then
+        prompt_tested_version "WordPress" "$(get_wp_tested)" update_wp_tested
+    fi
+    if [ -n "$wc_tested" ]; then
+        update_wc_tested "$wc_tested"
+    elif [ "$interactive" = true ]; then
+        prompt_tested_version "WooCommerce" "$(get_wc_tested)" update_wc_tested
+    fi
+
     local zip_name="${plan_slug}-${version}.zip"
 
     echo ""
     print_info "Plan: $plan"
     print_info "Version: $version"
+    print_info "WP tested up to: $(get_wp_tested)"
+    print_info "WC tested up to: $(get_wc_tested)"
     print_info "Output: release/$zip_name"
     echo ""
 
@@ -412,6 +482,8 @@ cmd_bump() {
 cmd_info() {
     print_info "Plugin: $PLUGIN_SLUG"
     print_info "Version: $(get_version)"
+    print_info "WP tested up to: $(get_wp_tested)"
+    print_info "WC tested up to: $(get_wc_tested)"
     print_info "Plugin dir: $PLUGIN_DIR"
 }
 
@@ -501,8 +573,9 @@ cmd_help() {
     echo "Commands:"
     echo "  dev                          Update admin shell + Vite dev server (:3040) + blocks watcher"
     echo "  build                        Build admin dashboard + blocks for production"
-    echo "  release [version] [--plan=free|pro] [--no-prompt]"
+    echo "  release [version] [--plan=free|pro] [--wp-tested=X.Y] [--wc-tested=X.Y.Z] [--no-prompt]"
     echo "                               Create release ZIP in release/ (default --plan=free)"
+    echo "                               Prompts for version and WP/WC tested-up-to unless given"
     echo "  bump <version>               Bump version in plugin files"
     echo "  info                         Show current version info"
     echo "  clean                        Remove admin build artifacts (blocks output is left)"
@@ -516,6 +589,7 @@ cmd_help() {
     echo "  ./scripts/run.sh release --plan=pro      # Pro package"
     echo "  ./scripts/run.sh release 1.0.1          # Bump to 1.0.1 and package"
     echo "  ./scripts/run.sh release --no-prompt    # Package current version"
+    echo "  ./scripts/run.sh release 1.0.1 --wp-tested=6.9 --wc-tested=10.8.0"
 }
 
 # ─── Main ───────────────────────────────────────────────────────────────
