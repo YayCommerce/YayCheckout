@@ -16,6 +16,7 @@ class LayoutMarkupReader {
     private const EXTRA_FIELD       = 'yaycheckout/extra-field';
     private const ORDER_NOTE        = 'yaycheckout/order-note';
     private const SLOT              = 'yaycheckout/slot';
+    private const WC_HOOK           = 'yaycheckout/wc-hook';
     public const BILLING            = 'yaycheckout/billing';
     public const SHIPPING           = 'yaycheckout/shipping';
     private const DIFFERENT_ADDRESS = 'yaycheckout/different-address';
@@ -97,6 +98,23 @@ class LayoutMarkupReader {
         }
 
         return array_values( array_unique( array_filter( $slots, 'strlen' ) ) );
+    }
+
+    /**
+     * The hook each WooCommerce Hook block fires, in document order, unique. Unvetted: WcHooks decides which may fire.
+     *
+     * @return string[]
+     */
+    public static function wc_hooks( string $markup ): array {
+        $hooks = [];
+
+        foreach ( self::blocks( $markup ) as $block ) {
+            if ( self::WC_HOOK === $block['blockName'] ) {
+                $hooks[] = self::text( $block['attrs'], 'hook' );
+            }
+        }
+
+        return array_values( array_unique( array_filter( $hooks, 'strlen' ) ) );
     }
 
     /**

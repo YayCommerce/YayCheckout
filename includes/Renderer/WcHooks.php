@@ -1,0 +1,427 @@
+<?php
+namespace YayCheckout\Renderer;
+
+use YayCheckout\Services\LayoutMarkupReader;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * The WooCommerce classic-checkout actions a WooCommerce Hook block can fire, and the rule that
+ * moves a hook out of the block that fires it today: once the served layout places a Hook block
+ * for it, only that block fires it, so plugin output never prints twice or inside another block.
+ */
+class WcHooks {
+
+    public const BLOCK = 'yaycheckout/wc-hook';
+
+    /** The root of a refreshed hook's output; with a `--<hook>` modifier it is that hook's fragment selector. */
+    public const CONTENT_CLASS = 'yaycheckout-wc-hook__content';
+
+    /** Wraps what plugins print, in a table when they print rows. */
+    public const ROWS_CLASS = 'yaycheckout-wc-hook__rows';
+
+    /**
+     * Hook => where it sits in WooCommerce's templates, whether it passes WC()->checkout() as they do,
+     * and whether update_order_review reprints it: plugins print totals there, which change on refresh.
+     * Left out: the login hooks (their inputs belong to the login dialog's own form), the per-rate
+     * woocommerce_after_shipping_rate, and woocommerce_checkout_terms_and_conditions, whose core
+     * callbacks are the Terms block's content.
+     */
+    public const HOOKS = [
+        'woocommerce_before_checkout_form'                 => [
+            'group'        => 'page',
+            'checkout_arg' => true,
+            'refresh'      => false,
+        ],
+        'woocommerce_after_checkout_form'                  => [
+            'group'        => 'page',
+            'checkout_arg' => true,
+            'refresh'      => false,
+        ],
+        'woocommerce_checkout_before_customer_details'     => [
+            'group'        => 'customer',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_checkout_after_customer_details'      => [
+            'group'        => 'customer',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_checkout_billing'                     => [
+            'group'        => 'customer',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_checkout_shipping'                    => [
+            'group'        => 'customer',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_before_checkout_billing_form'         => [
+            'group'        => 'customer',
+            'checkout_arg' => true,
+            'refresh'      => false,
+        ],
+        'woocommerce_after_checkout_billing_form'          => [
+            'group'        => 'customer',
+            'checkout_arg' => true,
+            'refresh'      => false,
+        ],
+        'woocommerce_before_checkout_shipping_form'        => [
+            'group'        => 'customer',
+            'checkout_arg' => true,
+            'refresh'      => false,
+        ],
+        'woocommerce_after_checkout_shipping_form'         => [
+            'group'        => 'customer',
+            'checkout_arg' => true,
+            'refresh'      => false,
+        ],
+        'woocommerce_before_checkout_registration_form'    => [
+            'group'        => 'customer',
+            'checkout_arg' => true,
+            'refresh'      => false,
+        ],
+        'woocommerce_after_checkout_registration_form'     => [
+            'group'        => 'customer',
+            'checkout_arg' => true,
+            'refresh'      => false,
+        ],
+        'woocommerce_before_order_notes'                   => [
+            'group'        => 'customer',
+            'checkout_arg' => true,
+            'refresh'      => false,
+        ],
+        'woocommerce_after_order_notes'                    => [
+            'group'        => 'customer',
+            'checkout_arg' => true,
+            'refresh'      => false,
+        ],
+        'woocommerce_checkout_before_order_review_heading' => [
+            'group'        => 'review',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_checkout_before_order_review'         => [
+            'group'        => 'review',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_checkout_order_review'                => [
+            'group'        => 'review',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_checkout_after_order_review'          => [
+            'group'        => 'review',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_review_order_before_cart_contents'    => [
+            'group'        => 'review',
+            'checkout_arg' => false,
+            'refresh'      => true,
+        ],
+        'woocommerce_review_order_after_cart_contents'     => [
+            'group'        => 'review',
+            'checkout_arg' => false,
+            'refresh'      => true,
+        ],
+        'woocommerce_review_order_before_shipping'         => [
+            'group'        => 'review',
+            'checkout_arg' => false,
+            'refresh'      => true,
+        ],
+        'woocommerce_review_order_after_shipping'          => [
+            'group'        => 'review',
+            'checkout_arg' => false,
+            'refresh'      => true,
+        ],
+        'woocommerce_review_order_before_order_total'      => [
+            'group'        => 'review',
+            'checkout_arg' => false,
+            'refresh'      => true,
+        ],
+        'woocommerce_review_order_after_order_total'       => [
+            'group'        => 'review',
+            'checkout_arg' => false,
+            'refresh'      => true,
+        ],
+        'woocommerce_review_order_before_payment'          => [
+            'group'        => 'payment',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_review_order_after_payment'           => [
+            'group'        => 'payment',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_review_order_before_submit'           => [
+            'group'        => 'payment',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_review_order_after_submit'            => [
+            'group'        => 'payment',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_checkout_before_terms_and_conditions' => [
+            'group'        => 'payment',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+        'woocommerce_checkout_after_terms_and_conditions'  => [
+            'group'        => 'payment',
+            'checkout_arg' => false,
+            'refresh'      => false,
+        ],
+    ];
+
+    /** @var array{0: string, 1: string[]}|null The layout content placed() last read, and its hooks. */
+    private static ?array $placed = null;
+
+    /** @return array<string, string> Hook => its name in the editor's picker. */
+    public static function labels(): array {
+        return [
+            'woocommerce_before_checkout_form'             => __( 'Before checkout form', 'yaycheckout' ),
+            'woocommerce_after_checkout_form'              => __( 'After checkout form', 'yaycheckout' ),
+            'woocommerce_checkout_before_customer_details' => __( 'Before customer details', 'yaycheckout' ),
+            'woocommerce_checkout_after_customer_details'  => __( 'After customer details', 'yaycheckout' ),
+            'woocommerce_checkout_billing'                 => __( 'Billing', 'yaycheckout' ),
+            'woocommerce_checkout_shipping'                => __( 'Shipping', 'yaycheckout' ),
+            'woocommerce_before_checkout_billing_form'     => __( 'Before billing form', 'yaycheckout' ),
+            'woocommerce_after_checkout_billing_form'      => __( 'After billing form', 'yaycheckout' ),
+            'woocommerce_before_checkout_shipping_form'    => __( 'Before shipping form', 'yaycheckout' ),
+            'woocommerce_after_checkout_shipping_form'     => __( 'After shipping form', 'yaycheckout' ),
+            'woocommerce_before_checkout_registration_form' => __( 'Before account fields', 'yaycheckout' ),
+            'woocommerce_after_checkout_registration_form' => __( 'After account fields', 'yaycheckout' ),
+            'woocommerce_before_order_notes'               => __( 'Before order notes', 'yaycheckout' ),
+            'woocommerce_after_order_notes'                => __( 'After order notes', 'yaycheckout' ),
+            'woocommerce_checkout_before_order_review_heading' => __( 'Before order review heading', 'yaycheckout' ),
+            'woocommerce_checkout_before_order_review'     => __( 'Before order review', 'yaycheckout' ),
+            'woocommerce_checkout_order_review'            => __( 'Order review', 'yaycheckout' ),
+            'woocommerce_checkout_after_order_review'      => __( 'After order review', 'yaycheckout' ),
+            'woocommerce_review_order_before_cart_contents' => __( 'Before cart items', 'yaycheckout' ),
+            'woocommerce_review_order_after_cart_contents' => __( 'After cart items', 'yaycheckout' ),
+            'woocommerce_review_order_before_shipping'     => __( 'Before shipping totals', 'yaycheckout' ),
+            'woocommerce_review_order_after_shipping'      => __( 'After shipping totals', 'yaycheckout' ),
+            'woocommerce_review_order_before_order_total'  => __( 'Before order total', 'yaycheckout' ),
+            'woocommerce_review_order_after_order_total'   => __( 'After order total', 'yaycheckout' ),
+            'woocommerce_review_order_before_payment'      => __( 'Before payment', 'yaycheckout' ),
+            'woocommerce_review_order_after_payment'       => __( 'After payment', 'yaycheckout' ),
+            'woocommerce_review_order_before_submit'       => __( 'Before place order button', 'yaycheckout' ),
+            'woocommerce_review_order_after_submit'        => __( 'After place order button', 'yaycheckout' ),
+            'woocommerce_checkout_before_terms_and_conditions' => __( 'Before terms', 'yaycheckout' ),
+            'woocommerce_checkout_after_terms_and_conditions' => __( 'After terms', 'yaycheckout' ),
+        ];
+    }
+
+    public static function is_allowed( string $hook ): bool {
+        return isset( self::HOOKS[ $hook ] );
+    }
+
+    public static function is_refreshed( string $hook ): bool {
+        return self::is_allowed( $hook ) && self::HOOKS[ $hook ]['refresh'];
+    }
+
+    /**
+     * WooCommerce's own callbacks on $hook that print what another YayCheckout block already prints:
+     * the login and coupon forms, the billing and shipping forms, the review table and payment section.
+     * Notices are among them because the checkout prints none of its own there today.
+     *
+     * @return callable[]
+     */
+    public static function core_callbacks( string $hook ): array {
+        switch ( $hook ) {
+            case 'woocommerce_before_checkout_form':
+                return [ 'woocommerce_checkout_login_form', 'woocommerce_checkout_coupon_form', 'woocommerce_output_all_notices' ];
+            case 'woocommerce_checkout_billing':
+                return [ [ WC()->checkout(), 'checkout_form_billing' ] ];
+            case 'woocommerce_checkout_shipping':
+                return [ [ WC()->checkout(), 'checkout_form_shipping' ] ];
+            case 'woocommerce_checkout_order_review':
+                return [ 'woocommerce_order_review', 'woocommerce_checkout_payment' ];
+            default:
+                return [];
+        }
+    }
+
+    /** What $hook prints without its core callbacks, or '' for a hook outside HOOKS. */
+    public static function fire( string $hook ): string {
+        if ( ! self::is_allowed( $hook ) ) {
+            return '';
+        }
+
+        $args = self::HOOKS[ $hook ]['checkout_arg'] ? [ WC()->checkout() ] : [];
+
+        ob_start();
+        self::with_hook_trimmed(
+            $hook,
+            self::core_callbacks( $hook ),
+            static function () use ( $hook, $args ) {
+                // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- One of HOOKS, WooCommerce's own names.
+                do_action( $hook, ...$args );
+            }
+        );
+
+        return (string) ob_get_clean();
+    }
+
+    /** Whether anything besides core_callbacks() hooks $hook. For the editor's notice. */
+    public static function has_callbacks( string $hook ): bool {
+        global $wp_filter;
+
+        if ( ! isset( $wp_filter[ $hook ] ) ) {
+            return false;
+        }
+
+        $count = count( array_merge( ...array_values( $wp_filter[ $hook ]->callbacks ) ) );
+
+        foreach ( self::core_callbacks( $hook ) as $callback ) {
+            if ( false !== has_action( $hook, $callback ) ) {
+                --$count;
+            }
+        }
+
+        return $count > 0;
+    }
+
+    /**
+     * The HOOKS the served layout's Hook blocks fire, or none when no layout is served.
+     *
+     * @return string[]
+     */
+    public static function placed(): array {
+        $layout = CheckoutPage::get_instance()->layout();
+
+        if ( null === $layout ) {
+            return [];
+        }
+
+        if ( null === self::$placed || self::$placed[0] !== $layout->content ) {
+            self::$placed = [ $layout->content, array_values( array_filter( LayoutMarkupReader::wc_hooks( $layout->content ), [ self::class, 'is_allowed' ] ) ) ];
+        }
+
+        return self::$placed[1];
+    }
+
+    /**
+     * A refreshed hook's output in the root update_order_review swaps, printed even when empty so the
+     * swap always has a target. The root carries BlockEmptiness's live markers.
+     */
+    public static function content_root( string $hook, string $output ): string {
+        $is_empty = '' === trim( $output );
+
+        return '<div class="' . esc_attr( self::CONTENT_CLASS . ' ' . self::CONTENT_CLASS . '--' . $hook ) . '" '
+            . BlockEmptiness::LIVE_ATTR . '="1"' . ( $is_empty ? ' ' . BlockEmptiness::EMPTY_ATTR . '="1"' : '' ) . '>'
+            . CheckoutFragments::wrap_extension_html( $output, self::ROWS_CLASS )
+            . '</div>';
+    }
+
+    /**
+     * Selector => fresh root for each refreshed hook a Hook block in the served layout fires, for update_order_review.
+     *
+     * @return array<string, string>
+     */
+    public static function fragments(): array {
+        $fragments = [];
+
+        foreach ( self::placed_refreshed() as $hook ) {
+            $fragments[ '.' . self::CONTENT_CLASS . '--' . $hook ] = self::content_root( $hook, self::fire( $hook ) );
+        }
+
+        return $fragments;
+    }
+
+    /**
+     * The placed() hooks that update_order_review reprints.
+     *
+     * @return string[]
+     */
+    public static function placed_refreshed(): array {
+        return array_values( array_filter( self::placed(), [ self::class, 'is_refreshed' ] ) );
+    }
+
+    public static function is_placed( string $hook ): bool {
+        return in_array( $hook, self::placed(), true );
+    }
+
+    /**
+     * Fires $hook where a block has always fired it, unless a Hook block in the served layout fires it instead.
+     *
+     * @param mixed ...$args The hook's arguments.
+     */
+    public static function in_place( string $hook, ...$args ): void {
+        if ( self::is_placed( $hook ) ) {
+            return;
+        }
+
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- WooCommerce's hook, named by the caller.
+        do_action( $hook, ...$args );
+    }
+
+    /**
+     * Runs $render with every callback detached from those $hooks that a Hook block fires, for a
+     * WooCommerce template that fires them itself.
+     *
+     * @param string[] $hooks Hooks the template fires.
+     */
+    public static function without_placed( array $hooks, callable $render ): void {
+        global $wp_filter;
+
+        $saved = [];
+        foreach ( $hooks as $hook ) {
+            if ( self::is_placed( $hook ) && isset( $wp_filter[ $hook ] ) ) {
+                $saved[ $hook ] = $wp_filter[ $hook ];
+                unset( $wp_filter[ $hook ] );
+            }
+        }
+
+        try {
+            $render();
+        } finally {
+            foreach ( $saved as $hook => $wp_hook ) {
+                // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restores the hook detached above.
+                $wp_filter[ $hook ] = $wp_hook;
+            }
+        }
+    }
+
+    /**
+     * Runs $render while $hook lacks $callbacks. It fires a copy of the hook, so the original, with its
+     * callback order, is put back untouched even when a callback throws.
+     *
+     * @param callable[] $callbacks
+     */
+    private static function with_hook_trimmed( string $hook, array $callbacks, callable $render ): void {
+        global $wp_filter;
+
+        if ( array() === $callbacks || ! isset( $wp_filter[ $hook ] ) ) {
+            $render();
+            return;
+        }
+
+        $original = $wp_filter[ $hook ];
+        $trimmed  = clone $original;
+
+        foreach ( $callbacks as $callback ) {
+            $priority = $trimmed->has_filter( $hook, $callback );
+            if ( false !== $priority ) {
+                $trimmed->remove_filter( $hook, $callback, $priority );
+            }
+        }
+
+        // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Swapped back in the finally below.
+        $wp_filter[ $hook ] = $trimmed;
+
+        try {
+            $render();
+        } finally {
+            // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restores the hook swapped above.
+            $wp_filter[ $hook ] = $original;
+        }
+    }
+}

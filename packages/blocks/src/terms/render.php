@@ -17,7 +17,13 @@ if ( ! function_exists( 'WC' ) || ! WC()->cart instanceof WC_Cart || ! function_
 
 // Buffered so the merchant's padding, border or background don't draw an empty box.
 ob_start();
-wc_get_template( 'checkout/terms.php' );
+// A WooCommerce Hook block placed for the before or after hook prints it instead.
+\YayCheckout\Renderer\WcHooks::without_placed(
+    [ 'woocommerce_checkout_before_terms_and_conditions', 'woocommerce_checkout_after_terms_and_conditions' ],
+    static function () {
+        wc_get_template( 'checkout/terms.php' );
+    }
+);
 $yaycheckout_terms = (string) ob_get_clean();
 
 if ( '' === trim( wp_strip_all_tags( $yaycheckout_terms ) ) ) {
