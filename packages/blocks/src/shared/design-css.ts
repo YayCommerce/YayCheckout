@@ -173,7 +173,8 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 	out.push( ...radioColours.filter( notEmpty ) );
 
 	const linkColours: [ string, string ][] = [
-		[ 'link-color', String( colours.link ?? '' ) ],
+		// An empty link colour takes the primary colour; with neither, links keep the theme's.
+		[ 'link-color', String( colours.link || colours.primary || '' ) ],
 		[ 'link-hover-color', String( colours.link_hover ?? '' ) ],
 	];
 
