@@ -153,6 +153,7 @@ class BlockRegistry {
             ];
         }
 
+        // Every block whose block.json turns on supports.dimensions.width.
         foreach ( [ 'place-order', 'step-button', 'back-button' ] as $width_block ) {
             $blocks[ 'yaycheckout/' . $width_block ]['dimensions'] = [ 'dimensionSizes' => $sizes ];
         }

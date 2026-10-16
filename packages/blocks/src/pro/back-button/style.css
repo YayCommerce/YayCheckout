@@ -1,3 +1,5 @@
+@import "../../shared/step-nav-button/style.css";
+
 .yaycheckout-back-button {
 	box-sizing: border-box;
 	display: flex;
@@ -14,15 +16,6 @@
 	/* One line, so a flex row beside it (Place Order's terms text) can't squeeze the label. */
 	white-space: nowrap;
 	cursor: pointer;
-}
-
-/* The text alignment places the label and arrow when the Width setting makes the button wider than them. */
-.yaycheckout-back-button.has-text-align-center {
-	justify-content: center;
-}
-
-.yaycheckout-back-button.has-text-align-right {
-	justify-content: flex-end;
 }
 
 /* Classic themes (Storefront) repaint button:hover. */

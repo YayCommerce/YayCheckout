@@ -1,3 +1,4 @@
+/* Same fallback chain as checkout-base.css's .yaycheckout-disclosure__toggle[data-mode="link"]; change them together. */
 .editor-styles-wrapper .yaycheckout-disclosure__toggle[data-mode="link"] {
 	display: block;
 	margin-bottom: 0.5em;
