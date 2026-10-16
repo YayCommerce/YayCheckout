@@ -117,8 +117,8 @@ class BlockRegistry {
 
     /**
      * Block settings in the default origin, so a theme's own block settings and presets win:
-     * - Place Order: Core Button's old 25/50/75/100% widths as presets for its Width control
-     *   (Styles > Dimensions). WordPress ships no dimension sizes, so the control has none without them.
+     * - Place Order, Step Button and Back Button: Core Button's old 25/50/75/100% widths as presets for their Width
+     *   control (Styles > Dimensions). WordPress ships no dimension sizes, so the control has none without them.
      * - Every block in ORDER: padding, margin and border, and Steps, Step, Billing, Shipping, Order Summary and Summary Details: blockGap,
      *   which core's defaults leave off, so their Styles controls show on themes that don't turn them on.
      *
@@ -153,7 +153,9 @@ class BlockRegistry {
             ];
         }
 
-        $blocks['yaycheckout/place-order']['dimensions'] = [ 'dimensionSizes' => $sizes ];
+        foreach ( [ 'place-order', 'step-button', 'back-button' ] as $width_block ) {
+            $blocks[ 'yaycheckout/' . $width_block ]['dimensions'] = [ 'dimensionSizes' => $sizes ];
+        }
 
         foreach ( [ 'steps', 'step', 'billing', 'shipping', 'order-summary', 'order-summary-details' ] as $gap_block ) {
             $blocks[ 'yaycheckout/' . $gap_block ]['spacing']['blockGap'] = true;

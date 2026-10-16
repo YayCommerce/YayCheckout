@@ -1,4 +1,5 @@
 .yaycheckout-step-button {
+	box-sizing: border-box;
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -11,6 +12,15 @@
 	/* The surrounding text's font, which the block's typography settings override. A button doesn't inherit it by default. */
 	font: inherit;
 	cursor: pointer;
+}
+
+/* The text alignment places the label and arrow when the Width setting makes the button wider than them. */
+.yaycheckout-step-button.has-text-align-center {
+	justify-content: center;
+}
+
+.yaycheckout-step-button.has-text-align-right {
+	justify-content: flex-end;
 }
 
 /* Classic themes (Storefront) repaint button:hover. */
