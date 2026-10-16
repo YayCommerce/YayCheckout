@@ -220,7 +220,7 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 <?php endif; ?></div>
 <!-- /wp:group -->
 
-<!-- wp:yaycheckout/order-note {"disclosure":"checkbox","disclosureText":"<?php esc_html_e( 'Add a note to your order', 'yaycheckout' ); ?>","style":{"typography":{"fontSize":"13px"}}} /-->
+<!-- wp:yaycheckout/order-note {"placeholder":"<?php esc_html_e( 'Notes about your order.', 'yaycheckout' ); ?>","disclosure":"checkbox","disclosureText":"<?php esc_html_e( 'Add a note to your order', 'yaycheckout' ); ?>","style":{"typography":{"fontSize":"13px"}}} /-->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"16px"}}} -->
 <div class="wp-block-group"><?php if ( '' !== $yaycheckout_terms_sentence ) : ?>
