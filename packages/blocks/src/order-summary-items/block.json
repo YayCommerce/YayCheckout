@@ -22,6 +22,14 @@
       "type": "boolean",
       "default": true
     },
+    "linkImage": {
+      "type": "boolean",
+      "default": false
+    },
+    "linkName": {
+      "type": "boolean",
+      "default": false
+    },
     "itemData": {
       "type": "string",
       "enum": [ "list", "inline", "hidden" ],

@@ -850,7 +850,7 @@ class CheckoutFragments {
      * The Items block's attributes with their defaults. During AJAX they come from the parsed
      * layout, where an untouched attribute is missing, so each default matches block.json's.
      *
-     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_badge: bool}
+     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_badge: bool, link_image: bool, link_name: bool}
      */
     public static function order_items_options( array $attributes ): array {
         // The first choice is the default.
@@ -871,6 +871,8 @@ class CheckoutFragments {
             'show_short_description' => self::bool_attr( $attributes, 'showShortDescription', false ),
             'quantity_display'       => $choice( 'quantityDisplay', [ 'inline', 'stepper', 'hidden' ] ),
             'show_badge'             => self::bool_attr( $attributes, 'showBadge', false ),
+            'link_image'             => self::bool_attr( $attributes, 'linkImage', false ),
+            'link_name'              => self::bool_attr( $attributes, 'linkName', false ),
         ];
     }
 
@@ -916,11 +918,26 @@ class CheckoutFragments {
             $stepper = $stepper_mode
                 && ! $product->is_sold_individually()
                 && $product->get_min_purchase_quantity() !== $product->get_max_purchase_quantity();
+
+            // Links open in a new tab, so the shopper keeps the checkout and what they typed into it.
+            $permalink  = $options['link_image'] || $options['link_name'] ? self::product_permalink( $product, $cart_item, $cart_item_key ) : '';
+            $link_open  = '<a class="' . esc_attr( self::ORDER_ITEMS_CLASS . '__link' ) . '" href="' . esc_url( $permalink ) . '" target="_blank" rel="noopener"';
+            $link_name  = $options['link_name'] && '' !== $permalink;
+            $link_image = $options['link_image'] && '' !== $permalink;
             ?>
     <div class="<?php echo esc_attr( apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) . ' ' . self::ORDER_ITEMS_CLASS . '__item' ); ?>">
             <?php if ( $options['show_thumbnails'] ) : ?>
         <div class="product-thumbnail">
-                <?php echo apply_filters( 'woocommerce_cart_item_thumbnail', $product->get_image(), $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered image HTML, as cart/cart.php prints it. ?>
+                <?php
+                $thumbnail = apply_filters( 'woocommerce_cart_item_thumbnail', $product->get_image(), $cart_item, $cart_item_key );
+
+                if ( $link_image ) {
+                    // With the name linked too, the image link is skipped by keyboard and screen readers, so each product is one stop.
+                    $thumbnail = $link_open . ( $link_name ? ' tabindex="-1" aria-hidden="true"' : '' ) . '>' . $thumbnail . '</a>';
+                }
+
+                echo $thumbnail; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered image HTML, as cart/cart.php prints it, in a link escaped above.
+                ?>
                 <?php if ( $badge ) : ?>
             <span class="<?php echo esc_attr( self::ORDER_ITEMS_CLASS . '__badge' ); ?>"><span aria-hidden="true"><?php echo esc_html( $cart_item['quantity'] ); ?></span><span class="screen-reader-text">
                     <?php
@@ -932,7 +949,8 @@ class CheckoutFragments {
         </div>
             <?php endif; ?>
         <div class="product-name">
-            <?php echo wp_kses_post( apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key ) ) . '&nbsp;'; ?>
+            <?php // Linked before the filter, as cart/cart.php does, so extensions get the input they get on the cart page. ?>
+            <?php echo wp_kses_post( apply_filters( 'woocommerce_cart_item_name', $link_name ? $link_open . '>' . $product->get_name() . '</a>' : $product->get_name(), $cart_item, $cart_item_key ) ) . '&nbsp;'; ?>
             <?php // Hidden shows no quantity here, and the stepper's input already shows it; the filter still runs, as extensions (Germanized's units line) print their item info through it. ?>
             <?php $inline_quantity = 'hidden' !== $options['quantity_display'] && ! $stepper ? ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>' : ''; ?>
             <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', $inline_quantity, $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered HTML. ?>
@@ -972,6 +990,12 @@ class CheckoutFragments {
         // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
         return (string) ob_get_clean();
+    }
+
+    /** The product page an item links to, or '' when the product has none a shopper may see, as cart/cart.php works it out. */
+    private static function product_permalink( \WC_Product $product, array $cart_item, string $cart_item_key ): string {
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's cart permalink filter.
+        return (string) apply_filters( 'woocommerce_cart_item_permalink', $product->is_visible() ? $product->get_permalink( $cart_item ) : '', $cart_item, $cart_item_key );
     }
 
     /** The SKU, unit price and short description under an item's name, each when its option is on. */

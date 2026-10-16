@@ -24,6 +24,8 @@ interface OrderSummaryItemsAttributes {
 	productLabel?: string;
 	subtotalLabel?: string;
 	showThumbnails: boolean;
+	linkImage: boolean;
+	linkName: boolean;
 	itemData: 'list' | 'inline' | 'hidden';
 	showSku: boolean;
 	showUnitPrice: boolean;
@@ -55,6 +57,11 @@ function badgeStyle( { badgeBackgroundColor, badgeTextColor, badgeSize }: OrderS
 	};
 }
 
+// The canvas shows the links as the storefront does, without leaving the editor.
+function preventNavigation( event: { preventDefault: () => void } ) {
+	event.preventDefault();
+}
+
 function quantityHelp( quantityDisplay: OrderSummaryItemsAttributes[ 'quantityDisplay' ], badge: boolean ) {
 	if ( quantityDisplay === 'stepper' ) {
 		return __( 'Lets shoppers change or remove items.', 'yaycheckout' );
@@ -70,6 +77,8 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		productLabel,
 		subtotalLabel,
 		showThumbnails,
+		linkImage,
+		linkName,
 		itemData,
 		showSku,
 		showUnitPrice,
@@ -97,6 +106,19 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						label={ __( 'Show thumbnails', 'yaycheckout' ) }
 						checked={ showThumbnails }
 						onChange={ ( value ) => setAttributes( { showThumbnails: value } ) }
+					/>
+					{ showThumbnails && (
+						<ToggleControl
+							label={ __( 'Link image', 'yaycheckout' ) }
+							checked={ linkImage }
+							onChange={ ( value ) => setAttributes( { linkImage: value } ) }
+						/>
+					) }
+					<ToggleControl
+						label={ __( 'Link name', 'yaycheckout' ) }
+						help={ __( 'Opens the product page in a new tab.', 'yaycheckout' ) }
+						checked={ linkName }
+						onChange={ ( value ) => setAttributes( { linkName: value } ) }
 					/>
 					<SelectControl
 						label={ __( 'Product details', 'yaycheckout' ) }
@@ -240,7 +262,18 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					<div className="cart_item yaycheckout-order-summary-items__item">
 						{ showThumbnails && (
 							<div className="product-thumbnail">
-								<div className="yaycheckout-order-summary-items__placeholder" />
+								{ linkImage ? (
+									<a
+										className="yaycheckout-order-summary-items__link"
+										href="#"
+										onClick={ preventNavigation }
+										{ ...( linkName ? { tabIndex: -1, 'aria-hidden': true } : {} ) }
+									>
+										<div className="yaycheckout-order-summary-items__placeholder" />
+									</a>
+								) : (
+									<div className="yaycheckout-order-summary-items__placeholder" />
+								) }
 								{ badge && (
 									<span className="yaycheckout-order-summary-items__badge">
 										<span aria-hidden="true">1</span>
@@ -249,7 +282,14 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 							</div>
 						) }
 						<div className="product-name">
-							{ __( 'Sample product', 'yaycheckout' ) }&nbsp;
+							{ linkName ? (
+								<a className="yaycheckout-order-summary-items__link" href="#" onClick={ preventNavigation }>
+									{ __( 'Sample product', 'yaycheckout' ) }
+								</a>
+							) : (
+								__( 'Sample product', 'yaycheckout' )
+							) }
+							&nbsp;
 							{ quantityDisplay === 'inline' && <strong className="product-quantity">×&nbsp;1</strong> }
 							{ itemData !== 'hidden' && (
 								<dl className="variation">
