@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute tasks in order, one at a time. Steps use `- [ ]` for tracking. There is no spec; the Requirements below are the contract.
 
-**Status:** active
+**Status:** done 2026-10-16
 **Goal:** The three templates that ship custom CSS (Editorial fashion, Minimal steps, Soft steps) get the same look from block settings and design tokens, with `custom_css` empty, so the editor canvas (which never prints layout CSS) matches the storefront.
 **Spec:** none, planned from the request
 **Architecture:** Each rule moves to the most general home that can carry it: a base-CSS fallback when it is right for every layout (an empty Inputs background), a block support or attribute when merchants need it on any layout (Place Order as a flex row with a Spread option; Width and text alignment on Step and Back buttons), and template markup or tokens otherwise (core Column width, Group min height and flex layout, the Link hover token). New block CSS gives sensible defaults, so a block with no setting looks right without CSS.
@@ -183,7 +183,7 @@ Build this in the editor, then copy the markup back as the file header says:
 
 - [ ] **Step 3: Set Place Order (line 230) in the editor**
 
-Turn on Spread. Set Padding to `18px` top and bottom and `24px` left and right, which with the 13px label and 1px border gives today's 56px height. Keep Width 100%, Left alignment and the other styles.
+Turn on Spread. Set Padding to `18px` top and bottom and `24px` left and right, which with the 13px label and 1px border gives today's 56px height. Keep Width 100% and the other styles, and drop the Left alignment, which Spread overrides.
 
 - [ ] **Step 4: Verify**
 
