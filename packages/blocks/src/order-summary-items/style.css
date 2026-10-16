@@ -38,6 +38,20 @@
 	position: relative;
 }
 
+/* Image and name links (linkImage, linkName): the text keeps its colour and underlines on hover or focus. */
+.yaycheckout-order-summary-items .yaycheckout-order-summary-items__link {
+	color: inherit;
+	text-decoration: none;
+}
+
+.yaycheckout-order-summary-items .yaycheckout-order-summary-items__link:is(:hover, :focus-visible) {
+	text-decoration: underline;
+}
+
+.yaycheckout-order-summary-items .product-thumbnail > .yaycheckout-order-summary-items__link {
+	display: block;
+}
+
 .yaycheckout-order-summary-items .product-thumbnail img {
 	display: block;
 	width: 48px;
@@ -84,7 +98,7 @@
 	content: ",";
 }
 
-/* Size, background and text come from the block's badge settings (CheckoutFragments::order_items_badge_style()). */
+/* Size, background and text come from the block's badge settings (CheckoutFragments::order_items_style_vars()). */
 .yaycheckout-order-summary-items__badge {
 	--yaycheckout-badge-size-resolved: var(--yaycheckout-badge-size, 20px);
 
@@ -126,13 +140,19 @@
 	margin-block-start: 6px;
 }
 
-/* Quantity stepper: − / input / + in one bordered 32px box. */
+/*
+ * Quantity stepper. Boxed (the default): − / input / + in one bordered box. The border colour and
+ * size come from the block's stepper settings (CheckoutFragments::order_items_style_vars()), and
+ * without them the border follows the text colour, so the stepper suits light and dark panels alike.
+ */
 .yaycheckout-order-summary-items .yaycheckout-qty {
-	--yaycheckout-qty-border: color-mix(in srgb, currentColor 25%, transparent);
+	--yaycheckout-qty-border: var(--yaycheckout-stepper-border, color-mix(in srgb, currentColor 25%, transparent));
+	/* The 32px and Round's 24px fallbacks are the Size slider's start in edit.tsx. */
+	--yaycheckout-qty-size: var(--yaycheckout-stepper-size, 32px);
 
 	display: inline-flex;
 	align-items: stretch;
-	height: 32px;
+	height: var(--yaycheckout-qty-size);
 	border: 1px solid var(--yaycheckout-qty-border);
 	border-radius: var(--yaycheckout-field-radius);
 	overflow: hidden;
@@ -140,7 +160,7 @@
 
 .yaycheckout-order-summary-items .yaycheckout-qty__button {
 	box-sizing: border-box;
-	width: 32px;
+	width: var(--yaycheckout-qty-size);
 	margin: 0;
 	padding: 0;
 	border: 0;
@@ -159,7 +179,7 @@
 
 .yaycheckout-order-summary-items .yaycheckout-qty__input {
 	box-sizing: border-box;
-	width: 40px;
+	width: calc(var(--yaycheckout-qty-size) * 1.25);
 	height: auto;
 	min-height: 0;
 	margin: 0;
@@ -180,10 +200,36 @@
 	appearance: none;
 }
 
+/* Round (stepperStyle "round"): two separate circles with the number between them, no outer box. */
+.yaycheckout-order-summary-items--stepper-round .yaycheckout-qty {
+	--yaycheckout-qty-size: var(--yaycheckout-stepper-size, 24px);
+
+	align-items: center;
+	gap: 10px;
+	border: 0;
+	overflow: visible;
+}
+
+.yaycheckout-order-summary-items--stepper-round .yaycheckout-qty__button {
+	height: var(--yaycheckout-qty-size);
+	border: 1px solid var(--yaycheckout-qty-border);
+	border-radius: 50%;
+}
+
+.yaycheckout-order-summary-items--stepper-round .yaycheckout-qty__button:hover:not(:disabled) {
+	background: color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.yaycheckout-order-summary-items--stepper-round .yaycheckout-qty__input {
+	width: 3ch;
+	border-inline: 0;
+	font-variant-numeric: tabular-nums;
+}
+
 .yaycheckout-order-summary-items .yaycheckout-order-summary-items__remove {
 	color: inherit;
 	font-size: 1.25em;
-	line-height: 32px;
+	line-height: 1;
 	text-decoration: none;
 	opacity: 0.6;
 }

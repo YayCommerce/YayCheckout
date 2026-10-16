@@ -65,7 +65,7 @@ Message: `feat(blocks): add Shape, Border colour and Size to the Items quantity 
 
 - [ ] **Step 1: Set the attributes**
 
-Add `"stepperStyle":"round","stepperBorderColor":"rgba(255,255,255,0.6)"` to the Items block (the mock's button border). Leave `stepperSize` unset: Round's 24px default is the mock's size.
+Add `"stepperStyle":"round","stepperBorderColor":"#ffffff99"` to the Items block: the mock's `rgba(255,255,255,.6)` button border written as hex, because WordPress's `safecss_filter_attr()`, which `get_block_wrapper_attributes()` runs the wrapper style through, drops any `rgb()`/`rgba()` value. Leave `stepperSize` unset: Round's 24px default is the mock's size.
 
 - [ ] **Step 2: Check the template still publishes**
 

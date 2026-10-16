@@ -13,8 +13,10 @@ import {
 	__experimentalToolsPanel as ToolsPanel,
 	__experimentalToolsPanelItem as ToolsPanelItem,
 } from '@wordpress/components';
+import type { ReactNode } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
+import { preventCanvasNavigation } from '../shared/canvas-link';
 import { plainText } from '../shared/plain-text';
 import '../shared/tools-panel.css';
 import './editor.css';
@@ -24,15 +26,20 @@ interface OrderSummaryItemsAttributes {
 	productLabel?: string;
 	subtotalLabel?: string;
 	showThumbnails: boolean;
+	linkImage: boolean;
+	linkName: boolean;
 	itemData: 'list' | 'inline' | 'hidden';
 	showSku: boolean;
 	showUnitPrice: boolean;
 	showShortDescription: boolean;
-	quantityDisplay: 'inline' | 'badge';
-	showStepper: boolean;
+	quantityDisplay: 'inline' | 'stepper' | 'hidden';
+	showBadge: boolean;
 	badgeBackgroundColor: string;
 	badgeTextColor: string;
 	badgeSize?: number;
+	stepperStyle: 'boxed' | 'round';
+	stepperBorderColor: string;
+	stepperSize?: number;
 	style?: BlockGapStyles;
 }
 
@@ -43,16 +50,114 @@ interface EditProps {
 }
 
 const BADGE_PANEL = 'yaycheckout-order-summary-items-badge';
+const STEPPER_PANEL = 'yaycheckout-order-summary-items-stepper';
 
-// Mirrors CheckoutFragments::order_items_badge_style(): the badge settings as --yaycheckout-badge-* vars.
-function badgeStyle( { badgeBackgroundColor, badgeTextColor, badgeSize }: OrderSummaryItemsAttributes ) {
+// Mirrors the px ranges CheckoutFragments::order_items_style_vars() clamps badgeSize and stepperSize to.
+const BADGE_SIZE = { min: 16, max: 32 };
+const STEPPER_SIZE = { min: 20, max: 40 };
+
+function clampedPx( value: number, { min, max }: { min: number; max: number } ) {
+	return `${ Math.max( min, Math.min( max, value ) ) }px`;
+}
+
+// Mirrors CheckoutFragments::order_items_style_vars(): the badge and stepper settings as --yaycheckout-badge-* and --yaycheckout-stepper-* vars.
+function itemsStyleVars( {
+	badgeBackgroundColor,
+	badgeTextColor,
+	badgeSize,
+	stepperBorderColor,
+	stepperSize,
+}: OrderSummaryItemsAttributes ) {
 	return {
 		...( badgeBackgroundColor ? { '--yaycheckout-badge-bg': badgeBackgroundColor } : {} ),
 		...( badgeTextColor ? { '--yaycheckout-badge-text': badgeTextColor } : {} ),
-		...( typeof badgeSize === 'number'
-			? { '--yaycheckout-badge-size': `${ Math.max( 16, Math.min( 32, badgeSize ) ) }px` }
-			: {} ),
+		...( typeof badgeSize === 'number' ? { '--yaycheckout-badge-size': clampedPx( badgeSize, BADGE_SIZE ) } : {} ),
+		...( stepperBorderColor ? { '--yaycheckout-stepper-border': stepperBorderColor } : {} ),
+		...( typeof stepperSize === 'number' ? { '--yaycheckout-stepper-size': clampedPx( stepperSize, STEPPER_SIZE ) } : {} ),
 	};
+}
+
+// The image or name link of order_items_html(); decorative when the name carries the same link.
+function ItemLink( { on, decorative = false, children }: { on: boolean; decorative?: boolean; children: ReactNode } ) {
+	if ( ! on ) {
+		return <>{ children }</>;
+	}
+
+	return (
+		<a
+			className="yaycheckout-order-summary-items__link"
+			href="#"
+			onClick={ preventCanvasNavigation }
+			{ ...( decorative ? { tabIndex: -1, 'aria-hidden': true } : {} ) }
+		>
+			{ children }
+		</a>
+	);
+}
+
+interface ColorSizePanelProps {
+	label: string;
+	panelId: string;
+	resetAll: () => void;
+	colors: { label: string; value: string; onChange: ( value: string ) => void }[];
+	size: { value?: number; min: number; max: number; initial: number; onChange: ( value?: number ) => void };
+	// Items shown before the colours, such as the stepper's Shape.
+	children?: ReactNode;
+}
+
+// A Styles tab panel of colours and a size, as the badge and the stepper have.
+function ColorSizePanel( { label, panelId, resetAll, colors, size, children }: ColorSizePanelProps ) {
+	const palettes = useMultipleOriginColorsAndGradients();
+
+	return (
+		<InspectorControls group="styles">
+			<ToolsPanel label={ label } panelId={ panelId } className="yaycheckout-tools-panel" resetAll={ resetAll }>
+				{ children }
+				<div className="yaycheckout-tools-panel__colors">
+					<ColorGradientSettingsDropdown
+						__experimentalIsRenderedInSidebar
+						panelId={ panelId }
+						settings={ colors.map( ( color ) => ( {
+							label: color.label,
+							colorValue: color.value || undefined,
+							onColorChange: ( value?: string ) => color.onChange( value ?? '' ),
+							clearable: true,
+							isShownByDefault: true,
+						} ) ) }
+						colors={ palettes.colors }
+						disableCustomColors={ palettes.disableCustomColors }
+					/>
+				</div>
+				<ToolsPanelItem
+					panelId={ panelId }
+					label={ __( 'Size', 'yaycheckout' ) }
+					hasValue={ () => typeof size.value === 'number' }
+					onDeselect={ () => size.onChange( undefined ) }
+					isShownByDefault
+				>
+					<RangeControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
+						label={ __( 'Size', 'yaycheckout' ) }
+						value={ size.value }
+						min={ size.min }
+						max={ size.max }
+						initialPosition={ size.initial }
+						allowReset
+						onChange={ size.onChange }
+					/>
+				</ToolsPanelItem>
+			</ToolsPanel>
+		</InspectorControls>
+	);
+}
+
+function quantityHelp( quantityDisplay: OrderSummaryItemsAttributes[ 'quantityDisplay' ], badge: boolean ) {
+	if ( quantityDisplay === 'stepper' ) {
+		return __( 'Lets shoppers change or remove items.', 'yaycheckout' );
+	}
+
+	return quantityDisplay === 'hidden' && ! badge ? __( "Shoppers won't see item quantities.", 'yaycheckout' ) : undefined;
 }
 
 // Mirrors CheckoutFragments::order_items_html(), so the block's style.css draws it as on the storefront.
@@ -62,20 +167,25 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		productLabel,
 		subtotalLabel,
 		showThumbnails,
+		linkImage,
+		linkName,
 		itemData,
 		showSku,
 		showUnitPrice,
 		showShortDescription,
 		quantityDisplay,
-		showStepper,
+		showBadge,
 		badgeBackgroundColor,
 		badgeTextColor,
 		badgeSize,
+		stepperStyle,
+		stepperBorderColor,
+		stepperSize,
 		style,
 	} = attributes;
-	// As order_items_html(): a badge needs a thumbnail to sit on.
-	const badge = quantityDisplay === 'badge' && showThumbnails;
-	const palettes = useMultipleOriginColorsAndGradients();
+	// As order_items_html(): a badge needs a thumbnail to sit on, and is independent of quantityDisplay.
+	const badge = showBadge && showThumbnails;
+	const stepper = quantityDisplay === 'stepper';
 	const css = useBlockGapCSS( `#block-${ clientId } > .yaycheckout-order-summary-items`, style );
 	const productPlaceholder = __( 'Product', 'yaycheckout' );
 	const subtotalPlaceholder = __( 'Subtotal', 'yaycheckout' );
@@ -88,6 +198,19 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						label={ __( 'Show thumbnails', 'yaycheckout' ) }
 						checked={ showThumbnails }
 						onChange={ ( value ) => setAttributes( { showThumbnails: value } ) }
+					/>
+					{ showThumbnails && (
+						<ToggleControl
+							label={ __( 'Link image', 'yaycheckout' ) }
+							checked={ linkImage }
+							onChange={ ( value ) => setAttributes( { linkImage: value } ) }
+						/>
+					) }
+					<ToggleControl
+						label={ __( 'Link name', 'yaycheckout' ) }
+						help={ __( 'Opens the product page in a new tab.', 'yaycheckout' ) }
+						checked={ linkName }
+						onChange={ ( value ) => setAttributes( { linkName: value } ) }
 					/>
 					<SelectControl
 						label={ __( 'Product details', 'yaycheckout' ) }
@@ -121,23 +244,21 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						value={ quantityDisplay }
 						options={ [
 							{ label: __( 'Inline', 'yaycheckout' ), value: 'inline' },
-							{ label: __( 'Badge', 'yaycheckout' ), value: 'badge' },
+							{ label: __( 'Stepper', 'yaycheckout' ), value: 'stepper' },
+							{ label: __( 'Hidden', 'yaycheckout' ), value: 'hidden' },
 						] }
-						help={
-							quantityDisplay === 'badge' && ! showThumbnails
-								? __( 'Shown inline while thumbnails are off.', 'yaycheckout' )
-								: undefined
-						}
+						help={ quantityHelp( quantityDisplay, badge ) }
 						onChange={ ( value ) =>
 							setAttributes( { quantityDisplay: value as OrderSummaryItemsAttributes[ 'quantityDisplay' ] } )
 						}
 					/>
-					<ToggleControl
-						label={ __( 'Quantity stepper', 'yaycheckout' ) }
-						help={ __( 'Lets shoppers change or remove items.', 'yaycheckout' ) }
-						checked={ showStepper }
-						onChange={ ( value ) => setAttributes( { showStepper: value } ) }
-					/>
+					{ showThumbnails && (
+						<ToggleControl
+							label={ __( 'Badge on thumbnail', 'yaycheckout' ) }
+							checked={ showBadge }
+							onChange={ ( value ) => setAttributes( { showBadge: value } ) }
+						/>
+					) }
 				</PanelBody>
 				<PanelBody title={ __( 'Column labels', 'yaycheckout' ) } initialOpen={ false }>
 					<ToggleControl
@@ -164,65 +285,79 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 				</PanelBody>
 			</InspectorControls>
 			{ badge && (
-				<InspectorControls group="styles">
-					<ToolsPanel
-						label={ __( 'Quantity badge', 'yaycheckout' ) }
-						panelId={ BADGE_PANEL }
-						className="yaycheckout-tools-panel"
-						resetAll={ () => setAttributes( { badgeBackgroundColor: '', badgeTextColor: '', badgeSize: undefined } ) }
-					>
-						<div className="yaycheckout-tools-panel__colors">
-							<ColorGradientSettingsDropdown
-								__experimentalIsRenderedInSidebar
-								panelId={ BADGE_PANEL }
-								settings={ [
-									{
-										label: __( 'Background', 'yaycheckout' ),
-										colorValue: badgeBackgroundColor || undefined,
-										onColorChange: ( value?: string ) => setAttributes( { badgeBackgroundColor: value ?? '' } ),
-										clearable: true,
-										isShownByDefault: true,
-									},
-									{
-										label: __( 'Text', 'yaycheckout' ),
-										colorValue: badgeTextColor || undefined,
-										onColorChange: ( value?: string ) => setAttributes( { badgeTextColor: value ?? '' } ),
-										clearable: true,
-										isShownByDefault: true,
-									},
-								] }
-								colors={ palettes.colors }
-								disableCustomColors={ palettes.disableCustomColors }
-							/>
-						</div>
-						<ToolsPanelItem
-							panelId={ BADGE_PANEL }
-							label={ __( 'Size', 'yaycheckout' ) }
-							hasValue={ () => typeof badgeSize === 'number' }
-							onDeselect={ () => setAttributes( { badgeSize: undefined } ) }
-							isShownByDefault
-						>
-							<RangeControl
-								__nextHasNoMarginBottom
-								__next40pxDefaultSize
-								label={ __( 'Size', 'yaycheckout' ) }
-								value={ badgeSize }
-								min={ 16 }
-								max={ 32 }
-								initialPosition={ 20 }
-								allowReset
-								onChange={ ( value ) => setAttributes( { badgeSize: value } ) }
-							/>
-						</ToolsPanelItem>
-					</ToolsPanel>
-				</InspectorControls>
+				<ColorSizePanel
+					label={ __( 'Quantity badge', 'yaycheckout' ) }
+					panelId={ BADGE_PANEL }
+					resetAll={ () => setAttributes( { badgeBackgroundColor: '', badgeTextColor: '', badgeSize: undefined } ) }
+					colors={ [
+						{
+							label: __( 'Background', 'yaycheckout' ),
+							value: badgeBackgroundColor,
+							onChange: ( value ) => setAttributes( { badgeBackgroundColor: value } ),
+						},
+						{
+							label: __( 'Text', 'yaycheckout' ),
+							value: badgeTextColor,
+							onChange: ( value ) => setAttributes( { badgeTextColor: value } ),
+						},
+					] }
+					size={ {
+						value: badgeSize,
+						...BADGE_SIZE,
+						initial: 20,
+						onChange: ( value ) => setAttributes( { badgeSize: value } ),
+					} }
+				/>
 			) }
-			<div { ...useBlockProps( { style: badgeStyle( attributes ) } ) }>
+			{ stepper && (
+				<ColorSizePanel
+					label={ __( 'Quantity stepper', 'yaycheckout' ) }
+					panelId={ STEPPER_PANEL }
+					resetAll={ () => setAttributes( { stepperStyle: 'boxed', stepperBorderColor: '', stepperSize: undefined } ) }
+					colors={ [
+						{
+							label: __( 'Border', 'yaycheckout' ),
+							value: stepperBorderColor,
+							onChange: ( value ) => setAttributes( { stepperBorderColor: value } ),
+						},
+					] }
+					size={ {
+						value: stepperSize,
+						...STEPPER_SIZE,
+						// The --yaycheckout-qty-size fallbacks in style.css: 24px round, 32px boxed.
+						initial: stepperStyle === 'round' ? 24 : 32,
+						onChange: ( value ) => setAttributes( { stepperSize: value } ),
+					} }
+				>
+					<ToolsPanelItem
+						panelId={ STEPPER_PANEL }
+						label={ __( 'Shape', 'yaycheckout' ) }
+						hasValue={ () => stepperStyle !== 'boxed' }
+						onDeselect={ () => setAttributes( { stepperStyle: 'boxed' } ) }
+						isShownByDefault
+					>
+						<SelectControl
+							__nextHasNoMarginBottom
+							__next40pxDefaultSize
+							label={ __( 'Shape', 'yaycheckout' ) }
+							value={ stepperStyle }
+							options={ [
+								{ label: __( 'Boxed', 'yaycheckout' ), value: 'boxed' },
+								{ label: __( 'Round', 'yaycheckout' ), value: 'round' },
+							] }
+							onChange={ ( value ) =>
+								setAttributes( { stepperStyle: value as OrderSummaryItemsAttributes[ 'stepperStyle' ] } )
+							}
+						/>
+					</ToolsPanelItem>
+				</ColorSizePanel>
+			) }
+			<div { ...useBlockProps( { style: itemsStyleVars( attributes ) } ) }>
 				{ css && <style>{ css }</style> }
 				<div
 					className={ `yaycheckout-order-summary-items${
 						itemData === 'inline' ? ' yaycheckout-order-summary-items--item-data-inline' : ''
-					}` }
+					}${ stepper && stepperStyle === 'round' ? ' yaycheckout-order-summary-items--stepper-round' : '' }` }
 				>
 					{ showLabels && (
 						<div className="yaycheckout-order-summary-items__header">
@@ -233,7 +368,9 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					<div className="cart_item yaycheckout-order-summary-items__item">
 						{ showThumbnails && (
 							<div className="product-thumbnail">
-								<div className="yaycheckout-order-summary-items__placeholder" />
+								<ItemLink on={ linkImage } decorative={ linkName }>
+									<div className="yaycheckout-order-summary-items__placeholder" />
+								</ItemLink>
 								{ badge && (
 									<span className="yaycheckout-order-summary-items__badge">
 										<span aria-hidden="true">1</span>
@@ -242,8 +379,9 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 							</div>
 						) }
 						<div className="product-name">
-							{ __( 'Sample product', 'yaycheckout' ) }&nbsp;
-							{ ! badge && ! showStepper && <strong className="product-quantity">×&nbsp;1</strong> }
+							<ItemLink on={ linkName }>{ __( 'Sample product', 'yaycheckout' ) }</ItemLink>
+							&nbsp;
+							{ quantityDisplay === 'inline' && <strong className="product-quantity">×&nbsp;1</strong> }
 							{ itemData !== 'hidden' && (
 								<dl className="variation">
 									<dt>{ __( 'Color:', 'yaycheckout' ) }</dt>
@@ -261,7 +399,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 							{ showShortDescription && (
 								<div className="product-short-description">{ __( 'A short product description.', 'yaycheckout' ) }</div>
 							) }
-							{ showStepper && (
+							{ stepper && (
 								<div className="yaycheckout-order-summary-items__controls">
 									<div className="yaycheckout-qty">
 										<button type="button" className="yaycheckout-qty__button" disabled>
