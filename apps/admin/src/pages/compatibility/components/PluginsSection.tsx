@@ -25,15 +25,6 @@ export function PluginsSection({ plugins }: { plugins: PluginRow[] }) {
     <Card>
       <CardHeader>
         <CardTitle>{__('Plugins touching checkout', 'yaycheckout')}</CardTitle>
-        <CardDescription>
-          {plugins.length === 0
-            ? __('none detected', 'yaycheckout')
-            : sprintf(
-                /* translators: %d: number of plugins */
-                __('%d detected', 'yaycheckout'),
-                plugins.length,
-              )}
-        </CardDescription>
       </CardHeader>
       <CardContent>
         {plugins.length === 0 ? (
