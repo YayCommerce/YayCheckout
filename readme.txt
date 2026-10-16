@@ -30,12 +30,6 @@ When you save a checkout layout whose design uses a Google font that is not inst
 
 This service is provided by Google: [Google Fonts API Terms of Service](https://developers.google.com/fonts/terms), [Privacy Policy](https://policies.google.com/privacy). The font list is provided by WordPress.org: [Privacy Policy](https://wordpress.org/about/privacy/).
 
-= WordPress.org plugin icons =
-
-The Settings → Integrations tab shows plugin icons loaded from the WordPress.org plugin directory (`ps.w.org`), which sends your IP address and browser details to WordPress.org. No store or customer data is sent.
-
-This service is provided by WordPress.org: [Privacy Policy](https://wordpress.org/about/privacy/).
-
 == Changelog ==
 
 = 1.0.0 =
