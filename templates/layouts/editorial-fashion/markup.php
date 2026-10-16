@@ -127,11 +127,11 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 
 <!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Your bag', 'yaycheckout' ); ?>","style":{"color":{"text":"#ffffff"},"spacing":{"blockGap":"14px"}}} -->
 <!-- wp:yaycheckout/order-summary-details {"lock":{"remove":true},"style":{"spacing":{"blockGap":"16px"}}} -->
-<!-- wp:yaycheckout/order-summary-items {"showLabels":false,"itemData":"inline","quantityDisplay":"stepper","style":{"color":{"text":"#ffffff"},"border":{"top":{"color":"rgba(255,255,255,0.35)","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"14px","bottom":"14px"}},"typography":{"fontSize":"15px","fontFamily":"Georgia, \"Times New Roman\", serif"}}} /-->
+<!-- wp:yaycheckout/order-summary-items {"showLabels":false,"itemData":"inline","quantityDisplay":"stepper","stepperStyle":"round","stepperBorderColor":"#ffffff99","style":{"color":{"text":"#ffffff"},"border":{"top":{"color":"#ffffff59","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"14px","bottom":"14px"}},"typography":{"fontSize":"15px","fontFamily":"Georgia, \"Times New Roman\", serif"}}} /-->
 
-<!-- wp:yaycheckout/order-summary-breakdown {"style":{"border":{"top":{"color":"rgba(255,255,255,0.35)","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"16px"}},"typography":{"fontSize":"14px"},"color":{"text":"#ffffff"},"yaycheckout":{"label":{"color":{"text":"rgba(255,255,255,0.85)"}}}}} /-->
+<!-- wp:yaycheckout/order-summary-breakdown {"style":{"border":{"top":{"color":"#ffffff59","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"16px"}},"typography":{"fontSize":"14px"},"color":{"text":"#ffffff"},"yaycheckout":{"label":{"color":{"text":"#ffffffd9"}}}}} /-->
 
-<!-- wp:yaycheckout/order-summary-total {"style":{"border":{"top":{"color":"rgba(255,255,255,0.35)","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"12px"},"margin":{"top":"4px"}},"color":{"text":"#ffffff"},"yaycheckout":{"label":{"typography":{"fontSize":"11px","letterSpacing":"0.16em","textTransform":"uppercase"},"color":{"text":"#ffffff"}},"value":{"typography":{"fontSize":"36px","fontWeight":"400","fontFamily":"Georgia, \"Times New Roman\", serif","letterSpacing":"-0.02em","lineHeight":"1"},"color":{"text":"#ffffff"}}}}} /-->
+<!-- wp:yaycheckout/order-summary-total {"style":{"border":{"top":{"color":"#ffffff59","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"12px"},"margin":{"top":"4px"}},"color":{"text":"#ffffff"},"yaycheckout":{"label":{"typography":{"fontSize":"11px","letterSpacing":"0.16em","textTransform":"uppercase"},"color":{"text":"#ffffff"}},"value":{"typography":{"fontSize":"36px","fontWeight":"400","fontFamily":"Georgia, \"Times New Roman\", serif","letterSpacing":"-0.02em","lineHeight":"1"},"color":{"text":"#ffffff"}}}}} /-->
 <!-- /wp:yaycheckout/order-summary-details -->
 <!-- /wp:yaycheckout/order-summary --></div>
 <!-- /wp:group -->

@@ -22,6 +22,14 @@
       "type": "boolean",
       "default": true
     },
+    "linkImage": {
+      "type": "boolean",
+      "default": false
+    },
+    "linkName": {
+      "type": "boolean",
+      "default": false
+    },
     "itemData": {
       "type": "string",
       "enum": [ "list", "inline", "hidden" ],
@@ -57,6 +65,18 @@
       "default": ""
     },
     "badgeSize": {
+      "type": "number"
+    },
+    "stepperStyle": {
+      "type": "string",
+      "enum": [ "boxed", "round" ],
+      "default": "boxed"
+    },
+    "stepperBorderColor": {
+      "type": "string",
+      "default": ""
+    },
+    "stepperSize": {
       "type": "number"
     }
   },

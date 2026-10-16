@@ -2,7 +2,7 @@
 
 > **For agentic workers:** execute phases in order. Read this file, then the current phase file. Do not start a phase until the previous phase's exit criterion has been verified and `/yayplancheck` has passed on it. Each phase is its own branch and PR into `dev/edd`.
 
-**Status:** active
+**Status:** done 2026-10-16
 **Goal:** Order Summary Items gets a clean quantity model (Show as Inline, Stepper or Hidden, plus a separate badge), a stepper that always sits on its own row, optional product links, and a stepper look merchants can change.
 **Spec:** none, planned from the request
 **Architecture:** Every change stays inside the Items block: its attributes (`block.json`), its editor mirror (`edit.tsx`), its storefront markup (`CheckoutFragments::order_items_html()` and helpers) and its CSS (`style.css`). Look options follow the badge's existing pattern: settings become `--yaycheckout-*` custom properties on the block wrapper (kept across AJAX refreshes) plus a modifier class on the root (rebuilt on each refresh from the same attributes), so no template needs custom CSS. There are no shipped users, so attributes are renamed outright with no migration.
@@ -51,10 +51,10 @@
 
 | Phase | Branch | Delivers (user-visible) | Exit criterion (exact check) | Status |
 |---|---|---|---|---|
-| 1 | `trace/fix/order-items-stepper-row` | The stepper and remove link always sit on their own row | Phase 1 Task 1 Step 3 passes on the Upsell & cross-sell layout | pending |
-| 2 | `trace/feat/order-items-quantity-display` | Show as Inline / Stepper / Hidden, plus a separate badge toggle | Phase 2 Task 2 Step 3 passes on all eight templates | pending |
-| 3 | `trace/feat/order-items-product-links` | Link image and Link name toggles | Phase 3 Task 1 Step 3 passes | pending |
-| 4 | `trace/feat/order-items-stepper-style` | Stepper Shape, Border colour and Size; Editorial uses Round | Acceptance criterion 5, run as Phase 4 Task 2 Step 3 | pending |
+| 1 | `trace/fix/order-items-stepper-row` | The stepper and remove link always sit on their own row | Phase 1 Task 1 Step 3 passes on the Upsell & cross-sell layout | done |
+| 2 | `trace/feat/order-items-quantity-display` | Show as Inline / Stepper / Hidden, plus a separate badge toggle | Phase 2 Task 2 Step 3 passes on all eight templates | done |
+| 3 | `trace/feat/order-items-product-links` | Link image and Link name toggles | Phase 3 Task 1 Step 3 passes | done |
+| 4 | `trace/feat/order-items-stepper-style` | Stepper Shape, Border colour and Size; Editorial uses Round | Acceptance criterion 5, run as Phase 4 Task 2 Step 3 | done |
 
 ## Interface contract
 
