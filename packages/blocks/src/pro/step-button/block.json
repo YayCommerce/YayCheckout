@@ -1,0 +1,80 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/step-button",
+  "title": "Next Step Button",
+  "category": "yaycheckout",
+  "description": "Validates the open checkout step and opens the next one. Place it anywhere in the layout.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "continue", "next", "step" ],
+  "example": {
+    "attributes": {
+      "buttonText": "Continue"
+    }
+  },
+  "attributes": {
+    "buttonText": {
+      "type": "string",
+      "default": ""
+    },
+    "arrow": {
+      "type": "string",
+      "default": "none",
+      "enum": [ "none", "arrow", "chevron" ]
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false,
+    "color": {
+      "text": true,
+      "background": true,
+      "__experimentalDefaultControls": {
+        "background": true,
+        "text": true
+      }
+    },
+    "spacing": {
+      "padding": true,
+      "margin": true,
+      "__experimentalDefaultControls": {
+        "padding": true
+      }
+    },
+    "dimensions": {
+      "width": true,
+      "__experimentalDefaultControls": {
+        "width": true
+      }
+    },
+    "typography": {
+      "fontSize": true,
+      "textAlign": true,
+      "lineHeight": true,
+      "__experimentalFontFamily": true,
+      "__experimentalFontWeight": true,
+      "__experimentalFontStyle": true,
+      "__experimentalTextTransform": true,
+      "__experimentalTextDecoration": true,
+      "__experimentalLetterSpacing": true,
+      "__experimentalDefaultControls": {
+        "fontSize": true
+      }
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true,
+      "__experimentalDefaultControls": {
+        "color": true,
+        "radius": true,
+        "style": true,
+        "width": true
+      }
+    }
+  },
+  "editorScript": "file:./index.js",
+  "style": "file:./style-index.css",
+  "render": "file:./render.php"
+}

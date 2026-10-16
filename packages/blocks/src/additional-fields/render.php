@@ -23,8 +23,7 @@ $yaycheckout_skip_note = null !== $yaycheckout_layout && \YayCheckout\Services\L
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-additional-fields woocommerce-additional-fields' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php
-    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce hook before the order fields.
-    do_action( 'woocommerce_before_order_notes', $yaycheckout_checkout );
+    \YayCheckout\Renderer\WcHooks::in_place( 'woocommerce_before_order_notes', $yaycheckout_checkout );
     ?>
 
     <?php // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce filter. ?>
@@ -45,7 +44,6 @@ $yaycheckout_skip_note = null !== $yaycheckout_layout && \YayCheckout\Services\L
     <?php endif; ?>
 
     <?php
-    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce hook after the order fields.
-    do_action( 'woocommerce_after_order_notes', $yaycheckout_checkout );
+    \YayCheckout\Renderer\WcHooks::in_place( 'woocommerce_after_order_notes', $yaycheckout_checkout );
     ?>
 </div>

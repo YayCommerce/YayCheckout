@@ -7,6 +7,7 @@ import { __ } from '@wordpress/i18n';
 import { markSetupDone } from '@/lib/api/settings.api';
 import { getErrorMsg } from '@/lib/helpers/response.helper';
 import { logger } from '@/lib/logger';
+import { COMPATIBILITY_QUERIES } from '@/lib/queries/compatibility.queries';
 import { invalidateListedLayouts } from '@/lib/queries/layout.queries';
 import { useCompleteSetupMutation } from '@/lib/queries/setup.queries';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,8 @@ function SetupWizardDialog({ rerun = false, onClose }: { rerun?: boolean; onClos
   const [templateSlug, setTemplateSlug] = useState<string | null>();
   const [applyError, setApplyError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  // Each opening scans afresh: dropped before Scan first renders, and kept for Back from a later step.
+  useState(() => queryClient.removeQueries({ queryKey: COMPATIBILITY_QUERIES.report.queryKey }));
   const setup = useCompleteSetupMutation();
   const draft = setup.data?.layout;
   const isFinished = step === STEPS.length;

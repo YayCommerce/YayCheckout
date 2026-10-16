@@ -40,10 +40,11 @@ export type LayoutDesignMeta = {
 	checkboxes: SectionTokens;
 	radios: SectionTokens;
 	help_text: SectionTokens;
+	buttons: SectionTokens;
 	custom_css: string;
 };
 
-type Section = 'colours' | 'typography' | 'inputs' | 'checkboxes' | 'radios' | 'help_text';
+type Section = 'colours' | 'typography' | 'inputs' | 'checkboxes' | 'radios' | 'help_text' | 'buttons';
 
 const SECTIONS: Record< Section, string > = {
 	colours: __( 'Colours', 'yaycheckout' ),
@@ -52,6 +53,7 @@ const SECTIONS: Record< Section, string > = {
 	checkboxes: __( 'Checkboxes', 'yaycheckout' ),
 	radios: __( 'Radios', 'yaycheckout' ),
 	help_text: __( 'Help text', 'yaycheckout' ),
+	buttons: __( 'Buttons', 'yaycheckout' ),
 };
 
 /** Each section's colour panel. A section of colours only shows that panel alone, under the section's name. */
@@ -61,6 +63,7 @@ const COLOUR_PANELS: Partial< Record< Section, string > > = {
 	inputs: __( 'Input colours', 'yaycheckout' ),
 	checkboxes: __( 'Checkbox colours', 'yaycheckout' ),
 	radios: __( 'Radio colours', 'yaycheckout' ),
+	buttons: __( 'Button colours', 'yaycheckout' ),
 };
 
 const TOKEN_LABELS: Record< string, string > = {
@@ -82,6 +85,8 @@ const TOKEN_LABELS: Record< string, string > = {
 	checked: __( 'Checked', 'yaycheckout' ),
 	color: __( 'Colour', 'yaycheckout' ),
 	link: __( 'Link', 'yaycheckout' ),
+	font_weight: __( 'Weight', 'yaycheckout' ),
+	text_transform: __( 'Letter case', 'yaycheckout' ),
 };
 
 const ENUM_LABELS: Record< string, string > = {
@@ -93,12 +98,28 @@ const ENUM_LABELS: Record< string, string > = {
 	large: __( 'Large', 'yaycheckout' ),
 	floating: __( 'Floating', 'yaycheckout' ),
 	hidden: __( 'Hidden', 'yaycheckout' ),
+	normal: __( 'Normal', 'yaycheckout' ),
+	semibold: __( 'Semibold', 'yaycheckout' ),
+	bold: __( 'Bold', 'yaycheckout' ),
+	uppercase: __( 'Uppercase', 'yaycheckout' ),
 };
 
-/** Focus style names what the shopper sees: the theme's ring thickens the border; `border` drops the ring. */
-const FOCUS_STYLE_LABELS: Record< string, string > = {
-	'': __( 'Thick border', 'yaycheckout' ),
-	border: __( 'Thin border', 'yaycheckout' ),
+/**
+ * Enum labels for one token, ahead of ENUM_LABELS. Focus style names what the shopper sees: the theme's ring
+ * thickens the border; `border` drops the ring. An empty button weight or letter case is the checkout's own
+ * (semibold, as typed), not the theme's.
+ */
+const TOKEN_ENUM_LABELS: Record< string, Record< string, string > > = {
+	focus_style: {
+		'': __( 'Thick border', 'yaycheckout' ),
+		border: __( 'Thin border', 'yaycheckout' ),
+	},
+	font_weight: {
+		'': __( 'Default', 'yaycheckout' ),
+	},
+	text_transform: {
+		'': __( 'As typed', 'yaycheckout' ),
+	},
 };
 
 function isTokens( value: unknown ): value is Record< string, unknown > {
@@ -128,6 +149,7 @@ function normalize( design: EditorDesign, raw: unknown ): LayoutDesignMeta {
 		checkboxes: sectionTokens( design.schema.checkboxes, meta.checkboxes ),
 		radios: sectionTokens( design.schema.radios, meta.radios ),
 		help_text: sectionTokens( design.schema.help_text, meta.help_text ),
+		buttons: sectionTokens( design.schema.buttons, meta.buttons ),
 		custom_css: 'string' === typeof meta.custom_css ? meta.custom_css : '',
 	};
 }
@@ -292,6 +314,16 @@ const STATE_GROUPS: Partial< Record< Section, Record< string, [ string, string ]
 		border: [
 			[ 'border', __( 'Default', 'yaycheckout' ) ],
 			[ 'focus_border', __( 'Focus', 'yaycheckout' ) ],
+		],
+	},
+	buttons: {
+		background: [
+			[ 'background', __( 'Default', 'yaycheckout' ) ],
+			[ 'hover_background', __( 'Hover', 'yaycheckout' ) ],
+		],
+		text: [
+			[ 'text', __( 'Default', 'yaycheckout' ) ],
+			[ 'hover_text', __( 'Hover', 'yaycheckout' ) ],
 		],
 	},
 };
@@ -500,7 +532,7 @@ function TokenControl( {
 						label:
 							'font_family' === token
 								? design.fontFamilies[ option ] || ENUM_LABELS[ '' ]
-								: ( 'focus_style' === token ? FOCUS_STYLE_LABELS[ option ] : undefined ) ??
+								: TOKEN_ENUM_LABELS[ token ]?.[ option ] ??
 								  ENUM_LABELS[ option ] ??
 								  option,
 					} ) ) }

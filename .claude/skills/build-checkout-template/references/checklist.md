@@ -2,7 +2,7 @@
 
 ## Files a template touches
 
-**Slug already in `LayoutTemplateCatalogue::catalogue()`** (all 11 mock templates are):
+**Slug already in `LayoutTemplateCatalogue::catalogue()`** (all 11 mock templates are). Below, `templates/layouts/<slug>/` means `templates/layouts/pro/<slug>/` for an entry marked `'pro' => true` (one built from Pro blocks, such as the step blocks):
 
 | File | Change |
 |---|---|
@@ -14,7 +14,7 @@
 That's all. `is_available()` turns the template on once both files exist. The REST controller and the SPA picker already know every slug, and the picker's preview (`templates/layouts/<slug>/preview.html`, from `./scripts/run.sh previews`) already exists for every slug in the mock.
 
 **A brand-new slug** also needs:
-- an entry in `catalogue()` with slug, name and categories (one or more filter chips). Its position decides Free vs Pro: the first `FREE_UNLOCKED_COUNT` entries are Free. Ask the user where it goes.
+- an entry in `catalogue()` with slug, name and categories (one or more filter chips), plus `'pro' => true` if it uses any Pro block (`BlockRegistry::PRO_BLOCKS`, today the step blocks); its files then go in `templates/layouts/pro/<slug>/`, which Free neither lists nor ships. Ask the user where in the order it goes.
 - a `preview.html`: run `./scripts/run.sh previews` once the catalogue entry exists. Without one the card shows the template's name on a plain box.
 
 **Only if the address or summary structure changes** (rare):

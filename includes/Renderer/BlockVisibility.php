@@ -124,15 +124,23 @@ class BlockVisibility {
 
     /**
      * True when the block shows: action "show" and every rule matches, or action "hide" and not every rule does.
+     * Without steps (no Steps block, or Free, which can't render one) step rules are skipped, and a setting left
+     * with no rules shows its block.
      *
      * @param array $setting    A normalize()d setting.
      * @param array $state      As state() returns it.
      * @param int   $step       The open step, 1-based.
-     * @param int   $step_count The layout's steps; 0 without a Steps block, when no step rule matches.
+     * @param int   $step_count The layout's steps; 0 without a working Steps block.
      * @param array $empty_ids  The blockIds that are empty, as BlockEmptiness::empty_ids() returns them.
      */
     public static function is_visible( array $setting, array $state, int $step, int $step_count, array $empty_ids = [] ): bool {
-        foreach ( $setting['rules'] as $rule ) {
+        $rules = 0 < $step_count ? $setting['rules'] : array_filter( $setting['rules'], static fn( $rule ) => 'step' !== $rule['type'] );
+
+        if ( [] === $rules ) {
+            return true;
+        }
+
+        foreach ( $rules as $rule ) {
             if ( ! self::matches( $rule, $state, $step, $step_count, $empty_ids ) ) {
                 return 'show' !== $setting['action'];
             }
@@ -281,7 +289,7 @@ class BlockVisibility {
 
     /** The steps in the served layout's first Steps block; 0 without one. Memoised by layout_titles(). */
     private static function step_count(): int {
-        return count( CheckoutStepsProgress::layout_titles() );
+        return count( LayoutSteps::layout_titles() );
     }
 
     /**
@@ -356,7 +364,7 @@ class BlockVisibility {
             case 'block':
                 return in_array( $rule['block'], $empty_ids, true ) === ( 'empty' === $rule['is'] );
             case 'step':
-                return $step_count > 0 && ( $rule['step'] === $step || ( 'last' === $rule['step'] && $step === $step_count ) );
+                return $rule['step'] === $step || ( 'last' === $rule['step'] && $step === $step_count );
             case 'subtotal':
                 $subtotal = (float) ( $state['subtotal'] ?? 0.0 );
 

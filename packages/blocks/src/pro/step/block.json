@@ -1,0 +1,71 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/step",
+  "title": "Step",
+  "category": "yaycheckout",
+  "description": "One checkout step. Holds the sections of that step.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "accordion", "section" ],
+  "example": {
+    "attributes": {
+      "title": "Information"
+    },
+    "innerBlocks": [
+      {
+        "name": "yaycheckout/step-button",
+        "attributes": {
+          "buttonText": "Continue"
+        }
+      }
+    ]
+  },
+  "parent": [ "yaycheckout/steps" ],
+  "usesContext": [ "yaycheckout/showHeadings" ],
+  "attributes": {
+    "title": {
+      "type": "string",
+      "default": ""
+    },
+    "summarySeparator": {
+      "type": "string",
+      "default": ", "
+    },
+    "summaryOmit": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    }
+  },
+  "supports": {
+    "html": false,
+    "reusable": false,
+    "color": {
+      "__experimentalDefaultControls": {
+        "background": true,
+        "text": true
+      }
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true,
+      "blockGap": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true,
+      "__experimentalDefaultControls": {
+        "color": true,
+        "radius": true,
+        "width": true
+      }
+    }
+  },
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php"
+}

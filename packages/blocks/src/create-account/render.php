@@ -34,8 +34,7 @@ $yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper( [ 'class' 
     <?php endif; ?>
 
     <?php
-    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce hook around the account fields.
-    do_action( 'woocommerce_before_checkout_registration_form', $yaycheckout_checkout );
+    \YayCheckout\Renderer\WcHooks::in_place( 'woocommerce_before_checkout_registration_form', $yaycheckout_checkout );
     ?>
 
     <?php if ( $yaycheckout_checkout->get_checkout_fields( 'account' ) ) : ?>
@@ -50,7 +49,6 @@ $yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper( [ 'class' 
     <?php endif; ?>
 
     <?php
-    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce hook around the account fields.
-    do_action( 'woocommerce_after_checkout_registration_form', $yaycheckout_checkout );
+    \YayCheckout\Renderer\WcHooks::in_place( 'woocommerce_after_checkout_registration_form', $yaycheckout_checkout );
     ?>
 </div>
