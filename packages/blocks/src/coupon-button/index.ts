@@ -1,6 +1,7 @@
 import metadata from './block.json';
 import Edit from './edit';
 import './style.css';
+import { couponButtonIcon } from '../shared/block-icons';
 import { registerDynamicBlock } from '../shared/register-dynamic-block';
 
-registerDynamicBlock( metadata, Edit );
+registerDynamicBlock( metadata, couponButtonIcon, Edit );
