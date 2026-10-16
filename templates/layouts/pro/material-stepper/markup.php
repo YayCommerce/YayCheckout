@@ -12,8 +12,8 @@
  * card with a vertical-timeline Steps block (Contact, address, Shipping options, Payment options) and right a
  * sticky Order Summary card. The address order follows WooCommerce's Shipping destination when the layout is
  * created: with shipping main, Step 2 is Shipping and Step 4 offers "Billing address is the same as shipping"
- * with the Billing fields; with billing main, Step 2 is Billing and Step 4 offers the same label with the
- * Shipping fields; with shipping forced to billing, Billing alone.
+ * with the Billing fields; with billing main, Step 2 is Billing and Step 4 offers "Shipping address is the
+ * same as billing", ticked, with the Shipping fields; with shipping forced to billing, Billing alone.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -171,7 +171,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <div class="wp-block-group"><!-- wp:yaycheckout/payment {"showTitle":false,"layout":"cards","style":{"spacing":{"blockGap":"2px"},"color":{"background":"transparent"},"border":{"radius":"8px"},"yaycheckout":{"backgroundSelected":"rgba(56,88,233,0.06)","backgroundHover":"#f0f0f1","border":"transparent","radio":"#757575","radioSelected":"#3858e9","borderWidth":"0px"}}} /-->
 <?php if ( 'billing_only' !== $yaycheckout_destination ) : ?>
 
-<!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Billing address is the same as shipping', 'yaycheckout' ); ?>","shipLabel":"<?php esc_html_e( 'Billing address is the same as shipping', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Billing address is the same as shipping', 'yaycheckout' ); ?>","ticked":"same","sameShipLabel":"<?php esc_html_e( 'Shipping address is the same as billing', 'yaycheckout' ); ?>"} /-->
 <?php if ( 'shipping' === $yaycheckout_destination ) : ?>
 
 <!-- wp:yaycheckout/billing {"showTitle":false} -->

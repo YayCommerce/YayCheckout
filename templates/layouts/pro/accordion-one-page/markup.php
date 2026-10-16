@@ -150,7 +150,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <?php endif; ?>
 <?php if ( 'billing_only' !== $yaycheckout_destination ) : ?>
 
-<!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Billing address is the same as delivery', 'yaycheckout' ); ?>","shipLabel":"<?php esc_html_e( 'Billing address is the same as delivery', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Billing address is the same as delivery', 'yaycheckout' ); ?>","ticked":"same","sameShipLabel":"<?php esc_html_e( 'Delivery address is the same as billing', 'yaycheckout' ); ?>"} /-->
 <?php if ( 'shipping' === $yaycheckout_destination ) : ?>
 
 <!-- wp:yaycheckout/billing {"showTitle":false} -->
