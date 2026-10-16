@@ -28,8 +28,8 @@ interface OrderSummaryItemsAttributes {
 	showSku: boolean;
 	showUnitPrice: boolean;
 	showShortDescription: boolean;
-	quantityDisplay: 'inline' | 'badge';
-	showStepper: boolean;
+	quantityDisplay: 'inline' | 'stepper' | 'hidden';
+	showBadge: boolean;
 	badgeBackgroundColor: string;
 	badgeTextColor: string;
 	badgeSize?: number;
@@ -55,6 +55,14 @@ function badgeStyle( { badgeBackgroundColor, badgeTextColor, badgeSize }: OrderS
 	};
 }
 
+function quantityHelp( quantityDisplay: OrderSummaryItemsAttributes[ 'quantityDisplay' ], badge: boolean ) {
+	if ( quantityDisplay === 'stepper' ) {
+		return __( 'Lets shoppers change or remove items.', 'yaycheckout' );
+	}
+
+	return quantityDisplay === 'hidden' && ! badge ? __( "Shoppers won't see item quantities.", 'yaycheckout' ) : undefined;
+}
+
 // Mirrors CheckoutFragments::order_items_html(), so the block's style.css draws it as on the storefront.
 export default function Edit( { attributes, setAttributes, clientId }: EditProps ) {
 	const {
@@ -67,14 +75,15 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		showUnitPrice,
 		showShortDescription,
 		quantityDisplay,
-		showStepper,
+		showBadge,
 		badgeBackgroundColor,
 		badgeTextColor,
 		badgeSize,
 		style,
 	} = attributes;
-	// As order_items_html(): a badge needs a thumbnail to sit on.
-	const badge = quantityDisplay === 'badge' && showThumbnails;
+	// As order_items_html(): a badge needs a thumbnail to sit on, and adds to Show as.
+	const badge = showBadge && showThumbnails;
+	const stepper = quantityDisplay === 'stepper';
 	const palettes = useMultipleOriginColorsAndGradients();
 	const css = useBlockGapCSS( `#block-${ clientId } > .yaycheckout-order-summary-items`, style );
 	const productPlaceholder = __( 'Product', 'yaycheckout' );
@@ -121,23 +130,21 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						value={ quantityDisplay }
 						options={ [
 							{ label: __( 'Inline', 'yaycheckout' ), value: 'inline' },
-							{ label: __( 'Badge', 'yaycheckout' ), value: 'badge' },
+							{ label: __( 'Stepper', 'yaycheckout' ), value: 'stepper' },
+							{ label: __( 'Hidden', 'yaycheckout' ), value: 'hidden' },
 						] }
-						help={
-							quantityDisplay === 'badge' && ! showThumbnails
-								? __( 'Shown inline while thumbnails are off.', 'yaycheckout' )
-								: undefined
-						}
+						help={ quantityHelp( quantityDisplay, badge ) }
 						onChange={ ( value ) =>
 							setAttributes( { quantityDisplay: value as OrderSummaryItemsAttributes[ 'quantityDisplay' ] } )
 						}
 					/>
-					<ToggleControl
-						label={ __( 'Quantity stepper', 'yaycheckout' ) }
-						help={ __( 'Lets shoppers change or remove items.', 'yaycheckout' ) }
-						checked={ showStepper }
-						onChange={ ( value ) => setAttributes( { showStepper: value } ) }
-					/>
+					{ showThumbnails && (
+						<ToggleControl
+							label={ __( 'Badge on thumbnail', 'yaycheckout' ) }
+							checked={ showBadge }
+							onChange={ ( value ) => setAttributes( { showBadge: value } ) }
+						/>
+					) }
 				</PanelBody>
 				<PanelBody title={ __( 'Column labels', 'yaycheckout' ) } initialOpen={ false }>
 					<ToggleControl
@@ -243,7 +250,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						) }
 						<div className="product-name">
 							{ __( 'Sample product', 'yaycheckout' ) }&nbsp;
-							{ ! badge && ! showStepper && <strong className="product-quantity">×&nbsp;1</strong> }
+							{ quantityDisplay === 'inline' && <strong className="product-quantity">×&nbsp;1</strong> }
 							{ itemData !== 'hidden' && (
 								<dl className="variation">
 									<dt>{ __( 'Color:', 'yaycheckout' ) }</dt>
@@ -261,7 +268,7 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 							{ showShortDescription && (
 								<div className="product-short-description">{ __( 'A short product description.', 'yaycheckout' ) }</div>
 							) }
-							{ showStepper && (
+							{ stepper && (
 								<div className="yaycheckout-order-summary-items__controls">
 									<div className="yaycheckout-qty">
 										<button type="button" className="yaycheckout-qty__button" disabled>

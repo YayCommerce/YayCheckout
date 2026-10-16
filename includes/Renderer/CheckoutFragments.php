@@ -791,7 +791,7 @@ class CheckoutFragments {
                 $wrapper['style'] = $badge_style;
             }
 
-            $stepper = self::order_items_options( $block->attributes )['show_stepper'];
+            $stepper = 'stepper' === self::order_items_options( $block->attributes )['quantity_display'];
 
             if ( $stepper ) {
                 $wrapper['data-yaycheckout-cart-nonce'] = wp_create_nonce( CartItemQuantity::NONCE_ACTION );
@@ -850,7 +850,7 @@ class CheckoutFragments {
      * The Items block's attributes with their defaults. During AJAX they come from the parsed
      * layout, where an untouched attribute is missing, so each default matches block.json's.
      *
-     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_stepper: bool}
+     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_badge: bool}
      */
     public static function order_items_options( array $attributes ): array {
         // The first choice is the default.
@@ -869,8 +869,8 @@ class CheckoutFragments {
             'show_sku'               => self::bool_attr( $attributes, 'showSku', false ),
             'show_unit_price'        => self::bool_attr( $attributes, 'showUnitPrice', false ),
             'show_short_description' => self::bool_attr( $attributes, 'showShortDescription', false ),
-            'quantity_display'       => $choice( 'quantityDisplay', [ 'inline', 'badge' ] ),
-            'show_stepper'           => self::bool_attr( $attributes, 'showStepper', false ),
+            'quantity_display'       => $choice( 'quantityDisplay', [ 'inline', 'stepper', 'hidden' ] ),
+            'show_badge'             => self::bool_attr( $attributes, 'showBadge', false ),
         ];
     }
 
@@ -886,9 +886,10 @@ class CheckoutFragments {
         }
 
         $options = self::order_items_options( $attributes );
-        // A badge sits on the thumbnail; without one, the quantity shows inline rather than vanish.
-        $badge = 'badge' === $options['quantity_display'] && $options['show_thumbnails'];
-        $root  = self::ORDER_ITEMS_CLASS . ( 'inline' === $options['item_data'] ? ' ' . self::ORDER_ITEMS_CLASS . '--item-data-inline' : '' );
+        // A badge sits on the thumbnail, so it needs one. It adds to Show as and hides nothing.
+        $badge        = $options['show_badge'] && $options['show_thumbnails'];
+        $stepper_mode = 'stepper' === $options['quantity_display'];
+        $root         = self::ORDER_ITEMS_CLASS . ( 'inline' === $options['item_data'] ? ' ' . self::ORDER_ITEMS_CLASS . '--item-data-inline' : '' );
 
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hooks and filters.
         ob_start();
@@ -911,8 +912,8 @@ class CheckoutFragments {
                 continue;
             }
 
-            // A product with one allowed quantity gets no stepper; its quantity shows as the Quantity option says.
-            $stepper = $options['show_stepper']
+            // A product with one allowed quantity gets no stepper; its quantity shows inline instead.
+            $stepper = $stepper_mode
                 && ! $product->is_sold_individually()
                 && $product->get_min_purchase_quantity() !== $product->get_max_purchase_quantity();
             ?>
@@ -932,8 +933,8 @@ class CheckoutFragments {
             <?php endif; ?>
         <div class="product-name">
             <?php echo wp_kses_post( apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key ) ) . '&nbsp;'; ?>
-            <?php // The badge and the stepper show the quantity, so inline it would say it twice; the filter still runs, as extensions (Germanized's units line) print their item info through it. ?>
-            <?php $inline_quantity = ! $badge && ! $stepper ? ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>' : ''; ?>
+            <?php // Hidden shows no quantity here, and the stepper's input already shows it; the filter still runs, as extensions (Germanized's units line) print their item info through it. ?>
+            <?php $inline_quantity = 'hidden' !== $options['quantity_display'] && ! $stepper ? ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>' : ''; ?>
             <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', $inline_quantity, $cart_item, $cart_item_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered HTML. ?>
             <?php
             if ( 'hidden' !== $options['item_data'] ) {
@@ -943,7 +944,7 @@ class CheckoutFragments {
             self::print_item_details( $options, $product, $cart_item, $cart_item_key );
 
             // A row of its own, so the stepper never flows onto the name's line when no detail line sits between them.
-            if ( $options['show_stepper'] ) {
+            if ( $stepper_mode ) {
                 echo '<div class="' . esc_attr( self::ORDER_ITEMS_CLASS . '__controls' ) . '">';
 
                 if ( $stepper ) {
