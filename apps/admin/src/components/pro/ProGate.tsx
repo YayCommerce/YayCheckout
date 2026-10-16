@@ -64,7 +64,7 @@ export function ProBadge({ className }: { className?: string }) {
       trigger={
         <Badge
           variant="warning"
-          className={cn('text-3 h-4.5 cursor-pointer rounded-sm p-1.5 pr-0.75 leading-6 text-white', className)}
+          className={cn('h-4.5 cursor-pointer rounded-sm p-1.5 pr-0.75 leading-6 text-white', className)}
           onClick={() => window.open(UPGRADE_URL)}
         >
           {__('Pro', 'yaycheckout')}
@@ -73,15 +73,6 @@ export function ProBadge({ className }: { className?: string }) {
       }
       content={__('Unlock this feature', 'yaycheckout')}
     />
-  );
-}
-
-/** Inert Pro chip for a locked item; ProBadge is the clickable one. */
-export function ProTag({ className }: { className?: string }) {
-  return (
-    <Badge variant="outline" className={cn('px-1.5 text-[10px]', className)}>
-      {__('PRO', 'yaycheckout')}
-    </Badge>
   );
 }
 
