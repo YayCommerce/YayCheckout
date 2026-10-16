@@ -46,14 +46,15 @@ export type LayoutDesignMeta = {
 
 type Section = 'colours' | 'typography' | 'inputs' | 'checkboxes' | 'radios' | 'help_text' | 'buttons';
 
+/** In the sidebar's order. */
 const SECTIONS: Record< Section, string > = {
 	colours: __( 'Colours', 'yaycheckout' ),
 	typography: __( 'Typography', 'yaycheckout' ),
 	inputs: __( 'Inputs', 'yaycheckout' ),
+	buttons: __( 'Buttons', 'yaycheckout' ),
 	checkboxes: __( 'Checkboxes', 'yaycheckout' ),
 	radios: __( 'Radios', 'yaycheckout' ),
 	help_text: __( 'Help text', 'yaycheckout' ),
-	buttons: __( 'Buttons', 'yaycheckout' ),
 };
 
 /** Each section's colour panel. A section of colours only shows that panel alone, under the section's name. */

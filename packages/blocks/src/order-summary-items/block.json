@@ -22,6 +22,17 @@
       "type": "boolean",
       "default": true
     },
+    "thumbnailRatio": {
+      "type": "string",
+      "enum": [ "square", "portrait", "landscape", "original" ],
+      "default": "square"
+    },
+    "thumbnailSize": {
+      "type": "number"
+    },
+    "thumbnailRadius": {
+      "type": "number"
+    },
     "linkImage": {
       "type": "boolean",
       "default": false

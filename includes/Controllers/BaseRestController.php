@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Controllers;
 
+use YayCheckout\Helpers\ExceptionHelper;
 use YayCheckout\Helpers\Logger;
 use YayCheckout\PostTypes\LayoutPostType;
 
@@ -68,7 +69,7 @@ abstract class BaseRestController {
         } catch ( \Throwable $ex ) {
             Logger::exception( $ex, 'GET ' . $request->get_route() );
 
-            return new \WP_Error( 'internal_error', $ex->getMessage(), [ 'status' => 500 ] );
+            return new \WP_Error( 'internal_error', ExceptionHelper::message( $ex ), [ 'status' => 500 ] );
         }
     }
 
@@ -89,7 +90,7 @@ abstract class BaseRestController {
         } catch ( \Throwable $ex ) {
             Logger::exception( $ex, $request->get_method() . ' ' . $request->get_route() );
 
-            return new \WP_Error( 'internal_error', $ex->getMessage(), [ 'status' => 500 ] );
+            return new \WP_Error( 'internal_error', ExceptionHelper::message( $ex ), [ 'status' => 500 ] );
         }
     }
 
@@ -117,7 +118,7 @@ abstract class BaseRestController {
 
             Logger::exception( $ex, $request->get_method() . ' ' . $request->get_route(), [ 'rolled_back' => true ] );
 
-            return new \WP_Error( 'internal_error', $ex->getMessage(), [ 'status' => 500 ] );
+            return new \WP_Error( 'internal_error', ExceptionHelper::message( $ex ), [ 'status' => 500 ] );
         }
     }
 }

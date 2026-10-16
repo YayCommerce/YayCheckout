@@ -68,15 +68,15 @@ class LayoutTemplateCatalogue {
         $template = array_column( self::templates( $is_pro ), null, 'slug' )[ $slug ] ?? null;
 
         if ( null === $template ) {
-            throw new \InvalidArgumentException( __( 'Unknown template.', 'yaycheckout' ) );
+            throw new \InvalidArgumentException( esc_html__( 'Unknown template.', 'yaycheckout' ) );
         }
 
         if ( $template['pro'] && ! $is_pro ) {
-            throw new \InvalidArgumentException( __( 'This template requires YayCheckout Pro.', 'yaycheckout' ) );
+            throw new \InvalidArgumentException( esc_html__( 'This template requires YayCheckout Pro.', 'yaycheckout' ) );
         }
 
         if ( ! $template['available'] ) {
-            throw new \InvalidArgumentException( __( 'This template is coming soon.', 'yaycheckout' ) );
+            throw new \InvalidArgumentException( esc_html__( 'This template is coming soon.', 'yaycheckout' ) );
         }
     }
 
@@ -125,7 +125,7 @@ class LayoutTemplateCatalogue {
      */
     private static function file( string $slug, string $name ): string {
         if ( ! self::is_available( $slug ) ) {
-            throw new \InvalidArgumentException( sprintf( 'Template "%s" is not available.', $slug ) );
+            throw new \InvalidArgumentException( esc_html( sprintf( 'Template "%s" is not available.', $slug ) ) );
         }
 
         return self::path( $slug, $name );

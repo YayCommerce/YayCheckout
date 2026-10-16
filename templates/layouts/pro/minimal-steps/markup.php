@@ -62,7 +62,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
     // One blockId per section; each matches BlockEmptiness::BLOCK_ID_PATTERN.
     $yaycheckout_state_id = 'billing' === $type ? 'bilstate' : 'shpstate';
     ?>
-<!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_first_name","label":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -74,13 +74,13 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_1","label":"<?php esc_html_e( 'Address', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Address', 'yaycheckout' ); ?>","required":true} /-->
 
-<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
+<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns are-vertically-aligned-bottom"><!-- wp:column {"verticalAlignment":"bottom","width":"50%"} -->
 <div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:50%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
 <!-- wp:column {"verticalAlignment":"bottom","width":"25%","yaycheckoutVisibility":{"action":"show","rules":[{"type":"block","block":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","is":"not_empty"}]}} -->
-<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"blockId":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"blockId":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
 <!-- wp:column {"verticalAlignment":"bottom","width":"25%"} -->
@@ -88,7 +88,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
-<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_country","type":"country","label":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","required":true} /-->
+<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_country","type":"country","label":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","required":true} /-->
 <?php
 };
 ?>

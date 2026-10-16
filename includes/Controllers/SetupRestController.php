@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Controllers;
 
+use YayCheckout\Helpers\ExceptionHelper;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
 use YayCheckout\Utils\SingletonTrait;
@@ -66,7 +67,7 @@ class SetupRestController extends BaseRestController {
             LayoutTemplateCatalogue::assert_available( $template_slug );
             $layout = $this->layouts->create( __( 'Checkout — draft', 'yaycheckout' ), $template_slug );
         } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
+            return $this->error_invalid_arguments( ExceptionHelper::message( $ex ) );
         }
 
         $this->settings->mark_setup_done();

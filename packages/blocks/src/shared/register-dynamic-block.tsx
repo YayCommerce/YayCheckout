@@ -1,7 +1,6 @@
 import { InnerBlocks } from '@wordpress/block-editor';
 import { registerBlockType } from '@wordpress/blocks';
 import { decodeEntities } from '@wordpress/html-entities';
-import { blockIcons } from './block-icons';
 
 type BlockSettings = NonNullable< Parameters< typeof registerBlockType >[ 1 ] >;
 type BlockMetadata = { name: string } & Record< string, unknown >;
@@ -27,16 +26,17 @@ export function listViewLabel< A >( text: ( attributes: A ) => string ) {
 
 /**
  * Registers a block whose markup comes from render.php. A parent with inner blocks
- * must pass saveNestedBlocks as save.
+ * must pass saveNestedBlocks as save. The icon is the block's own export from block-icons.
  */
 export function registerDynamicBlock(
 	metadata: BlockMetadata,
+	icon: JSX.Element,
 	edit: BlockSettings[ 'edit' ],
 	save: BlockSettings[ 'save' ] = () => null,
 	settings: Omit< BlockSettings, 'edit' | 'save' > = {}
 ): void {
 	registerBlockType( metadata as Parameters< typeof registerBlockType >[ 0 ], {
-		icon: blockIcons[ metadata.name ],
+		icon,
 		...settings,
 		edit,
 		save,

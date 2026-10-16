@@ -28,8 +28,8 @@ function controlText( control: Control ): string {
 	return control.value.trim();
 }
 
-/** Every control's text, skipping unticked radios and checkboxes, as one comma-separated line. */
-export function controlsText( controls: Iterable< Control > ): string {
+/** Every control's text, skipping unticked radios and checkboxes, joined by separator (default ", "). */
+export function controlsText( controls: Iterable< Control >, separator = ', ' ): string {
 	const values: string[] = [];
 
 	for ( const control of controls ) {
@@ -44,7 +44,7 @@ export function controlsText( controls: Iterable< Control > ): string {
 		}
 	}
 
-	return values.join( ', ' );
+	return values.join( separator );
 }
 
 /**

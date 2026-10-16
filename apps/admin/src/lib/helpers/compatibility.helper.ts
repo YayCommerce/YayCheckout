@@ -28,11 +28,6 @@ export const FAILED_REPORT: CompatibilityReport = {
   catalogue: { source: 'bundled', fetchedAt: null },
 };
 
-/** True when any detection failed. */
-export function hasUndetected(report: CompatibilityReport): boolean {
-  return report.store === null || report.gateways === null || report.plugins === null;
-}
-
 /** How a store's checkout type reads to the merchant. */
 export function storeTypeLabel(storeType: StoreEnvironment['storeType']): string {
   return storeType === 'block' ? __('Block checkout', 'yaycheckout') : __('Classic store', 'yaycheckout');

@@ -26,6 +26,9 @@ interface OrderSummaryItemsAttributes {
 	productLabel?: string;
 	subtotalLabel?: string;
 	showThumbnails: boolean;
+	thumbnailRatio: 'square' | 'portrait' | 'landscape' | 'original';
+	thumbnailSize?: number;
+	thumbnailRadius?: number;
 	linkImage: boolean;
 	linkName: boolean;
 	itemData: 'list' | 'inline' | 'hidden';
@@ -51,29 +54,51 @@ interface EditProps {
 
 const BADGE_PANEL = 'yaycheckout-order-summary-items-badge';
 const STEPPER_PANEL = 'yaycheckout-order-summary-items-stepper';
+const THUMBNAIL_PANEL = 'yaycheckout-order-summary-items-thumbnail';
 
-// Mirrors the px ranges CheckoutFragments::order_items_style_vars() clamps badgeSize and stepperSize to.
+// Mirrors the px ranges CheckoutFragments::order_items_style_vars() clamps badgeSize, stepperSize, thumbnailSize and
+// thumbnailRadius to.
 const BADGE_SIZE = { min: 16, max: 32 };
 const STEPPER_SIZE = { min: 20, max: 40 };
+const THUMBNAIL_SIZE = { min: 40, max: 96 };
+const THUMBNAIL_RADIUS = { min: 0, max: 48 };
+
+// Mirrors the ratios in CheckoutFragments::order_items_style_vars(); square is style.css's fallback. Original is
+// the image's own ratio on the storefront, and square here, where the placeholder has none.
+const THUMBNAIL_RATIOS: Partial< Record< OrderSummaryItemsAttributes[ 'thumbnailRatio' ], string > > = {
+	portrait: '3 / 4',
+	landscape: '4 / 3',
+};
 
 function clampedPx( value: number, { min, max }: { min: number; max: number } ) {
 	return `${ Math.max( min, Math.min( max, value ) ) }px`;
 }
 
-// Mirrors CheckoutFragments::order_items_style_vars(): the badge and stepper settings as --yaycheckout-badge-* and --yaycheckout-stepper-* vars.
+// Mirrors CheckoutFragments::order_items_style_vars(): the badge, stepper and thumbnail settings as
+// --yaycheckout-badge-*, --yaycheckout-stepper-* and --yaycheckout-thumbnail-* vars.
 function itemsStyleVars( {
 	badgeBackgroundColor,
 	badgeTextColor,
 	badgeSize,
 	stepperBorderColor,
 	stepperSize,
+	thumbnailRatio,
+	thumbnailSize,
+	thumbnailRadius,
 }: OrderSummaryItemsAttributes ) {
+	const ratio = THUMBNAIL_RATIOS[ thumbnailRatio ];
+
 	return {
 		...( badgeBackgroundColor ? { '--yaycheckout-badge-bg': badgeBackgroundColor } : {} ),
 		...( badgeTextColor ? { '--yaycheckout-badge-text': badgeTextColor } : {} ),
 		...( typeof badgeSize === 'number' ? { '--yaycheckout-badge-size': clampedPx( badgeSize, BADGE_SIZE ) } : {} ),
 		...( stepperBorderColor ? { '--yaycheckout-stepper-border': stepperBorderColor } : {} ),
 		...( typeof stepperSize === 'number' ? { '--yaycheckout-stepper-size': clampedPx( stepperSize, STEPPER_SIZE ) } : {} ),
+		...( typeof thumbnailSize === 'number' ? { '--yaycheckout-thumbnail-size': clampedPx( thumbnailSize, THUMBNAIL_SIZE ) } : {} ),
+		...( ratio ? { '--yaycheckout-thumbnail-ratio': ratio } : {} ),
+		...( typeof thumbnailRadius === 'number'
+			? { '--yaycheckout-thumbnail-radius': clampedPx( thumbnailRadius, THUMBNAIL_RADIUS ) }
+			: {} ),
 	};
 }
 
@@ -99,35 +124,37 @@ interface ColorSizePanelProps {
 	label: string;
 	panelId: string;
 	resetAll: () => void;
-	colors: { label: string; value: string; onChange: ( value: string ) => void }[];
+	colors?: { label: string; value: string; onChange: ( value: string ) => void }[];
 	size: { value?: number; min: number; max: number; initial: number; onChange: ( value?: number ) => void };
 	// Items shown before the colours, such as the stepper's Shape.
 	children?: ReactNode;
 }
 
-// A Styles tab panel of colours and a size, as the badge and the stepper have.
-function ColorSizePanel( { label, panelId, resetAll, colors, size, children }: ColorSizePanelProps ) {
+// A Styles tab panel of colours and a size, as the badge and the stepper have; the thumbnail's has no colours.
+function ColorSizePanel( { label, panelId, resetAll, colors = [], size, children }: ColorSizePanelProps ) {
 	const palettes = useMultipleOriginColorsAndGradients();
 
 	return (
 		<InspectorControls group="styles">
 			<ToolsPanel label={ label } panelId={ panelId } className="yaycheckout-tools-panel" resetAll={ resetAll }>
 				{ children }
-				<div className="yaycheckout-tools-panel__colors">
-					<ColorGradientSettingsDropdown
-						__experimentalIsRenderedInSidebar
-						panelId={ panelId }
-						settings={ colors.map( ( color ) => ( {
-							label: color.label,
-							colorValue: color.value || undefined,
-							onColorChange: ( value?: string ) => color.onChange( value ?? '' ),
-							clearable: true,
-							isShownByDefault: true,
-						} ) ) }
-						colors={ palettes.colors }
-						disableCustomColors={ palettes.disableCustomColors }
-					/>
-				</div>
+				{ colors.length > 0 && (
+					<div className="yaycheckout-tools-panel__colors">
+						<ColorGradientSettingsDropdown
+							__experimentalIsRenderedInSidebar
+							panelId={ panelId }
+							settings={ colors.map( ( color ) => ( {
+								label: color.label,
+								colorValue: color.value || undefined,
+								onColorChange: ( value?: string ) => color.onChange( value ?? '' ),
+								clearable: true,
+								isShownByDefault: true,
+							} ) ) }
+							colors={ palettes.colors }
+							disableCustomColors={ palettes.disableCustomColors }
+						/>
+					</div>
+				) }
 				<ToolsPanelItem
 					panelId={ panelId }
 					label={ __( 'Size', 'yaycheckout' ) }
@@ -167,6 +194,9 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		productLabel,
 		subtotalLabel,
 		showThumbnails,
+		thumbnailRatio,
+		thumbnailSize,
+		thumbnailRadius,
 		linkImage,
 		linkName,
 		itemData,
@@ -284,6 +314,70 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					) }
 				</PanelBody>
 			</InspectorControls>
+			{ showThumbnails && (
+				<ColorSizePanel
+					label={ __( 'Thumbnail', 'yaycheckout' ) }
+					panelId={ THUMBNAIL_PANEL }
+					resetAll={ () =>
+						setAttributes( { thumbnailRatio: 'square', thumbnailSize: undefined, thumbnailRadius: undefined } )
+					}
+					size={ {
+						value: thumbnailSize,
+						...THUMBNAIL_SIZE,
+						initial: 48,
+						onChange: ( value ) => setAttributes( { thumbnailSize: value } ),
+					} }
+				>
+					<ToolsPanelItem
+						panelId={ THUMBNAIL_PANEL }
+						label={ __( 'Aspect ratio', 'yaycheckout' ) }
+						hasValue={ () => thumbnailRatio !== 'square' }
+						onDeselect={ () => setAttributes( { thumbnailRatio: 'square' } ) }
+						isShownByDefault
+					>
+						<SelectControl
+							__nextHasNoMarginBottom
+							__next40pxDefaultSize
+							label={ __( 'Aspect ratio', 'yaycheckout' ) }
+							value={ thumbnailRatio }
+							options={ [
+								{ label: __( 'Square', 'yaycheckout' ), value: 'square' },
+								{ label: __( 'Portrait (3:4)', 'yaycheckout' ), value: 'portrait' },
+								{ label: __( 'Landscape (4:3)', 'yaycheckout' ), value: 'landscape' },
+								{ label: __( 'Original', 'yaycheckout' ), value: 'original' },
+							] }
+							help={
+								thumbnailRatio === 'original'
+									? __( 'Each image keeps its own shape; the editor shows a square.', 'yaycheckout' )
+									: undefined
+							}
+							onChange={ ( value ) =>
+								setAttributes( { thumbnailRatio: value as OrderSummaryItemsAttributes[ 'thumbnailRatio' ] } )
+							}
+						/>
+					</ToolsPanelItem>
+					<ToolsPanelItem
+						panelId={ THUMBNAIL_PANEL }
+						label={ __( 'Radius', 'yaycheckout' ) }
+						hasValue={ () => typeof thumbnailRadius === 'number' }
+						onDeselect={ () => setAttributes( { thumbnailRadius: undefined } ) }
+						isShownByDefault
+					>
+						<RangeControl
+							__nextHasNoMarginBottom
+							__next40pxDefaultSize
+							label={ __( 'Radius', 'yaycheckout' ) }
+							help={ __( 'Unset, it follows the Inputs radius in Layout design.', 'yaycheckout' ) }
+							value={ thumbnailRadius }
+							{ ...THUMBNAIL_RADIUS }
+							// checkout-base.css's --yaycheckout-neutral-radius, the fallback with no Inputs radius.
+							initialPosition={ 2 }
+							allowReset
+							onChange={ ( value ) => setAttributes( { thumbnailRadius: value } ) }
+						/>
+					</ToolsPanelItem>
+				</ColorSizePanel>
+			) }
 			{ badge && (
 				<ColorSizePanel
 					label={ __( 'Quantity badge', 'yaycheckout' ) }

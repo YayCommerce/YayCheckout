@@ -59,7 +59,7 @@ $yaycheckout_main        = 'shipping' === $yaycheckout_destination ? 'shipping' 
 // Step 1's address fields; $type is 'shipping' or 'billing'.
 $yaycheckout_main_fields = static function ( string $type ): void {
     ?>
-<!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_first_name","label":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -75,7 +75,7 @@ $yaycheckout_main_fields = static function ( string $type ): void {
 
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_2","label":"<?php esc_html_e( 'Apartment, suite, unit, etc.', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Apartment, suite, unit, etc. (optional)', 'yaycheckout' ); ?>","disclosure":"link","disclosureText":"<?php esc_html_e( '+ Add apartment, suite, etc.', 'yaycheckout' ); ?>"} /-->
 
-<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
+<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns are-vertically-aligned-bottom"><!-- wp:column {"verticalAlignment":"bottom","width":"50%"} -->
 <div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:50%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -96,7 +96,7 @@ $yaycheckout_main_fields = static function ( string $type ): void {
 // The other address, in its box: no apartment line or phone.
 $yaycheckout_box_fields = static function ( string $type ): void {
     ?>
-<!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_first_name","label":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -110,7 +110,7 @@ $yaycheckout_box_fields = static function ( string $type ): void {
 
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_1","label":"<?php esc_html_e( 'Address', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'House number and street name', 'yaycheckout' ); ?>","required":true} /-->
 
-<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
+<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns are-vertically-aligned-bottom"><!-- wp:column {"verticalAlignment":"bottom","width":"50%"} -->
 <div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:50%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -170,7 +170,7 @@ $yaycheckout_box_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/order-summary-header -->
 
 <!-- wp:yaycheckout/order-summary-details {"lock":{"remove":true},"style":{"border":{"top":{"color":"var:preset|color|yaycheckout-border","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"20px"}}}} -->
-<!-- wp:yaycheckout/order-summary-items {"showLabels":false,"quantityDisplay":"hidden","showBadge":true,"badgeBackgroundColor":"var(--yaycheckout-design-primary)"} /-->
+<!-- wp:yaycheckout/order-summary-items {"showLabels":false,"thumbnailSize":56,"thumbnailRadius":4,"quantityDisplay":"hidden","showBadge":true,"badgeBackgroundColor":"var(--yaycheckout-design-primary)"} /-->
 
 <!-- wp:yaycheckout/coupon-form {"placeholder":"<?php esc_html_e( 'Enter code', 'yaycheckout' ); ?>","disclosure":"collapsible","disclosureText":"<?php esc_html_e( 'Add coupons', 'yaycheckout' ); ?>"} -->
 <!-- wp:yaycheckout/coupon-button {"buttonText":"<?php esc_html_e( 'Apply', 'yaycheckout' ); ?>","className":"is-style-outline","style":{"typography":{"fontSize":"13px","fontWeight":"500"}}} /-->

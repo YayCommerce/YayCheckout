@@ -61,7 +61,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
     // One blockId per section, since a layout holds both; each matches BlockEmptiness::BLOCK_ID_PATTERN.
     $yaycheckout_state_id = 'billing' === $type ? 'bilstate' : 'shpstate';
     ?>
-<!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_first_name","label":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -77,7 +77,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_2","label":"<?php esc_html_e( 'Apartment, suite, unit, etc.', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Apartment, suite, unit, etc. (optional)', 'yaycheckout' ); ?>","disclosure":"link","disclosureText":"<?php esc_html_e( '+ Add apartment, suite, etc.', 'yaycheckout' ); ?>"} /-->
 
-<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"left":"12px"}}}} -->
+<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns are-vertically-aligned-bottom"><!-- wp:column {"verticalAlignment":"bottom","width":"50%"} -->
 <div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:50%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
@@ -197,7 +197,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <div class="wp-block-group has-background" style="border-top-color:var(--wp--preset--color--yaycheckout-border);border-top-style:solid;border-top-width:1px;background-color:#ffffff"><!-- wp:group {"style":{"spacing":{"padding":{"top":"12px","right":"20px","bottom":"12px","left":"20px"}}},"layout":{"type":"constrained","contentSize":"640px"}} -->
 <div class="wp-block-group" style="padding-top:12px;padding-right:20px;padding-bottom:12px;padding-left:20px"><!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>","collapsible":true,"initialState":"collapsed"} -->
 <!-- wp:yaycheckout/order-summary-details {"lock":{"remove":true},"style":{"spacing":{"padding":{"top":"4px","bottom":"4px"},"blockGap":"12px"}}} -->
-<!-- wp:yaycheckout/order-summary-items {"showLabels":false,"quantityDisplay":"hidden","showBadge":true,"badgeBackgroundColor":"var(--yaycheckout-design-primary)"} /-->
+<!-- wp:yaycheckout/order-summary-items {"showLabels":false,"thumbnailSize":44,"thumbnailRadius":4,"quantityDisplay":"hidden","showBadge":true,"badgeBackgroundColor":"var(--yaycheckout-design-primary)"} /-->
 
 <!-- wp:yaycheckout/coupon-form {"placeholder":"<?php esc_html_e( 'Enter code', 'yaycheckout' ); ?>","disclosure":"collapsible","disclosureText":"<?php esc_html_e( 'Add coupons', 'yaycheckout' ); ?>"} -->
 <!-- wp:yaycheckout/coupon-button {"buttonText":"<?php esc_html_e( 'Apply', 'yaycheckout' ); ?>","className":"is-style-outline","style":{"typography":{"fontSize":"13px","fontWeight":"500"}}} /-->

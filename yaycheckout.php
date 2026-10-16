@@ -13,7 +13,7 @@
  * Requires at least: 6.5
  * Requires PHP: 7.4
  * WC requires at least: 10.0.0
- * WC tested up to: 10.7.0
+ * WC tested up to: 11.2
  */
 
 namespace YayCheckout;
@@ -61,7 +61,7 @@ if ( ! defined( 'YAYCHECKOUT_DOCS_URL' ) ) {
 }
 
 if ( ! defined( 'YAYCHECKOUT_UPGRADE_URL' ) ) {
-    define( 'YAYCHECKOUT_UPGRADE_URL', 'https://yaycommerce.com/yaycheckout-for-woocommerce/' );
+    define( 'YAYCHECKOUT_UPGRADE_URL', 'https://yaycommerce.com/yaycheckout/' );
 }
 
 if ( ! defined( 'YAYCHECKOUT_COMPATIBILITY_CATALOGUE_URL' ) ) {
@@ -118,7 +118,6 @@ if ( ! function_exists( 'YayCheckout\\plugin_init' ) ) {
         add_action( 'before_woocommerce_init', [ \YayCheckout\Engine\ActDeact::class, 'before_woocommerce_init' ] );
 
         YayCheckout::initialize();
-        I18n::load_plugin_textdomain();
     }
 }//end if
 

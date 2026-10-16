@@ -129,7 +129,7 @@ class Layout {
 
         foreach ( $input as $group_index => $group ) {
             if ( ! is_array( $group ) || [] === $group || array_values( $group ) !== $group ) {
-                throw new \InvalidArgumentException( sprintf( 'Group %d must be a non-empty list of conditions.', $group_index + 1 ) );
+                throw new \InvalidArgumentException( esc_html( sprintf( 'Group %d must be a non-empty list of conditions.', $group_index + 1 ) ) );
             }
 
             foreach ( $group as $condition_index => $condition ) {
@@ -150,17 +150,17 @@ class Layout {
         $type        = $condition['type'] ?? null;
 
         if ( ! is_string( $type ) || ! isset( $definitions[ $type ] ) ) {
-            throw new \InvalidArgumentException( "Unknown condition type in $where." );
+            throw new \InvalidArgumentException( esc_html( "Unknown condition type in $where." ) );
         }
 
         if ( ! in_array( $condition['operator'] ?? null, $definitions[ $type ]['operators'], true ) ) {
-            throw new \InvalidArgumentException( "Invalid operator in $where." );
+            throw new \InvalidArgumentException( esc_html( "Invalid operator in $where." ) );
         }
 
         $value = self::sanitize_rule_value( $condition['value'] ?? null, $definitions[ $type ] );
 
         if ( null === $value ) {
-            throw new \InvalidArgumentException( "Invalid value in $where." );
+            throw new \InvalidArgumentException( esc_html( "Invalid value in $where." ) );
         }
 
         return [

@@ -2,7 +2,7 @@ import { InspectorControls, store as blockEditorStore, useBlockProps } from '@wo
 import { Notice, PanelBody, SelectControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { blockIcons } from '../shared/block-icons';
+import { wcHookIcon } from '../shared/block-icons';
 import { type BlockEditorSelectors } from '../shared/section-fields';
 import metadata from './block.json';
 import { type WcHookGroup, wcHooksEditorData } from './editor-data';
@@ -108,7 +108,7 @@ export default function Edit( { attributes, setAttributes, isSelected }: EditPro
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
-				<span className="yaycheckout-wc-hook__icon">{ blockIcons[ metadata.name ] }</span>
+				<span className="yaycheckout-wc-hook__icon">{ wcHookIcon }</span>
 				<span className="yaycheckout-wc-hook__text">
 					<span className="yaycheckout-wc-hook__eyebrow">{ __( 'WooCommerce hook', 'yaycheckout' ) }</span>
 					<span className="yaycheckout-wc-hook__label">
