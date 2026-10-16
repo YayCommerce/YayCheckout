@@ -86,9 +86,14 @@ export function ProLinkBadge({ className }: { className?: string }) {
 }
 
 /** Plain "Upgrade" CTA. Opens the upgrade page; pass onClick only for a button that goes somewhere else. */
-export function UpgradeButton({ onClick, ...props }: Omit<ComponentProps<typeof Button>, 'children'>) {
+export function UpgradeButton({ onClick, className, ...props }: Omit<ComponentProps<typeof Button>, 'children'>) {
   return (
-    <Button size="sm" variant="primary-outline" onClick={onClick ?? (() => window.open(UPGRADE_URL))} {...props}>
+    <Button
+      variant="warning"
+      className={cn('text-white', className)}
+      onClick={onClick ?? (() => window.open(UPGRADE_URL))}
+      {...props}
+    >
       {__('Upgrade', 'yaycheckout')}
     </Button>
   );
@@ -112,9 +117,7 @@ export function UpgradePrompt() {
         </EmptyTitle>
         <EmptyDescription>{__('Upgrade to PRO to unlock this feature now', 'yaycheckout')}</EmptyDescription>
         <EmptyContent>
-          <Button variant="warning" className="text-white" onClick={() => window.open(UPGRADE_URL)}>
-            {__('Upgrade', 'yaycheckout')}
-          </Button>
+          <UpgradeButton />
         </EmptyContent>
       </EmptyHeader>
     </Empty>

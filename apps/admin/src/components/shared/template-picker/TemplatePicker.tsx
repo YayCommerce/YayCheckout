@@ -3,10 +3,11 @@ import { Check, Clock } from 'lucide-react';
 import { __, _n } from '@wordpress/i18n';
 
 import { isPro } from '@/lib/plan';
-import { isPickable, useTemplate, useTemplates } from '@/lib/queries/template.queries';
+import { isLocked, isPickable, useTemplate, useTemplates } from '@/lib/queries/template.queries';
 import type { Template } from '@/lib/schema/template.schema';
 import { cn } from '@/lib/utils';
 import { focusVariants } from '@/components/ui/variants/focus.variants';
+import { ProBadge, UpgradeButton } from '@/components/pro/ProGate';
 import { TemplatePreview } from './TemplatePreview';
 
 const ALL_CATEGORIES = __('All', 'yaycheckout');
@@ -34,10 +35,21 @@ function ComingSoonOverlay() {
 
 const COMING_SOON_TITLE = __('This template is coming soon', 'yaycheckout');
 
+const LOCKED_TITLE = __('Upgrade to Pro to use this template', 'yaycheckout');
+
+/** Veils a locked card like a Coming soon one; on hover it lightens and shows the Upgrade button. */
+function LockedOverlay() {
+  return (
+    <div className="bg-background/60 group-hover:bg-background/25 group-focus-visible:bg-background/25 absolute inset-0 flex items-center justify-center backdrop-blur-[1px] transition-colors duration-300 group-hover:backdrop-blur-none">
+      <UpgradeButton className="transition-default opacity-0 group-focus-within:opacity-100 group-hover:opacity-100" />
+    </div>
+  );
+}
+
 /**
- * Template cards, each previewing its mock page. PHP lists only the installed plan's templates: Free
- * gets the ones built from Free blocks, Pro the full grid, filterable by category. Coming soon cards
- * preview in full but can't be picked. A filter that hides the selection clears it (onSelect(null)).
+ * Template cards, each previewing its mock page. Pro gets the full grid, filterable by category. Free
+ * gets the same templates, with the ones built from Pro blocks locked behind a Pro badge. Coming soon
+ * and locked cards preview in full but can't be picked. A filter that hides the selection clears it (onSelect(null)).
  */
 export function TemplatePicker({
   selectedSlug,
@@ -53,7 +65,7 @@ export function TemplatePicker({
     <div className="flex flex-col gap-3 rounded-md border p-4">
       <div className="flex items-center justify-between gap-2">
         <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
-          {isPro ? __('Pro — full grid, filterable', 'yaycheckout') : __('Templates included in Lite', 'yaycheckout')}
+          {isPro ? __('Pro — full grid, filterable', 'yaycheckout') : __('Templates', 'yaycheckout')}
         </span>
         {isPro && (
           <span className="text-muted-foreground text-xs">
@@ -129,9 +141,13 @@ function CardGrid({ children }: { children: ReactNode }) {
   return <div className="grid grid-cols-3 content-start gap-4">{children}</div>;
 }
 
-/** Built templates first, then Coming soon, each in catalogue order. */
+/**
+ * Built Free templates first, then Pro ones (built, or locked on Free), then Coming soon, each in
+ * catalogue order.
+ */
 function byAvailableFirst(templates: Template[]): Template[] {
-  return [...templates].sort((a, b) => Number(b.available) - Number(a.available));
+  const rank = (t: Template) => (!t.available && !isLocked(t) ? 2 : t.pro ? 1 : 0);
+  return [...templates].sort((a, b) => rank(a) - rank(b));
 }
 
 function TemplateCards({ templates, selectedSlug, onSelect }: GridProps) {
@@ -158,7 +174,7 @@ function SelectedCheck() {
   );
 }
 
-/** One template card. Coming soon cards are veiled but still preview, since the preview is the pitch. */
+/** One template card. Coming soon and locked cards still preview, since the preview is the pitch. */
 function TemplateTile({
   template,
   isSelected,
@@ -168,6 +184,10 @@ function TemplateTile({
   isSelected: boolean;
   onSelect: (slug: string) => void;
 }) {
+  if (isLocked(template)) {
+    return <LockedTemplateTile template={template} />;
+  }
+
   const pickable = isPickable(template);
 
   return (
@@ -190,5 +210,30 @@ function TemplateTile({
       </TemplatePreview>
       <span className={cn('text-xs font-medium', isSelected && 'text-primary')}>{template.name}</span>
     </button>
+  );
+}
+
+/**
+ * A Pro template on Free: its preview with a Pro badge, and an Upgrade button on hover. A div, not the
+ * tile's button, since it holds the Upgrade button; it is focusable so the preview still scrolls by keyboard.
+ */
+function LockedTemplateTile({ template }: { template: Template }) {
+  return (
+    <div
+      role="group"
+      tabIndex={0}
+      title={LOCKED_TITLE}
+      aria-label={template.name}
+      className={cn(
+        'group transition-default hover:border-muted-foreground flex flex-col items-start gap-2 rounded-md border p-2 text-left',
+        focusVariants({ variant: 'none' }),
+      )}
+    >
+      <TemplatePreview template={template}>
+        <LockedOverlay />
+        <ProBadge className="absolute top-2 right-2 shadow-sm" />
+      </TemplatePreview>
+      <span className="text-xs font-medium">{template.name}</span>
+    </div>
   );
 }

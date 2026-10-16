@@ -24,7 +24,8 @@ PLUGIN_DIR="$(dirname "$SCRIPT_DIR")"
 ADMIN_DIR="$PLUGIN_DIR/apps/admin"
 BLOCKS_DIR="$PLUGIN_DIR/packages/blocks"
 RELEASE_DIR="$PLUGIN_DIR/release"
-# Pro-only paths: the Free zip deletes them and the artifact check enforces it. Space-separated, each ending in /.
+# Pro-only paths: the Free zip deletes them, except each preview.html (Free's picker shows Pro templates locked),
+# and the artifact check enforces it. Space-separated, each ending in /.
 # Owners: includes/Pro/ (YayCheckout::boot_pro()), assets/dist/blocks/pro/ (ProServiceProvider::built_blocks())
 # and templates/layouts/pro/ (LayoutTemplateCatalogue::relative_path()).
 PRO_PATHS="includes/Pro/ assets/dist/blocks/pro/ templates/layouts/pro/"
@@ -321,13 +322,16 @@ cmd_release() {
 
     # includes/Pro/ is the only Pro PHP and nothing else names it (scripts/check-pro-boundary.sh),
     # so removing it leaves a working Free build. The Pro blocks (built from packages/blocks/src/pro/)
-    # and the templates made from them go with it: Free registers neither.
+    # and the templates made from them go with it: Free registers neither. Only the templates'
+    # preview.html stays, a static page Free's picker shows behind a Pro badge.
     if [ "$plan" = "free" ]; then
         local pro_path
         for pro_path in $PRO_PATHS; do
-            rm -rf "${temp_dir:?}/$pro_path"
+            [ -d "${temp_dir:?}/$pro_path" ] || continue
+            find "${temp_dir:?}/$pro_path" -type f ! -name preview.html -delete
+            find "${temp_dir:?}/$pro_path" -depth -type d -empty -delete
         done
-        print_info "Free build: removed $PRO_PATHS"
+        print_info "Free build: removed $PRO_PATHS (kept preview.html)"
     fi
 
     # Distinguish the editions in wp-admin.
@@ -355,11 +359,11 @@ cmd_release() {
     print_step "Verifying artifact..."
     local pro_entries pro_pattern path
     pro_pattern="${PRO_PATHS// /|}"
-    pro_entries=$(unzip -l "$zip_name" | grep -cE "$pro_pattern" || true)
+    pro_entries=$(unzip -l "$zip_name" | grep -E "$pro_pattern" | grep -cvE '/$|/preview\.html$' || true)
 
     if [ "$plan" = "free" ] && [ "$pro_entries" -ne 0 ]; then
         print_error "Free artifact contains pro code:"
-        unzip -l "$zip_name" | grep -E "$pro_pattern"
+        unzip -l "$zip_name" | grep -E "$pro_pattern" | grep -vE '/$|/preview\.html$'
         exit 1
     fi
 

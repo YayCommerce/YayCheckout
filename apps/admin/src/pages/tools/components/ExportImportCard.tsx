@@ -23,7 +23,6 @@ export function ExportImportCard() {
         </div>
       </CardContent>
       <CardFooter className="flex-col items-start gap-3">
-        <p className="text-sm">{__("Copy your layout from the editor's Code view for free", 'yaycheckout')}</p>
         <UpgradeButton />
       </CardFooter>
     </Card>
