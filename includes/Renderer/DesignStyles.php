@@ -266,7 +266,8 @@ class DesignStyles {
             $vars,
             array_filter(
                 [
-                    'link-color'       => $colours['link'],
+                    // An empty link colour takes the primary colour; with neither, links keep the theme's.
+                    'link-color'       => '' !== $colours['link'] ? $colours['link'] : $colours['primary'],
                     'link-hover-color' => $colours['link_hover'],
                 ],
                 $not_empty

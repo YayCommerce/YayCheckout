@@ -125,7 +125,7 @@ class CheckoutPage {
         }
 
         // Picked afresh by every request, AJAX and order submit too, with no pin: safe because every ConditionType reads a fact that holds for the life of the form.
-        return $this->with_view( ( new LayoutRepository() )->active( $this->shopper_context() ), CheckoutLogin::must_log_in() );
+        return $this->with_view( ( new LayoutRepository() )->active( self::shopper_context() ), CheckoutLogin::must_log_in() );
     }
 
     /**
@@ -142,11 +142,11 @@ class CheckoutPage {
     }
 
     /**
-     * What assignment conditions test, read once for this request. Keyed by ConditionType.
+     * What assignment conditions test. Keyed by ConditionType. Also read at setup_theme by ThemelessCheckout.
      *
      * @return array{customer_role: string[], login_status: string, device: string}
      */
-    private function shopper_context(): array {
+    public static function shopper_context(): array {
         return [
             ConditionType::CUSTOMER_ROLE => array_values( wp_get_current_user()->roles ),
             // Not "no roles": a user of another site in the network is logged in with none here.
