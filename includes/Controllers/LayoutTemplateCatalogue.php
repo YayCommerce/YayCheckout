@@ -9,8 +9,8 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The layout templates a merchant creates from, which ones this plan lists, and their files:
  * templates/layouts/<slug>/markup.php and design.json, or templates/layouts/pro/<slug>/ for a Pro
- * template (one built from Pro blocks), which Free neither lists nor ships. A template missing either
- * file is Coming soon.
+ * template (one built from Pro blocks). Free lists a Pro template as locked and ships only its
+ * preview.html. A template missing either file is Coming soon.
  * preview.html, the picker's preview of the mock, sits beside them and availability ignores it,
  * as it does the optional logged-out.php, the template's own logged-out view.
  */
@@ -23,19 +23,16 @@ class LayoutTemplateCatalogue {
     private const LOGGED_OUT_FILE = 'logged-out.php';
 
     /**
-     * The templates this plan lists: all of them in Pro, only the non-Pro ones in Free.
+     * Every template, for the picker. In Free a Pro template is listed with `available` false, so its
+     * preview shows locked and it can't be created from.
      *
-     * @return array{ slug: string, name: string, categories: string[], available: bool, preview_url: string }[]
+     * @return array{ slug: string, name: string, categories: string[], pro: bool, available: bool, preview_url: string }[]
      */
     public static function templates( bool $is_pro ): array {
         $templates = [];
 
         foreach ( self::catalogue() as $template ) {
-            if ( ! $is_pro && ! empty( $template['pro'] ) ) {
-                continue;
-            }
-
-            unset( $template['pro'] );
+            $template['pro']         = ! empty( $template['pro'] );
             $template['available']   = self::is_available( $template['slug'], $is_pro );
             $template['preview_url'] = self::preview_url( $template['slug'] );
             $templates[]             = $template;
@@ -64,13 +61,18 @@ class LayoutTemplateCatalogue {
      * Refuses a template this plan cannot build from. Shared by every route
      * that creates from a template so the plan rule has one owner.
      *
-     * @throws \InvalidArgumentException When $slug is unknown or not listed on this plan, or coming soon.
+     * @throws \InvalidArgumentException When $slug is unknown, a Pro template on Free, or coming soon.
      */
     public static function assert_available( string $slug ): void {
-        $template = array_column( self::templates( Plan::is_pro() ), null, 'slug' )[ $slug ] ?? null;
+        $is_pro   = Plan::is_pro();
+        $template = array_column( self::templates( $is_pro ), null, 'slug' )[ $slug ] ?? null;
 
         if ( null === $template ) {
             throw new \InvalidArgumentException( __( 'Unknown template.', 'yaycheckout' ) );
+        }
+
+        if ( $template['pro'] && ! $is_pro ) {
+            throw new \InvalidArgumentException( __( 'This template requires YayCheckout Pro.', 'yaycheckout' ) );
         }
 
         if ( ! $template['available'] ) {
@@ -157,7 +159,7 @@ class LayoutTemplateCatalogue {
 
     /**
      * Every template, in the picker's order. `pro` marks one built from Pro blocks: it lives under
-     * templates/layouts/pro/, which the Free zip leaves out.
+     * templates/layouts/pro/, of which the Free zip keeps only each preview.html.
      *
      * @return array{ slug: string, name: string, categories: string[], pro?: bool }[]
      */

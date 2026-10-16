@@ -6,7 +6,7 @@
 
 ## Status
 
-Accepted, 2026-10-15, by Trace Bui, who asked for the steps mechanism to be Pro only.
+Superseded by [2026-10-16-pro-template-previews-in-free.md](2026-10-16-pro-template-previews-in-free.md).
 
 ## Context
 

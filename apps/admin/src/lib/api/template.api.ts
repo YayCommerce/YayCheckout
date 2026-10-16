@@ -5,6 +5,7 @@ function templateFromWire(wire: TemplateWire): Template {
     slug: wire.slug,
     name: wire.name,
     categories: wire.categories,
+    pro: wire.pro,
     available: wire.available,
     previewUrl: wire.preview_url,
   };

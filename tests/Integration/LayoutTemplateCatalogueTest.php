@@ -28,11 +28,12 @@ class LayoutTemplateCatalogueTest extends WP_UnitTestCase {
         }
     }
 
-    public function test_free_lists_no_pro_template(): void {
-        $free = array_column( LayoutTemplateCatalogue::templates( false ), 'slug' );
-        $this->assertContains( LayoutTemplateCatalogue::DEFAULT_SLUG, $free );
-        $this->assertNotContains( 'multi-step-wizard', $free );
-        $this->assertContains( 'multi-step-wizard', array_column( LayoutTemplateCatalogue::templates( true ), 'slug' ) );
+    public function test_free_lists_a_pro_template_locked(): void {
+        $free = array_column( LayoutTemplateCatalogue::templates( false ), null, 'slug' );
+        $this->assertTrue( $free[ LayoutTemplateCatalogue::DEFAULT_SLUG ]['available'] );
+        $this->assertTrue( $free['multi-step-wizard']['pro'] );
+        $this->assertFalse( $free['multi-step-wizard']['available'] );
+        $this->assertTrue( array_column( LayoutTemplateCatalogue::templates( true ), 'available', 'slug' )['multi-step-wizard'] );
     }
 
     public function test_a_template_without_files_is_coming_soon(): void {

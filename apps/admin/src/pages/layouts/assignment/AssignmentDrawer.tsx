@@ -237,14 +237,8 @@ function LockedAssignment({ layout }: { layout: LayoutSummary }) {
               'yaycheckout',
             )}
           </p>
-          <div className="flex items-center gap-2 border-t pt-3">
-            <p className="text-muted-foreground flex-1 text-xs">
-              {__('Your rules are kept if you upgrade later.', 'yaycheckout')}
-            </p>
-            <SheetClose asChild>
-              <Button variant="outline">{__('Not now', 'yaycheckout')}</Button>
-            </SheetClose>
-            <UpgradeButton size="default" variant="primary" />
+          <div className="flex items-center justify-end border-t pt-3">
+            <UpgradeButton />
           </div>
         </div>
       </div>
