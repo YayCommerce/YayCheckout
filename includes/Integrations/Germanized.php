@@ -9,11 +9,8 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Fixes for Germanized for WooCommerce, active only while that plugin is.
  *
- * Germanized adds a thumbnail to every cart item name and wraps the name in a div that only its
- * quantity filter closes. The Items block prints its own thumbnail and, with a badge or a stepper,
- * skips that filter, so each row got a second 300px image and a div that never closed, which
- * nested the next row inside this one. Turning the injection off while the Items block prints
- * its rows removes both.
+ * Germanized adds a thumbnail to every cart item name. The Items block prints its own, so each
+ * row got a second 300px image; the injection is off while the Items block prints its rows.
  */
 class Germanized {
 

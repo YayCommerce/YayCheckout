@@ -798,14 +798,7 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	}
 }
 
-/* Some plugins and themes (Germanized) give every checkout .shop_table a grey background; the summary tables sit on the block's own. */
-.yaycheckout-page table.shop_table {
+/* Some plugins and themes (Germanized) give every checkout .shop_table a grey background; YayCheckout's tables sit on their block's own. Others' tables keep theirs. */
+.yaycheckout-page table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total, .yaycheckout-order-summary-items__hook, .yaycheckout-shipping-methods__extensions) {
 	background-color: transparent;
-}
-
-/* Germanized prints its units, description and delivery time as <p>/<div> inside the item name; the theme's paragraph margins push them off the row. Style them like the SKU line. */
-.yaycheckout-page .yaycheckout-order-summary-items .wc-gzd-cart-info {
-	margin: 0;
-	font-size: 0.875em;
-	opacity: 0.75;
 }

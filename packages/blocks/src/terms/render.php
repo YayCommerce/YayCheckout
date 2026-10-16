@@ -2,7 +2,8 @@
 /**
  * Prints WooCommerce's checkout terms: the privacy text and, when a Terms page is set, the
  * required terms checkbox. Place Order no longer prints them, so a layout without this block
- * has neither. Prints nothing without a cart, or when WooCommerce has nothing to show.
+ * has neither. Prints nothing without a cart, or when neither WooCommerce nor an extension on
+ * yaycheckout_checkout_terms has anything to show.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
@@ -18,16 +19,22 @@ if ( ! function_exists( 'WC' ) || ! WC()->cart instanceof WC_Cart || ! function_
 // Buffered so the merchant's padding, border or background don't draw an empty box.
 ob_start();
 wc_get_template( 'checkout/terms.php' );
+$yaycheckout_terms = (string) ob_get_clean();
+
+ob_start();
 /**
  * Prints inside the Terms block, after WooCommerce's terms: where an extension that replaces the
  * terms checkbox prints its own (Integrations\Germanized prints its legal checkboxes here).
  */
 do_action( 'yaycheckout_checkout_terms' );
-$yaycheckout_terms = (string) ob_get_clean();
+$yaycheckout_extension_terms = (string) ob_get_clean();
 
-if ( '' === trim( wp_strip_all_tags( $yaycheckout_terms ) ) ) {
+// An extension's markup keeps the block even without text: a checkbox that shows only for some carts prints an empty placeholder its refresh fills in later.
+if ( '' === trim( wp_strip_all_tags( $yaycheckout_terms ) ) && '' === trim( $yaycheckout_extension_terms ) ) {
     return;
 }
+
+$yaycheckout_terms .= $yaycheckout_extension_terms;
 
 $yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper( [ 'class' => 'yaycheckout-terms' ], $attributes );
 
