@@ -26,6 +26,7 @@ export const compatibilityWireSchema = z
           })
           .strict(),
         safe_mode: z.boolean(),
+        active_layouts: z.number().int(),
       })
       .strict(),
     gateways: z.array(
@@ -78,6 +79,7 @@ export type StoreEnvironment = {
   wordpressVersion: string;
   theme: { name: string; version: string; isBlockTheme: boolean };
   safeMode: boolean;
+  activeLayouts: number;
 };
 
 export type GatewayRow = {

@@ -17,6 +17,7 @@ export function reportFromWire(wire: CompatibilityWire): CompatibilityReport {
         isBlockTheme: wire.store.theme.is_block_theme,
       },
       safeMode: wire.store.safe_mode,
+      activeLayouts: wire.store.active_layouts,
     },
     gateways: wire.gateways.map((gateway) => ({
       id: gateway.id,

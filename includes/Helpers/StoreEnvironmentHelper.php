@@ -2,18 +2,20 @@
 namespace YayCheckout\Helpers;
 
 use Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils;
+use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * The "Store" facts on the Compatibility page: checkout type, versions,
- * theme and whether safe mode is serving WooCommerce's stock checkout.
+ * theme, whether safe mode is serving WooCommerce's stock checkout, and how
+ * many layouts are active (none leaves the theme's checkout in place).
  */
 class StoreEnvironmentHelper {
 
     /**
-     * @return array{store_type: string, woocommerce_version: string, wordpress_version: string, theme: array{name: string, version: string, is_block_theme: bool}, safe_mode: bool}
+     * @return array{store_type: string, woocommerce_version: string, wordpress_version: string, theme: array{name: string, version: string, is_block_theme: bool}, safe_mode: bool, active_layouts: int}
      */
     public static function describe(): array {
         $theme = wp_get_theme();
@@ -28,6 +30,7 @@ class StoreEnvironmentHelper {
                 'is_block_theme' => wp_is_block_theme(),
             ],
             'safe_mode'           => ( new SettingsRepository() )->is_safe_mode(),
+            'active_layouts'      => ( new LayoutRepository() )->active_count(),
         ];
     }
 
