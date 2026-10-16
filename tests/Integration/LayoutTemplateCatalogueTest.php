@@ -38,10 +38,10 @@ class LayoutTemplateCatalogueTest extends WP_UnitTestCase {
 
     public function test_a_template_without_files_is_coming_soon(): void {
         $available = array_column( LayoutTemplateCatalogue::templates( true ), 'available', 'slug' );
-        $this->assertFalse( $available['material-stepper'] );
+        $this->assertFalse( $available['digital-product'] );
 
         $this->expectException( \InvalidArgumentException::class );
         $this->expectExceptionMessage( 'This template is coming soon.' );
-        LayoutTemplateCatalogue::assert_available( 'material-stepper' );
+        LayoutTemplateCatalogue::assert_available( 'digital-product' );
     }
 }

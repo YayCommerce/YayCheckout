@@ -217,7 +217,7 @@ class LayoutTemplateCatalogue {
             [
                 'slug'       => 'material-stepper',
                 'name'       => 'Material stepper',
-                'categories' => [ 'Two column' ],
+                'categories' => [ 'Multi-step', 'Two column' ],
                 'pro'        => true,
             ],
             [
