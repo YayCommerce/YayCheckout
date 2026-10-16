@@ -34,8 +34,8 @@ body.yaycheckout-page {
 	max-width: none;
 }
 
-/* What extensions print on woocommerce_before_checkout_form (the Slot named before_checkout_form, or above the form) counts on a theme's border-box reset: YayCurrency's notice is width: 100% plus padding. Other Slots keep their content-box. */
-.yaycheckout-slot[data-slot="before_checkout_form"] *,
+/* What extensions print on woocommerce_before_checkout_form (above the form, or in a WooCommerce Hook block for it) counts on a theme's border-box reset: YayCurrency's notice is width: 100% plus padding. Other hooks' output keeps its content-box. */
+.yaycheckout-wc-hook[data-hook="woocommerce_before_checkout_form"] *,
 .yaycheckout-before-form * {
 	box-sizing: border-box;
 }

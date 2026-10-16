@@ -41,11 +41,13 @@ if ( ! function_exists( 'WC' ) || \YayCheckout\Renderer\CheckoutPage::get_instan
     return;
 }
 
-// Above the form, where form-checkout.php fires woocommerce_before_checkout_form, inside the layout's width.
-// Empty when a before_checkout_form Slot inside, rendered before this block, already printed it.
-$yaycheckout_before_form = \YayCheckout\Renderer\CheckoutPage::before_form_html();
-if ( '' !== trim( $yaycheckout_before_form ) ) {
-    echo '<div class="yaycheckout-before-form">' . $yaycheckout_before_form . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Whatever the hook's callbacks print, as do_action() would.
+// woocommerce_before_checkout_form above the form, where form-checkout.php fires it, inside the layout's width, so
+// extensions' notices there still show (YayCurrency's "paid in" notice), until a WooCommerce Hook block takes it.
+if ( ! \YayCheckout\Renderer\WcHooks::is_placed( 'woocommerce_before_checkout_form' ) ) {
+    $yaycheckout_before_form = \YayCheckout\Renderer\WcHooks::fire( 'woocommerce_before_checkout_form' );
+    if ( '' !== trim( $yaycheckout_before_form ) ) {
+        echo '<div class="yaycheckout-before-form">' . $yaycheckout_before_form . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Whatever the hook's callbacks print, as do_action() would.
+    }
 }
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Verbatim from WooCommerce's form-checkout.php so its filter and translation still apply.
