@@ -72,6 +72,7 @@ class CheckoutPage {
         // PHP_INT_MAX: must run after block themes swap in template-canvas.php.
         add_filter( 'template_include', [ $this, 'page_template' ], PHP_INT_MAX );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], self::SCRIPTS_PRIORITY );
+        add_filter( 'render_block_core/shortcode', [ $this, 'run_shortcodes' ] );
 
         if ( has_block( ExpressPay::BLOCK, $this->layout()->content ) ) {
             add_filter( 'wc_stripe_express_checkout_params', [ ExpressPay::class, 'stripe_params' ] );
@@ -80,6 +81,15 @@ class CheckoutPage {
 
     public function page_template(): string {
         return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-page.php';
+    }
+
+    /**
+     * Runs the shortcode in a core Shortcode block. The template renders the layout with do_blocks(), not
+     * the_content, so nothing else would: core's filters (shortcode_unautop, then do_shortcode) are applied
+     * here, to this block only, so a shortcode typed into another block still prints as text.
+     */
+    public function run_shortcodes( $html ): string {
+        return do_shortcode( shortcode_unautop( (string) $html ) );
     }
 
     /**
