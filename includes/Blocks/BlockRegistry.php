@@ -189,6 +189,8 @@ class BlockRegistry {
         // One bundle serves both editions, so the plan reaches it at runtime; PHP supplies the post type and upgrade link so the bundle never redeclares them.
         $editor_data = [
             'isPro'          => Plan::is_pro(),
+            // Pro blocks not registered here: the editor registers them as locked stubs. Set after every block registered above.
+            'lockedBlocks'   => self::locked_blocks(),
             'postType'       => Layout::POST_TYPE,
             'upgradeUrl'     => YAYCHECKOUT_UPGRADE_URL,
             'currencySymbol' => html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8' ),
@@ -243,12 +245,22 @@ class BlockRegistry {
     }
 
     /**
-     * The block names registered on this site, as LayoutMarkupReader::publish_error() takes them.
+     * The block names registered on this site.
      *
      * @return string[]
      */
     public static function registered_names(): array {
         return array_keys( \WP_Block_Type_Registry::get_instance()->get_all_registered() );
+    }
+
+    /**
+     * The Pro blocks this site hasn't registered: all of them in Free, none in a built Pro. They are the
+     * editor's locked stubs, and LayoutMarkupReader::publish_error() refuses a live layout holding one.
+     *
+     * @return string[]
+     */
+    public static function locked_blocks(): array {
+        return array_values( array_diff( self::PRO_BLOCKS, self::registered_names() ) );
     }
 
     /**
@@ -420,7 +432,7 @@ class BlockRegistry {
         }
     }
 
-    /** Adds the YayCheckout inserter category in the layout editor, and in Free a YayCheckout Pro one after it for the locked stubs. */
+    /** Adds the YayCheckout inserter category in the layout editor, and a YayCheckout Pro one after it while there are locked stubs. */
     public function register_category( $categories, $editor_context ) {
         if ( 'layout' !== $this->editor( $editor_context ) ) {
             return $categories;
@@ -434,7 +446,7 @@ class BlockRegistry {
             ],
         ];
 
-        if ( ! Plan::is_pro() ) {
+        if ( [] !== self::locked_blocks() ) {
             $ours[] = [
                 'slug'  => self::PRO_CATEGORY,
                 'title' => __( 'YayCheckout Pro', 'yaycheckout' ),
@@ -448,7 +460,7 @@ class BlockRegistry {
     /**
      * Keeps YayCheckout blocks to the layout editor, and WooCommerce's Checkout block (a second
      * checkout form inside the layout's own) out of it. Types stay registered so checkout-page.php
-     * can still do_blocks() the layout. In Free the layout editor also offers the Pro blocks' locked
+     * can still do_blocks() the layout. The layout editor also offers locked_blocks(), the Pro blocks'
      * stubs, which only JavaScript registers. An unknown editor is left alone: it may be the layout editor.
      *
      * @param  bool|string[] $allowed_block_types
@@ -459,12 +471,8 @@ class BlockRegistry {
             case 'layout':
                 $allowed = self::without( $allowed_block_types, static fn( $name ) => 'woocommerce/checkout' === $name );
 
-                if ( ! is_array( $allowed ) || Plan::is_pro() ) {
-                    return $allowed;
-                }
-
-                // Free never registers the Pro blocks on the server, so their stubs are not in the list yet.
-                return array_merge( $allowed, self::PRO_BLOCKS );
+                // The locked stubs are registered only in JavaScript, so they are not in the list yet.
+                return is_array( $allowed ) ? array_merge( $allowed, self::locked_blocks() ) : $allowed;
             case 'other':
                 return self::without( $allowed_block_types, static fn( $name ) => str_starts_with( $name, 'yaycheckout/' ) );
             default:
@@ -499,7 +507,7 @@ class BlockRegistry {
     private static function without( $allowed_block_types, callable $drop ) {
         if ( true === $allowed_block_types ) {
             // true means "all"; subtract by naming every registered type.
-            $allowed_block_types = array_keys( \WP_Block_Type_Registry::get_instance()->get_all_registered() );
+            $allowed_block_types = self::registered_names();
         }
 
         if ( ! is_array( $allowed_block_types ) ) {

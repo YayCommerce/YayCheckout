@@ -15,7 +15,7 @@ class LayoutTemplateCatalogueTest extends WP_UnitTestCase {
         $this->assertContains( LayoutTemplateCatalogue::DEFAULT_SLUG, array_column( $available, 'slug' ) );
 
         foreach ( array_column( $available, 'slug' ) as $slug ) {
-            $this->assertSame( '', LayoutMarkupReader::publish_error( LayoutTemplateCatalogue::markup( $slug ), BlockRegistry::registered_names() ), $slug );
+            $this->assertSame( '', LayoutMarkupReader::publish_error( LayoutTemplateCatalogue::markup( $slug ), BlockRegistry::locked_blocks() ), $slug );
 
             $folder  = is_dir( YAYCHECKOUT_PLUGIN_DIR . "templates/layouts/pro/{$slug}" ) ? "pro/{$slug}" : $slug;
             $decoded = wp_json_file_decode( YAYCHECKOUT_PLUGIN_DIR . "templates/layouts/{$folder}/design.json", [ 'associative' => true ] );

@@ -18,5 +18,3 @@ export const PRO_BLOCK_METAS = [
 	backButtonMeta,
 	goToStepMeta,
 ];
-
-export const PRO_BLOCK_NAMES: string[] = PRO_BLOCK_METAS.map( ( meta ) => meta.name );

@@ -37,14 +37,16 @@ class LayoutSteps {
 
     /**
      * Titles of the rendered layout's first Steps block, as HTML safe to echo; empty without a layout or a
-     * Steps block.
+     * Steps block, and in Free, where Steps isn't registered and a downgraded layout prints its steps' fields
+     * as one page.
      *
      * @return string[]
      */
     public static function layout_titles(): array {
         if ( null === self::$titles ) {
             $layout       = CheckoutPage::get_instance()->layout();
-            self::$titles = null !== $layout ? self::titles_in( $layout->content ) : [];
+            $has_steps    = null !== $layout && \WP_Block_Type_Registry::get_instance()->is_registered( self::STEPS );
+            self::$titles = $has_steps ? self::titles_in( $layout->content ) : [];
         }
 
         return self::$titles;

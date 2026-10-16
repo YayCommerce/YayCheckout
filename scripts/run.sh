@@ -11,7 +11,7 @@
 #   info               - Show current version info
 #   clean              - Remove admin build artifacts (blocks output is left)
 #   backlog            - List docs/backlog/ items and their open boxes
-#   previews [mock]    - Capture templates/layouts/*/preview.html from the HTML mock
+#   previews [mock]    - Capture templates/layouts/{,pro/}*/preview.html from the HTML mock
 #   help               - Show this help message
 #
 
@@ -503,7 +503,7 @@ cmd_help() {
     echo "  info                         Show current version info"
     echo "  clean                        Remove admin build artifacts (blocks output is left)"
     echo "  backlog                      List docs/backlog/ items and their open boxes"
-    echo "  previews [mock-path]         Capture templates/layouts/*/preview.html from the HTML mock"
+    echo "  previews [mock-path]         Capture templates/layouts/{,pro/}*/preview.html from the HTML mock"
     echo "  help                         Show this help message"
     echo ""
     echo "Examples:"

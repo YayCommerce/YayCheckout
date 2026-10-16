@@ -211,7 +211,7 @@ class LayoutRepository {
      * @throws \InvalidArgumentException With LayoutMarkupReader::publish_error() when the markup may not go live.
      */
     private static function refuse_unpublishable( string $markup ): void {
-        $error = LayoutMarkupReader::publish_error( $markup, BlockRegistry::registered_names() );
+        $error = LayoutMarkupReader::publish_error( $markup, BlockRegistry::locked_blocks() );
 
         if ( '' !== $error ) {
             throw new \InvalidArgumentException( $error );
@@ -376,7 +376,7 @@ class LayoutRepository {
 
     /**
      * Puts a layout's blocks and design back to its template's, or to the default template's when it has
-     * none still available. The plan lock is not checked: it governs creating, not the merchant's own layout.
+     * none available on this plan (a Pro template in Free falls back to the default one).
      * Title, status, rules, the template and the active flag stay. WordPress stores the old markup as a
      * revision, so the editor can undo it; the design meta has no revisions.
      *

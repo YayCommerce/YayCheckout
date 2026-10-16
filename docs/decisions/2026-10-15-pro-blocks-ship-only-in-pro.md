@@ -23,9 +23,9 @@ Accepted, 2026-10-15, by Trace Bui, who asked for the steps mechanism to be Pro 
 - A Pro block lives in `packages/blocks/src/pro/<block>/` and builds into `assets/dist/blocks/pro/<block>/`. Core's `BlockRegistry` registers only `assets/dist/blocks/*/`, and Pro adds the `pro/` directories through the `yaycheckout_built_blocks` filter. PHP that only a Pro block's `render.php` calls lives in `includes/Pro/`. A Free block's `render.php` must not name `YayCheckout\Pro`, and `scripts/check-pro-boundary.sh` checks it.
 - A template that uses a Pro block is marked `pro` in `LayoutTemplateCatalogue::catalogue()` and lives in `templates/layouts/pro/<slug>/`. Free neither lists nor ships it, and every other template is usable in Free: there is no locked template.
 - `release --plan=free` deletes `assets/dist/blocks/pro/` and `templates/layouts/pro/` with `includes/Pro/`, and checks that the zip has none of them. Pro's zip must have all three.
-- Free's editor registers each Pro block in JavaScript only, as a locked stub carrying just the name, labels and attributes: it is listed in the inserter under its own YayCheckout Pro category and shows an upgrade card. It keeps a downgraded layout's inner blocks.
-- `LayoutMarkupReader::publish_error()` refuses any `yaycheckout/*` block not registered on the site, so a layout holding a Pro block can't go live in Free.
-- Code shared with Free blocks may keep small references to Pro blocks by name (the Visibility step rule, `Renderer\LayoutSteps`, placement lists). These do nothing when the blocks are absent.
+- A Pro block the site hasn't registered is locked (`BlockRegistry::locked_blocks()`): in Free, every Pro block. The editor registers each locked block in JavaScript only, as a stub carrying just the name, labels and attributes: it is listed in the inserter under its own YayCheckout Pro category, shows an upgrade card, and keeps a downgraded layout's inner blocks so the merchant can move them out.
+- `LayoutMarkupReader::publish_error()` refuses a live layout holding a locked block, so a layout holding a Pro block can't go live in Free. Any other unregistered YayCheckout block, such as one from a newer version's export, is not refused.
+- Code shared with Free blocks may keep small references to Pro blocks by name (the Visibility step rule, `Renderer\LayoutSteps`, placement lists). They stand down when the blocks are absent: with no steps, step rules are skipped, and the Visibility panel doesn't offer them.
 
 ## Consequences
 
