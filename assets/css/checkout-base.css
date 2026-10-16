@@ -303,8 +303,9 @@ html.yaycheckout-has-pinned body {
  * Text inputs, selects, textareas, the coupon code and the select2 box all draw as one input.
  * A section left at theme default leaves its token unset, so the fallback applies: the theme's
  * font and text colour, a border mixed from the text colour, a transparent background. The input
- * background, text and border colour tokens win over the layout's background, text and border
- * colour. A size token zeroes the vertical padding, so the box is exactly its height and the text
+ * text and border colour tokens win over the layout's text and border colour. The background never
+ * takes the layout's: without its own token it stays transparent, so a field on a coloured block
+ * shows that block. A size token zeroes the vertical padding, so the box is exactly its height and the text
  * centres in it.
  */
 .yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code),
@@ -319,7 +320,7 @@ html.yaycheckout-has-pinned body {
 	border-width: var(--yaycheckout-input-border-width, 1px);
 	border-color: var(--yaycheckout-input-border-color, var(--yaycheckout-border-color));
 	border-radius: var(--yaycheckout-field-radius);
-	background-color: var(--yaycheckout-input-background, var(--yaycheckout-color-background, transparent));
+	background-color: var(--yaycheckout-input-background, transparent);
 	box-shadow: none;
 	color: var(--yaycheckout-input-color, inherit);
 	font: inherit;
@@ -469,7 +470,7 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	border-color: var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline: var(--yaycheckout-input-focus-ring-width, 1px) solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline-offset: 0;
-	background-color: var(--yaycheckout-input-focus-background, var(--yaycheckout-input-background, var(--yaycheckout-color-background, transparent)));
+	background-color: var(--yaycheckout-input-focus-background, var(--yaycheckout-input-background, transparent));
 }
 
 /* Keyboard focus on a button, checkbox or radio: an offset ring, in the input focus colour for the controls. */
