@@ -43,5 +43,14 @@
 	"help_text": {
 		"size": 12
 	},
+	"buttons": {
+		"background": "",
+		"text": "",
+		"hover_background": "",
+		"hover_text": "",
+		"radius": 32,
+		"font_weight": "semibold",
+		"text_transform": ""
+	},
 	"custom_css": ""
 }
