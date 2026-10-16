@@ -786,9 +786,9 @@ class CheckoutFragments {
                 $wrapper['class'] = $class;
             }
 
-            $badge_style = self::order_items_badge_style( $block->attributes );
-            if ( '' !== $badge_style ) {
-                $wrapper['style'] = $badge_style;
+            $style_vars = self::order_items_style_vars( $block->attributes );
+            if ( '' !== $style_vars ) {
+                $wrapper['style'] = $style_vars;
             }
 
             $stepper = 'stepper' === self::order_items_options( $block->attributes )['quantity_display'];
@@ -819,18 +819,19 @@ class CheckoutFragments {
     }
 
     /**
-     * Inline --yaycheckout-badge-* vars from the Items block's badge attributes; empty when none
-     * are set. On the wrapper, which checkout.js keeps across refreshes. Mirrors badgeStyle() in
-     * order-summary-items/edit.tsx.
+     * Inline --yaycheckout-badge-* and --yaycheckout-stepper-* vars from the Items block's badge and
+     * stepper attributes; empty when none are set. On the wrapper, which checkout.js keeps across
+     * refreshes. Mirrors itemsStyleVars() in order-summary-items/edit.tsx.
      *
      * @param array $attributes Block attributes.
      */
-    private static function order_items_badge_style( array $attributes ): string {
+    private static function order_items_style_vars( array $attributes ): string {
         $decls = [];
 
         $colors = [
             'badgeBackgroundColor' => '--yaycheckout-badge-bg',
             'badgeTextColor'       => '--yaycheckout-badge-text',
+            'stepperBorderColor'   => '--yaycheckout-stepper-border',
         ];
         foreach ( $colors as $key => $var ) {
             $value = self::css_color( $attributes[ $key ] ?? null );
@@ -843,6 +844,10 @@ class CheckoutFragments {
             $decls[] = '--yaycheckout-badge-size:' . max( 16, min( 32, (int) $attributes['badgeSize'] ) ) . 'px';
         }
 
+        if ( isset( $attributes['stepperSize'] ) && is_numeric( $attributes['stepperSize'] ) ) {
+            $decls[] = '--yaycheckout-stepper-size:' . max( 20, min( 40, (int) $attributes['stepperSize'] ) ) . 'px';
+        }
+
         return implode( ';', $decls );
     }
 
@@ -850,7 +855,7 @@ class CheckoutFragments {
      * The Items block's attributes with their defaults. During AJAX they come from the parsed
      * layout, where an untouched attribute is missing, so each default matches block.json's.
      *
-     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_badge: bool, link_image: bool, link_name: bool}
+     * @return array{show_labels: bool, product_label: string, subtotal_label: string, show_thumbnails: bool, item_data: string, show_sku: bool, show_unit_price: bool, show_short_description: bool, quantity_display: string, show_badge: bool, link_image: bool, link_name: bool, stepper_style: string}
      */
     public static function order_items_options( array $attributes ): array {
         // The first choice is the default.
@@ -873,6 +878,7 @@ class CheckoutFragments {
             'show_badge'             => self::bool_attr( $attributes, 'showBadge', false ),
             'link_image'             => self::bool_attr( $attributes, 'linkImage', false ),
             'link_name'              => self::bool_attr( $attributes, 'linkName', false ),
+            'stepper_style'          => $choice( 'stepperStyle', [ 'boxed', 'round' ] ),
         ];
     }
 
@@ -892,6 +898,7 @@ class CheckoutFragments {
         $badge        = $options['show_badge'] && $options['show_thumbnails'];
         $stepper_mode = 'stepper' === $options['quantity_display'];
         $root         = self::ORDER_ITEMS_CLASS . ( 'inline' === $options['item_data'] ? ' ' . self::ORDER_ITEMS_CLASS . '--item-data-inline' : '' );
+        $root        .= $stepper_mode && 'round' === $options['stepper_style'] ? ' ' . self::ORDER_ITEMS_CLASS . '--stepper-round' : '';
 
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hooks and filters.
         ob_start();

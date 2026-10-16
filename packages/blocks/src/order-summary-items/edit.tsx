@@ -35,6 +35,9 @@ interface OrderSummaryItemsAttributes {
 	badgeBackgroundColor: string;
 	badgeTextColor: string;
 	badgeSize?: number;
+	stepperStyle: 'boxed' | 'round';
+	stepperBorderColor: string;
+	stepperSize?: number;
 	style?: BlockGapStyles;
 }
 
@@ -45,14 +48,25 @@ interface EditProps {
 }
 
 const BADGE_PANEL = 'yaycheckout-order-summary-items-badge';
+const STEPPER_PANEL = 'yaycheckout-order-summary-items-stepper';
 
-// Mirrors CheckoutFragments::order_items_badge_style(): the badge settings as --yaycheckout-badge-* vars.
-function badgeStyle( { badgeBackgroundColor, badgeTextColor, badgeSize }: OrderSummaryItemsAttributes ) {
+// Mirrors CheckoutFragments::order_items_style_vars(): the badge and stepper settings as --yaycheckout-badge-* and --yaycheckout-stepper-* vars.
+function itemsStyleVars( {
+	badgeBackgroundColor,
+	badgeTextColor,
+	badgeSize,
+	stepperBorderColor,
+	stepperSize,
+}: OrderSummaryItemsAttributes ) {
 	return {
 		...( badgeBackgroundColor ? { '--yaycheckout-badge-bg': badgeBackgroundColor } : {} ),
 		...( badgeTextColor ? { '--yaycheckout-badge-text': badgeTextColor } : {} ),
 		...( typeof badgeSize === 'number'
 			? { '--yaycheckout-badge-size': `${ Math.max( 16, Math.min( 32, badgeSize ) ) }px` }
+			: {} ),
+		...( stepperBorderColor ? { '--yaycheckout-stepper-border': stepperBorderColor } : {} ),
+		...( typeof stepperSize === 'number'
+			? { '--yaycheckout-stepper-size': `${ Math.max( 20, Math.min( 40, stepperSize ) ) }px` }
 			: {} ),
 	};
 }
@@ -88,6 +102,9 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 		badgeBackgroundColor,
 		badgeTextColor,
 		badgeSize,
+		stepperStyle,
+		stepperBorderColor,
+		stepperSize,
 		style,
 	} = attributes;
 	// As order_items_html(): a badge needs a thumbnail to sit on, and adds to Show as.
@@ -246,12 +263,82 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					</ToolsPanel>
 				</InspectorControls>
 			) }
-			<div { ...useBlockProps( { style: badgeStyle( attributes ) } ) }>
+			{ stepper && (
+				<InspectorControls group="styles">
+					<ToolsPanel
+						label={ __( 'Quantity stepper', 'yaycheckout' ) }
+						panelId={ STEPPER_PANEL }
+						className="yaycheckout-tools-panel"
+						resetAll={ () =>
+							setAttributes( { stepperStyle: 'boxed', stepperBorderColor: '', stepperSize: undefined } )
+						}
+					>
+						<ToolsPanelItem
+							panelId={ STEPPER_PANEL }
+							label={ __( 'Shape', 'yaycheckout' ) }
+							hasValue={ () => stepperStyle !== 'boxed' }
+							onDeselect={ () => setAttributes( { stepperStyle: 'boxed' } ) }
+							isShownByDefault
+						>
+							<SelectControl
+								__nextHasNoMarginBottom
+								__next40pxDefaultSize
+								label={ __( 'Shape', 'yaycheckout' ) }
+								value={ stepperStyle }
+								options={ [
+									{ label: __( 'Boxed', 'yaycheckout' ), value: 'boxed' },
+									{ label: __( 'Round', 'yaycheckout' ), value: 'round' },
+								] }
+								onChange={ ( value ) =>
+									setAttributes( { stepperStyle: value as OrderSummaryItemsAttributes[ 'stepperStyle' ] } )
+								}
+							/>
+						</ToolsPanelItem>
+						<div className="yaycheckout-tools-panel__colors">
+							<ColorGradientSettingsDropdown
+								__experimentalIsRenderedInSidebar
+								panelId={ STEPPER_PANEL }
+								settings={ [
+									{
+										label: __( 'Border', 'yaycheckout' ),
+										colorValue: stepperBorderColor || undefined,
+										onColorChange: ( value?: string ) => setAttributes( { stepperBorderColor: value ?? '' } ),
+										clearable: true,
+										isShownByDefault: true,
+									},
+								] }
+								colors={ palettes.colors }
+								disableCustomColors={ palettes.disableCustomColors }
+							/>
+						</div>
+						<ToolsPanelItem
+							panelId={ STEPPER_PANEL }
+							label={ __( 'Size', 'yaycheckout' ) }
+							hasValue={ () => typeof stepperSize === 'number' }
+							onDeselect={ () => setAttributes( { stepperSize: undefined } ) }
+							isShownByDefault
+						>
+							<RangeControl
+								__nextHasNoMarginBottom
+								__next40pxDefaultSize
+								label={ __( 'Size', 'yaycheckout' ) }
+								value={ stepperSize }
+								min={ 20 }
+								max={ 40 }
+								initialPosition={ stepperStyle === 'round' ? 24 : 32 }
+								allowReset
+								onChange={ ( value ) => setAttributes( { stepperSize: value } ) }
+							/>
+						</ToolsPanelItem>
+					</ToolsPanel>
+				</InspectorControls>
+			) }
+			<div { ...useBlockProps( { style: itemsStyleVars( attributes ) } ) }>
 				{ css && <style>{ css }</style> }
 				<div
 					className={ `yaycheckout-order-summary-items${
 						itemData === 'inline' ? ' yaycheckout-order-summary-items--item-data-inline' : ''
-					}` }
+					}${ stepper && stepperStyle === 'round' ? ' yaycheckout-order-summary-items--stepper-round' : '' }` }
 				>
 					{ showLabels && (
 						<div className="yaycheckout-order-summary-items__header">
