@@ -34,6 +34,21 @@ class Germanized {
         // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
         add_action( 'yaycheckout_checkout_terms', 'woocommerce_gzd_template_render_checkout_checkboxes' );
+
+        // After init, where Germanized adds its submit button; before the layout renders.
+        add_action( 'wp', [ $this, 'keep_place_order_button' ] );
+    }
+
+    /**
+     * Germanized hides Woo's button to print its own at woocommerce_checkout_order_review, which
+     * a layout never fires, so the Place Order block lost its button. Without Germanized's button
+     * Germanized leaves Woo's button and its submit hooks alone.
+     */
+    public function keep_place_order_button(): void {
+        if ( CheckoutPage::get_instance()->takes_over() ) {
+            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's checkout hook.
+            remove_action( 'woocommerce_checkout_order_review', 'woocommerce_gzd_template_order_submit', wc_gzd_get_hook_priority( 'checkout_order_submit' ) );
+        }
     }
 
     /**
