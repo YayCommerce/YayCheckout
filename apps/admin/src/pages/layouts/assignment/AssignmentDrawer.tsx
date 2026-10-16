@@ -237,7 +237,7 @@ function LockedAssignment({ layout }: { layout: LayoutSummary }) {
               'yaycheckout',
             )}
           </p>
-          <div className="flex items-center justify-end border-t pt-3">
+          <div className="flex items-center pt-3">
             <UpgradeButton />
           </div>
         </div>
