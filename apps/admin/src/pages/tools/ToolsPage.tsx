@@ -11,7 +11,7 @@ import { ResetCard } from './components/ResetCard';
 export default function ToolsPage() {
   return (
     <PageLayout
-      heading={__('Tools', 'yaycheckout')}
+      title={__('Tools', 'yaycheckout')}
       description={__('Import, export and maintenance utilities for your checkout.', 'yaycheckout')}
     >
       <div className={cn('bg-card grid gap-6 rounded-md border p-6 md:grid-cols-2', isPro && 'xl:grid-cols-3')}>

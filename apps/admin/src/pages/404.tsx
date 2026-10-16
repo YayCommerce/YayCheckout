@@ -11,14 +11,14 @@ export default function NotFoundPage() {
     <div className="flex h-[80vh] flex-col items-center justify-center gap-6">
       <div className="text-center">
         <h1 className="text-primary mb-2 text-6xl font-bold">404</h1>
-        <h2 className="text-foreground mb-4 text-xl font-semibold">Page Not Found</h2>
+        <h2 className="text-foreground mb-4 text-xl font-semibold">{__('Page not found', 'yaycheckout')}</h2>
         <p className="text-muted-foreground text-sm">
           {__("The page you are looking for doesn't exist or has been moved.", 'yaycheckout')}
         </p>
       </div>
 
       <Button variant="primary" onClick={() => navigate(LAYOUTS_PATH)}>
-        {__('Back to Layouts', 'yaycheckout')}
+        {__('Back to layouts', 'yaycheckout')}
       </Button>
     </div>
   );

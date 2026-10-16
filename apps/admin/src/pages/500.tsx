@@ -18,14 +18,16 @@ export default function ErrorPage() {
     <div className="flex h-[80vh] flex-col items-center justify-center gap-6">
       <div className="text-center">
         <h1 className="text-primary mb-2 text-6xl font-bold">500</h1>
-        <h2 className="text-foreground mb-4 text-xl font-semibold">{error?.message || 'Something went wrong'}</h2>
+        <h2 className="text-foreground mb-4 text-xl font-semibold">
+          {error?.message || __('Something went wrong', 'yaycheckout')}
+        </h2>
         <p className="text-muted-foreground text-sm">
           {__('Something went wrong. Please try again later.', 'yaycheckout')}
         </p>
       </div>
 
       <Button variant="primary" onClick={() => navigate(LAYOUTS_PATH)}>
-        {__('Back to Layouts', 'yaycheckout')}
+        {__('Back to layouts', 'yaycheckout')}
       </Button>
     </div>
   );

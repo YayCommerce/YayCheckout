@@ -112,7 +112,7 @@ export default function LayoutsPage() {
 
   return (
     <PageLayout
-      heading={__('Layouts', 'yaycheckout')}
+      title={__('Layouts', 'yaycheckout')}
       description={__('Create and activate checkout layouts.', 'yaycheckout')}
     >
       {/* isPending fires only on first load; keepPreviousData turns later fetches into isFetching. */}
@@ -399,7 +399,7 @@ function LayoutsPageBody({
       />
 
       <Card className="min-w-0">
-        <h2 className="text-lg font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
+        <h2 className="text-xl leading-none font-semibold">{__('Your layouts', 'yaycheckout')}</h2>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Segmented
@@ -549,7 +549,7 @@ function LayoutsPageBody({
       </Card>
 
       <Dialog open={null !== editingLayoutId} onOpenChange={onEditorOpenChange}>
-        <DialogContent className="!flex h-[92vh] w-[96vw] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[96vw]">
+        <DialogContent className="data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100 inset-0 !flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 p-0 shadow-none sm:max-w-none">
           <DialogHeader className="shrink-0 gap-1 border-b px-4 py-2">
             <DialogTitle className="text-base">{__('Edit layout', 'yaycheckout')}</DialogTitle>
           </DialogHeader>

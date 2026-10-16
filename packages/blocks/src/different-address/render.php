@@ -2,7 +2,9 @@
 /**
  * Prints the checkbox that splits billing and shipping, for WooCommerce's Shipping destination:
  * - billing is main: WooCommerce's own "Ship to a different address?" box from checkout/form-shipping.php,
- *   which checkout.js reads to show div.shipping_address (the Shipping block) and send its rates fields;
+ *   which checkout.js reads to show div.shipping_address (the Shipping block) and send its rates fields.
+ *   With ticked "same", it prints "Use same address for shipping" instead, unnamed, and WooCommerce's box
+ *   hidden with the opposite state, which checkout-different-address.js keeps in step;
  * - shipping is main: "Use same address for billing", posted as yaycheckout_same_billing. The Shipping block
  *   prints WooCommerce's box checked and hidden, and CheckoutDifferentAddress copies shipping into billing.
  * Prints nothing when shipping is forced to billing, the cart needs no shipping address, the layout has no
@@ -33,6 +35,20 @@ if ( '' === $yaycheckout_block ) {
                 <input class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" id="yaycheckout-same-billing" <?php checked( ! \YayCheckout\Renderer\CheckoutDifferentAddress::saved_addresses_differ() ); ?> type="checkbox" name="<?php echo esc_attr( \YayCheckout\Renderer\CheckoutDifferentAddress::SAME_BILLING_FIELD ); ?>" value="1" /> <span><?php echo $yaycheckout_label; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered by wp_kses in LayoutMarkupReader::rich_text(). ?></span>
             </label>
         </p>
+    <?php elseif ( 'same' === ( $attributes['ticked'] ?? 'different' ) ) : ?>
+        <?php
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce filter; its default is 0 because billing is main here.
+        $yaycheckout_ship_different = 1 === (int) apply_filters( 'woocommerce_ship_to_different_address_checked', 0 );
+        $yaycheckout_label          = \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'sameShipLabel', __( 'Use same address for shipping', 'yaycheckout' ) );
+        ?>
+        <p class="form-row form-row-wide yaycheckout-different-address__same">
+            <label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox">
+                <input class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" id="yaycheckout-same-shipping" <?php checked( ! $yaycheckout_ship_different ); ?> type="checkbox" value="1" /> <span><?php echo $yaycheckout_label; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered by wp_kses in LayoutMarkupReader::rich_text(). ?></span>
+            </label>
+        </p>
+        <div id="ship-to-different-address" hidden>
+            <input id="ship-to-different-address-checkbox" type="checkbox" name="ship_to_different_address" value="1" <?php checked( $yaycheckout_ship_different ); ?> />
+        </div>
     <?php else : ?>
         <?php
         // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Verbatim WooCommerce string so the storefront matches classic checkout when the merchant leaves the label empty.

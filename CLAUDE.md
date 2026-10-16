@@ -14,7 +14,7 @@ Run from the repo root on Node 22: `nvm use` reads `.nvmrc`, and pnpm 11 [fails 
 
 - `pnpm install`: JS dependencies, then `composer install` (root `postinstall`). A fresh clone also needs `composer shell-update` before WordPress can load the plugin ([known issue](docs/known-issues.md)).
 - `composer lint`: `scripts/check-pro-boundary.sh`, then phpcs (WordPress standard). `composer lint -- <files>` lints only those files.
-- `composer test`: PHPUnit integration suite, inside WordPress with WooCommerce, against a test database the bootstrap drops and recreates. It holds no tests today. Setup is in the header of `phpunit.xml.dist`; Local sites need [the per-site socket](docs/known-issues.md).
+- `composer test`: PHPUnit integration suite, inside WordPress with WooCommerce, against a test database the bootstrap drops and recreates. Its tests live in `tests/Integration/`. Setup is in the header of `phpunit.xml.dist`; Local sites need [the per-site socket](docs/known-issues.md).
 - `pnpm --filter @yaycheckout/admin-page lint`: eslint, then prettier. [Fails today](docs/known-issues.md).
 - `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit`: type-check the SPA.
 - `pnpm build:blocks`: build the blocks into `assets/dist/blocks/`. Without a build, the editor has no YayCheckout blocks and says nothing.
@@ -47,13 +47,13 @@ The team keeps only tests that guard real risk, so a test is warranted in two ca
 
 ## Plans and specs
 
-`docs/plans/` and `docs/specs/` are kept as history. Act only on a plan whose `Status:` is `active` or a spec whose `Status:` is `accepted`. Any other status makes it a record, not an instruction.
+Plans live in `docs/plans/` and specs in `docs/specs/`; once their work ships they are deleted, and git history keeps them. Act only on a plan whose `Status:` is `active` or a spec whose `Status:` is `accepted`. Any other status makes it a record, not an instruction.
 
 ## Where to look
 
 - [docs/architecture.md](docs/architecture.md): how the pieces fit: boot, the admin-shell sync, layers and who writes what, layouts and how the storefront picks one, preview links, blocks and the embedded editor, Free/Pro, the SPA↔WordPress bridge, the compatibility scan, release and tests. Read it before a change that crosses layers, adds a stored value or a writer, touches the Free/Pro split, or changes how the SPA or the editor loads or calls WordPress.
 - [docs/conventions.md](docs/conventions.md): team rules the code can't show: storage keys, settings and design schemas, TypeScript copies of PHP, wire casing and dates, file names, logging and comments. Read it before adding a file, a stored key or setting, a TypeScript copy of a PHP shape, or a REST field.
-- [docs/decisions/](docs/decisions/): the reasons behind architectural choices: the Free/Pro split, admin-shell scoping, a layout as one post, wire timestamps and this harness. Read the matching record before a change that alters an architectural choice; [the decision-record practice](docs/decisions/2026-10-05-decision-record-practice.md) says when to write a new one. Only `accepted` records are in force.
+- [docs/decisions/](docs/decisions/): the reasons behind architectural choices: the Free/Pro split, admin-shell scoping, a layout as one post and its design, wire timestamps, checkout base styles and fonts, block visibility, and this harness. Read the matching record before a change that alters an architectural choice; [the decision-record practice](docs/decisions/2026-10-05-decision-record-practice.md) says when to write a new one. Only `accepted` records are in force.
 - [docs/known-issues.md](docs/known-issues.md): checks that fail today and gotchas, each with a workaround. Read it when a command fails or does something unexpected, before you debug it.
 - [docs/backlog/](docs/backlog/): follow-ups that reviews left open, one file per item, each with a `## Done when` checklist. Read it when you start work in an area, or before you fix something a review flagged. `/yaybacklog` lists, checks and adds items; `./scripts/run.sh backlog` lists them.
 - [README.md](README.md): onboarding, the review, promotion and release practice, when to use each skill, and the owner map of the harness. Read it before adding or moving a harness doc, rule or skill.

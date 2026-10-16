@@ -19,7 +19,7 @@ How the SPA loads and calls WordPress is in [docs/architecture.md § SPA and Wor
 - **Forms:** react-hook-form with `zodResolver` over the resource's zod schema.
 - **Pro:** read the plan from `apps/admin/src/lib/plan.ts` (`isPro`). `<ProGate>` blurs its children for Free and still ships them; `<ProOnly>` hides them and still ships them. Neither is used today: Free's upsells are `ProTag` and `UpgradeButton` teasers. To leave code out of the Free bundle, branch at the call site: `{isPro && <X />}`.
 - **Components:** `apps/admin/src/components/ui/` holds shadcn-style primitives; there is no `components.json`, so no CLI regenerates them. Don't add page components there. A component used by one page lives in that page's `components/` folder, and moves to `apps/admin/src/components/shared/` when a second page needs it.
-- **`FormItem` hides switches:** shadcn's `FormItem` makes every direct child `w-auto`, so a `Switch` inside it shows as a bare thumb. Render a control with no label or message of its own straight from `FormField`'s render prop, without `FormItem` or `FormControl`, as `apps/admin/src/pages/settings/components/GeneralTab.tsx` does.
+- **`FormItem` hides switches:** a vertical `FormItem` makes every direct child `w-auto`, so a `Switch` inside it shows as a bare thumb. Put a switch in a horizontal row (`SettingRow` defaults to one, see `apps/admin/src/pages/settings/components/GeneralTab.tsx`), or render it straight from `FormField`'s render prop without `FormItem`.
 
 ## Couplings no check catches
 
