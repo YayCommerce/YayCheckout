@@ -13,7 +13,8 @@
  * headed by a large question; Continue / Back / Place Order follow the step as pill buttons.
  * The address order follows WooCommerce's Shipping destination when the layout is created: with shipping
  * main, Step 1 asks for Shipping and Step 3 offers "Billing address is the same as shipping"; with billing
- * main, Step 1 asks for Billing and offers a different shipping address there, before the rates in Step 2;
+ * main, Step 1 asks for Billing and offers "Shipping address is the same as billing" there, ticked, before the
+ * rates in Step 2;
  * with shipping forced to billing, Billing alone.
  */
 
@@ -152,7 +153,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <?php if ( 'billing' === $yaycheckout_destination ) : ?>
 
 
-<!-- wp:yaycheckout/different-address {"shipLabel":"<?php esc_html_e( 'Ship to a different address', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/different-address {"ticked":"same","sameShipLabel":"<?php esc_html_e( 'Shipping address is the same as billing', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:yaycheckout/shipping {"showTitle":false} -->
 <?php $yaycheckout_address_fields( 'shipping' ); ?>
