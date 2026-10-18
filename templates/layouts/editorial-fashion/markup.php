@@ -161,6 +161,8 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 <!-- /wp:group --></div>
 <!-- /wp:group -->
 
+<!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
 <!-- wp:group {"style":{"spacing":{"blockGap":"20px"}}} -->
 <div class="wp-block-group"><!-- wp:group {"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
 <div class="wp-block-group"><!-- wp:heading {"style":{"typography":{"fontSize":"28px","fontWeight":"400","lineHeight":"1.1","fontFamily":"Georgia, \"Times New Roman\", serif","letterSpacing":"-0.01em"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->

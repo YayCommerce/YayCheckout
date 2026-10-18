@@ -128,7 +128,9 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <div class="wp-block-group" style="padding-top:32px;padding-right:24px;padding-bottom:80px;padding-left:24px"><!-- wp:yaycheckout/checkout -->
 <!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"32px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column {"width":"60%","style":{"spacing":{"blockGap":"16px"}}} -->
-<div class="wp-block-column" style="flex-basis:60%"><!-- wp:group {"borderColor":"yaycheckout-border","style":{"color":{"background":"#ffffff"},"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"24px","right":"24px","bottom":"24px","left":"24px"},"blockGap":"12px"}}} -->
+<div class="wp-block-column" style="flex-basis:60%"><!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
+<!-- wp:group {"borderColor":"yaycheckout-border","style":{"color":{"background":"#ffffff"},"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"24px","right":"24px","bottom":"24px","left":"24px"},"blockGap":"12px"}}} -->
 <div class="wp-block-group has-border-color has-background has-yaycheckout-border-border-color" style="border-style:solid;border-width:1px;border-radius:4px;background-color:#ffffff;padding-top:24px;padding-right:24px;padding-bottom:24px;padding-left:24px"><!-- wp:group {"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
 <div class="wp-block-group"><!-- wp:heading {"style":{"typography":{"fontSize":"20px","fontWeight":"400"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
 <h2 class="wp-block-heading" style="margin-top:0;margin-bottom:0;font-size:20px;font-weight:400"><?php esc_html_e( 'Contact information', 'yaycheckout' ); ?></h2>

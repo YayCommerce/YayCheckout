@@ -31,7 +31,7 @@ ob_start();
         WC()->cart->calculate_totals();
 
         // finalize() decides the blocks whose visibility depends on a block rendered after them.
-        echo \YayCheckout\Renderer\BlockVisibility::get_instance()->finalize( do_blocks( $yaycheckout_layout->content ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block markup, rendered and escaped by each block.
+        echo \YayCheckout\Renderer\BlockVisibility::get_instance()->finalize( \YayCheckout\Renderer\LayoutShortcodes::render( $yaycheckout_layout->content ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block markup, rendered and escaped by each block.
     }
     ?>
 </div>

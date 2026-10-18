@@ -162,6 +162,8 @@ $yaycheckout_address_fields = static function ( string $type, bool $secondary = 
 
 <!-- wp:yaycheckout/steps-progress {"variant":"segments","upcomingTextColor":"var(--yaycheckout-design-muted)"} /-->
 
+<!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
 <!-- wp:yaycheckout/steps {"layout":"one-at-a-time","showHeadings":false} -->
 <!-- wp:yaycheckout/step {"borderColor":"yaycheckout-border","title":"<?php esc_html_e( 'Information', 'yaycheckout' ); ?>","style":{"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"24px","right":"24px","bottom":"24px","left":"24px"},"blockGap":"24px"}}} -->
 <!-- wp:group {"style":{"spacing":{"blockGap":"12px"}}} -->

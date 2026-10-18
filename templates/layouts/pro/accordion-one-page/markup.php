@@ -135,6 +135,8 @@ $yaycheckout_address_fields = static function ( string $type, bool $secondary = 
 <!-- wp:yaycheckout/steps-progress {"textColor":"yaycheckout-muted","variant":"text"} /--></div>
 <!-- /wp:group -->
 
+<!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
 <!-- wp:yaycheckout/steps {"layout":"accordion"} -->
 <!-- wp:yaycheckout/step {"borderColor":"yaycheckout-border","title":"<?php esc_html_e( 'Contact', 'yaycheckout' ); ?>","style":{"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"16px","right":"20px","bottom":"16px","left":"20px"},"blockGap":"12px"}}} -->
 <!-- wp:yaycheckout/email {"placeholder":"<?php esc_html_e( 'you@example.com', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'You are currently checking out as a guest.', 'yaycheckout' ); ?>"} /-->

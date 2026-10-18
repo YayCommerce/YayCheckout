@@ -130,7 +130,9 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/order-summary -->
 
 <!-- wp:group {"style":{"spacing":{"padding":{"top":"56px","right":"24px","bottom":"80px","left":"24px"},"blockGap":"40px"}},"layout":{"type":"constrained","contentSize":"560px"}} -->
-<div class="wp-block-group" style="padding-top:56px;padding-right:24px;padding-bottom:80px;padding-left:24px"><!-- wp:yaycheckout/steps {"layout":"one-at-a-time","showHeadings":false} -->
+<div class="wp-block-group" style="padding-top:56px;padding-right:24px;padding-bottom:80px;padding-left:24px"><!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
+<!-- wp:yaycheckout/steps {"layout":"one-at-a-time","showHeadings":false} -->
 <!-- wp:yaycheckout/step {"title":"<?php esc_html_e( 'Delivery', 'yaycheckout' ); ?>","style":{"color":{"background":"transparent"},"border":{"width":"0px"},"spacing":{"padding":{"top":"0","right":"0","bottom":"0","left":"0"},"blockGap":"32px"}}} -->
 <!-- wp:group {"style":{"spacing":{"blockGap":"8px"}}} -->
 <div class="wp-block-group"><!-- wp:heading {"level":1,"style":{"typography":{"fontSize":"34px","fontWeight":"600","lineHeight":"1.15","letterSpacing":"-0.02em"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
