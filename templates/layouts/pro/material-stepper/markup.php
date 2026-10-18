@@ -120,7 +120,9 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"24px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:group {"style":{"color":{"background":"#ffffff"},"border":{"radius":"8px"},"spacing":{"padding":{"top":"8px","right":"24px","bottom":"8px","left":"24px"},"blockGap":"0"}}} -->
-<div class="wp-block-group has-background" style="border-radius:8px;background-color:#ffffff;padding-top:8px;padding-right:24px;padding-bottom:8px;padding-left:24px"><!-- wp:yaycheckout/steps {"layout":"timeline","showHeadings":true,"style":{"spacing":{"blockGap":"12px"}}} -->
+<div class="wp-block-group has-background" style="border-radius:8px;background-color:#ffffff;padding-top:8px;padding-right:24px;padding-bottom:8px;padding-left:24px"><!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
+<!-- wp:yaycheckout/steps {"layout":"timeline","showHeadings":true,"style":{"spacing":{"blockGap":"12px"}}} -->
 <!-- wp:yaycheckout/step {"title":"<?php esc_html_e( 'Contact information', 'yaycheckout' ); ?>","style":{"color":{"background":"transparent"},"border":{"width":"0px"},"spacing":{"padding":{"top":"16px","right":"0","bottom":"20px","left":"0"},"blockGap":"16px"}}} -->
 <!-- wp:group {"style":{"spacing":{"blockGap":"20px"}}} -->
 <div class="wp-block-group"><!-- wp:yaycheckout/email {"placeholder":"<?php esc_html_e( 'you@example.com', 'yaycheckout' ); ?>"} /-->

@@ -129,6 +129,8 @@ $yaycheckout_ship_label = 'shipping' === $yaycheckout_main ? __( 'SHIP TO', 'yay
 <!-- /wp:paragraph --></div>
 <!-- /wp:group -->
 
+<!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
 <!-- wp:group {"style":{"spacing":{"blockGap":"12px"}}} -->
 <div class="wp-block-group"><!-- wp:group {"style":{"spacing":{"blockGap":"10px"}},"layout":{"type":"flex","flexWrap":"nowrap","verticalAlignment":"center"}} -->
 <div class="wp-block-group"><!-- wp:paragraph {"backgroundColor":"yaycheckout-primary","align":"center","style":{"color":{"text":"#ffffff"},"typography":{"fontSize":"11px","fontWeight":"600","lineHeight":"22px"},"border":{"radius":"9999px"},"dimensions":{"minHeight":"22px","width":"22px"},"layout":{"selfStretch":"fixed","flexSize":"22px"},"spacing":{"margin":{"top":"0","bottom":"0"},"padding":{"top":"0","bottom":"0","left":"0","right":"0"}}}} -->

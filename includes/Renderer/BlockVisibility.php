@@ -48,6 +48,9 @@ class BlockVisibility {
     /** Mirrored by RULE_TYPES in visibility-rules.ts. */
     public const RULE_TYPES = [ 'step', 'needs_shipping', 'has_coupon', 'subtotal', 'logged_in', 'block' ];
 
+    /** The render_block priority of filter_block(). LayoutShortcodes runs just before it, so it marks the shortcodes' output. */
+    public const RENDER_PRIORITY = 10;
+
     /** Set once filter_block() decorated a block, so the footer prints the state the script reads. */
     private $rendered = false;
 
@@ -55,7 +58,7 @@ class BlockVisibility {
     private $deferred = false;
 
     protected function __construct() {
-        add_filter( 'render_block', [ $this, 'filter_block' ], 10, 2 );
+        add_filter( 'render_block', [ $this, 'filter_block' ], self::RENDER_PRIORITY, 2 );
         add_action( 'wp_footer', [ $this, 'print_state' ] );
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's AJAX fragment filter.
         add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'fragments' ], 20 );

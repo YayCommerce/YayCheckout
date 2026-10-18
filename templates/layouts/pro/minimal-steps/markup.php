@@ -125,6 +125,8 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/order-summary-details -->
 <!-- /wp:yaycheckout/order-summary -->
 
+<!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
 <!-- wp:yaycheckout/steps {"layout":"one-at-a-time","showHeadings":false} -->
 <!-- wp:yaycheckout/step {"title":"<?php esc_html_e( 'Address', 'yaycheckout' ); ?>","style":{"color":{"background":"transparent"},"border":{"width":"0px"},"spacing":{"padding":{"top":"0","right":"0","bottom":"0","left":"0"},"blockGap":"20px"}}} -->
 <!-- wp:heading {"level":1,"style":{"typography":{"fontSize":"23px","fontWeight":"400","lineHeight":"1.3"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->

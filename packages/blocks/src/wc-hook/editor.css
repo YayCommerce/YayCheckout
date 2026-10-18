@@ -54,15 +54,6 @@
 	font-weight: 600;
 }
 
-.editor-styles-wrapper .yaycheckout-wc-hook__badge {
-	flex: none;
-	padding: 2px 8px;
-	border-radius: 999px;
-	background: #f0f0f0;
-	color: #757575;
-	font-size: 11px;
-}
-
 .editor-styles-wrapper .yaycheckout-wc-hook__name {
 	overflow: hidden;
 	flex: 0 1 auto;

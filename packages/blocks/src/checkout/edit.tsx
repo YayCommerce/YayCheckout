@@ -11,12 +11,15 @@ import placeOrderMeta from '../place-order/block.json';
 import shippingMeta from '../shipping/block.json';
 import shippingMethodsMeta from '../shipping-methods/block.json';
 import termsMeta from '../terms/block.json';
+import wcHookMeta from '../wc-hook/block.json';
 
 /**
  * What a newly inserted Checkout holds. A template only fills a block that has no
  * inner blocks, so saved layouts are untouched.
  */
 const defaultTemplate = () => [
+	// WooCommerce fires this before its form; the Checkout block fires no hook itself, so plugin notices print here.
+	[ wcHookMeta.name, { hook: 'woocommerce_before_checkout_form' } ],
 	[ emailMeta.name ],
 	[ billingMeta.name, {}, addressTemplate( 'billing' ) ],
 	[ differentAddressMeta.name ],

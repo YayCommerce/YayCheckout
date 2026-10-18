@@ -26,7 +26,7 @@ That's all. `is_available()` turns the template on once both files exist. The RE
 On a Local site, wp-cli and PHPUnit must reach the database through the site's socket, not `localhost`; `docs/known-issues.md` covers it for PHPUnit. For wp-cli, use `php -d mysqli.default_socket="$HOME/Library/Application Support/Local/run/<run id>/mysql/mysqld.sock" $(which wp) …`. The run id is the folder whose site matches this one. Put that command in `WP` for `design_json.sh`.
 
 1. **Lint:** `composer lint -- templates/layouts/<slug>/markup.php`
-2. **Suite:** `composer test -- --filter LayoutTemplateCatalogueTest`. It checks that `publish_error()` is `''` and that `design.json` equals `to_meta()`, for every available template.
+2. **Suite:** `composer test -- --filter LayoutTemplateCatalogueTest`. It checks that `publish_error()` is `''`, that `design.json` equals `to_meta()`, and that the layout places a WooCommerce Hook block for `woocommerce_before_checkout_form`, where plugins print checkout notices, for every available template. Put it where the shopper reads the notices plugins print there: at the top of the main form column, below any header, progress bar or order summary and above the first section, as the other templates do.
 3. **Markup renders for each destination.** Run `LayoutTemplateCatalogue::markup( '<slug>' )` under each value of `woocommerce_ship_to_destination` (`shipping`, `billing`, `billing_only`), using `wp eval` with `update_option`. Restore the option afterwards. Each run must return non-empty markup with no PHP notice.
 4. **Editor.**
    - Create a **new** layout from the library. Never paste into an existing draft: autosave writes to it.

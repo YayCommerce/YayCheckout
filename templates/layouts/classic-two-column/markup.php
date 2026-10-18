@@ -139,7 +139,9 @@ $yaycheckout_address_fields = static function ( string $type, bool $secondary = 
 <div class="wp-block-group" style="padding-top:40px;padding-right:24px;padding-bottom:80px;padding-left:24px"><!-- wp:yaycheckout/checkout -->
 <!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"40px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column {"width":"60%","style":{"spacing":{"blockGap":"40px"}}} -->
-<div class="wp-block-column" style="flex-basis:60%"><!-- wp:yaycheckout/express-pay /-->
+<div class="wp-block-column" style="flex-basis:60%"><!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
+<!-- wp:yaycheckout/express-pay /-->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"12px"}}} -->
 <div class="wp-block-group"><!-- wp:group {"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between","verticalAlignment":"center"}} -->

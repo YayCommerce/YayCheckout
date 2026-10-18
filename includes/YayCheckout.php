@@ -31,6 +31,7 @@ class YayCheckout {
         \YayCheckout\Renderer\CheckoutPage::get_instance();
         \YayCheckout\Renderer\CheckoutAdminBar::get_instance();
         \YayCheckout\Renderer\CheckoutFragments::get_instance();
+        \YayCheckout\Renderer\CheckoutNestedForms::get_instance();
         \YayCheckout\Renderer\CartItemQuantity::get_instance();
         \YayCheckout\Renderer\BlockVisibility::get_instance();
         \YayCheckout\Renderer\PinToBottom::get_instance();

@@ -86,7 +86,7 @@ export default function Edit( { attributes, setAttributes, isSelected }: EditPro
 					{ option && ! option.hasCallbacks && (
 						<Notice status="info" isDismissible={ false }>
 							{ __(
-								'Nothing on this store prints here yet, so shoppers see nothing.',
+								'Nothing hooks this in the editor. Some plugins add output only on the storefront, so preview to check.',
 								'yaycheckout'
 							) }
 						</Notice>
@@ -115,9 +115,6 @@ export default function Edit( { attributes, setAttributes, isSelected }: EditPro
 						{ option ? option.label : __( 'Choose a hook in the block settings', 'yaycheckout' ) }
 					</span>
 				</span>
-				{ option && ! option.hasCallbacks && (
-					<span className="yaycheckout-wc-hook__badge">{ __( 'Nothing prints here', 'yaycheckout' ) }</span>
-				) }
 				{ option && <code className="yaycheckout-wc-hook__name">{ option.hook }</code> }
 			</div>
 		</>
