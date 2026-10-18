@@ -17,9 +17,6 @@ defined( 'ABSPATH' ) || exit;
 /** All layout storage access; publishing and the active set have one owner. */
 class LayoutRepository {
 
-    /** Layouts the Free edition may hold. */
-    public const FREE_LIMIT = 3;
-
     /** What bulk() runs; each is a method of this class taking a layout id. */
     public const BULK_ACTIONS = [ 'deactivate', 'archive', 'restore', 'delete' ];
 
@@ -193,7 +190,7 @@ class LayoutRepository {
     public function activate( int $id ): Layout {
         $layout = $this->find_or_throw( $id );
 
-        // Publishing would silently restore it from the trash and could exceed FREE_LIMIT.
+        // Publishing would silently restore it from the trash.
         if ( LayoutStatus::ARCHIVED === $layout->post_status ) {
             throw new \InvalidArgumentException(
                 esc_html__( 'Restore this layout from the archive before activating it.', 'yaycheckout' )
@@ -313,7 +310,6 @@ class LayoutRepository {
         // wp_untrash_post() hands back the pre-update object; only the status moved.
         $restored->post_status = LayoutStatus::DRAFT;
 
-        // No Plan::layout_limit_reached() check: a restore may exceed the Free cap, unlike a new layout.
         return $this->to_layout( $restored, false );
     }
 
@@ -342,7 +338,7 @@ class LayoutRepository {
      * activating it as-is lets a shopper place an order, its design, and its logged-out view. The post
      * type's template only applies to auto-drafts, not to this insert.
      *
-     * @throws \InvalidArgumentException When the template is not available, the layout limit is reached or the insert fails.
+     * @throws \InvalidArgumentException When the template is not available or the insert fails.
      */
     public function create( string $title, string $template_slug ): Layout {
         return $this->insert_draft(
@@ -471,7 +467,7 @@ class LayoutRepository {
     }
 
     /**
-     * The one insert path for a new draft, so the cap and slashing cannot drift.
+     * The one insert path for a new draft, so slashing cannot drift.
      *
      * @param array  $rules         Already sanitized; written with the post, like the design, so the draft never exists without them.
      * @param string $template_slug The catalogue template it comes from; '' when none (an import).
@@ -491,11 +487,6 @@ class LayoutRepository {
 
         if ( '' !== $logged_out_content ) {
             $meta[ Layout::META_LOGGED_OUT ] = self::filter_logged_out_content( $logged_out_content );
-        }
-
-        // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.
-        if ( Plan::layout_limit_reached( $this->count() ) ) {
-            throw new \InvalidArgumentException( esc_html( Plan::layout_limit_message() ) );
         }
 
         // wp_insert_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
