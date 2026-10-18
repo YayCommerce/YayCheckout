@@ -55,7 +55,7 @@
 
 ## Logging
 
-- **Rule:** log faults, not expected outcomes. PHP logs through `Helpers\Logger` (WooCommerce's log, source `yaycheckout`); `Logger::exception()` records the route, class, file, line and trace, and `BaseRestController` calls it for every 500. A 4xx the merchant caused, such as the layout limit or unpublishable markup, is not logged. The SPA logs through `apps/admin/src/lib/logger.ts`, where the failure is handled (`apps/admin/src/lib/query-client.ts`, `apps/admin/src/pages/500.tsx`), not at every layer.
+- **Rule:** log faults, not expected outcomes. PHP logs through `Helpers\Logger` (WooCommerce's log, source `yaycheckout`); `Logger::exception()` records the route, class, file, line and trace, and `BaseRestController` calls it for every 500. A 4xx the merchant caused, such as unpublishable markup, is not logged. The SPA logs through `apps/admin/src/lib/logger.ts`, where the failure is handled (`apps/admin/src/lib/query-client.ts`, `apps/admin/src/pages/500.tsx`), not at every layer.
 - **Why:** support reads WooCommerce → Status → Logs, and expected outcomes there bury the failures that matter. In the browser, `error` and `warn` stay in production so a merchant's console screenshot shows the cause; `info` and `debug` run only in development, so nothing sensitive goes in their messages.
 - **In code:** `includes/Helpers/Logger.php`, `apps/admin/src/lib/logger.ts`.
 
