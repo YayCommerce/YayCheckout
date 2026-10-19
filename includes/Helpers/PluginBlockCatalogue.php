@@ -1,0 +1,225 @@
+<?php
+namespace YayCheckout\Helpers;
+
+use YayCheckout\Blocks\BlockRegistry;
+use YayCheckout\Integrations\YayBoost;
+use YayCheckout\Services\LayoutMarkupReader;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Other Yay plugins' blocks that a layout can hold a placeholder for (yaycheckout/plugin-block), and where each
+ * stands on this site. The editor reads editor_data() as window.yayCheckoutPluginBlocks; the placeholder's
+ * variations, card and states all come from it.
+ */
+class PluginBlockCatalogue {
+
+    /** The placeholder block, packages/blocks/src/plugin-block/block.json. */
+    public const BLOCK = 'yaycheckout/plugin-block';
+
+    /** Entries follow the shape yayboost_entry() builds, before editor_data() resolves their state. */
+    public const FILTER = 'yaycheckout_plugin_blocks';
+
+    private const YAYBOOST_FILE = 'yayboost-sales-booster-for-woocommerce.php';
+
+    private const YAYBOOST_SLUG = 'yayboost-sales-booster-for-woocommerce';
+
+    /** YayBoost's blocks come with Pro; the card links here. */
+    private const YAYBOOST_PRO_URL = 'https://yaycommerce.com/yayboost-sales-booster-for-woocommerce/';
+
+    /** The YayCommerce Licenses screen, where YayBoost Pro takes its key. */
+    private const YAYCOMMERCE_LICENSES_PATH = 'admin.php?page=yaycommerce-licenses';
+
+    /**
+     * The catalogue after the filter.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function entries(): array {
+        $entries = [
+            self::yayboost_entry(
+                'yayboost/order-bump',
+                __( 'Order bump', 'yaycheckout' ),
+                __( 'Offer a one-click add-on right before payment.', 'yaycheckout' ),
+                'admin.php?page=yayboost-settings#/features/order_bump',
+                YayBoost::ORDER_BUMP,
+                YayBoost::ORDER_BUMP_SHORTCODE
+            ),
+            self::yayboost_entry(
+                'yayboost/free-shipping-bar',
+                __( 'Free shipping bar', 'yaycheckout' ),
+                __( 'Show how much more the shopper needs to spend for free shipping.', 'yaycheckout' ),
+                'admin.php?page=yayboost-settings#/features/free_shipping_bar',
+                YayBoost::FREE_SHIPPING_BAR,
+                YayBoost::FREE_SHIPPING_BAR_SHORTCODE
+            ),
+            // YayBoost has no block for this yet: the card says it is coming.
+            self::yayboost_entry(
+                'yayboost/frequently-bought-together',
+                __( 'Frequently bought together', 'yaycheckout' ),
+                __( 'Suggest products that go with the cart, added in one click.', 'yaycheckout' ),
+                '',
+                '',
+                '',
+                false
+            ),
+        ];
+
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- FILTER is a yaycheckout_ prefixed constant.
+        $filtered = array_values( (array) apply_filters( self::FILTER, $entries ) );
+
+        // A filtered-in entry may leave out the optional fields; every reader then gets them.
+        return array_map(
+            static function ( array $entry ): array {
+                return $entry + [
+                    'featureId'  => '',
+                    'shortcode'  => '',
+                    'upgradeUrl' => '',
+                    'licenseUrl' => '',
+                ];
+            },
+            $filtered
+        );
+    }
+
+    /**
+     * The block names the catalogue promotes.
+     *
+     * @return string[]
+     */
+    public static function targets(): array {
+        return array_values( array_filter( array_column( self::entries(), 'target' ), 'is_string' ) );
+    }
+
+    /**
+     * The catalogue with each entry's plugin path and state on this site, and what the user may do about it.
+     * Wire shape consumed by packages/blocks/src/plugin-block/plugin-blocks-data.ts.
+     */
+    public static function editor_data(): array {
+        if ( ! function_exists( 'get_plugins' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        $installed    = array_keys( get_plugins() );
+        $by_file      = array_combine( array_map( 'basename', $installed ), $installed );
+        $registered   = BlockRegistry::registered_names();
+        $integrations = array_column( IntegrationsHelper::get_integrations(), null, 'slug' );
+        $entries      = [];
+
+        foreach ( self::entries() as $entry ) {
+            $plugin_path = $by_file[ $entry['pluginFile'] ] ?? null;
+
+            if ( ! $entry['available'] ) {
+                $state = 'unavailable';
+            } elseif ( null === $plugin_path ) {
+                $state = 'not_installed';
+            } elseif ( ! is_plugin_active( $plugin_path ) ) {
+                $state = 'inactive';
+            } elseif ( 'yayboost' === $entry['plugin'] && false === YayBoost::get_instance()->is_licensed() ) {
+                // Unlicensed YayBoost Pro boots nothing: no block, no feature, no shortcode.
+                $state = 'unlicensed';
+            } elseif ( in_array( $entry['target'], $registered, true ) ) {
+                $state = 'ready';
+            } elseif ( self::feature_enabled( $entry ) && shortcode_exists( $entry['shortcode'] ) ) {
+                // The block is Pro's; the free edition fills the spot through the shortcode.
+                $state = 'shortcode';
+            } else {
+                $state = 'feature_off';
+            }
+
+            $integration = $integrations[ $entry['plugin'] ] ?? [];
+            $entries[]   = array_merge(
+                $entry,
+                [
+                    'pluginName'   => $integration['name'] ?? $entry['plugin'],
+                    'learnMoreUrl' => $integration['learn_more_url'] ?? $entry['learnMoreUrl'],
+                    'iconUrl'      => $integration['icon_url'] ?? null,
+                    'settingsUrl'  => '' === $entry['settingsUrl'] ? '' : admin_url( $entry['settingsUrl'] ),
+                    'licenseUrl'   => '' === $entry['licenseUrl'] ? '' : admin_url( $entry['licenseUrl'] ),
+                    'installUrl'   => admin_url( 'plugin-install.php?s=' . rawurlencode( $entry['wporgSlug'] ) . '&tab=search&type=term' ),
+                    'pluginsUrl'   => admin_url( 'plugins.php' ),
+                    'pluginPath'   => $plugin_path,
+                    'state'        => $state,
+                ]
+            );
+        }
+
+        return [
+            'canInstall'  => current_user_can( 'install_plugins' ),
+            'canActivate' => current_user_can( 'activate_plugins' ),
+            'entries'     => $entries,
+        ];
+    }
+
+    /**
+     * The catalogue targets $content holds a spot for, in document order: a placeholder for the target, or the
+     * target block itself while this site has it registered. An unregistered block prints nothing, so it is no spot.
+     *
+     * @return string[]
+     */
+    public static function spots_in( string $content ): array {
+        $targets    = self::targets();
+        $registered = BlockRegistry::registered_names();
+        $spots      = [];
+
+        foreach ( LayoutMarkupReader::flatten( parse_blocks( $content ) ) as $block ) {
+            $target = self::BLOCK === $block['blockName'] ? ( $block['attrs']['target'] ?? '' ) : $block['blockName'];
+
+            if ( ! in_array( $target, $targets, true ) ) {
+                continue;
+            }
+
+            if ( self::BLOCK === $block['blockName'] || in_array( $target, $registered, true ) ) {
+                $spots[] = $target;
+            }
+        }
+
+        return array_values( array_unique( $spots ) );
+    }
+
+    /**
+     * The markup a template prints for a spot that $target fits: the block itself when this site has registered
+     * it, so a merchant who already runs the plugin starts with it, or else its placeholder.
+     *
+     * @param array $attributes The block's attributes, the same for the block and its placeholder.
+     */
+    public static function block( string $target, array $attributes = [] ): string {
+        if ( in_array( $target, BlockRegistry::registered_names(), true ) ) {
+            return get_comment_delimited_block_content( $target, $attributes, '' );
+        }
+
+        return get_comment_delimited_block_content( self::BLOCK, array_merge( [ 'target' => $target ], $attributes ), '' );
+    }
+
+    /** Whether the entry's plugin reports its feature on; unknown counts as off. */
+    private static function feature_enabled( array $entry ): bool {
+        return 'yayboost' === $entry['plugin'] && true === YayBoost::get_instance()->feature_enabled( $entry['featureId'] );
+    }
+
+    /**
+     * One YayBoost entry.
+     *
+     * @param string $settings_path The plugin's settings screen for the block's feature, relative to wp-admin; '' for none.
+     * @param string $feature_id    YayBoost's id for the block's feature, e.g. order_bump; '' for none.
+     * @param string $shortcode     The shortcode that prints the feature without the block; '' for none.
+     * @param bool   $available     False while the plugin has no such block yet.
+     */
+    private static function yayboost_entry( string $target, string $title, string $pitch, string $settings_path, string $feature_id, string $shortcode, bool $available = true ): array {
+        return [
+            'target'       => $target,
+            'plugin'       => 'yayboost',
+            'pluginFile'   => self::YAYBOOST_FILE,
+            'wporgSlug'    => self::YAYBOOST_SLUG,
+            'title'        => $title,
+            'pitch'        => $pitch,
+            'settingsUrl'  => $settings_path,
+            'featureId'    => $feature_id,
+            'shortcode'    => $shortcode,
+            'upgradeUrl'   => self::YAYBOOST_PRO_URL,
+            'licenseUrl'   => self::YAYCOMMERCE_LICENSES_PATH,
+            // IntegrationsHelper's learn_more_url wins in editor_data(); this is the fallback for a filtered-out integration.
+            'learnMoreUrl' => YAYCHECKOUT_DOCS_URL,
+            'available'    => $available,
+        ];
+    }
+}
