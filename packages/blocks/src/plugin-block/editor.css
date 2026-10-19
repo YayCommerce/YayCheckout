@@ -58,3 +58,21 @@
 	color: #1e1e1e;
 	font-weight: 500;
 }
+
+/* A spot that shows a stand-in for the plugin's output (FbtPreview): no card around it, so it looks as on the storefront. */
+.editor-styles-wrapper .yaycheckout-plugin-block.has-preview {
+	padding: 0;
+	border: 0;
+	background: none;
+	font-size: inherit;
+	line-height: inherit;
+}
+
+.editor-styles-wrapper .yaycheckout-plugin-block__preview {
+	pointer-events: none;
+	user-select: none;
+}
+
+.editor-styles-wrapper .yaycheckout-plugin-block__preview .yaycheckout-fbt__image {
+	border-radius: 2px;
+}
