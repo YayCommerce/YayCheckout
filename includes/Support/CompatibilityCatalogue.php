@@ -38,6 +38,7 @@ final class CompatibilityCatalogue {
     public static function bundled(): array {
         $core      = __( 'Core gateway.', 'yaycheckout' );
         $community = __( 'Reported working by merchants, not tested by us.', 'yaycheckout' );
+        $pricing   = __( 'Pricing rules, free gifts, cart discounts and fees show in the order summary.', 'yaycheckout' );
 
         return [
             'gateways' => [
@@ -50,7 +51,8 @@ final class CompatibilityCatalogue {
             'plugins'  => [
                 'yayboost'       => self::entry( self::STATUS_VERIFIED, __( 'Order bumps you can place as a block.', 'yaycheckout' ) ),
                 'yayloyalty'     => self::entry( self::STATUS_VERIFIED, __( 'Points balance and redemption at checkout.', 'yaycheckout' ) ),
-                'yaypricing-pro' => self::entry( self::STATUS_VERIFIED, __( 'Pricing rules, free gifts, cart discounts and fees show in the order summary.', 'yaycheckout' ) ),
+                'yaypricing'     => self::entry( self::STATUS_VERIFIED, $pricing ),
+                'yaypricing-pro' => self::entry( self::STATUS_VERIFIED, $pricing ),
             ],
         ];
     }
