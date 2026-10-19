@@ -5,7 +5,7 @@ Update when: a requirement or a setup step changes, the review, promotion or rel
 
 # YayCheckout: WooCommerce Checkout Builder
 
-A checkout builder for WooCommerce: merchants build checkout layouts from blocks, assign them to shoppers, and style them, and the storefront renders the active layout in place of WooCommerce's checkout form. One repository ships a Free and a Pro build ([how they split](docs/architecture.md#free-and-pro)).
+A checkout builder for WooCommerce: merchants build checkout layouts from blocks, assign them to shoppers, and style them, and the storefront renders the active layout in place of WooCommerce's checkout form. One repository ships a Pro build from `dev/edd` and a Free build from `dev/lite` ([how they split](docs/architecture.md#free-and-pro)).
 
 ## Requirements
 
@@ -60,7 +60,7 @@ The git rules are in [CLAUDE.md § Git](CLAUDE.md#git): branch names, Convention
 
 - **Review.** Every PR into `dev/edd` needs one approval from a teammate other than its author, then it is squash-merged.
 - **Promotion.** `dev/edd` reaches `main` by a PR with a merge commit, before a release.
-- **Releases.** The release commands are in [CLAUDE.md § Commands](CLAUDE.md#commands). What the release builds and checks is in [docs/architecture.md § Build and release](docs/architecture.md#build-and-release), and the rules for changing it are in [.claude/rules/release.md](.claude/rules/release.md). Release notes go in `readme.txt`.
+- **Releases.** Build Pro from `dev/edd` and Free from `dev/lite`, after merging `dev/edd` into `dev/lite`. The release commands are in [CLAUDE.md § Commands](CLAUDE.md#commands). What the release builds and checks is in [docs/architecture.md § Build and release](docs/architecture.md#build-and-release), and the rules for changing it are in [.claude/rules/release.md](.claude/rules/release.md). Release notes go in `readme.txt`.
 
 ## Agent tooling
 
