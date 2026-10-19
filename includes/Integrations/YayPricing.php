@@ -7,16 +7,20 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Fixes for YayPricing, active only while its encouraged-notice script is enqueued.
+ * Fixes for YayPricing and YayPricing Lite, active only while their scripts are enqueued.
  *
- * YayPricing refreshes its "spend more to get…" notice on cart-page events, never on updated_checkout,
- * so the Items block's stepper, remove link and Coupon form left it stale. Its unit price also starts
- * with "2 ×", which the Items block's "each" then contradicts.
+ * Its unit price starts with "2 ×", which the Items block's "each" then contradicts. Pro also refreshes
+ * its "spend more to get…" notice on cart-page events, never on updated_checkout, so the Items block's
+ * stepper, remove link and Coupon form left it stale. Lite has no such notice.
  */
 class YayPricing {
 
     use SingletonTrait;
 
+    /** Both editions enqueue it on every page. */
+    private const BASE_SCRIPT = 'yaydp-frontend-index';
+
+    /** Pro only. */
     private const NOTICE_SCRIPT = 'yaydp-frontend-encouraged-notice';
 
     /** YayPricing's refresh listens for this cart-page event; updated_checkout runs after every fragment swap. */
@@ -30,11 +34,14 @@ class YayPricing {
     }
 
     public function enqueue(): void {
-        if ( ! wp_script_is( self::NOTICE_SCRIPT, 'enqueued' ) || ! CheckoutPage::get_instance()->takes_over() ) {
+        if ( ! wp_script_is( self::BASE_SCRIPT, 'enqueued' ) || ! CheckoutPage::get_instance()->takes_over() ) {
             return;
         }
 
-        wp_add_inline_script( self::NOTICE_SCRIPT, self::REFRESH_JS );
+        if ( wp_script_is( self::NOTICE_SCRIPT, 'enqueued' ) ) {
+            wp_add_inline_script( self::NOTICE_SCRIPT, self::REFRESH_JS );
+        }
+
         wp_add_inline_style( generate_block_asset_handle( 'yaycheckout/order-summary-items', 'style' ), self::UNIT_PRICE_CSS );
     }
 }
