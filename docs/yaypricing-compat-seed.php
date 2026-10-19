@@ -1,9 +1,17 @@
 <?php
-// wp eval-file seed.php [clean]
-$clean = isset( $args[0] ) && 'clean' === $args[0];
+// Seeds YayPricing test rules and "YPTEST " products. It REPLACES all three YayPricing rule options, so run it
+// only on a test site:  wp eval-file docs/yaypricing-compat-seed.php run|clean
+$mode = $args[0] ?? '';
+if ( ! in_array( $mode, [ 'run', 'clean' ], true ) ) {
+	echo "Pass run or clean. This deletes every YayPricing rule on this site.\n";
+	return;
+}
+$clean = 'clean' === $mode;
 $opts  = [ 'yaydp_product_pricing_rules', 'yaydp_cart_discount_rules', 'yaydp_checkout_fee_rules' ];
 foreach ( get_posts( [ 'post_type' => 'product', 'post_status' => 'any', 's' => 'YPTEST', 'numberposts' => -1 ] ) as $p ) {
-	wp_delete_post( $p->ID, true );
+	if ( 0 === strpos( $p->post_title, 'YPTEST ' ) ) {
+		wp_delete_post( $p->ID, true );
+	}
 }
 foreach ( $opts as $o ) { delete_option( $o ); }
 if ( $clean ) { echo "cleaned\n"; return; }
