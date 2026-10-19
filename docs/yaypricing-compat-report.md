@@ -26,7 +26,7 @@ Script: `docs/yaypricing-compat-seed.php`. Run `wp eval-file docs/yaypricing-com
 
 ## 3. Findings (YayCheckout side)
 
-**Status** (branch `alan/fix/yaypricing-compat`, each fix re-tested in a browser): YC-1, YC-2, YC-3 and YC-5 are fixed. YC-4 is YayPricing's own behaviour and YC-6 is a team decision, so neither was changed.
+**Status** (branch `alan/fix/yaypricing-compat`, each fix re-tested in a browser): YC-1, YC-2, YC-3 and YC-5 are fixed. YC-6 is fixed too. YC-4 is YayPricing's own behaviour, so it was not changed.
 
 ### YC-1 · Low · The coupon chip showed a × that did nothing (fixed)
 - **Symptom:** a cart-discount rule's virtual coupon showed as a chip `YPTEST CART_DISCOUNT 5 · -16 $ ×`. Clicking × reported "Coupon has been removed." but the chip and the discount stayed, because YayPricing re-applies its coupon on the next totals calculation.
@@ -56,8 +56,10 @@ Script: `docs/yaypricing-compat-seed.php`. Run `wp eval-file docs/yaypricing-com
 - **Verified:** the notice follows the subtotal (81 $ at 320 $) and disappears once the 400 $ threshold is met.
 - **Note:** after a refresh YayPricing nests its wrapper inside the existing `.checkout-fee-encouraged-notice`. Only one block is visible; this is YayPricing's own markup.
 
-### YC-6 · Info · YayPricing is not in the compatibility catalogue (not changed)
-- The scan reports `unverified` ("Hooks into checkout submission"). Marking it verified is the team's call.
+### YC-6 · Info · YayPricing was not in the compatibility catalogue (fixed)
+- The scan reported `unverified` ("Hooks into checkout submission") and Settings → Integrations had no YayPricing card.
+- **Fix:** `yaypricing-pro` is now `verified` in `CompatibilityCatalogue::bundled()`, and `IntegrationsHelper` lists YayPricing (detected through `YAYDP_VERSION`). The remote catalogue, when it loads, still overrides the bundled list.
+- **Verified:** Compatibility shows "Verified" for YayPricing Pro, and Integrations lists it under "Detected plugins" with its version.
 
 ## 4. Checked and working
 
