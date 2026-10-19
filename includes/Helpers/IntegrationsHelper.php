@@ -38,6 +38,14 @@ class IntegrationsHelper {
                 // YayLoyalty has no icon of its own yet; it borrows YayBoost's.
                 YAYCHECKOUT_PLUGIN_URL . self::YAYBOOST_ICON_PATH
             ),
+            self::describe(
+                'yaypricing',
+                __( 'YayPricing', 'yaycheckout' ),
+                __( 'Dynamic pricing, free gifts and cart discounts that show in the order summary.', 'yaycheckout' ),
+                'YAYDP_VERSION',
+                null,
+                'https://yaycommerce.com/yaypricing-woocommerce-dynamic-pricing-and-discounts/'
+            ),
         ];
 
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- FILTER is a yaycheckout_ prefixed constant.

@@ -48,8 +48,9 @@ final class CompatibilityCatalogue {
                 'ppcp-gateway' => self::entry( self::STATUS_COMMUNITY, $community ),
             ],
             'plugins'  => [
-                'yayboost'   => self::entry( self::STATUS_VERIFIED, __( 'Order bumps you can place as a block.', 'yaycheckout' ) ),
-                'yayloyalty' => self::entry( self::STATUS_VERIFIED, __( 'Points balance and redemption at checkout.', 'yaycheckout' ) ),
+                'yayboost'       => self::entry( self::STATUS_VERIFIED, __( 'Order bumps you can place as a block.', 'yaycheckout' ) ),
+                'yayloyalty'     => self::entry( self::STATUS_VERIFIED, __( 'Points balance and redemption at checkout.', 'yaycheckout' ) ),
+                'yaypricing-pro' => self::entry( self::STATUS_VERIFIED, __( 'Pricing rules, free gifts, cart discounts and fees show in the order summary.', 'yaycheckout' ) ),
             ],
         ];
     }
