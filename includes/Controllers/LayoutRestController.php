@@ -3,6 +3,7 @@ namespace YayCheckout\Controllers;
 
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Helpers\DateHelper;
+use YayCheckout\Helpers\ExceptionHelper;
 use YayCheckout\Helpers\PreviewToken;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
@@ -251,7 +252,7 @@ class LayoutRestController extends BaseRestController {
                 ->with_active_only( (bool) $request->get_param( 'active' ) )
                 ->with_order( (string) $request->get_param( 'orderby' ), (string) $request->get_param( 'order' ) );
         } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
+            return $this->error_invalid_arguments( ExceptionHelper::message( $ex ) );
         }
 
         $result = $this->layouts->query( $query );
@@ -301,7 +302,7 @@ class LayoutRestController extends BaseRestController {
 
             return $this->layouts->create( $name, $template_slug )->to_array();
         } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
+            return $this->error_invalid_arguments( ExceptionHelper::message( $ex ) );
         }
     }
 
@@ -422,7 +423,7 @@ class LayoutRestController extends BaseRestController {
         try {
             $this->layouts->delete( $id );
         } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
+            return $this->error_invalid_arguments( ExceptionHelper::message( $ex ) );
         }
 
         return [
@@ -449,7 +450,7 @@ class LayoutRestController extends BaseRestController {
         try {
             return $op( $id )->to_array();
         } catch ( \InvalidArgumentException $ex ) {
-            return $this->error_invalid_arguments( $ex->getMessage() );
+            return $this->error_invalid_arguments( ExceptionHelper::message( $ex ) );
         }
     }
 

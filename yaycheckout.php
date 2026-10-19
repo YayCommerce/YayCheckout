@@ -118,7 +118,6 @@ if ( ! function_exists( 'YayCheckout\\plugin_init' ) ) {
         add_action( 'before_woocommerce_init', [ \YayCheckout\Engine\ActDeact::class, 'before_woocommerce_init' ] );
 
         YayCheckout::initialize();
-        I18n::load_plugin_textdomain();
     }
 }//end if
 

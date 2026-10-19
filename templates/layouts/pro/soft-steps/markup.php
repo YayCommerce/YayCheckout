@@ -13,7 +13,8 @@
  * headed by a large question; Continue / Back / Place Order follow the step as pill buttons.
  * The address order follows WooCommerce's Shipping destination when the layout is created: with shipping
  * main, Step 1 asks for Shipping and Step 3 offers "Billing address is the same as shipping"; with billing
- * main, Step 1 asks for Billing and offers a different shipping address there, before the rates in Step 2;
+ * main, Step 1 asks for Billing and offers "Shipping address is the same as billing" there, ticked, before the
+ * rates in Step 2;
  * with shipping forced to billing, Billing alone.
  */
 
@@ -73,7 +74,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:column -->
 
 <!-- wp:column {"verticalAlignment":"bottom","width":"29.41%","yaycheckoutVisibility":{"action":"show","rules":[{"type":"block","block":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","is":"not_empty"}]}} -->
-<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:29.41%"><!-- wp:yaycheckout/field {"blockId":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:29.41%"><!-- wp:yaycheckout/field {"blockId":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
 <!-- wp:column {"verticalAlignment":"bottom","width":"29.41%"} -->
@@ -81,7 +82,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
-<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_country","type":"country","label":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","required":true} /-->
+<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_country","type":"country","label":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","required":true} /-->
 
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Phone (optional)', 'yaycheckout' ); ?>"} /-->
 <?php
@@ -129,7 +130,9 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/order-summary -->
 
 <!-- wp:group {"style":{"spacing":{"padding":{"top":"56px","right":"24px","bottom":"80px","left":"24px"},"blockGap":"40px"}},"layout":{"type":"constrained","contentSize":"560px"}} -->
-<div class="wp-block-group" style="padding-top:56px;padding-right:24px;padding-bottom:80px;padding-left:24px"><!-- wp:yaycheckout/steps {"layout":"one-at-a-time","showHeadings":false} -->
+<div class="wp-block-group" style="padding-top:56px;padding-right:24px;padding-bottom:80px;padding-left:24px"><!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
+<!-- wp:yaycheckout/steps {"layout":"one-at-a-time","showHeadings":false} -->
 <!-- wp:yaycheckout/step {"title":"<?php esc_html_e( 'Delivery', 'yaycheckout' ); ?>","style":{"color":{"background":"transparent"},"border":{"width":"0px"},"spacing":{"padding":{"top":"0","right":"0","bottom":"0","left":"0"},"blockGap":"32px"}}} -->
 <!-- wp:group {"style":{"spacing":{"blockGap":"8px"}}} -->
 <div class="wp-block-group"><!-- wp:heading {"level":1,"style":{"typography":{"fontSize":"34px","fontWeight":"600","lineHeight":"1.15","letterSpacing":"-0.02em"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
@@ -152,7 +155,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <?php if ( 'billing' === $yaycheckout_destination ) : ?>
 
 
-<!-- wp:yaycheckout/different-address {"shipLabel":"<?php esc_html_e( 'Ship to a different address', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/different-address {"ticked":"same","sameShipLabel":"<?php esc_html_e( 'Shipping address is the same as billing', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:yaycheckout/shipping {"showTitle":false} -->
 <?php $yaycheckout_address_fields( 'shipping' ); ?>

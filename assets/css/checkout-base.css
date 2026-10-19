@@ -767,6 +767,19 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	opacity: 0.5;
 }
 
+/*
+ * The Checkout block isn't a core layout, so core's flow-layout trim doesn't reach its children: a first or last
+ * block (Columns' 1.75em bottom margin, a Group, a heading) would push its margin outside the form. A child's own
+ * margin setting is inline, so it still wins.
+ */
+.yaycheckout-checkout > :first-child {
+	margin-block-start: 0;
+}
+
+.yaycheckout-checkout > :last-child {
+	margin-block-end: 0;
+}
+
 /* Columns that lay out address fields side by side keep the fields' own spacing, not core's block margin. */
 .yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-columns {
 	margin-block: 0;

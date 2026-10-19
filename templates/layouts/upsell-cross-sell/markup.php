@@ -13,10 +13,13 @@
  * yet, so this template leaves them out.
  *
  * The address order follows WooCommerce's Shipping destination when the layout is created: Shipping in the
- * address card and Billing inside the Payment card behind Different Address, as in the mock, when shipping
- * is main; Billing then Shipping in the address card when billing is main; Billing alone when shipping is
- * forced to billing. Both sections print the same fields, from $yaycheckout_address_fields: 01's fields
- * without Company, with the apartment line behind a link.
+ * address card and Billing inside the Payment card behind "Billing address is the same as shipping", ticked,
+ * as in the mock, when shipping is main; Billing then Shipping in the address card behind its mirror,
+ * "Shipping address is the same as billing", ticked, when billing is main; Billing alone when shipping is
+ * forced to billing. The mock never draws the revealed section, so both sections print the same fields, from
+ * $yaycheckout_address_fields: 01's fields without Company, with the apartment line behind a link. The mock
+ * puts Phone beside Email in the contact card, but a Field block lives only in an address section, so Phone
+ * stays last in each section.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -80,12 +83,12 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"blockId":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
-<!-- wp:column {"verticalAlignment":"bottom","width":"25%"} -->
-<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_postcode","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:column {"verticalAlignment":"bottom"} -->
+<div class="wp-block-column is-vertically-aligned-bottom"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_postcode","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
-<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'In case we need to contact you about your order', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_phone","type":"tel","label":"<?php esc_html_e( 'Phone', 'yaycheckout' ); ?>"} /-->
 <?php
 };
 ?>
@@ -125,7 +128,9 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <div class="wp-block-group" style="padding-top:32px;padding-right:24px;padding-bottom:80px;padding-left:24px"><!-- wp:yaycheckout/checkout -->
 <!-- wp:columns {"style":{"spacing":{"blockGap":{"left":"32px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column {"width":"60%","style":{"spacing":{"blockGap":"16px"}}} -->
-<div class="wp-block-column" style="flex-basis:60%"><!-- wp:group {"borderColor":"yaycheckout-border","style":{"color":{"background":"#ffffff"},"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"24px","right":"24px","bottom":"24px","left":"24px"},"blockGap":"12px"}}} -->
+<div class="wp-block-column" style="flex-basis:60%"><!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
+<!-- wp:group {"borderColor":"yaycheckout-border","style":{"color":{"background":"#ffffff"},"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"24px","right":"24px","bottom":"24px","left":"24px"},"blockGap":"12px"}}} -->
 <div class="wp-block-group has-border-color has-background has-yaycheckout-border-border-color" style="border-style:solid;border-width:1px;border-radius:4px;background-color:#ffffff;padding-top:24px;padding-right:24px;padding-bottom:24px;padding-left:24px"><!-- wp:group {"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
 <div class="wp-block-group"><!-- wp:heading {"style":{"typography":{"fontSize":"20px","fontWeight":"400"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
 <h2 class="wp-block-heading" style="margin-top:0;margin-bottom:0;font-size:20px;font-weight:400"><?php esc_html_e( 'Contact information', 'yaycheckout' ); ?></h2>
@@ -134,7 +139,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- wp:yaycheckout/login {"textColor":"yaycheckout-muted","text":"<?php esc_html_e( 'Have an account? Log in', 'yaycheckout' ); ?>","linkText":"<?php esc_html_e( 'Log in', 'yaycheckout' ); ?>"} /--></div>
 <!-- /wp:group -->
 
-<!-- wp:yaycheckout/email {"placeholder":"<?php esc_html_e( 'you@example.com', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'You are currently checking out as a guest.', 'yaycheckout' ); ?>"} /--></div>
+<!-- wp:yaycheckout/email {"description":"<?php esc_html_e( 'You are currently checking out as a guest.', 'yaycheckout' ); ?>"} /--></div>
 <!-- /wp:group -->
 
 <!-- wp:group {"borderColor":"yaycheckout-border","style":{"color":{"background":"#ffffff"},"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"24px","right":"24px","bottom":"24px","left":"24px"},"blockGap":"16px"}}} -->
@@ -148,7 +153,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/billing -->
 <?php if ( 'billing' === $yaycheckout_destination ) : ?>
 
-<!-- wp:yaycheckout/different-address /-->
+<!-- wp:yaycheckout/different-address {"ticked":"same","sameShipLabel":"<?php esc_html_e( 'Shipping address is the same as billing', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:yaycheckout/shipping {"title":"<?php esc_html_e( 'Shipping address', 'yaycheckout' ); ?>","headingLevel":2,"style":{"yaycheckout":{"title":{"typography":{"fontSize":"20px","fontWeight":"400"}}}}} -->
 <?php $yaycheckout_address_fields( 'shipping' ); ?>

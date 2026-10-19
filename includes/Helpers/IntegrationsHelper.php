@@ -12,8 +12,8 @@ class IntegrationsHelper {
     /** Entries follow the shape describe() emits. */
     public const FILTER = 'yaycheckout_integrations';
 
-    /** YayBoost's icon on the WordPress.org plugin directory. */
-    private const YAYBOOST_ICON_URL = 'https://ps.w.org/yayboost-sales-booster-for-woocommerce/assets/icon-256x256.png?rev=3498248';
+    /** YayBoost's icon, bundled: wordpress.org disallows loading images from a remote host. */
+    private const YAYBOOST_ICON_PATH = 'assets/images/integrations/yayboost.png';
 
     /**
      * Wire shape consumed by the SPA; mirrored by integrationWireSchema.
@@ -27,7 +27,7 @@ class IntegrationsHelper {
                 __( 'YayBoost', 'yaycheckout' ),
                 __( 'Boost conversions, increase AOV, and create urgency with powerful sales-boosting tools for WooCommerce.', 'yaycheckout' ),
                 'YAYBOOST_VERSION',
-                self::YAYBOOST_ICON_URL,
+                YAYCHECKOUT_PLUGIN_URL . self::YAYBOOST_ICON_PATH,
                 'https://docs.yaycommerce.com/yayboost'
             ),
             self::describe(
@@ -36,7 +36,7 @@ class IntegrationsHelper {
                 __( 'Points balance and redemption at checkout.', 'yaycheckout' ),
                 'YAYLOYALTY_VERSION',
                 // YayLoyalty has no icon of its own yet; it borrows YayBoost's.
-                self::YAYBOOST_ICON_URL
+                YAYCHECKOUT_PLUGIN_URL . self::YAYBOOST_ICON_PATH
             ),
         ];
 

@@ -23,7 +23,7 @@
 		"focus_border": "",
 		"focus_background": "",
 		"focus_style": "",
-		"label": "floating"
+		"label": "hidden"
 	},
 	"checkboxes": {
 		"size": 16,

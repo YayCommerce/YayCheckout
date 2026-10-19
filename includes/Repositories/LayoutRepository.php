@@ -4,6 +4,7 @@ namespace YayCheckout\Repositories;
 use YayCheckout\Blocks\BlockRegistry;
 use YayCheckout\Controllers\LayoutTemplateCatalogue;
 use YayCheckout\Enums\LayoutStatus;
+use YayCheckout\Helpers\ExceptionHelper;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Models\LayoutQuery;
@@ -15,9 +16,6 @@ defined( 'ABSPATH' ) || exit;
 
 /** All layout storage access; publishing and the active set have one owner. */
 class LayoutRepository {
-
-    /** Layouts the Free edition may hold. */
-    public const FREE_LIMIT = 3;
 
     /** What bulk() runs; each is a method of this class taking a layout id. */
     public const BULK_ACTIONS = [ 'deactivate', 'archive', 'restore', 'delete' ];
@@ -171,7 +169,7 @@ class LayoutRepository {
         // Same refusal as activate(): the status write below would un-archive it.
         if ( LayoutStatus::ARCHIVED === $post->post_status ) {
             throw new \InvalidArgumentException(
-                __( 'Restore this layout from the archive before publishing it.', 'yaycheckout' )
+                esc_html__( 'Restore this layout from the archive before publishing it.', 'yaycheckout' )
             );
         }
 
@@ -192,10 +190,10 @@ class LayoutRepository {
     public function activate( int $id ): Layout {
         $layout = $this->find_or_throw( $id );
 
-        // Publishing would silently restore it from the trash and could exceed FREE_LIMIT.
+        // Publishing would silently restore it from the trash.
         if ( LayoutStatus::ARCHIVED === $layout->post_status ) {
             throw new \InvalidArgumentException(
-                __( 'Restore this layout from the archive before activating it.', 'yaycheckout' )
+                esc_html__( 'Restore this layout from the archive before activating it.', 'yaycheckout' )
             );
         }
 
@@ -219,7 +217,7 @@ class LayoutRepository {
         $error = LayoutMarkupReader::publish_error( $markup, BlockRegistry::locked_blocks() );
 
         if ( '' !== $error ) {
-            throw new \InvalidArgumentException( $error );
+            throw new \InvalidArgumentException( esc_html( $error ) );
         }
     }
 
@@ -245,7 +243,7 @@ class LayoutRepository {
             );
 
             if ( is_wp_error( $updated ) ) {
-                throw new \RuntimeException( sprintf( 'Layout %d could not be moved to draft.', $id ) );
+                throw new \RuntimeException( esc_html( sprintf( 'Layout %d could not be moved to draft.', $id ) ) );
             }
 
             $post = get_post( $id );
@@ -272,7 +270,7 @@ class LayoutRepository {
         $post = $this->post_or_throw( $id );
 
         if ( LayoutStatus::ARCHIVED === $post->post_status ) {
-            throw new \InvalidArgumentException( __( 'This layout is already archived.', 'yaycheckout' ) );
+            throw new \InvalidArgumentException( esc_html__( 'This layout is already archived.', 'yaycheckout' ) );
         }
 
         // LayoutActiveGuard refuses to trash the active layout; archiving is the merchant's explicit choice, so deactivate first.
@@ -281,7 +279,7 @@ class LayoutRepository {
         $trashed = wp_trash_post( $id );
 
         if ( ! $trashed instanceof \WP_Post ) {
-            throw new \RuntimeException( sprintf( 'Layout %d could not be archived.', $id ) );
+            throw new \RuntimeException( esc_html( sprintf( 'Layout %d could not be archived.', $id ) ) );
         }
 
         // wp_trash_post() hands back the pre-update object; only the status moved.
@@ -300,19 +298,18 @@ class LayoutRepository {
         $post = $this->post_or_throw( $id );
 
         if ( LayoutStatus::ARCHIVED !== $post->post_status ) {
-            throw new \InvalidArgumentException( __( 'Layout is not archived.', 'yaycheckout' ) );
+            throw new \InvalidArgumentException( esc_html__( 'Layout is not archived.', 'yaycheckout' ) );
         }
 
         $restored = wp_untrash_post( $id );
 
         if ( ! $restored instanceof \WP_Post ) {
-            throw new \RuntimeException( sprintf( 'Layout %d could not be restored.', $id ) );
+            throw new \RuntimeException( esc_html( sprintf( 'Layout %d could not be restored.', $id ) ) );
         }
 
         // wp_untrash_post() hands back the pre-update object; only the status moved.
         $restored->post_status = LayoutStatus::DRAFT;
 
-        // No Plan::layout_limit_reached() check: a restore may exceed the Free cap, unlike a new layout.
         return $this->to_layout( $restored, false );
     }
 
@@ -341,7 +338,7 @@ class LayoutRepository {
      * activating it as-is lets a shopper place an order, its design, and its logged-out view. The post
      * type's template only applies to auto-drafts, not to this insert.
      *
-     * @throws \InvalidArgumentException When the template is not available, the layout limit is reached or the insert fails.
+     * @throws \InvalidArgumentException When the template is not available or the insert fails.
      */
     public function create( string $title, string $template_slug ): Layout {
         return $this->insert_draft(
@@ -422,7 +419,7 @@ class LayoutRepository {
         $title = trim( $title );
 
         if ( '' === $title ) {
-            throw new \InvalidArgumentException( __( 'Name is required.', 'yaycheckout' ) );
+            throw new \InvalidArgumentException( esc_html__( 'Name is required.', 'yaycheckout' ) );
         }
 
         // Slashed by update_post(): a title may hold backslashes.
@@ -470,7 +467,7 @@ class LayoutRepository {
     }
 
     /**
-     * The one insert path for a new draft, so the cap and slashing cannot drift.
+     * The one insert path for a new draft, so slashing cannot drift.
      *
      * @param array  $rules         Already sanitized; written with the post, like the design, so the draft never exists without them.
      * @param string $template_slug The catalogue template it comes from; '' when none (an import).
@@ -492,11 +489,6 @@ class LayoutRepository {
             $meta[ Layout::META_LOGGED_OUT ] = self::filter_logged_out_content( $logged_out_content );
         }
 
-        // LayoutCapGuard only sees wp/v2 inserts; this path must enforce the cap itself.
-        if ( Plan::layout_limit_reached( $this->count() ) ) {
-            throw new \InvalidArgumentException( Plan::layout_limit_message() );
-        }
-
         // wp_insert_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
         $new_id = wp_insert_post(
             wp_slash(
@@ -512,7 +504,7 @@ class LayoutRepository {
         );
 
         if ( is_wp_error( $new_id ) ) {
-            throw new \InvalidArgumentException( $new_id->get_error_message() );
+            throw new \InvalidArgumentException( esc_html( $new_id->get_error_message() ) );
         }
 
         return $this->find( (int) $new_id );
@@ -529,15 +521,15 @@ class LayoutRepository {
         $post = $this->post_or_throw( $id );
 
         if ( LayoutStatus::ARCHIVED !== $post->post_status ) {
-            throw new \InvalidArgumentException( __( 'Archive this layout before deleting it.', 'yaycheckout' ) );
+            throw new \InvalidArgumentException( esc_html__( 'Archive this layout before deleting it.', 'yaycheckout' ) );
         }
 
         if ( $this->is_active( $id ) ) {
-            throw new \InvalidArgumentException( __( 'Deactivate this layout before deleting it.', 'yaycheckout' ) );
+            throw new \InvalidArgumentException( esc_html__( 'Deactivate this layout before deleting it.', 'yaycheckout' ) );
         }
 
         if ( ! wp_delete_post( $id, true ) ) {
-            throw new \RuntimeException( sprintf( 'Layout %d could not be deleted.', $id ) );
+            throw new \RuntimeException( esc_html( sprintf( 'Layout %d could not be deleted.', $id ) ) );
         }
     }
 
@@ -554,7 +546,7 @@ class LayoutRepository {
      */
     public function bulk( string $action, array $ids ): array {
         if ( ! in_array( $action, self::BULK_ACTIONS, true ) ) {
-            throw new \InvalidArgumentException( sprintf( 'Unknown bulk action "%s".', $action ) );
+            throw new \InvalidArgumentException( esc_html( sprintf( 'Unknown bulk action "%s".', $action ) ) );
         }
 
         $done   = [];
@@ -563,11 +555,11 @@ class LayoutRepository {
         foreach ( array_unique( array_map( 'intval', $ids ) ) as $id ) {
             try {
                 if ( ! self::is_layout( $id ) ) {
-                    throw new \InvalidArgumentException( __( 'Layout not found.', 'yaycheckout' ) );
+                    throw new \InvalidArgumentException( esc_html__( 'Layout not found.', 'yaycheckout' ) );
                 }
 
                 if ( 'archive' === $action && $this->is_active( $id ) ) {
-                    throw new \InvalidArgumentException( __( 'Deactivate this layout before archiving it.', 'yaycheckout' ) );
+                    throw new \InvalidArgumentException( esc_html__( 'Deactivate this layout before archiving it.', 'yaycheckout' ) );
                 }
 
                 $this->{$action}( $id );
@@ -575,7 +567,7 @@ class LayoutRepository {
             } catch ( \InvalidArgumentException $ex ) {
                 $failed[] = [
                     'id'      => $id,
-                    'message' => $ex->getMessage(),
+                    'message' => ExceptionHelper::message( $ex ),
                 ];
             }
         }
@@ -616,7 +608,7 @@ class LayoutRepository {
         $post = get_post( $id );
 
         if ( ! self::is_layout( $post ) ) {
-            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+            throw new \InvalidArgumentException( esc_html( sprintf( 'Layout %d not found.', $id ) ) );
         }
 
         return $post;
@@ -629,7 +621,7 @@ class LayoutRepository {
         $layout = $this->find( $id );
 
         if ( null === $layout ) {
-            throw new \InvalidArgumentException( sprintf( 'Layout %d not found.', $id ) );
+            throw new \InvalidArgumentException( esc_html( sprintf( 'Layout %d not found.', $id ) ) );
         }
 
         return $layout;
@@ -658,7 +650,7 @@ class LayoutRepository {
         $result = wp_update_post( wp_slash( $fields ), true );
 
         if ( is_wp_error( $result ) ) {
-            throw new \InvalidArgumentException( $result->get_error_message() );
+            throw new \InvalidArgumentException( esc_html( $result->get_error_message() ) );
         }
     }
 
