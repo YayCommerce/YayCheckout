@@ -15,6 +15,8 @@ class IntegrationsHelper {
     /** YayBoost's icon, bundled: wordpress.org disallows loading images from a remote host. */
     private const YAYBOOST_ICON_PATH = 'assets/images/integrations/yayboost.png';
 
+    private const YAYCURRENCY_ICON_PATH = 'assets/images/integrations/yaycurrency.png';
+
     /**
      * Wire shape consumed by the SPA; mirrored by integrationWireSchema.
      *
@@ -43,8 +45,7 @@ class IntegrationsHelper {
                 __( 'YayCurrency', 'yaycheckout' ),
                 __( 'Multi-currency switcher with prices converted and paid in the shopper\'s currency.', 'yaycheckout' ),
                 'YAY_CURRENCY_VERSION',
-                // YayCurrency has no icon of its own yet; it borrows YayBoost's.
-                YAYCHECKOUT_PLUGIN_URL . self::YAYBOOST_ICON_PATH,
+                YAYCHECKOUT_PLUGIN_URL . self::YAYCURRENCY_ICON_PATH,
                 'https://docs.yaycommerce.com/yaycurrency'
             ),
         ];
