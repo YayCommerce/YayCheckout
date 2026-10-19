@@ -79,6 +79,12 @@ class CheckoutSavingsNote {
 
             $regular = $product->get_regular_price();
 
+            // An extension can zero the regular price on its free items (YayPricing's gifts); the saved product still has the real one.
+            if ( ! is_numeric( $regular ) || 0.0 === (float) $regular ) {
+                $saved   = wc_get_product( $product->get_id() );
+                $regular = $saved ? $saved->get_regular_price() : $regular;
+            }
+
             if ( ! is_numeric( $regular ) ) {
                 continue;
             }
