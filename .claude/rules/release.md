@@ -19,6 +19,7 @@ What the release does is in [docs/architecture.md § Build and release](../../do
 - **The zip holds only what `cmd_release` in `scripts/run.sh` copies.** A new runtime file outside its copy list must be added to that list. A dev-only file inside a shipped directory must be deleted in its strip step.
 - **The version lives in three lines:** the plugin header's `Version:` and the `YAYCHECKOUT_VERSION` define in `yaycheckout.php`, and `Stable tag:` in `readme.txt`. `update_version` writes all three with `sed`, and `get_version` reads the define back. Change a line's shape, or add a location, in all of them at once.
 - **"Tested up to" lives in two lines:** WordPress's `Tested up to:` in `readme.txt` and `WC tested up to:` in the `yaycheckout.php` header. The plugin header has no WordPress `Tested up to:`. `update_wp_tested` and `update_wc_tested` write them, and `get_wp_tested` and `get_wc_tested` read them back.
+- **The edition comes from the branch.** `release` reads it from `YayCheckoutPluginAdapter.php` (`LicenseConfigAdapter` means Pro) and never rewrites the adapter or the header. A check that tells the editions apart must read the same signal.
 - **The Pro boundary check** (`scripts/check-pro-boundary.sh`) skips comment lines and wants exactly one reference to `YayCheckout\Pro` outside `includes/Pro/`, in `includes/YayCheckout.php`. Zero fails as well as two, and so does a move of `boot_pro()` to another file.
 
 ## Checking a change
