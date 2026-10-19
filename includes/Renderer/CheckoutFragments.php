@@ -1127,16 +1127,24 @@ class CheckoutFragments {
                 $code = (string) $code;
                 // translators: %s: coupon code.
                 $label = sprintf( __( 'Remove %s coupon', 'woocommerce' ), $code ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own string, so its translation still applies.
+
+                // An extension that applies a coupon itself (YayPricing) drops Woo's [Remove] link from this filtered HTML; its × would only re-apply it.
+                ob_start();
+                wc_cart_totals_coupon_html( $coupon );
+                $removable = false !== strpos( (string) ob_get_clean(), 'woocommerce-remove-coupon' );
+
                 $html .= '<li class="yaycheckout-coupon-form__chip">'
                     . '<svg class="yaycheckout-coupon-form__chip-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg>'
                     . '<strong>' . esc_html( wc_strtoupper( $code ) ) . '</strong>'
                     . '<span aria-hidden="true">·</span>'
                     // One flex item, or the gap would split the minus sign from the price.
                     . '<span class="yaycheckout-coupon-form__chip-amount">' . wp_kses_post( self::coupon_amount_html( $coupon ) ) . '</span>'
-                    . '<a role="button" class="woocommerce-remove-coupon yaycheckout-coupon-form__chip-remove"'
-                    . ' href="' . esc_url( add_query_arg( 'remove_coupon', rawurlencode( $code ), $checkout_url ) ) . '"'
-                    . ' data-coupon="' . esc_attr( $code ) . '"'
-                    . ' aria-label="' . esc_attr( $label ) . '">×</a>'
+                    . ( $removable
+                        ? '<a role="button" class="woocommerce-remove-coupon yaycheckout-coupon-form__chip-remove"'
+                            . ' href="' . esc_url( add_query_arg( 'remove_coupon', rawurlencode( $code ), $checkout_url ) ) . '"'
+                            . ' data-coupon="' . esc_attr( $code ) . '"'
+                            . ' aria-label="' . esc_attr( $label ) . '">×</a>'
+                        : '' )
                     . '</li>';
             }
         }

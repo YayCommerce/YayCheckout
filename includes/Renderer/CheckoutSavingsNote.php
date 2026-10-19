@@ -79,6 +79,12 @@ class CheckoutSavingsNote {
 
             $regular = $product->get_regular_price();
 
+            // YayPricing zeroes the regular price of its free gifts (flagged is_extra); the saved product still has the real one.
+            if ( ! empty( $cart_item['is_extra'] ) ) {
+                $saved   = wc_get_product( $product->get_id() );
+                $regular = $saved ? $saved->get_regular_price() : $regular;
+            }
+
             if ( ! is_numeric( $regular ) ) {
                 continue;
             }

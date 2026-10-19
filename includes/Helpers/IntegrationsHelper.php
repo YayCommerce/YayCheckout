@@ -15,6 +15,8 @@ class IntegrationsHelper {
     /** YayBoost's icon, bundled: wordpress.org disallows loading images from a remote host. */
     private const YAYBOOST_ICON_PATH = 'assets/images/integrations/yayboost.png';
 
+    private const YAYPRICING_ICON_PATH = 'assets/images/integrations/yaypricing.png';
+
     /**
      * Wire shape consumed by the SPA; mirrored by integrationWireSchema.
      *
@@ -37,6 +39,14 @@ class IntegrationsHelper {
                 'YAYLOYALTY_VERSION',
                 // YayLoyalty has no icon of its own yet; it borrows YayBoost's.
                 YAYCHECKOUT_PLUGIN_URL . self::YAYBOOST_ICON_PATH
+            ),
+            self::describe(
+                'yaypricing',
+                __( 'YayPricing', 'yaycheckout' ),
+                __( 'Dynamic pricing, free gifts and cart discounts that show in the order summary.', 'yaycheckout' ),
+                'YAYDP_VERSION',
+                YAYCHECKOUT_PLUGIN_URL . self::YAYPRICING_ICON_PATH,
+                'https://yaycommerce.com/yaypricing-woocommerce-dynamic-pricing-and-discounts/'
             ),
         ];
 
