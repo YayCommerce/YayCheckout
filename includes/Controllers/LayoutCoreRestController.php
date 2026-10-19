@@ -94,7 +94,11 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
             return $prepared;
         }
 
-        $error = LayoutMarkupReader::publish_error( $content, BlockRegistry::locked_blocks() );
+        $surface = null !== $stored
+            ? Layout::normalize_surface( get_post_meta( $stored->ID, Layout::META_SURFACE, true ) )
+            : Layout::SURFACE_CHECKOUT;
+
+        $error = LayoutMarkupReader::publish_error( $content, BlockRegistry::locked_blocks(), $surface );
 
         if ( '' !== $error ) {
             return new \WP_Error( 'yaycheckout_layout_unpublishable', $error, [ 'status' => 400 ] );

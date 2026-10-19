@@ -103,5 +103,24 @@ class LayoutPostType {
                 },
             ]
         );
+
+        // In REST so the layout editor's publish guard can skip checkout-required blocks for thank-you layouts.
+        // Not on Layout::to_array(): the SPA list schema is strict and has no surface field yet.
+        register_post_meta(
+            Layout::POST_TYPE,
+            Layout::META_SURFACE,
+            [
+                'type'              => 'string',
+                'single'            => true,
+                'default'           => Layout::SURFACE_CHECKOUT,
+                'show_in_rest'      => true,
+                'sanitize_callback' => static function ( $value ) {
+                    return Layout::normalize_surface( $value );
+                },
+                'auth_callback'     => static function () {
+                    return current_user_can( self::CAPABILITY );
+                },
+            ]
+        );
     }
 }

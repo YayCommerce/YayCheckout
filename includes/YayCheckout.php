@@ -22,12 +22,14 @@ class YayCheckout {
         \YayCheckout\Engine\LayoutTrashSync::get_instance();
         \YayCheckout\Engine\DesignFontInstall::get_instance();
         \YayCheckout\Engine\LayoutActiveGuard::get_instance();
+        \YayCheckout\Engine\ThankYouLayoutSeed::get_instance();
         \YayCheckout\Engine\Admin\LayoutEditorEmbed::get_instance();
         \YayCheckout\Engine\Admin\LayoutEditorCanvas::get_instance();
         \YayCheckout\Renderer\PreviewRequest::get_instance();
         \YayCheckout\Renderer\ThemelessCheckout::get_instance();
         \YayCheckout\Renderer\CheckoutScripts::get_instance();
         \YayCheckout\Renderer\CheckoutPage::get_instance();
+        \YayCheckout\Renderer\ThankYouPage::get_instance();
         \YayCheckout\Renderer\CheckoutAdminBar::get_instance();
         \YayCheckout\Renderer\CheckoutFragments::get_instance();
         \YayCheckout\Renderer\CheckoutNestedForms::get_instance();

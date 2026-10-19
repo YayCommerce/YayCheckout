@@ -2,12 +2,15 @@
 namespace YayCheckout\Tests\Integration\Services;
 
 use WP_UnitTestCase;
+use YayCheckout\Models\Layout;
 use YayCheckout\Services\LayoutMarkupReader;
 
 /** A Free install refuses to publish a layout that still holds Pro blocks, such as Steps after a downgrade. */
 class LayoutMarkupReaderPublishTest extends WP_UnitTestCase {
 
     private const MARKUP = '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/steps --><!-- wp:yaycheckout/step /--><!-- /wp:yaycheckout/steps --><!-- wp:yaycheckout/from-a-newer-version /--><!-- /wp:yaycheckout/checkout -->';
+
+    private const PARAGRAPH_MARKUP = '<!-- wp:paragraph --><p>Your order has been received.</p><!-- /wp:paragraph -->';
 
     public function test_refuses_a_locked_pro_block(): void {
         $error = LayoutMarkupReader::publish_error( self::MARKUP, [ 'yaycheckout/steps', 'yaycheckout/step' ] );
@@ -20,5 +23,17 @@ class LayoutMarkupReaderPublishTest extends WP_UnitTestCase {
         $error = LayoutMarkupReader::publish_error( self::MARKUP, [] );
 
         $this->assertSame( '', $error );
+    }
+
+    public function test_thank_you_surface_allows_markup_without_checkout(): void {
+        $error = LayoutMarkupReader::publish_error( self::PARAGRAPH_MARKUP, [], Layout::SURFACE_THANK_YOU );
+
+        $this->assertSame( '', $error );
+    }
+
+    public function test_checkout_surface_still_requires_checkout_block(): void {
+        $error = LayoutMarkupReader::publish_error( self::PARAGRAPH_MARKUP, [] );
+
+        $this->assertStringContainsString( 'Checkout block', $error );
     }
 }

@@ -39,19 +39,35 @@ class LayoutRepository {
         return null !== $post && Layout::POST_TYPE === get_post_type( $post );
     }
 
-    /** Whether the layout is in the active set. Cheap per row: the option is in alloptions cache. */
+    /** Whether the layout is in either active set. Cheap per row: the options are in alloptions cache. */
     public function is_active( int $id ): bool {
-        return in_array( $id, $this->active_ids(), true );
+        return in_array( $id, $this->all_active_ids(), true );
     }
 
     /**
-     * The active layout for this shopper: the most recently activated whose assignment rules match $context.
-     * Free has no assignment, so its one active layout serves everyone.
+     * The active checkout layout for this shopper: the most recently activated whose assignment rules match $context.
+     * Free has no assignment, so its one active checkout layout serves everyone.
      *
      * @param array $context Shopper facts; see LayoutAssignment::matches().
      */
     public function active( array $context ): ?Layout {
-        $layouts = array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
+        return $this->pick_active( Layout::SURFACE_CHECKOUT, $context );
+    }
+
+    /**
+     * The active thank-you layout for this shopper. Same pick rules as active(), on the thank-you option.
+     *
+     * @param array $context Shopper facts; see LayoutAssignment::matches().
+     */
+    public function active_thank_you( array $context ): ?Layout {
+        return $this->pick_active( Layout::SURFACE_THANK_YOU, $context );
+    }
+
+    /**
+     * @param array $context Shopper facts; see LayoutAssignment::matches().
+     */
+    private function pick_active( string $surface, array $context ): ?Layout {
+        $layouts = array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids_for( $surface ) ) ) ) );
 
         return Plan::is_pro() ? LayoutAssignment::pick( $layouts, $context ) : ( $layouts[0] ?? null );
     }
@@ -79,7 +95,8 @@ class LayoutRepository {
 
         if ( $query->active_only() ) {
             // An empty post__in means no filter to WP_Query, so [ 0 ] keeps an empty active set empty.
-            $active_ids       = $this->active_ids();
+            // Both surfaces: the Active tab and Deactivate cover thank-you layouts too.
+            $active_ids       = $this->all_active_ids();
             $args['post__in'] = $active_ids === [] ? [ 0 ] : $active_ids;
         }
 
@@ -153,9 +170,9 @@ class LayoutRepository {
         ];
     }
 
-    /** How many layouts are in the active set, without the listing queries counts() runs. */
+    /** How many layouts are in either active set, without the listing queries counts() runs. */
     public function active_count(): int {
-        return count( $this->active_ids() );
+        return count( $this->all_active_ids() );
     }
 
     /**
@@ -164,16 +181,16 @@ class LayoutRepository {
      * @throws \InvalidArgumentException When the layout is missing, archived, or fails LayoutMarkupReader::publish_error().
      */
     public function publish( int $id ): Layout {
-        $post = $this->post_or_throw( $id );
+        $layout = $this->find_or_throw( $id );
 
         // Same refusal as activate(): the status write below would un-archive it.
-        if ( LayoutStatus::ARCHIVED === $post->post_status ) {
+        if ( LayoutStatus::ARCHIVED === $layout->post_status ) {
             throw new \InvalidArgumentException(
                 esc_html__( 'Restore this layout from the archive before publishing it.', 'yaycheckout' )
             );
         }
 
-        self::refuse_unpublishable( $post->post_content );
+        self::refuse_unpublishable( $layout->content, $layout->surface );
 
         wp_publish_post( $id );
 
@@ -183,7 +200,7 @@ class LayoutRepository {
     /**
      * Publishes the layout unless it already is, then makes it active, so an
      * active layout is always one shoppers may see. On Free, the layout it
-     * replaces goes back to draft.
+     * replaces on the same surface goes back to draft.
      *
      * @throws \InvalidArgumentException When the layout is missing, archived or not publishable.
      */
@@ -198,7 +215,7 @@ class LayoutRepository {
         }
 
         // Also when already published: Quick Edit and layouts saved before these rules skip the check.
-        self::refuse_unpublishable( $layout->content );
+        self::refuse_unpublishable( $layout->content, $layout->surface );
 
         // Scheduled and pending count too: activating overrides the schedule or review.
         if ( ! $layout->is_published() ) {
@@ -213,8 +230,8 @@ class LayoutRepository {
     /**
      * @throws \InvalidArgumentException With LayoutMarkupReader::publish_error() when the markup may not go live.
      */
-    private static function refuse_unpublishable( string $markup ): void {
-        $error = LayoutMarkupReader::publish_error( $markup, BlockRegistry::locked_blocks() );
+    private static function refuse_unpublishable( string $markup, string $surface = Layout::SURFACE_CHECKOUT ): void {
+        $error = LayoutMarkupReader::publish_error( $markup, BlockRegistry::locked_blocks(), $surface );
 
         if ( '' !== $error ) {
             throw new \InvalidArgumentException( esc_html( $error ) );
@@ -253,11 +270,17 @@ class LayoutRepository {
     }
 
     /**
-     * Drops a layout from the active set and leaves post_status alone. For hooks
+     * Drops a layout from whichever active set holds it and leaves post_status alone. For hooks
      * that react to a status change: deactivate() would fire the transition again.
      */
     public function forget_active( int $id ): void {
-        $this->store_ids( array_diff( $this->active_ids(), [ $id ] ) );
+        foreach ( [ Layout::SURFACE_CHECKOUT, Layout::SURFACE_THANK_YOU ] as $surface ) {
+            $ids = $this->active_ids_for( $surface );
+
+            if ( in_array( $id, $ids, true ) ) {
+                $this->store_ids( array_diff( $ids, [ $id ] ), $surface );
+            }
+        }
     }
 
     /**
@@ -314,11 +337,14 @@ class LayoutRepository {
     }
 
     /**
-     * Free replaces the set and drafts the layout it replaces, as a Deactivate would;
-     * Pro moves the id to the end, the most recent choice.
+     * Free replaces the set for this layout's surface and drafts the layout it replaces, as a
+     * Deactivate would; Pro moves the id to the end of that surface's option, the most recent choice.
+     * Activating a thank-you layout never deactivates a checkout layout, and the reverse.
      */
     public function set_active( int $id ): void {
-        $others = array_diff( $this->active_ids(), [ $id ] );
+        $layout  = $this->find_or_throw( $id );
+        $surface = $layout->surface;
+        $others  = array_diff( $this->active_ids_for( $surface ), [ $id ] );
 
         if ( Plan::is_pro() ) {
             $ids = array_merge( $others, [ $id ] );
@@ -330,7 +356,7 @@ class LayoutRepository {
             $ids = [ $id ];
         }
 
-        $this->store_ids( $ids );
+        $this->store_ids( $ids, $surface );
     }
 
     /**
@@ -352,7 +378,7 @@ class LayoutRepository {
     }
 
     /**
-     * Copies a layout's content, logged-out view, assignment rules, design and template into a new draft layout.
+     * Copies a layout's content, logged-out view, assignment rules, design, template and surface into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -360,7 +386,7 @@ class LayoutRepository {
         $source = $this->find_or_throw( $id );
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template, $source->logged_out_content );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template, $source->logged_out_content, $source->surface );
     }
 
     /**
@@ -382,10 +408,17 @@ class LayoutRepository {
      * Title, status, rules, the template and the active flag stay. WordPress stores the old markup as a
      * revision, so the editor can undo it; the design meta has no revisions.
      *
-     * @throws \InvalidArgumentException When the layout is missing or the update fails.
+     * @throws \InvalidArgumentException When the layout is missing, is a thank-you layout, or the update fails.
      */
     public function reset( int $id ): Layout {
         $layout = $this->find_or_throw( $id );
+
+        // Thank-you layouts have no checkout template; resetting would pour a checkout form into them.
+        if ( Layout::SURFACE_THANK_YOU === $layout->surface ) {
+            throw new \InvalidArgumentException(
+                esc_html__( 'Thank-you layouts cannot be reset to a checkout template.', 'yaycheckout' )
+            );
+        }
 
         $slug = LayoutTemplateCatalogue::is_available( $layout->template ) ? $layout->template : LayoutTemplateCatalogue::DEFAULT_SLUG;
 
@@ -472,9 +505,10 @@ class LayoutRepository {
      * @param array  $rules         Already sanitized; written with the post, like the design, so the draft never exists without them.
      * @param string $template_slug The catalogue template it comes from; '' when none (an import).
      * @param string $logged_out_content The logged-out view's markup; '' when none.
+     * @param string $surface       Layout::SURFACE_*; checkout is omitted so older readers treat missing meta as checkout.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug, string $logged_out_content = '' ): Layout {
+    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug, string $logged_out_content = '', string $surface = Layout::SURFACE_CHECKOUT ): Layout {
         $meta = [ Layout::META_DESIGN => $design->to_meta() ];
 
         if ( [] !== $rules ) {
@@ -487,6 +521,10 @@ class LayoutRepository {
 
         if ( '' !== $logged_out_content ) {
             $meta[ Layout::META_LOGGED_OUT ] = self::filter_logged_out_content( $logged_out_content );
+        }
+
+        if ( Layout::SURFACE_CHECKOUT !== $surface ) {
+            $meta[ Layout::META_SURFACE ] = Layout::normalize_surface( $surface );
         }
 
         // wp_insert_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
@@ -579,15 +617,15 @@ class LayoutRepository {
     }
 
     /**
-     * The active ids the current plan allows, oldest first.
+     * Active ids for one surface, oldest first.
      * Accepts a bare int (pre-Pro storage). On Free, keeps only the last id so
      * a site dropping back from Pro stays on the same layout and deactivating
      * it does not revive an older one.
      *
      * @return int[]
      */
-    private function active_ids(): array {
-        $stored = get_option( Layout::OPTION_ACTIVE, [] );
+    private function active_ids_for( string $surface ): array {
+        $stored = get_option( Layout::option_active_for( $surface ), [] );
         $ids    = is_array( $stored ) ? $stored : [ $stored ];
         $ids    = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
 
@@ -595,10 +633,27 @@ class LayoutRepository {
     }
 
     /**
-     * @param int[] $ids
+     * Checkout and thank-you active ids together, for list Active and is_active().
+     *
+     * @return int[]
      */
-    private function store_ids( array $ids ): void {
-        update_option( Layout::OPTION_ACTIVE, array_values( $ids ) );
+    private function all_active_ids(): array {
+        return array_values(
+            array_unique(
+                array_merge(
+                    $this->active_ids_for( Layout::SURFACE_CHECKOUT ),
+                    $this->active_ids_for( Layout::SURFACE_THANK_YOU )
+                )
+            )
+        );
+    }
+
+    /**
+     * @param int[]  $ids
+     * @param string $surface Layout::SURFACE_*.
+     */
+    private function store_ids( array $ids, string $surface = Layout::SURFACE_CHECKOUT ): void {
+        update_option( Layout::option_active_for( $surface ), array_values( $ids ) );
     }
 
     /**

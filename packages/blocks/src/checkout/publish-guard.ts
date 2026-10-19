@@ -55,11 +55,15 @@ function focusKeyControl( attempts = 20 ) {
 	}, 50 );
 }
 
+/** Layout::META_SURFACE; thank-you layouts skip REQUIRED_BLOCKS the way LayoutMarkupReader::publish_error() skips has_checkout(). */
+const META_SURFACE = '_yaycheckout_surface';
+const SURFACE_THANK_YOU = 'thank_you';
+
 /**
  * Why the layout cannot take an order: no Checkout block at any depth, a locked Pro block
  * (editorData.lockedBlocks, checkout/locked-pro-blocks.tsx), or an extra field Key that is empty, malformed or shared. Mirrors LayoutMarkupReader::publish_error(). The
  * logged-out view takes no order and the server checks none of it, so it has no problem.
- * layout-actions.tsx reads it too, to hold Activate.
+ * Thank-you layouts (META_SURFACE thank_you) skip REQUIRED_BLOCKS. layout-actions.tsx reads it too, to hold Activate.
  */
 export function useLayoutProblem(): LayoutProblem {
 	return useSelect( ( select ): LayoutProblem => {
@@ -68,10 +72,16 @@ export function useLayoutProblem(): LayoutProblem {
 		}
 
 		const blockEditor = select( blockEditorStore );
+		const meta = select( editorStore ).getEditedPostAttribute( 'meta' ) as
+			| Record< string, unknown >
+			| undefined;
+		const isThankYou = meta?.[ META_SURFACE ] === SURFACE_THANK_YOU;
 
-		for ( const [ name, message ] of REQUIRED_BLOCKS ) {
-			if ( blockEditor.getGlobalBlockCount( name ) === 0 ) {
-				return { message, clientId: '', blocksSave: true };
+		if ( ! isThankYou ) {
+			for ( const [ name, message ] of REQUIRED_BLOCKS ) {
+				if ( blockEditor.getGlobalBlockCount( name ) === 0 ) {
+					return { message, clientId: '', blocksSave: true };
+				}
 			}
 		}
 

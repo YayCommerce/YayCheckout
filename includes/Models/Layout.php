@@ -20,8 +20,13 @@ class Layout {
     public const META_DESIGN     = '_yaycheckout_design';
     public const META_TEMPLATE   = '_yaycheckout_template';
     public const META_LOGGED_OUT = '_yaycheckout_logged_out_content';
+    public const META_SURFACE    = '_yaycheckout_surface';
 
-    public const OPTION_ACTIVE = 'yaycheckout_active_layout';
+    public const SURFACE_CHECKOUT  = 'checkout';
+    public const SURFACE_THANK_YOU = 'thank_you';
+
+    public const OPTION_ACTIVE           = 'yaycheckout_active_layout';
+    public const OPTION_ACTIVE_THANK_YOU = 'yaycheckout_active_thankyou_layout';
 
     /** Export envelope identity; `plugin_version` carries compatibility, so there is no separate format version. */
     public const EXPORT_FORMAT = 'yaycheckout-layout';
@@ -61,6 +66,26 @@ class Layout {
     public string $template = '';
 
     /**
+     * Which storefront page this layout serves: SURFACE_CHECKOUT or SURFACE_THANK_YOU.
+     * Not on the wire: the SPA list schema is strict and has no surface field yet.
+     */
+    public string $surface = self::SURFACE_CHECKOUT;
+
+    /**
+     * Missing or unknown values read as checkout, so layouts stored before this meta stay checkout.
+     *
+     * @param mixed $value Raw meta.
+     */
+    public static function normalize_surface( $value ): string {
+        return self::SURFACE_THANK_YOU === $value ? self::SURFACE_THANK_YOU : self::SURFACE_CHECKOUT;
+    }
+
+    /** The active-set option that holds layouts for this surface. */
+    public static function option_active_for( string $surface ): string {
+        return self::SURFACE_THANK_YOU === $surface ? self::OPTION_ACTIVE_THANK_YOU : self::OPTION_ACTIVE;
+    }
+
+    /**
      * @param array $meta Bulk meta as returned by get_post_meta( $id ), unserialized.
      */
     public static function from_post( \WP_Post $post, array $meta, bool $is_active ): self {
@@ -77,6 +102,7 @@ class Layout {
         $layout->rules        = (array) self::meta_value( $meta, self::META_RULES, [] );
         $layout->design       = LayoutDesign::from_meta( self::meta_value( $meta, self::META_DESIGN, null ) );
         $layout->template     = (string) self::meta_value( $meta, self::META_TEMPLATE, '' );
+        $layout->surface      = self::normalize_surface( self::meta_value( $meta, self::META_SURFACE, self::SURFACE_CHECKOUT ) );
 
         $layout->logged_out_content = (string) self::meta_value( $meta, self::META_LOGGED_OUT, '' );
 

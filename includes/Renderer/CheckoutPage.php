@@ -106,8 +106,15 @@ class CheckoutPage {
 
         // Before the safe-mode check: safe mode protects shoppers, a preview is the merchant looking.
         if ( null !== $preview_id ) {
+            $layout = ( new LayoutRepository() )->find( $preview_id );
+
+            // A thank-you layout's Preview opens the checkout URL; it must not render the form.
+            if ( null === $layout || Layout::SURFACE_THANK_YOU === $layout->surface ) {
+                return null;
+            }
+
             // The merchant is logged in, so a preview shows the logged-out view only when asked for it.
-            return $this->with_view( ( new LayoutRepository() )->find( $preview_id ), LayoutEditorEmbed::is_logged_out_view() );
+            return $this->with_view( $layout, LayoutEditorEmbed::is_logged_out_view() );
         }
 
         if ( ( new SettingsRepository() )->is_safe_mode() ) {
@@ -115,7 +122,13 @@ class CheckoutPage {
         }
 
         // Picked afresh by every request, AJAX and order submit too, with no pin: safe because every ConditionType reads a fact that holds for the life of the form.
-        return $this->with_view( ( new LayoutRepository() )->active( self::shopper_context() ), CheckoutLogin::must_log_in() );
+        $layout = ( new LayoutRepository() )->active( self::shopper_context() );
+
+        if ( null === $layout || Layout::SURFACE_THANK_YOU === $layout->surface ) {
+            return null;
+        }
+
+        return $this->with_view( $layout, CheckoutLogin::must_log_in() );
     }
 
     /**

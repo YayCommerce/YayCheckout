@@ -1,6 +1,8 @@
 <?php
 namespace YayCheckout\Services;
 
+use YayCheckout\Models\Layout;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -296,9 +298,10 @@ class LayoutMarkupReader {
      *
      * @param string   $markup        The layout's block markup.
      * @param string[] $locked_blocks The Pro blocks this site hasn't registered (BlockRegistry::locked_blocks()): in Free, the step blocks.
+     * @param string   $surface       Layout::SURFACE_*; thank-you layouts need no Checkout block.
      */
-    public static function publish_error( string $markup, array $locked_blocks ): string {
-        if ( ! self::has_checkout( $markup ) ) {
+    public static function publish_error( string $markup, array $locked_blocks, string $surface = Layout::SURFACE_CHECKOUT ): string {
+        if ( Layout::SURFACE_THANK_YOU !== $surface && ! self::has_checkout( $markup ) ) {
             return __( 'Add a Checkout block to this layout before activating it.', 'yaycheckout' );
         }
 

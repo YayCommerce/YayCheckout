@@ -24,9 +24,10 @@ class CheckoutAdminBar {
     }
 
     public function edit_layout_node( WP_Admin_Bar $admin_bar ): void {
-        $checkout_page = CheckoutPage::get_instance();
+        $checkout_page  = CheckoutPage::get_instance();
+        $thank_you_page = ThankYouPage::get_instance();
 
-        if ( ! $checkout_page->takes_over() ) {
+        if ( ! $checkout_page->takes_over() && ! $thank_you_page->takes_over() ) {
             return;
         }
 
@@ -37,7 +38,11 @@ class CheckoutAdminBar {
             return;
         }
 
-        $layout = $checkout_page->layout();
+        $layout = $checkout_page->takes_over() ? $checkout_page->layout() : $thank_you_page->layout();
+
+        if ( null === $layout ) {
+            return;
+        }
 
         $admin_bar->add_node(
             [
