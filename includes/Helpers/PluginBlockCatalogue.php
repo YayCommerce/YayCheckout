@@ -38,7 +38,7 @@ class PluginBlockCatalogue {
     public static function entries(): array {
         $entries = [
             self::yayboost_entry(
-                'yayboost/order-bump',
+                YayBoost::ORDER_BUMP_BLOCK,
                 __( 'Order bump', 'yaycheckout' ),
                 __( 'Offer a one-click add-on right before payment.', 'yaycheckout' ),
                 'admin.php?page=yayboost-settings#/features/order_bump',
@@ -76,6 +76,7 @@ class PluginBlockCatalogue {
                     'shortcode'  => '',
                     'upgradeUrl' => '',
                     'licenseUrl' => '',
+                    'hooks'      => [],
                 ];
             },
             $filtered
@@ -140,6 +141,8 @@ class PluginBlockCatalogue {
                     'pluginsUrl'   => admin_url( 'plugins.php' ),
                     'pluginPath'   => $plugin_path,
                     'state'        => $state,
+                    // Where the plugin prints the feature in a layout without a spot; the editor shows a stand-in there.
+                    'hooks'        => 'yayboost' === $entry['plugin'] && YayBoost::ORDER_BUMP === $entry['featureId'] ? YayBoost::get_instance()->order_bump_hooks() : $entry['hooks'],
                 ]
             );
         }
@@ -158,23 +161,32 @@ class PluginBlockCatalogue {
      * @return string[]
      */
     public static function spots_in( string $content ): array {
-        $targets    = self::targets();
-        $registered = BlockRegistry::registered_names();
-        $spots      = [];
+        $targets = self::targets();
+        $spots   = array_map(
+            static fn( array $block ): string => self::spot_for( $block, $targets ),
+            LayoutMarkupReader::flatten( parse_blocks( $content ) )
+        );
 
-        foreach ( LayoutMarkupReader::flatten( parse_blocks( $content ) ) as $block ) {
-            $target = self::BLOCK === $block['blockName'] ? ( $block['attrs']['target'] ?? '' ) : $block['blockName'];
+        return array_values( array_unique( array_filter( $spots ) ) );
+    }
 
-            if ( ! in_array( $target, $targets, true ) ) {
-                continue;
-            }
+    /**
+     * The target among $targets that $block holds a spot for: a placeholder's target, or the target block itself
+     * while this site has it registered; '' for none.
+     *
+     * @param array    $block   A parsed block.
+     * @param string[] $targets Catalogue targets.
+     */
+    public static function spot_for( array $block, array $targets ): string {
+        $name = $block['blockName'] ?? '';
 
-            if ( self::BLOCK === $block['blockName'] || in_array( $target, $registered, true ) ) {
-                $spots[] = $target;
-            }
+        if ( self::BLOCK === $name ) {
+            $target = (string) ( $block['attrs']['target'] ?? '' );
+        } else {
+            $target = \WP_Block_Type_Registry::get_instance()->is_registered( (string) $name ) ? (string) $name : '';
         }
 
-        return array_values( array_unique( $spots ) );
+        return in_array( $target, $targets, true ) ? $target : '';
     }
 
     /**
