@@ -13,6 +13,8 @@ class ScriptName {
 
     public const STYLE_DESIGN_PRESETS = 'yaycheckout/style/design-presets';
 
+    public const STYLE_YAYBOOST = 'yaycheckout/style/yayboost';
+
     public const MODULE_PREFIX = 'yaycheckout/module/';
 
     public const PAGE_SETTINGS = 'yaycheckout/module/page-settings';

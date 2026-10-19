@@ -1,8 +1,10 @@
 <?php
 namespace YayCheckout\Integrations;
 
+use YayCheckout\Engine\Register\ScriptName;
 use YayCheckout\Helpers\PluginBlockCatalogue;
 use YayCheckout\Renderer\CheckoutPage;
+use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -24,6 +26,12 @@ class YayBoost {
     public const ORDER_BUMP        = 'order_bump';
     public const FREE_SHIPPING_BAR = 'free_shipping_bar';
 
+    /** YayBoost Pro's Order Bump block, the catalogue target a layout's order bump spot holds. */
+    public const ORDER_BUMP_BLOCK = 'yayboost/order-bump';
+
+    /** On the order bump spot's outer element, which update_order_review replaces (order_bump_fragment()). */
+    private const ORDER_BUMP_SPOT_CLASS = 'yaycheckout-order-bump-spot';
+
     /** The shortcodes a placeholder prints for those features. */
     public const ORDER_BUMP_SHORTCODE        = 'yayboost_order_bump';
     public const FREE_SHIPPING_BAR_SHORTCODE = 'yayboost_free_shipping_bar';
@@ -34,11 +42,14 @@ class YayBoost {
         self::FREE_SHIPPING_BAR_SHORTCODE => 'free_shipping_bar_shortcode',
     ];
 
+    /** Pro's only order bump hook, and Free's for its default position, before_place_order. */
+    private const ORDER_BUMP_DEFAULT_HOOK = 'woocommerce_review_order_before_submit';
+
     /** The hooks YayBoost prints its order bumps on, one per bump position (OrderBumpRenderer). */
     private const ORDER_BUMP_HOOKS = [
         'woocommerce_review_order_after_cart_contents',
         'woocommerce_review_order_before_payment',
-        'woocommerce_review_order_before_submit',
+        self::ORDER_BUMP_DEFAULT_HOOK,
     ];
 
     /** Feature id => the method that removes its hook output. */
@@ -69,6 +80,20 @@ class YayBoost {
         // The contract YayBoost is asked to honour before printing on its hooks; until then stop_default_output() unhooks.
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- YayBoost's filter.
         add_filter( 'yayboost_render_default_output', [ $this, 'render_default_output' ], 10, 2 );
+        add_filter( 'render_block', [ $this, 'mark_order_bump_spot' ], 10, 2 );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's AJAX fragment filter.
+        add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'order_bump_fragment' ] );
+
+        // After checkout-base: CheckoutPage enqueues it at 20 on the storefront, LayoutEditorCanvas at 10 in the editor canvas.
+        add_action( 'wp_enqueue_scripts', [ $this, 'add_styles' ], 21 );
+        add_action( 'enqueue_block_assets', [ $this, 'add_styles' ], 11 );
+    }
+
+    /** The order bump in the templates' card look, wherever a layout renders: the storefront checkout and the layout editor canvas. */
+    public function add_styles(): void {
+        if ( wp_style_is( ScriptName::STYLE_CHECKOUT_BASE ) ) {
+            wp_enqueue_style( ScriptName::STYLE_YAYBOOST, YAYCHECKOUT_PLUGIN_URL . 'assets/css/yayboost.css', [ ScriptName::STYLE_CHECKOUT_BASE ], YAYCHECKOUT_VERSION );
+        }
     }
 
     /** @param object $registry YayBoost's FeatureRegistry. */
@@ -104,6 +129,51 @@ class YayBoost {
         return null !== $feature && method_exists( $feature, 'is_enabled' ) ? (bool) $feature->is_enabled() : null;
     }
 
+    /**
+     * The hooks YayBoost prints its order bumps on in a layout without a spot, in ORDER_BUMP_HOOKS order: Pro's one,
+     * or the hook of each active bump's position in Free. A bump's conditions are left out: the editor shows where a
+     * bump can land, not whether a cart triggers it. Empty while the feature is off, no bump is active, or YayBoost's
+     * BumpRepository can't be read.
+     *
+     * @return string[]
+     */
+    public function order_bump_hooks(): array {
+        $repository = '\YayBoost\Features\OrderBump\BumpRepository';
+        $renderer   = '\YayBoost\Features\OrderBump\OrderBumpRenderer';
+
+        if ( true !== $this->feature_enabled( self::ORDER_BUMP ) || ! method_exists( $repository, 'get_active' ) ) {
+            return [];
+        }
+
+        try {
+            $bumps = ( new $repository() )->get_active();
+        } catch ( \Throwable $error ) {
+            return [];
+        }
+
+        if ( ! is_array( $bumps ) || [] === $bumps ) {
+            return [];
+        }
+
+        // Pro hooks only before_submit and ignores each bump's position.
+        if ( $this->is_pro() ) {
+            return [ self::ORDER_BUMP_DEFAULT_HOOK ];
+        }
+
+        // Free maps each bump's position to its hook; a build without the mapper prints every bump before submit.
+        if ( ! method_exists( $renderer, 'get_hook_for_position' ) ) {
+            return [ self::ORDER_BUMP_DEFAULT_HOOK ];
+        }
+
+        $hooks = [];
+
+        foreach ( $bumps as $bump ) {
+            $hooks[] = (string) $renderer::get_hook_for_position( (string) ( $bump['settings']['position'] ?? 'before_place_order' ) );
+        }
+
+        return array_values( array_intersect( self::ORDER_BUMP_HOOKS, $hooks ) );
+    }
+
     public function register_shortcodes(): void {
         if ( null === $this->registry ) {
             return;
@@ -116,14 +186,32 @@ class YayBoost {
         }
     }
 
-    /** Every active bump, as YayBoost Pro's Order Bump block prints them. */
+    /**
+     * Every active bump, as YayBoost Pro's Order Bump block prints them. Free returns them from
+     * render_all_bumps_for_block(); Pro lacks it and prints them from render(), the method it hooks.
+     */
     public function order_bump_shortcode(): string {
         return $this->render(
             self::ORDER_BUMP,
             static function ( $feature ): string {
                 $renderer = method_exists( $feature, 'get_renderer' ) ? $feature->get_renderer() : null;
 
-                return is_object( $renderer ) && method_exists( $renderer, 'render_all_bumps_for_block' ) ? (string) $renderer->render_all_bumps_for_block() : '';
+                if ( ! is_object( $renderer ) ) {
+                    return '';
+                }
+
+                if ( method_exists( $renderer, 'render_all_bumps_for_block' ) ) {
+                    return (string) $renderer->render_all_bumps_for_block();
+                }
+
+                if ( ! method_exists( $renderer, 'render' ) ) {
+                    return '';
+                }
+
+                ob_start();
+                $renderer->render();
+
+                return (string) ob_get_clean();
             }
         );
     }
@@ -190,7 +278,73 @@ class YayBoost {
     }
 
     public function render_default_output( bool $render, string $feature_id ): bool {
-        return in_array( $feature_id, $this->spotted, true ) ? false : $render;
+        return $this->has_spot( $feature_id ) ? false : $render;
+    }
+
+    /**
+     * Tags the order bump spot's output with ORDER_BUMP_SPOT_CLASS, and prints a hidden stand-in when it has no
+     * bump, so order_bump_fragment() always has an element to replace.
+     *
+     * @param string $html  The block's output.
+     * @param array  $block The parsed block.
+     */
+    public function mark_order_bump_spot( $html, $block ): string {
+        $html = (string) $html;
+
+        if ( ! $this->has_spot( self::ORDER_BUMP ) || ! $this->is_order_bump_spot( (array) $block ) ) {
+            return $html;
+        }
+
+        $tags = new \WP_HTML_Tag_Processor( $html );
+
+        if ( ! $tags->next_tag() ) {
+            return '<div class="' . self::ORDER_BUMP_SPOT_CLASS . '" hidden></div>';
+        }
+
+        $tags->add_class( self::ORDER_BUMP_SPOT_CLASS );
+
+        return $tags->get_updated_html();
+    }
+
+    /**
+     * Reprints the order bump spot on update_order_review. YayBoost ticks a bump only when it prints it, and its
+     * script reads the tick back from the page; WooCommerce reprints the bump with the payment area, but a layout's
+     * spot sits outside every fragment, so a bump removed from the Items block stayed ticked. A layout holds one
+     * spot: the first is reprinted.
+     *
+     * @param mixed $fragments Selector => HTML.
+     * @return mixed
+     */
+    public function order_bump_fragment( $fragments ) {
+        if ( ! is_array( $fragments ) || ! $this->has_spot( self::ORDER_BUMP ) ) {
+            return $fragments;
+        }
+
+        $layout = CheckoutPage::get_instance()->layout();
+
+        if ( null === $layout ) {
+            return $fragments;
+        }
+
+        foreach ( LayoutMarkupReader::flatten( parse_blocks( $layout->content ) ) as $block ) {
+            if ( $this->is_order_bump_spot( $block ) ) {
+                // mark_order_bump_spot() tags the result.
+                $fragments[ '.' . self::ORDER_BUMP_SPOT_CLASS ] = render_block( $block );
+                break;
+            }
+        }
+
+        return $fragments;
+    }
+
+    /** Whether the served layout has a spot for the feature, once stop_default_output() ran. */
+    private function has_spot( string $feature_id ): bool {
+        return in_array( $feature_id, $this->spotted, true );
+    }
+
+    /** The order bump's registered real block, or a placeholder for it. */
+    private function is_order_bump_spot( array $block ): bool {
+        return '' !== PluginBlockCatalogue::spot_for( $block, [ self::ORDER_BUMP_BLOCK ] );
     }
 
     /**
