@@ -9,8 +9,10 @@
  * the terms sentence and the address sections. Keep the markup as the editor saves it: a
  * hand edit that differs by one class or style makes the editor flag the block as invalid.
  *
- * The mock's order bump, free-shipping progress bar and "Frequently bought together" list have no block
- * yet, so this template leaves them out.
+ * The mock's order bump, free-shipping progress bar and "Frequently bought together" list are YayBoost's, so
+ * each prints through PluginBlockCatalogue::block(): the real block when YayBoost has registered it, or else a
+ * Plugin block placeholder, a card in the editor that installs or activates YayBoost and swaps itself for the
+ * real block, and nothing on the storefront.
  *
  * The address order follows WooCommerce's Shipping destination when the layout is created: Shipping in the
  * address card and Billing inside the Payment card behind "Billing address is the same as shipping", ticked,
@@ -166,6 +168,8 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <div class="wp-block-group has-border-color has-background has-yaycheckout-border-border-color" style="border-style:solid;border-width:1px;border-radius:4px;background-color:#ffffff;padding-top:24px;padding-right:24px;padding-bottom:24px;padding-left:24px"><!-- wp:yaycheckout/shipping-methods {"label":"<?php esc_html_e( 'Shipping options', 'yaycheckout' ); ?>","headingLevel":2,"layout":"box","style":{"yaycheckout":{"background":"#ffffff","radius":"4px","title":{"typography":{"fontSize":"20px","fontWeight":"400"}}}}} /--></div>
 <!-- /wp:group -->
 
+<?php echo \YayCheckout\Helpers\PluginBlockCatalogue::block( 'yayboost/order-bump' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block markup from a fixed name. ?>
+
 <!-- wp:group {"borderColor":"yaycheckout-border","style":{"color":{"background":"#ffffff"},"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"24px","right":"24px","bottom":"24px","left":"24px"},"blockGap":"12px"}}} -->
 <div class="wp-block-group has-border-color has-background has-yaycheckout-border-border-color" style="border-style:solid;border-width:1px;border-radius:4px;background-color:#ffffff;padding-top:24px;padding-right:24px;padding-bottom:24px;padding-left:24px"><!-- wp:yaycheckout/payment {"label":"<?php esc_html_e( 'Payment options', 'yaycheckout' ); ?>","headingLevel":2,"description":"<?php esc_html_e( 'All transactions are secure and encrypted.', 'yaycheckout' ); ?>","layout":"box","style":{"color":{"background":"#ffffff"},"border":{"radius":"4px"},"yaycheckout":{"title":{"typography":{"fontSize":"20px","fontWeight":"400"}}}}} /-->
 <?php if ( 'shipping' === $yaycheckout_destination ) : ?>
@@ -193,7 +197,9 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 
 <!-- wp:column {"width":"40%"} -->
 <div class="wp-block-column" style="flex-basis:40%"><!-- wp:group {"style":{"position":{"type":"sticky","top":"24px"}}} -->
-<div class="wp-block-group"><!-- wp:group {"borderColor":"yaycheckout-border","style":{"color":{"background":"#ffffff"},"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"20px","right":"20px","bottom":"20px","left":"20px"}}}} -->
+<div class="wp-block-group"><?php echo \YayCheckout\Helpers\PluginBlockCatalogue::block( 'yayboost/free-shipping-bar' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block markup from a fixed name. ?>
+
+<!-- wp:group {"borderColor":"yaycheckout-border","style":{"color":{"background":"#ffffff"},"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"20px","right":"20px","bottom":"20px","left":"20px"}}}} -->
 <div class="wp-block-group has-border-color has-background has-yaycheckout-border-border-color" style="border-style:solid;border-width:1px;border-radius:4px;background-color:#ffffff;padding-top:20px;padding-right:20px;padding-bottom:20px;padding-left:20px"><!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>"} -->
 <!-- wp:yaycheckout/order-summary-header -->
 <!-- wp:yaycheckout/order-summary-toggle -->
@@ -209,6 +215,8 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 
 <!-- wp:yaycheckout/order-summary-details {"lock":{"remove":true}} -->
 <!-- wp:yaycheckout/order-summary-items {"showLabels":false,"thumbnailSize":56,"thumbnailRadius":4,"quantityDisplay":"stepper"} /-->
+
+<?php echo \YayCheckout\Helpers\PluginBlockCatalogue::block( 'yayboost/frequently-bought-together' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block markup from a fixed name. ?>
 
 <!-- wp:yaycheckout/coupon-form {"placeholder":"<?php esc_html_e( 'Enter code', 'yaycheckout' ); ?>","disclosure":"collapsible","disclosureText":"<?php esc_html_e( 'Add coupons', 'yaycheckout' ); ?>","style":{"border":{"top":{"color":"var:preset|color|yaycheckout-border","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"16px"}}}} -->
 <!-- wp:yaycheckout/coupon-button {"buttonText":"<?php esc_html_e( 'Apply', 'yaycheckout' ); ?>","className":"is-style-outline","style":{"typography":{"fontSize":"13px","fontWeight":"500"}}} /-->
