@@ -1,0 +1,47 @@
+/*
+ * HookOutputPreview: a stand-in for another plugin's hook output. Its card border and pill come from
+ * assets/css/yayboost.css, which gives YayBoost's order bump that look and loads in the canvas while YayBoost is
+ * active. Not part of the block: no pointer events, so clicks select the block.
+ */
+.editor-styles-wrapper .yaycheckout-hook-output-preview {
+	display: flex;
+	gap: 16px;
+	align-items: flex-start;
+	box-sizing: border-box;
+	margin: 12px 0;
+	padding: 16px 20px;
+	color: var(--yaycheckout-design-text, #1e1e1e);
+	font-size: 13px;
+	line-height: 1.4;
+	text-align: left;
+	pointer-events: none;
+	user-select: none;
+}
+
+/* A real checkbox, so checkout-base.css draws it as the layout's Checkboxes design; disabled, without its dimming. */
+/* Outranks checkout-base.css's :disabled rule. */
+.editor-styles-wrapper .yaycheckout-hook-output-preview input.yaycheckout-hook-output-preview__checkbox:disabled {
+	flex: 0 0 auto;
+	margin: 2px 0 0;
+	opacity: 1;
+}
+
+.editor-styles-wrapper .yaycheckout-hook-output-preview__body {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.editor-styles-wrapper .yaycheckout-hook-output-preview__title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.editor-styles-wrapper .yaycheckout-hook-output-preview__note {
+	color: var(--yaycheckout-design-muted, #757575);
+}

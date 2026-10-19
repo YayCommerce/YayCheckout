@@ -13,6 +13,7 @@ import {
 	SectionTextPanels,
 	SectionTitle,
 } from '../shared/section-heading';
+import { HookOutputPreview } from '../shared/hook-output-preview';
 import { SetupNotice } from '../shared/setup-notice';
 import '../shared/section-preview.css';
 
@@ -120,6 +121,8 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 					<SectionTitle level={ headingLevel } text={ heading } className="yaycheckout-section-preview__heading" />
 				) }
 				<SectionDescription text={ description } />
+				{ /* Mirrors CheckoutFragments::payment_methods_html()'s WcHooks::in_place() before #payment. */ }
+				<HookOutputPreview hook="woocommerce_review_order_before_payment" owner="block" />
 				{ /* WooCommerce's list markup, so the block's own CSS draws it as on the storefront. */ }
 				<div id="payment" className="woocommerce-checkout-payment">
 					<ul className="wc_payment_methods payment_methods methods">

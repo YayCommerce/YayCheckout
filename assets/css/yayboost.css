@@ -1,0 +1,192 @@
+/*
+ * YayBoost's order bump in the templates' card look (Integrations\YayBoost::add_styles()): a dashed card,
+ * the checkbox on the left with its label as the title, the headline as a pill, the image on the right,
+ * and the whole card ticks the box. Wherever a layout renders it: the plugin block's shortcode, YayBoost
+ * Pro's block, or YayBoost's own hook output.
+ *
+ * CSS only: YayBoost's script finds the bump by these classes, so the markup stays YayBoost's
+ * (OrderBumpRenderer::render_single_bump()). The .yaycheckout-checkout prefix outranks YayBoost's
+ * single-class rules (order-bump.css) whatever the load order; only its !important checkbox-wrap display needs one here.
+ * Colours come from the layout's design tokens (DesignStyles); the amber border is the templates' own.
+ */
+
+.yaycheckout-checkout .yayboost-order-bump {
+	margin: 0;
+}
+
+/* Pro prints several bumps in one wrapper. */
+.yaycheckout-checkout .yayboost-order-bumps {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+/*
+ * Columns: checkbox | title | pill | image. Row 1 holds the pill only on a narrow screen, so it is empty and
+ * 0 high otherwise; the last row takes the image's extra height, so the text rows stay packed.
+ */
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) {
+	position: relative;
+	display: grid;
+	grid-template-columns: auto minmax(0, max-content) 1fr auto;
+	grid-template-rows: repeat(6, auto) 1fr;
+	align-items: start;
+	gap: 0;
+	padding: 20px 24px;
+	box-shadow: none;
+	cursor: pointer;
+}
+
+/* The card and its pill, shared with the editor's stand-in for a bump the layout has no spot for (HookOutputPreview). */
+.yaycheckout-checkout :is(.yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple), .yaycheckout-hook-output-preview) {
+	border: 2px dashed #f0b849;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.yaycheckout-checkout :is(.yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__headline, .yaycheckout-hook-output-preview__pill) {
+	padding: 2px 8px;
+	border-radius: 9999px;
+	background: var(--yaycheckout-primary-color, #3858e9);
+	color: #fff;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.4;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+/* Their children become the card's grid items. The label keeps its checkbox, so a click on its text still ticks it. */
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) :is(.yayboost-order-bump__body, .yayboost-order-bump__actions) {
+	display: contents;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__checkbox-wrap {
+	display: contents !important;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__checkbox {
+	grid-column: 1;
+	grid-row: 2;
+	margin: 2px 16px 0 0;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__checkbox-label {
+	grid-column: 2;
+	grid-row: 2;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+/* The whole card is the label's click target; the link, selects and button sit above it. */
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__checkbox-label::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) :is(.yayboost-order-bump__product a, .yayboost-order-bump__variations, .yayboost-order-bump__update-btn) {
+	position: relative;
+	z-index: 1;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__headline {
+	grid-column: 3;
+	grid-row: 2;
+	justify-self: start;
+	margin: 1px 0 0 8px;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) :is(.yayboost-order-bump__product, .yayboost-order-bump__description, .yayboost-order-bump__price, .yayboost-order-bump__variations, .yayboost-order-bump__update-btn) {
+	grid-column: 2 / 4;
+	margin: 4px 0 0;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__product {
+	grid-row: 3;
+	font-size: 12px;
+}
+
+/* Its colour stays the layout's link colour (DesignStyles). */
+.yaycheckout-checkout .yayboost-order-bump__product a {
+	text-decoration: none;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__product a:hover {
+	text-decoration: underline;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__description {
+	grid-row: 4;
+	font-size: inherit;
+	color: var(--yaycheckout-design-muted);
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__price {
+	grid-row: 5;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 8px;
+	padding-top: 2px;
+	font-size: inherit;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__variations {
+	grid-row: 6;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__update-btn {
+	grid-row: 7;
+	justify-self: start;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__price-bump {
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__price-regular {
+	color: var(--yaycheckout-design-muted);
+}
+
+.yaycheckout-checkout .yayboost-order-bump__price-save {
+	color: #2f8a48;
+	font-weight: 500;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__image {
+	grid-column: 4;
+	grid-row: 1 / -1;
+	width: 72px;
+	margin-left: 16px;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__image img {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 1;
+	object-fit: cover;
+	border-radius: 4px;
+}
+
+@media (max-width: 479px) {
+	.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) {
+		padding: 16px;
+	}
+
+	/* Beside the title the pill would squeeze it; it goes above instead. */
+	.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__headline {
+		grid-column: 2 / 4;
+		grid-row: 1;
+		margin: 0 0 6px;
+	}
+
+	.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__image {
+		width: 56px;
+		margin-left: 12px;
+	}
+}
