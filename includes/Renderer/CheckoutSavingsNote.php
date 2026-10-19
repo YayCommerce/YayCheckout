@@ -33,7 +33,7 @@ class CheckoutSavingsNote {
     }
 
     /**
-     * Escaped sentence with every %s replaced by wc_price( amount() ). A sentence with no %s
+     * Escaped sentence with every %s replaced by the formatted amount(). A sentence with no %s
      * uses DEFAULT_TEXT.
      *
      * @param array $attributes Block attributes.
@@ -47,7 +47,7 @@ class CheckoutSavingsNote {
             $text = $fallback;
         }
 
-        $price = wc_price( self::amount() );
+        $price = CheckoutFragments::price_html( self::amount() );
         $parts = explode( '%s', $text );
         $html  = '';
 

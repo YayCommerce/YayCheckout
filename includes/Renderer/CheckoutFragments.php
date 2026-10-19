@@ -549,9 +549,10 @@ class CheckoutFragments {
     }
 
     /**
-     * Radios Woo's checkout.js listens for. The label is the method name after
-     * woocommerce_cart_shipping_method_full_label, and the price is its own element:
-     * core concatenates them, which leaves no node for a card layout to place.
+     * Radios Woo's checkout.js listens for. woocommerce_cart_shipping_method_full_label gets
+     * core's "Name: price" label, and the price then moves to its own element for a card layout
+     * to place. A label whose price a plugin rewrote (a currency switcher) prints whole, with no
+     * price element, so the price never shows twice.
      *
      * @param array<string, \WC_Shipping_Rate> $methods
      * @param mixed                            $chosen_method Session value for this package.
@@ -566,14 +567,22 @@ class CheckoutFragments {
 
             $slug     = sanitize_title( $method->id );
             $input_id = 'shipping_method_' . $index . '_' . $slug;
+            $price    = self::shipping_rate_price_html( $method );
+            $suffix   = '' !== $price ? ': ' . $price : '';
             $name     = apply_filters(
                 // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's rate-label filter.
                 'woocommerce_cart_shipping_method_full_label',
-                $method->get_label(),
+                $method->get_label() . $suffix,
                 $method
             );
-            $name  = is_string( $name ) ? $name : $method->get_label();
-            $price = self::shipping_rate_price_html( $method );
+            $name = is_string( $name ) ? $name : $method->get_label() . $suffix;
+            $at   = '' !== $suffix ? strpos( $name, $suffix ) : false;
+
+            if ( false !== $at ) {
+                $name = substr_replace( $name, '', $at, strlen( $suffix ) );
+            } else {
+                $price = '';
+            }
 
             $attr_index = (string) $index;
 
@@ -604,7 +613,7 @@ class CheckoutFragments {
         echo '</ul>';
     }
 
-    /** The price suffix wc_cart_totals_shipping_method_label() appends, without the method name. */
+    /** The price wc_cart_totals_shipping_method_label() appends after ": ", without the method name. */
     private static function shipping_rate_price_html( \WC_Shipping_Rate $method ): string {
         $has_cost  = 0 < $method->cost;
         $hide_cost = ! $has_cost && in_array( $method->get_method_id(), array( 'free_shipping', 'local_pickup' ), true );
@@ -1040,7 +1049,9 @@ class CheckoutFragments {
         }
 
         if ( $options['show_unit_price'] ) {
-            $price = apply_filters( 'woocommerce_cart_item_price', WC()->cart->get_product_price( $product ), $cart_item, $cart_item_key );
+            // The amount WC_Cart::get_product_price() formats.
+            $unit  = WC()->cart->display_prices_including_tax() ? wc_get_price_including_tax( $product ) : wc_get_price_excluding_tax( $product );
+            $price = apply_filters( 'woocommerce_cart_item_price', self::price_html( (float) $unit, WC()->cart->get_product_price( $product ), 'unit_price', $product ), $cart_item, $cart_item_key );
             /* translators: %s: product price */
             echo '<div class="product-unit-price">' . sprintf( esc_html__( '%s each', 'yaycheckout' ), $price ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered price HTML.
         }
@@ -1102,10 +1113,23 @@ class CheckoutFragments {
         return isset( $attributes[ $name ] ) && is_bool( $attributes[ $name ] ) ? $attributes[ $name ] : $fallback;
     }
 
+    /**
+     * An amount YayCheckout formats itself rather than through a WooCommerce filter (the Breakdown's shipping row,
+     * Items' unit price, the Coupon form's chips, live values, the Savings note): $html, or wc_price( $amount ),
+     * through yaycheckout_price_html, so a multi-currency plugin can print it as it prints WooCommerce's own amounts.
+     *
+     * @param string           $key     A live value's key (LiveValues::money()), 'unit_price' or 'coupon', so an amount
+     *                                  can match the row WooCommerce prints for it.
+     * @param \WC_Product|null $product The product, for 'unit_price'.
+     */
+    public static function price_html( float $amount, ?string $html = null, string $key = '', ?\WC_Product $product = null ): string {
+        return (string) apply_filters( 'yaycheckout_price_html', $html ?? wc_price( $amount ), $amount, $key, $product );
+    }
+
     /** The amount half of Woo's wc_cart_totals_coupon_html() (wc-cart-functions.php), without its [Remove] link: the chip carries that. */
     public static function coupon_amount_html( \WC_Coupon $coupon ): string {
         $amount = WC()->cart->get_coupon_discount_amount( $coupon->get_code(), WC()->cart->display_cart_ex_tax );
-        $html   = '-' . wc_price( $amount );
+        $html   = '-' . self::price_html( (float) $amount, null, 'coupon' );
 
         if ( $coupon->get_free_shipping() && empty( $amount ) ) {
             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own string, so its translation still applies.
@@ -1192,10 +1216,13 @@ class CheckoutFragments {
             <th><?php wc_cart_totals_coupon_label( $coupon ); ?></th>
             <?php if ( $chips ) : ?>
                 <?php
-                $amount_html = self::coupon_amount_html( $coupon );
-                // Woo's filter, given the amount without [Remove], so extensions that add to the row still apply.
+                // Woo's own row, so woocommerce_cart_totals_coupon_html gets the [Remove] link that extensions
+                // (a currency switcher) cut around; the link is then dropped, as the chip carries it.
+                ob_start();
+                wc_cart_totals_coupon_html( $coupon );
+                $coupon_html = preg_replace( '#\s*<a\b[^>]*\bwoocommerce-remove-coupon\b[^>]*>.*?</a>#s', '', (string) ob_get_clean() );
                 ?>
-            <td><?php echo wp_kses_post( apply_filters( 'woocommerce_cart_totals_coupon_html', $amount_html, $coupon, $amount_html ) ); ?></td>
+            <td><?php echo $coupon_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wc_cart_totals_coupon_html() output, already through wp_kses(). ?></td>
             <?php else : ?>
             <td><?php wc_cart_totals_coupon_html( $coupon ); ?></td>
             <?php endif; ?>
@@ -1358,7 +1385,7 @@ class CheckoutFragments {
             if ( 0.0 === round( $amount, wc_get_price_decimals() ) ) {
                 $value = '<strong>' . esc_html__( 'Free', 'woocommerce' ) . '</strong>';
             } else {
-                $value = wc_price( $amount );
+                $value = self::price_html( $amount );
             }
         } elseif ( WC()->customer && WC()->customer->has_calculated_shipping() ) {
             $value = esc_html__( 'No available delivery option', 'woocommerce' );

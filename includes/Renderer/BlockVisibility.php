@@ -110,7 +110,9 @@ class BlockVisibility {
 
     /**
      * What the rules test for the current cart and shopper. The subtotal is the cart's as the cart shows it,
-     * rounded to the store's decimals, so the script compares it as is. Without a cart, all false and 0.
+     * rounded to the store's decimals, so the script compares it as is; a multi-currency plugin returns it in
+     * the store's currency, the one a rule's amount is typed in, through yaycheckout_visibility_subtotal.
+     * Without a cart, all false and 0.
      *
      * @return array{needs_shipping: bool, has_coupon: bool, subtotal: float, logged_in: bool}
      */
@@ -120,7 +122,7 @@ class BlockVisibility {
         return [
             'needs_shipping' => null !== $cart && $cart->needs_shipping(),
             'has_coupon'     => null !== $cart && ! empty( $cart->get_applied_coupons() ),
-            'subtotal'       => round( LiveValues::money()['cart_subtotal'] ?? 0.0, wc_get_price_decimals() ),
+            'subtotal'       => (float) apply_filters( 'yaycheckout_visibility_subtotal', round( LiveValues::money()['cart_subtotal'] ?? 0.0, wc_get_price_decimals() ) ),
             'logged_in'      => is_user_logged_in(),
         ];
     }
