@@ -23,8 +23,12 @@ class YayPricing {
     /** Pro only. */
     private const NOTICE_SCRIPT = 'yaydp-frontend-encouraged-notice';
 
-    /** YayPricing's refresh listens for this cart-page event; updated_checkout runs after every fragment swap. */
-    private const REFRESH_JS = "jQuery( document.body ).on( 'updated_checkout', function () { jQuery( document.body ).trigger( 'updated_cart_totals' ); } );";
+    /**
+     * YayPricing's refresh listens for the cart-page event updated_cart_totals. updated_checkout also fires on page
+     * load and on every address, shipping or payment change, so fire it only when the cart itself changed:
+     * its subtotal and coupon state (#yaycheckout-visibility-state) or an Items stepper quantity.
+     */
+    private const REFRESH_JS = "( function ( $ ) { var last = null; $( document.body ).on( 'updated_checkout', function () { var el = document.getElementById( 'yaycheckout-visibility-state' ), now = ( el ? el.textContent : '' ) + $( '.yaycheckout-qty__input' ).map( function () { return this.value; } ).get().join(); if ( null !== last && now !== last ) { $( document.body ).trigger( 'updated_cart_totals' ); } last = now; } ); } )( jQuery );";
 
     private const UNIT_PRICE_CSS = '.yaycheckout-order-summary-items .yaydp-cart-item-quantity { display: none; }';
 
