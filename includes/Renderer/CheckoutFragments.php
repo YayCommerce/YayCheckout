@@ -107,6 +107,16 @@ class CheckoutFragments {
         add_action( 'woocommerce_after_template_part', [ WcHooks::class, 'unmute_review_table' ] );
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's coupon message filter.
         add_filter( 'woocommerce_coupon_message', [ $this, 'drop_applied_message' ], PHP_INT_MAX, 2 );
+        // After WC_Cart recalculates totals on the same hook (priority 20), so the chips carry the new amounts.
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's coupon action.
+        add_action( 'woocommerce_applied_coupon', [ $this, 'print_applied_chips' ], 30 );
+    }
+
+    /** Whether this is the Coupon form's own apply_coupon request: the cart page posts to the same endpoint without the field. */
+    private static function is_coupon_form_request(): bool {
+        // Only the Coupon form posts the field, and it renders only under a layout.
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Woo's apply_coupon checks its nonce first; this only reads a flag.
+        return isset( $_POST[ self::COUPON_FORM_FIELD ] ) && doing_action( 'wc_ajax_apply_coupon' );
     }
 
     /**
@@ -115,13 +125,22 @@ class CheckoutFragments {
      * Only for the Coupon form's own request: the cart page posts to the same endpoint.
      */
     public function drop_applied_message( $msg, $msg_code ) {
-        // Only the Coupon form posts the field, and it renders only under a layout.
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Woo's apply_coupon checks its nonce first; this only reads a flag.
-        if ( \WC_Coupon::WC_COUPON_SUCCESS !== (int) $msg_code || ! isset( $_POST[ self::COUPON_FORM_FIELD ] ) || ! doing_action( 'wc_ajax_apply_coupon' ) ) {
+        if ( \WC_Coupon::WC_COUPON_SUCCESS !== (int) $msg_code || ! self::is_coupon_form_request() ) {
             return $msg;
         }
 
         return '';
+    }
+
+    /**
+     * Prints the fresh chips into the Coupon form's apply_coupon response, ahead of the notices Woo prints after
+     * this hook, so checkout-coupon-form.js shows the chip without waiting for update_order_review.
+     * The hook fires only once the coupon is applied.
+     */
+    public function print_applied_chips(): void {
+        if ( self::is_coupon_form_request() ) {
+            echo self::coupon_chips_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped by coupon_chips_html().
+        }
     }
 
     /**
@@ -1116,7 +1135,7 @@ class CheckoutFragments {
         return (string) apply_filters( 'woocommerce_coupon_discount_amount_html', $html, $coupon );
     }
 
-    /** The Coupon form's applied coupons as chips; checkout.js's .woocommerce-remove-coupon handler runs their ×. */
+    /** The Coupon form's applied coupons as chips; checkout-coupon-form.js runs their ×, and the href serves without JS. */
     public static function coupon_chips_html(): string {
         $html = '<ul class="' . esc_attr( self::COUPON_CHIPS_CLASS ) . '">';
 
@@ -1133,7 +1152,7 @@ class CheckoutFragments {
                     . '<span aria-hidden="true">·</span>'
                     // One flex item, or the gap would split the minus sign from the price.
                     . '<span class="yaycheckout-coupon-form__chip-amount">' . wp_kses_post( self::coupon_amount_html( $coupon ) ) . '</span>'
-                    . '<a role="button" class="woocommerce-remove-coupon yaycheckout-coupon-form__chip-remove"'
+                    . '<a role="button" class="yaycheckout-coupon-form__chip-remove"'
                     . ' href="' . esc_url( add_query_arg( 'remove_coupon', rawurlencode( $code ), $checkout_url ) ) . '"'
                     . ' data-coupon="' . esc_attr( $code ) . '"'
                     . ' aria-label="' . esc_attr( $label ) . '">×</a>'
