@@ -8,8 +8,8 @@
  * lock icon's guard, the policy links and the address sections. Keep the markup as the editor saves it: a
  * hand edit that differs by one class or style makes the editor flag the block as invalid.
  *
- * One 440px column under a full-width progress bar: logo with "Step N of 3", a collapsible
- * Order Summary, then one step at a time (Address, Delivery, Payment). Continue / Back / Pay
+ * One 440px column under a header outside the Checkout block (a full-width progress bar, then logo with
+ * "Step N of 3"); inside Checkout, a collapsible Order Summary, then one step at a time (Address, Delivery, Payment). Continue / Back / Pay
  * and Secure checkout sit in a Group pinned to the bottom of the screen.
  */
 
@@ -93,11 +93,11 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <?php
 };
 ?>
-<!-- wp:yaycheckout/checkout -->
-<!-- wp:yaycheckout/steps-progress {"variant":"bar","showCount":false,"trackColor":"var(--yaycheckout-design-border)"} /-->
+<!-- wp:group {"tagName":"header","style":{"spacing":{"blockGap":"0"}},"layout":{"type":"default"}} -->
+<header class="wp-block-group"><!-- wp:yaycheckout/steps-progress {"variant":"bar","showCount":false,"trackColor":"var(--yaycheckout-design-border)"} /-->
 
-<!-- wp:group {"style":{"spacing":{"padding":{"top":"40px","right":"24px","bottom":"24px","left":"24px"},"blockGap":"32px"}},"layout":{"type":"constrained","contentSize":"440px"}} -->
-<div class="wp-block-group" style="padding-top:40px;padding-right:24px;padding-bottom:24px;padding-left:24px"><!-- wp:group {"style":{"spacing":{"blockGap":"12px"}},"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
+<!-- wp:group {"style":{"spacing":{"padding":{"top":"40px","right":"24px","left":"24px"}}},"layout":{"type":"constrained","contentSize":"440px"}} -->
+<div class="wp-block-group" style="padding-top:40px;padding-right:24px;padding-left:24px"><!-- wp:group {"style":{"spacing":{"blockGap":"12px"}},"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
 <div class="wp-block-group"><?php if ( has_custom_logo() ) : ?>
 <!-- wp:site-logo {"width":24} /-->
 <?php else : ?>
@@ -105,9 +105,13 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <?php endif; ?>
 
 <!-- wp:yaycheckout/steps-progress {"textColor":"yaycheckout-muted","variant":"text","style":{"typography":{"fontSize":"12px"}}} /--></div>
+<!-- /wp:group --></div>
+<!-- /wp:group --></header>
 <!-- /wp:group -->
 
-<!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>","showTitle":false,"collapsible":true,"initialState":"collapsed"} -->
+<!-- wp:yaycheckout/checkout -->
+<!-- wp:group {"style":{"spacing":{"padding":{"top":"32px","right":"24px","bottom":"24px","left":"24px"},"blockGap":"32px"}},"layout":{"type":"constrained","contentSize":"440px"}} -->
+<div class="wp-block-group" style="padding-top:32px;padding-right:24px;padding-bottom:24px;padding-left:24px"><!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>","showTitle":false,"collapsible":true,"initialState":"collapsed"} -->
 <!-- wp:yaycheckout/order-summary-header -->
 <!-- wp:yaycheckout/order-summary-toggle {"textColor":"yaycheckout-muted","style":{"spacing":{"blockGap":"8px"},"typography":{"fontSize":"14px"}}} -->
 <!-- wp:paragraph {"style":{"typography":{"fontSize":"14px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
