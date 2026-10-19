@@ -53,15 +53,18 @@ class PluginBlockCatalogue {
                 YayBoost::FREE_SHIPPING_BAR,
                 YayBoost::FREE_SHIPPING_BAR_SHORTCODE
             ),
-            // YayBoost has no block for this yet: the card says it is coming.
-            self::yayboost_entry(
-                'yayboost/frequently-bought-together',
-                __( 'Frequently bought together', 'yaycheckout' ),
-                __( 'Suggest products that go with the cart, added in one click.', 'yaycheckout' ),
-                '',
-                '',
-                '',
-                false
+            // Neither YayBoost edition has a block for this: the shortcode Integrations\YayBoost registers fills the
+            // spot, so the card offers no upgrade to Pro for it.
+            array_merge(
+                self::yayboost_entry(
+                    YayBoost::FBT_BLOCK,
+                    __( 'Frequently bought together', 'yaycheckout' ),
+                    __( 'Suggest products that go with the cart, added in one click.', 'yaycheckout' ),
+                    'admin.php?page=yayboost-settings#/features/frequently_bought_together',
+                    YayBoost::FBT,
+                    YayBoost::FBT_SHORTCODE
+                ),
+                [ 'upgradeUrl' => '' ]
             ),
         ];
 

@@ -3,6 +3,7 @@ namespace YayCheckout\Integrations;
 
 use YayCheckout\Engine\Register\ScriptName;
 use YayCheckout\Helpers\PluginBlockCatalogue;
+use YayCheckout\Renderer\CartItemQuantity;
 use YayCheckout\Renderer\CheckoutPage;
 use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
@@ -25,22 +26,43 @@ class YayBoost {
     /** YayBoost's feature ids, as its FeatureRegistry keys them. */
     public const ORDER_BUMP        = 'order_bump';
     public const FREE_SHIPPING_BAR = 'free_shipping_bar';
+    public const FBT               = 'frequently_bought_together';
 
     /** YayBoost Pro's Order Bump block, the catalogue target a layout's order bump spot holds. */
     public const ORDER_BUMP_BLOCK = 'yayboost/order-bump';
 
-    /** On the order bump spot's outer element, which update_order_review replaces (order_bump_fragment()). */
-    private const ORDER_BUMP_SPOT_CLASS = 'yaycheckout-order-bump-spot';
+    /** The catalogue target a layout's Frequently bought together spot holds; YayBoost has no such block yet. */
+    public const FBT_BLOCK = 'yayboost/frequently-bought-together';
+
+    /**
+     * Feature id => [ its catalogue target, the class on its spot's outer element ], for the spots update_order_review
+     * reprints (spot_fragments()).
+     */
+    private const REPRINTED_SPOTS = [
+        self::ORDER_BUMP => [ self::ORDER_BUMP_BLOCK, 'yaycheckout-order-bump-spot' ],
+        self::FBT        => [ self::FBT_BLOCK, 'yaycheckout-fbt-spot' ],
+    ];
 
     /** The shortcodes a placeholder prints for those features. */
     public const ORDER_BUMP_SHORTCODE        = 'yayboost_order_bump';
     public const FREE_SHIPPING_BAR_SHORTCODE = 'yayboost_free_shipping_bar';
+    public const FBT_SHORTCODE               = 'yayboost_frequently_bought_together';
 
     /** Shortcode => the method that prints it, registered only while YayBoost doesn't register its own. */
     private const SHORTCODES = [
         self::ORDER_BUMP_SHORTCODE        => 'order_bump_shortcode',
         self::FREE_SHIPPING_BAR_SHORTCODE => 'free_shipping_bar_shortcode',
+        self::FBT_SHORTCODE               => 'fbt_shortcode',
     ];
+
+    /** Adds and removes the Frequently bought together spot's products (templates/yayboost-fbt.php). */
+    private const FBT_SCRIPT = 'yaycheckout-yayboost-fbt';
+
+    /** YayBoost's add-to-cart action for FBT products, which keeps their attribution (FBTAjaxHandler). */
+    private const FBT_ADD_ACTION = 'yayboost_fbt_add_to_cart';
+
+    /** The cart item data FBT_ADD_ACTION gives a product added from an FBT list. */
+    private const FBT_CART_ITEM_KEY = '_yayboost_fbt';
 
     /** Pro's only order bump hook, and Free's for its default position, before_place_order. */
     private const ORDER_BUMP_DEFAULT_HOOK = 'woocommerce_review_order_before_submit';
@@ -80,9 +102,9 @@ class YayBoost {
         // The contract YayBoost is asked to honour before printing on its hooks; until then stop_default_output() unhooks.
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- YayBoost's filter.
         add_filter( 'yayboost_render_default_output', [ $this, 'render_default_output' ], 10, 2 );
-        add_filter( 'render_block', [ $this, 'mark_order_bump_spot' ], 10, 2 );
+        add_filter( 'render_block', [ $this, 'mark_spot' ], 10, 2 );
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's AJAX fragment filter.
-        add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'order_bump_fragment' ] );
+        add_filter( 'woocommerce_update_order_review_fragments', [ $this, 'spot_fragments' ] );
 
         // After checkout-base: CheckoutPage enqueues it at 20 on the storefront, LayoutEditorCanvas at 10 in the editor canvas.
         add_action( 'wp_enqueue_scripts', [ $this, 'add_styles' ], 21 );
@@ -233,6 +255,94 @@ class YayBoost {
     }
 
     /**
+     * The products YayBoost's Frequently bought together pairs with the cart, drawn like the templates' cross-sell
+     * list. FBT recommends for one product and prints only on the product page, so this asks it for each cart item
+     * the shopper didn't add from an FBT list, and merges the answers, first come first kept, up to the count FBT shows for one product. Its own filter
+     * decides whether a product already in the cart drops out or stays listed as added (hide_if_in_cart).
+     */
+    public function fbt_shortcode(): string {
+        return $this->render(
+            self::FBT,
+            function ( $feature ): string {
+                $renderer = '\YayBoost\Features\FrequentlyBoughtTogether\FBTRenderer';
+                $currency = '\YayBoost\Currency\NullCurrencyProvider';
+
+                if ( ! class_exists( $renderer ) || ! class_exists( $currency ) || ! method_exists( $feature, 'get_cache_manager' ) || ! method_exists( $feature, 'get_settings' ) || ! WC()->cart instanceof \WC_Cart ) {
+                    return '';
+                }
+
+                $settings = (array) $feature->get_settings();
+                // get_prepared_products() reads no prices, so it needs no real currency provider.
+                $fbt = new $renderer( $feature->get_cache_manager(), $settings, new $currency() );
+
+                // Product id => its cart item key; a variation's cart item carries its parent's id, as FBT's products do.
+                $in_cart = [];
+                // The products FBT recommends for: not those added from an FBT list, which YayBoost marks, so adding
+                // one doesn't pull its own pairings into the list it came from.
+                $sources = [];
+
+                foreach ( WC()->cart->get_cart() as $key => $cart_item ) {
+                    $in_cart += [ (int) $cart_item['product_id'] => (string) $key ];
+
+                    if ( ! isset( $cart_item[ self::FBT_CART_ITEM_KEY ] ) ) {
+                        $sources[] = (int) $cart_item['product_id'];
+                    }
+                }
+
+                $items = [];
+
+                foreach ( array_unique( $sources ) as $source_id ) {
+                    $prepared = $fbt->get_prepared_products( $source_id );
+
+                    foreach ( (array) ( $prepared['products'] ?? [] ) as $product ) {
+                        if ( $product instanceof \WC_Product && ! isset( $items[ $product->get_id() ] ) ) {
+                            $items[ $product->get_id() ] = [
+                                'product'       => $product,
+                                'source_id'     => (int) $prepared['product_id'],
+                                'cart_item_key' => $in_cart[ $product->get_id() ] ?? '',
+                            ];
+                        }
+                    }
+                }
+
+                // FBTRenderer::get_prepared_products()'s cap: Free shows 3, Pro its setting.
+                $items = array_slice( array_values( $items ), 0, $this->is_pro() ? (int) ( $settings['max_products'] ?? 4 ) : 3 );
+
+                if ( [] === $items ) {
+                    return '';
+                }
+
+                wp_enqueue_script( self::FBT_SCRIPT, YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-yayboost-fbt.js', [ 'jquery', 'wc-checkout' ], YAYCHECKOUT_VERSION, true );
+
+                $title = '' !== trim( (string) ( $settings['section_title'] ?? '' ) ) ? (string) $settings['section_title'] : __( 'Frequently bought together', 'yaycheckout' );
+
+                return self::fbt_html( $items, $title );
+            }
+        );
+    }
+
+    /**
+     * The spot's markup, with what its script needs: YayBoost's add-to-cart action and nonce, and CartItemQuantity's
+     * nonce to remove an added product.
+     *
+     * @param array<int, array{product: \WC_Product, source_id: int, cart_item_key: string}> $items
+     */
+    private static function fbt_html( array $items, string $title ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- The template reads them.
+        $wrapper = [
+            'ajax-url'   => admin_url( 'admin-ajax.php' ),
+            'add-action' => self::FBT_ADD_ACTION,
+            'add-nonce'  => wp_create_nonce( self::FBT_ADD_ACTION ),
+            'cart-nonce' => wp_create_nonce( CartItemQuantity::NONCE_ACTION ),
+            'error-text' => __( 'The cart could not be updated. Please try again.', 'yaycheckout' ),
+        ];
+
+        ob_start();
+        include YAYCHECKOUT_PLUGIN_DIR . 'templates/yayboost-fbt.php';
+
+        return (string) ob_get_clean();
+    }
+
+    /**
      * What $output returns for an enabled feature, or ''. YayBoost's internals are no contract (an off feature's
      * get_renderer() throws a TypeError), so anything thrown leaves the spot empty instead of the checkout broken.
      */
@@ -270,8 +380,14 @@ class YayBoost {
         $spots = PluginBlockCatalogue::spots_in( $page->layout()->content );
 
         foreach ( PluginBlockCatalogue::entries() as $entry ) {
-            if ( 'yayboost' === $entry['plugin'] && isset( self::UNHOOK[ $entry['featureId'] ] ) && in_array( $entry['target'], $spots, true ) ) {
-                $this->spotted[] = $entry['featureId'];
+            if ( 'yayboost' !== $entry['plugin'] || '' === $entry['featureId'] || ! in_array( $entry['target'], $spots, true ) ) {
+                continue;
+            }
+
+            $this->spotted[] = $entry['featureId'];
+
+            // Frequently bought together prints nothing on checkout.
+            if ( isset( self::UNHOOK[ $entry['featureId'] ] ) ) {
                 $this->{ self::UNHOOK[ $entry['featureId'] ] }();
             }
         }
@@ -282,55 +398,53 @@ class YayBoost {
     }
 
     /**
-     * Tags the order bump spot's output with ORDER_BUMP_SPOT_CLASS, and prints a hidden stand-in when it has no
-     * bump, so order_bump_fragment() always has an element to replace.
+     * Tags a reprinted spot's output with its REPRINTED_SPOTS class, and prints a hidden stand-in when it printed
+     * nothing, so spot_fragments() always has an element to replace.
      *
      * @param string $html  The block's output.
      * @param array  $block The parsed block.
      */
-    public function mark_order_bump_spot( $html, $block ): string {
-        $html = (string) $html;
+    public function mark_spot( $html, $block ): string {
+        $html       = (string) $html;
+        $spot_class = $this->spot_class( (array) $block );
 
-        if ( ! $this->has_spot( self::ORDER_BUMP ) || ! $this->is_order_bump_spot( (array) $block ) ) {
+        if ( '' === $spot_class ) {
             return $html;
         }
 
         $tags = new \WP_HTML_Tag_Processor( $html );
 
         if ( ! $tags->next_tag() ) {
-            return '<div class="' . self::ORDER_BUMP_SPOT_CLASS . '" hidden></div>';
+            return '<div class="' . $spot_class . '" hidden></div>';
         }
 
-        $tags->add_class( self::ORDER_BUMP_SPOT_CLASS );
+        $tags->add_class( $spot_class );
 
         return $tags->get_updated_html();
     }
 
     /**
-     * Reprints the order bump spot on update_order_review. YayBoost ticks a bump only when it prints it, and its
-     * script reads the tick back from the page; WooCommerce reprints the bump with the payment area, but a layout's
-     * spot sits outside every fragment, so a bump removed from the Items block stayed ticked. A layout holds one
-     * spot: the first is reprinted.
+     * Reprints the order bump and Frequently bought together spots on update_order_review, since a layout's spot
+     * sits outside every fragment. YayBoost ticks a bump only when it prints it, and its script reads the tick back
+     * from the page, so a bump removed from the Items block stayed ticked; FBT's products follow the cart. A layout
+     * holds one spot per feature: the first is reprinted.
      *
      * @param mixed $fragments Selector => HTML.
      * @return mixed
      */
-    public function order_bump_fragment( $fragments ) {
-        if ( ! is_array( $fragments ) || ! $this->has_spot( self::ORDER_BUMP ) ) {
-            return $fragments;
-        }
-
+    public function spot_fragments( $fragments ) {
         $layout = CheckoutPage::get_instance()->layout();
 
-        if ( null === $layout ) {
+        if ( ! is_array( $fragments ) || [] === $this->spotted || null === $layout ) {
             return $fragments;
         }
 
         foreach ( LayoutMarkupReader::flatten( parse_blocks( $layout->content ) ) as $block ) {
-            if ( $this->is_order_bump_spot( $block ) ) {
-                // mark_order_bump_spot() tags the result.
-                $fragments[ '.' . self::ORDER_BUMP_SPOT_CLASS ] = render_block( $block );
-                break;
+            $spot_class = $this->spot_class( $block );
+
+            if ( '' !== $spot_class && ! isset( $fragments[ '.' . $spot_class ] ) ) {
+                // mark_spot() tags the result.
+                $fragments[ '.' . $spot_class ] = render_block( $block );
             }
         }
 
@@ -342,9 +456,15 @@ class YayBoost {
         return in_array( $feature_id, $this->spotted, true );
     }
 
-    /** The order bump's registered real block, or a placeholder for it. */
-    private function is_order_bump_spot( array $block ): bool {
-        return '' !== PluginBlockCatalogue::spot_for( $block, [ self::ORDER_BUMP_BLOCK ] );
+    /** The REPRINTED_SPOTS class for a spot of a feature the served layout has a spot for, or ''. */
+    private function spot_class( array $block ): string {
+        foreach ( self::REPRINTED_SPOTS as $feature_id => list( $target, $spot_class ) ) {
+            if ( $this->has_spot( $feature_id ) && '' !== PluginBlockCatalogue::spot_for( $block, [ $target ] ) ) {
+                return $spot_class;
+            }
+        }
+
+        return '';
     }
 
     /**
