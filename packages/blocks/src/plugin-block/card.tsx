@@ -158,9 +158,11 @@ export function PluginBlockCard( { target, addBlock, useFree }: PluginBlockCardP
 						label={ sprintf( /* translators: %s: plugin name. */ __( 'Install & activate %s', 'yaycheckout' ), name ) }
 						denied={ sprintf( /* translators: %s: plugin name. */ __( 'Ask a site administrator to install %s.', 'yaycheckout' ), name ) }
 					/>
-					<ExternalLink href={ entry.upgradeUrl }>
-						{ sprintf( /* translators: %s: plugin name. */ __( '%s Pro adds it as a block', 'yaycheckout' ), name ) }
-					</ExternalLink>
+					{ entry.upgradeUrl !== '' && (
+						<ExternalLink href={ entry.upgradeUrl }>
+							{ sprintf( /* translators: %s: plugin name. */ __( '%s Pro adds it as a block', 'yaycheckout' ), name ) }
+						</ExternalLink>
+					) }
 				</>
 			);
 			break;
@@ -216,9 +218,11 @@ export function PluginBlockCard( { target, addBlock, useFree }: PluginBlockCardP
 					{ entry.settingsUrl !== '' && (
 						<ExternalLink href={ entry.settingsUrl }>{ sprintf( /* translators: %s: plugin name. */ __( 'Manage in %s', 'yaycheckout' ), name ) }</ExternalLink>
 					) }
-					<ExternalLink href={ entry.upgradeUrl }>
-						{ sprintf( /* translators: %s: plugin name. */ __( 'Upgrade to %s Pro to place it as a block', 'yaycheckout' ), name ) }
-					</ExternalLink>
+					{ entry.upgradeUrl !== '' && (
+						<ExternalLink href={ entry.upgradeUrl }>
+							{ sprintf( /* translators: %s: plugin name. */ __( 'Upgrade to %s Pro to place it as a block', 'yaycheckout' ), name ) }
+						</ExternalLink>
+					) }
 				</>
 			);
 			break;
