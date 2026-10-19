@@ -22,6 +22,14 @@
 }
 
 /*
+ * On a hook inside another block (before the Place Order button, before the payment methods) no block gap
+ * spaces the bumps from what follows; in the order bump spot the layout's gap does.
+ */
+.yaycheckout-checkout :is(.yayboost-order-bumps, .yayboost-order-bump:not(.yayboost-order-bumps *)):not(.yaycheckout-order-bump-spot, .yaycheckout-order-bump-spot *) {
+	margin-bottom: 16px;
+}
+
+/*
  * Columns: checkbox | title | pill | image. Row 1 holds the pill only on a narrow screen, so it is empty and
  * 0 high otherwise; the last row takes the image's extra height, so the text rows stay packed.
  */
@@ -189,4 +197,145 @@
 		width: 56px;
 		margin-left: 12px;
 	}
+}
+
+/*
+ * Frequently bought together (templates/yayboost-fbt.php, printed by Integrations\YayBoost::fbt_shortcode()): the
+ * templates' cross-sell list, a row per product with an Add button that turns to Added once it is in the cart.
+ */
+.yaycheckout-checkout .yaycheckout-fbt {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding-top: 16px;
+	border-top: 1px solid var(--yaycheckout-border-color, #ddd);
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 8px;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__title {
+	font-weight: 600;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__caption {
+	color: var(--yaycheckout-design-muted, #757575);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px;
+	border: 1px solid var(--yaycheckout-border-color, #ddd);
+	border-radius: 4px;
+	background: #fff;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__item.is-added {
+	background: color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 4%, #fff);
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__image {
+	flex: none;
+	width: 40px;
+	height: 40px;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__image img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	object-fit: cover;
+	border-radius: 2px;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__body {
+	flex: 1;
+	min-width: 0;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__name {
+	overflow: hidden;
+	font-weight: 500;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* WooCommerce's price markup: the sale price, then the regular one struck through. */
+.yaycheckout-checkout .yaycheckout-fbt__price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 6px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__price ins {
+	order: -1;
+	text-decoration: none;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__price del {
+	color: #949494;
+	font-weight: 400;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__price .screen-reader-text {
+	position: absolute;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__button {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 4px;
+	height: 32px;
+	margin: 0;
+	padding: 0 12px;
+	border: 1px solid var(--yaycheckout-primary-color, #3858e9);
+	border-radius: 2px;
+	background: transparent;
+	color: var(--yaycheckout-primary-color, #3858e9);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__button:hover {
+	background: color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 4%, transparent);
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__item.is-added .yaycheckout-fbt__button {
+	background: var(--yaycheckout-primary-color, #3858e9);
+	color: #fff;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__button:disabled {
+	opacity: 0.6;
+	cursor: progress;
+}
+
+.yaycheckout-checkout .yaycheckout-fbt__notice {
+	margin: 0;
+	color: #cc1818;
+	font-size: 12px;
 }

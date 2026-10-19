@@ -21,7 +21,7 @@ export type PluginBlockEntry = {
 	featureId: string;
 	/** The shortcode that fills the spot without the block (state `shortcode`); '' for none. */
 	shortcode: string;
-	/** The edition that has the block. */
+	/** The edition that has the block; '' when no edition has one. */
 	upgradeUrl: string;
 	/** Where the plugin's license is entered (state `unlicensed`). */
 	licenseUrl: string;
