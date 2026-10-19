@@ -103,6 +103,8 @@ class PreviewRequest {
         nocache_headers();
         add_filter( 'woocommerce_ajax_get_endpoint', [ $this, 'add_token_to_url' ] );
         add_filter( 'woocommerce_get_checkout_url', [ $this, 'add_token_to_url' ] );
+        // Plugins that post to admin-ajax.php from the checkout (YayBoost's order bump) must keep the sample cart too.
+        add_filter( 'admin_url', [ $this, 'add_token_to_ajax_url' ], 10, 2 );
         add_filter( 'woocommerce_checkout_redirect_empty_cart', '__return_false' );
         // update_order_review swaps the form for "session expired" on an empty cart; a store with no products must still show the layout.
         add_filter( 'woocommerce_checkout_update_order_review_expired', '__return_false' );
@@ -112,6 +114,11 @@ class PreviewRequest {
     /** Every wc-ajax call and the non-JS form POST carry the token; a hidden input never reaches update_order_review. */
     public function add_token_to_url( string $url ): string {
         return PreviewToken::with_token( $url, $this->token );
+    }
+
+    /** An admin-ajax.php request without the token would strip the sample items from the shared session. */
+    public function add_token_to_ajax_url( string $url, string $path ): string {
+        return 'admin-ajax.php' === ltrim( $path, '/' ) ? PreviewToken::with_token( $url, $this->token ) : $url;
     }
 
     /** Disables the button WooCommerce or the Place order block printed, keeping its label and styles. */
