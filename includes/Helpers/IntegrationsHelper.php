@@ -38,6 +38,15 @@ class IntegrationsHelper {
                 // YayLoyalty has no icon of its own yet; it borrows YayBoost's.
                 YAYCHECKOUT_PLUGIN_URL . self::YAYBOOST_ICON_PATH
             ),
+            self::describe(
+                'yaycurrency',
+                __( 'YayCurrency', 'yaycheckout' ),
+                __( 'Multi-currency switcher with prices converted and paid in the shopper\'s currency.', 'yaycheckout' ),
+                'YAY_CURRENCY_VERSION',
+                // YayCurrency has no icon of its own yet; it borrows YayBoost's.
+                YAYCHECKOUT_PLUGIN_URL . self::YAYBOOST_ICON_PATH,
+                'https://docs.yaycommerce.com/yaycurrency'
+            ),
         ];
 
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- FILTER is a yaycheckout_ prefixed constant.
