@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       YayCheckout Pro - WooCommerce Checkout Builder
+ * Plugin Name:       YayCheckout - WooCommerce Checkout Builder
  * Plugin URI:        https://yaycommerce.com/
  * Description:       Checkout builder plugin for WooCommerce: customize checkout fields, layout and design.
  * Version:           1.0.0
