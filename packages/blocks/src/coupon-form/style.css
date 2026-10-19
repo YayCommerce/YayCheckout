@@ -79,6 +79,12 @@
 	opacity: 1;
 }
 
+/* Waiting on remove_coupon (checkout-coupon-form.js). */
+.yaycheckout-coupon-form__chip[aria-busy="true"] {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
 .yaycheckout-coupon-form__error {
 	display: flex;
 	gap: 4px;
