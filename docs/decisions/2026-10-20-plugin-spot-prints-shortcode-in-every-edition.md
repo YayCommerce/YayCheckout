@@ -39,6 +39,7 @@ Proposed, 2026-10-20. It supersedes [the free-edition fallback record](2026-10-1
 - **YayCheckout stands in for YayBoost's shortcodes.**
   - `Integrations\YayBoost` keeps YayBoost's registry from `yayboost_register_features`.
   - It registers `[yayboost_order_bump]`, `[yayboost_free_shipping_bar]` and `[yayboost_frequently_bought_together]` only while YayBoost registers no shortcode of that name.
+  - The free shipping bar's shortcode prints YayCheckout's own bar, the templates' progress card, from YayBoost's `get_bar_data()`, whatever bar design YayBoost is set to; the Frequently bought together shortcode prints YayCheckout's own list.
   - Every call into YayBoost is guarded, and anything thrown leaves the spot empty.
 - **Only a placeholder is a spot.**
   - When the served layout holds a placeholder for a feature (`PluginBlockCatalogue::spots_in()`), `Integrations\YayBoost` removes YayBoost's hook output for that feature.
@@ -57,10 +58,11 @@ Proposed, 2026-10-20. It supersedes [the free-edition fallback record](2026-10-1
   - A layout looks and prints the same with YayBoost Free and Pro.
   - The swap machinery is gone: the `ready` state, **Add block**, the missing-block card, the re-added Order Bump, and the script and block-definition injection.
 - **Pro merchants lose YayBoost's block in the editor.**
-  - Each spot shows YayCheckout's preview instead, which can differ from the merchant's YayBoost design. The free shipping bar preview, for example, shows the minimal-text design in the layout's Primary.
+  - Each spot shows YayCheckout's preview instead, which can differ from the merchant's YayBoost design.
+- **The free shipping bar ignores YayBoost's design setting** at a spot: it always takes the template's look and the layout's Primary. Where a layout has no spot, YayBoost's hook output keeps the merchant's design.
 - **A merchant who inserts YayBoost's own block gets the feature twice.** The block prints it, and so does YayBoost's hook. The placeholder is the way to place a feature.
 - **The shim depends on YayBoost internals** until [the backlog item](../backlog/2026-10-19-yayboost-shortcode-shim.md) is done:
-  - the render methods;
+  - the render methods, and `FreeShippingBarFeature::get_bar_data()`'s keys;
   - how the order bump is hooked: closures bound to `OrderBumpFeature` in Free, the renderer's `render()` in Pro.
 
   If YayBoost changes them, the spot prints nothing, or the bump prints twice. A crash inside YayBoost's own rendering is caught at the spot, but not on YayBoost's hooks.
