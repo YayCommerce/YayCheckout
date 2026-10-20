@@ -9,6 +9,7 @@
  */
 
 use YayCheckout\Helpers\PluginBlockCatalogue;
+use YayCheckout\Renderer\CheckoutScope;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -26,4 +27,4 @@ if ( '' === trim( $yaycheckout_output ) ) {
     return;
 }
 ?>
-<div <?php echo get_block_wrapper_attributes(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>><?php echo $yaycheckout_output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The plugin's own shortcode markup. ?></div>
+<div <?php echo get_block_wrapper_attributes( [ 'class' => CheckoutScope::classes() ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>><?php echo $yaycheckout_output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The plugin's own shortcode markup. ?></div>

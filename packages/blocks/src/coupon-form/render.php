@@ -26,7 +26,8 @@ if ( \YayCheckout\Renderer\CheckoutLogin::must_log_in() ) {
 
 $yaycheckout_placeholder = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'placeholder', __( 'Coupon code', 'yaycheckout' ) );
 
-$yaycheckout_wrapper_attrs = [ 'class' => 'yaycheckout-coupon-form' ];
+// It may sit outside Checkout (CheckoutScope).
+$yaycheckout_wrapper_attrs = [ 'class' => 'yaycheckout-coupon-form ' . \YayCheckout\Renderer\CheckoutScope::classes() ];
 
 // Inner block markup (the Coupon Button); a form saved without one gets the default button.
 $yaycheckout_button = '' !== trim( $content )
