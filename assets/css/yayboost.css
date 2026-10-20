@@ -1,13 +1,13 @@
 /*
  * YayBoost's order bump in the templates' card look (Integrations\YayBoost::add_styles()): a dashed card,
  * the checkbox on the left with its label as the title, the headline as a pill, the image on the right,
- * and the whole card ticks the box. Wherever a layout renders it: the plugin block's shortcode, YayBoost
- * Pro's block, or YayBoost's own hook output.
+ * and the whole card ticks the box. Wherever a layout renders it: the plugin block's shortcode, the editor's
+ * stand-ins for it, or YayBoost's own hook output.
  *
  * CSS only: YayBoost's script finds the bump by these classes, so the markup stays YayBoost's
  * (OrderBumpRenderer::render_single_bump()). The .yaycheckout-checkout prefix outranks YayBoost's
  * single-class rules (order-bump.css) whatever the load order; only its !important checkbox-wrap display needs one here.
- * Colours come from the layout's design tokens (DesignStyles); the amber border is the templates' own.
+ * Colours come from the layout's design tokens (DesignStyles): the dashed border and the pill follow Primary.
  */
 
 .yaycheckout-checkout .yayboost-order-bump {
@@ -47,7 +47,7 @@
 
 /* The card and its pill, shared with the editor's stand-in for a bump the layout has no spot for (HookOutputPreview). */
 .yaycheckout-checkout :is(.yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple), .yaycheckout-hook-output-preview) {
-	border: 2px dashed #f0b849;
+	border: 2px dashed var(--yaycheckout-primary-color, #3858e9);
 	border-radius: 4px;
 	background: #fff;
 }
