@@ -6,6 +6,10 @@ interface OrderDetailsAttributes {
 	title: string;
 	productLabel: string;
 	totalLabel: string;
+	subtotalLabel: string;
+	shippingLabel: string;
+	paymentMethodLabel: string;
+	orderTotalLabel: string;
 }
 
 interface EditProps {
@@ -14,11 +18,19 @@ interface EditProps {
 }
 
 /**
- * Preview of WooCommerce's order details table. Heading and column labels are RichText; empty
- * attributes fall back to WooCommerce's strings on the storefront.
+ * Preview of WooCommerce's order details table. Heading, column and totals-row labels are
+ * RichText; empty attributes fall back to WooCommerce's strings on the storefront.
  */
 export default function Edit( { attributes, setAttributes }: EditProps ) {
-	const { title, productLabel, totalLabel } = attributes;
+	const {
+		title,
+		productLabel,
+		totalLabel,
+		subtotalLabel,
+		shippingLabel,
+		paymentMethodLabel,
+		orderTotalLabel,
+	} = attributes;
 	const blockProps = useBlockProps( { className: 'yaycheckout-order-details' } );
 
 	return (
@@ -71,7 +83,59 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					</tbody>
 					<tfoot>
 						<tr>
-							<th scope="row">{ __( 'Total', 'yaycheckout' ) }</th>
+							<th scope="row">
+								<RichText
+									tagName="span"
+									value={ subtotalLabel }
+									onChange={ ( value: string ) => setAttributes( { subtotalLabel: value } ) }
+									placeholder={ __( 'Subtotal:', 'yaycheckout' ) }
+									allowedFormats={ [] }
+									withoutInteractiveFormatting
+								/>
+							</th>
+							<td>
+								<span className="woocommerce-Price-amount amount">{ __( '$0.00', 'yaycheckout' ) }</span>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<RichText
+									tagName="span"
+									value={ shippingLabel }
+									onChange={ ( value: string ) => setAttributes( { shippingLabel: value } ) }
+									placeholder={ __( 'Shipping:', 'yaycheckout' ) }
+									allowedFormats={ [] }
+									withoutInteractiveFormatting
+								/>
+							</th>
+							<td>{ __( 'Free', 'yaycheckout' ) }</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<RichText
+									tagName="span"
+									value={ paymentMethodLabel }
+									onChange={ ( value: string ) =>
+										setAttributes( { paymentMethodLabel: value } )
+									}
+									placeholder={ __( 'Payment method:', 'yaycheckout' ) }
+									allowedFormats={ [] }
+									withoutInteractiveFormatting
+								/>
+							</th>
+							<td>{ __( 'Direct bank transfer', 'yaycheckout' ) }</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<RichText
+									tagName="span"
+									value={ orderTotalLabel }
+									onChange={ ( value: string ) => setAttributes( { orderTotalLabel: value } ) }
+									placeholder={ __( 'Total:', 'yaycheckout' ) }
+									allowedFormats={ [] }
+									withoutInteractiveFormatting
+								/>
+							</th>
 							<td>
 								<span className="woocommerce-Price-amount amount">{ __( '$0.00', 'yaycheckout' ) }</span>
 							</td>

@@ -20,6 +20,22 @@
     "totalLabel": {
       "type": "string",
       "default": ""
+    },
+    "subtotalLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "shippingLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "paymentMethodLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "orderTotalLabel": {
+      "type": "string",
+      "default": ""
     }
   },
   "supports": {
