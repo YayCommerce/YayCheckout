@@ -36,4 +36,4 @@ Superseded by [2026-10-19-plugin-block-free-fallback](2026-10-19-plugin-block-fr
 - The placeholder has no ancestor rule: the blocks it stands for have none, and an ancestor naming Checkout would make Order Summary Details and the address sections refuse it.
 - The definitions come from the editor page, not from core's `/wp/v2/block-types`: YayBoost puts PHP objects in its blocks' `provides_context`, which makes that route fatal.
 - Only a merchant with the core plugin capabilities installs or activates anything, and nothing reaches wordpress.org until they click.
-- Overriding YayBoost's filter is temporary: [the backlog item](../backlog/2026-10-19-yayboost-allows-layout-editor.md) tracks YayBoost allowing the layout editor itself.
+- Overriding YayBoost's filter is temporary: [the backlog item](../backlog/2026-10-19-yayboost-shortcode-shim.md) tracks YayBoost allowing the layout editor itself.

@@ -10,9 +10,9 @@
  * hand edit that differs by one class or style makes the editor flag the block as invalid.
  *
  * The mock's order bump, free-shipping progress bar and "Frequently bought together" list are YayBoost's, so
- * each prints through PluginBlockCatalogue::block(): the real block when YayBoost has registered it, or else a
- * Plugin block placeholder, a card in the editor that installs or activates YayBoost and swaps itself for the
- * real block, and nothing on the storefront.
+ * each prints through PluginBlockCatalogue::block() as a Plugin block placeholder: YayBoost's shortcode on the
+ * storefront, in either edition, and in the editor a preview, or a card that installs, activates or turns on
+ * YayBoost.
  *
  * The address order follows WooCommerce's Shipping destination when the layout is created: Shipping in the
  * address card and Billing inside the Payment card behind "Billing address is the same as shipping", ticked,

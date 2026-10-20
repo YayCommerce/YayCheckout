@@ -541,9 +541,7 @@ class BlockRegistry {
      * Keeps YayCheckout blocks to the layout editor, and WooCommerce's Checkout block (a second
      * checkout form inside the layout's own) out of it. Types stay registered so checkout-page.php
      * can still do_blocks() the layout. The layout editor also offers locked_blocks(), the Pro blocks'
-     * stubs, which only JavaScript registers, and every PluginBlockCatalogue target, which its own plugin
-     * may hide outside its own editors (YayBoost keeps Order Bump to checkout templates and the checkout page).
-     * An unknown editor is left alone: it may be the layout editor.
+     * stubs, which only JavaScript registers. An unknown editor is left alone: it may be the layout editor.
      *
      * @param  bool|string[] $allowed_block_types
      * @return bool|string[]
@@ -557,10 +555,8 @@ class BlockRegistry {
                     return $allowed;
                 }
 
-                // The locked stubs are registered only in JavaScript, so they are not in the list yet. Every catalogue
-                // target is listed even before its plugin registers it, so one activated from the editor can be
-                // inserted without a reload; the inserter lists only registered types.
-                return array_values( array_unique( array_merge( $allowed, self::locked_blocks(), PluginBlockCatalogue::targets() ) ) );
+                // The locked stubs are registered only in JavaScript, so they are not in the list yet.
+                return array_values( array_unique( array_merge( $allowed, self::locked_blocks() ) ) );
             case 'other':
                 return self::without( $allowed_block_types, static fn( $name ) => str_starts_with( $name, 'yaycheckout/' ) );
             default:

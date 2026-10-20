@@ -4,7 +4,7 @@
   "name": "yaycheckout/plugin-block",
   "title": "Plugin block",
   "category": "yaycheckout-plugins",
-  "description": "A spot for another Yay plugin's block or its shortcode.",
+  "description": "A spot that another Yay plugin's shortcode fills.",
   "textdomain": "yaycheckout",
   "attributes": {
     "target": {
