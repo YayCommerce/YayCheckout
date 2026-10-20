@@ -14,9 +14,9 @@ defined( 'ABSPATH' ) || exit;
  * YayBoost, read through its public `yayboost_register_features` action only: which edition runs, whether Pro is
  * licensed, and whether a feature is on. PluginBlockCatalogue resolves its card states from it.
  *
- * YayBoost's checkout blocks are Pro's, so until YayBoost ships shortcodes of its own, this registers them for a
- * placeholder to print, and removes YayBoost's own hook output for a feature the served layout has a spot for, so
- * it prints once. Every call into YayBoost is guarded: a YayBoost that renames a method yields '' or a null state,
+ * A layout's spot prints a feature through a shortcode in both YayBoost editions, so until YayBoost ships
+ * shortcodes of its own, this registers them for the placeholder to print, and removes YayBoost's own hook output
+ * for a feature the served layout has a spot for, so it prints once. Every call into YayBoost is guarded: a YayBoost that renames a method yields '' or a null state,
  * never a fatal.
  */
 class YayBoost {
@@ -28,7 +28,7 @@ class YayBoost {
     public const FREE_SHIPPING_BAR = 'free_shipping_bar';
     public const FBT               = 'frequently_bought_together';
 
-    /** YayBoost Pro's Order Bump block, the catalogue target a layout's order bump spot holds. */
+    /** The catalogue target a layout's order bump spot holds, named after YayBoost Pro's Order Bump block. */
     public const ORDER_BUMP_BLOCK = 'yayboost/order-bump';
 
     /** The catalogue target a layout's Frequently bought together spot holds; YayBoost has no such block yet. */
@@ -209,7 +209,7 @@ class YayBoost {
     }
 
     /**
-     * Every active bump, as YayBoost Pro's Order Bump block prints them. Free returns them from
+     * Every active bump, in one wrapper. Free returns them from
      * render_all_bumps_for_block(); Pro lacks it and prints them from render(), the method it hooks.
      */
     public function order_bump_shortcode(): string {
