@@ -2,12 +2,7 @@
 	margin: 0;
 }
 
-.yaycheckout-order-details__preview + .yaycheckout-order-details__preview {
-	margin-top: 1.5em;
-}
-
-.yaycheckout-order-details__preview .woocommerce-order-details__title,
-.yaycheckout-order-details__preview .woocommerce-column__title {
+.yaycheckout-order-details__preview .woocommerce-order-details__title {
 	margin: 0 0 0.5em;
 	font-size: 1.1em;
 }
@@ -27,9 +22,4 @@
 
 .yaycheckout-order-details__preview thead th {
 	border-top: 0;
-}
-
-.yaycheckout-order-details__preview address {
-	font-style: normal;
-	opacity: 0.85;
 }

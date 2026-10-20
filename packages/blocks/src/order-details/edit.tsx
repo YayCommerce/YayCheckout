@@ -3,8 +3,8 @@ import { __ } from '@wordpress/i18n';
 import './editor.css';
 
 /**
- * Static preview of WooCommerce's order details table. Titles come from WooCommerce's
- * template and are not editable here; the storefront prints woocommerce_order_details_table().
+ * Static preview of WooCommerce's order details table (items and totals only). Addresses are a
+ * separate Order Addresses block. Titles come from WooCommerce's template and are not editable here.
  */
 export default function Edit() {
 	const blockProps = useBlockProps( { className: 'yaycheckout-order-details' } );
@@ -40,10 +40,6 @@ export default function Edit() {
 						</tr>
 					</tfoot>
 				</table>
-			</section>
-			<section className="yaycheckout-order-details__preview woocommerce-customer-details">
-				<h2 className="woocommerce-column__title">{ __( 'Billing address', 'yaycheckout' ) }</h2>
-				<address>{ __( 'Sample address', 'yaycheckout' ) }</address>
 			</section>
 		</div>
 	);

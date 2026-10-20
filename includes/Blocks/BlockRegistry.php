@@ -86,6 +86,7 @@ class BlockRegistry {
         'slot',
         'wc-hook',
         'order-details',
+        'order-customer-details',
     ];
 
     /**

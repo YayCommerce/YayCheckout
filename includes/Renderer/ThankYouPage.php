@@ -79,13 +79,55 @@ class ThankYouPage {
             wp_dequeue_style( $handle );
         }
 
-        // Order Details prints WooCommerce's order-details table; it needs the classic shop styles.
-        if ( has_block( 'yaycheckout/order-details', $layout->content ) ) {
+        // Order Details / Order Addresses print WooCommerce order templates; they need classic shop styles.
+        if ( has_block( 'yaycheckout/order-details', $layout->content ) || has_block( 'yaycheckout/order-customer-details', $layout->content ) ) {
             wp_enqueue_style( 'woocommerce-general' );
             wp_enqueue_style( 'woocommerce-layout' );
         }
 
         ( new CheckoutBaseStyles() )->enqueue( true, $layout->design );
+    }
+
+    /**
+     * Drops the billing/shipping section WooCommerce appends inside woocommerce_order_details_table(),
+     * so Order Addresses can print order-details-customer.php on its own. Leaves $html untouched when
+     * that section is missing (theme override, already stripped).
+     */
+    public static function without_customer_details( string $html ): string {
+        $marker = '<section class="woocommerce-customer-details">';
+        $start  = strpos( $html, $marker );
+
+        if ( false === $start ) {
+            return $html;
+        }
+
+        $depth = 0;
+        $pos   = $start;
+        $len   = strlen( $html );
+
+        while ( $pos < $len ) {
+            $open  = stripos( $html, '<section', $pos );
+            $close = stripos( $html, '</section>', $pos );
+
+            if ( false === $close ) {
+                return $html;
+            }
+
+            if ( false !== $open && $open < $close ) {
+                ++$depth;
+                $pos = $open + 8;
+                continue;
+            }
+
+            --$depth;
+            $pos = $close + strlen( '</section>' );
+
+            if ( 0 === $depth ) {
+                return substr( $html, 0, $start ) . ltrim( substr( $html, $pos ) );
+            }
+        }
+
+        return $html;
     }
 
     /**
