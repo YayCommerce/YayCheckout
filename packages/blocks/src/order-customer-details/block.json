@@ -8,6 +8,16 @@
   "textdomain": "yaycheckout",
   "keywords": [ "thank you", "billing", "shipping", "address" ],
   "example": {},
+  "attributes": {
+    "billingTitle": {
+      "type": "string",
+      "default": ""
+    },
+    "shippingTitle": {
+      "type": "string",
+      "default": ""
+    }
+  },
   "supports": {
     "html": false,
     "multiple": false,

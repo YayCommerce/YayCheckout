@@ -89,6 +89,40 @@ class ThankYouPage {
     }
 
     /**
+     * Runs $print while WooCommerce gettext for the given English source strings returns the merchant's
+     * labels. Empty overrides are skipped so the shop's WooCommerce locale stays in force.
+     *
+     * @param array<string, string> $overrides Source string (as in WooCommerce templates) => replacement.
+     * @param callable              $print     Printer that echoes WooCommerce template output.
+     */
+    public static function with_woocommerce_label_overrides( array $overrides, callable $print ): void {
+        $overrides = array_filter(
+            $overrides,
+            static function ( $label ) {
+                return is_string( $label ) && '' !== $label;
+            }
+        );
+
+        if ( [] === $overrides ) {
+            $print();
+
+            return;
+        }
+
+        $filter = static function ( $translation, $text, $domain ) use ( $overrides ) {
+            if ( 'woocommerce' !== $domain || ! isset( $overrides[ $text ] ) ) {
+                return $translation;
+            }
+
+            return $overrides[ $text ];
+        };
+
+        add_filter( 'gettext', $filter, 10, 3 );
+        $print();
+        remove_filter( 'gettext', $filter, 10 );
+    }
+
+    /**
      * Drops the billing/shipping section WooCommerce appends inside woocommerce_order_details_table(),
      * so Order Addresses can print order-details-customer.php on its own. Leaves $html untouched when
      * that section is missing (theme override, already stripped).

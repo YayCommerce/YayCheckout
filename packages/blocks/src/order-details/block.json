@@ -8,6 +8,20 @@
   "textdomain": "yaycheckout",
   "keywords": [ "thank you", "order", "receipt", "items" ],
   "example": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "default": ""
+    },
+    "productLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "totalLabel": {
+      "type": "string",
+      "default": ""
+    }
+  },
   "supports": {
     "html": false,
     "multiple": false,
