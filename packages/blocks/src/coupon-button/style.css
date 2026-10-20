@@ -1,33 +1,33 @@
 /*
- * The .yaycheckout-checkout prefix outranks checkout-base.css's button rule (0,2,0). Until the merchant
+ * The prefix, Checkout or a Coupon form outside it (.yaycheckout-scope), outranks checkout-base.css's button rule (0,2,0). Until the merchant
  * picks a colour here, the design's button colours apply, else the primary token; the colour support adds
  * .has-background and .has-text-color for a preset or a custom pick alike.
  */
-.yaycheckout-checkout .wp-block-yaycheckout-coupon-button:not(.has-background) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .wp-block-yaycheckout-coupon-button:not(.has-background) {
 	background: var(--yaycheckout-button-background, var(--yaycheckout-primary-color));
 }
 
-.yaycheckout-checkout .wp-block-yaycheckout-coupon-button:not(.has-background):hover {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .wp-block-yaycheckout-coupon-button:not(.has-background):hover {
 	background: var(--yaycheckout-button-hover-background, var(--yaycheckout-button-background, var(--yaycheckout-primary-color)));
 }
 
-.yaycheckout-checkout .wp-block-yaycheckout-coupon-button:not(.has-text-color) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .wp-block-yaycheckout-coupon-button:not(.has-text-color) {
 	color: var(--yaycheckout-button-color, #fff);
 }
 
-.yaycheckout-checkout .wp-block-yaycheckout-coupon-button:not(.has-text-color):hover {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .wp-block-yaycheckout-coupon-button:not(.has-text-color):hover {
 	color: var(--yaycheckout-button-hover-color, var(--yaycheckout-button-color, #fff));
 }
 
-.yaycheckout-checkout .wp-block-yaycheckout-coupon-button.is-style-outline:not(.has-background) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .wp-block-yaycheckout-coupon-button.is-style-outline:not(.has-background) {
 	background: transparent;
 }
 
-.yaycheckout-checkout .wp-block-yaycheckout-coupon-button.is-style-outline:not(.has-text-color) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .wp-block-yaycheckout-coupon-button.is-style-outline:not(.has-text-color) {
 	color: var(--yaycheckout-primary-color);
 }
 
-.yaycheckout-checkout .wp-block-yaycheckout-coupon-button.is-style-outline:not(.has-border-color) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .wp-block-yaycheckout-coupon-button.is-style-outline:not(.has-border-color) {
 	border: 1px solid currentColor;
 }
 

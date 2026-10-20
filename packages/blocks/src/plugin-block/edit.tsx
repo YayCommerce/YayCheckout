@@ -8,6 +8,7 @@ import { FreeShippingBarPreview } from './free-shipping-bar-preview';
 import { OrderBumpPreview } from './order-bump-preview';
 import { pluginBlocksData } from './plugin-blocks-data';
 import { pluginBlocksStore } from './store';
+import { useScopeClass } from '../shared/checkout-scope';
 
 interface EditProps {
 	attributes: { target: string };
@@ -29,7 +30,8 @@ export default function Edit( { attributes }: EditProps ) {
 	const state = useSelect( ( select ) => select( pluginBlocksStore ).getPluginState( attributes.target )?.state, [ attributes.target ] );
 	const Preview = state === 'shortcode' ? PREVIEWS[ attributes.target ] : undefined;
 	const settingsUrl = pluginBlocksData.entries.find( ( entry ) => entry.target === attributes.target )?.settingsUrl ?? '';
-	const blockProps = useBlockProps( { className: 'yaycheckout-plugin-block' } );
+	// It may sit outside Checkout (CheckoutScope).
+	const blockProps = useBlockProps( { className: 'yaycheckout-plugin-block ' + useScopeClass() } );
 
 	// The spot's style is for the plugin's output, which the storefront only prints once the card is gone: the card
 	// leaves out its inline styles and its colour classes.
