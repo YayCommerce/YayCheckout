@@ -568,9 +568,9 @@ class CheckoutFragments {
     }
 
     /**
-     * Radios Woo's checkout.js listens for. The label is the method name after
-     * woocommerce_cart_shipping_method_full_label, and the price is its own element:
-     * core concatenates them, which leaves no node for a card layout to place.
+     * Radios Woo's checkout.js listens for. The label is the method name and the price is its own
+     * element (shipping_rate_label_parts()): core concatenates them, which leaves no node for a card
+     * layout to place.
      *
      * @param array<string, \WC_Shipping_Rate> $methods
      * @param mixed                            $chosen_method Session value for this package.
@@ -585,14 +585,9 @@ class CheckoutFragments {
 
             $slug     = sanitize_title( $method->id );
             $input_id = 'shipping_method_' . $index . '_' . $slug;
-            $name     = apply_filters(
-                // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's rate-label filter.
-                'woocommerce_cart_shipping_method_full_label',
-                $method->get_label(),
-                $method
-            );
-            $name  = is_string( $name ) ? $name : $method->get_label();
-            $price = self::shipping_rate_price_html( $method );
+            $parts    = self::shipping_rate_label_parts( $method );
+            $name     = $parts['name'];
+            $price    = $parts['price'];
 
             $attr_index = (string) $index;
 
@@ -611,7 +606,7 @@ class CheckoutFragments {
             echo '</span></span>';
 
             if ( '' !== $price ) {
-                echo '<span class="yaycheckout-shipping-methods__price">' . $price . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wc_price() HTML, plus an escaped tax label.
+                echo '<span class="yaycheckout-shipping-methods__price">' . $price . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wc_price() HTML, an escaped tax label, and what the rate-label filter appended.
             }
 
             echo '</label>';
@@ -621,6 +616,45 @@ class CheckoutFragments {
         }
 
         echo '</ul>';
+    }
+
+    /**
+     * A rate's name and price, split from the label wc_cart_totals_shipping_method_label() builds.
+     * woocommerce_cart_shipping_method_full_label gets core's "Name: price", because plugins rebuild
+     * or extend it: a currency switcher returns "Name: price (~converted)". The result is split at
+     * ": price", so the price keeps its own element along with whatever a plugin appended after it.
+     * When the split finds no price, the whole label is the name and the price is left out, so a
+     * label that carries its own price never prints it twice.
+     *
+     * @return array{name: string, price: string}
+     */
+    private static function shipping_rate_label_parts( \WC_Shipping_Rate $method ): array {
+        $name  = $method->get_label();
+        $price = self::shipping_rate_price_html( $method );
+        $label = '' === $price ? $name : $name . ': ' . $price;
+
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's rate-label filter.
+        $filtered = apply_filters( 'woocommerce_cart_shipping_method_full_label', $label, $method );
+        if ( ! is_string( $filtered ) ) {
+            return [
+                'name'  => $name,
+                'price' => $price,
+            ];
+        }
+
+        $separator = ': ' . $price;
+        $at        = '' === $price ? false : strpos( $filtered, $separator );
+        if ( false === $at ) {
+            return [
+                'name'  => $filtered,
+                'price' => '',
+            ];
+        }
+
+        return [
+            'name'  => substr( $filtered, 0, $at ),
+            'price' => $price . substr( $filtered, $at + strlen( $separator ) ),
+        ];
     }
 
     /** The price suffix wc_cart_totals_shipping_method_label() appends, without the method name. */
@@ -1327,9 +1361,10 @@ class CheckoutFragments {
         $chosen   = WC()->session ? WC()->session->get( 'chosen_shipping_methods', array() ) : array();
         $chosen   = is_array( $chosen ) ? $chosen : array();
 
-        $selected_names  = array();
-        $available_names = array();
-        $has_selected    = false;
+        $selected_names   = array();
+        $selected_methods = array();
+        $available_names  = array();
+        $has_selected     = false;
 
         foreach ( $packages as $index => $package ) {
             if ( ! is_array( $package ) ) {
@@ -1350,7 +1385,8 @@ class CheckoutFragments {
                 }
 
                 if ( '' !== $chosen_id && $method->id === $chosen_id ) {
-                    $has_selected = true;
+                    $has_selected       = true;
+                    $selected_methods[] = $method;
                     if ( is_string( $name ) && '' !== $name && ! in_array( $name, $selected_names, true ) ) {
                         $selected_names[] = $name;
                     }
@@ -1374,8 +1410,14 @@ class CheckoutFragments {
                 $amount += (float) WC()->cart->get_shipping_tax();
             }
 
+            // One selected rate shows its price as Shipping Methods does, with what the rate-label
+            // filter appended (a currency switcher's converted amount); several are summed.
+            $rate_price = 1 === count( $selected_methods ) ? self::shipping_rate_label_parts( $selected_methods[0] )['price'] : '';
+
             if ( 0.0 === round( $amount, wc_get_price_decimals() ) ) {
                 $value = '<strong>' . esc_html__( 'Free', 'woocommerce' ) . '</strong>';
+            } elseif ( '' !== $rate_price ) {
+                $value = $rate_price;
             } else {
                 $value = wc_price( $amount );
             }
@@ -1388,7 +1430,7 @@ class CheckoutFragments {
         ?>
         <tr class="yaycheckout-order-summary-breakdown__shipping">
             <th><?php echo esc_html( $label ); ?></th>
-            <td><?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above or wc_price() HTML. ?></td>
+            <td><?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above, wc_price() HTML, or a rate's filtered price. ?></td>
         </tr>
         <?php
     }
