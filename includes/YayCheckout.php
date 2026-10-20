@@ -22,7 +22,6 @@ class YayCheckout {
         \YayCheckout\Engine\LayoutTrashSync::get_instance();
         \YayCheckout\Engine\DesignFontInstall::get_instance();
         \YayCheckout\Engine\LayoutActiveGuard::get_instance();
-        \YayCheckout\Engine\ThankYouLayoutSeed::get_instance();
         \YayCheckout\Engine\Admin\LayoutEditorEmbed::get_instance();
         \YayCheckout\Engine\Admin\LayoutEditorCanvas::get_instance();
         \YayCheckout\Renderer\PreviewRequest::get_instance();
