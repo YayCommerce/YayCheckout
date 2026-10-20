@@ -763,6 +763,35 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 }
 
 /*
+ * Button blocks a merchant adds (core's Button, Brandy's), which print a.wp-block-button__link and so miss the rule
+ * above: the design's buttons tokens, with its fallbacks, instead of the theme's :root :where(.wp-element-button).
+ * Their size and spacing stay the block's. Block supports win: inline styles, and a colour picked in the block's
+ * settings (has-background, has-text-color). An outline button keeps its own colours.
+ */
+.yaycheckout-checkout .wp-block-button__link {
+	border-radius: var(--yaycheckout-button-radius, var(--yaycheckout-neutral-radius));
+	font-weight: var(--yaycheckout-button-font-weight, 600);
+	text-transform: var(--yaycheckout-button-text-transform, none);
+}
+
+.yaycheckout-checkout .wp-block-button__link:not(.has-background, .is-style-outline, .is-style-outline > *) {
+	background-color: var(--yaycheckout-button-background, var(--yaycheckout-primary-color));
+}
+
+.yaycheckout-checkout .wp-block-button__link:not(.has-text-color, .is-style-outline, .is-style-outline > *) {
+	color: var(--yaycheckout-button-color, #fff);
+}
+
+.yaycheckout-checkout .wp-block-button__link:not(.has-background, .is-style-outline, .is-style-outline > *):hover {
+	background-color: var(--yaycheckout-button-hover-background, var(--yaycheckout-button-background, var(--yaycheckout-primary-color)));
+	filter: var(--yaycheckout-button-hover-filter, brightness(0.92));
+}
+
+.yaycheckout-checkout .wp-block-button__link:not(.has-text-color, .is-style-outline, .is-style-outline > *):hover {
+	color: var(--yaycheckout-button-hover-color, var(--yaycheckout-button-color, #fff));
+}
+
+/*
  * The Checkout block isn't a core layout, so core's flow-layout trim doesn't reach its children: a first or last
  * block (Columns' 1.75em bottom margin, a Group, a heading) would push its margin outside the form. A child's own
  * margin setting is inline, so it still wins.
