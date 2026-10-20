@@ -138,14 +138,22 @@ export async function bulkLayouts({
   return layoutBulkResponseWireSchema.parse(await api.post('layouts/bulk', { json: { action, ids } }).json());
 }
 
+/** Mirrors Layout::SURFACE_* in PHP. Omitted is checkout. */
+export type LayoutSurface = 'checkout' | 'thank_you';
+
 export type CreateLayoutDraftPayload =
-  { name: string; source: 'default' } | { name: string; source: 'library'; templateSlug: string };
+  | { name: string; source: 'default'; surface?: LayoutSurface }
+  | { name: string; source: 'library'; templateSlug: string; surface?: LayoutSurface };
 
 export async function createLayoutDraft(payload: CreateLayoutDraftPayload): Promise<Layout> {
-  const json =
+  const json: Record<string, string> =
     payload.source === 'library'
       ? { name: payload.name, source: payload.source, template_slug: payload.templateSlug }
       : { name: payload.name, source: payload.source };
+
+  if (payload.surface) {
+    json.surface = payload.surface;
+  }
 
   return parseLayout(await api.post('layouts', { json }).json());
 }

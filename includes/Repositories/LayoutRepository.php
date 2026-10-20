@@ -363,10 +363,18 @@ class LayoutRepository {
      * Creates a layout draft from a catalogue template: its markup, which is a complete checkout, so
      * activating it as-is lets a shopper place an order, its design, and its logged-out view. The post
      * type's template only applies to auto-drafts, not to this insert.
+     * A thank-you surface skips the catalogue so a checkout form is never poured into it.
      *
+     * @param string $surface Layout::SURFACE_*; omitted callers stay checkout.
      * @throws \InvalidArgumentException When the template is not available or the insert fails.
      */
-    public function create( string $title, string $template_slug ): Layout {
+    public function create( string $title, string $template_slug, string $surface = Layout::SURFACE_CHECKOUT ): Layout {
+        $surface = Layout::normalize_surface( $surface );
+
+        if ( Layout::SURFACE_THANK_YOU === $surface ) {
+            return $this->insert_draft( $title, '', [], LayoutDesign::from_meta( [] ), '', '', Layout::SURFACE_THANK_YOU );
+        }
+
         return $this->insert_draft(
             $title,
             LayoutTemplateCatalogue::markup( $template_slug ),

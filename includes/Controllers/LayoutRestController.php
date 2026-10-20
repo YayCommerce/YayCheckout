@@ -62,6 +62,15 @@ class LayoutRestController extends BaseRestController {
                                 return is_string( $value ) && '' !== trim( $value );
                             },
                         ],
+                        'surface'       => [
+                            'required'          => false,
+                            'type'              => 'string',
+                            'default'           => Layout::SURFACE_CHECKOUT,
+                            'sanitize_callback' => [ Layout::class, 'normalize_surface' ],
+                            'validate_callback' => static function ( $value ) {
+                                return in_array( $value, [ Layout::SURFACE_CHECKOUT, Layout::SURFACE_THANK_YOU ], true );
+                            },
+                        ],
                     ],
                 ],
             ]
@@ -289,18 +298,25 @@ class LayoutRestController extends BaseRestController {
     /**
      * Creates a layout draft from the New layout modal. Titles may repeat, as Pages do.
      * 'default' builds from the default template, 'library' from the picked one, once it is available on this plan.
+     * A thank-you surface skips the catalogue: those templates are checkout forms.
      *
      * @return array|\WP_Error
      */
     public function create_draft( \WP_REST_Request $request ) {
-        $name          = (string) $request->get_param( 'name' );
-        $source        = (string) $request->get_param( 'source' );
-        $template_slug = 'library' === $source ? (string) $request->get_param( 'template_slug' ) : LayoutTemplateCatalogue::DEFAULT_SLUG;
+        $name    = (string) $request->get_param( 'name' );
+        $surface = Layout::normalize_surface( $request->get_param( 'surface' ) );
 
         try {
+            if ( Layout::SURFACE_THANK_YOU === $surface ) {
+                return $this->layouts->create( $name, '', $surface )->to_array();
+            }
+
+            $source        = (string) $request->get_param( 'source' );
+            $template_slug = 'library' === $source ? (string) $request->get_param( 'template_slug' ) : LayoutTemplateCatalogue::DEFAULT_SLUG;
+
             LayoutTemplateCatalogue::assert_available( $template_slug );
 
-            return $this->layouts->create( $name, $template_slug )->to_array();
+            return $this->layouts->create( $name, $template_slug, $surface )->to_array();
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( ExceptionHelper::message( $ex ) );
         }
