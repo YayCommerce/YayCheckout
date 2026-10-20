@@ -339,3 +339,49 @@
 	color: #cc1818;
 	font-size: 12px;
 }
+
+/*
+ * Free shipping bar (templates/yayboost-free-shipping-bar.php, printed by Integrations\YayBoost::free_shipping_bar_shortcode()):
+ * the templates' progress card, the message and the amounts above a bar in Primary.
+ */
+.yaycheckout-checkout .yaycheckout-shipping-bar {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 16px 20px;
+	border: 1px solid var(--yaycheckout-border-color, #ddd);
+	border-radius: 4px;
+	background: #fff;
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-bar__head {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 12px;
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-bar__message {
+	font-weight: 500;
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-bar__amount {
+	flex: 0 0 auto;
+	color: var(--yaycheckout-design-muted, #757575);
+	font-size: 12px;
+	white-space: nowrap;
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-bar__track {
+	height: 6px;
+	overflow: hidden;
+	border-radius: 9999px;
+	background: #e0e0e0;
+}
+
+.yaycheckout-checkout .yaycheckout-shipping-bar__fill {
+	height: 100%;
+	border-radius: 9999px;
+	background: var(--yaycheckout-primary-color, #3858e9);
+	transition: width 180ms;
+}

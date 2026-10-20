@@ -42,7 +42,7 @@ class PluginBlockCatalogue {
                 YayBoost::ORDER_BUMP_SHORTCODE
             ),
             self::yayboost_entry(
-                'yayboost/free-shipping-bar',
+                YayBoost::FREE_SHIPPING_BAR_BLOCK,
                 __( 'Free shipping bar', 'yaycheckout' ),
                 __( 'Show how much more the shopper needs to spend for free shipping.', 'yaycheckout' ),
                 'admin.php?page=yayboost-settings#/features/free_shipping_bar',
