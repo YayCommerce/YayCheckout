@@ -59,7 +59,7 @@ Proposed, 2026-10-20. It supersedes [the free-edition fallback record](2026-10-1
   - The swap machinery is gone: the `ready` state, **Add block**, the missing-block card, the re-added Order Bump, and the script and block-definition injection.
 - **Pro merchants lose YayBoost's block in the editor.**
   - Each spot shows YayCheckout's preview instead, which can differ from the merchant's YayBoost design.
-- **The free shipping bar ignores YayBoost's design setting** at a spot: it always takes the template's look and the layout's Primary. Where a layout has no spot, YayBoost's hook output keeps the merchant's design.
+- **The free shipping bar ignores YayBoost's design setting** at a spot: it always takes the template's look and the layout's Primary. The card around it is the spot's block style, which starts as the template's and which the merchant can change in the editor. Where a layout has no spot, YayBoost's hook output keeps the merchant's design.
 - **A merchant who inserts YayBoost's own block gets the feature twice.** The block prints it, and so does YayBoost's hook. The placeholder is the way to place a feature.
 - **The shim depends on YayBoost internals** until [the backlog item](../backlog/2026-10-19-yayboost-shortcode-shim.md) is done:
   - the render methods, and `FreeShippingBarFeature::get_bar_data()`'s keys;
