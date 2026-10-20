@@ -123,6 +123,21 @@ class ThankYouPage {
     }
 
     /**
+     * Drops the order-details heading WooCommerce prints in order-details.php when the block's
+     * Show title toggle is off. Leaves $html untouched when that heading is missing.
+     */
+    public static function without_order_details_title( string $html ): string {
+        $stripped = preg_replace(
+            '/<h2\b[^>]*\bwoocommerce-order-details__title\b[^>]*>.*?<\/h2>/is',
+            '',
+            $html,
+            1
+        );
+
+        return is_string( $stripped ) ? $stripped : $html;
+    }
+
+    /**
      * Drops the billing/shipping section WooCommerce appends inside woocommerce_order_details_table(),
      * so Order Addresses can print order-details-customer.php on its own. Leaves $html untouched when
      * that section is missing (theme override, already stripped).

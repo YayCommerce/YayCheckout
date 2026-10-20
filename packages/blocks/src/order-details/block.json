@@ -9,6 +9,10 @@
   "keywords": [ "thank you", "order", "receipt", "items" ],
   "example": {},
   "attributes": {
+    "showTitle": {
+      "type": "boolean",
+      "default": true
+    },
     "title": {
       "type": "string",
       "default": ""
