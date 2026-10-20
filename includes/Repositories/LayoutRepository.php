@@ -413,8 +413,8 @@ class LayoutRepository {
     /**
      * Puts a layout's blocks and design back to its template's, or to the default template's when it has
      * none available on this plan (a Pro template in Free falls back to the default one).
-     * Title, status, rules, the template and the active flag stay. WordPress stores the old markup as a
-     * revision, so the editor can undo it; the design meta has no revisions.
+     * Title, status, rules, the template and the active flag stay. The old markup and design are already
+     * a revision (every layout gets one when created), so the editor can undo it.
      *
      * @throws \InvalidArgumentException When the layout is missing, is a thank-you layout, or the update fails.
      */
@@ -430,20 +430,16 @@ class LayoutRepository {
 
         $slug = LayoutTemplateCatalogue::is_available( $layout->template ) ? $layout->template : LayoutTemplateCatalogue::DEFAULT_SLUG;
 
-        // Core revisions the post after the update, so a layout never saved in the editor has no revision
-        // holding the old markup. No-op when the latest revision already matches.
-        wp_save_post_revision( $id );
-
-        // Slashed by update_post(): without it block attributes lose their \uXXXX escapes.
+        // Slashed by update_post(): without it block attributes lose their \uXXXX escapes, and a template's
+        // custom CSS its backslashes. The design goes in the same update, so the revision core saves after it
+        // pairs the template's markup with the template's design.
         $this->update_post(
             [
                 'ID'           => $id,
                 'post_content' => LayoutTemplateCatalogue::markup( $slug ),
+                'meta_input'   => [ Layout::META_DESIGN => LayoutTemplateCatalogue::design( $slug )->to_meta() ],
             ]
         );
-
-        // update_post_meta() unslashes too; a template's custom CSS may hold backslashes.
-        update_post_meta( $id, Layout::META_DESIGN, wp_slash( LayoutTemplateCatalogue::design( $slug )->to_meta() ) );
 
         return $this->find( $id );
     }
@@ -552,6 +548,10 @@ class LayoutRepository {
         if ( is_wp_error( $new_id ) ) {
             throw new \InvalidArgumentException( esc_html( $new_id->get_error_message() ) );
         }
+
+        // Core revisions on update only, so without this the layout as created could never be restored.
+        // The design went in with the insert, so the revision holds it too.
+        wp_save_post_revision( (int) $new_id );
 
         return $this->find( (int) $new_id );
     }

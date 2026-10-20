@@ -6,8 +6,10 @@
  * neutral fallbacks that take the theme's font and colour; block supports override per instance.
  *
  * Selectors are .yaycheckout-checkout plus a class or more, so they beat a theme's
- * input[type="text"] (0,1,1). Things WooCommerce or select2 append outside the form are
- * scoped to body.yaycheckout-page. No @layer: unlayered theme CSS would beat it.
+ * input[type="text"] (0,1,1). A block that may sit outside Checkout carries .yaycheckout-scope
+ * (Renderer\CheckoutScope), which the rules take as Checkout through :is() at the same specificity;
+ * the rules on Checkout's direct children don't. Things WooCommerce or select2 append outside the
+ * form are scoped to body.yaycheckout-page. No @layer: unlayered theme CSS would beat it.
  */
 
 /*
@@ -128,37 +130,37 @@ html.yaycheckout-has-pinned body {
  * their own; the layout places it. No block setting can undo a theme's float. Their margins are 0 too,
  * since Order Summary's Block spacing places them and themes style them by id.
  */
-.yaycheckout-checkout #order_review_heading,
-.yaycheckout-checkout #order_review {
+:is(.yaycheckout-checkout, .yaycheckout-scope) #order_review_heading,
+:is(.yaycheckout-checkout, .yaycheckout-scope) #order_review {
 	float: none;
 	width: auto;
 	margin-block: 0;
 }
 
 /* Section description under Billing, Shipping, Shipping Methods and Payment headings. */
-.yaycheckout-checkout .yaycheckout-section-description {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-section-description {
 	margin: 0 0 8px;
 	font-size: 0.875em;
 	opacity: 0.75;
 }
 
 /* Field rows. Classic themes float the half-width rows; the layout's Columns place fields side by side instead. */
-.yaycheckout-checkout :is(.form-row-first, .form-row-last, .form-row-wide) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.form-row-first, .form-row-last, .form-row-wide) {
 	float: none;
 	width: auto;
 }
 
 /* WooCommerce prints each row as a <p>, whose browser margin would add to the layout's own spacing. */
-.yaycheckout-checkout :is(.form-row, .yaycheckout-disclosure__panel, .yaycheckout-different-address, .yaycheckout-create-account, .yaycheckout-create-account > .create-account, .woocommerce-additional-fields__field-wrapper) > .form-row {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.form-row, .yaycheckout-disclosure__panel, .yaycheckout-different-address, .yaycheckout-create-account, .yaycheckout-create-account > .create-account, .woocommerce-additional-fields__field-wrapper) > .form-row {
 	margin-block: 0;
 }
 
 /* These wrappers hold several rows and have no gap of their own. */
-.yaycheckout-checkout :is(.yaycheckout-create-account > .create-account, .woocommerce-additional-fields__field-wrapper) > .form-row + .form-row {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.yaycheckout-create-account > .create-account, .woocommerce-additional-fields__field-wrapper) > .form-row + .form-row {
 	margin-block-start: 12px;
 }
 
-.yaycheckout-checkout .form-row :is(label, .yaycheckout-field-preview__label, .yaycheckout-extra-field__label) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .form-row :is(label, .yaycheckout-field-preview__label, .yaycheckout-extra-field__label) {
 	display: block;
 	margin-block: 0 4px;
 	color: var(--yaycheckout-input-label-color, inherit);
@@ -167,8 +169,8 @@ html.yaycheckout-has-pinned body {
 }
 
 /* Checkbox rows keep the box beside their text. */
-.yaycheckout-checkout .form-row label:is(.checkbox, .woocommerce-form__label-for-checkbox),
-.yaycheckout-checkout .form-row label:has(> input[type="checkbox"]) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .form-row label:is(.checkbox, .woocommerce-form__label-for-checkbox),
+:is(.yaycheckout-checkout, .yaycheckout-scope) .form-row label:has(> input[type="checkbox"]) {
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
@@ -177,7 +179,7 @@ html.yaycheckout-has-pinned body {
 }
 
 /* An Extra Field with Multiple choices: one option per line. */
-.yaycheckout-checkout .yaycheckout-extra-field__choices {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-extra-field__choices {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
@@ -185,7 +187,7 @@ html.yaycheckout-has-pinned body {
 }
 
 /* RequiredIndicator::span() and WooCommerce's own mark. */
-.yaycheckout-checkout .form-row :is(.required, abbr.required) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .form-row :is(.required, abbr.required) {
 	margin-inline-start: 2px;
 	border: 0;
 	color: var(--wc-red, #cc1818);
@@ -193,7 +195,7 @@ html.yaycheckout-has-pinned body {
 	text-decoration: none;
 }
 
-.yaycheckout-checkout .form-row .optional {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .form-row .optional {
 	margin-inline-start: 2px;
 	font-weight: 400;
 	opacity: 0.7;
@@ -206,7 +208,7 @@ html.yaycheckout-has-pinned body {
  * The editor's field preview prints the same classes. Every kind of field (text, select, radio,
  * checkbox) takes the layout's Muted colour and its Help text size (DesignStyles); an unset size is 0.875em.
  */
-.yaycheckout-checkout .form-row .description {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .form-row .description {
 	display: block !important;
 	height: auto !important;
 	overflow: visible !important;
@@ -219,12 +221,12 @@ html.yaycheckout-has-pinned body {
 	font-size: var(--yaycheckout-help-text-size, 0.875em);
 }
 
-.yaycheckout-checkout .form-row .description::before {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .form-row .description::before {
 	display: none;
 }
 
 /* The toggle Disclosure::open() prints in front of a hidden Field, Extra field or Coupon form. */
-.yaycheckout-checkout .yaycheckout-disclosure__toggle {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__toggle {
 	background: none;
 	border: 0;
 	padding: 0;
@@ -235,16 +237,16 @@ html.yaycheckout-has-pinned body {
 }
 
 /* A link toggle takes the design's link colours (elements); a collapsible or checkbox toggle is a row, not a link. */
-.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="link"] {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__toggle[data-mode="link"] {
 	color: var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor));
 }
 
-.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="link"]:is(:hover, :focus) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__toggle[data-mode="link"]:is(:hover, :focus) {
 	color: var(--yaycheckout-link-hover-color, var(--yaycheckout-link-color, var(--wp--style--color--link, currentColor)));
 }
 
 /* Collapsible: a full-width header that opens and closes the panel below it. */
-.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="collapsible"] {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__toggle[data-mode="collapsible"] {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -255,7 +257,7 @@ html.yaycheckout-has-pinned body {
 	text-align: start;
 }
 
-.yaycheckout-checkout .yaycheckout-disclosure__chevron {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__chevron {
 	flex: none;
 	width: 1.25em;
 	height: 1.25em;
@@ -263,39 +265,39 @@ html.yaycheckout-has-pinned body {
 	transition: transform 0.15s ease;
 }
 
-.yaycheckout-checkout .yaycheckout-disclosure__toggle[aria-expanded="true"] .yaycheckout-disclosure__chevron {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__toggle[aria-expanded="true"] .yaycheckout-disclosure__chevron {
 	transform: rotate(180deg);
 }
 
-.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="collapsible"] + .yaycheckout-disclosure__panel {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__toggle[data-mode="collapsible"] + .yaycheckout-disclosure__panel {
 	padding-top: 0.5em;
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.yaycheckout-checkout .yaycheckout-disclosure__chevron {
+	:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__chevron {
 		transition: none;
 	}
 }
 
 /* Checkbox: ticking shows the panel below, unticking hides it again. */
-.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="checkbox"] {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__toggle[data-mode="checkbox"] {
 	display: flex;
 	align-items: center;
 	gap: 0.5em;
 	color: inherit;
 }
 
-.yaycheckout-checkout .yaycheckout-disclosure__checkbox {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__checkbox {
 	margin: 0;
 }
 
-.yaycheckout-checkout .yaycheckout-disclosure__toggle[data-mode="checkbox"] + .yaycheckout-disclosure__panel {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__toggle[data-mode="checkbox"] + .yaycheckout-disclosure__panel {
 	padding-top: 0.5em;
 }
 
 /* A theme's button or div display rule would otherwise beat the hidden attribute. */
-.yaycheckout-checkout .yaycheckout-disclosure__toggle[hidden],
-.yaycheckout-checkout .yaycheckout-disclosure__panel[hidden] {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__toggle[hidden],
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-disclosure__panel[hidden] {
 	display: none;
 }
 
@@ -307,8 +309,8 @@ html.yaycheckout-has-pinned body {
  * win over the layout's text and border colour. A size token zeroes the vertical padding, so the box is exactly its height and the text
  * centres in it.
  */
-.yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code),
-.yaycheckout-checkout .select2-container .select2-selection--single {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.input-text, select, textarea, .yaycheckout-coupon-form__code),
+:is(.yaycheckout-checkout, .yaycheckout-scope) .select2-container .select2-selection--single {
 	box-sizing: border-box;
 	width: 100%;
 	min-height: var(--yaycheckout-input-height, 40px);
@@ -331,7 +333,7 @@ html.yaycheckout-has-pinned body {
  * a cap that scrolls. Its text does not centre like an input's, so it keeps its own vertical padding, which a size
  * token does not zero. Every checkout textarea carries .input-text, and the class lifts this rule above the shared one.
  */
-.yaycheckout-checkout textarea.input-text {
+:is(.yaycheckout-checkout, .yaycheckout-scope) textarea.input-text {
 	display: block;
 	min-height: calc(var(--yaycheckout-input-height, 40px) * 2.5);
 	max-height: 20em;
@@ -341,26 +343,26 @@ html.yaycheckout-has-pinned body {
 	resize: vertical;
 }
 
-.yaycheckout-checkout :is(.input-text, textarea, .yaycheckout-coupon-form__code)::placeholder {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.input-text, textarea, .yaycheckout-coupon-form__code)::placeholder {
 	color: inherit;
 	opacity: 0.55;
 }
 
 /* select2's box: the rendered value fills it, the arrow sits at the inline end. */
-.yaycheckout-checkout .select2-container .select2-selection--single {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .select2-container .select2-selection--single {
 	display: flex;
 	align-items: center;
 	height: auto;
 }
 
-.yaycheckout-checkout .select2-container .select2-selection--single .select2-selection__rendered {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .select2-container .select2-selection--single .select2-selection__rendered {
 	flex: 1;
 	padding: 0;
 	color: inherit;
 	line-height: inherit;
 }
 
-.yaycheckout-checkout .select2-container .select2-selection--single .select2-selection__arrow {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .select2-container .select2-selection--single .select2-selection__arrow {
 	top: 0;
 	bottom: 0;
 	height: auto;
@@ -396,7 +398,7 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
  * checked colour to the primary colour. A checkbox's corner never takes the input radius. Payment and
  * Shipping hide their real radio and draw their own indicator, whose colours fall back to the Radios design.
  */
-.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(input[type="checkbox"], input[type="radio"]) {
 	-webkit-appearance: none;
 	appearance: none;
 	box-sizing: border-box;
@@ -410,7 +412,7 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 }
 
 /* The tick stays 12px and shrinks only to keep a quarter of a small box clear. */
-.yaycheckout-checkout input[type="checkbox"] {
+:is(.yaycheckout-checkout, .yaycheckout-scope) input[type="checkbox"] {
 	width: var(--yaycheckout-checkbox-size, 16px);
 	height: var(--yaycheckout-checkbox-size, 16px);
 	border-width: var(--yaycheckout-checkbox-border-width, 1px);
@@ -420,13 +422,13 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	background-size: min(12px, calc(var(--yaycheckout-checkbox-size, 16px) * 0.75));
 }
 
-.yaycheckout-checkout input[type="checkbox"]:checked {
+:is(.yaycheckout-checkout, .yaycheckout-scope) input[type="checkbox"]:checked {
 	border-color: var(--yaycheckout-checkbox-checked-color, var(--yaycheckout-primary-color));
 	background-color: var(--yaycheckout-checkbox-checked-color, var(--yaycheckout-primary-color));
 	background-image: var(--yaycheckout-check-icon);
 }
 
-.yaycheckout-checkout input[type="radio"] {
+:is(.yaycheckout-checkout, .yaycheckout-scope) input[type="radio"] {
 	width: var(--yaycheckout-radio-size, 18px);
 	height: var(--yaycheckout-radio-size, 18px);
 	border-width: var(--yaycheckout-radio-border-width, 1px);
@@ -435,24 +437,24 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 	background-color: var(--yaycheckout-radio-background, var(--yaycheckout-input-background, var(--yaycheckout-color-background, #fff)));
 }
 
-.yaycheckout-checkout input[type="radio"]:checked {
+:is(.yaycheckout-checkout, .yaycheckout-scope) input[type="radio"]:checked {
 	border: 5px solid var(--yaycheckout-radio-checked-color, var(--yaycheckout-primary-color));
 }
 
-.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):disabled {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(input[type="checkbox"], input[type="radio"]):disabled {
 	opacity: 0.5;
 	cursor: default;
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]) {
+	:is(.yaycheckout-checkout, .yaycheckout-scope) :is(input[type="checkbox"], input[type="radio"]) {
 		transition: none;
 	}
 }
 
 /* Forced colours drop backgrounds and borders: the native control stays legible. */
 @media (forced-colors: active) {
-	.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]) {
+	:is(.yaycheckout-checkout, .yaycheckout-scope) :is(input[type="checkbox"], input[type="radio"]) {
 		-webkit-appearance: auto;
 		appearance: auto;
 	}
@@ -464,8 +466,8 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
  * Thin border focus style sets the ring width to 0. Its fill takes the layout's input focus background, falling back
  * to the input background.
  */
-.yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code):focus,
-.yaycheckout-checkout .select2-container:is(.select2-container--focus, .select2-container--open) .select2-selection--single {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.input-text, select, textarea, .yaycheckout-coupon-form__code):focus,
+:is(.yaycheckout-checkout, .yaycheckout-scope) .select2-container:is(.select2-container--focus, .select2-container--open) .select2-selection--single {
 	border-color: var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline: var(--yaycheckout-input-focus-ring-width, 1px) solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline-offset: 0;
@@ -473,12 +475,12 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 }
 
 /* Keyboard focus on a button, checkbox or radio: an offset ring, in the input focus colour for the controls. */
-.yaycheckout-checkout :is(.button, button):focus-visible {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.button, button):focus-visible {
 	outline: 2px solid var(--yaycheckout-primary-color);
 	outline-offset: 1px;
 }
 
-.yaycheckout-checkout :is(input[type="checkbox"], input[type="radio"]):focus-visible {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(input[type="checkbox"], input[type="radio"]):focus-visible {
 	outline: 2px solid var(--yaycheckout-input-focus-color, var(--yaycheckout-primary-color));
 	outline-offset: 1px;
 }
@@ -487,17 +489,17 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
  * A click focuses the control too, and themes outline every :focus (Twenty Twenty-Five every element, Storefront
  * links and buttons); only a keyboard ring shows.
  */
-.yaycheckout-checkout :is(button, .button, a, [role="button"], input[type="checkbox"], input[type="radio"]):focus:not(:focus-visible) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(button, .button, a, [role="button"], input[type="checkbox"], input[type="radio"]):focus:not(:focus-visible) {
 	outline: 0;
 }
 
 /* WooCommerce marks the row, not the input, when a field fails validation; its focus edge turns red too. */
-.yaycheckout-checkout .form-row.woocommerce-invalid {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .form-row.woocommerce-invalid {
 	--yaycheckout-input-focus-color: var(--wc-red, #cc1818);
 }
 
-.yaycheckout-checkout .form-row.woocommerce-invalid :is(.input-text, select, textarea),
-.yaycheckout-checkout .form-row.woocommerce-invalid .select2-container .select2-selection--single {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .form-row.woocommerce-invalid :is(.input-text, select, textarea),
+:is(.yaycheckout-checkout, .yaycheckout-scope) .form-row.woocommerce-invalid .select2-container .select2-selection--single {
 	border-color: var(--wc-red, #cc1818);
 }
 
@@ -509,23 +511,23 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
  * otherwise (coupon-form/style.css). WooCommerce prints the label before the input, so the row's
  * state picks the look: :focus-within, autofill, or is-filled from checkout-floating-labels.js.
  */
-.yaycheckout-checkout--floating-labels .form-row:is(
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .form-row:is(
 	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
 	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
 	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
 ),
-.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field {
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .yaycheckout-coupon-form__field {
 	/* A size token sets it; without one, tall enough for the label and the value. */
 	--yaycheckout-floating-height: var(--yaycheckout-input-floating-height, max(var(--yaycheckout-input-height, 40px), 3.25em));
 	position: relative;
 }
 
-.yaycheckout-checkout--floating-labels .form-row:is(
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .form-row:is(
 	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
 	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
 	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
 ) > :is(label, .yaycheckout-field-preview__label),
-.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__label {
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__label {
 	position: absolute;
 	z-index: 1;
 	top: calc(var(--yaycheckout-floating-height) / 2);
@@ -548,26 +550,26 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 }
 
 /* The storefront label lets a click through to its input; the editor's stays clickable, to edit its text. */
-.yaycheckout-checkout--floating-labels .form-row:is(
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .form-row:is(
 	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
 	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea))
 ) > label,
-.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > label {
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .yaycheckout-coupon-form__field > label {
 	pointer-events: none;
 }
 
-.yaycheckout-checkout--floating-labels .form-row:is(
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .form-row:is(
 	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
 	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
 	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
 ) :is(.input-text, select, textarea, .select2-selection--single),
-.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__code {
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__code {
 	min-height: var(--yaycheckout-floating-height);
 	padding-block: 1.375em var(--yaycheckout-input-padding-block, 0.375em);
 }
 
 /* A textarea keeps its taller box and its bottom padding under a floating label. */
-.yaycheckout-checkout--floating-labels .form-row:is(
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .form-row:is(
 	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > .input-text),
 	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
 	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea))
@@ -577,26 +579,26 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 }
 
 /* Floated: small, at the top of the box. A select always shows a value, so its label never rests. */
-.yaycheckout-checkout--floating-labels .form-row:is(
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .form-row:is(
 	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > :is(.input-text, select)),
 	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
 	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea, select))
 ):is(:focus-within, .is-filled, :has(select)) > :is(label, .yaycheckout-field-preview__label),
-.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field:is(:focus-within, .is-filled) > .yaycheckout-coupon-form__label {
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .yaycheckout-coupon-form__field:is(:focus-within, .is-filled) > .yaycheckout-coupon-form__label {
 	top: 0.4em;
 	font-size: 0.75em;
 	transform: none;
 }
 
 /* Its own rule: a browser without :autofill would drop the whole list above. */
-.yaycheckout-checkout--floating-labels .form-row:has(> label + .woocommerce-input-wrapper :autofill) > label {
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .form-row:has(> label + .woocommerce-input-wrapper :autofill) > label {
 	top: 0.4em;
 	font-size: 0.75em;
 	transform: none;
 }
 
 /* A resting label stands in for the placeholder, which shows once the label floats. */
-.yaycheckout-checkout--floating-labels .form-row:is(
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .form-row:is(
 	:has(> label:not(.screen-reader-text) + .woocommerce-input-wrapper > .input-text),
 	:has(> label:not(.screen-reader-text) + :is(.input-text, textarea)),
 	:has(> .yaycheckout-field-preview__label + :is(.input-text, textarea))
@@ -605,13 +607,13 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 }
 
 /* The coupon's label is its placeholder text, so the placeholder would only repeat it. */
-.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__code::placeholder {
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__code::placeholder {
 	opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.yaycheckout-checkout--floating-labels .form-row > :is(label, .yaycheckout-field-preview__label),
-	.yaycheckout-checkout--floating-labels .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__label {
+	:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .form-row > :is(label, .yaycheckout-field-preview__label),
+	:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) .yaycheckout-coupon-form__field > .yaycheckout-coupon-form__label {
 		transition: none;
 	}
 }
@@ -720,11 +722,11 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	initial-value: 40px;
 }
 
-.yaycheckout-checkout {
+:is(.yaycheckout-checkout, .yaycheckout-scope) {
 	--yaycheckout-button-height: var(--yaycheckout-input-height, 40px);
 }
 
-.yaycheckout-checkout--floating-labels {
+:is(.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels) {
 	--yaycheckout-button-height: var(--yaycheckout-input-floating-height, var(--yaycheckout-input-height, 40px));
 }
 
@@ -733,7 +735,7 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
  * Place Order's style.css sets it. Block supports (inline styles, has-* classes) win. The design's buttons tokens
  * replace each value; place-order, coupon-button, step-button and login read them with the same fallbacks.
  */
-.yaycheckout-checkout :is(.button, button[type="submit"]) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.button, button[type="submit"]) {
 	box-sizing: border-box;
 	min-height: var(--yaycheckout-button-height, 40px);
 	padding: var(--yaycheckout-input-padding-block, 8px) 20px;
@@ -751,15 +753,44 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 }
 
 /* Darkened, until the design picks a hover colour. */
-.yaycheckout-checkout :is(.button, button[type="submit"]):hover {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.button, button[type="submit"]):hover {
 	background-color: var(--yaycheckout-button-hover-background, var(--yaycheckout-button-background, var(--yaycheckout-primary-color)));
 	color: var(--yaycheckout-button-hover-color, var(--yaycheckout-button-color, #fff));
 	filter: var(--yaycheckout-button-hover-filter, brightness(0.92));
 }
 
-.yaycheckout-checkout :is(.button, button[type="submit"]):disabled {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.button, button[type="submit"]):disabled {
 	cursor: not-allowed;
 	opacity: 0.5;
+}
+
+/*
+ * Button blocks a merchant adds (core's Button, Brandy's), which print a.wp-block-button__link and so miss the rule
+ * above: the design's buttons tokens, with its fallbacks, instead of the theme's :root :where(.wp-element-button).
+ * Their size and spacing stay the block's. Block supports win: inline styles, and a colour picked in the block's
+ * settings (has-background, has-text-color). An outline button keeps its own colours.
+ */
+:is(.yaycheckout-checkout, .yaycheckout-scope) .wp-block-button__link {
+	border-radius: var(--yaycheckout-button-radius, var(--yaycheckout-neutral-radius));
+	font-weight: var(--yaycheckout-button-font-weight, 600);
+	text-transform: var(--yaycheckout-button-text-transform, none);
+}
+
+:is(.yaycheckout-checkout, .yaycheckout-scope) .wp-block-button__link:not(.has-background, .is-style-outline, .is-style-outline > *) {
+	background-color: var(--yaycheckout-button-background, var(--yaycheckout-primary-color));
+}
+
+:is(.yaycheckout-checkout, .yaycheckout-scope) .wp-block-button__link:not(.has-text-color, .is-style-outline, .is-style-outline > *) {
+	color: var(--yaycheckout-button-color, #fff);
+}
+
+:is(.yaycheckout-checkout, .yaycheckout-scope) .wp-block-button__link:not(.has-background, .is-style-outline, .is-style-outline > *):hover {
+	background-color: var(--yaycheckout-button-hover-background, var(--yaycheckout-button-background, var(--yaycheckout-primary-color)));
+	filter: var(--yaycheckout-button-hover-filter, brightness(0.92));
+}
+
+:is(.yaycheckout-checkout, .yaycheckout-scope) .wp-block-button__link:not(.has-text-color, .is-style-outline, .is-style-outline > *):hover {
+	color: var(--yaycheckout-button-hover-color, var(--yaycheckout-button-color, #fff));
 }
 
 /*
@@ -776,7 +807,7 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 }
 
 /* Columns that lay out address fields side by side keep the fields' own spacing, not core's block margin. */
-.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-columns {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-columns {
 	margin-block: 0;
 }
 
@@ -792,7 +823,7 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	gap: 12px;
 }
 
-.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary, .yaycheckout-order-summary-details) > * {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.yaycheckout-billing, .yaycheckout-shipping, .yaycheckout-order-summary, .yaycheckout-order-summary-details) > * {
 	margin-block: 0;
 }
 
@@ -807,11 +838,11 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 }
 
 /* Fields in a Columns row end at the row, which the section's gap spaces; fields stacked in one Column keep 12px. */
-.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-column > * {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-column > * {
 	margin-block: 0;
 }
 
-.yaycheckout-checkout :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-column > * + * {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.yaycheckout-billing, .yaycheckout-shipping) .wp-block-column > * + * {
 	margin-block-start: 12px;
 }
 
@@ -832,7 +863,7 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 
 /* iOS zooms into a focused field whose text is under 16px. */
 @media (pointer: coarse) {
-	.yaycheckout-checkout :is(.input-text, select, textarea, .yaycheckout-coupon-form__code) {
+	:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.input-text, select, textarea, .yaycheckout-coupon-form__code) {
 		font-size: max(16px, 1em);
 	}
 }

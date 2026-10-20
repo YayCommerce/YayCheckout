@@ -1,8 +1,6 @@
 import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
-import { useSelect } from '@wordpress/data';
-import { store as editorStore } from '@wordpress/editor';
-import { editorData } from '../shared/editor-data';
 import { addressTemplate } from '../shared/address-template';
+import { useLabelMode } from '../shared/checkout-scope';
 import billingMeta from '../billing/block.json';
 import differentAddressMeta from '../different-address/block.json';
 import emailMeta from '../email/block.json';
@@ -30,32 +28,11 @@ const defaultTemplate = () => [
 	[ placeOrderMeta.name ],
 ];
 
-/** The wrapper class for the inputs.label token, as the merchant is editing it. Mirrors LayoutDesign::has_floating_labels() and has_hidden_labels() in PHP. */
-function useLabelClass(): string {
-	const metaKey = editorData.design?.metaKey ?? '';
-
-	return useSelect(
-		( selectStore ) => {
-			const meta = selectStore( editorStore ).getEditedPostAttribute( 'meta' ) as
-				| Record< string, { inputs?: { label?: unknown } } | undefined >
-				| undefined;
-
-			const label = '' !== metaKey ? meta?.[ metaKey ]?.inputs?.label : undefined;
-
-			if ( 'floating' === label ) {
-				return ' yaycheckout-checkout--floating-labels';
-			}
-
-			return 'hidden' === label ? ' yaycheckout-checkout--hidden-labels' : '';
-		},
-		[ metaKey ]
-	);
-}
-
 export default function Edit() {
-	const labelClass = useLabelClass();
+	// The inputs.label token's class. Mirrors LayoutDesign::has_floating_labels() and has_hidden_labels() in PHP.
+	const labelMode = useLabelMode();
 	const blockProps = useBlockProps( {
-		className: 'yaycheckout-checkout' + labelClass,
+		className: 'yaycheckout-checkout' + ( labelMode ? ` yaycheckout-checkout--${ labelMode }-labels` : '' ),
 	} );
 	const innerBlocksProps = useInnerBlocksProps( blockProps, {
 		template: defaultTemplate(),

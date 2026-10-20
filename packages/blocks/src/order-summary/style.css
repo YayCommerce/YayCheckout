@@ -47,7 +47,7 @@
 .yaycheckout-order-summary table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total) :is(th, td) {
 	padding: 6px 0;
 	border: 0;
-	vertical-align: top;
+	vertical-align: middle;
 }
 
 .yaycheckout-order-summary table:is(.yaycheckout-order-summary-breakdown, .yaycheckout-order-summary-total) :is(th, td):first-child {

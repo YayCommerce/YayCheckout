@@ -107,6 +107,16 @@ class CheckoutFragments {
         add_action( 'woocommerce_after_template_part', [ WcHooks::class, 'unmute_review_table' ] );
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's coupon message filter.
         add_filter( 'woocommerce_coupon_message', [ $this, 'drop_applied_message' ], PHP_INT_MAX, 2 );
+        // After WC_Cart recalculates totals on the same hook (priority 20), so the chips carry the new amounts.
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's coupon action.
+        add_action( 'woocommerce_applied_coupon', [ $this, 'print_applied_chips' ], 30 );
+    }
+
+    /** Whether this is the Coupon form's own apply_coupon request: the cart page posts to the same endpoint without the field. */
+    private static function is_coupon_form_request(): bool {
+        // Only the Coupon form posts the field, and it renders only under a layout.
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Woo's apply_coupon checks its nonce first; this only reads a flag.
+        return isset( $_POST[ self::COUPON_FORM_FIELD ] ) && doing_action( 'wc_ajax_apply_coupon' );
     }
 
     /**
@@ -115,13 +125,22 @@ class CheckoutFragments {
      * Only for the Coupon form's own request: the cart page posts to the same endpoint.
      */
     public function drop_applied_message( $msg, $msg_code ) {
-        // Only the Coupon form posts the field, and it renders only under a layout.
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Woo's apply_coupon checks its nonce first; this only reads a flag.
-        if ( \WC_Coupon::WC_COUPON_SUCCESS !== (int) $msg_code || ! isset( $_POST[ self::COUPON_FORM_FIELD ] ) || ! doing_action( 'wc_ajax_apply_coupon' ) ) {
+        if ( \WC_Coupon::WC_COUPON_SUCCESS !== (int) $msg_code || ! self::is_coupon_form_request() ) {
             return $msg;
         }
 
         return '';
+    }
+
+    /**
+     * Prints the fresh chips into the Coupon form's apply_coupon response, ahead of the notices Woo prints after
+     * this hook, so checkout-coupon-form.js shows the chip without waiting for update_order_review.
+     * The hook fires only once the coupon is applied.
+     */
+    public function print_applied_chips(): void {
+        if ( self::is_coupon_form_request() ) {
+            echo self::coupon_chips_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped by coupon_chips_html().
+        }
     }
 
     /**
@@ -549,9 +568,9 @@ class CheckoutFragments {
     }
 
     /**
-     * Radios Woo's checkout.js listens for. The label is the method name after
-     * woocommerce_cart_shipping_method_full_label, and the price is its own element:
-     * core concatenates them, which leaves no node for a card layout to place.
+     * Radios Woo's checkout.js listens for. The label is the method name and the price is its own
+     * element (shipping_rate_label_parts()): core concatenates them, which leaves no node for a card
+     * layout to place.
      *
      * @param array<string, \WC_Shipping_Rate> $methods
      * @param mixed                            $chosen_method Session value for this package.
@@ -566,14 +585,9 @@ class CheckoutFragments {
 
             $slug     = sanitize_title( $method->id );
             $input_id = 'shipping_method_' . $index . '_' . $slug;
-            $name     = apply_filters(
-                // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's rate-label filter.
-                'woocommerce_cart_shipping_method_full_label',
-                $method->get_label(),
-                $method
-            );
-            $name  = is_string( $name ) ? $name : $method->get_label();
-            $price = self::shipping_rate_price_html( $method );
+            $parts    = self::shipping_rate_label_parts( $method );
+            $name     = $parts['name'];
+            $price    = $parts['price'];
 
             $attr_index = (string) $index;
 
@@ -592,7 +606,7 @@ class CheckoutFragments {
             echo '</span></span>';
 
             if ( '' !== $price ) {
-                echo '<span class="yaycheckout-shipping-methods__price">' . $price . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wc_price() HTML, plus an escaped tax label.
+                echo '<span class="yaycheckout-shipping-methods__price">' . $price . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wc_price() HTML, an escaped tax label, and what the rate-label filter appended.
             }
 
             echo '</label>';
@@ -602,6 +616,45 @@ class CheckoutFragments {
         }
 
         echo '</ul>';
+    }
+
+    /**
+     * A rate's name and price, split from the label wc_cart_totals_shipping_method_label() builds.
+     * woocommerce_cart_shipping_method_full_label gets core's "Name: price", because plugins rebuild
+     * or extend it: a currency switcher returns "Name: price (~converted)". The result is split at
+     * ": price", so the price keeps its own element along with whatever a plugin appended after it.
+     * When the split finds no price, the whole label is the name and the price is left out, so a
+     * label that carries its own price never prints it twice.
+     *
+     * @return array{name: string, price: string}
+     */
+    private static function shipping_rate_label_parts( \WC_Shipping_Rate $method ): array {
+        $name  = $method->get_label();
+        $price = self::shipping_rate_price_html( $method );
+        $label = '' === $price ? $name : $name . ': ' . $price;
+
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's rate-label filter.
+        $filtered = apply_filters( 'woocommerce_cart_shipping_method_full_label', $label, $method );
+        if ( ! is_string( $filtered ) ) {
+            return [
+                'name'  => $name,
+                'price' => $price,
+            ];
+        }
+
+        $separator = ': ' . $price;
+        $at        = '' === $price ? false : strpos( $filtered, $separator );
+        if ( false === $at ) {
+            return [
+                'name'  => $filtered,
+                'price' => '',
+            ];
+        }
+
+        return [
+            'name'  => substr( $filtered, 0, $at ),
+            'price' => $price . substr( $filtered, $at + strlen( $separator ) ),
+        ];
     }
 
     /** The price suffix wc_cart_totals_shipping_method_label() appends, without the method name. */
@@ -1116,7 +1169,7 @@ class CheckoutFragments {
         return (string) apply_filters( 'woocommerce_coupon_discount_amount_html', $html, $coupon );
     }
 
-    /** The Coupon form's applied coupons as chips; checkout.js's .woocommerce-remove-coupon handler runs their ×. */
+    /** The Coupon form's applied coupons as chips; checkout-coupon-form.js runs their ×, and the href serves without JS. */
     public static function coupon_chips_html(): string {
         $html = '<ul class="' . esc_attr( self::COUPON_CHIPS_CLASS ) . '">';
 
@@ -1133,7 +1186,7 @@ class CheckoutFragments {
                     . '<span aria-hidden="true">·</span>'
                     // One flex item, or the gap would split the minus sign from the price.
                     . '<span class="yaycheckout-coupon-form__chip-amount">' . wp_kses_post( self::coupon_amount_html( $coupon ) ) . '</span>'
-                    . '<a role="button" class="woocommerce-remove-coupon yaycheckout-coupon-form__chip-remove"'
+                    . '<a role="button" class="yaycheckout-coupon-form__chip-remove"'
                     . ' href="' . esc_url( add_query_arg( 'remove_coupon', rawurlencode( $code ), $checkout_url ) ) . '"'
                     . ' data-coupon="' . esc_attr( $code ) . '"'
                     . ' aria-label="' . esc_attr( $label ) . '">×</a>'
@@ -1308,9 +1361,10 @@ class CheckoutFragments {
         $chosen   = WC()->session ? WC()->session->get( 'chosen_shipping_methods', array() ) : array();
         $chosen   = is_array( $chosen ) ? $chosen : array();
 
-        $selected_names  = array();
-        $available_names = array();
-        $has_selected    = false;
+        $selected_names   = array();
+        $selected_methods = array();
+        $available_names  = array();
+        $has_selected     = false;
 
         foreach ( $packages as $index => $package ) {
             if ( ! is_array( $package ) ) {
@@ -1331,7 +1385,8 @@ class CheckoutFragments {
                 }
 
                 if ( '' !== $chosen_id && $method->id === $chosen_id ) {
-                    $has_selected = true;
+                    $has_selected       = true;
+                    $selected_methods[] = $method;
                     if ( is_string( $name ) && '' !== $name && ! in_array( $name, $selected_names, true ) ) {
                         $selected_names[] = $name;
                     }
@@ -1355,8 +1410,14 @@ class CheckoutFragments {
                 $amount += (float) WC()->cart->get_shipping_tax();
             }
 
+            // One selected rate shows its price as Shipping Methods does, with what the rate-label
+            // filter appended (a currency switcher's converted amount); several are summed.
+            $rate_price = 1 === count( $selected_methods ) ? self::shipping_rate_label_parts( $selected_methods[0] )['price'] : '';
+
             if ( 0.0 === round( $amount, wc_get_price_decimals() ) ) {
                 $value = '<strong>' . esc_html__( 'Free', 'woocommerce' ) . '</strong>';
+            } elseif ( '' !== $rate_price ) {
+                $value = $rate_price;
             } else {
                 $value = wc_price( $amount );
             }
@@ -1369,7 +1430,7 @@ class CheckoutFragments {
         ?>
         <tr class="yaycheckout-order-summary-breakdown__shipping">
             <th><?php echo esc_html( $label ); ?></th>
-            <td><?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above or wc_price() HTML. ?></td>
+            <td><?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above, wc_price() HTML, or a rate's filtered price. ?></td>
         </tr>
         <?php
     }

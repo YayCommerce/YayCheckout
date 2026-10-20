@@ -1,4 +1,14 @@
+/*
+ * Hidden while savings are zero. The wrapper carries the empty marker only with a blockId, and keeps its first-paint
+ * value unless the visibility script copies the fragment's, so the sentence's own marker decides too: it is fresh after
+ * every update_order_review.
+ */
 .wp-block-yaycheckout-savings-note[data-yaycheckout-empty],
+.wp-block-yaycheckout-savings-note:has(> .yaycheckout-savings-note[data-yaycheckout-empty]),
 .yaycheckout-savings-note[data-yaycheckout-empty] {
 	display: none;
+}
+
+.wp-block-yaycheckout-savings-note .yaycheckout-savings-note {
+	margin: 0;
 }

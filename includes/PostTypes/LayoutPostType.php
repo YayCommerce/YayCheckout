@@ -81,12 +81,14 @@ class LayoutPostType {
 
         // In REST so the editor's Save writes it with the markup; the schema makes core refuse an invalid token.
         // Reads are projected first: core answers null for a stored design missing a section added since.
+        // Revisioned, so each revision keeps the design beside its markup and restoring one puts both back.
         register_post_meta(
             Layout::POST_TYPE,
             Layout::META_DESIGN,
             [
                 'type'              => 'object',
                 'single'            => true,
+                'revisions_enabled' => true,
                 'default'           => LayoutDesign::from_meta( [] )->to_meta(),
                 'show_in_rest'      => [
                     'schema'           => LayoutDesign::rest_schema(),

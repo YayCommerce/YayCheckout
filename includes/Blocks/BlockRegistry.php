@@ -4,6 +4,7 @@ namespace YayCheckout\Blocks;
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Engine\Register\ScriptName;
 use YayCheckout\Helpers\CheckoutSetupHelper;
+use YayCheckout\Helpers\PluginBlockCatalogue;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Renderer\CheckoutDifferentAddress;
@@ -33,6 +34,9 @@ class BlockRegistry {
 
     /** Free's inserter group for the Pro blocks' locked stubs, registered by register_category(). PRO_CATEGORY in packages/blocks/src/checkout/locked-pro-blocks.tsx copies it. */
     private const PRO_CATEGORY = 'yaycheckout-pro';
+
+    /** The inserter group for the plugin block placeholders' variations, registered by register_category(). packages/blocks/src/plugin-block/block.json names it. */
+    public const PLUGINS_CATEGORY = 'yaycheckout-plugins';
 
     /** Named by viewScript in packages/blocks/src/coupon-form/block.json; core enqueues it when the block renders. */
     public const COUPON_FORM_SCRIPT = 'yaycheckout-coupon-form';
@@ -87,6 +91,7 @@ class BlockRegistry {
         'wc-hook',
         'order-details',
         'order-customer-details',
+        'plugin-block',
     ];
 
     /**
@@ -110,6 +115,7 @@ class BlockRegistry {
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_express_pay_data' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_wc_hooks_data' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'editor_method_setup_data' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'editor_plugin_blocks_data' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_live_value_editor' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_visibility_editor' ] );
         add_action( 'enqueue_block_assets', [ $this, 'enqueue_live_value_editor_style' ] );
@@ -303,6 +309,18 @@ class BlockRegistry {
     }
 
     /**
+     * The plugin block placeholders' catalogue, with each entry's state on this site, on the placeholder's own handle.
+     * Only in the layout editor, the one that offers the block, since it reads every installed plugin's header.
+     */
+    public function editor_plugin_blocks_data(): void {
+        if ( 'layout' !== $this->editor( null ) ) {
+            return;
+        }
+
+        self::inline_data( generate_block_asset_handle( PluginBlockCatalogue::BLOCK, 'editorScript' ), 'window.yayCheckoutPluginBlocks', PluginBlockCatalogue::editor_data() );
+    }
+
+    /**
      * The block names registered on this site.
      *
      * @return string[]
@@ -490,7 +508,7 @@ class BlockRegistry {
         }
     }
 
-    /** Adds the YayCheckout inserter category in the layout editor, and a YayCheckout Pro one after it while there are locked stubs. */
+    /** Adds the YayCheckout inserter category in the layout editor, a YayCheckout Pro one after it while there are locked stubs, and From Yay plugins last. */
     public function register_category( $categories, $editor_context ) {
         if ( 'layout' !== $this->editor( $editor_context ) ) {
             return $categories;
@@ -512,6 +530,12 @@ class BlockRegistry {
             ];
         }
 
+        $ours[] = [
+            'slug'  => self::PLUGINS_CATEGORY,
+            'title' => __( 'From Yay plugins', 'yaycheckout' ),
+            'icon'  => null,
+        ];
+
         return array_merge( $ours, $categories );
     }
 
@@ -529,8 +553,12 @@ class BlockRegistry {
             case 'layout':
                 $allowed = self::without( $allowed_block_types, static fn( $name ) => 'woocommerce/checkout' === $name );
 
+                if ( ! is_array( $allowed ) ) {
+                    return $allowed;
+                }
+
                 // The locked stubs are registered only in JavaScript, so they are not in the list yet.
-                return is_array( $allowed ) ? array_merge( $allowed, self::locked_blocks() ) : $allowed;
+                return array_values( array_unique( array_merge( $allowed, self::locked_blocks() ) ) );
             case 'other':
                 return self::without( $allowed_block_types, static fn( $name ) => str_starts_with( $name, 'yaycheckout/' ) );
             default:
