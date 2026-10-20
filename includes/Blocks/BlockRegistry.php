@@ -85,6 +85,7 @@ class BlockRegistry {
         'place-order',
         'slot',
         'wc-hook',
+        'order-details',
     ];
 
     /**

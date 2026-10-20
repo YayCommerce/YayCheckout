@@ -79,6 +79,12 @@ class ThankYouPage {
             wp_dequeue_style( $handle );
         }
 
+        // Order Details prints WooCommerce's order-details table; it needs the classic shop styles.
+        if ( has_block( 'yaycheckout/order-details', $layout->content ) ) {
+            wp_enqueue_style( 'woocommerce-general' );
+            wp_enqueue_style( 'woocommerce-layout' );
+        }
+
         ( new CheckoutBaseStyles() )->enqueue( true, $layout->design );
     }
 
