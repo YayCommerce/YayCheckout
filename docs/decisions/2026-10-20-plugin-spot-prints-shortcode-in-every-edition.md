@@ -59,7 +59,7 @@ Proposed, 2026-10-20. It supersedes [the free-edition fallback record](2026-10-1
 - **Pro merchants lose YayBoost's block in the editor.**
   - Each spot shows YayCheckout's preview instead, which can differ from the merchant's YayBoost design. The free shipping bar preview, for example, shows the minimal-text design in the layout's Primary.
 - **A merchant who inserts YayBoost's own block gets the feature twice.** The block prints it, and so does YayBoost's hook. The placeholder is the way to place a feature.
-- **The shim depends on YayBoost internals** until [the backlog item](../backlog/2026-10-19-yayboost-allows-layout-editor.md) is done:
+- **The shim depends on YayBoost internals** until [the backlog item](../backlog/2026-10-19-yayboost-shortcode-shim.md) is done:
   - the render methods;
   - how the order bump is hooked: closures bound to `OrderBumpFeature` in Free, the renderer's `render()` in Pro.
 

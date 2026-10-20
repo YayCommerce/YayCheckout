@@ -41,5 +41,5 @@ Superseded by [the plugin spot record](2026-10-20-plugin-spot-prints-shortcode-i
 ## Consequences
 
 - **Free merchants get the promotion's result.** A merchant on Free YayBoost sees the feature at the template's spot, and the card offers Pro for the block.
-- **The shim depends on YayBoost internals** until [the backlog item](../backlog/2026-10-19-yayboost-allows-layout-editor.md) is done: the render methods, and how the order bump is hooked (closures bound to `OrderBumpFeature` in Free 1.3.0, the renderer's `render()` in Pro 1.3.2). If YayBoost changes them, the spot prints nothing, or the bump prints twice; it never fatals.
+- **The shim depends on YayBoost internals** until [the backlog item](../backlog/2026-10-19-yayboost-shortcode-shim.md) is done: the render methods, and how the order bump is hooked (closures bound to `OrderBumpFeature` in Free 1.3.0, the renderer's `render()` in Pro 1.3.2). If YayBoost changes them, the spot prints nothing, or the bump prints twice; it never fatals.
 - **A real YayBoost block that is unregistered counts as no spot,** so YayBoost keeps printing on its hooks after Pro is deactivated. The editor shows the catalogue card in its place.
