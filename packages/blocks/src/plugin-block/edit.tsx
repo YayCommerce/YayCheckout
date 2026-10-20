@@ -21,6 +21,12 @@ const PREVIEWS: Record< string, () => JSX.Element > = {
 	'yayboost/frequently-bought-together': FbtPreview,
 };
 
+/** What the sidebar tells the merchant above the settings link, by target: where the spot's look differs from the plugin's. */
+const SETTINGS_NOTES: Record< string, string > = {
+	// YayBoost::free_shipping_bar_shortcode() draws the templates' progress card, whatever bar design YayBoost is set to.
+	'yayboost/free-shipping-bar': __( "The bar's style settings in YayBoost don't apply in YayCheckout layouts. The bar takes the layout's design here.", 'yaycheckout' ),
+};
+
 /**
  * A spot in the layout for another Yay plugin's feature (PluginBlockCatalogue). The storefront prints the entry's
  * shortcode, in either edition of the plugin; while it does, a target with a stand-in shows that, and the sidebar
@@ -59,6 +65,7 @@ export default function Edit( { attributes }: EditProps ) {
 			{ settingsUrl !== '' && (
 				<InspectorControls>
 					<PanelBody title={ __( 'Settings', 'yaycheckout' ) }>
+						{ SETTINGS_NOTES[ attributes.target ] && <p>{ SETTINGS_NOTES[ attributes.target ] }</p> }
 						{ /* A new tab: the layout's unsaved changes stay in this one. */ }
 						<Button variant="secondary" href={ settingsUrl } target="_blank" rel="noreferrer">
 							{ __( 'Go to settings page', 'yaycheckout' ) }
