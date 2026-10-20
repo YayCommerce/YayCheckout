@@ -63,7 +63,26 @@ jQuery(function ($) {
                     return;
                 }
 
-                // The reprint replaces the button, so it stays disabled until then.
+                // The reprint replaces the button, so it stays disabled until then. A refresh that fails or answers
+                // without fragments (another plugin's fatal empties update_order_review) replaces nothing: give the
+                // button back, with the error when no fragments came. An aborted refresh is followed by a newer one.
+                function onRefreshed(event, xhr, settings) {
+                    if (-1 === String(settings.url).indexOf('update_order_review') || 'abort' === xhr.statusText) {
+                        return;
+                    }
+
+                    $(document).off('ajaxComplete', onRefreshed);
+
+                    if ($.contains(document.documentElement, $button[0])) {
+                        $button.prop('disabled', false).removeAttr('aria-busy');
+
+                        if (!(xhr.responseJSON && xhr.responseJSON.fragments)) {
+                            showError($wrapper);
+                        }
+                    }
+                }
+
+                $(document).on('ajaxComplete', onRefreshed);
                 $(document.body).trigger('update_checkout').trigger('wc_fragment_refresh');
             })
             .fail(function (xhr) {
