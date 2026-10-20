@@ -30,13 +30,13 @@ $yaycheckout_order_total_label    = \YayCheckout\Services\LayoutMarkupReader::pl
 ob_start();
 \YayCheckout\Renderer\ThankYouPage::with_woocommerce_label_overrides(
     [
-        'Order details'  => $yaycheckout_title,
-        'Product'        => $yaycheckout_product_label,
-        'Total'          => $yaycheckout_total_label,
-        'Subtotal:'      => $yaycheckout_subtotal_label,
-        'Shipping:'      => $yaycheckout_shipping_label,
+        'Order details'   => $yaycheckout_title,
+        'Product'         => $yaycheckout_product_label,
+        'Total'           => $yaycheckout_total_label,
+        'Subtotal:'       => $yaycheckout_subtotal_label,
+        'Shipping:'       => $yaycheckout_shipping_label,
         'Payment method:' => $yaycheckout_payment_method_label,
-        'Total:'         => $yaycheckout_order_total_label,
+        'Total:'          => $yaycheckout_order_total_label,
     ],
     static function () use ( $yaycheckout_order ): void {
         woocommerce_order_details_table( $yaycheckout_order->get_id() );
