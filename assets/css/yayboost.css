@@ -7,7 +7,8 @@
  * CSS only: YayBoost's script finds the bump by these classes, so the markup stays YayBoost's
  * (OrderBumpRenderer::render_single_bump()). The .yaycheckout-checkout prefix outranks YayBoost's
  * single-class rules (order-bump.css) whatever the load order; only its !important checkbox-wrap display needs one here.
- * Colours come from the layout's design tokens (DesignStyles): the dashed border and the pill follow Primary.
+ * Colours come from the layout's design tokens (DesignStyles): the pill follows Primary, and so does the dashed
+ * border once the bump is ticked; unticked it is the mock's amber.
  */
 
 .yaycheckout-checkout .yayboost-order-bump {
@@ -47,9 +48,13 @@
 
 /* The card and its pill, shared with the editor's stand-in for a bump the layout has no spot for (HookOutputPreview). */
 .yaycheckout-checkout :is(.yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple), .yaycheckout-hook-output-preview) {
-	border: 2px dashed var(--yaycheckout-primary-color, #3858e9);
+	border: 2px dashed #f0b849;
 	border-radius: 4px;
 	background: #fff;
+}
+
+.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple):has(.yayboost-order-bump__checkbox:checked) {
+	border-color: var(--yaycheckout-primary-color, #3858e9);
 }
 
 .yaycheckout-checkout :is(.yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__headline, .yaycheckout-hook-output-preview__pill) {
