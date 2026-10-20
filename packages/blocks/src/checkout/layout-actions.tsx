@@ -9,6 +9,7 @@ import { store as noticesStore } from '@wordpress/notices';
 import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
 import { errorMessage } from '../shared/error-message';
+import { useIsPreviewingRevision } from '../shared/layout-editor';
 import { layoutStateStore } from './layout-state';
 import LayoutViewSwitch, { isLoggedOutView } from './layout-view';
 import { useLayoutProblem } from './publish-guard';
@@ -55,8 +56,9 @@ function copyFor( action: Action, title: string ) {
 }
 
 /**
- * A container added to a header area once it renders; the header can appear after the plugin.
- * The settings slot also tags the body with MOUNTED_CLASS.
+ * A container added to a header area once it renders; the header can appear after the plugin, and core
+ * rebuilds it on entering and leaving revisions mode, so the container is put back whenever it drops out.
+ * The settings slot also tags the body with MOUNTED_CLASS while it is in the header.
  */
 function useHeaderSlot( enabled: boolean, area: 'settings' | 'toolbar' ): HTMLElement | null {
 	const [ slot, setSlot ] = useState< HTMLElement | null >( null );
@@ -71,31 +73,37 @@ function useHeaderSlot( enabled: boolean, area: 'settings' | 'toolbar' ): HTMLEl
 		container.className = isSettings ? 'yaycheckout-layout-actions' : 'yaycheckout-layout-view';
 
 		const mount = () => {
+			if ( container.isConnected ) {
+				return;
+			}
+
 			const header = document.querySelector( isSettings ? HEADER_SELECTOR : TOOLBAR_SELECTOR );
 
+			if ( isSettings ) {
+				document.body.classList.toggle( MOUNTED_CLASS, !! header );
+			}
+
 			if ( ! header ) {
-				return false;
+				return;
 			}
 
 			if ( isSettings ) {
 				header.prepend( container );
-				document.body.classList.add( MOUNTED_CLASS );
 			} else {
 				header.append( container );
 			}
 			setSlot( container );
-			return true;
 		};
 
-		const observer = new MutationObserver( () => mount() && observer.disconnect() );
+		const observer = new MutationObserver( mount );
 
-		if ( ! mount() ) {
-			observer.observe( document.body, { childList: true, subtree: true } );
-		}
+		mount();
+		observer.observe( document.body, { childList: true, subtree: true } );
 
 		return () => {
 			observer.disconnect();
 			container.remove();
+			setSlot( null );
 			if ( isSettings ) {
 				document.body.classList.remove( MOUNTED_CLASS );
 			}
@@ -135,8 +143,10 @@ function LayoutActions() {
 	const [ confirm, setConfirm ] = useState< Action | null >( null );
 	const [ isBusy, setBusy ] = useState( false );
 	const [ isPreviewing, setPreviewing ] = useState( false );
-	const slot = useHeaderSlot( isLayout, 'settings' );
-	const viewSlot = useHeaderSlot( isLayout, 'toolbar' );
+	// Core's revisions header has no save, and a revision can't be activated, so the buttons step aside.
+	const isRevision = useIsPreviewingRevision();
+	const slot = useHeaderSlot( isLayout && ! isRevision, 'settings' );
+	const viewSlot = useHeaderSlot( isLayout && ! isRevision, 'toolbar' );
 
 	useEffect( () => {
 		if ( ! isLayout || ! postId ) {
