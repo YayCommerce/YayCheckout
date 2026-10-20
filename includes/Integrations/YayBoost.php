@@ -31,6 +31,9 @@ class YayBoost {
     /** The catalogue target a layout's order bump spot holds, named after YayBoost Pro's Order Bump block. */
     public const ORDER_BUMP_BLOCK = 'yayboost/order-bump';
 
+    /** The catalogue target a layout's free shipping bar spot holds. */
+    public const FREE_SHIPPING_BAR_BLOCK = 'yayboost/free-shipping-bar';
+
     /** The catalogue target a layout's Frequently bought together spot holds; YayBoost has no such block yet. */
     public const FBT_BLOCK = 'yayboost/frequently-bought-together';
 
@@ -39,8 +42,9 @@ class YayBoost {
      * reprints (spot_fragments()).
      */
     private const REPRINTED_SPOTS = [
-        self::ORDER_BUMP => [ self::ORDER_BUMP_BLOCK, 'yaycheckout-order-bump-spot' ],
-        self::FBT        => [ self::FBT_BLOCK, 'yaycheckout-fbt-spot' ],
+        self::ORDER_BUMP        => [ self::ORDER_BUMP_BLOCK, 'yaycheckout-order-bump-spot' ],
+        self::FREE_SHIPPING_BAR => [ self::FREE_SHIPPING_BAR_BLOCK, 'yaycheckout-shipping-bar-spot' ],
+        self::FBT               => [ self::FBT_BLOCK, 'yaycheckout-fbt-spot' ],
     ];
 
     /** The shortcodes a placeholder prints for those features. */
@@ -111,7 +115,7 @@ class YayBoost {
         add_action( 'enqueue_block_assets', [ $this, 'add_styles' ], 11 );
     }
 
-    /** The order bump in the templates' card look, wherever a layout renders: the storefront checkout and the layout editor canvas. */
+    /** YayBoost's features in the templates' look, wherever a layout renders: the storefront checkout and the layout editor canvas. */
     public function add_styles(): void {
         if ( wp_style_is( ScriptName::STYLE_CHECKOUT_BASE ) ) {
             wp_enqueue_style( ScriptName::STYLE_YAYBOOST, YAYCHECKOUT_PLUGIN_URL . 'assets/css/yayboost.css', [ ScriptName::STYLE_CHECKOUT_BASE ], YAYCHECKOUT_VERSION );
@@ -238,20 +242,53 @@ class YayBoost {
         );
     }
 
+    /**
+     * YayBoost's free shipping bar drawn like the templates' progress card (templates/yayboost-free-shipping-bar.php),
+     * whatever design YayBoost is set to: YayBoost works out the progress and the message (get_bar_data()), this prints
+     * them. Pro's product suggestions follow, as render_bar() prints them.
+     */
     public function free_shipping_bar_shortcode(): string {
         return $this->render(
             self::FREE_SHIPPING_BAR,
             static function ( $feature ): string {
-                if ( ! method_exists( $feature, 'render_bar' ) ) {
+                if ( ! method_exists( $feature, 'get_bar_data' ) ) {
                     return '';
                 }
 
-                ob_start();
-                $feature->render_bar();
+                $data = $feature->get_bar_data();
 
-                return (string) ob_get_clean();
+                if ( ! is_array( $data ) ) {
+                    return '';
+                }
+
+                $suggestions = method_exists( $feature, 'get_suggested_products_html' ) ? (string) $feature->get_suggested_products_html() : '';
+
+                return self::shipping_bar_html( $data ) . $suggestions;
             }
         );
+    }
+
+    /**
+     * The bar's markup from YayBoost's bar data: current / threshold in the cart's currency, or as item counts when free
+     * shipping needs a quantity.
+     *
+     * @param array<string, mixed> $data FreeShippingBarFeature::get_bar_data().
+     */
+    private static function shipping_bar_html( array $data ): string {
+        $achieved = ! empty( $data['achieved'] );
+        $progress = $achieved ? 100.0 : max( 0.0, min( 100.0, (float) ( $data['progress'] ?? 0 ) ) );
+        $message  = (string) ( $data['message'] ?? '' );
+
+        if ( 'item_quantity' === ( $data['requires_type'] ?? null ) ) {
+            $amount = sprintf( '%d / %d', (int) ( $data['current'] ?? 0 ), (int) ( $data['threshold'] ?? 0 ) );
+        } else {
+            $amount = wc_price( (float) ( $data['current'] ?? 0 ) ) . ' / ' . wc_price( (float) ( $data['threshold'] ?? 0 ) );
+        }
+
+        ob_start();
+        include YAYCHECKOUT_PLUGIN_DIR . 'templates/yayboost-free-shipping-bar.php';
+
+        return (string) ob_get_clean();
     }
 
     /**
@@ -424,9 +461,10 @@ class YayBoost {
     }
 
     /**
-     * Reprints the order bump and Frequently bought together spots on update_order_review, since a layout's spot
-     * sits outside every fragment. YayBoost ticks a bump only when it prints it, and its script reads the tick back
-     * from the page, so a bump removed from the Items block stayed ticked; FBT's products follow the cart. A layout
+     * Reprints the order bump, free shipping bar and Frequently bought together spots on update_order_review, since a
+     * layout's spot sits outside every fragment. YayBoost ticks a bump only when it prints it, and its script reads the
+     * tick back from the page, so a bump removed from the Items block stayed ticked; the bar's progress and FBT's
+     * products follow the cart. A layout
      * holds one spot per feature: the first is reprinted.
      *
      * @param mixed $fragments Selector => HTML.

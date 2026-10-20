@@ -9,16 +9,16 @@
 ## Today
 
 - A layout's spot prints a YayBoost feature through a shortcode with YayBoost Free and Pro alike, and neither edition has a shortcode for the order bump or the free shipping bar. `Integrations\YayBoost` therefore:
-  - registers `[yayboost_order_bump]` and `[yayboost_free_shipping_bar]` itself, through YayBoost internals (`OrderBumpFeature::get_renderer()`'s `render_all_bumps_for_block()` in Free or `render()` in Pro, `FreeShippingBarFeature::render_bar()`);
+  - registers `[yayboost_order_bump]` and `[yayboost_free_shipping_bar]` itself, through YayBoost internals (`OrderBumpFeature::get_renderer()`'s `render_all_bumps_for_block()` in Free or `render()` in Pro, `FreeShippingBarFeature::get_bar_data()` and `get_suggested_products_html()`, whose bar data `templates/yayboost-free-shipping-bar.php` draws as the templates' progress card);
   - removes YayBoost's hook output for a feature the served layout has a spot for, finding the order bump's callbacks by their object: closures bound to `OrderBumpFeature` (Free) or the renderer's `render()` (Pro), in `Integrations\YayBoost::unhook_order_bumps()`.
-- YayBoost ticks a bump only when it prints it, and `order-bump.js` reads the tick back from the page (`reseedCartStateFromDom()`), so a bump stays ticked after its product leaves the cart until something reprints it. WooCommerce reprints it with the payment area; a layout's spot is outside every fragment, so `Integrations\YayBoost::spot_fragments()` reprints the spot on `update_order_review`.
+- YayBoost ticks a bump only when it prints it, and `order-bump.js` reads the tick back from the page (`reseedCartStateFromDom()`), so a bump stays ticked after its product leaves the cart until something reprints it. WooCommerce reprints it with the payment area; a layout's spot is outside every fragment, so `Integrations\YayBoost::spot_fragments()` reprints the spot on `update_order_review`, as it does the free shipping bar spot, which YayBoost's own `.yayboost-shipping-bar` fragment no longer matches.
 - `Integrations\YayBoost::order_bump_hooks()` tells the editor where a layout without a spot gets the bump: Pro's `woocommerce_review_order_before_submit`, or in Free each active bump's `position` from `BumpRepository::get_active()`, mapped by `OrderBumpRenderer::get_hook_for_position()`. A change to either drops or misplaces the editor's stand-in card.
 - YayBoost's Frequently bought together has no shortcode, block or checkout output, and recommends for one product only. `Integrations\YayBoost::fbt_shortcode()` builds `FBTRenderer` itself (with `FrequentlyBoughtTogetherFeature::get_cache_manager()` and `get_settings()`), merges `get_prepared_products()` across the cart items, and prints its own markup; `assets/js/checkout-yayboost-fbt.js` adds through YayBoost's `yayboost_fbt_add_to_cart` AJAX action and nonce name.
 - YayBoost's order bump has no style setting, CSS variables or filters, so `assets/css/yayboost.css` gives it the templates' card look by restyling the classes `OrderBumpRenderer::render_single_bump()` prints, inside any layout.
 
 ## Why it matters
 
-The shim breaks quietly when YayBoost renames those methods or changes how it hooks its bumps: the spot prints nothing, or the bump prints twice. A renamed bump class drops the card look.
+The shim breaks quietly when YayBoost renames those methods or changes how it hooks its bumps: the spot prints nothing, or the bump prints twice. A renamed bump class drops the card look, and a renamed `get_bar_data()` key empties or misdraws the bar.
 
 ## Suggested fix
 
