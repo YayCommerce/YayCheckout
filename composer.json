@@ -12,7 +12,7 @@
   },
   "require-dev": {
     "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
-    "humbug/php-scoper": "^0.18.18",
+    "humbug/php-scoper": "^0.18.20",
     "squizlabs/php_codesniffer": "^3.9",
     "thecodingmachine/safe": "^3.4",
     "wp-coding-standards/wpcs": "^3.1",

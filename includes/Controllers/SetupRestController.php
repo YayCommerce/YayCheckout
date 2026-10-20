@@ -65,7 +65,7 @@ class SetupRestController extends BaseRestController {
         try {
             $template_slug = (string) $request->get_param( 'template_slug' );
             LayoutTemplateCatalogue::assert_available( $template_slug );
-            $layout = $this->layouts->create( __( 'Checkout — draft', 'yaycheckout' ), $template_slug );
+            $layout = $this->layouts->create( __( 'Checkout', 'yaycheckout' ), $template_slug );
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( ExceptionHelper::message( $ex ) );
         }
