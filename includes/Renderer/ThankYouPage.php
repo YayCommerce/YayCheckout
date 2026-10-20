@@ -93,9 +93,9 @@ class ThankYouPage {
      * labels. Empty overrides are skipped so the shop's WooCommerce locale stays in force.
      *
      * @param array<string, string> $overrides Source string (as in WooCommerce templates) => replacement.
-     * @param callable              $print     Printer that echoes WooCommerce template output.
+     * @param callable              $callback  Printer that echoes WooCommerce template output.
      */
-    public static function with_woocommerce_label_overrides( array $overrides, callable $print ): void {
+    public static function with_woocommerce_label_overrides( array $overrides, callable $callback ): void {
         $overrides = array_filter(
             $overrides,
             static function ( $label ) {
@@ -104,7 +104,7 @@ class ThankYouPage {
         );
 
         if ( [] === $overrides ) {
-            $print();
+            $callback();
 
             return;
         }
@@ -118,7 +118,7 @@ class ThankYouPage {
         };
 
         add_filter( 'gettext', $filter, 10, 3 );
-        $print();
+        $callback();
         remove_filter( 'gettext', $filter, 10 );
     }
 
