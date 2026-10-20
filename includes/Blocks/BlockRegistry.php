@@ -357,7 +357,7 @@ class BlockRegistry {
         // Added after register_blocks()' own inline script, so window.yayCheckoutBlocks exists.
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.design', $design );
         // The live value picker's Cart totals and Counts.
-        self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.liveValues', LiveValues::cart_values() );
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.liveValues', LiveValues::picker_values() );
         // The layout editor's Logged in / Logged out switch; other editors keep editor-data.ts's default.
         if ( Layout::POST_TYPE !== get_post_type() ) {
             return;
