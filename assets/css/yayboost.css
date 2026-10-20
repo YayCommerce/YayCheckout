@@ -5,18 +5,18 @@
  * stand-ins for it, or YayBoost's own hook output.
  *
  * CSS only: YayBoost's script finds the bump by these classes, so the markup stays YayBoost's
- * (OrderBumpRenderer::render_single_bump()). The .yaycheckout-checkout prefix outranks YayBoost's
+ * (OrderBumpRenderer::render_single_bump()). The prefix, Checkout or a plugin block outside it (.yaycheckout-scope), outranks YayBoost's
  * single-class rules (order-bump.css) whatever the load order; only its !important checkbox-wrap display needs one here.
  * Colours come from the layout's design tokens (DesignStyles): the pill follows Primary, and so does the dashed
  * border once the bump is ticked; unticked it is the mock's amber.
  */
 
-.yaycheckout-checkout .yayboost-order-bump {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump {
 	margin: 0;
 }
 
 /* Pro prints several bumps in one wrapper. */
-.yaycheckout-checkout .yayboost-order-bumps {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bumps {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
@@ -26,7 +26,7 @@
  * On a hook inside another block (before the Place Order button, before the payment methods) no block gap
  * spaces the bumps from what follows; in the order bump spot the layout's gap does.
  */
-.yaycheckout-checkout :is(.yayboost-order-bumps, .yayboost-order-bump:not(.yayboost-order-bumps *)):not(.yaycheckout-order-bump-spot, .yaycheckout-order-bump-spot *) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.yayboost-order-bumps, .yayboost-order-bump:not(.yayboost-order-bumps *)):not(.yaycheckout-order-bump-spot, .yaycheckout-order-bump-spot *) {
 	margin-bottom: 16px;
 }
 
@@ -34,7 +34,7 @@
  * Columns: checkbox | title | pill | image. Row 1 holds the pill only on a narrow screen, so it is empty and
  * 0 high otherwise; the last row takes the image's extra height, so the text rows stay packed.
  */
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) {
 	position: relative;
 	display: grid;
 	grid-template-columns: auto minmax(0, max-content) 1fr auto;
@@ -47,17 +47,17 @@
 }
 
 /* The card and its pill, shared with the editor's stand-in for a bump the layout has no spot for (HookOutputPreview). */
-.yaycheckout-checkout :is(.yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple), .yaycheckout-hook-output-preview) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple), .yaycheckout-hook-output-preview) {
 	border: 2px dashed #f0b849;
 	border-radius: 4px;
 	background: #fff;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple):has(.yayboost-order-bump__checkbox:checked) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple):has(.yayboost-order-bump__checkbox:checked) {
 	border-color: var(--yaycheckout-primary-color, #3858e9);
 }
 
-.yaycheckout-checkout :is(.yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__headline, .yaycheckout-hook-output-preview__pill) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__headline, .yaycheckout-hook-output-preview__pill) {
 	padding: 2px 8px;
 	border-radius: 9999px;
 	background: var(--yaycheckout-primary-color, #3858e9);
@@ -71,21 +71,21 @@
 }
 
 /* Their children become the card's grid items. The label keeps its checkbox, so a click on its text still ticks it. */
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) :is(.yayboost-order-bump__body, .yayboost-order-bump__actions) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) :is(.yayboost-order-bump__body, .yayboost-order-bump__actions) {
 	display: contents;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__checkbox-wrap {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__checkbox-wrap {
 	display: contents !important;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__checkbox {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__checkbox {
 	grid-column: 1;
 	grid-row: 2;
 	margin: 2px 16px 0 0;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__checkbox-label {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__checkbox-label {
 	grid-column: 2;
 	grid-row: 2;
 	font-size: 14px;
@@ -94,50 +94,50 @@
 }
 
 /* The whole card is the label's click target; the link, selects and button sit above it. */
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__checkbox-label::after {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__checkbox-label::after {
 	content: "";
 	position: absolute;
 	inset: 0;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) :is(.yayboost-order-bump__product a, .yayboost-order-bump__variations, .yayboost-order-bump__update-btn) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) :is(.yayboost-order-bump__product a, .yayboost-order-bump__variations, .yayboost-order-bump__update-btn) {
 	position: relative;
 	z-index: 1;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__headline {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__headline {
 	grid-column: 3;
 	grid-row: 2;
 	justify-self: start;
 	margin: 1px 0 0 8px;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) :is(.yayboost-order-bump__product, .yayboost-order-bump__description, .yayboost-order-bump__price, .yayboost-order-bump__variations, .yayboost-order-bump__update-btn) {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) :is(.yayboost-order-bump__product, .yayboost-order-bump__description, .yayboost-order-bump__price, .yayboost-order-bump__variations, .yayboost-order-bump__update-btn) {
 	grid-column: 2 / 4;
 	margin: 4px 0 0;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__product {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__product {
 	grid-row: 3;
 	font-size: 12px;
 }
 
 /* Its colour stays the layout's link colour (DesignStyles). */
-.yaycheckout-checkout .yayboost-order-bump__product a {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__product a {
 	text-decoration: none;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__product a:hover {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__product a:hover {
 	text-decoration: underline;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__description {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__description {
 	grid-row: 4;
 	font-size: inherit;
 	color: var(--yaycheckout-design-muted);
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__price {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__price {
 	grid-row: 5;
 	display: flex;
 	flex-wrap: wrap;
@@ -147,37 +147,37 @@
 	font-size: inherit;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__variations {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__variations {
 	grid-row: 6;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__update-btn {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__update-btn {
 	grid-row: 7;
 	justify-self: start;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__price-bump {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__price-bump {
 	font-size: 15px;
 	font-weight: 600;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__price-regular {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__price-regular {
 	color: var(--yaycheckout-design-muted);
 }
 
-.yaycheckout-checkout .yayboost-order-bump__price-save {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__price-save {
 	color: #2f8a48;
 	font-weight: 500;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__image {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__image {
 	grid-column: 4;
 	grid-row: 1 / -1;
 	width: 72px;
 	margin-left: 16px;
 }
 
-.yaycheckout-checkout .yayboost-order-bump__image img {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__image img {
 	display: block;
 	width: 100%;
 	height: auto;
@@ -187,18 +187,18 @@
 }
 
 @media (max-width: 479px) {
-	.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) {
+	:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) {
 		padding: 16px;
 	}
 
 	/* Beside the title the pill would squeeze it; it goes above instead. */
-	.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__headline {
+	:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__headline {
 		grid-column: 2 / 4;
 		grid-row: 1;
 		margin: 0 0 6px;
 	}
 
-	.yaycheckout-checkout .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__image {
+	:is(.yaycheckout-checkout, .yaycheckout-scope) .yayboost-order-bump__inner:not(.yayboost-order-bump__inner--simple) .yayboost-order-bump__image {
 		width: 56px;
 		margin-left: 12px;
 	}
@@ -206,28 +206,27 @@
 
 /*
  * Frequently bought together (templates/yayboost-fbt.php, printed by Integrations\YayBoost::fbt_shortcode()): the
- * templates' cross-sell list, a row per product with an Add button that turns to Added once it is in the cart.
+ * templates' cross-sell list, a row per product with an Add button that turns to Added once it is in the cart. The
+ * rule above it is the spot's block style (PluginBlockCatalogue's default), not this sheet's.
  */
-.yaycheckout-checkout .yaycheckout-fbt {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-	padding-top: 16px;
-	border-top: 1px solid var(--yaycheckout-border-color, #ddd);
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__header {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: baseline;
 	gap: 8px;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__title {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__title {
 	font-weight: 600;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__caption {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__caption {
 	color: var(--yaycheckout-design-muted, #757575);
 	font-size: 11px;
 	font-weight: 500;
@@ -235,13 +234,13 @@
 	text-transform: uppercase;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__list {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__list {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__item {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__item {
 	display: flex;
 	align-items: center;
 	gap: 10px;
@@ -251,17 +250,17 @@
 	background: #fff;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__item.is-added {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__item.is-added {
 	background: color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 4%, #fff);
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__image {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__image {
 	flex: none;
 	width: 40px;
 	height: 40px;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__image img {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__image img {
 	display: block;
 	width: 100%;
 	height: 100%;
@@ -270,12 +269,12 @@
 	border-radius: 2px;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__body {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__body {
 	flex: 1;
 	min-width: 0;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__name {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__name {
 	overflow: hidden;
 	font-weight: 500;
 	text-overflow: ellipsis;
@@ -283,7 +282,7 @@
 }
 
 /* WooCommerce's price markup: the sale price, then the regular one struck through. */
-.yaycheckout-checkout .yaycheckout-fbt__price {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__price {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: baseline;
@@ -292,21 +291,21 @@
 	font-weight: 600;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__price ins {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__price ins {
 	order: -1;
 	text-decoration: none;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__price del {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__price del {
 	color: #949494;
 	font-weight: 400;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__price .screen-reader-text {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__price .screen-reader-text {
 	position: absolute;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__button {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__button {
 	display: flex;
 	flex: none;
 	align-items: center;
@@ -325,21 +324,21 @@
 	cursor: pointer;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__button:hover {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__button:hover {
 	background: color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 4%, transparent);
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__item.is-added .yaycheckout-fbt__button {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__item.is-added .yaycheckout-fbt__button {
 	background: var(--yaycheckout-primary-color, #3858e9);
 	color: #fff;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__button:disabled {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__button:disabled {
 	opacity: 0.6;
 	cursor: progress;
 }
 
-.yaycheckout-checkout .yaycheckout-fbt__notice {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__notice {
 	margin: 0;
 	color: #cc1818;
 	font-size: 12px;
@@ -347,44 +346,41 @@
 
 /*
  * Free shipping bar (templates/yayboost-free-shipping-bar.php, printed by Integrations\YayBoost::free_shipping_bar_shortcode()):
- * the templates' progress card, the message and the amounts above a bar in Primary.
+ * the message and the amounts above a bar in Primary. The card around it is the spot's block style (PluginBlockCatalogue's
+ * default), not this sheet's.
  */
-.yaycheckout-checkout .yaycheckout-shipping-bar {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-shipping-bar {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-	padding: 16px 20px;
-	border: 1px solid var(--yaycheckout-border-color, #ddd);
-	border-radius: 4px;
-	background: #fff;
 }
 
-.yaycheckout-checkout .yaycheckout-shipping-bar__head {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-shipping-bar__head {
 	display: flex;
 	justify-content: space-between;
 	align-items: baseline;
 	gap: 12px;
 }
 
-.yaycheckout-checkout .yaycheckout-shipping-bar__message {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-shipping-bar__message {
 	font-weight: 500;
 }
 
-.yaycheckout-checkout .yaycheckout-shipping-bar__amount {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-shipping-bar__amount {
 	flex: 0 0 auto;
 	color: var(--yaycheckout-design-muted, #757575);
 	font-size: 12px;
 	white-space: nowrap;
 }
 
-.yaycheckout-checkout .yaycheckout-shipping-bar__track {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-shipping-bar__track {
 	height: 6px;
 	overflow: hidden;
 	border-radius: 9999px;
 	background: #e0e0e0;
 }
 
-.yaycheckout-checkout .yaycheckout-shipping-bar__fill {
+:is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-shipping-bar__fill {
 	height: 100%;
 	border-radius: 9999px;
 	background: var(--yaycheckout-primary-color, #3858e9);

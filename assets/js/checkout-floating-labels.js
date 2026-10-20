@@ -5,10 +5,11 @@
  * address-i18n.js relabels rows, and an applied coupon clears the coupon field.
  */
 jQuery(function ($) {
-    var form = document.querySelector('.yaycheckout-checkout--floating-labels');
-    var controls = '.input-text, textarea, .yaycheckout-coupon-form__code';
+    // Checkout, and a block outside it that takes the layout's label mode (Renderer\CheckoutScope).
+    var roots = '.yaycheckout-checkout--floating-labels, .yaycheckout-scope--floating-labels';
+    var controls = ':is(' + roots + ') :is(.input-text, textarea, .yaycheckout-coupon-form__code)';
 
-    if (!form) {
+    if (!document.querySelector(roots)) {
         return;
     }
 
@@ -21,19 +22,17 @@ jQuery(function ($) {
     }
 
     function markAll() {
-        form.querySelectorAll(controls).forEach(mark);
+        document.querySelectorAll(controls).forEach(mark);
     }
 
-    form.addEventListener('input', function (event) {
-        if (event.target.matches(controls)) {
+    function onEdit(event) {
+        if (event.target instanceof Element && event.target.matches(controls)) {
             mark(event.target);
         }
-    });
-    form.addEventListener('change', function (event) {
-        if (event.target.matches(controls)) {
-            mark(event.target);
-        }
-    });
+    }
+
+    document.addEventListener('input', onEdit);
+    document.addEventListener('change', onEdit);
 
     $(document.body).on('updated_checkout country_to_state_changed', markAll);
     markAll();

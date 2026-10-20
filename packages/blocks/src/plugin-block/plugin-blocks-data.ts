@@ -29,6 +29,8 @@ export type PluginBlockEntry = {
 	available: boolean;
 	/** The WooCommerce hooks the plugin prints the feature on in a layout without a spot; HookOutputPreview stands in there. */
 	hooks: string[];
+	/** The block style a new spot starts with; empty (PHP's `[]`) for none. */
+	style: Record< string, unknown > | [];
 	/** `<folder>/<file>.php`, or null while not installed. */
 	pluginPath: string | null;
 	state: PluginBlockState;

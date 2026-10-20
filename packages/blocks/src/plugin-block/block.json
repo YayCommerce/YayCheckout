@@ -16,8 +16,19 @@
     "html": false,
     "reusable": false,
     "inserter": false,
+    "color": {
+      "text": false,
+      "background": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    },
     "spacing": {
-      "margin": true
+      "margin": true,
+      "padding": true
     }
   },
   "editorScript": "file:./index.js",

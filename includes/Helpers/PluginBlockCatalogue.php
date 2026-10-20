@@ -23,6 +23,9 @@ class PluginBlockCatalogue {
 
     private const YAYBOOST_SLUG = 'yayboost-sales-booster-for-woocommerce';
 
+    /** The layout design's Border colour, as a block style value. */
+    private const BORDER_COLOR = 'var:preset|color|yaycheckout-border';
+
     /** The YayCommerce Licenses screen, where YayBoost Pro takes its key. */
     private const YAYCOMMERCE_LICENSES_PATH = 'admin.php?page=yaycommerce-licenses';
 
@@ -47,7 +50,26 @@ class PluginBlockCatalogue {
                 __( 'Show how much more the shopper needs to spend for free shipping.', 'yaycheckout' ),
                 'admin.php?page=yayboost-settings#/features/free_shipping_bar',
                 YayBoost::FREE_SHIPPING_BAR,
-                YayBoost::FREE_SHIPPING_BAR_SHORTCODE
+                YayBoost::FREE_SHIPPING_BAR_SHORTCODE,
+                true,
+                // The template mock's progress card.
+                [
+                    'color'   => [ 'background' => '#ffffff' ],
+                    'border'  => [
+                        'color'  => self::BORDER_COLOR,
+                        'width'  => '1px',
+                        'style'  => 'solid',
+                        'radius' => '4px',
+                    ],
+                    'spacing' => [
+                        'padding' => [
+                            'top'    => '16px',
+                            'right'  => '20px',
+                            'bottom' => '16px',
+                            'left'   => '20px',
+                        ],
+                    ],
+                ]
             ),
             self::yayboost_entry(
                 YayBoost::FBT_BLOCK,
@@ -55,7 +77,19 @@ class PluginBlockCatalogue {
                 __( 'Suggest products that go with the cart, added in one click.', 'yaycheckout' ),
                 'admin.php?page=yayboost-settings#/features/frequently_bought_together',
                 YayBoost::FBT,
-                YayBoost::FBT_SHORTCODE
+                YayBoost::FBT_SHORTCODE,
+                true,
+                // The template mock's cross-sell list: a rule above it, as on the coupon form beside it.
+                [
+                    'border'  => [
+                        'top' => [
+                            'color' => self::BORDER_COLOR,
+                            'width' => '1px',
+                            'style' => 'solid',
+                        ],
+                    ],
+                    'spacing' => [ 'padding' => [ 'top' => '16px' ] ],
+                ]
             ),
         ];
 
@@ -70,6 +104,7 @@ class PluginBlockCatalogue {
                     'shortcode'  => '',
                     'licenseUrl' => '',
                     'hooks'      => [],
+                    'style'      => [],
                 ];
             },
             $filtered
@@ -177,11 +212,18 @@ class PluginBlockCatalogue {
     }
 
     /**
-     * The markup a template prints for a spot that $target fits: its placeholder.
+     * The markup a template prints for a spot that $target fits: its placeholder, styled as the entry's `style` unless
+     * $attributes carries its own.
      *
      * @param array $attributes The placeholder's attributes besides its target.
      */
     public static function block( string $target, array $attributes = [] ): string {
+        $entry = array_column( self::entries(), null, 'target' )[ $target ] ?? null;
+
+        if ( ! isset( $attributes['style'] ) && ! empty( $entry['style'] ) ) {
+            $attributes['style'] = $entry['style'];
+        }
+
         return get_comment_delimited_block_content( self::BLOCK, array_merge( [ 'target' => $target ], $attributes ), '' );
     }
 
@@ -197,8 +239,9 @@ class PluginBlockCatalogue {
      * @param string $feature_id    YayBoost's id for the block's feature, e.g. order_bump; '' for none.
      * @param string $shortcode     The shortcode that prints the feature without the block; '' for none.
      * @param bool   $available     False while the plugin has no such block yet.
+     * @param array  $style         The block style a new spot starts with (a template's, or an inserted one's); [] for none.
      */
-    private static function yayboost_entry( string $target, string $title, string $pitch, string $settings_path, string $feature_id, string $shortcode, bool $available = true ): array {
+    private static function yayboost_entry( string $target, string $title, string $pitch, string $settings_path, string $feature_id, string $shortcode, bool $available = true, array $style = [] ): array {
         return [
             'target'       => $target,
             'plugin'       => 'yayboost',
@@ -213,6 +256,7 @@ class PluginBlockCatalogue {
             // IntegrationsHelper's learn_more_url wins in editor_data(); this is the fallback for a filtered-out integration.
             'learnMoreUrl' => YAYCHECKOUT_DOCS_URL,
             'available'    => $available,
+            'style'        => $style,
         ];
     }
 }
