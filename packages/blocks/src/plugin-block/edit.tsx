@@ -31,12 +31,25 @@ export default function Edit( { attributes }: EditProps ) {
 	const Preview = state === 'shortcode' ? PREVIEWS[ attributes.target ] : undefined;
 	const settingsUrl = pluginBlocksData.entries.find( ( entry ) => entry.target === attributes.target )?.settingsUrl ?? '';
 	// It may sit outside Checkout (CheckoutScope).
-	const blockProps = useBlockProps( { className: 'yaycheckout-plugin-block ' + useScopeClass() + ( Preview ? ' has-preview' : '' ) } );
+	const blockProps = useBlockProps( { className: 'yaycheckout-plugin-block ' + useScopeClass() } );
 
+	// The spot's style is for the plugin's output, which the storefront only prints once the card is gone: the card
+	// leaves out its inline styles and its colour classes.
 	if ( ! Preview ) {
+		const cardProps = {
+			...blockProps,
+			style: undefined,
+			className: blockProps.className
+				.split( ' ' )
+				.filter( ( name: string ) => ! /^has-(.+-)?(background|background-color|border-color)$/.test( name ) )
+				.join( ' ' ),
+		};
+
 		return (
-			<div { ...blockProps }>
-				<PluginBlockCard target={ attributes.target } />
+			<div { ...cardProps }>
+				<div className="yaycheckout-plugin-block__card">
+					<PluginBlockCard target={ attributes.target } />
+				</div>
 			</div>
 		);
 	}

@@ -206,14 +206,13 @@
 
 /*
  * Frequently bought together (templates/yayboost-fbt.php, printed by Integrations\YayBoost::fbt_shortcode()): the
- * templates' cross-sell list, a row per product with an Add button that turns to Added once it is in the cart.
+ * templates' cross-sell list, a row per product with an Add button that turns to Added once it is in the cart. The
+ * rule above it is the spot's block style (PluginBlockCatalogue's default), not this sheet's.
  */
 :is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-	padding-top: 16px;
-	border-top: 1px solid var(--yaycheckout-border-color, #ddd);
 }
 
 :is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-fbt__header {
@@ -347,16 +346,13 @@
 
 /*
  * Free shipping bar (templates/yayboost-free-shipping-bar.php, printed by Integrations\YayBoost::free_shipping_bar_shortcode()):
- * the templates' progress card, the message and the amounts above a bar in Primary.
+ * the message and the amounts above a bar in Primary. The card around it is the spot's block style (PluginBlockCatalogue's
+ * default), not this sheet's.
  */
 :is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-shipping-bar {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-	padding: 16px 20px;
-	border: 1px solid var(--yaycheckout-border-color, #ddd);
-	border-radius: 4px;
-	background: #fff;
 }
 
 :is(.yaycheckout-checkout, .yaycheckout-scope) .yaycheckout-shipping-bar__head {
