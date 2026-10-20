@@ -1,8 +1,6 @@
-import { addFilter } from '@wordpress/hooks';
 import { __, sprintf } from '@wordpress/i18n';
 import metadata from './block.json';
 import Edit from './edit';
-import { withPluginBlockCard } from './missing';
 import { pluginBlocksData } from './plugin-blocks-data';
 import { pluginBlockIcon } from '../shared/block-icons';
 import { registerDynamicBlock } from '../shared/register-dynamic-block';
@@ -23,8 +21,3 @@ registerDynamicBlock( metadata, pluginBlockIcon, Edit, () => null, {
 		isActive: [ 'target' ],
 	} ) ),
 } );
-
-// The catalogue is printed in the layout editor only, so other editors keep core's missing-block notice.
-if ( pluginBlocksData.entries.length > 0 ) {
-	addFilter( 'editor.BlockEdit', 'yaycheckout/plugin-block-missing', withPluginBlockCard );
-}

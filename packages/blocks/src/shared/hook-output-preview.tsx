@@ -16,7 +16,7 @@ interface HookOutputPreviewProps {
 /**
  * A stand-in for what another Yay plugin prints on `hook` while the layout has no spot for it: YayBoost's order
  * bump lands on a WooCommerce hook the calling block fires (PluginBlockCatalogue's `hooks`). Gone once the layout
- * holds the plugin's block or its placeholder, and from the original block while a Hook block takes the hook.
+ * holds its placeholder, and from the original block while a Hook block takes the hook.
  */
 export function HookOutputPreview( { hook, owner }: HookOutputPreviewProps ) {
 	// Read at render: another block's script prints the catalogue, maybe after this bundle loaded.
@@ -39,13 +39,12 @@ export function HookOutputPreview( { hook, owner }: HookOutputPreviewProps ) {
 				return '';
 			}
 
-			// Mirrors PluginBlockCatalogue::spot_for(): a placeholder for the target, or the target block itself. The
-			// editor holds an unregistered block as core/missing, so a named block is a registered one.
+			// Mirrors PluginBlockCatalogue::spot_for(): only a placeholder holds a spot for its target.
 			const placeholders = editor.getBlocksByName( pluginBlockMeta.name ).map( ( id ) => editor.getBlockAttributes( id )?.target );
 
 			return candidateTargets
 				.split( ' ' )
-				.filter( ( target ) => ! placeholders.includes( target ) && editor.getBlocksByName( target ).length === 0 )
+				.filter( ( target ) => ! placeholders.includes( target ) )
 				.join( ' ' );
 		},
 		[ hook, owner, candidateTargets ]

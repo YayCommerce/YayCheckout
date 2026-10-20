@@ -1,7 +1,6 @@
 <?php
 namespace YayCheckout\Helpers;
 
-use YayCheckout\Blocks\BlockRegistry;
 use YayCheckout\Integrations\YayBoost;
 use YayCheckout\Services\LayoutMarkupReader;
 
@@ -23,9 +22,6 @@ class PluginBlockCatalogue {
     private const YAYBOOST_FILE = 'yayboost-sales-booster-for-woocommerce.php';
 
     private const YAYBOOST_SLUG = 'yayboost-sales-booster-for-woocommerce';
-
-    /** YayBoost's blocks come with Pro; the card links here. */
-    private const YAYBOOST_PRO_URL = 'https://yaycommerce.com/yayboost-sales-booster-for-woocommerce/';
 
     /** The YayCommerce Licenses screen, where YayBoost Pro takes its key. */
     private const YAYCOMMERCE_LICENSES_PATH = 'admin.php?page=yaycommerce-licenses';
@@ -53,18 +49,13 @@ class PluginBlockCatalogue {
                 YayBoost::FREE_SHIPPING_BAR,
                 YayBoost::FREE_SHIPPING_BAR_SHORTCODE
             ),
-            // Neither YayBoost edition has a block for this: the shortcode Integrations\YayBoost registers fills the
-            // spot, so the card offers no upgrade to Pro for it.
-            array_merge(
-                self::yayboost_entry(
-                    YayBoost::FBT_BLOCK,
-                    __( 'Frequently bought together', 'yaycheckout' ),
-                    __( 'Suggest products that go with the cart, added in one click.', 'yaycheckout' ),
-                    'admin.php?page=yayboost-settings#/features/frequently_bought_together',
-                    YayBoost::FBT,
-                    YayBoost::FBT_SHORTCODE
-                ),
-                [ 'upgradeUrl' => '' ]
+            self::yayboost_entry(
+                YayBoost::FBT_BLOCK,
+                __( 'Frequently bought together', 'yaycheckout' ),
+                __( 'Suggest products that go with the cart, added in one click.', 'yaycheckout' ),
+                'admin.php?page=yayboost-settings#/features/frequently_bought_together',
+                YayBoost::FBT,
+                YayBoost::FBT_SHORTCODE
             ),
         ];
 
@@ -77,7 +68,6 @@ class PluginBlockCatalogue {
                 return $entry + [
                     'featureId'  => '',
                     'shortcode'  => '',
-                    'upgradeUrl' => '',
                     'licenseUrl' => '',
                     'hooks'      => [],
                 ];
@@ -87,7 +77,7 @@ class PluginBlockCatalogue {
     }
 
     /**
-     * The block names the catalogue promotes.
+     * The targets the catalogue holds spots for.
      *
      * @return string[]
      */
@@ -106,7 +96,6 @@ class PluginBlockCatalogue {
 
         $installed    = array_keys( get_plugins() );
         $by_file      = array_combine( array_map( 'basename', $installed ), $installed );
-        $registered   = BlockRegistry::registered_names();
         $integrations = array_column( IntegrationsHelper::get_integrations(), null, 'slug' );
         $entries      = [];
 
@@ -120,12 +109,10 @@ class PluginBlockCatalogue {
             } elseif ( ! is_plugin_active( $plugin_path ) ) {
                 $state = 'inactive';
             } elseif ( 'yayboost' === $entry['plugin'] && false === YayBoost::get_instance()->is_licensed() ) {
-                // Unlicensed YayBoost Pro boots nothing: no block, no feature, no shortcode.
+                // Unlicensed YayBoost Pro boots nothing: no feature, no shortcode.
                 $state = 'unlicensed';
-            } elseif ( in_array( $entry['target'], $registered, true ) ) {
-                $state = 'ready';
             } elseif ( self::feature_enabled( $entry ) && shortcode_exists( $entry['shortcode'] ) ) {
-                // The block is Pro's; the free edition fills the spot through the shortcode.
+                // Both YayBoost editions fill the spot through the shortcode.
                 $state = 'shortcode';
             } else {
                 $state = 'feature_off';
@@ -158,8 +145,8 @@ class PluginBlockCatalogue {
     }
 
     /**
-     * The catalogue targets $content holds a spot for, in document order: a placeholder for the target, or the
-     * target block itself while this site has it registered. An unregistered block prints nothing, so it is no spot.
+     * The catalogue targets $content holds a placeholder for, in document order. The plugin's own block for a target
+     * is no spot: it prints the feature beside the plugin's hook output, which stays.
      *
      * @return string[]
      */
@@ -174,35 +161,27 @@ class PluginBlockCatalogue {
     }
 
     /**
-     * The target among $targets that $block holds a spot for: a placeholder's target, or the target block itself
-     * while this site has it registered; '' for none.
+     * The target among $targets that $block, a placeholder, holds a spot for; '' for none.
      *
      * @param array    $block   A parsed block.
      * @param string[] $targets Catalogue targets.
      */
     public static function spot_for( array $block, array $targets ): string {
-        $name = $block['blockName'] ?? '';
-
-        if ( self::BLOCK === $name ) {
-            $target = (string) ( $block['attrs']['target'] ?? '' );
-        } else {
-            $target = \WP_Block_Type_Registry::get_instance()->is_registered( (string) $name ) ? (string) $name : '';
+        if ( self::BLOCK !== ( $block['blockName'] ?? '' ) ) {
+            return '';
         }
+
+        $target = (string) ( $block['attrs']['target'] ?? '' );
 
         return in_array( $target, $targets, true ) ? $target : '';
     }
 
     /**
-     * The markup a template prints for a spot that $target fits: the block itself when this site has registered
-     * it, so a merchant who already runs the plugin starts with it, or else its placeholder.
+     * The markup a template prints for a spot that $target fits: its placeholder.
      *
-     * @param array $attributes The block's attributes, the same for the block and its placeholder.
+     * @param array $attributes The placeholder's attributes besides its target.
      */
     public static function block( string $target, array $attributes = [] ): string {
-        if ( in_array( $target, BlockRegistry::registered_names(), true ) ) {
-            return get_comment_delimited_block_content( $target, $attributes, '' );
-        }
-
         return get_comment_delimited_block_content( self::BLOCK, array_merge( [ 'target' => $target ], $attributes ), '' );
     }
 
@@ -230,7 +209,6 @@ class PluginBlockCatalogue {
             'settingsUrl'  => $settings_path,
             'featureId'    => $feature_id,
             'shortcode'    => $shortcode,
-            'upgradeUrl'   => self::YAYBOOST_PRO_URL,
             'licenseUrl'   => self::YAYCOMMERCE_LICENSES_PATH,
             // IntegrationsHelper's learn_more_url wins in editor_data(); this is the fallback for a filtered-out integration.
             'learnMoreUrl' => YAYCHECKOUT_DOCS_URL,

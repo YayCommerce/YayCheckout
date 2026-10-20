@@ -1,7 +1,7 @@
-import { jsonObjectAt } from '../shared/load-editor-assets';
+import { jsonObjectAt } from '../shared/load-editor-styles';
 
-/** Where a promoted block's plugin stands on this site: PluginBlockCatalogue::editor_data()'s states. */
-export type PluginBlockState = 'not_installed' | 'inactive' | 'unlicensed' | 'feature_off' | 'shortcode' | 'unavailable' | 'ready';
+/** Where a spot's plugin stands on this site: PluginBlockCatalogue::editor_data()'s states. */
+export type PluginBlockState = 'not_installed' | 'inactive' | 'unlicensed' | 'feature_off' | 'shortcode' | 'unavailable';
 
 /** One PluginBlockCatalogue entry, as PluginBlockCatalogue::editor_data() prints it. */
 export type PluginBlockEntry = {
@@ -19,10 +19,8 @@ export type PluginBlockEntry = {
 	learnMoreUrl: string;
 	/** The plugin's id for the block's feature, e.g. order_bump; '' for none. */
 	featureId: string;
-	/** The shortcode that fills the spot without the block (state `shortcode`); '' for none. */
+	/** The shortcode that fills the spot (state `shortcode`); '' for none. */
 	shortcode: string;
-	/** The edition that has the block; '' when no edition has one. */
-	upgradeUrl: string;
 	/** Where the plugin's license is entered (state `unlicensed`). */
 	licenseUrl: string;
 	installUrl: string;
@@ -54,7 +52,7 @@ export const pluginBlocksData: PluginBlocksData = window.yayCheckoutPluginBlocks
 const VARIABLE = 'window.yayCheckoutPluginBlocks = ';
 
 /**
- * The catalogue a freshly loaded editor prints, read from `page` (loadEditorAssets' fetch): the server's states
+ * The catalogue a freshly loaded editor prints, read from `page` (loadEditorStyles' fetch): the server's states
  * after an install or activate, which the client can't tell apart (a Free plugin's shortcode, an unlicensed Pro).
  * Null when the page doesn't print it.
  */

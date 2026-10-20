@@ -59,7 +59,7 @@
 	font-weight: 500;
 }
 
-/* A spot that shows a stand-in for the plugin's output (FbtPreview): no card around it, so it looks as on the storefront. */
+/* A spot that shows a stand-in for the plugin's output (PREVIEWS in edit.tsx): no card around it, so it looks as on the storefront. */
 .editor-styles-wrapper .yaycheckout-plugin-block.has-preview {
 	padding: 0;
 	border: 0;
@@ -75,4 +75,21 @@
 
 .editor-styles-wrapper .yaycheckout-plugin-block__preview .yaycheckout-fbt__image {
 	border-radius: 2px;
+}
+
+/* YayBoost's minimal-text free shipping bar (FreeShippingBarPreview), as its style.scss draws it, tinted with the layout's Primary. */
+.editor-styles-wrapper .yaycheckout-plugin-block__preview.yayboost-shipping-bar--minimal-text {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 15px 20px;
+	border-radius: 8px;
+	background: color-mix(in srgb, var(--yaycheckout-primary-color, #3858e9) 15%, #fff);
+	color: var(--yaycheckout-primary-color, #3858e9);
+}
+
+.editor-styles-wrapper .yaycheckout-plugin-block__preview .yayboost-shipping-bar__icon {
+	flex-shrink: 0;
+	font-size: 20px;
+	line-height: 1;
 }

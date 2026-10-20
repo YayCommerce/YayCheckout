@@ -20,12 +20,13 @@ class PluginBlockCatalogueTest extends WP_UnitTestCase {
         $real_bump   = '<!-- wp:yayboost/order-bump /-->';
         $unknown     = '<!-- wp:yaycheckout/plugin-block {"target":"acme/thing"} /-->';
 
-        // A nested placeholder counts; an unregistered real block and a target outside the catalogue don't.
+        // A nested placeholder counts; a target outside the catalogue doesn't.
         $this->assertSame( [ 'yayboost/free-shipping-bar' ], PluginBlockCatalogue::spots_in( $placeholder . $real_bump . $unknown ) );
 
+        // YayBoost's own block is no spot even while registered: its hook output must stay, or the bump is lost.
         register_block_type( 'yayboost/order-bump', [ 'render_callback' => '__return_empty_string' ] );
 
-        $this->assertSame( [ 'yayboost/free-shipping-bar', 'yayboost/order-bump' ], PluginBlockCatalogue::spots_in( $placeholder . $real_bump . $real_bump ) );
+        $this->assertSame( [ 'yayboost/free-shipping-bar' ], PluginBlockCatalogue::spots_in( $placeholder . $real_bump . $real_bump ) );
         $this->assertSame( [], PluginBlockCatalogue::spots_in( '' ) );
     }
 }

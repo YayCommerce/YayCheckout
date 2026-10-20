@@ -6,7 +6,7 @@
 
 ## Status
 
-Proposed, 2026-10-19. Supersedes [Templates promote other Yay plugins' blocks through one placeholder block](2026-10-19-plugin-block-placeholders.md).
+Superseded by [the plugin spot record](2026-10-20-plugin-spot-prints-shortcode-in-every-edition.md).
 
 ## Context
 

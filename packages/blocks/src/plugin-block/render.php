@@ -1,8 +1,7 @@
 <?php
 /**
- * Prints the entry's shortcode, when it has one this site registers: the free edition of the other plugin fills the
- * spot that way, while its real block is the merchant's to add from the editor card (PluginBlockCatalogue).
- * Otherwise nothing.
+ * Prints the entry's shortcode, when it has one this site registers (PluginBlockCatalogue): both editions of the
+ * other plugin fill the spot that way. Otherwise nothing.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
