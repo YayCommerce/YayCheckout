@@ -16,7 +16,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * A layout's spot prints a feature through a shortcode in both YayBoost editions, so until YayBoost ships
  * shortcodes of its own, this registers them for the placeholder to print, and removes YayBoost's own hook output
- * for a feature the served layout has a spot for, so it prints once. Every call into YayBoost is guarded: a YayBoost that renames a method yields '' or a null state,
+ * for a feature the served layout has a spot for, so it prints once. In a served layout every order bump stays listed while
+ * its product is in the cart, so the shopper can tick and untick it. Every call into YayBoost is guarded: a YayBoost that renames a method yields '' or a null state,
  * never a fatal.
  */
 class YayBoost {
@@ -70,6 +71,9 @@ class YayBoost {
 
     /** Pro's only order bump hook, and Free's for its default position, before_place_order. */
     private const ORDER_BUMP_DEFAULT_HOOK = 'woocommerce_review_order_before_submit';
+
+    /** The transient YayBoost caches its active bumps in (BumpRepository::get_active(), through its Cache prefix). */
+    private const ORDER_BUMPS_TRANSIENT = 'yayboost_bumps_active';
 
     /** The hooks YayBoost prints its order bumps on, one per bump position (OrderBumpRenderer). */
     private const ORDER_BUMP_HOOKS = [
@@ -294,8 +298,9 @@ class YayBoost {
     /**
      * The products YayBoost's Frequently bought together pairs with the cart, drawn like the templates' cross-sell
      * list. FBT recommends for one product and prints only on the product page, so this asks it for each cart item
-     * the shopper didn't add from an FBT list, and merges the answers, first come first kept, up to the count FBT shows for one product. Its own filter
-     * decides whether a product already in the cart drops out or stays listed as added (hide_if_in_cart).
+     * the shopper didn't add from an FBT list, and merges the answers, first come first kept, up to the count FBT shows for one product. A product already in
+     * the cart stays listed as added, whatever FBT's "If already in cart" setting (hide_if_in_cart), so the shopper can
+     * remove it and add it back.
      */
     public function fbt_shortcode(): string {
         return $this->render(
@@ -308,7 +313,8 @@ class YayBoost {
                     return '';
                 }
 
-                $settings = (array) $feature->get_settings();
+                $settings                    = (array) $feature->get_settings();
+                $settings['hide_if_in_cart'] = 'show';
                 // get_prepared_products() reads no prices, so it needs no real currency provider.
                 $fbt = new $renderer( $feature->get_cache_manager(), $settings, new $currency() );
 
@@ -414,6 +420,8 @@ class YayBoost {
             return;
         }
 
+        $this->show_bumps_in_cart();
+
         $spots = PluginBlockCatalogue::spots_in( $page->layout()->content );
 
         foreach ( PluginBlockCatalogue::entries() as $entry ) {
@@ -428,6 +436,45 @@ class YayBoost {
                 $this->{ self::UNHOOK[ $entry['featureId'] ] }();
             }
         }
+    }
+
+    /**
+     * Lists every bump whatever its "If already in cart" setting, so a bump whose product the shopper already has
+     * stays on the layout to tick and untick, in a spot or on YayBoost's hooks. OrderBumpRenderer reads the setting
+     * from its cached active bumps, so this fills that cache, then rewrites the setting on each read.
+     */
+    private function show_bumps_in_cart(): void {
+        $repository = '\YayBoost\Features\OrderBump\BumpRepository';
+
+        if ( true !== $this->feature_enabled( self::ORDER_BUMP ) || ! method_exists( $repository, 'get_active' ) ) {
+            return;
+        }
+
+        try {
+            ( new $repository() )->get_active();
+        } catch ( \Throwable $error ) {
+            return;
+        }
+
+        add_filter( 'transient_' . self::ORDER_BUMPS_TRANSIENT, [ $this, 'show_bump_in_cart' ] );
+    }
+
+    /**
+     * @param mixed $bumps YayBoost's cached active bumps.
+     * @return mixed
+     */
+    public function show_bump_in_cart( $bumps ) {
+        if ( ! is_array( $bumps ) ) {
+            return $bumps;
+        }
+
+        foreach ( $bumps as $index => $bump ) {
+            if ( is_array( $bump ) && isset( $bump['settings'] ) && is_array( $bump['settings'] ) ) {
+                $bumps[ $index ]['settings']['behavior'] = 'show';
+            }
+        }
+
+        return $bumps;
     }
 
     public function render_default_output( bool $render, string $feature_id ): bool {
