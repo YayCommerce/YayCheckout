@@ -1,6 +1,7 @@
 import { InspectorControls, useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { useScopeClass } from '../shared/checkout-scope';
 import { DisclosureControls, DisclosurePreview, disclosureMode, type DisclosureMode } from '../shared/disclosure';
 import './editor.css';
 
@@ -24,7 +25,8 @@ interface EditProps {
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	// The fallbacks mirror render.php, which owns the storefront defaults.
 	const { placeholder, disclosure = 'none', disclosureText = '' } = attributes;
-	const blockProps = useBlockProps( { className: 'yaycheckout-coupon-form' } );
+	// It may sit outside Checkout (CheckoutScope).
+	const blockProps = useBlockProps( { className: 'yaycheckout-coupon-form ' + useScopeClass() } );
 	// The form always holds exactly one Coupon Button, which the merchant styles from its own Styles tab.
 	const { children, ...innerBlocksProps } = useInnerBlocksProps(
 		{ className: 'yaycheckout-coupon-form__row' },
