@@ -1,9 +1,8 @@
-import { Fragment } from 'react';
 import { __ } from '@wordpress/i18n';
 
 import type { LayoutRulesWire } from '@/lib/schema/layout.schema';
-import { Badge } from '@/components/ui/badge';
 import { CONDITION_TYPES, isKnownType, storeData } from '@/pages/layouts/assignment/condition-types';
+import { OverflowBadges } from '@/pages/layouts/OverflowBadges';
 
 type WireCondition = LayoutRulesWire[number][number];
 
@@ -28,26 +27,11 @@ function chipText(condition: WireCondition): string {
   return `${known?.label ?? condition.type} ${operator} ${valueText(condition)}`;
 }
 
-/** A layout's rules as chips for the Layouts table, groups separated by "or". No rules means everyone. */
+/** A layout's rules as chips for the Layouts table, groups separated by "or", past two folded into "+N". No rules means everyone. */
 export function AssignmentChips({ rules }: { rules: LayoutRulesWire }) {
   if (rules.length === 0) {
     return <span className="text-muted-foreground">{__('Everyone', 'yaycheckout')}</span>;
   }
 
-  const groups = rules.map((group) => group.map(chipText));
-
-  return (
-    <div className="flex flex-wrap items-center gap-1 py-2">
-      {groups.map((chips, groupIndex) => (
-        <Fragment key={groupIndex}>
-          {groupIndex > 0 && <span className="text-muted-foreground text-xs">{__('or', 'yaycheckout')}</span>}
-          {chips.map((text, chipIndex) => (
-            <Badge key={chipIndex} variant="outline" className="shrink-0">
-              {text}
-            </Badge>
-          ))}
-        </Fragment>
-      ))}
-    </div>
-  );
+  return <OverflowBadges groups={rules.map((group) => group.map(chipText))} joiner={__('or', 'yaycheckout')} />;
 }

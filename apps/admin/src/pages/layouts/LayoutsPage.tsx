@@ -760,7 +760,7 @@ function LayoutTableRow({
         </div>
       </TableCell>
       {isPro && (
-        <TableCell className="max-w-70">
+        <TableCell>
           <AssignmentChips rules={layout.rules} />
         </TableCell>
       )}
