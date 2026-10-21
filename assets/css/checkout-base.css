@@ -645,11 +645,11 @@ body.yaycheckout-page :is(.woocommerce-error, .woocommerce-message, .woocommerce
 	margin: 0 0 16px;
 	padding: 12px 16px;
 	list-style: none;
-	/* Lighter than a field's border: a notice is a panel, not a control. */
-	border: 1px solid var(--yaycheckout-color-border, color-mix(in srgb, currentColor 25%, transparent));
-	border-inline-start: 4px solid var(--yaycheckout-notice);
+	border: 1px solid var(--yaycheckout-notice);
+	border-inline-start-width: 4px;
 	border-radius: var(--yaycheckout-neutral-radius);
-	background: none;
+	/* A tint of the accent, so the notice reads as its type on any page background. */
+	background: color-mix(in srgb, var(--yaycheckout-notice) 8%, transparent);
 	color: inherit;
 }
 
@@ -674,15 +674,20 @@ body.yaycheckout-page .wc-block-components-notice-banner {
 }
 
 body.yaycheckout-page .wc-block-components-notice-banner.is-error {
-	border-color: var(--yaycheckout-notice-error-color, var(--wc-red, #cc1818));
+	--yaycheckout-notice: var(--yaycheckout-notice-error-color, var(--wc-red, #cc1818));
 }
 
 body.yaycheckout-page .wc-block-components-notice-banner.is-success {
-	border-color: var(--yaycheckout-notice-success-color, #4ab866);
+	--yaycheckout-notice: var(--yaycheckout-notice-success-color, #4ab866);
 }
 
 body.yaycheckout-page .wc-block-components-notice-banner.is-info {
-	border-color: var(--yaycheckout-notice-info-color, var(--yaycheckout-primary-color));
+	--yaycheckout-notice: var(--yaycheckout-notice-info-color, var(--yaycheckout-primary-color));
+}
+
+body.yaycheckout-page .wc-block-components-notice-banner:is(.is-error, .is-success, .is-info) {
+	border-color: var(--yaycheckout-notice);
+	background: color-mix(in srgb, var(--yaycheckout-notice) 8%, transparent);
 }
 
 /* blockUI writes the overlay's white veil inline while totals update; the spinner was woocommerce-general's. */
