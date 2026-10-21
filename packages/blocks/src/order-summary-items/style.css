@@ -243,10 +243,6 @@
 	opacity: 1;
 }
 
-.wp-block-yaycheckout-order-summary-items[aria-busy="true"] .yaycheckout-order-summary-items {
-	opacity: 0.6;
-}
-
 .yaycheckout-order-summary-items__notices:not(:empty) {
 	margin-block-start: 12px;
 }

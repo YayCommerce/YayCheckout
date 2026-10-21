@@ -44,6 +44,9 @@ class BlockRegistry {
     /** Named by viewScript in packages/blocks/src/order-summary-items/block.json; drives the quantity stepper. */
     public const ORDER_SUMMARY_ITEMS_SCRIPT = 'yaycheckout-order-summary-items';
 
+    /** Named by viewScript in packages/blocks/src/order-summary/block.json; WooCommerce's loading overlay on the summary. */
+    public const ORDER_SUMMARY_LOADING_SCRIPT = 'yaycheckout-order-summary-loading';
+
     /** Named by viewScript in packages/blocks/src/different-address/block.json; hides and mirrors Billing when shipping is main. */
     public const DIFFERENT_ADDRESS_SCRIPT = 'yaycheckout-different-address';
 
@@ -464,6 +467,14 @@ class BlockRegistry {
         wp_register_script(
             self::ORDER_SUMMARY_ITEMS_SCRIPT,
             YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-order-summary-items.js',
+            [ 'jquery', 'wc-checkout' ],
+            YAYCHECKOUT_VERSION,
+            true
+        );
+
+        wp_register_script(
+            self::ORDER_SUMMARY_LOADING_SCRIPT,
+            YAYCHECKOUT_PLUGIN_URL . 'assets/js/checkout-order-summary-loading.js',
             [ 'jquery', 'wc-checkout' ],
             YAYCHECKOUT_VERSION,
             true
