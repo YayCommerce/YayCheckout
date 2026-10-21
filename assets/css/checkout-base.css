@@ -641,7 +641,7 @@ body.yaycheckout-page .select2-container--default .select2-results__option--high
 
 /* Notices: WooCommerce's classic list markup, and the banner markup it prints on block themes (wc-blocks-style draws its layout). */
 body.yaycheckout-page :is(.woocommerce-error, .woocommerce-message, .woocommerce-info) {
-	--yaycheckout-notice: var(--yaycheckout-primary-color);
+	--yaycheckout-notice: var(--yaycheckout-notice-info-color, var(--yaycheckout-primary-color));
 	margin: 0 0 16px;
 	padding: 12px 16px;
 	list-style: none;
@@ -654,11 +654,11 @@ body.yaycheckout-page :is(.woocommerce-error, .woocommerce-message, .woocommerce
 }
 
 body.yaycheckout-page .woocommerce-error {
-	--yaycheckout-notice: var(--wc-red, #cc1818);
+	--yaycheckout-notice: var(--yaycheckout-notice-error-color, var(--wc-red, #cc1818));
 }
 
 body.yaycheckout-page .woocommerce-message {
-	--yaycheckout-notice: #4ab866;
+	--yaycheckout-notice: var(--yaycheckout-notice-success-color, #4ab866);
 }
 
 body.yaycheckout-page :is(.woocommerce-error, .woocommerce-message, .woocommerce-info) li {
@@ -674,15 +674,15 @@ body.yaycheckout-page .wc-block-components-notice-banner {
 }
 
 body.yaycheckout-page .wc-block-components-notice-banner.is-error {
-	border-color: var(--wc-red, #cc1818);
+	border-color: var(--yaycheckout-notice-error-color, var(--wc-red, #cc1818));
 }
 
 body.yaycheckout-page .wc-block-components-notice-banner.is-success {
-	border-color: #4ab866;
+	border-color: var(--yaycheckout-notice-success-color, #4ab866);
 }
 
 body.yaycheckout-page .wc-block-components-notice-banner.is-info {
-	border-color: var(--yaycheckout-primary-color);
+	border-color: var(--yaycheckout-notice-info-color, var(--yaycheckout-primary-color));
 }
 
 /* blockUI writes the overlay's white veil inline while totals update; the spinner was woocommerce-general's. */

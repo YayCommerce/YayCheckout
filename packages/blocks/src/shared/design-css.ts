@@ -68,7 +68,7 @@ const BUTTON_FONT_WEIGHTS: Record< string, string > = {
 
 /** Mirrors DesignStyles::vars() in PHP: custom property values by name, for the tokens that aren't empty, and always the font size. */
 function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: DesignFonts ): [ string, string ][] {
-	const { colours, typography, inputs, checkboxes, radios, buttons } = tokens;
+	const { colours, typography, inputs, checkboxes, radios, buttons, notices } = tokens;
 	const background = String( colours.background ?? '' );
 	const pairs: [ string, string ][] = [
 		[ 'color-primary', String( colours.primary ?? '' ) ],
@@ -211,6 +211,14 @@ function vars( tokens: DesignTokens, { fontFamilies, serifFonts, fontStacks }: D
 	if ( '' !== buttons.text_transform ) {
 		out.push( [ 'button-text-transform', String( buttons.text_transform ) ] );
 	}
+
+	const noticeColours: [ string, string ][] = [
+		[ 'notice-error-color', String( notices.error ?? '' ) ],
+		[ 'notice-success-color', String( notices.success ?? '' ) ],
+		[ 'notice-info-color', String( notices.info ?? '' ) ],
+	];
+
+	out.push( ...noticeColours.filter( notEmpty ) );
 
 	return out;
 }
