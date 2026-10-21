@@ -857,3 +857,8 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 		font-size: max(16px, 1em);
 	}
 }
+
+.yaycheckout-checkout.woocommerce-checkout .shop_table th,
+.yaycheckout-checkout.woocommerce-checkout .shop_table td {
+	background-color: transparent !important;
+}
