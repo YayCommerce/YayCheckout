@@ -42,10 +42,11 @@ export type LayoutDesignMeta = {
 	radios: SectionTokens;
 	help_text: SectionTokens;
 	buttons: SectionTokens;
+	notices: SectionTokens;
 	custom_css: string;
 };
 
-type Section = 'colours' | 'typography' | 'inputs' | 'checkboxes' | 'radios' | 'help_text' | 'buttons';
+type Section = 'colours' | 'typography' | 'inputs' | 'checkboxes' | 'radios' | 'help_text' | 'buttons' | 'notices';
 
 /** In the sidebar's order. */
 const SECTIONS: Record< Section, string > = {
@@ -56,6 +57,7 @@ const SECTIONS: Record< Section, string > = {
 	checkboxes: __( 'Checkboxes', 'yaycheckout' ),
 	radios: __( 'Radios', 'yaycheckout' ),
 	help_text: __( 'Help text', 'yaycheckout' ),
+	notices: __( 'Notices', 'yaycheckout' ),
 };
 
 /** Each section's colour panel. A section of colours only shows that panel alone, under the section's name. */
@@ -89,6 +91,9 @@ const TOKEN_LABELS: Record< string, string > = {
 	link: __( 'Link', 'yaycheckout' ),
 	font_weight: __( 'Weight', 'yaycheckout' ),
 	text_transform: __( 'Letter case', 'yaycheckout' ),
+	error: __( 'Error', 'yaycheckout' ),
+	success: __( 'Success', 'yaycheckout' ),
+	info: __( 'Info', 'yaycheckout' ),
 };
 
 const ENUM_LABELS: Record< string, string > = {
@@ -152,6 +157,7 @@ function normalize( design: EditorDesign, raw: unknown ): LayoutDesignMeta {
 		radios: sectionTokens( design.schema.radios, meta.radios ),
 		help_text: sectionTokens( design.schema.help_text, meta.help_text ),
 		buttons: sectionTokens( design.schema.buttons, meta.buttons ),
+		notices: sectionTokens( design.schema.notices, meta.notices ),
 		custom_css: 'string' === typeof meta.custom_css ? meta.custom_css : '',
 	};
 }
