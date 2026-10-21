@@ -100,6 +100,8 @@ final class LayoutDesign {
      * buttons styles the primary buttons: Place Order, the Step button, Coupon's filled Apply, Login's submit and
      * WooCommerce's .button. An empty background is the primary colour and an empty text white; an empty hover colour
      * keeps its default colour, darkened, while either hover colour drops the darkening. A block's own colours win.
+     * notices colours the accent of WooCommerce's error, success and info notices, in the classic list markup and the
+     * block-theme banner. An empty one keeps WooCommerce's red, green, or for info the primary colour.
      */
     public static function schema(): array {
         return [
@@ -296,6 +298,20 @@ final class LayoutDesign {
                     'type'    => 'enum',
                     'default' => '',
                     'enum'    => [ '', 'uppercase' ],
+                ],
+            ],
+            'notices'    => [
+                'error'   => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'success' => [
+                    'type'    => 'color',
+                    'default' => '',
+                ],
+                'info'    => [
+                    'type'    => 'color',
+                    'default' => '',
                 ],
             ],
         ];

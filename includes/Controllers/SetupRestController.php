@@ -46,7 +46,8 @@ class SetupRestController extends BaseRestController {
     }
 
     /**
-     * Creates the wizard's draft layout from the picked template and marks setup done.
+     * Creates the wizard's draft layout from the picked template, named after it as the New layout modal
+     * names one, and marks setup done.
      *
      * The template is validated before the first write, so a refusal leaves no
      * draft or setup flag behind. Once setup is done a first run refuses
@@ -65,7 +66,7 @@ class SetupRestController extends BaseRestController {
         try {
             $template_slug = (string) $request->get_param( 'template_slug' );
             LayoutTemplateCatalogue::assert_available( $template_slug );
-            $layout = $this->layouts->create( __( 'Checkout', 'yaycheckout' ), $template_slug );
+            $layout = $this->layouts->create( LayoutTemplateCatalogue::name( $template_slug ), $template_slug );
         } catch ( \InvalidArgumentException $ex ) {
             return $this->error_invalid_arguments( ExceptionHelper::message( $ex ) );
         }
