@@ -10,7 +10,6 @@ import {
 
 import {
   activateLayout,
-  addThankYou,
   archiveLayout,
   bulkLayouts,
   createLayoutDraft,
@@ -225,19 +224,6 @@ export function useDuplicateLayoutMutation() {
   return useMutation({
     mutationKey: ['layouts', 'duplicate'],
     mutationFn: duplicateLayout,
-    onSuccess: () => {
-      invalidateListedLayouts(queryClient);
-    },
-  });
-}
-
-/** The row's Thank you link appears; counts stay valid. */
-export function useAddThankYouMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationKey: ['layouts', 'add-thank-you'],
-    mutationFn: addThankYou,
     onSuccess: () => {
       invalidateListedLayouts(queryClient);
     },

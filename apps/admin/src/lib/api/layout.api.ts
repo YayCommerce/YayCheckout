@@ -110,11 +110,6 @@ export async function duplicateLayout(id: number): Promise<Layout> {
   return parseLayout(await api.post(`layouts/${id}/duplicate`).json());
 }
 
-/** POST /layouts/{id}/thank-you: gives a layout without one its template's thank-you page. */
-export async function addThankYou(id: number): Promise<Layout> {
-  return parseLayout(await api.post(`layouts/${id}/thank-you`).json());
-}
-
 export async function renameLayout(id: number, name: string): Promise<Layout> {
   return parseLayout(await api.put(`layouts/${id}`, { json: { name } }).json());
 }

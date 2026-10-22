@@ -407,7 +407,7 @@ class LayoutRepository {
 
     /**
      * Gives a layout made before thank-you pages its template's thank-you page (or the shared one), from
-     * the Layouts list's Add thank-you page action. Never overwrites one the layout already has.
+     * the layout editor's Add thank-you page button. Never overwrites one the layout already has.
      *
      * @throws \InvalidArgumentException When the layout is missing, archived, already has a thank-you page, or the update fails.
      */

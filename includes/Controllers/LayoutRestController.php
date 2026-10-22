@@ -382,7 +382,7 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Gives a layout its thank-you page from the layouts list's Add thank-you page action.
+     * Gives a layout its thank-you page from the layout editor's Add thank-you page button.
      *
      * @return array|\WP_Error
      */

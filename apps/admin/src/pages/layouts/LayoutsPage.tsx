@@ -11,7 +11,6 @@ import { isPro } from '@/lib/plan';
 import {
   LAYOUT_KEYS,
   useActivateLayoutMutation,
-  useAddThankYouMutation,
   useArchiveLayoutMutation,
   useBulkLayoutsMutation,
   useCreatePreviewLinkMutation,
@@ -206,7 +205,6 @@ function LayoutsPageBody({
   const restoreMutation = useRestoreLayoutMutation();
   const deleteMutation = useDeleteLayoutMutation();
   const duplicateMutation = useDuplicateLayoutMutation();
-  const addThankYouMutation = useAddThankYouMutation();
   const previewLinkMutation = useCreatePreviewLinkMutation();
   const bulkMutation = useBulkLayoutsMutation();
 
@@ -310,15 +308,6 @@ function LayoutsPageBody({
   function onDuplicate(layout: LayoutSummary) {
     duplicateMutation.mutate(layout.id, {
       onSuccess: () => toast.success(__('Layout duplicated.', 'yaycheckout')),
-    });
-  }
-
-  function onAddThankYou(layout: LayoutSummary) {
-    addThankYouMutation.mutate(layout.id, {
-      onSuccess: () => {
-        toast.success(__('Thank-you page added.', 'yaycheckout'));
-        openEditor(layout.id, 'thank-you');
-      },
     });
   }
 
@@ -526,7 +515,6 @@ function LayoutsPageBody({
                     onRestore={onRestore}
                     onDelete={setDeletingLayout}
                     onDuplicate={onDuplicate}
-                    onAddThankYou={onAddThankYou}
                     onRename={setRenamingLayout}
                     onAssign={setAssigningLayout}
                     onPreview={onPreview}
@@ -627,7 +615,6 @@ function LayoutsTable({
   onRestore,
   onDelete,
   onDuplicate,
-  onAddThankYou,
   onRename,
   onAssign,
   onPreview,
@@ -647,7 +634,6 @@ function LayoutsTable({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
-  onAddThankYou: (layout: LayoutSummary) => void;
   onRename: (layout: LayoutSummary) => void;
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
@@ -715,7 +701,6 @@ function LayoutsTable({
             onRestore={onRestore}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
-            onAddThankYou={onAddThankYou}
             onRename={onRename}
             onAssign={onAssign}
             onPreview={onPreview}
@@ -739,7 +724,6 @@ function LayoutTableRow({
   onRestore,
   onDelete,
   onDuplicate,
-  onAddThankYou,
   onRename,
   onAssign,
   onPreview,
@@ -756,7 +740,6 @@ function LayoutTableRow({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
-  onAddThankYou: (layout: LayoutSummary) => void;
   onRename: (layout: LayoutSummary) => void;
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
@@ -812,7 +795,6 @@ function LayoutTableRow({
           onRestore={onRestore}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
-          onAddThankYou={onAddThankYou}
           onRename={onRename}
           onAssign={onAssign}
           onPreview={onPreview}
@@ -834,7 +816,6 @@ function LayoutRowActions({
   onRestore,
   onDelete,
   onDuplicate,
-  onAddThankYou,
   onRename,
   onAssign,
   onPreview,
@@ -849,7 +830,6 @@ function LayoutRowActions({
   onRestore: (layout: LayoutSummary) => void;
   onDelete: (layout: LayoutSummary) => void;
   onDuplicate: (layout: LayoutSummary) => void;
-  onAddThankYou: (layout: LayoutSummary) => void;
   onRename: (layout: LayoutSummary) => void;
   onAssign: (layout: LayoutSummary) => void;
   onPreview: (layout: LayoutSummary) => void;
@@ -903,11 +883,6 @@ function LayoutRowActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={() => onAssign(layout)}>{__('Assignment', 'yaycheckout')}</DropdownMenuItem>
-          {!layout.hasThankYou && (
-            <DropdownMenuItem onSelect={() => onAddThankYou(layout)}>
-              {__('Add thank-you page', 'yaycheckout')}
-            </DropdownMenuItem>
-          )}
           <DropdownMenuItem onSelect={() => onRename(layout)}>{__('Rename', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onDuplicate(layout)}>{__('Duplicate', 'yaycheckout')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" disabled={layout.isActive} onSelect={() => onArchive(layout)}>
