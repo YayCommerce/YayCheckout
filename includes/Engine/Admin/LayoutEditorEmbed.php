@@ -30,7 +30,10 @@ class LayoutEditorEmbed {
     public const VIEW_LOGGED_OUT = 'logged-out';
     public const VIEW_THANK_YOU  = 'thank-you';
 
-    /** Each view other than main, and the meta that holds its markup. A pay-order page would be one more entry. */
+    /**
+     * Each view other than main, and the meta that holds its markup. A pay-order page would be one more entry
+     * here and one in LayoutTemplateCatalogue::VIEW_FILES, its starter markup.
+     */
     private const VIEW_META = [
         self::VIEW_LOGGED_OUT => Layout::META_LOGGED_OUT,
         self::VIEW_THANK_YOU  => Layout::META_THANK_YOU,
@@ -164,11 +167,13 @@ class LayoutEditorEmbed {
             admin_url( 'post.php' )
         );
 
-        return [
-            self::VIEW_MAIN       => $main,
-            self::VIEW_LOGGED_OUT => add_query_arg( self::QUERY_VIEW, self::VIEW_LOGGED_OUT, $main ),
-            self::VIEW_THANK_YOU  => add_query_arg( self::QUERY_VIEW, self::VIEW_THANK_YOU, $main ),
-        ];
+        $urls = [ self::VIEW_MAIN => $main ];
+
+        foreach ( array_keys( self::VIEW_META ) as $view ) {
+            $urls[ $view ] = add_query_arg( self::QUERY_VIEW, $view, $main );
+        }
+
+        return $urls;
     }
 
     /**

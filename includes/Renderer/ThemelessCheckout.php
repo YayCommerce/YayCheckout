@@ -165,8 +165,10 @@ class ThemelessCheckout {
 
         $path         = preg_replace( '#^index\.php(/|$)#', '', $this->request_path() );
         $checkout_uri = get_page_uri( $checkout_id );
+        // The merchant may rename the endpoint (Settings → Advanced); is_order_received_page() reads the same setting.
+        $endpoint = WC()->query->get_query_vars()['order-received'] ?? 'order-received';
 
-        return '' !== $path && '' !== $checkout_uri && 0 === strpos( $path, $checkout_uri . '/order-received' );
+        return '' !== $path && '' !== $checkout_uri && '' !== $endpoint && 0 === strpos( $path, $checkout_uri . '/' . $endpoint );
     }
 
     /**

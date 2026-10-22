@@ -10,9 +10,9 @@ export const EDIT_VIEW_PARAM = 'view';
 /** The editor views the Layouts page opens. Mirrors LayoutEditorEmbed::VIEW_MAIN and VIEW_THANK_YOU. */
 export type EditView = 'main' | 'thank-you';
 
-/** The Layouts route that opens `id` in the embedded editor. Mirrors AdminUrlHelper::edit_layout() in PHP. */
-export function editLayoutPath(id: number): string {
-  return `${LAYOUTS_PATH}?${EDIT_LAYOUT_PARAM}=${id}`;
+/** The Layouts route that opens `id` in the embedded editor, in `view`. Mirrors AdminUrlHelper::edit_layout() in PHP. */
+export function editLayoutPath(id: number, view: EditView = 'main'): string {
+  return `${LAYOUTS_PATH}?${withEditLayout(new URLSearchParams(), id, view).toString()}`;
 }
 
 /** The layout id the URL asks the embedded editor to open: a positive integer, or null. */

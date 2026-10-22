@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Controllers;
 
+use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Models\LayoutDesign;
 use YayCheckout\Support\Plan;
 
@@ -24,6 +25,12 @@ class LayoutTemplateCatalogue {
 
     /** A template's optional thank-you page, and the shared one beside the template folders. */
     private const THANK_YOU_FILE = 'thank-you.php';
+
+    /** Each editor view kept in meta (LayoutEditorEmbed::VIEW_META), and the file its starter markup comes from. */
+    private const VIEW_FILES = [
+        LayoutEditorEmbed::VIEW_LOGGED_OUT => self::LOGGED_OUT_FILE,
+        LayoutEditorEmbed::VIEW_THANK_YOU  => self::THANK_YOU_FILE,
+    ];
 
     /**
      * Every template, for the picker. In Free a Pro template is listed with `available` false, so its
@@ -103,14 +110,7 @@ class LayoutTemplateCatalogue {
      * templates/layouts/logged-out.php when the template has none or $slug is not an available template.
      */
     public static function logged_out_markup( string $slug ): string {
-        $file = self::is_available( $slug ) && is_file( self::path( $slug, self::LOGGED_OUT_FILE ) )
-            ? self::path( $slug, self::LOGGED_OUT_FILE )
-            : YAYCHECKOUT_PLUGIN_DIR . 'templates/layouts/' . self::LOGGED_OUT_FILE;
-
-        ob_start();
-        include $file;
-
-        return (string) ob_get_clean();
+        return self::markup_file( $slug, self::LOGGED_OUT_FILE );
     }
 
     /**
@@ -118,9 +118,22 @@ class LayoutTemplateCatalogue {
      * templates/layouts/thank-you.php when the template has none or $slug is not an available template.
      */
     public static function thank_you_markup( string $slug ): string {
-        $file = self::is_available( $slug ) && is_file( self::path( $slug, self::THANK_YOU_FILE ) )
-            ? self::path( $slug, self::THANK_YOU_FILE )
-            : YAYCHECKOUT_PLUGIN_DIR . 'templates/layouts/' . self::THANK_YOU_FILE;
+        return self::markup_file( $slug, self::THANK_YOU_FILE );
+    }
+
+    /**
+     * The starter markup of an editor view kept in meta, for a layout from $slug: logged_out_markup() or
+     * thank_you_markup(). '' for a view with no starter file, such as VIEW_MAIN.
+     */
+    public static function view_markup( string $view, string $slug ): string {
+        return isset( self::VIEW_FILES[ $view ] ) ? self::markup_file( $slug, self::VIEW_FILES[ $view ] ) : '';
+    }
+
+    /** The template's own $name file when it is available and has one, else the shared one beside the template folders. */
+    private static function markup_file( string $slug, string $name ): string {
+        $file = self::is_available( $slug ) && is_file( self::path( $slug, $name ) )
+            ? self::path( $slug, $name )
+            : YAYCHECKOUT_PLUGIN_DIR . 'templates/layouts/' . $name;
 
         ob_start();
         include $file;
@@ -157,20 +170,21 @@ class LayoutTemplateCatalogue {
 
     /** The URL of the template's preview.html, or '' when it has none. Called only with catalogue slugs. */
     private static function preview_url( string $slug ): string {
-        if ( ! is_file( self::path( $slug, 'preview.html' ) ) ) {
-            return '';
-        }
-
-        return YAYCHECKOUT_PLUGIN_URL . self::relative_path( $slug, 'preview.html' ) . '?ver=' . YAYCHECKOUT_VERSION;
+        return self::file_url( $slug, 'preview.html' );
     }
 
     /** The URL of the template's thank-you-preview.html, the New layout modal's Thank you card, or '' when it has none. Called only with catalogue slugs. */
     private static function thank_you_preview_url( string $slug ): string {
-        if ( ! is_file( self::path( $slug, 'thank-you-preview.html' ) ) ) {
+        return self::file_url( $slug, 'thank-you-preview.html' );
+    }
+
+    /** The versioned URL of one of the template's files, or '' when it has none. Called only with catalogue slugs. */
+    private static function file_url( string $slug, string $name ): string {
+        if ( ! is_file( self::path( $slug, $name ) ) ) {
             return '';
         }
 
-        return YAYCHECKOUT_PLUGIN_URL . self::relative_path( $slug, 'thank-you-preview.html' ) . '?ver=' . YAYCHECKOUT_VERSION;
+        return YAYCHECKOUT_PLUGIN_URL . self::relative_path( $slug, $name ) . '?ver=' . YAYCHECKOUT_VERSION;
     }
 
     /** Unchecked: callers check $slug against the catalogue first. */

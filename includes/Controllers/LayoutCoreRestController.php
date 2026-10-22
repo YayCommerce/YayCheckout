@@ -123,10 +123,7 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
         $markup = (string) get_post_meta( $item->ID, $meta_key, true );
 
         if ( '' === $markup ) {
-            $template = (string) get_post_meta( $item->ID, Layout::META_TEMPLATE, true );
-            $markup   = LayoutEditorEmbed::VIEW_THANK_YOU === $view
-                ? LayoutTemplateCatalogue::thank_you_markup( $template )
-                : LayoutTemplateCatalogue::logged_out_markup( $template );
+            $markup = LayoutTemplateCatalogue::view_markup( $view, (string) get_post_meta( $item->ID, Layout::META_TEMPLATE, true ) );
         }
 
         if ( isset( $data['content'] ) ) {

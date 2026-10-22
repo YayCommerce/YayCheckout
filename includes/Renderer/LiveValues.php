@@ -234,7 +234,7 @@ class LiveValues {
      *
      * @return array<string, float>
      */
-    public static function order_money( \WC_Order $order ): array {
+    private static function order_money( \WC_Order $order ): array {
         $tax = self::display_prices_including_tax();
 
         return [
@@ -271,30 +271,25 @@ class LiveValues {
         $checkout  = CheckoutPage::get_instance();
         $thank_you = ThankYouPage::get_instance();
 
+        // The checkout reads the cart; the thank-you page reads its order.
         if ( $checkout->takes_over() ) {
             $layout = $checkout->layout();
-
-            if ( null === $layout ) {
-                return $html;
-            }
-
-            $this->order = null;
-            $this->bag   = self::values();
-            $markup      = $layout->content;
+            $order  = null;
         } elseif ( $thank_you->takes_over() ) {
             $layout = $thank_you->layout();
             $order  = $thank_you->order();
-
-            if ( null === $layout || null === $order ) {
-                return $html;
-            }
-
-            $this->order = $order;
-            $this->bag   = self::order_values( $order );
-            $markup      = $layout->content;
         } else {
             return $html;
         }
+
+        // ThankYouPage::takes_over() holds only with an order, so a null $order here is the checkout's.
+        if ( null === $layout ) {
+            return $html;
+        }
+
+        $this->order = $order;
+        $this->bag   = null !== $order ? self::order_values( $order ) : self::values();
+        $markup      = $layout->content;
 
         $filled = preg_replace_callback(
             '#(<span\b[^>]*' . preg_quote( self::CLASS_NAME, '#' ) . '[^>]*>)(.*?)</span>#s',
