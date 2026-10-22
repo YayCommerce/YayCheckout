@@ -40,9 +40,12 @@ class ThemelessCheckout {
     }
 
     public function maybe_swap(): void {
-        $checkout = $this->is_storefront_request() && $this->is_checkout_form_request() && $this->resolves_layout();
+        $storefront = $this->is_storefront_request() && (
+            ( $this->is_checkout_form_request() && $this->resolves_layout() )
+            || ( $this->is_order_received_request() && $this->resolves_thank_you_layout() )
+        );
 
-        if ( ! $checkout && ! $this->is_layout_editor_request() ) {
+        if ( ! $storefront && ! $this->is_layout_editor_request() ) {
             return;
         }
 
@@ -136,6 +139,37 @@ class ThemelessCheckout {
     }
 
     /**
+     * The order-received endpoint on the checkout page. Not order-pay: that stays WooCommerce's
+     * pay-for-order screen. Matched from the URL at setup_theme, before the main query exists.
+     */
+    private function is_order_received_request(): bool {
+        $checkout_id = wc_get_page_id( 'checkout' );
+
+        if ( $checkout_id <= 0 ) {
+            return false;
+        }
+
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only routing, as core's own parse_request.
+        if ( isset( $_GET['wc-ajax'] ) || isset( $_GET['order-pay'] ) ) {
+            return false;
+        }
+
+        if ( isset( $_GET['order-received'] ) ) {
+            if ( isset( $_GET['page_id'] ) ) {
+                return absint( $_GET['page_id'] ) === $checkout_id;
+            }
+
+            return true;
+        }
+        // phpcs:enable
+
+        $path         = preg_replace( '#^index\.php(/|$)#', '', $this->request_path() );
+        $checkout_uri = get_page_uri( $checkout_id );
+
+        return '' !== $path && '' !== $checkout_uri && 0 === strpos( $path, $checkout_uri . '/order-received' );
+    }
+
+    /**
      * The layout editor, so its canvas gets the theme.json and editor styles the storefront gets: the
      * editor screen of a layout, and the REST calls its embed tags (LayoutEditorEmbed::REST_HEADER).
      */
@@ -172,6 +206,17 @@ class ThemelessCheckout {
         }
 
         return null !== ( new LayoutRepository() )->active( CheckoutPage::shopper_context() );
+    }
+
+    /** What ThankYouPage needs before takeover, short of the order: safe mode off and an active layout with a thank-you page. */
+    private function resolves_thank_you_layout(): bool {
+        if ( ( new SettingsRepository() )->is_safe_mode() ) {
+            return false;
+        }
+
+        $layout = ( new LayoutRepository() )->active( CheckoutPage::shopper_context() );
+
+        return null !== $layout && $layout->has_thank_you();
     }
 
     /** The request path below home, decoded, without slashes at either end. */

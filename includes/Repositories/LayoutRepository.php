@@ -335,7 +335,7 @@ class LayoutRepository {
 
     /**
      * Creates a layout draft from a catalogue template: its markup, which is a complete checkout, so
-     * activating it as-is lets a shopper place an order, its design, and its logged-out view. The post
+     * activating it as-is lets a shopper place an order, its design, its logged-out view and its thank-you page. The post
      * type's template only applies to auto-drafts, not to this insert.
      *
      * @throws \InvalidArgumentException When the template is not available or the insert fails.
@@ -347,12 +347,13 @@ class LayoutRepository {
             [],
             LayoutTemplateCatalogue::design( $template_slug ),
             $template_slug,
-            LayoutTemplateCatalogue::logged_out_markup( $template_slug )
+            LayoutTemplateCatalogue::logged_out_markup( $template_slug ),
+            LayoutTemplateCatalogue::thank_you_markup( $template_slug )
         );
     }
 
     /**
-     * Copies a layout's content, logged-out view, assignment rules, design and template into a new draft layout.
+     * Copies a layout's content, logged-out view, thank-you page, assignment rules, design and template into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -360,7 +361,7 @@ class LayoutRepository {
         $source = $this->find_or_throw( $id );
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template, $source->logged_out_content );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template, $source->logged_out_content, $source->thank_you_content );
     }
 
     /**
@@ -379,7 +380,7 @@ class LayoutRepository {
     /**
      * Puts a layout's blocks and design back to its template's, or to the default template's when it has
      * none available on this plan (a Pro template in Free falls back to the default one).
-     * Title, status, rules, the template and the active flag stay. The old markup and design are already
+     * Title, status, rules, the template, the thank-you page and the active flag stay. The old markup and design are already
      * a revision (every layout gets one when created), so the editor can undo it.
      *
      * @throws \InvalidArgumentException When the layout is missing or the update fails.
@@ -452,12 +453,13 @@ class LayoutRepository {
     }
 
     /**
-     * The logged-out view as the current user may store it: kses-filtered unless they have unfiltered_html, as core's
-     * content_save_pre filters post_content. Core never filters meta, so every writer of Layout::META_LOGGED_OUT calls this.
+     * A view's markup as the current user may store it: kses-filtered unless they have unfiltered_html, as core's
+     * content_save_pre filters post_content. Core never filters meta, so every writer of a view meta
+     * (Layout::META_LOGGED_OUT, Layout::META_THANK_YOU) calls this.
      *
      * @param string $markup Unslashed.
      */
-    public static function filter_logged_out_content( string $markup ): string {
+    public static function filter_view_markup( string $markup ): string {
         // wp_filter_post_kses() is content_save_pre's filter and takes slashed data.
         return current_user_can( 'unfiltered_html' ) ? $markup : wp_unslash( wp_filter_post_kses( wp_slash( $markup ) ) );
     }
@@ -468,9 +470,10 @@ class LayoutRepository {
      * @param array  $rules         Already sanitized; written with the post, like the design, so the draft never exists without them.
      * @param string $template_slug The catalogue template it comes from; '' when none (an import).
      * @param string $logged_out_content The logged-out view's markup; '' when none.
+     * @param string $thank_you_content  The thank-you page's markup; '' when none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug, string $logged_out_content = '' ): Layout {
+    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug, string $logged_out_content = '', string $thank_you_content = '' ): Layout {
         $meta = [ Layout::META_DESIGN => $design->to_meta() ];
 
         if ( [] !== $rules ) {
@@ -482,7 +485,11 @@ class LayoutRepository {
         }
 
         if ( '' !== $logged_out_content ) {
-            $meta[ Layout::META_LOGGED_OUT ] = self::filter_logged_out_content( $logged_out_content );
+            $meta[ Layout::META_LOGGED_OUT ] = self::filter_view_markup( $logged_out_content );
+        }
+
+        if ( '' !== $thank_you_content ) {
+            $meta[ Layout::META_THANK_YOU ] = self::filter_view_markup( $thank_you_content );
         }
 
         // wp_insert_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.

@@ -1,0 +1,25 @@
+.yaycheckout-order-details__preview {
+	margin: 0;
+}
+
+.yaycheckout-order-details__preview .woocommerce-order-details__title {
+	margin: 0 0 0.5em;
+	font-size: 1.1em;
+}
+
+.yaycheckout-order-details__preview table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.yaycheckout-order-details__preview th,
+.yaycheckout-order-details__preview td {
+	padding: 0.5em 0;
+	border-top: 1px solid currentColor;
+	text-align: left;
+	opacity: 0.85;
+}
+
+.yaycheckout-order-details__preview thead th {
+	border-top: 0;
+}

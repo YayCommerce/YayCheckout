@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
  * template (one built from Pro blocks). Free lists a Pro template as locked and ships only its
  * preview.html. A template missing either file is Coming soon.
  * preview.html, the picker's preview of the mock, sits beside them and availability ignores it,
- * as it does the optional logged-out.php, the template's own logged-out view.
+ * as it does the optional logged-out.php and thank-you.php, the template's own logged-out view and thank-you page.
  */
 class LayoutTemplateCatalogue {
 
@@ -21,6 +21,9 @@ class LayoutTemplateCatalogue {
 
     /** A template's optional logged-out view, and the shared one beside the template folders. */
     private const LOGGED_OUT_FILE = 'logged-out.php';
+
+    /** A template's optional thank-you page, and the shared one beside the template folders. */
+    private const THANK_YOU_FILE = 'thank-you.php';
 
     /**
      * Every template, for the picker. In Free a Pro template is listed with `available` false, so its
@@ -102,6 +105,21 @@ class LayoutTemplateCatalogue {
         $file = self::is_available( $slug ) && is_file( self::path( $slug, self::LOGGED_OUT_FILE ) )
             ? self::path( $slug, self::LOGGED_OUT_FILE )
             : YAYCHECKOUT_PLUGIN_DIR . 'templates/layouts/' . self::LOGGED_OUT_FILE;
+
+        ob_start();
+        include $file;
+
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * The thank-you page a layout from $slug starts with: the template's thank-you.php, or the shared
+     * templates/layouts/thank-you.php when the template has none or $slug is not an available template.
+     */
+    public static function thank_you_markup( string $slug ): string {
+        $file = self::is_available( $slug ) && is_file( self::path( $slug, self::THANK_YOU_FILE ) )
+            ? self::path( $slug, self::THANK_YOU_FILE )
+            : YAYCHECKOUT_PLUGIN_DIR . 'templates/layouts/' . self::THANK_YOU_FILE;
 
         ob_start();
         include $file;

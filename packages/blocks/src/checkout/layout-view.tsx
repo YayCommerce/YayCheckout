@@ -20,10 +20,22 @@ export function isLoggedOutView(): boolean {
 	return editorData.view.current === 'logged-out';
 }
 
+/** True while the editor edits the checkout itself (post_content), not a view kept in meta. */
+export function isMainView(): boolean {
+	return editorData.view.current === 'main';
+}
+
+const LOADING_MESSAGES: Record< View, string > = {
+	main: __( 'Loading the checkout…', 'yaycheckout' ),
+	'logged-out': __( 'Loading the logged-out view…', 'yaycheckout' ),
+	'thank-you': __( 'Loading the thank-you page…', 'yaycheckout' ),
+};
+
 /**
- * Logged in / Logged out, shown while WooCommerce makes guests log in (or while already in the
- * logged-out view, so the merchant can get back). Each view is its own page load; unsaved edits
- * are saved first, or dropped when the merchant chooses, never carried across.
+ * Checkout / Logged out / Thank you. Logged out shows while WooCommerce makes guests log in, Thank you
+ * while the layout has a thank-you page, and each while it is the open view, so the merchant can get back.
+ * Each view is its own page load; unsaved edits are saved first, or dropped when the merchant chooses,
+ * never carried across.
  */
 export default function LayoutViewSwitch() {
 	const { isLocked, isSaving } = useSelect(
@@ -37,15 +49,19 @@ export default function LayoutViewSwitch() {
 	const { clearEntityRecordEdits } = useDispatch( coreStore );
 	// The view picked but not yet open: asking to save first, or loading it.
 	const [ pending, setPending ] = useState< { view: View; step: 'ask' | 'load' } | null >( null );
-	const { current, loginRequired } = editorData.view;
+	const { current, loginRequired, hasThankYou } = editorData.view;
+	const showLoggedOut = loginRequired || current === 'logged-out';
+	const showThankYou = hasThankYou || current === 'thank-you';
 
-	if ( ! loginRequired && ! isLoggedOutView() ) {
+	if ( ! showLoggedOut && ! showThankYou ) {
 		return null;
 	}
 
 	const go = ( view: View ) => {
 		setPending( { view, step: 'load' } );
-		window.location.assign( editorData.view.urls[ view ] );
+		// replace(), not assign(): the iframe's history is the manager's, and a pushed entry makes its
+		// close button (navigate(-1) in LayoutsPage.tsx) step back to the previous view instead of closing.
+		window.location.replace( editorData.view.urls[ view ] );
 	};
 
 	// Dropping the edits first keeps core's "unsaved changes" prompt from stopping the reload.
@@ -91,8 +107,13 @@ export default function LayoutViewSwitch() {
 					}
 				} }
 			>
-				<ToggleGroupControlOption value="main" label={ __( 'Logged in', 'yaycheckout' ) } />
-				<ToggleGroupControlOption value="logged-out" label={ __( 'Logged out', 'yaycheckout' ) } />
+				<ToggleGroupControlOption value="main" label={ __( 'Checkout', 'yaycheckout' ) } />
+				{ showLoggedOut && (
+					<ToggleGroupControlOption value="logged-out" label={ __( 'Logged out', 'yaycheckout' ) } />
+				) }
+				{ showThankYou && (
+					<ToggleGroupControlOption value="thank-you" label={ __( 'Thank you', 'yaycheckout' ) } />
+				) }
 			</ToggleGroupControl>
 			{ pending?.step === 'ask' && (
 				<Modal
@@ -132,11 +153,7 @@ export default function LayoutViewSwitch() {
 				>
 					<Flex justify="center" gap={ 3 }>
 						<Spinner />
-						<span>
-							{ pending.view === 'logged-out'
-								? __( 'Loading the logged-out view…', 'yaycheckout' )
-								: __( 'Loading the logged-in view…', 'yaycheckout' ) }
-						</span>
+						<span>{ LOADING_MESSAGES[ pending.view ] }</span>
 					</Flex>
 				</Modal>
 			) }

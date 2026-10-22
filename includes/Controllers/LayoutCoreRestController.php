@@ -71,11 +71,13 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
             return $prepared;
         }
 
-        // The logged-out view saves into its meta; post_content, which the checks below read, stays as stored.
-        if ( LayoutEditorEmbed::is_logged_out_view( $request ) && isset( $prepared->post_content ) ) {
+        // The logged-out view and the thank-you page save into their meta; post_content, which the checks below read, stays as stored.
+        $meta_key = LayoutEditorEmbed::view_meta_key( LayoutEditorEmbed::current_view( $request ) );
+
+        if ( '' !== $meta_key && isset( $prepared->post_content ) ) {
             // Unslashed here; update_item() slashes later.
             $prepared->meta_input = [
-                Layout::META_LOGGED_OUT => LayoutRepository::filter_logged_out_content( $prepared->post_content ),
+                $meta_key => LayoutRepository::filter_view_markup( $prepared->post_content ),
             ];
             unset( $prepared->post_content );
         }
@@ -88,7 +90,7 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
             return $prepared;
         }
 
-        // Neither the markup nor the status changes, as when the logged-out view saves: the stored markup went
+        // Neither the markup nor the status changes, as when the logged-out view or thank-you page saves: the stored markup went
         // live under these rules, and a rule it fails since (Pro blocks after a downgrade) must not block the save.
         if ( ! isset( $prepared->post_content ) && null !== $stored && $stored->post_status === $status ) {
             return $prepared;
@@ -103,9 +105,12 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
         return $prepared;
     }
 
-    /** In the logged-out view the editor loads that view's markup as the post content, or its template's when none is saved. */
+    /** In the logged-out view or thank-you page the editor loads that view's markup as the post content, or its template's when none is saved. */
     public function prepare_item_for_response( $item, $request ) {
-        if ( ! LayoutEditorEmbed::is_logged_out_view( $request ) || 'edit' !== $request['context'] ) {
+        $view     = LayoutEditorEmbed::current_view( $request );
+        $meta_key = LayoutEditorEmbed::view_meta_key( $view );
+
+        if ( '' === $meta_key || 'edit' !== $request['context'] ) {
             return parent::prepare_item_for_response( $item, $request );
         }
 
@@ -115,10 +120,17 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
         remove_filter( 'the_content', '__return_empty_string', PHP_INT_MIN );
 
         $data   = $response->get_data();
-        $markup = (string) get_post_meta( $item->ID, Layout::META_LOGGED_OUT, true );
+        $markup = (string) get_post_meta( $item->ID, $meta_key, true );
+
+        if ( '' === $markup ) {
+            $template = (string) get_post_meta( $item->ID, Layout::META_TEMPLATE, true );
+            $markup   = LayoutEditorEmbed::VIEW_THANK_YOU === $view
+                ? LayoutTemplateCatalogue::thank_you_markup( $template )
+                : LayoutTemplateCatalogue::logged_out_markup( $template );
+        }
 
         if ( isset( $data['content'] ) ) {
-            $data['content']['raw']      = '' !== $markup ? $markup : LayoutTemplateCatalogue::logged_out_markup( (string) get_post_meta( $item->ID, Layout::META_TEMPLATE, true ) );
+            $data['content']['raw']      = $markup;
             $data['content']['rendered'] = '';
             $response->set_data( $data );
         }

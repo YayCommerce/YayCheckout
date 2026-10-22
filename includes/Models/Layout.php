@@ -20,6 +20,7 @@ class Layout {
     public const META_DESIGN     = '_yaycheckout_design';
     public const META_TEMPLATE   = '_yaycheckout_template';
     public const META_LOGGED_OUT = '_yaycheckout_logged_out_content';
+    public const META_THANK_YOU  = '_yaycheckout_thank_you_content';
 
     public const OPTION_ACTIVE = 'yaycheckout_active_layout';
 
@@ -34,6 +35,9 @@ class Layout {
 
     /** What a guest who must log in sees instead of $content; '' when the merchant has not saved one. */
     public string $logged_out_content = '';
+
+    /** The order-received page shoppers see while this layout is active; '' when the layout has none. */
+    public string $thank_you_content = '';
 
     /** GMT post_date while post_status is 'publish'; null otherwise. */
     public ?string $published_at = null;
@@ -60,6 +64,11 @@ class Layout {
     /** The LayoutTemplateCatalogue slug it was created from, which Reset restores; '' when unknown (older or imported). */
     public string $template = '';
 
+    /** Whether the layout has a thank-you page to serve on order-received. */
+    public function has_thank_you(): bool {
+        return '' !== trim( $this->thank_you_content );
+    }
+
     /**
      * @param array $meta Bulk meta as returned by get_post_meta( $id ), unserialized.
      */
@@ -79,6 +88,7 @@ class Layout {
         $layout->template     = (string) self::meta_value( $meta, self::META_TEMPLATE, '' );
 
         $layout->logged_out_content = (string) self::meta_value( $meta, self::META_LOGGED_OUT, '' );
+        $layout->thank_you_content  = (string) self::meta_value( $meta, self::META_THANK_YOU, '' );
 
         return $layout;
     }

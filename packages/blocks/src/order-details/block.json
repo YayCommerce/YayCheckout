@@ -1,0 +1,77 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/order-details",
+  "title": "Order Details",
+  "category": "yaycheckout",
+  "description": "WooCommerce's order details table on the thank-you page: line items, totals, downloads, addresses and plugin output on its hooks.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "thank you", "order", "receipt", "items" ],
+  "example": {},
+  "attributes": {
+    "showTitle": {
+      "type": "boolean",
+      "default": true
+    },
+    "title": {
+      "type": "string",
+      "default": ""
+    },
+    "productLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "totalLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "subtotalLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "shippingLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "paymentMethodLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "orderTotalLabel": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false,
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "__experimentalFontFamily": true,
+      "__experimentalFontStyle": true,
+      "__experimentalFontWeight": true,
+      "__experimentalLetterSpacing": true,
+      "__experimentalTextDecoration": true,
+      "__experimentalTextTransform": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php"
+}

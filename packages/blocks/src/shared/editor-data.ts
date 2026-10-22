@@ -31,14 +31,19 @@ export type EditorDesign = {
 
 /** The layout editor's view switch, from BlockRegistry::editor_design_data(). */
 export type EditorView = {
-	/** LayoutEditorEmbed::VIEW_MAIN or VIEW_LOGGED_OUT; the latter edits the markup a guest who must log in sees (Layout::META_LOGGED_OUT). */
-	current: 'main' | 'logged-out';
+	/**
+	 * LayoutEditorEmbed::VIEW_MAIN, VIEW_LOGGED_OUT or VIEW_THANK_YOU. Logged out edits the markup a guest who must log in
+	 * sees (Layout::META_LOGGED_OUT); Thank you edits the order-received page (Layout::META_THANK_YOU).
+	 */
+	current: 'main' | 'logged-out' | 'thank-you';
 	/** CheckoutLogin::login_required(): WooCommerce makes guests log in before checkout. */
 	loginRequired: boolean;
+	/** Layout::has_thank_you(): the layout has a thank-you page to edit. */
+	hasThankYou: boolean;
 	/** LayoutEditorEmbed::QUERY_VIEW. */
 	queryArg: string;
 	/** The embedded editor for each view of this layout: LayoutEditorEmbed::view_urls(). */
-	urls: Record< 'main' | 'logged-out', string >;
+	urls: Record< 'main' | 'logged-out' | 'thank-you', string >;
 };
 
 type EditorData = {
@@ -70,6 +75,12 @@ export const editorData: EditorData = {
 	currencySymbol: '',
 	design: null,
 	liveValues: {},
-	view: { current: 'main', loginRequired: false, queryArg: '', urls: { main: '', 'logged-out': '' } },
+	view: {
+		current: 'main',
+		loginRequired: false,
+		hasThankYou: false,
+		queryArg: '',
+		urls: { main: '', 'logged-out': '', 'thank-you': '' },
+	},
 	...window.yayCheckoutBlocks,
 };
