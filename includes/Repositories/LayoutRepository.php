@@ -365,16 +365,17 @@ class LayoutRepository {
     }
 
     /**
-     * Creates a draft from an export file's title, markup, assignment rules, design and logged-out view, as the current user
+     * Creates a draft from an export file's title, markup, assignment rules, design, logged-out view and thank-you page, as the current user
      * may store them (kses-filtered without unfiltered_html).
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
      * @param array  $rules              Already sanitized (Layout::sanitize_rules()); [] for none.
      * @param string $logged_out_content The logged-out view's markup; '' when none.
+     * @param string $thank_you_content  The thank-you page's markup; '' when none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    public function import( string $title, string $content, array $rules, LayoutDesign $design, string $logged_out_content = '' ): Layout {
-        return $this->insert_draft( $title, $content, $rules, $design, '', $logged_out_content );
+    public function import( string $title, string $content, array $rules, LayoutDesign $design, string $logged_out_content = '', string $thank_you_content = '' ): Layout {
+        return $this->insert_draft( $title, $content, $rules, $design, '', $logged_out_content, $thank_you_content );
     }
 
     /**
