@@ -27,9 +27,57 @@ defined( 'ABSPATH' ) || exit;
 <h1 class="wp-block-heading" style="margin-top:0;margin-bottom:0;font-size:28px;font-weight:600;line-height:1.3"><?php esc_html_e( 'Thank you. Your order has been received.', 'yaycheckout' ); ?></h1>
 <!-- /wp:heading -->
 
-<!-- wp:paragraph {"style":{"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
-<p style="margin-top:0;margin-bottom:0"><?php esc_html_e( 'Order number:', 'yaycheckout' ); ?> <span class="yaycheckout-live-value" data-yaycheckout-value="order_number" data-fallback="" data-prefix="" data-suffix=""><?php esc_html_e( 'Order number', 'yaycheckout' ); ?></span></p>
+<!-- wp:group {"style":{"spacing":{"blockGap":"32px"}},"layout":{"type":"flex","flexWrap":"wrap"}} -->
+<div class="wp-block-group"><!-- wp:group {"style":{"spacing":{"blockGap":"0"}},"layout":{"type":"flex","orientation":"vertical"}} -->
+<div class="wp-block-group"><!-- wp:paragraph {"style":{"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p style="margin-top:0;margin-bottom:0"><?php esc_html_e( 'Order #:', 'yaycheckout' ); ?></p>
 <!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"style":{"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p style="margin-top:0;margin-bottom:0"><span class="yaycheckout-live-value" data-yaycheckout-value="order_number" data-fallback="" data-prefix="" data-suffix=""><?php esc_html_e( 'Order number', 'yaycheckout' ); ?></span></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"style":{"spacing":{"blockGap":"0"}},"layout":{"type":"flex","orientation":"vertical"}} -->
+<div class="wp-block-group"><!-- wp:paragraph {"style":{"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p style="margin-top:0;margin-bottom:0"><?php esc_html_e( 'Date:', 'yaycheckout' ); ?></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"style":{"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p style="margin-top:0;margin-bottom:0"><span class="yaycheckout-live-value" data-yaycheckout-value="order_date" data-fallback="" data-prefix="" data-suffix=""><?php esc_html_e( 'Order date', 'yaycheckout' ); ?></span></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"style":{"spacing":{"blockGap":"0"}},"layout":{"type":"flex","orientation":"vertical"}} -->
+<div class="wp-block-group"><!-- wp:paragraph {"style":{"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p style="margin-top:0;margin-bottom:0"><?php esc_html_e( 'Total:', 'yaycheckout' ); ?></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"style":{"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p style="margin-top:0;margin-bottom:0"><span class="yaycheckout-live-value" data-yaycheckout-value="cart_total" data-fallback="" data-prefix="" data-suffix=""><?php esc_html_e( 'Order summary total', 'yaycheckout' ); ?></span></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"style":{"spacing":{"blockGap":"0"}},"layout":{"type":"flex","orientation":"vertical"}} -->
+<div class="wp-block-group"><!-- wp:paragraph {"style":{"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p style="margin-top:0;margin-bottom:0"><?php esc_html_e( 'Email:', 'yaycheckout' ); ?></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"style":{"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p style="margin-top:0;margin-bottom:0"><span class="yaycheckout-live-value" data-yaycheckout-value="order_email" data-fallback="" data-prefix="" data-suffix=""><?php esc_html_e( 'Email', 'yaycheckout' ); ?></span></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+
+<!-- wp:group {"style":{"spacing":{"blockGap":"0"}},"layout":{"type":"flex","orientation":"vertical"}} -->
+<div class="wp-block-group"><!-- wp:paragraph {"style":{"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p style="margin-top:0;margin-bottom:0"><?php esc_html_e( 'Payment method:', 'yaycheckout' ); ?></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"style":{"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
+<p style="margin-top:0;margin-bottom:0"><span class="yaycheckout-live-value" data-yaycheckout-value="order_payment_method" data-fallback="" data-prefix="" data-suffix=""><?php esc_html_e( 'Payment method', 'yaycheckout' ); ?></span></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
 
 <!-- wp:yaycheckout/order-details /-->
 
