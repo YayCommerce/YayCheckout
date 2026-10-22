@@ -17,6 +17,9 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+# Loading the capture script below would otherwise leave scripts/__pycache__/ behind.
+sys.dont_write_bytecode = True
+
 # The catalogue reader and the preview checks are capture-template-previews.py's; loaded by path, since -I keeps
 # this folder off sys.path.
 _spec = importlib.util.spec_from_file_location('capture_template_previews', os.path.join(HERE, 'capture-template-previews.py'))
