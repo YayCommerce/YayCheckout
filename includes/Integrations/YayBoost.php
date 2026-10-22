@@ -91,6 +91,12 @@ class YayBoost {
     /** The checkout hooks YayBoost prints its free shipping bar on. */
     private const SHIPPING_BAR_HOOKS = [ 'woocommerce_before_checkout_form', 'woocommerce_after_checkout_form' ];
 
+    /** Feature id => the method that names the hooks it prints on in a layout without a spot (output_hooks()). */
+    private const OUTPUT_HOOKS = [
+        self::ORDER_BUMP        => 'order_bump_hooks',
+        self::FREE_SHIPPING_BAR => 'shipping_bar_hooks',
+    ];
+
     /** YayBoost's FeatureRegistry, once YayBoost has booted its features this request; null otherwise. */
     private $registry = null;
 
@@ -160,6 +166,16 @@ class YayBoost {
     }
 
     /**
+     * The hooks YayBoost prints a feature on in a layout without a spot, where the editor shows a stand-in; null for a
+     * feature with no checkout hook, such as Frequently bought together.
+     *
+     * @return string[]|null
+     */
+    public function output_hooks( string $feature_id ): ?array {
+        return isset( self::OUTPUT_HOOKS[ $feature_id ] ) ? $this->{ self::OUTPUT_HOOKS[ $feature_id ] }() : null;
+    }
+
+    /**
      * The hooks YayBoost prints its order bumps on in a layout without a spot, in ORDER_BUMP_HOOKS order: Pro's one,
      * or the hook of each active bump's position in Free. A bump's conditions are left out: the editor shows where a
      * bump can land, not whether a cart triggers it. Empty while the feature is off, no bump is active, or YayBoost's
@@ -202,6 +218,27 @@ class YayBoost {
         }
 
         return array_values( array_intersect( self::ORDER_BUMP_HOOKS, $hooks ) );
+    }
+
+    /**
+     * The hooks YayBoost prints its free shipping bar on in a layout without a spot, in SHIPPING_BAR_HOOKS order: the
+     * checkout positions it is set to, which it hooks render_bar() on whatever the page. Empty while the feature is off.
+     *
+     * @return string[]
+     */
+    public function shipping_bar_hooks(): array {
+        $feature = $this->feature( self::FREE_SHIPPING_BAR );
+
+        if ( null === $feature || true !== $this->feature_enabled( self::FREE_SHIPPING_BAR ) ) {
+            return [];
+        }
+
+        return array_values(
+            array_filter(
+                self::SHIPPING_BAR_HOOKS,
+                static fn( string $hook ): bool => false !== has_action( $hook, [ $feature, 'render_bar' ] )
+            )
+        );
     }
 
     public function register_shortcodes(): void {

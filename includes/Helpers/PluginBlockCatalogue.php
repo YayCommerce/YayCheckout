@@ -167,7 +167,7 @@ class PluginBlockCatalogue {
                     'pluginPath'   => $plugin_path,
                     'state'        => $state,
                     // Where the plugin prints the feature in a layout without a spot; the editor shows a stand-in there.
-                    'hooks'        => 'yayboost' === $entry['plugin'] && YayBoost::ORDER_BUMP === $entry['featureId'] ? YayBoost::get_instance()->order_bump_hooks() : $entry['hooks'],
+                    'hooks'        => ( 'yayboost' === $entry['plugin'] ? YayBoost::get_instance()->output_hooks( $entry['featureId'] ) : null ) ?? $entry['hooks'],
                 ]
             );
         }
