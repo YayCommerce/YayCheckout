@@ -227,6 +227,19 @@ class LayoutRestController extends BaseRestController {
 
         register_rest_route(
             self::REST_NAMESPACE,
+            '/layouts/(?P<id>\d+)/thank-you',
+            [
+                [
+                    'methods'             => \WP_REST_Server::CREATABLE,
+                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'add_thank_you_layout' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $this->id_args(),
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
             '/layouts/(?P<id>\d+)/reset',
             [
                 [
@@ -366,6 +379,15 @@ class LayoutRestController extends BaseRestController {
      */
     public function duplicate_layout( \WP_REST_Request $request ) {
         return $this->change_layout( $request, fn( int $id ) => $this->layouts->duplicate( $id ) );
+    }
+
+    /**
+     * Gives a layout its thank-you page from the layouts list's Add thank-you page action.
+     *
+     * @return array|\WP_Error
+     */
+    public function add_thank_you_layout( \WP_REST_Request $request ) {
+        return $this->change_layout( $request, fn( int $id ) => $this->layouts->add_thank_you( $id ) );
     }
 
     /**

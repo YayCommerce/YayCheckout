@@ -101,16 +101,17 @@ class Layout {
     /** List row: no markup, so a large store does not ship every draft. Timestamps as ISO 8601. */
     public function to_summary_array(): array {
         return [
-            'id'           => $this->id,
-            'title'        => $this->title,
-            'status'       => $this->post_status,
-            'is_active'    => $this->is_active,
-            'blocks'       => self::block_count( $this->content ),
-            'size'         => strlen( $this->content ),
-            'published_at' => DateHelper::to_iso8601( $this->published_at ),
-            'scheduled_at' => DateHelper::to_iso8601( $this->scheduled_at ),
-            'updated_at'   => DateHelper::to_iso8601( $this->updated_at ),
-            'rules'        => $this->rules,
+            'id'            => $this->id,
+            'title'         => $this->title,
+            'status'        => $this->post_status,
+            'is_active'     => $this->is_active,
+            'blocks'        => self::block_count( $this->content ),
+            'size'          => strlen( $this->content ),
+            'published_at'  => DateHelper::to_iso8601( $this->published_at ),
+            'scheduled_at'  => DateHelper::to_iso8601( $this->scheduled_at ),
+            'updated_at'    => DateHelper::to_iso8601( $this->updated_at ),
+            'rules'         => $this->rules,
+            'has_thank_you' => $this->has_thank_you(),
         ];
     }
 

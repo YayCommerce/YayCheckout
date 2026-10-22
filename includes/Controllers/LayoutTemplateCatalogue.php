@@ -29,16 +29,17 @@ class LayoutTemplateCatalogue {
      * Every template, for the picker. In Free a Pro template is listed with `available` false, so its
      * preview shows locked and it can't be created from.
      *
-     * @return array{ slug: string, name: string, categories: string[], pro: bool, available: bool, preview_url: string }[]
+     * @return array{ slug: string, name: string, categories: string[], pro: bool, available: bool, preview_url: string, thank_you_preview_url: string }[]
      */
     public static function templates( bool $is_pro ): array {
         $templates = [];
 
         foreach ( self::catalogue() as $template ) {
-            $template['pro']         = ! empty( $template['pro'] );
-            $template['available']   = self::is_available( $template['slug'], $is_pro );
-            $template['preview_url'] = self::preview_url( $template['slug'] );
-            $templates[]             = $template;
+            $template['pro']                   = ! empty( $template['pro'] );
+            $template['available']             = self::is_available( $template['slug'], $is_pro );
+            $template['preview_url']           = self::preview_url( $template['slug'] );
+            $template['thank_you_preview_url'] = self::thank_you_preview_url( $template['slug'] );
+            $templates[]                       = $template;
         }
 
         return $templates;
@@ -161,6 +162,15 @@ class LayoutTemplateCatalogue {
         }
 
         return YAYCHECKOUT_PLUGIN_URL . self::relative_path( $slug, 'preview.html' ) . '?ver=' . YAYCHECKOUT_VERSION;
+    }
+
+    /** The URL of the template's thank-you-preview.html, the New layout modal's Thank you card, or '' when it has none. Called only with catalogue slugs. */
+    private static function thank_you_preview_url( string $slug ): string {
+        if ( ! is_file( self::path( $slug, 'thank-you-preview.html' ) ) ) {
+            return '';
+        }
+
+        return YAYCHECKOUT_PLUGIN_URL . self::relative_path( $slug, 'thank-you-preview.html' ) . '?ver=' . YAYCHECKOUT_VERSION;
     }
 
     /** Unchecked: callers check $slug against the catalogue first. */

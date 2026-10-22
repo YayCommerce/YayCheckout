@@ -1,0 +1,78 @@
+import type { ReactNode } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
+import { __ } from '@wordpress/i18n';
+
+import type { NewLayoutFormValues } from '@/lib/schema/layout.schema';
+import type { Template } from '@/lib/schema/template.schema';
+import { Button } from '@/components/ui/button';
+import { DialogFooter } from '@/components/ui/dialog';
+import { TemplatePreview } from '@/components/shared/template-picker/TemplatePreview';
+
+/**
+ * The pages the new layout comes with, previewed side by side: its checkout and its thank-you page.
+ * Create layout makes both; the server writes the thank-you page from the template.
+ */
+export function PagesStep({
+  template,
+  onBack,
+  isPending,
+  rootError,
+}: {
+  template: Template;
+  onBack: () => void;
+  isPending: boolean;
+  rootError?: string;
+}) {
+  const { control } = useFormContext<NewLayoutFormValues>();
+  const name = useWatch<NewLayoutFormValues, 'name'>({ control, name: 'name' });
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-1">
+        <h3 className="text-sm font-medium">{__('Preview pages', 'yaycheckout')}</h3>
+        <p className="text-muted-foreground text-sm">{name}</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <PageCard title={__('Checkout', 'yaycheckout')}>
+          <TemplatePreview template={template} />
+        </PageCard>
+        <PageCard title={__('Thank you', 'yaycheckout')}>
+          <TemplatePreview
+            template={template}
+            previewUrl={template.thankYouPreviewUrl}
+            placeholder={__('Preview coming soon', 'yaycheckout')}
+          />
+        </PageCard>
+      </div>
+
+      {rootError && <p className="text-destructive text-sm">{rootError}</p>}
+
+      <DialogFooter className="items-center gap-3 border-t pt-4 sm:justify-end">
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" disabled={isPending} onClick={onBack}>
+            {__('Back', 'yaycheckout')}
+          </Button>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? __('Creating…', 'yaycheckout') : __('Create layout', 'yaycheckout')}
+          </Button>
+        </div>
+      </DialogFooter>
+    </div>
+  );
+}
+
+/** Not selectable: a group, focusable so its preview still scrolls by keyboard as the picker's tiles do. */
+function PageCard({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div
+      role="group"
+      tabIndex={0}
+      aria-label={title}
+      className="group flex flex-col items-start gap-2 rounded-md border p-2 outline-none focus-visible:ring-2"
+    >
+      {children}
+      <span className="text-xs font-medium">{title}</span>
+    </div>
+  );
+}

@@ -31,6 +31,7 @@ function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
     scheduledAt: wire.scheduled_at,
     updatedAt: wire.updated_at,
     rules: wire.rules,
+    hasThankYou: wire.has_thank_you,
   };
 }
 
@@ -107,6 +108,11 @@ export async function restoreLayout(id: number): Promise<Layout> {
 
 export async function duplicateLayout(id: number): Promise<Layout> {
   return parseLayout(await api.post(`layouts/${id}/duplicate`).json());
+}
+
+/** POST /layouts/{id}/thank-you: gives a layout without one its template's thank-you page. */
+export async function addThankYou(id: number): Promise<Layout> {
+  return parseLayout(await api.post(`layouts/${id}/thank-you`).json());
 }
 
 export async function renameLayout(id: number, name: string): Promise<Layout> {

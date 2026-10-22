@@ -405,6 +405,34 @@ class LayoutRepository {
     }
 
     /**
+     * Gives a layout made before thank-you pages its template's thank-you page (or the shared one), from
+     * the Layouts list's Add thank-you page action. Never overwrites one the layout already has.
+     *
+     * @throws \InvalidArgumentException When the layout is missing, archived, already has a thank-you page, or the update fails.
+     */
+    public function add_thank_you( int $id ): Layout {
+        $layout = $this->find_or_throw( $id );
+
+        if ( LayoutStatus::ARCHIVED === $layout->post_status ) {
+            throw new \InvalidArgumentException( esc_html__( 'Restore this layout from the archive first.', 'yaycheckout' ) );
+        }
+
+        if ( $layout->has_thank_you() ) {
+            throw new \InvalidArgumentException( esc_html__( 'This layout already has a thank-you page.', 'yaycheckout' ) );
+        }
+
+        // Slashed by update_post(), like the markup Reset writes.
+        $this->update_post(
+            [
+                'ID'         => $id,
+                'meta_input' => [ Layout::META_THANK_YOU => self::filter_view_markup( LayoutTemplateCatalogue::thank_you_markup( $layout->template ) ) ],
+            ]
+        );
+
+        return $this->find( $id );
+    }
+
+    /**
      * Changes a layout's title. Status, content, rules, design and the active flag stay.
      *
      * @param string $title Already sanitized (sanitize_text_field()).
