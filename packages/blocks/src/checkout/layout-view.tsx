@@ -10,10 +10,11 @@ import {
 import { store as coreStore } from '@wordpress/core-data';
 import { select, useDispatch, useSelect } from '@wordpress/data';
 import { store as editorStore } from '@wordpress/editor';
-import { useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { store as noticesStore } from '@wordpress/notices';
 import { editorData, type EditorView } from '../shared/editor-data';
+import { isSwitchViewMessage, type EditorViewMessage } from '../shared/editor-messages';
 import { errorMessage } from '../shared/error-message';
 
 type View = EditorView[ 'current' ];
@@ -36,10 +37,10 @@ const LOADING_MESSAGES: Record< View, string > = {
 };
 
 /**
- * Checkout / Logged out / Thank you. Logged out shows while WooCommerce makes guests log in, Thank you
- * while the layout has a thank-you page, and each while it is the open view, so the merchant can get back.
- * A layout without a thank-you page gets an Add thank-you page button instead, which writes its template's
- * (POST /layouts/{id}/thank-you, LayoutRepository::add_thank_you()) and opens it.
+ * Checkout / Logged out in the toolbar, shown while WooCommerce makes guests log in or while Logged out is open.
+ * Checkout and Thank you are picked from the manager's page boxes beside the iframe (EditorViewNav in the SPA),
+ * which send a switch-view message; the editor tells them the open view on each load. Picking Thank you on a
+ * layout without one first writes its template's (POST /layouts/{id}/thank-you, LayoutRepository::add_thank_you()).
  * Each view is its own page load; unsaved edits are saved first, or dropped when the merchant chooses,
  * never carried across.
  */
@@ -58,9 +59,8 @@ export default function LayoutViewSwitch() {
 	const [ pending, setPending ] = useState< { view: View; step: 'ask' | 'load' } | null >( null );
 	const { current, loginRequired, hasThankYou } = editorData.view;
 	const showLoggedOut = loginRequired || current === 'logged-out';
-	const showThankYou = hasThankYou || current === 'thank-you';
-	// With no view besides Checkout, a toggle of one option would show; the Add button stands alone then.
-	const showToggle = showLoggedOut || showThankYou;
+	// Logged out is a variant of the checkout, so the toggle stays off the thank-you page.
+	const showToggle = showLoggedOut && current !== 'thank-you';
 
 	const go = async ( view: View ) => {
 		setPending( { view, step: 'load' } );
@@ -119,6 +119,29 @@ export default function LayoutViewSwitch() {
 		}
 	};
 
+	// The message listener is registered once per load; the ref keeps it calling the latest pick().
+	const pickRef = useRef( pick );
+	pickRef.current = pick;
+
+	useEffect( () => {
+		if ( window.parent === window ) {
+			return undefined;
+		}
+
+		const message: EditorViewMessage = { source: 'yaycheckout-editor', type: 'view', current, hasThankYou };
+		window.parent.postMessage( message, window.location.origin );
+
+		const onMessage = ( event: MessageEvent ) => {
+			if ( event.origin === window.location.origin && event.source === window.parent && isSwitchViewMessage( event.data ) ) {
+				pickRef.current( event.data.view );
+			}
+		};
+
+		window.addEventListener( 'message', onMessage );
+
+		return () => window.removeEventListener( 'message', onMessage );
+	}, [ current, hasThankYou ] );
+
 	return (
 		<>
 			{ showToggle && (
@@ -136,20 +159,7 @@ export default function LayoutViewSwitch() {
 					{ showLoggedOut && (
 						<ToggleGroupControlOption value="logged-out" label={ __( 'Logged out', 'yaycheckout' ) } />
 					) }
-					{ showThankYou && (
-						<ToggleGroupControlOption value="thank-you" label={ __( 'Thank you', 'yaycheckout' ) } />
-					) }
 				</ToggleGroupControl>
-			) }
-			{ ! showThankYou && (
-				<Button
-					__next40pxDefaultSize
-					variant="tertiary"
-					disabled={ pending?.step === 'load' }
-					onClick={ () => pick( 'thank-you' ) }
-				>
-					{ __( 'Add thank-you page', 'yaycheckout' ) }
-				</Button>
 			) }
 			{ pending?.step === 'ask' && (
 				<Modal

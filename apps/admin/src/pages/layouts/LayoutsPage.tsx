@@ -56,6 +56,7 @@ import { AssignmentDrawer } from '@/pages/layouts/assignment/AssignmentDrawer';
 import { BulkActionDialog, type ConfirmedBulkAction } from '@/pages/layouts/BulkActionDialog';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { DeleteModal } from '@/pages/layouts/DeleteModal';
+import { EditorViewNav } from '@/pages/layouts/EditorViewNav';
 import { LayoutBulkBar } from '@/pages/layouts/LayoutBulkBar';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import { PreviewLinkModal } from '@/pages/layouts/PreviewLinkModal';
@@ -569,23 +570,28 @@ function LayoutsPageBody({
 /** Block-editor iframe with a spinner over it until the editor page finishes loading. Keyed by URL so each open starts in the loading state. */
 function LayoutEditorFrame({ src }: { src: string }) {
   const [loaded, setLoaded] = useState(false);
+  const frameRef = useRef<HTMLIFrameElement>(null);
 
   return (
-    <div className="relative min-h-0 flex-1 overflow-hidden">
-      <iframe
-        title={__('Layout editor', 'yaycheckout')}
-        src={src}
-        onLoad={() => setLoaded(true)}
-        className={cn('block size-full border-0', !loaded && 'invisible')}
-      />
-      {!loaded && (
-        <div className="bg-background absolute inset-0 flex items-center justify-center">
-          <Loader2
-            className="text-muted-foreground size-6 animate-spin"
-            aria-label={__('Loading editor…', 'yaycheckout')}
-          />
-        </div>
-      )}
+    <div className="flex min-h-0 flex-1">
+      <EditorViewNav frameRef={frameRef} />
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        <iframe
+          ref={frameRef}
+          title={__('Layout editor', 'yaycheckout')}
+          src={src}
+          onLoad={() => setLoaded(true)}
+          className={cn('block size-full border-0', !loaded && 'invisible')}
+        />
+        {!loaded && (
+          <div className="bg-background absolute inset-0 flex items-center justify-center">
+            <Loader2
+              className="text-muted-foreground size-6 animate-spin"
+              aria-label={__('Loading editor…', 'yaycheckout')}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
