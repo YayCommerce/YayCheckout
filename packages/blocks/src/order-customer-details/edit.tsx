@@ -12,6 +12,24 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< OrderCustomerDetailsAttributes > ) => void;
 }
 
+const SAMPLE_BILLING = [ 'John Doe', 'YayCommerce', '7400 Edwards Rd', 'Edwards Rd' ];
+const SAMPLE_SHIPPING = [ 'John Doe', 'YayCommerce', '755 E North Grove Rd', 'Mayville, Michigan' ];
+const SAMPLE_PHONE = '(910) 529-1147';
+
+const SampleAddress = ( { lines }: { lines: string[] } ) => (
+	<address>
+		{ lines.map( ( line ) => (
+			<span key={ line }>
+				{ line }
+				<br />
+			</span>
+		) ) }
+		<a href="#" onClick={ ( event ) => event.preventDefault() }>
+			{ SAMPLE_PHONE }
+		</a>
+	</address>
+);
+
 /**
  * Preview of WooCommerce's order customer details. Address titles are RichText; empty attributes
  * fall back to WooCommerce's strings on the storefront.
@@ -34,7 +52,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							allowedFormats={ [] }
 							withoutInteractiveFormatting
 						/>
-						<address>{ __( 'Sample billing address', 'yaycheckout' ) }</address>
+						<SampleAddress lines={ SAMPLE_BILLING } />
 					</div>
 					<div>
 						<RichText
@@ -46,7 +64,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							allowedFormats={ [] }
 							withoutInteractiveFormatting
 						/>
-						<address>{ __( 'Sample shipping address', 'yaycheckout' ) }</address>
+						<SampleAddress lines={ SAMPLE_SHIPPING } />
 					</div>
 				</div>
 			</section>

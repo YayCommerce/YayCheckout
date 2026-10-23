@@ -169,11 +169,17 @@ export const orderSummaryIcon = /*#__PURE__*/ icon(
 );
 export const orderSummaryHeaderIcon = /*#__PURE__*/ icon( <path d="M4 6h16v5H4zM15 9l1.5 1.5L18 9" /> );
 export const orderSummaryDetailsIcon = /*#__PURE__*/ icon( <path d="M4 4h16v16H4zM8 9h8M8 13h8M8 17h5" /> );
-export const orderDetailsIcon = /*#__PURE__*/ icon( <path d="M4 4h16v16H4zM8 9h8M8 13h8M8 17h5" /> );
+export const orderDetailsIcon = /*#__PURE__*/ icon(
+	<>
+		<rect x="4" y="3.5" width="16" height="17" rx="2.5" />
+		<path d="M8 8h5M15.5 8h.5M8 12h5M15.5 12h.5M8 16h8" />
+	</>
+);
 export const orderCustomerDetailsIcon = /*#__PURE__*/ icon(
 	<>
-		<path d="M3 5h8v14H3zM13 5h8v14h-8z" />
-		<path d="M5 9h4M5 13h3M15 9h4M15 13h3" />
+		<rect x="3" y="5" width="18" height="14" rx="3" />
+		<path d="M8.5 15.5s-2.75-2.25-2.75-4.75a2.75 2.75 0 0 1 5.5 0c0 2.5-2.75 4.75-2.75 4.75Z" />
+		<path d="M14 10h4M14 14h4" />
 	</>
 );
 export const orderSummaryToggleIcon = /*#__PURE__*/ icon( <path d="M4 7h16v10H4zM9 11l3 3 3-3" /> );

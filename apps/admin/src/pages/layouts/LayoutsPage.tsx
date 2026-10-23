@@ -763,15 +763,6 @@ function LayoutTableRow({
         <div className="max-w-[320px] truncate" title={layout.title}>
           {layout.title}
         </div>
-        {layout.hasThankYou && layout.status !== 'trash' && (
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground text-xs font-normal underline-offset-2 hover:underline"
-            onClick={() => onEditLayout(layout.id, 'thank-you')}
-          >
-            {__('Thank you', 'yaycheckout')}
-          </button>
-        )}
       </TableCell>
       {isPro && (
         <TableCell>

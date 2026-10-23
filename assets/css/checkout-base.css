@@ -874,6 +874,17 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	padding: 0;
 }
 
+/* WooCommerce prints the email and phone as paragraphs inside the address, with an icon and a paragraph gap; keep them plain address lines. */
+.yaycheckout-order-customer-details .woocommerce-customer-details address :is(.woocommerce-customer-details--email, .woocommerce-customer-details--phone) {
+	margin: 0;
+	padding: 0;
+}
+
+.yaycheckout-order-customer-details .woocommerce-customer-details address :is(.woocommerce-customer-details--email, .woocommerce-customer-details--phone)::before {
+	content: none;
+	display: none;
+}
+
 /* iOS zooms into a focused field whose text is under 16px. */
 @media (pointer: coarse) {
 	:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.input-text, select, textarea, .yaycheckout-coupon-form__code) {
