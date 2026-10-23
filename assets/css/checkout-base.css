@@ -885,6 +885,16 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	display: none;
 }
 
+/* Order details' amounts line up on the right, as in WooCommerce's default thank-you table. */
+.yaycheckout-order-details .woocommerce-table--order-details :is(th, td):last-child:not(:first-child) {
+	text-align: right;
+}
+
+/* WooCommerce bolds the totals' values too (.woocommerce table.shop_table tfoot td); only their labels stay bold. */
+.yaycheckout-order-details .woocommerce-table--order-details.shop_table tfoot td {
+	font-weight: 400;
+}
+
 /* iOS zooms into a focused field whose text is under 16px. */
 @media (pointer: coarse) {
 	:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.input-text, select, textarea, .yaycheckout-coupon-form__code) {
