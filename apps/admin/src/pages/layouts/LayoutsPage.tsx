@@ -56,7 +56,6 @@ import { AssignmentDrawer } from '@/pages/layouts/assignment/AssignmentDrawer';
 import { BulkActionDialog, type ConfirmedBulkAction } from '@/pages/layouts/BulkActionDialog';
 import { DeactivateModal } from '@/pages/layouts/DeactivateModal';
 import { DeleteModal } from '@/pages/layouts/DeleteModal';
-import { EditorViewNav } from '@/pages/layouts/EditorViewNav';
 import { LayoutBulkBar } from '@/pages/layouts/LayoutBulkBar';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import { PreviewLinkModal } from '@/pages/layouts/PreviewLinkModal';
@@ -183,8 +182,6 @@ function LayoutsPageBody({
   const location = useLocation();
   const navigate = useNavigate();
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
-  // Kept here, not in the frame, so it survives reopening the editor.
-  const [pagesNavOpen, setPagesNavOpen] = useState(true);
   // The URL is the only record of the open editor, so browser Back closes it and other screens can deep-link to it.
   const editingLayoutId = editLayoutIdFrom(searchParams);
   const editingView = editViewFrom(searchParams);
@@ -562,14 +559,7 @@ function LayoutsPageBody({
             <DialogTitle className="text-base">{__('Edit layout', 'yaycheckout')}</DialogTitle>
           </DialogHeader>
 
-          {editorUrl && (
-            <LayoutEditorFrame
-              key={editorUrl}
-              src={editorUrl}
-              pagesCollapsed={!pagesNavOpen}
-              onTogglePages={() => setPagesNavOpen((open) => !open)}
-            />
-          )}
+          {editorUrl && <LayoutEditorFrame key={editorUrl} src={editorUrl} />}
         </DialogContent>
       </Dialog>
     </div>
@@ -577,38 +567,25 @@ function LayoutsPageBody({
 }
 
 /** Block-editor iframe with a spinner over it until the editor page finishes loading. Keyed by URL so each open starts in the loading state. */
-function LayoutEditorFrame({
-  src,
-  pagesCollapsed,
-  onTogglePages,
-}: {
-  src: string;
-  pagesCollapsed: boolean;
-  onTogglePages: () => void;
-}) {
+function LayoutEditorFrame({ src }: { src: string }) {
   const [loaded, setLoaded] = useState(false);
-  const frameRef = useRef<HTMLIFrameElement>(null);
 
   return (
-    <div className="flex min-h-0 flex-1">
-      <EditorViewNav frameRef={frameRef} collapsed={pagesCollapsed} onToggle={onTogglePages} />
-      <div className="relative min-h-0 flex-1 overflow-hidden">
-        <iframe
-          ref={frameRef}
-          title={__('Layout editor', 'yaycheckout')}
-          src={src}
-          onLoad={() => setLoaded(true)}
-          className={cn('block size-full border-0', !loaded && 'invisible')}
-        />
-        {!loaded && (
-          <div className="bg-background absolute inset-0 flex items-center justify-center">
-            <Loader2
-              className="text-muted-foreground size-6 animate-spin"
-              aria-label={__('Loading editor…', 'yaycheckout')}
-            />
-          </div>
-        )}
-      </div>
+    <div className="relative min-h-0 flex-1 overflow-hidden">
+      <iframe
+        title={__('Layout editor', 'yaycheckout')}
+        src={src}
+        onLoad={() => setLoaded(true)}
+        className={cn('block size-full border-0', !loaded && 'invisible')}
+      />
+      {!loaded && (
+        <div className="bg-background absolute inset-0 flex items-center justify-center">
+          <Loader2
+            className="text-muted-foreground size-6 animate-spin"
+            aria-label={__('Loading editor…', 'yaycheckout')}
+          />
+        </div>
+      )}
     </div>
   );
 }

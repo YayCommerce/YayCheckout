@@ -10,12 +10,12 @@ import {
 import { store as coreStore } from '@wordpress/core-data';
 import { select, useDispatch, useSelect } from '@wordpress/data';
 import { store as editorStore } from '@wordpress/editor';
-import { useEffect, useRef, useState } from '@wordpress/element';
+import { createPortal, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { store as noticesStore } from '@wordpress/notices';
 import { editorData, type EditorView } from '../shared/editor-data';
-import { isSwitchViewMessage, type EditorViewMessage } from '../shared/editor-messages';
 import { errorMessage } from '../shared/error-message';
+import LayoutPages from './layout-pages';
 
 type View = EditorView[ 'current' ];
 
@@ -38,13 +38,12 @@ const LOADING_MESSAGES: Record< View, string > = {
 
 /**
  * Checkout / Logged out in the toolbar, shown while WooCommerce makes guests log in or while Logged out is open.
- * Checkout and Thank you are picked from the manager's page boxes beside the iframe (EditorViewNav in the SPA),
- * which send a switch-view message; the editor tells them the open view on each load. Picking Thank you on a
- * layout without one first writes its template's (POST /layouts/{id}/thank-you, LayoutRepository::add_thank_you()).
+ * Checkout and Thank you are picked from LayoutPages, a column between the editor's header and footer, through
+ * pick(). Picking Thank you on a layout without one first writes its template's (POST /layouts/{id}/thank-you, LayoutRepository::add_thank_you()).
  * Each view is its own page load; unsaved edits are saved first, or dropped when the merchant chooses,
  * never carried across.
  */
-export default function LayoutViewSwitch() {
+export default function LayoutViewSwitch( { pagesSlot }: { pagesSlot: HTMLElement | null } ) {
 	const { isLocked, isSaving } = useSelect(
 		( selectStore ) => ( {
 			isLocked: selectStore( editorStore ).isPostSavingLocked(),
@@ -119,31 +118,18 @@ export default function LayoutViewSwitch() {
 		}
 	};
 
-	// The message listener is registered once per load; the ref keeps it calling the latest pick().
-	const pickRef = useRef( pick );
-	pickRef.current = pick;
-
-	useEffect( () => {
-		if ( window.parent === window ) {
-			return undefined;
-		}
-
-		const message: EditorViewMessage = { source: 'yaycheckout-editor', type: 'view', current, hasThankYou };
-		window.parent.postMessage( message, window.location.origin );
-
-		const onMessage = ( event: MessageEvent ) => {
-			if ( event.origin === window.location.origin && event.source === window.parent && isSwitchViewMessage( event.data ) ) {
-				pickRef.current( event.data.view );
-			}
-		};
-
-		window.addEventListener( 'message', onMessage );
-
-		return () => window.removeEventListener( 'message', onMessage );
-	}, [ current, hasThankYou ] );
-
 	return (
 		<>
+			{ pagesSlot &&
+				createPortal(
+					<LayoutPages
+						current={ current }
+						hasThankYou={ hasThankYou }
+						disabled={ pending?.step === 'load' }
+						onPick={ pick }
+					/>,
+					pagesSlot
+				) }
 			{ showToggle && (
 				<ToggleGroupControl
 					__next40pxDefaultSize
