@@ -382,7 +382,7 @@ class BlockRegistry {
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.design', $design );
         // The live value picker's Cart totals and Counts.
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.liveValues', LiveValues::picker_values() );
-        // The layout editor's view switch (Checkout, Logged out, Thank you); other editors keep editor-data.ts's default.
+        // The layout editor's view switch (Checkout, Logged out, Thank you, Pay order); other editors keep editor-data.ts's default.
         if ( Layout::POST_TYPE !== get_post_type() ) {
             return;
         }
@@ -396,6 +396,7 @@ class BlockRegistry {
                 'current'       => LayoutEditorEmbed::current_view(),
                 'loginRequired' => CheckoutLogin::login_required(),
                 'hasThankYou'   => null !== $layout && $layout->has_thank_you(),
+                'hasPayOrder'   => null !== $layout && $layout->has_pay_order(),
                 'queryArg'      => LayoutEditorEmbed::QUERY_VIEW,
                 'urls'          => LayoutEditorEmbed::view_urls( (int) get_the_ID() ),
             ]

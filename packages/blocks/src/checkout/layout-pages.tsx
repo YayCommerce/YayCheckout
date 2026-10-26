@@ -39,6 +39,12 @@ const thankYouIcon = svg(
 		<path d="m8.5 12.25 2.5 2.25 4.5-4.5" />
 	</>
 );
+const payOrderIcon = svg(
+	<>
+		<rect x="3.5" y="6" width="17" height="12" rx="2" />
+		<path d="M3.5 10h17M7 14.5h3" />
+	</>
+);
 const addIcon = svg( <path d="M12 6v12M6 12h12" /> );
 const collapseIcon = svg( <path d="m11 8-4 4 4 4M17 8l-4 4 4 4" /> );
 const expandIcon = svg( <path d="m7 8 4 4-4 4M13 8l4 4-4 4" /> );
@@ -62,18 +68,19 @@ function writeCollapsed( collapsed: boolean ) {
 type Props = {
 	current: View;
 	hasThankYou: boolean;
+	hasPayOrder: boolean;
 	disabled: boolean;
 	onPick: ( view: View ) => void;
 };
 
 /**
- * The layout's pages, in a column between the editor's header and footer: Checkout and Thank you, or Add
- * thank-you page while the layout has none. Logged out is a variant of the checkout, so it keeps Checkout
+ * The layout's pages, in a column between the editor's header and footer: Checkout, Thank you and Pay order, or
+ * Add thank-you page / Add pay-order page while the layout has none. Logged out is a variant of the checkout, so it keeps Checkout
  * selected. A pick goes through LayoutViewSwitch's pick(), so the save-first prompt applies.
  */
-export default function LayoutPages( { current, hasThankYou, disabled, onPick }: Props ) {
+export default function LayoutPages( { current, hasThankYou, hasPayOrder, disabled, onPick }: Props ) {
 	const [ collapsed, setCollapsed ] = useState( readCollapsed );
-	const active: View = current === 'thank-you' ? 'thank-you' : 'main';
+	const active: View = current === 'thank-you' || current === 'pay-order' ? current : 'main';
 
 	const toggle = () => {
 		writeCollapsed( ! collapsed );
@@ -108,6 +115,9 @@ export default function LayoutPages( { current, hasThankYou, disabled, onPick }:
 			{ hasThankYou || current === 'thank-you'
 				? item( 'thank-you', __( 'Thank you', 'yaycheckout' ), thankYouIcon )
 				: item( 'thank-you', __( 'Add thank-you page', 'yaycheckout' ), addIcon, ' is-add' ) }
+			{ hasPayOrder || current === 'pay-order'
+				? item( 'pay-order', __( 'Pay order', 'yaycheckout' ), payOrderIcon )
+				: item( 'pay-order', __( 'Add pay-order page', 'yaycheckout' ), addIcon, ' is-add' ) }
 			<button
 				type="button"
 				className="yaycheckout-layout-pages__toggle"

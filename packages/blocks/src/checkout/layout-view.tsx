@@ -34,12 +34,28 @@ const LOADING_MESSAGES: Record< View, string > = {
 	main: __( 'Loading the checkout…', 'yaycheckout' ),
 	'logged-out': __( 'Loading the logged-out view…', 'yaycheckout' ),
 	'thank-you': __( 'Loading the thank-you page…', 'yaycheckout' ),
+	'pay-order': __( 'Loading the pay-order page…', 'yaycheckout' ),
+};
+
+/** The pages a layout made before them may lack: the route that adds one, and what to say while it does or when it fails. */
+const ADDABLE_PAGES: Partial< Record< View, { route: string; adding: string; failed: string } > > = {
+	'thank-you': {
+		route: 'thank-you',
+		adding: __( 'Adding the thank-you page…', 'yaycheckout' ),
+		failed: __( 'The thank-you page could not be added.', 'yaycheckout' ),
+	},
+	'pay-order': {
+		route: 'pay-order',
+		adding: __( 'Adding the pay-order page…', 'yaycheckout' ),
+		failed: __( 'The pay-order page could not be added.', 'yaycheckout' ),
+	},
 };
 
 /**
  * Checkout / Logged out in the toolbar, shown while WooCommerce makes guests log in or while Logged out is open.
- * Checkout and Thank you are picked from LayoutPages, a column between the editor's header and footer, through
- * pick(). Picking Thank you on a layout without one first writes its template's (POST /layouts/{id}/thank-you, LayoutRepository::add_thank_you()).
+ * Checkout, Thank you and Pay order are picked from LayoutPages, a column between the editor's header and footer, through
+ * pick(). Picking Thank you or Pay order on a layout without one first writes its template's (POST /layouts/{id}/thank-you
+ * or /pay-order: LayoutRepository::add_thank_you(), add_pay_order()).
  * Each view is its own page load; unsaved edits are saved first, or dropped when the merchant chooses,
  * never carried across.
  */
@@ -56,26 +72,28 @@ export default function LayoutViewSwitch( { pagesSlot }: { pagesSlot: HTMLElemen
 	const { createErrorNotice } = useDispatch( noticesStore );
 	// The view picked but not yet open: asking to save first, or loading it.
 	const [ pending, setPending ] = useState< { view: View; step: 'ask' | 'load' } | null >( null );
-	const { current, loginRequired, hasThankYou } = editorData.view;
+	const { current, loginRequired, hasThankYou, hasPayOrder } = editorData.view;
 	const showLoggedOut = loginRequired || current === 'logged-out';
-	// Logged out is a variant of the checkout, so the toggle stays off the thank-you page.
-	const showToggle = showLoggedOut && current !== 'thank-you';
+	// Logged out is a variant of the checkout, so the toggle stays off the thank-you and pay-order pages.
+	const showToggle = showLoggedOut && ( current === 'main' || current === 'logged-out' );
+	// The page to add before opening it: one the layout doesn't have yet.
+	const missingPage = ( view: View ) =>
+		( view === 'thank-you' && ! hasThankYou ) || ( view === 'pay-order' && ! hasPayOrder ) ? ADDABLE_PAGES[ view ] : undefined;
 
 	const go = async ( view: View ) => {
 		setPending( { view, step: 'load' } );
 
-		if ( view === 'thank-you' && ! hasThankYou ) {
+		const missing = missingPage( view );
+
+		if ( missing ) {
 			try {
 				await apiFetch( {
-					path: `/yaycheckout/v1/layouts/${ select( editorStore ).getCurrentPostId() }/thank-you`,
+					path: `/yaycheckout/v1/layouts/${ select( editorStore ).getCurrentPostId() }/${ missing.route }`,
 					method: 'POST',
 				} );
 			} catch ( error ) {
 				setPending( null );
-				createErrorNotice(
-					await errorMessage( error, __( 'The thank-you page could not be added.', 'yaycheckout' ) ),
-					{ type: 'snackbar' }
-				);
+				createErrorNotice( await errorMessage( error, missing.failed ), { type: 'snackbar' } );
 				return;
 			}
 		}
@@ -125,6 +143,7 @@ export default function LayoutViewSwitch( { pagesSlot }: { pagesSlot: HTMLElemen
 					<LayoutPages
 						current={ current }
 						hasThankYou={ hasThankYou }
+						hasPayOrder={ hasPayOrder }
 						disabled={ pending?.step === 'load' }
 						onPick={ pick }
 					/>,
@@ -186,9 +205,7 @@ export default function LayoutViewSwitch( { pagesSlot }: { pagesSlot: HTMLElemen
 					<Flex justify="center" gap={ 3 }>
 						<Spinner />
 						<span>
-							{ pending.view === 'thank-you' && ! hasThankYou
-								? __( 'Adding the thank-you page…', 'yaycheckout' )
-								: LOADING_MESSAGES[ pending.view ] }
+							{ missingPage( pending.view )?.adding ?? LOADING_MESSAGES[ pending.view ] }
 						</span>
 					</Flex>
 				</Modal>
