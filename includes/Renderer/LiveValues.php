@@ -260,7 +260,7 @@ class LiveValues {
     }
 
     /**
-     * Fills each live value span in $html on a taken-over checkout or thank-you page; anywhere else the
+     * Fills each live value span in $html on a taken-over checkout, thank-you or pay-order page; anywhere else the
      * HTML comes back untouched. Place Order's render.php calls it on its label, so value and data-value hold the values.
      */
     public function fill_html( string $html ): string {
@@ -270,19 +270,23 @@ class LiveValues {
 
         $checkout  = CheckoutPage::get_instance();
         $thank_you = ThankYouPage::get_instance();
+        $pay_order = PayOrderPage::get_instance();
 
-        // The checkout reads the cart; the thank-you page reads its order.
+        // The checkout reads the cart; the thank-you and pay-order pages read their order.
         if ( $checkout->takes_over() ) {
             $layout = $checkout->layout();
             $order  = null;
         } elseif ( $thank_you->takes_over() ) {
             $layout = $thank_you->layout();
             $order  = $thank_you->order();
+        } elseif ( $pay_order->takes_over() && null !== $pay_order->order() ) {
+            $layout = $pay_order->layout();
+            $order  = $pay_order->order();
         } else {
             return $html;
         }
 
-        // ThankYouPage::takes_over() holds only with an order, so a null $order here is the checkout's.
+        // ThankYouPage and PayOrderPage reach here only with an order, so a null $order here is the checkout's.
         if ( null === $layout ) {
             return $html;
         }

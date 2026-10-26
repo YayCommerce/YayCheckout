@@ -2,7 +2,7 @@
 /**
  * Prints WooCommerce's checkout terms: the privacy text and, when a Terms page is set, the
  * required terms checkbox. Place Order no longer prints them, so a layout without this block
- * has neither. Prints nothing without a cart, or when neither WooCommerce nor an extension on
+ * has neither. Prints nothing without a cart (except on the pay-order page), or when neither WooCommerce nor an extension on
  * yaycheckout_checkout_terms has anything to show.
  *
  * @var array    $attributes Block attributes.
@@ -12,7 +12,10 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! function_exists( 'WC' ) || ! WC()->cart instanceof WC_Cart || ! function_exists( 'wc_get_template' ) ) {
+// The pay-order page has no cart, and WooCommerce's form-pay.php prints the terms there too.
+$yaycheckout_on_pay_form = \YayCheckout\Renderer\PayOrderPage::get_instance()->in_form();
+
+if ( ! function_exists( 'WC' ) || ( ! $yaycheckout_on_pay_form && ! WC()->cart instanceof WC_Cart ) || ! function_exists( 'wc_get_template' ) ) {
     return;
 }
 

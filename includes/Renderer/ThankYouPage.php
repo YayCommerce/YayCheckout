@@ -180,6 +180,19 @@ class ThankYouPage {
     }
 
     /**
+     * Runs $callback with no order actions, so order-details.php prints no Actions row (Pay, Cancel): on the
+     * pay-order page the shopper is already paying.
+     *
+     * @param callable $callback Printer that echoes WooCommerce template output.
+     */
+    public static function without_order_actions( callable $callback ): void {
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's filter.
+        add_filter( 'woocommerce_my_account_my_orders_actions', '__return_empty_array', PHP_INT_MAX );
+        $callback();
+        remove_filter( 'woocommerce_my_account_my_orders_actions', '__return_empty_array', PHP_INT_MAX );
+    }
+
+    /**
      * Resolves layout and order together. Both null when this is not a valid takeover.
      */
     private function resolve(): void {

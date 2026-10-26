@@ -1,6 +1,6 @@
 <?php
 /**
- * Prints WooCommerce's order details table on a taken-over thank-you page: line items, totals,
+ * Prints WooCommerce's order details table on a taken-over thank-you or pay-order page: line items, totals,
  * downloads and plugin hooks on that template — without the billing/shipping section, which the
  * Order Addresses block prints via order-details-customer.php. Optional title / column / totals-row
  * labels from the block override WooCommerce's gettext while the table prints. Show title off strips
@@ -13,7 +13,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_order = \YayCheckout\Renderer\ThankYouPage::get_instance()->order();
+// The thank-you page's order, else the pay-order page's (set once WooCommerce lets the shopper pay).
+$yaycheckout_order = \YayCheckout\Renderer\ThankYouPage::get_instance()->order() ?? \YayCheckout\Renderer\PayOrderPage::get_instance()->order();
 
 if ( null === $yaycheckout_order ) {
     return;
@@ -42,12 +43,19 @@ if ( $yaycheckout_show_title ) {
 }
 
 ob_start();
-\YayCheckout\Renderer\ThankYouPage::with_woocommerce_label_overrides(
-    $yaycheckout_overrides,
-    static function () use ( $yaycheckout_order ): void {
-        woocommerce_order_details_table( $yaycheckout_order->get_id() );
-    }
-);
+$yaycheckout_print_table = static function () use ( $yaycheckout_order ): void {
+    woocommerce_order_details_table( $yaycheckout_order->get_id() );
+};
+
+// On the pay-order page the shopper is already paying: no Actions row (Pay, Cancel).
+if ( \YayCheckout\Renderer\PayOrderPage::get_instance()->in_form() ) {
+    $yaycheckout_print_bare_table = $yaycheckout_print_table;
+    $yaycheckout_print_table      = static function () use ( $yaycheckout_print_bare_table ): void {
+        \YayCheckout\Renderer\ThankYouPage::without_order_actions( $yaycheckout_print_bare_table );
+    };
+}
+
+\YayCheckout\Renderer\ThankYouPage::with_woocommerce_label_overrides( $yaycheckout_overrides, $yaycheckout_print_table );
 $yaycheckout_table = (string) ob_get_clean();
 
 // woocommerce_order_details_table always appends order-details-customer.php; Order Addresses owns that.

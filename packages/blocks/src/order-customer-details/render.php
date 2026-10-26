@@ -13,7 +13,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_order = \YayCheckout\Renderer\ThankYouPage::get_instance()->order();
+// The thank-you page's order, else the pay-order page's (set once WooCommerce lets the shopper pay).
+$yaycheckout_order = \YayCheckout\Renderer\ThankYouPage::get_instance()->order() ?? \YayCheckout\Renderer\PayOrderPage::get_instance()->order();
 
 if ( null === $yaycheckout_order ) {
     return;
