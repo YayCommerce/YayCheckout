@@ -84,7 +84,7 @@ class LayoutImportRestController extends BaseRestController {
     }
 
     /**
-     * Reviews the file, then inserts the draft with the file's rules, design, logged-out view and thank-you page. A file without a Checkout block is refused here;
+     * Reviews the file, then inserts the draft with the file's rules, design, logged-out view, thank-you and pay-order pages. A file without a Checkout block is refused here;
      * blocks the site lacks pass. Unreadable rules are dropped, never refusing the file.
      *
      * @return \WP_REST_Response|\WP_Error The new draft (Layout::to_array()) plus `rules_import` { status }.
@@ -93,7 +93,7 @@ class LayoutImportRestController extends BaseRestController {
         try {
             $layout = LayoutImportReview::from_envelope( (array) $request->get_param( 'file' ) );
             $rules  = LayoutImportReview::rules_from_file( $layout['rules'] );
-            $draft  = $this->layouts->import( $layout['title'], $layout['content'], $rules['rules'], $layout['design'], $layout['logged_out_content'], $layout['thank_you_content'] );
+            $draft  = $this->layouts->import( $layout['title'], $layout['content'], $rules['rules'], $layout['design'], $layout['logged_out_content'], $layout['thank_you_content'], $layout['pay_order_content'] );
 
             return new \WP_REST_Response(
                 array_merge(
