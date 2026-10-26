@@ -9,8 +9,8 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { TemplatePreview } from '@/components/shared/template-picker/TemplatePreview';
 
 /**
- * The pages the new layout comes with, previewed side by side: its checkout and its thank-you page.
- * Create layout makes both; the server writes the thank-you page from the template.
+ * The pages the new layout comes with, previewed side by side: its checkout, thank-you and pay-order pages.
+ * Create layout makes all three; the server writes the thank-you and pay-order pages from the template.
  */
 export function PagesStep({
   template,
@@ -33,7 +33,7 @@ export function PagesStep({
         <p className="text-muted-foreground text-sm">{name}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <PageCard title={__('Checkout', 'yaycheckout')}>
           <TemplatePreview template={template} />
         </PageCard>
@@ -41,6 +41,13 @@ export function PagesStep({
           <TemplatePreview
             template={template}
             previewUrl={template.thankYouPreviewUrl}
+            placeholder={__('Preview coming soon', 'yaycheckout')}
+          />
+        </PageCard>
+        <PageCard title={__('Pay order', 'yaycheckout')}>
+          <TemplatePreview
+            template={template}
+            previewUrl={template.payOrderPreviewUrl}
             placeholder={__('Preview coming soon', 'yaycheckout')}
           />
         </PageCard>

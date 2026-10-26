@@ -9,6 +9,7 @@ function templateFromWire(wire: TemplateWire): Template {
     available: wire.available,
     previewUrl: wire.preview_url,
     thankYouPreviewUrl: wire.thank_you_preview_url,
+    payOrderPreviewUrl: wire.pay_order_preview_url,
   };
 }
 

@@ -41,7 +41,7 @@ class LayoutTemplateCatalogue {
      * Every template, for the picker. In Free a Pro template is listed with `available` false, so its
      * preview shows locked and it can't be created from.
      *
-     * @return array{ slug: string, name: string, categories: string[], pro: bool, available: bool, preview_url: string, thank_you_preview_url: string }[]
+     * @return array{ slug: string, name: string, categories: string[], pro: bool, available: bool, preview_url: string, thank_you_preview_url: string, pay_order_preview_url: string }[]
      */
     public static function templates( bool $is_pro ): array {
         $templates = [];
@@ -51,6 +51,7 @@ class LayoutTemplateCatalogue {
             $template['available']             = self::is_available( $template['slug'], $is_pro );
             $template['preview_url']           = self::preview_url( $template['slug'] );
             $template['thank_you_preview_url'] = self::thank_you_preview_url( $template['slug'] );
+            $template['pay_order_preview_url'] = self::pay_order_preview_url( $template['slug'] );
             $templates[]                       = $template;
         }
 
@@ -189,6 +190,11 @@ class LayoutTemplateCatalogue {
     /** The URL of the template's thank-you-preview.html, the New layout modal's Thank you card, or '' when it has none. Called only with catalogue slugs. */
     private static function thank_you_preview_url( string $slug ): string {
         return self::file_url( $slug, 'thank-you-preview.html' );
+    }
+
+    /** The URL of the template's pay-order-preview.html, the New layout modal's Pay order card, or '' when it has none. Called only with catalogue slugs. */
+    private static function pay_order_preview_url( string $slug ): string {
+        return self::file_url( $slug, 'pay-order-preview.html' );
     }
 
     /** The versioned URL of one of the template's files, or '' when it has none. Called only with catalogue slugs. */
