@@ -71,7 +71,7 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
             return $prepared;
         }
 
-        // The logged-out view and the thank-you page save into their meta; post_content, which the checks below read, stays as stored.
+        // The logged-out view and the thank-you and pay-order pages save into their meta; post_content, which the checks below read, stays as stored.
         $meta_key = LayoutEditorEmbed::view_meta_key( LayoutEditorEmbed::current_view( $request ) );
 
         if ( '' !== $meta_key && isset( $prepared->post_content ) ) {
@@ -90,7 +90,7 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
             return $prepared;
         }
 
-        // Neither the markup nor the status changes, as when the logged-out view or thank-you page saves: the stored markup went
+        // Neither the markup nor the status changes, as when the logged-out view or a thank-you or pay-order page saves: the stored markup went
         // live under these rules, and a rule it fails since (Pro blocks after a downgrade) must not block the save.
         if ( ! isset( $prepared->post_content ) && null !== $stored && $stored->post_status === $status ) {
             return $prepared;
@@ -105,7 +105,7 @@ class LayoutCoreRestController extends \WP_REST_Posts_Controller {
         return $prepared;
     }
 
-    /** In the logged-out view or thank-you page the editor loads that view's markup as the post content, or its template's when none is saved. */
+    /** In the logged-out view or a thank-you or pay-order page the editor loads that view's markup as the post content, or its template's when none is saved. */
     public function prepare_item_for_response( $item, $request ) {
         $view     = LayoutEditorEmbed::current_view( $request );
         $meta_key = LayoutEditorEmbed::view_meta_key( $view );

@@ -6,7 +6,7 @@
 
 ## Status
 
-Proposed, 2026-10-16, by Trace Bui.
+Superseded by [the order pages run themeless record](2026-10-26-order-pages-run-themeless.md), 2026-10-26. Proposed, 2026-10-16, by Trace Bui.
 
 ## Context
 
