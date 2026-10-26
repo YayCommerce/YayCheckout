@@ -327,8 +327,8 @@ function LayoutsPageBody({
     url.searchParams.set('action', 'edit');
     url.searchParams.set('yc-embed', '1');
     // LayoutEditorEmbed::QUERY_VIEW; view_urls() there builds the same URLs.
-    if (editingView === 'thank-you') {
-      url.searchParams.set('yc-view', 'thank-you');
+    if (editingView !== 'main') {
+      url.searchParams.set('yc-view', editingView);
     }
     return url.toString();
   }, [editingLayoutId, editingView]);

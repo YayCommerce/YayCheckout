@@ -10,10 +10,10 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * On a checkout or order-received page the layout renders, swaps core's Edit Page
+ * On a checkout, order-received or order-pay page the layout renders, swaps core's Edit Page
  * and Edit site admin bar items, which edit neither the page nor the template shown,
  * for an Edit Layout item that opens the rendered layout in the admin SPA: its
- * checkout, or its thank-you page on order-received.
+ * checkout, its thank-you page on order-received, or its pay-order page on order-pay.
  */
 class CheckoutAdminBar {
     use SingletonTrait;
@@ -28,6 +28,7 @@ class CheckoutAdminBar {
     public function edit_layout_node( WP_Admin_Bar $admin_bar ): void {
         $checkout_page  = CheckoutPage::get_instance();
         $thank_you_page = ThankYouPage::get_instance();
+        $pay_order_page = PayOrderPage::get_instance();
 
         if ( $checkout_page->takes_over() ) {
             $layout = $checkout_page->layout();
@@ -35,6 +36,9 @@ class CheckoutAdminBar {
         } elseif ( $thank_you_page->takes_over() ) {
             $layout = $thank_you_page->layout();
             $view   = LayoutEditorEmbed::VIEW_THANK_YOU;
+        } elseif ( $pay_order_page->takes_over() ) {
+            $layout = $pay_order_page->layout();
+            $view   = LayoutEditorEmbed::VIEW_PAY_ORDER;
         } else {
             return;
         }
