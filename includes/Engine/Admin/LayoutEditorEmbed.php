@@ -22,21 +22,23 @@ class LayoutEditorEmbed {
 
     /**
      * The arg that opens a view other than the checkout: the logged-out view (the markup a guest who must log in
-     * sees), on post.php and on a preview link (CheckoutPage::resolve()); the thank-you page, on post.php.
+     * sees), on post.php and on a preview link (CheckoutPage::resolve()); the thank-you and pay-order pages, on post.php.
      */
     public const QUERY_VIEW = 'yc-view';
 
     public const VIEW_MAIN       = 'main';
     public const VIEW_LOGGED_OUT = 'logged-out';
     public const VIEW_THANK_YOU  = 'thank-you';
+    public const VIEW_PAY_ORDER  = 'pay-order';
 
     /**
-     * Each view other than main, and the meta that holds its markup. A pay-order page would be one more entry
-     * here and one in LayoutTemplateCatalogue::VIEW_FILES, its starter markup.
+     * Each view other than main, and the meta that holds its markup. Another page is one more entry here
+     * and one in LayoutTemplateCatalogue::VIEW_FILES, its starter markup.
      */
     private const VIEW_META = [
         self::VIEW_LOGGED_OUT => Layout::META_LOGGED_OUT,
         self::VIEW_THANK_YOU  => Layout::META_THANK_YOU,
+        self::VIEW_PAY_ORDER  => Layout::META_PAY_ORDER,
     ];
 
     /** Carries QUERY_VIEW to the editor's REST calls; read by LayoutCoreRestController. */
@@ -155,7 +157,7 @@ class LayoutEditorEmbed {
      * The embedded editor for each view of a layout, keyed like the editor's view switch. The main
      * URL is also built by editorUrl in the SPA's apps/admin/src/pages/layouts/LayoutsPage.tsx: change both together.
      *
-     * @return array{main: string, logged-out: string, thank-you: string}
+     * @return array{main: string, logged-out: string, thank-you: string, pay-order: string}
      */
     public static function view_urls( int $post_id ): array {
         $main = add_query_arg(

@@ -21,6 +21,7 @@ class Layout {
     public const META_TEMPLATE   = '_yaycheckout_template';
     public const META_LOGGED_OUT = '_yaycheckout_logged_out_content';
     public const META_THANK_YOU  = '_yaycheckout_thank_you_content';
+    public const META_PAY_ORDER  = '_yaycheckout_pay_order_content';
 
     public const OPTION_ACTIVE = 'yaycheckout_active_layout';
 
@@ -38,6 +39,9 @@ class Layout {
 
     /** The order-received page shoppers see while this layout is active; '' when the layout has none. */
     public string $thank_you_content = '';
+
+    /** The order-pay page shoppers see while this layout is active; '' when the layout has none. */
+    public string $pay_order_content = '';
 
     /** GMT post_date while post_status is 'publish'; null otherwise. */
     public ?string $published_at = null;
@@ -69,6 +73,11 @@ class Layout {
         return '' !== trim( $this->thank_you_content );
     }
 
+    /** Whether the layout has a pay-order page to serve on order-pay. */
+    public function has_pay_order(): bool {
+        return '' !== trim( $this->pay_order_content );
+    }
+
     /**
      * @param array $meta Bulk meta as returned by get_post_meta( $id ), unserialized.
      */
@@ -89,6 +98,7 @@ class Layout {
 
         $layout->logged_out_content = (string) self::meta_value( $meta, self::META_LOGGED_OUT, '' );
         $layout->thank_you_content  = (string) self::meta_value( $meta, self::META_THANK_YOU, '' );
+        $layout->pay_order_content  = (string) self::meta_value( $meta, self::META_PAY_ORDER, '' );
 
         return $layout;
     }

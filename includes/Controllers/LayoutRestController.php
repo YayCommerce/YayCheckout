@@ -240,6 +240,19 @@ class LayoutRestController extends BaseRestController {
 
         register_rest_route(
             self::REST_NAMESPACE,
+            '/layouts/(?P<id>\d+)/pay-order',
+            [
+                [
+                    'methods'             => \WP_REST_Server::CREATABLE,
+                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'add_pay_order_layout' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $this->id_args(),
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
             '/layouts/(?P<id>\d+)/reset',
             [
                 [
@@ -388,6 +401,15 @@ class LayoutRestController extends BaseRestController {
      */
     public function add_thank_you_layout( \WP_REST_Request $request ) {
         return $this->change_layout( $request, fn( int $id ) => $this->layouts->add_thank_you( $id ) );
+    }
+
+    /**
+     * Gives a layout its pay-order page from the layout editor's Add pay-order page button.
+     *
+     * @return array|\WP_Error
+     */
+    public function add_pay_order_layout( \WP_REST_Request $request ) {
+        return $this->change_layout( $request, fn( int $id ) => $this->layouts->add_pay_order( $id ) );
     }
 
     /**

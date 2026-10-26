@@ -13,7 +13,8 @@ defined( 'ABSPATH' ) || exit;
  * template (one built from Pro blocks). Free lists a Pro template as locked and ships only its
  * preview.html. A template missing either file is Coming soon.
  * preview.html, the picker's preview of the mock, sits beside them and availability ignores it,
- * as it does the optional logged-out.php and thank-you.php, the template's own logged-out view and thank-you page.
+ * as it does the optional logged-out.php, thank-you.php and pay-order.php, the template's own logged-out view,
+ * thank-you page and pay-order page.
  */
 class LayoutTemplateCatalogue {
 
@@ -26,10 +27,14 @@ class LayoutTemplateCatalogue {
     /** A template's optional thank-you page, and the shared one beside the template folders. */
     private const THANK_YOU_FILE = 'thank-you.php';
 
+    /** A template's optional pay-order page, and the shared one beside the template folders. */
+    private const PAY_ORDER_FILE = 'pay-order.php';
+
     /** Each editor view kept in meta (LayoutEditorEmbed::VIEW_META), and the file its starter markup comes from. */
     private const VIEW_FILES = [
         LayoutEditorEmbed::VIEW_LOGGED_OUT => self::LOGGED_OUT_FILE,
         LayoutEditorEmbed::VIEW_THANK_YOU  => self::THANK_YOU_FILE,
+        LayoutEditorEmbed::VIEW_PAY_ORDER  => self::PAY_ORDER_FILE,
     ];
 
     /**
@@ -122,8 +127,16 @@ class LayoutTemplateCatalogue {
     }
 
     /**
-     * The starter markup of an editor view kept in meta, for a layout from $slug: logged_out_markup() or
-     * thank_you_markup(). '' for a view with no starter file, such as VIEW_MAIN.
+     * The pay-order page a layout from $slug starts with: the template's pay-order.php, or the shared
+     * templates/layouts/pay-order.php when the template has none or $slug is not an available template.
+     */
+    public static function pay_order_markup( string $slug ): string {
+        return self::markup_file( $slug, self::PAY_ORDER_FILE );
+    }
+
+    /**
+     * The starter markup of an editor view kept in meta, for a layout from $slug: logged_out_markup(),
+     * thank_you_markup() or pay_order_markup(). '' for a view with no starter file, such as VIEW_MAIN.
      */
     public static function view_markup( string $view, string $slug ): string {
         return isset( self::VIEW_FILES[ $view ] ) ? self::markup_file( $slug, self::VIEW_FILES[ $view ] ) : '';
