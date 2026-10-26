@@ -16,9 +16,9 @@ export default function Header() {
     >
       <div className="border-border flex h-full bg-[#FFF5DB] px-0.75 pt-0.75">
         <img
-          src={`${window.yayCheckoutMeta.checkoutMeta.assetsUrl}/images/logo/favicon.svg`}
+          src={`${window.yayCheckoutMeta.checkoutMeta.assetsUrl}/images/logo/logo.png`}
           alt="YayCheckout"
-          className="size-12.5"
+          className="size-12.5 p-1.5"
         />
       </div>
 
