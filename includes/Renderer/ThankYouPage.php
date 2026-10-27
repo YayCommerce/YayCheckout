@@ -2,9 +2,7 @@
 namespace YayCheckout\Renderer;
 
 use YayCheckout\Models\Layout;
-use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\PreviewOrderRepository;
-use YayCheckout\Repositories\SettingsRepository;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -210,7 +208,7 @@ class ThankYouPage {
             return;
         }
 
-        $layout = self::preview_or_active_layout();
+        $layout = PreviewRequest::preview_or_active_layout();
 
         if ( null === $layout || ! $layout->has_thank_you() ) {
             return;
@@ -219,7 +217,7 @@ class ThankYouPage {
         $order = $this->validated_order();
 
         // A preview link shows only the sample order, so a token can't put a layout over a shopper's order.
-        if ( null === $order || ( null !== PreviewRequest::get_instance()->layout_id() && ! self::is_preview_order( $order ) ) ) {
+        if ( null === $order || ( null !== PreviewRequest::get_instance()->layout_id() && ! ( new PreviewOrderRepository() )->is_sample( $order ) ) ) {
             return;
         }
 
@@ -228,31 +226,6 @@ class ThankYouPage {
 
         $this->layout = $layout;
         $this->order  = $order;
-    }
-
-    /**
-     * A preview link's layout, any state, before the safe-mode check as on the checkout: safe mode protects
-     * shoppers, a preview is the merchant looking. Otherwise the active layout, unless safe mode is on.
-     * ThemelessCheckout decides with it too.
-     */
-    public static function preview_or_active_layout(): ?Layout {
-        $preview_id = PreviewRequest::get_instance()->layout_id();
-
-        if ( null !== $preview_id ) {
-            return ( new LayoutRepository() )->find( $preview_id );
-        }
-
-        if ( ( new SettingsRepository() )->is_safe_mode() ) {
-            return null;
-        }
-
-        return ( new LayoutRepository() )->active( CheckoutPage::shopper_context() );
-    }
-
-    private static function is_preview_order( \WC_Order $order ): bool {
-        $sample = ( new PreviewOrderRepository() )->find();
-
-        return null !== $sample && $sample->get_id() === $order->get_id();
     }
 
     /**

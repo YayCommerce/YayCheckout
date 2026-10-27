@@ -4,7 +4,7 @@ namespace YayCheckout\Repositories;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The one sample order a thank-you preview shows. A `checkout-draft` order, which WooCommerce leaves out
+ * The one sample order the thank-you and pay-order previews show. A `checkout-draft` order, which WooCommerce leaves out
  * of the Orders list and reports, sends no email for and deletes a day after it was last changed; a
  * missing or deleted order is made again on the next preview. Made once and reused, so the hooks that
  * fire when an order is created fire once.
@@ -35,6 +35,13 @@ class PreviewOrderRepository {
         $order = wc_get_order( $id );
 
         return $order instanceof \WC_Order && '' !== (string) $order->get_meta( self::META_FLAG ) ? $order : null;
+    }
+
+    /** True when $order is the sample order: a preview link shows no other. */
+    public function is_sample( \WC_Order $order ): bool {
+        $sample = $this->find();
+
+        return null !== $sample && $sample->get_id() === $order->get_id();
     }
 
     private function create(): \WC_Order {

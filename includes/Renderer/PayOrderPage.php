@@ -2,8 +2,7 @@
 namespace YayCheckout\Renderer;
 
 use YayCheckout\Models\Layout;
-use YayCheckout\Repositories\LayoutRepository;
-use YayCheckout\Repositories\SettingsRepository;
+use YayCheckout\Repositories\PreviewOrderRepository;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -14,7 +13,8 @@ defined( 'ABSPATH' ) || exit;
  * keeps every check (order key, pay_for_order, guest email verification, needs payment, stock). Only
  * checkout/form-pay.php, which WooCommerce reaches once the shopper may pay, is ours: it renders the layout's
  * blocks and is the one place the order is set. Leaves WooCommerce untouched when safe mode is on, no layout is
- * active, or the active layout has no pay-order page.
+ * active, or the active layout has no pay-order page. A preview link renders its own layout over the sample
+ * order (PreviewOrderRepository), and nothing else; that page skips order_pay() (render_preview_form()).
  */
 class PayOrderPage {
     use SingletonTrait;
@@ -26,6 +26,9 @@ class PayOrderPage {
 
     /** @var Layout|null|false false until first resolved. */
     private $layout = false;
+
+    /** The sample order a preview link shows, set by resolve(); null on a shopper's request. */
+    private ?\WC_Order $preview_order = null;
 
     private ?\WC_Order $order = null;
 
@@ -54,6 +57,39 @@ class PayOrderPage {
     /** True when this request is order-pay and a pay-order layout renders it. Meaningful from `wp` on. */
     public function takes_over(): bool {
         return null !== $this->layout();
+    }
+
+    /** True when a preview link renders the sample order. Meaningful from `wp` on. */
+    public function is_preview(): bool {
+        return null !== $this->layout() && null !== $this->preview_order;
+    }
+
+    /**
+     * The preview's form, in place of [woocommerce_checkout]: order_pay() would warn the merchant they are paying
+     * a guest order, check the sample products' stock, and save the sample's empty address to their customer.
+     * Gives form-pay.php what order_pay() gives it; the button is disabled and PreviewRequest refuses the POST.
+     */
+    public function render_preview_form(): void {
+        if ( ! $this->is_preview() ) {
+            return;
+        }
+
+        wc_print_notices();
+
+        $gateways = WC()->payment_gateways()->get_available_payment_gateways();
+        WC()->payment_gateways()->set_current_gateway( $gateways );
+
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- WooCommerce's filter and string, as order_pay() applies them.
+        $button_text = apply_filters( 'woocommerce_pay_order_button_text', __( 'Pay for order', 'woocommerce' ) );
+
+        wc_get_template(
+            self::FORM_TEMPLATE,
+            [
+                'order'              => $this->preview_order,
+                'available_gateways' => $gateways,
+                'order_button_text'  => $button_text,
+            ]
+        );
     }
 
     /** The order WooCommerce let the shopper pay, set once form-pay renders; null before, and when WooCommerce refused. */
@@ -96,10 +132,10 @@ class PayOrderPage {
      * Fires woocommerce_pay_order_before_payment once, from the Express Pay block, where the merchant placed it.
      * Gateways print their express buttons on it (Stripe's Express Checkout Element: Link, Amazon Pay, Apple Pay,
      * Google Pay). A pay-order page without Express Pay never fires it, as the checkout without the block shows
-     * no express buttons.
+     * no express buttons. A preview prints none: a wallet would pay the sample order.
      */
     public function fire_before_payment(): void {
-        if ( ! $this->in_form || $this->before_payment_fired ) {
+        if ( ! $this->in_form || $this->before_payment_fired || null !== $this->preview_order ) {
             return;
         }
 
@@ -159,26 +195,51 @@ class PayOrderPage {
         ( new CheckoutBaseStyles() )->enqueue( true, $layout->design );
     }
 
-    /** The active layout with its content swapped for the pay-order markup, or null. Reads no order: WooCommerce checks it. */
+    /**
+     * The layout with its content swapped for the pay-order markup, or null: a preview link's layout over the
+     * sample order only, else the active one. Reads no shopper's order: WooCommerce checks it.
+     */
     private function resolve(): ?Layout {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing; WooCommerce checks the key.
         if ( ! is_checkout_pay_page() || ! isset( $_GET['pay_for_order'] ) ) {
             return null;
         }
 
-        if ( ( new SettingsRepository() )->is_safe_mode() ) {
-            return null;
-        }
-
-        $layout = ( new LayoutRepository() )->active( CheckoutPage::shopper_context() );
+        $layout = PreviewRequest::preview_or_active_layout();
 
         if ( null === $layout || ! $layout->has_pay_order() ) {
             return null;
+        }
+
+        if ( null !== PreviewRequest::get_instance()->layout_id() ) {
+            $order = $this->sample_order_in_url();
+
+            // A preview link shows only the sample order, so a token can't put a layout over a shopper's order.
+            if ( null === $order ) {
+                return null;
+            }
+
+            $this->preview_order = $order;
         }
 
         // This request's own copy: every reader of $layout->content (the form, LiveValues, enqueue) gets the pay-order page.
         $layout->content = $layout->pay_order_content;
 
         return $layout;
+    }
+
+    /** The sample order when the URL names it with its key, as order_pay() would check; else null. */
+    private function sample_order_in_url(): ?\WC_Order {
+        $order = wc_get_order( absint( get_query_var( 'order-pay' ) ) );
+
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The key is the credential, cleaned like order_pay().
+        $key = isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
+        // phpcs:enable
+
+        if ( ! $order instanceof \WC_Order || '' === $key || ! hash_equals( $order->get_order_key(), $key ) ) {
+            return null;
+        }
+
+        return ( new PreviewOrderRepository() )->is_sample( $order ) ? $order : null;
     }
 }

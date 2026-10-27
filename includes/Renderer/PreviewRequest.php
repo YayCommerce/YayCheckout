@@ -5,6 +5,7 @@ use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Helpers\PreviewToken;
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
+use YayCheckout\Repositories\SettingsRepository;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -74,6 +75,8 @@ class PreviewRequest {
         // must not turn the sample cart into a real order. Before `wp`, because the non-JS
         // form POST is processed at wp_loaded.
         add_action( 'woocommerce_checkout_process', [ $this, 'refuse_order' ] );
+        // The pay-order form posts to its own URL, token included; WC_Form_Handler::pay_action() runs at wp 20.
+        add_action( 'wp', [ $this, 'refuse_payment' ], 19 );
 
         $parsed = PreviewToken::parse( $this->token );
 
@@ -109,6 +112,7 @@ class PreviewRequest {
         // update_order_review swaps the form for "session expired" on an empty cart; a store with no products must still show the layout.
         add_filter( 'woocommerce_checkout_update_order_review_expired', '__return_false' );
         add_filter( 'woocommerce_order_button_html', [ $this, 'disabled_order_button' ] );
+        add_filter( 'woocommerce_pay_order_button_html', [ $this, 'disabled_order_button' ] );
     }
 
     /** Every wc-ajax call and the non-JS form POST carry the token; a hidden input never reaches update_order_review. */
@@ -136,6 +140,35 @@ class PreviewRequest {
 
     public function refuse_order(): void {
         wc_add_notice( __( 'Orders cannot be placed from a preview link.', 'yaycheckout' ), 'error' );
+    }
+
+    /** A pay-order form posted from a preview link is never paid: WooCommerce's pay_action() does not run. */
+    public function refuse_payment(): void {
+        if ( ! isset( $_POST['woocommerce_pay'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only detects the pay form; nothing is read from it.
+            return;
+        }
+
+        remove_action( 'wp', [ \WC_Form_Handler::class, 'pay_action' ], 20 );
+        wc_add_notice( __( 'Orders cannot be paid from a preview link.', 'yaycheckout' ), 'error' );
+    }
+
+    /**
+     * The layout an order page (thank-you, pay-order) renders: a preview link's layout, any state, before the
+     * safe-mode check as on the checkout, since safe mode protects shoppers and a preview is the merchant
+     * looking. Otherwise the active layout, unless safe mode is on. ThemelessCheckout decides with it too.
+     */
+    public static function preview_or_active_layout(): ?Layout {
+        $preview_id = self::get_instance()->layout_id();
+
+        if ( null !== $preview_id ) {
+            return ( new LayoutRepository() )->find( $preview_id );
+        }
+
+        if ( ( new SettingsRepository() )->is_safe_mode() ) {
+            return null;
+        }
+
+        return ( new LayoutRepository() )->active( CheckoutPage::shopper_context() );
     }
 
     /**

@@ -213,8 +213,8 @@ function LayoutActions() {
 			const link = await apiFetch< PreviewLinkWire >( {
 				path: `/yaycheckout/v1/layouts/${ postId }/preview-link`,
 				method: 'POST',
-				// Thank you opens the sample order's order-received page; every other view, the checkout.
-				data: { view: editorData.view.current === 'thank-you' ? 'thank-you' : 'main' },
+				// Thank you and Pay order open the sample order's pages; every other view, the checkout.
+				data: { view: [ 'thank-you', 'pay-order' ].includes( editorData.view.current ) ? editorData.view.current : 'main' },
 			} );
 
 			const url = new URL( link.url );

@@ -3,7 +3,8 @@
  * Pay-order page: our own document, with no theme header or footer, on every theme. Its body is
  * WooCommerce's [woocommerce_checkout], so order_pay() checks the order and the shopper and prints its
  * own notices; when it lets them pay, its checkout/form-pay.php is ours (templates/checkout-form-pay.php),
- * which prints the layout's blocks. wp_head() loads the bundled themeless theme's styles (ThemelessCheckout),
+ * which prints the layout's blocks. A preview link prints the banner and the sample order's form without
+ * order_pay() (PayOrderPage::render_preview_form()). wp_head() loads the bundled themeless theme's styles (ThemelessCheckout),
  * or the site theme's when that is turned off.
  */
 
@@ -18,7 +19,16 @@ defined( 'ABSPATH' ) || exit;
 ob_start();
 ?>
 <div class="woocommerce yaycheckout-page">
-    <?php echo do_shortcode( '[woocommerce_checkout]' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WooCommerce's shortcode output and the layout's blocks, escaped there. ?>
+    <?php
+    $yaycheckout_pay_page = \YayCheckout\Renderer\PayOrderPage::get_instance();
+
+    if ( $yaycheckout_pay_page->is_preview() ) {
+        \YayCheckout\Renderer\PreviewRequest::get_instance()->banner( $yaycheckout_pay_page->layout() );
+        $yaycheckout_pay_page->render_preview_form();
+    } else {
+        echo do_shortcode( '[woocommerce_checkout]' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WooCommerce's shortcode output and the layout's blocks, escaped there.
+    }
+    ?>
 </div>
 <?php
 $yaycheckout_main = (string) ob_get_clean();

@@ -207,13 +207,13 @@ class LayoutRestController extends BaseRestController {
                 [
                     // POST because a link is minted with a fresh expiry; nothing is stored.
                     'methods'             => \WP_REST_Server::CREATABLE,
-                    // exec_write_wp: a thank-you preview makes its sample order the first time.
+                    // exec_write_wp: a thank-you or pay-order preview makes its sample order the first time.
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'create_preview_link' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => $this->id_args() + [
                         'view' => [
                             'type'    => 'string',
-                            'enum'    => [ LayoutEditorEmbed::VIEW_MAIN, LayoutEditorEmbed::VIEW_THANK_YOU ],
+                            'enum'    => [ LayoutEditorEmbed::VIEW_MAIN, LayoutEditorEmbed::VIEW_THANK_YOU, LayoutEditorEmbed::VIEW_PAY_ORDER ],
                             'default' => LayoutEditorEmbed::VIEW_MAIN,
                         ],
                     ],
@@ -442,7 +442,7 @@ class LayoutRestController extends BaseRestController {
     /**
      * Mints an expiring preview URL for any layout, archived included. The lifetime
      * is read now, so changing the setting later leaves issued links as they were.
-     * The thank-you view links to the sample order's order-received page instead of the checkout.
+     * The thank-you and pay-order views link to the sample order's order-received and order-pay pages instead of the checkout.
      *
      * @return array|\WP_Error
      */
@@ -456,9 +456,16 @@ class LayoutRestController extends BaseRestController {
         $lifetime = (int) ( new SettingsRepository() )->get()->advanced['preview_link_lifetime'];
         $minted   = PreviewToken::mint( $id, $lifetime );
 
-        $url = LayoutEditorEmbed::VIEW_THANK_YOU === $request->get_param( 'view' )
-            ? PreviewToken::with_token( ( new PreviewOrderRepository() )->get_or_create()->get_checkout_order_received_url(), $minted['token'] )
-            : PreviewToken::checkout_url( $minted['token'] );
+        switch ( $request->get_param( 'view' ) ) {
+            case LayoutEditorEmbed::VIEW_THANK_YOU:
+                $url = PreviewToken::with_token( ( new PreviewOrderRepository() )->get_or_create()->get_checkout_order_received_url(), $minted['token'] );
+                break;
+            case LayoutEditorEmbed::VIEW_PAY_ORDER:
+                $url = PreviewToken::with_token( ( new PreviewOrderRepository() )->get_or_create()->get_checkout_payment_url(), $minted['token'] );
+                break;
+            default:
+                $url = PreviewToken::checkout_url( $minted['token'] );
+        }
 
         return [
             'url'        => $url,
