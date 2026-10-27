@@ -3,6 +3,7 @@ namespace YayCheckout\Renderer;
 
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
+use YayCheckout\Repositories\PreviewOrderRepository;
 use YayCheckout\Repositories\SettingsRepository;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -12,7 +13,8 @@ defined( 'ABSPATH' ) || exit;
  * Makes the active layout's thank-you page (Layout::META_THANK_YOU) the order-received page: our
  * template in place of WooCommerce's thankyou.php, printing its blocks then the thank-you hooks
  * gateways rely on. Leaves WooCommerce untouched when safe mode is on, no layout is active, the
- * active layout has no thank-you page, or the order key is missing or wrong.
+ * active layout has no thank-you page, or the order key is missing or wrong. A preview link renders
+ * its own layout over the sample order (PreviewOrderRepository), and nothing else.
  */
 class ThankYouPage {
     use SingletonTrait;
@@ -61,6 +63,11 @@ class ThankYouPage {
         // PHP_INT_MAX: must run after block themes swap in template-canvas.php.
         add_filter( 'template_include', [ $this, 'page_template' ], PHP_INT_MAX );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], self::SCRIPTS_PRIORITY );
+
+        // The sample order is a checkout-draft, which WooCommerce counts as payable, so Order Details would offer a Pay action.
+        if ( null !== PreviewRequest::get_instance()->layout_id() ) {
+            add_filter( 'woocommerce_my_account_my_orders_actions', '__return_empty_array', PHP_INT_MAX );
+        }
     }
 
     public function page_template(): string {
@@ -203,11 +210,7 @@ class ThankYouPage {
             return;
         }
 
-        if ( ( new SettingsRepository() )->is_safe_mode() ) {
-            return;
-        }
-
-        $layout = ( new LayoutRepository() )->active( CheckoutPage::shopper_context() );
+        $layout = self::preview_or_active_layout();
 
         if ( null === $layout || ! $layout->has_thank_you() ) {
             return;
@@ -215,7 +218,8 @@ class ThankYouPage {
 
         $order = $this->validated_order();
 
-        if ( null === $order ) {
+        // A preview link shows only the sample order, so a token can't put a layout over a shopper's order.
+        if ( null === $order || ( null !== PreviewRequest::get_instance()->layout_id() && ! self::is_preview_order( $order ) ) ) {
             return;
         }
 
@@ -224,6 +228,31 @@ class ThankYouPage {
 
         $this->layout = $layout;
         $this->order  = $order;
+    }
+
+    /**
+     * A preview link's layout, any state, before the safe-mode check as on the checkout: safe mode protects
+     * shoppers, a preview is the merchant looking. Otherwise the active layout, unless safe mode is on.
+     * ThemelessCheckout decides with it too.
+     */
+    public static function preview_or_active_layout(): ?Layout {
+        $preview_id = PreviewRequest::get_instance()->layout_id();
+
+        if ( null !== $preview_id ) {
+            return ( new LayoutRepository() )->find( $preview_id );
+        }
+
+        if ( ( new SettingsRepository() )->is_safe_mode() ) {
+            return null;
+        }
+
+        return ( new LayoutRepository() )->active( CheckoutPage::shopper_context() );
+    }
+
+    private static function is_preview_order( \WC_Order $order ): bool {
+        $sample = ( new PreviewOrderRepository() )->find();
+
+        return null !== $sample && $sample->get_id() === $order->get_id();
     }
 
     /**

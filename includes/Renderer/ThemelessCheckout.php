@@ -240,13 +240,9 @@ class ThemelessCheckout {
         return null !== ( new LayoutRepository() )->active( CheckoutPage::shopper_context() );
     }
 
-    /** What ThankYouPage needs before takeover, short of the order: safe mode off and an active layout with a thank-you page. */
+    /** What ThankYouPage needs before takeover, short of the order: a layout with a thank-you page, the preview link's or the active one with safe mode off. */
     private function resolves_thank_you_layout(): bool {
-        if ( ( new SettingsRepository() )->is_safe_mode() ) {
-            return false;
-        }
-
-        $layout = ( new LayoutRepository() )->active( CheckoutPage::shopper_context() );
+        $layout = ThankYouPage::preview_or_active_layout();
 
         return null !== $layout && $layout->has_thank_you();
     }

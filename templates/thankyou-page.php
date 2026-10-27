@@ -23,6 +23,12 @@ ob_start();
 ?>
 <div class="woocommerce yaycheckout-page">
     <?php
+    $yaycheckout_preview = \YayCheckout\Renderer\PreviewRequest::get_instance();
+
+    if ( null !== $yaycheckout_layout && null !== $yaycheckout_preview->layout_id() ) {
+        $yaycheckout_preview->banner( $yaycheckout_layout );
+    }
+
     if ( null !== $yaycheckout_layout ) {
         // finalize() decides the blocks whose visibility depends on a block rendered after them.
         echo \YayCheckout\Renderer\BlockVisibility::get_instance()->finalize( \YayCheckout\Renderer\LayoutShortcodes::render( $yaycheckout_layout->content ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block markup, rendered and escaped by each block.
