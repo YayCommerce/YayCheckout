@@ -67,8 +67,8 @@ type Props = {
 };
 
 /**
- * The layout's pages, in a column between the editor's header and footer: Checkout and Thank you, or Add
- * thank-you page while the layout has none. Logged out is a variant of the checkout, so it keeps Checkout
+ * The layout's pages, in a column left of the editor's header and body: Checkout and Thank you, or Add
+ * thank-you page while the layout has none. Guest is a variant of the checkout, so it keeps Checkout
  * selected. A pick goes through LayoutViewSwitch's pick(), so the save-first prompt applies.
  */
 export default function LayoutPages( { current, hasThankYou, disabled, onPick }: Props ) {
@@ -94,7 +94,7 @@ export default function LayoutPages( { current, hasThankYou, disabled, onPick }:
 				onClick={ () => ! isActive && onPick( view ) }
 			>
 				{ icon }
-				{ ! collapsed && <span>{ label }</span> }
+				<span className="yaycheckout-layout-pages__label">{ label }</span>
 			</button>
 		);
 	};
@@ -117,7 +117,7 @@ export default function LayoutPages( { current, hasThankYou, disabled, onPick }:
 				onClick={ toggle }
 			>
 				{ collapsed ? expandIcon : collapseIcon }
-				{ ! collapsed && <span>{ __( 'Collapse', 'yaycheckout' ) }</span> }
+				<span className="yaycheckout-layout-pages__label">{ __( 'Collapse', 'yaycheckout' ) }</span>
 			</button>
 		</nav>
 	);

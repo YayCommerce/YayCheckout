@@ -32,13 +32,13 @@ export function isMainView(): boolean {
 
 const LOADING_MESSAGES: Record< View, string > = {
 	main: __( 'Loading the checkout…', 'yaycheckout' ),
-	'logged-out': __( 'Loading the logged-out view…', 'yaycheckout' ),
+	'logged-out': __( 'Loading the guest view…', 'yaycheckout' ),
 	'thank-you': __( 'Loading the thank-you page…', 'yaycheckout' ),
 };
 
 /**
- * Checkout / Logged out in the toolbar, shown while WooCommerce makes guests log in or while Logged out is open.
- * Checkout and Thank you are picked from LayoutPages, a column between the editor's header and footer, through
+ * Logged in / Guest in the toolbar, shown while WooCommerce makes guests log in or while Guest is open.
+ * Checkout and Thank you are picked from LayoutPages, a column left of the editor's header and body, through
  * pick(). Picking Thank you on a layout without one first writes its template's (POST /layouts/{id}/thank-you, LayoutRepository::add_thank_you()).
  * Each view is its own page load; unsaved edits are saved first, or dropped when the merchant chooses,
  * never carried across.
@@ -141,9 +141,9 @@ export default function LayoutViewSwitch( { pagesSlot }: { pagesSlot: HTMLElemen
 					value={ pending?.view ?? current }
 					onChange={ ( value ) => pick( value as View ) }
 				>
-					<ToggleGroupControlOption value="main" label={ __( 'Checkout', 'yaycheckout' ) } />
+					<ToggleGroupControlOption value="main" label={ __( 'Logged in', 'yaycheckout' ) } />
 					{ showLoggedOut && (
-						<ToggleGroupControlOption value="logged-out" label={ __( 'Logged out', 'yaycheckout' ) } />
+						<ToggleGroupControlOption value="logged-out" label={ __( 'Guest', 'yaycheckout' ) } />
 					) }
 				</ToggleGroupControl>
 			) }

@@ -20,8 +20,8 @@ const MOUNTED_CLASS = 'yaycheckout-has-layout-actions';
 /** The header's settings area (right) and toolbar (left): editor-header from WordPress 6.6, edit-post-header in 6.5. */
 const HEADER_SELECTOR = '.editor-header__settings, .edit-post-header__settings';
 const TOOLBAR_SELECTOR = '.editor-header__toolbar, .edit-post-header__toolbar';
-/** The row between the header and the footer: canvas and sidebars. The pages column goes first in it. */
-const BODY_SELECTOR = '.interface-interface-skeleton__body';
+/** The header and, below it, the canvas and sidebars, above the footer. The pages column goes first in it, left of both. */
+const EDITOR_SELECTOR = '.interface-interface-skeleton__editor';
 
 type Action = 'activate' | 'deactivate';
 
@@ -61,7 +61,7 @@ function copyFor( action: Action, title: string ) {
  * A container added to a header area once it renders; the header can appear after the plugin, and core
  * rebuilds it on entering and leaving revisions mode, so the container is put back whenever it drops out.
  * The settings slot also tags the body with MOUNTED_CLASS while it is in the header. The pages slot goes
- * first in the editor body instead, between the header and the footer.
+ * first in the editor area instead, left of the header and the body, above the footer.
  */
 function useHeaderSlot( enabled: boolean, area: 'settings' | 'toolbar' | 'pages' ): HTMLElement | null {
 	const [ slot, setSlot ] = useState< HTMLElement | null >( null );
@@ -80,7 +80,7 @@ function useHeaderSlot( enabled: boolean, area: 'settings' | 'toolbar' | 'pages'
 				return;
 			}
 
-			const header = document.querySelector( { settings: HEADER_SELECTOR, toolbar: TOOLBAR_SELECTOR, pages: BODY_SELECTOR }[ area ] );
+			const header = document.querySelector( { settings: HEADER_SELECTOR, toolbar: TOOLBAR_SELECTOR, pages: EDITOR_SELECTOR }[ area ] );
 
 			if ( isSettings ) {
 				document.body.classList.toggle( MOUNTED_CLASS, !! header );
