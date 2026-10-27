@@ -4,7 +4,7 @@
  * order-details.php loads after the order table. Optional titles from the block override WooCommerce's
  * gettext while the template prints. Wrapper holds block style supports. Prints nothing when there is
  * no validated order, or when WooCommerce would hide customer details (order user id does not match
- * the current user).
+ * the current user), except on a preview link.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
@@ -19,8 +19,9 @@ if ( null === $yaycheckout_order ) {
     return;
 }
 
-// Same gate as woocommerce/templates/order/order-details.php before order-details-customer.php.
-if ( $yaycheckout_order->get_user_id() !== get_current_user_id() ) {
+// Same gate as woocommerce/templates/order/order-details.php before order-details-customer.php. A preview
+// shows the guest sample order to the merchant, so it skips the gate.
+if ( null === \YayCheckout\Renderer\PreviewRequest::get_instance()->layout_id() && $yaycheckout_order->get_user_id() !== get_current_user_id() ) {
     return;
 }
 
