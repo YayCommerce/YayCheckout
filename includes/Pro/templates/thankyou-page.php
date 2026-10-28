@@ -1,6 +1,6 @@
 <?php
 /**
- * Thank-you page: the layout's blocks in our own document, with no theme header
+ * Pro's thank-you page (Pro\Renderer\ThankYouPage::page_template()): the layout's blocks in our own document, with no theme header
  * or footer, on every theme. After the markup, WooCommerce's thank-you hooks
  * fire so gateways can print payment instructions. wp_head() loads the bundled
  * themeless theme's styles (ThemelessCheckout), or the site theme's when that
@@ -9,7 +9,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_thank_you = \YayCheckout\Renderer\ThankYouPage::get_instance();
+$yaycheckout_thank_you = \YayCheckout\Pro\Renderer\ThankYouPage::get_instance();
 $yaycheckout_layout    = $yaycheckout_thank_you->layout();
 $yaycheckout_order     = $yaycheckout_thank_you->order();
 

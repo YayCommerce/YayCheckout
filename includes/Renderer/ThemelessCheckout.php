@@ -42,7 +42,7 @@ class ThemelessCheckout {
     public function maybe_swap(): void {
         $storefront = $this->is_storefront_request() && (
             ( $this->is_checkout_form_request() && $this->resolves_layout() )
-            || ( $this->is_order_received_request() && $this->resolves_thank_you_layout() )
+            || ( $this->is_order_received_request() && $this->layout_renders_order_received() )
         );
 
         if ( ! $storefront && ! $this->is_layout_editor_request() ) {
@@ -210,11 +210,15 @@ class ThemelessCheckout {
         return null !== ( new LayoutRepository() )->active( CheckoutPage::shopper_context() );
     }
 
-    /** What ThankYouPage needs before takeover, short of the order: a layout with a thank-you page, the preview link's or the active one with safe mode off. */
-    private function resolves_thank_you_layout(): bool {
-        $layout = ThankYouPage::preview_or_active_layout();
-
-        return null !== $layout && $layout->has_thank_you();
+    /** Whether a layout renders this order-received request. Free leaves order-received to WooCommerce; Pro's thank-you page answers. */
+    private function layout_renders_order_received(): bool {
+        /**
+         * Whether a layout renders this order-received request, short of checking the order. Runs at
+         * setup_theme, before the main query.
+         *
+         * @param bool $renders Default false.
+         */
+        return (bool) apply_filters( 'yaycheckout_layout_renders_order_received', false );
     }
 
     /** The request path below home, decoded, without slashes at either end. */

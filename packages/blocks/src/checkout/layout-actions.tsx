@@ -211,10 +211,12 @@ function LayoutActions() {
 		setPreviewing( true );
 		try {
 			const link = await apiFetch< PreviewLinkWire >( {
-				path: `/yaycheckout/v1/layouts/${ postId }/preview-link`,
+				// Thank you (Pro's route) opens the sample order's order-received page; every other view, the checkout.
+				path:
+					editorData.view.current === 'thank-you'
+						? `/yaycheckout/v1/layouts/${ postId }/thank-you/preview-link`
+						: `/yaycheckout/v1/layouts/${ postId }/preview-link`,
 				method: 'POST',
-				// Thank you opens the sample order's order-received page; every other view, the checkout.
-				data: { view: editorData.view.current === 'thank-you' ? 'thank-you' : 'main' },
 			} );
 
 			const url = new URL( link.url );

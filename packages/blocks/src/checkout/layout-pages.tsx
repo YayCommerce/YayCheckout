@@ -1,6 +1,7 @@
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import type { EditorView } from '../shared/editor-data';
+import { editorData, type EditorView } from '../shared/editor-data';
+import '../shared/pro-upgrade-notice.css';
 import './layout-pages.css';
 
 type View = EditorView[ 'current' ];
@@ -70,10 +71,29 @@ type Props = {
  * The layout's pages, in a column left of the editor's header and body: Checkout and Thank you, or Add
  * thank-you page while the layout has none. Guest is a variant of the checkout, so it keeps Checkout
  * selected. A pick goes through LayoutViewSwitch's pick(), so the save-first prompt applies.
+ * The thank-you page is Pro: in Free, Thank you is a locked link to the upgrade page, since Free's PHP has
+ * no Thank you view, no route that adds one and no order blocks.
  */
 export default function LayoutPages( { current, hasThankYou, disabled, onPick }: Props ) {
 	const [ collapsed, setCollapsed ] = useState( readCollapsed );
 	const active: View = current === 'thank-you' ? 'thank-you' : 'main';
+
+	const lockedThankYou = (
+		<a
+			className="yaycheckout-layout-pages__item is-locked"
+			href={ editorData.upgradeUrl }
+			target="_blank"
+			rel="noreferrer"
+			aria-label={ collapsed ? __( 'Thank you (Pro)', 'yaycheckout' ) : undefined }
+			title={ __( 'Thank-you pages are part of YayCheckout Pro. Upgrade to customize the order-received page.', 'yaycheckout' ) }
+		>
+			{ thankYouIcon }
+			<span className="yaycheckout-layout-pages__label">
+				{ __( 'Thank you', 'yaycheckout' ) }
+				<span className="yaycheckout-pro-tag">{ __( 'Pro', 'yaycheckout' ) }</span>
+			</span>
+		</a>
+	);
 
 	const toggle = () => {
 		writeCollapsed( ! collapsed );
@@ -105,9 +125,11 @@ export default function LayoutPages( { current, hasThankYou, disabled, onPick }:
 			aria-label={ __( 'Layout pages', 'yaycheckout' ) }
 		>
 			{ item( 'main', __( 'Checkout', 'yaycheckout' ), cartIcon ) }
-			{ hasThankYou || current === 'thank-you'
-				? item( 'thank-you', __( 'Thank you', 'yaycheckout' ), thankYouIcon )
-				: item( 'thank-you', __( 'Add thank-you page', 'yaycheckout' ), addIcon, ' is-add' ) }
+			{ ! editorData.isPro && lockedThankYou }
+			{ editorData.isPro &&
+				( hasThankYou || current === 'thank-you'
+					? item( 'thank-you', __( 'Thank you', 'yaycheckout' ), thankYouIcon )
+					: item( 'thank-you', __( 'Add thank-you page', 'yaycheckout' ), addIcon, ' is-add' ) ) }
 			<button
 				type="button"
 				className="yaycheckout-layout-pages__toggle"

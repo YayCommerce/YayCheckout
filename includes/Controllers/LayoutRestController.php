@@ -1,7 +1,6 @@
 <?php
 namespace YayCheckout\Controllers;
 
-use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Helpers\DateHelper;
 use YayCheckout\Helpers\ExceptionHelper;
@@ -9,7 +8,6 @@ use YayCheckout\Helpers\PreviewToken;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Repositories\LayoutRepository;
-use YayCheckout\Repositories\PreviewOrderRepository;
 use YayCheckout\Repositories\SettingsRepository;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -207,16 +205,9 @@ class LayoutRestController extends BaseRestController {
                 [
                     // POST because a link is minted with a fresh expiry; nothing is stored.
                     'methods'             => \WP_REST_Server::CREATABLE,
-                    // exec_write_wp: a thank-you preview makes its sample order the first time.
-                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'create_preview_link' ], $request ),
+                    'callback'            => fn( $request ) => $this->exec_read( [ $this, 'create_preview_link' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
-                    'args'                => $this->id_args() + [
-                        'view' => [
-                            'type'    => 'string',
-                            'enum'    => [ LayoutEditorEmbed::VIEW_MAIN, LayoutEditorEmbed::VIEW_THANK_YOU ],
-                            'default' => LayoutEditorEmbed::VIEW_MAIN,
-                        ],
-                    ],
+                    'args'                => $this->id_args(),
                 ],
             ]
         );
@@ -228,19 +219,6 @@ class LayoutRestController extends BaseRestController {
                 [
                     'methods'             => \WP_REST_Server::CREATABLE,
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'duplicate_layout' ], $request ),
-                    'permission_callback' => [ $this, 'permission_callback' ],
-                    'args'                => $this->id_args(),
-                ],
-            ]
-        );
-
-        register_rest_route(
-            self::REST_NAMESPACE,
-            '/layouts/(?P<id>\d+)/thank-you',
-            [
-                [
-                    'methods'             => \WP_REST_Server::CREATABLE,
-                    'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'add_thank_you_layout' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
                     'args'                => $this->id_args(),
                 ],
@@ -391,15 +369,6 @@ class LayoutRestController extends BaseRestController {
     }
 
     /**
-     * Gives a layout its thank-you page from the layout editor's Add thank-you page button.
-     *
-     * @return array|\WP_Error
-     */
-    public function add_thank_you_layout( \WP_REST_Request $request ) {
-        return $this->change_layout( $request, fn( int $id ) => $this->layouts->add_thank_you( $id ) );
-    }
-
-    /**
      * Changes a layout's title from the layouts list's Rename action.
      *
      * @return array|\WP_Error
@@ -420,7 +389,6 @@ class LayoutRestController extends BaseRestController {
     /**
      * Mints an expiring preview URL for any layout, archived included. The lifetime
      * is read now, so changing the setting later leaves issued links as they were.
-     * The thank-you view links to the sample order's order-received page instead of the checkout.
      *
      * @return array|\WP_Error
      */
@@ -434,12 +402,8 @@ class LayoutRestController extends BaseRestController {
         $lifetime = (int) ( new SettingsRepository() )->get()->advanced['preview_link_lifetime'];
         $minted   = PreviewToken::mint( $id, $lifetime );
 
-        $url = LayoutEditorEmbed::VIEW_THANK_YOU === $request->get_param( 'view' )
-            ? PreviewToken::with_token( ( new PreviewOrderRepository() )->get_or_create()->get_checkout_order_received_url(), $minted['token'] )
-            : PreviewToken::checkout_url( $minted['token'] );
-
         return [
-            'url'        => $url,
+            'url'        => PreviewToken::checkout_url( $minted['token'] ),
             'expires_at' => DateHelper::to_iso8601( gmdate( 'Y-m-d H:i:s', $minted['expires_at'] ) ),
         ];
     }

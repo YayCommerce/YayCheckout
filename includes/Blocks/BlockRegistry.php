@@ -99,7 +99,7 @@ class BlockRegistry {
     ];
 
     /**
-     * The Pro blocks: the step blocks, built under assets/dist/blocks/pro/. Free registers them only in
+     * The Pro blocks: the step blocks and the thank-you page's Order Details and Order Addresses, built under assets/dist/blocks/pro/. Free registers them only in
      * JavaScript, as locked stubs, so allowed_blocks() adds them to the layout editor's list. Lists the
      * folders under packages/blocks/src/pro/, as PRO_BLOCK_METAS in packages/blocks/src/shared/pro-blocks.ts
      * does; scripts/check-pro-boundary.sh checks both against those folders.
@@ -111,6 +111,8 @@ class BlockRegistry {
         'yaycheckout/step-button',
         'yaycheckout/back-button',
         'yaycheckout/go-to-step',
+        'yaycheckout/order-details',
+        'yaycheckout/order-customer-details',
     ];
 
     protected function __construct() {

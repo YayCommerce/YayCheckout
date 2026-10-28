@@ -104,6 +104,20 @@
 	cursor: default;
 }
 
+.yaycheckout-layout-pages__item.is-locked {
+	box-sizing: border-box;
+	text-decoration: none;
+}
+
+.yaycheckout-layout-pages__item.is-locked:hover {
+	color: #1e1e1e;
+	background: #f0f0f0;
+}
+
+.yaycheckout-layout-pages__item.is-locked .yaycheckout-pro-tag {
+	margin: 0 0 0 6px;
+}
+
 .yaycheckout-layout-pages__item.is-add {
 	border-style: dashed;
 }

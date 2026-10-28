@@ -1,20 +1,27 @@
 <?php
-namespace YayCheckout\Renderer;
+namespace YayCheckout\Pro\Renderer;
 
+use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Models\Layout;
+use YayCheckout\Pro\Repositories\PreviewOrderRepository;
+use YayCheckout\Renderer\CheckoutBaseStyles;
+use YayCheckout\Renderer\CheckoutPage;
+use YayCheckout\Renderer\PreviewRequest;
 use YayCheckout\Repositories\LayoutRepository;
-use YayCheckout\Repositories\PreviewOrderRepository;
 use YayCheckout\Repositories\SettingsRepository;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Makes the active layout's thank-you page (Layout::META_THANK_YOU) the order-received page: our
+ * Pro: makes the active layout's thank-you page (Layout::META_THANK_YOU) the order-received page: our
  * template in place of WooCommerce's thankyou.php, printing its blocks then the thank-you hooks
  * gateways rely on. Leaves WooCommerce untouched when safe mode is on, no layout is active, the
  * active layout has no thank-you page, or the order key is missing or wrong. A preview link renders
  * its own layout over the sample order (PreviewOrderRepository), and nothing else.
+ *
+ * Attaches to core through its filters only: the Thank you editor view, the themeless swap, the admin
+ * bar's Edit Layout, and the live values. Free has none of it, so order-received stays WooCommerce's.
  */
 class ThankYouPage {
     use SingletonTrait;
@@ -28,8 +35,89 @@ class ThankYouPage {
     /** @var \WC_Order|null|false false until first resolved. */
     private $order = false;
 
+    /** @var array<string, array{text: string, empty: bool}>|null The order's live values, read once per request. */
+    private $live_values = null;
+
     protected function __construct() {
         add_action( 'wp', [ $this, 'maybe_take_over' ] );
+        add_filter( 'yaycheckout_editor_views', [ $this, 'editor_views' ] );
+        add_filter( 'yaycheckout_layout_renders_order_received', [ $this, 'renders_order_received' ] );
+        add_filter( 'yaycheckout_admin_bar_layout', [ $this, 'admin_bar_layout' ] );
+        add_filter( 'yaycheckout_live_values_source', [ $this, 'live_values_source' ] );
+        add_filter( 'yaycheckout_live_value_labels', [ OrderLiveValues::class, 'labels' ] );
+    }
+
+    /**
+     * Adds the Thank you editor view, kept in Layout::META_THANK_YOU.
+     *
+     * @param array<string, string> $views View => meta key.
+     * @return array<string, string>
+     */
+    public function editor_views( $views ): array {
+        $views = is_array( $views ) ? $views : [];
+
+        $views[ LayoutEditorEmbed::VIEW_THANK_YOU ] = Layout::META_THANK_YOU;
+
+        return $views;
+    }
+
+    /**
+     * At setup_theme, on an order-received URL: whether a layout with a thank-you page would render it,
+     * short of the order, which the main query has yet to name.
+     *
+     * @param bool $renders
+     */
+    public function renders_order_received( $renders ): bool {
+        if ( $renders ) {
+            return true;
+        }
+
+        $layout = self::preview_or_active_layout();
+
+        return null !== $layout && $layout->has_thank_you();
+    }
+
+    /**
+     * The Edit Layout item on a page this renders opens the layout's Thank you view.
+     *
+     * @param mixed $rendered
+     * @return mixed
+     */
+    public function admin_bar_layout( $rendered ) {
+        if ( null !== $rendered || ! $this->takes_over() ) {
+            return $rendered;
+        }
+
+        return [
+            'layout' => $this->layout(),
+            'view'   => LayoutEditorEmbed::VIEW_THANK_YOU,
+        ];
+    }
+
+    /**
+     * On a page this renders, the live value spans read the order: its totals, overview and address fields.
+     *
+     * @param mixed $source
+     * @return mixed
+     */
+    public function live_values_source( $source ) {
+        if ( null !== $source || ! $this->takes_over() ) {
+            return $source;
+        }
+
+        $order = $this->order();
+
+        if ( null === $this->live_values ) {
+            $this->live_values = OrderLiveValues::values( $order );
+        }
+
+        return [
+            'layout' => $this->layout(),
+            'values' => $this->live_values,
+            'field'  => static function ( string $field ) use ( $order ): ?array {
+                return OrderLiveValues::field( $order, $field );
+            },
+        ];
     }
 
     /** The layout to render, its content already the thank-you markup, or null when the renderer stands down. Memoised per request. */
@@ -71,7 +159,7 @@ class ThankYouPage {
     }
 
     public function page_template(): string {
-        return YAYCHECKOUT_PLUGIN_DIR . 'templates/thankyou-page.php';
+        return YAYCHECKOUT_PLUGIN_DIR . 'includes/Pro/templates/thankyou-page.php';
     }
 
     /** Base stylesheet and design tokens only: no WooCommerce checkout scripts on thank-you. */
@@ -220,7 +308,7 @@ class ThankYouPage {
     /**
      * A preview link's layout, any state, before the safe-mode check as on the checkout: safe mode protects
      * shoppers, a preview is the merchant looking. Otherwise the active layout, unless safe mode is on.
-     * ThemelessCheckout decides with it too.
+     * renders_order_received() decides ThemelessCheckout's swap with it too.
      */
     public static function preview_or_active_layout(): ?Layout {
         $preview_id = PreviewRequest::get_instance()->layout_id();

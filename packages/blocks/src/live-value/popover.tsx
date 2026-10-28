@@ -10,7 +10,7 @@ import { FIELD_PREFIX, LIVE_VALUE_CLASS, LIVE_VALUE_FORMAT } from './constants';
 /** LiveValues::cart_values() keys ending in this are counts; the rest are money. */
 const COUNT_SUFFIX = '_count';
 
-/** LiveValues::order_received_values() keys start with this; the Order received picker group. */
+/** Pro's order-received keys (Pro\Renderer\OrderLiveValues::labels()) start with this: the Order received picker group, absent in Free. */
 const ORDER_PREFIX = 'order_';
 
 const CART_GROUPS = [
@@ -48,6 +48,7 @@ export default function LiveValuePopover( { value, onChange, contentRef, editing
 	const fields = useShowableFields();
 	const names = useMemo( () => fieldNames( fields ), [ fields ] );
 	const cart = Object.entries( editorData.liveValues );
+	const orderValues = cart.filter( ( [ cartKey ] ) => cartKey.startsWith( ORDER_PREFIX ) );
 
 	const labelOf = ( picked: string ): string =>
 		picked.startsWith( FIELD_PREFIX ) ? names.get( picked.slice( FIELD_PREFIX.length ) ) ?? picked : editorData.liveValues[ picked ] ?? picked;
@@ -85,15 +86,15 @@ export default function LiveValuePopover( { value, onChange, contentRef, editing
 					<option value="" disabled>
 						{ __( 'Select a value', 'yaycheckout' ) }
 					</option>
-					<optgroup label={ __( 'Order received', 'yaycheckout' ) }>
-						{ cart
-							.filter( ( [ cartKey ] ) => cartKey.startsWith( ORDER_PREFIX ) )
-							.map( ( [ cartKey, cartLabel ] ) => (
+					{ orderValues.length > 0 && (
+						<optgroup label={ __( 'Order received', 'yaycheckout' ) }>
+							{ orderValues.map( ( [ cartKey, cartLabel ] ) => (
 								<option key={ cartKey } value={ cartKey }>
 									{ cartLabel }
 								</option>
 							) ) }
-					</optgroup>
+						</optgroup>
+					) }
 					{ CART_GROUPS.map( ( { label, counts } ) => (
 						<optgroup key={ label } label={ label }>
 							{ cart

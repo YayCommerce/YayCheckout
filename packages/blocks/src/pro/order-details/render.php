@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_order = \YayCheckout\Renderer\ThankYouPage::get_instance()->order();
+$yaycheckout_order = \YayCheckout\Pro\Renderer\ThankYouPage::get_instance()->order();
 
 if ( null === $yaycheckout_order ) {
     return;
@@ -42,7 +42,7 @@ if ( $yaycheckout_show_title ) {
 }
 
 ob_start();
-\YayCheckout\Renderer\ThankYouPage::with_woocommerce_label_overrides(
+\YayCheckout\Pro\Renderer\ThankYouPage::with_woocommerce_label_overrides(
     $yaycheckout_overrides,
     static function () use ( $yaycheckout_order ): void {
         woocommerce_order_details_table( $yaycheckout_order->get_id() );
@@ -51,10 +51,10 @@ ob_start();
 $yaycheckout_table = (string) ob_get_clean();
 
 // woocommerce_order_details_table always appends order-details-customer.php; Order Addresses owns that.
-$yaycheckout_table = \YayCheckout\Renderer\ThankYouPage::without_customer_details( $yaycheckout_table );
+$yaycheckout_table = \YayCheckout\Pro\Renderer\ThankYouPage::without_customer_details( $yaycheckout_table );
 
 if ( ! $yaycheckout_show_title ) {
-    $yaycheckout_table = \YayCheckout\Renderer\ThankYouPage::without_order_details_title( $yaycheckout_table );
+    $yaycheckout_table = \YayCheckout\Pro\Renderer\ThankYouPage::without_order_details_title( $yaycheckout_table );
 }
 
 if ( '' === trim( $yaycheckout_table ) ) {
