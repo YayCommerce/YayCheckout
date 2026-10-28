@@ -33,8 +33,8 @@ export type EditorDesign = {
 export type EditorView = {
 	/**
 	 * LayoutEditorEmbed::VIEW_MAIN, VIEW_LOGGED_OUT, VIEW_THANK_YOU or VIEW_PAY_ORDER. Logged out edits the markup a guest
-	 * who must log in sees (Layout::META_LOGGED_OUT); Thank you edits the order-received page (Layout::META_THANK_YOU);
-	 * Pay order edits the order-pay page (Layout::META_PAY_ORDER).
+	 * who must log in sees (Layout::META_LOGGED_OUT); in Pro, Thank you edits the order-received page
+	 * (Layout::META_THANK_YOU) and Pay order the order-pay page (Layout::META_PAY_ORDER).
 	 */
 	current: 'main' | 'logged-out' | 'thank-you' | 'pay-order';
 	/** CheckoutLogin::login_required(): WooCommerce makes guests log in before checkout. */
@@ -45,7 +45,7 @@ export type EditorView = {
 	hasPayOrder: boolean;
 	/** LayoutEditorEmbed::QUERY_VIEW. */
 	queryArg: string;
-	/** The embedded editor for each view of this layout: LayoutEditorEmbed::view_urls(). thank-you is there only in Pro. */
+	/** The embedded editor for each view of this layout: LayoutEditorEmbed::view_urls(). thank-you and pay-order are there only in Pro. */
 	urls: Record< 'main' | 'logged-out' | 'thank-you' | 'pay-order', string >;
 };
 

@@ -335,8 +335,8 @@ class LayoutRepository {
 
     /**
      * Creates a layout draft from a catalogue template: its markup, which is a complete checkout, so
-     * activating it as-is lets a shopper place an order, its design, its logged-out view, its pay-order page and, in
-     * Pro, its thank-you page. The post type's template only applies to auto-drafts, not to this insert.
+     * activating it as-is lets a shopper place an order, its design, its logged-out view and, in Pro, its thank-you
+     * and pay-order pages. The post type's template only applies to auto-drafts, not to this insert.
      *
      * @throws \InvalidArgumentException When the template is not available or the insert fails.
      */
@@ -348,9 +348,9 @@ class LayoutRepository {
             LayoutTemplateCatalogue::design( $template_slug ),
             $template_slug,
             LayoutTemplateCatalogue::logged_out_markup( $template_slug ),
-            // The thank-you page is Pro; Free has neither its blocks nor its starter markup.
+            // The thank-you and pay-order pages are Pro; Free has neither their order blocks nor their starter markup.
             Plan::is_pro() ? LayoutTemplateCatalogue::thank_you_markup( $template_slug ) : '',
-            LayoutTemplateCatalogue::pay_order_markup( $template_slug )
+            Plan::is_pro() ? LayoutTemplateCatalogue::pay_order_markup( $template_slug ) : ''
         );
     }
 
@@ -441,12 +441,16 @@ class LayoutRepository {
     }
 
     /**
-     * Gives a layout made before pay-order pages its template's pay-order page (or the shared one), from
-     * the layout editor's Add pay-order page button. Never overwrites one the layout already has.
+     * Gives a layout made before pay-order pages, or in Free, its template's pay-order page (or the shared one),
+     * from the layout editor's Add pay-order page button through Pro's route. Never overwrites one the layout already has.
      *
-     * @throws \InvalidArgumentException When the layout is missing, archived, already has a pay-order page, or the update fails.
+     * @throws \InvalidArgumentException When this is not Pro, the layout is missing, archived, already has a pay-order page, or the update fails.
      */
     public function add_pay_order( int $id ): Layout {
+        if ( ! Plan::is_pro() ) {
+            throw new \InvalidArgumentException( esc_html__( 'Pay-order pages are part of YayCheckout Pro.', 'yaycheckout' ) );
+        }
+
         $layout = $this->find_or_throw( $id );
 
         if ( LayoutStatus::ARCHIVED === $layout->post_status ) {

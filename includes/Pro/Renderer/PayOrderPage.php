@@ -1,22 +1,27 @@
 <?php
-namespace YayCheckout\Renderer;
+namespace YayCheckout\Pro\Renderer;
 
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Models\Layout;
-use YayCheckout\Pro\Renderer\OrderLiveValues;
 use YayCheckout\Pro\Repositories\PreviewOrderRepository;
+use YayCheckout\Renderer\CheckoutBaseStyles;
+use YayCheckout\Renderer\PreviewRequest;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Makes the active layout's pay-order page (Layout::META_PAY_ORDER) the order-pay page. The page itself is our
+ * Pro: makes the active layout's pay-order page (Layout::META_PAY_ORDER) the order-pay page. The page itself is our
  * themeless document, which still runs WooCommerce's [woocommerce_checkout], so WC_Shortcode_Checkout::order_pay()
  * keeps every check (order key, pay_for_order, guest email verification, needs payment, stock). Only
  * checkout/form-pay.php, which WooCommerce reaches once the shopper may pay, is ours: it renders the layout's
  * blocks and is the one place the order is set. Leaves WooCommerce untouched when safe mode is on, no layout is
  * active, or the active layout has no pay-order page. A preview link renders its own layout over the sample
  * order (PreviewOrderRepository), and nothing else; that page skips order_pay() (render_preview_form()).
+ *
+ * Attaches to core through its filters only: the Pay order editor view, the themeless swap, the admin bar's
+ * Edit Layout, the live values, and the pay form the core checkout blocks render inside (PayOrderForm). Free
+ * has none of it, so order-pay stays WooCommerce's.
  */
 class PayOrderPage {
     use SingletonTrait;
@@ -49,8 +54,11 @@ class PayOrderPage {
     protected function __construct() {
         add_action( 'wp', [ $this, 'maybe_take_over' ] );
         add_filter( 'yaycheckout_editor_views', [ $this, 'editor_views' ] );
+        add_filter( 'yaycheckout_layout_renders_order_pay', [ $this, 'renders_order_pay' ] );
         add_filter( 'yaycheckout_admin_bar_layout', [ $this, 'admin_bar_layout' ] );
         add_filter( 'yaycheckout_live_values_source', [ $this, 'live_values_source' ] );
+        add_filter( 'yaycheckout_pay_order_form', [ $this, 'pay_order_form' ] );
+        add_action( 'yaycheckout_pay_order_express_pay', [ $this, 'fire_before_payment' ] );
     }
 
     /**
@@ -65,6 +73,42 @@ class PayOrderPage {
         $views[ LayoutEditorEmbed::VIEW_PAY_ORDER ] = Layout::META_PAY_ORDER;
 
         return $views;
+    }
+
+    /**
+     * At setup_theme, on an order-pay URL with pay_for_order: whether a layout with a pay-order page would render it,
+     * short of the order, which WooCommerce checks later.
+     *
+     * @param bool $renders
+     */
+    public function renders_order_pay( $renders ): bool {
+        if ( $renders ) {
+            return true;
+        }
+
+        $layout = PreviewRequest::preview_or_active_layout();
+
+        return null !== $layout && $layout->has_pay_order();
+    }
+
+    /**
+     * While includes/Pro/templates/checkout-form-pay.php renders the blocks: the form they sit inside, for core's
+     * Checkout, Payment, Terms and Place order blocks (PayOrderForm::current()).
+     *
+     * @param mixed $form
+     * @return mixed
+     */
+    public function pay_order_form( $form ) {
+        if ( null !== $form || ! $this->in_form || null === $this->order || null === $this->layout() ) {
+            return $form;
+        }
+
+        return [
+            'layout'      => $this->layout(),
+            'order'       => $this->order,
+            'gateways'    => $this->gateways,
+            'button_text' => $this->button_text,
+        ];
     }
 
     /**
@@ -176,13 +220,13 @@ class PayOrderPage {
         return $this->button_text;
     }
 
-    /** True while templates/checkout-form-pay.php renders the layout's blocks. */
+    /** True while includes/Pro/templates/checkout-form-pay.php renders the layout's blocks. */
     public function in_form(): bool {
         return $this->in_form;
     }
 
     /**
-     * Called by templates/checkout-form-pay.php with the values WooCommerce gives form-pay.php.
+     * Called by includes/Pro/templates/checkout-form-pay.php with the values WooCommerce gives form-pay.php.
      *
      * @param \WC_Payment_Gateway[] $gateways Available gateways.
      */
@@ -194,7 +238,8 @@ class PayOrderPage {
     }
 
     /**
-     * Fires woocommerce_pay_order_before_payment once, from the Express Pay block, where the merchant placed it.
+     * Fires woocommerce_pay_order_before_payment once, from the Express Pay block, where the merchant placed it
+     * (core's yaycheckout_pay_order_express_pay, PayOrderForm::express_pay()).
      * Gateways print their express buttons on it (Stripe's Express Checkout Element: Link, Amazon Pay, Apple Pay,
      * Google Pay). A pay-order page without Express Pay never fires it, as the checkout without the block shows
      * no express buttons. A preview prints none: a wallet would pay the sample order.
@@ -227,7 +272,7 @@ class PayOrderPage {
     }
 
     public function page_template(): string {
-        return YAYCHECKOUT_PLUGIN_DIR . 'templates/pay-order-page.php';
+        return YAYCHECKOUT_PLUGIN_DIR . 'includes/Pro/templates/pay-order-page.php';
     }
 
     /** Our form-pay.php in place of WooCommerce's (or the theme's) while a layout takes over; every other template as located. */
@@ -236,7 +281,7 @@ class PayOrderPage {
             return $template;
         }
 
-        return YAYCHECKOUT_PLUGIN_DIR . 'templates/checkout-form-pay.php';
+        return YAYCHECKOUT_PLUGIN_DIR . 'includes/Pro/templates/checkout-form-pay.php';
     }
 
     /** Base stylesheet and design tokens; wc-checkout stays, its #order_review handlers run on body.woocommerce-order-pay. */

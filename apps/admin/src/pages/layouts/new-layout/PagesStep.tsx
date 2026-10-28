@@ -13,8 +13,8 @@ import { TemplatePreview } from '@/components/shared/template-picker/TemplatePre
 
 /**
  * The pages the new layout comes with, previewed side by side: its checkout, thank-you and pay-order pages.
- * Create layout makes all three in Pro; the server writes the thank-you and pay-order pages from the template.
- * The thank-you page is Pro, so Free shows its card locked, an upsell only: Free's server makes no thank-you page.
+ * In Pro, Create layout makes all three; the server writes the thank-you and pay-order pages from the template.
+ * Those two pages are Pro, so Free shows their cards locked, an upsell only: Free's server makes the checkout alone.
  */
 export function PagesStep({
   template,
@@ -58,12 +58,22 @@ export function PagesStep({
             )}
           </TemplatePreview>
         </PageCard>
-        <PageCard title={__('Pay order', 'yaycheckout')}>
+        <PageCard
+          title={__('Pay order', 'yaycheckout')}
+          hint={isPro ? undefined : __('Upgrade to Pro to customize the pay-order page', 'yaycheckout')}
+        >
           <TemplatePreview
             template={template}
             previewUrl={template.payOrderPreviewUrl}
             placeholder={__('Preview coming soon', 'yaycheckout')}
-          />
+          >
+            {!isPro && (
+              <>
+                <LockedOverlay />
+                <ProBadge className="absolute top-2 right-2 shadow-sm" />
+              </>
+            )}
+          </TemplatePreview>
         </PageCard>
       </div>
 

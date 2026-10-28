@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
  * preview.html. A template missing either file is Coming soon.
  * preview.html, the picker's preview of the mock, sits beside them and availability ignores it,
  * as it does the optional logged-out.php, thank-you.php and pay-order.php, the template's own logged-out view,
- * thank-you page and pay-order page. The thank-you page is Pro: its shared starter lives in templates/layouts/pro/,
+ * thank-you page and pay-order page. Those two pages are Pro: their shared starters live in templates/layouts/pro/,
  * which the Free zip leaves out.
  */
 class LayoutTemplateCatalogue {
@@ -28,14 +28,14 @@ class LayoutTemplateCatalogue {
     /** A template's optional thank-you page (Pro), and the shared one in templates/layouts/pro/. */
     private const THANK_YOU_FILE = 'thank-you.php';
 
-    /** A template's optional pay-order page, and the shared one beside the template folders. */
+    /** A template's optional pay-order page (Pro), and the shared one in templates/layouts/pro/. */
     private const PAY_ORDER_FILE = 'pay-order.php';
 
     /** The shared starter for each view file, used when a template has none of its own. */
     private const SHARED_FILES = [
         self::LOGGED_OUT_FILE => 'templates/layouts/logged-out.php',
         self::THANK_YOU_FILE  => 'templates/layouts/pro/thank-you.php',
-        self::PAY_ORDER_FILE  => 'templates/layouts/pay-order.php',
+        self::PAY_ORDER_FILE  => 'templates/layouts/pro/pay-order.php',
     ];
 
     /** Each editor view kept in meta (LayoutEditorEmbed::views()), and the file its starter markup comes from. */
@@ -138,7 +138,8 @@ class LayoutTemplateCatalogue {
 
     /**
      * The pay-order page a layout from $slug starts with: the template's pay-order.php, or the shared
-     * templates/layouts/pay-order.php when the template has none or $slug is not an available template.
+     * templates/layouts/pro/pay-order.php when the template has none or $slug is not an available template.
+     * '' in Free, whose zip has neither.
      */
     public static function pay_order_markup( string $slug ): string {
         return self::markup_file( $slug, self::PAY_ORDER_FILE );

@@ -12,8 +12,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-// The pay-order page has no cart, and WooCommerce's form-pay.php prints the terms there too.
-$yaycheckout_on_pay_form = \YayCheckout\Renderer\PayOrderPage::get_instance()->in_form();
+// Pro's pay-order page has no cart, and WooCommerce's form-pay.php prints the terms there too.
+$yaycheckout_on_pay_form = \YayCheckout\Renderer\PayOrderForm::in_form();
 
 if ( ! function_exists( 'WC' ) || ( ! $yaycheckout_on_pay_form && ! WC()->cart instanceof WC_Cart ) || ! function_exists( 'wc_get_template' ) ) {
     return;

@@ -4,7 +4,9 @@ namespace YayCheckout\Pro;
 use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Pro\Controllers\LayoutImportRestController;
 use YayCheckout\Pro\Controllers\LayoutRulesRestController;
+use YayCheckout\Pro\Controllers\PayOrderRestController;
 use YayCheckout\Pro\Controllers\ThankYouRestController;
+use YayCheckout\Pro\Renderer\PayOrderPage;
 use YayCheckout\Pro\Renderer\ThankYouPage;
 use YayCheckout\Blocks\BlockRegistry;
 use YayCheckout\Pro\Services\AssignmentStoreData;
@@ -27,12 +29,13 @@ class ProServiceProvider {
         add_filter( 'yaycheckout_localize_admin_data', [ $this, 'admin_data' ] );
         add_filter( 'yaycheckout_built_blocks', [ $this, 'built_blocks' ] );
 
-        // The thank-you page: order-received takeover, its editor view, admin bar item and live values.
+        // The thank-you and pay-order pages: order-received and order-pay takeover, their editor views, admin bar item and live values.
         ThankYouPage::get_instance();
+        PayOrderPage::get_instance();
     }
 
     /**
-     * Adds the Pro blocks (the step blocks and the thank-you page's order blocks), built under assets/dist/blocks/pro/, which the Free zip leaves out.
+     * Adds the Pro blocks (the step blocks and the thank-you and pay-order pages' order blocks), built under assets/dist/blocks/pro/, which the Free zip leaves out.
      *
      * @param array<string, string> $built Block directory name => path.
      * @return array<string, string>
@@ -54,5 +57,6 @@ class ProServiceProvider {
         LayoutImportRestController::get_instance();
         LayoutRulesRestController::get_instance();
         ThankYouRestController::get_instance();
+        PayOrderRestController::get_instance();
     }
 }

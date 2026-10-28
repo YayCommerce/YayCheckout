@@ -211,14 +211,13 @@ function LayoutActions() {
 		setPreviewing( true );
 		try {
 			const link = await apiFetch< PreviewLinkWire >( {
-				// Thank you (Pro's route) opens the sample order's order-received page, Pay order its order-pay page;
+				// Thank you and Pay order (Pro's routes) open the sample order's order-received and order-pay pages;
 				// every other view, the checkout.
 				path:
-					editorData.view.current === 'thank-you'
-						? `/yaycheckout/v1/layouts/${ postId }/thank-you/preview-link`
+					editorData.view.current === 'thank-you' || editorData.view.current === 'pay-order'
+						? `/yaycheckout/v1/layouts/${ postId }/${ editorData.view.current }/preview-link`
 						: `/yaycheckout/v1/layouts/${ postId }/preview-link`,
 				method: 'POST',
-				data: { view: editorData.view.current === 'pay-order' ? 'pay-order' : 'main' },
 			} );
 
 			const url = new URL( link.url );

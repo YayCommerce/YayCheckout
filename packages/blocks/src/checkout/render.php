@@ -1,7 +1,7 @@
 <?php
 /**
  * Prints WooCommerce's <form name="checkout"> around the inner blocks, so
- * checkout.js and WC_Checkout see the stock form. On the pay-order page, a
+ * checkout.js and WC_Checkout see the stock form. On Pro's pay-order page, a
  * plain wrapper: the blocks sit inside WooCommerce's pay form (#order_review),
  * and a checkout form there would nest forms and hand the submit to checkout.js.
  *
@@ -33,28 +33,29 @@ $yaycheckout_wrapper = get_block_wrapper_attributes(
     ]
 );
 
-$yaycheckout_pay_page = \YayCheckout\Renderer\PayOrderPage::get_instance();
+// Pro's pay-order page (PayOrderForm): never in Free.
+$yaycheckout_pay_form = \YayCheckout\Renderer\PayOrderForm::current();
 
-if ( $yaycheckout_pay_page->in_form() ) {
-    $yaycheckout_pay_layout = $yaycheckout_pay_page->layout();
+if ( null !== $yaycheckout_pay_form ) {
+    $yaycheckout_pay_layout = $yaycheckout_pay_form['layout'];
     $yaycheckout_pay_class  = 'yaycheckout-checkout yaycheckout-checkout--pay-order';
 
-    if ( null !== $yaycheckout_pay_layout && $yaycheckout_pay_layout->design->has_floating_labels() ) {
+    if ( $yaycheckout_pay_layout->design->has_floating_labels() ) {
         $yaycheckout_pay_class .= ' yaycheckout-checkout--floating-labels';
-    } elseif ( null !== $yaycheckout_pay_layout && $yaycheckout_pay_layout->design->has_hidden_labels() ) {
+    } elseif ( $yaycheckout_pay_layout->design->has_hidden_labels() ) {
         $yaycheckout_pay_class .= ' yaycheckout-checkout--hidden-labels';
     }
 
     $yaycheckout_wrapper = get_block_wrapper_attributes(
         [
             'class'                   => $yaycheckout_pay_class,
-            'data-yaycheckout-layout' => null !== $yaycheckout_pay_layout ? (string) $yaycheckout_pay_layout->id : '0',
+            'data-yaycheckout-layout' => (string) $yaycheckout_pay_layout->id,
         ]
     );
 }
 
 // No form: without WooCommerce, in the merchant's logged-out view, whose blocks replace WooCommerce's login prompt, or inside the pay form.
-if ( ! function_exists( 'WC' ) || \YayCheckout\Renderer\CheckoutPage::get_instance()->is_logged_out_view() || $yaycheckout_pay_page->in_form() ) {
+if ( ! function_exists( 'WC' ) || \YayCheckout\Renderer\CheckoutPage::get_instance()->is_logged_out_view() || null !== $yaycheckout_pay_form ) {
     ?>
     <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
         <?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner block markup, already rendered and escaped by core. ?>

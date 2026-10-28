@@ -54,8 +54,9 @@ const ADDABLE_PAGES: Partial< Record< View, { route: string; adding: string; fai
 /**
  * Logged in / Guest in the toolbar, shown while WooCommerce makes guests log in or while Guest is open.
  * Checkout, Thank you and Pay order are picked from LayoutPages, a column left of the editor's header and body, through
- * pick(). Picking Thank you or Pay order on a layout without one first writes its template's (POST /layouts/{id}/thank-you
- * or /pay-order: LayoutRepository::add_thank_you(), add_pay_order()).
+ * pick(). Picking Thank you or Pay order on a layout without one first writes its template's (Pro's POST
+ * /layouts/{id}/thank-you or /pay-order: LayoutRepository::add_thank_you(), add_pay_order()). Both are Pro pages:
+ * Free shows them locked (LayoutPages).
  * Each view is its own page load; unsaved edits are saved first, or dropped when the merchant chooses,
  * never carried across.
  */

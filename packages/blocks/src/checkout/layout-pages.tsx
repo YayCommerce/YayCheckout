@@ -78,25 +78,26 @@ type Props = {
  * The layout's pages, in a column left of the editor's header and body: Checkout, Thank you and Pay order, or
  * Add thank-you page / Add pay-order page while the layout has none. Guest is a variant of the checkout, so it keeps Checkout
  * selected. A pick goes through LayoutViewSwitch's pick(), so the save-first prompt applies.
- * The thank-you page is Pro: in Free, Thank you is a locked link to the upgrade page, since Free's PHP has
- * no Thank you view, no route that adds one and no order blocks.
+ * The thank-you and pay-order pages are Pro: in Free, Thank you and Pay order are locked links to the upgrade
+ * page, since Free's PHP has no such views, no routes that add them and no order blocks.
  */
 export default function LayoutPages( { current, hasThankYou, hasPayOrder, disabled, onPick }: Props ) {
 	const [ collapsed, setCollapsed ] = useState( readCollapsed );
 	const active: View = current === 'thank-you' || current === 'pay-order' ? current : 'main';
 
-	const lockedThankYou = (
+	/** A Pro page in Free: a link to the upgrade page, never a view to open. */
+	const locked = ( label: string, collapsedLabel: string, hint: string, icon: JSX.Element ) => (
 		<a
 			className="yaycheckout-layout-pages__item is-locked"
 			href={ editorData.upgradeUrl }
 			target="_blank"
 			rel="noreferrer"
-			aria-label={ collapsed ? __( 'Thank you (Pro)', 'yaycheckout' ) : undefined }
-			title={ __( 'Thank-you pages are part of YayCheckout Pro. Upgrade to customize the order-received page.', 'yaycheckout' ) }
+			aria-label={ collapsed ? collapsedLabel : undefined }
+			title={ hint }
 		>
-			{ thankYouIcon }
+			{ icon }
 			<span className="yaycheckout-layout-pages__label">
-				{ __( 'Thank you', 'yaycheckout' ) }
+				{ label }
 				<span className="yaycheckout-pro-tag">{ __( 'Pro', 'yaycheckout' ) }</span>
 			</span>
 		</a>
@@ -132,14 +133,32 @@ export default function LayoutPages( { current, hasThankYou, hasPayOrder, disabl
 			aria-label={ __( 'Layout pages', 'yaycheckout' ) }
 		>
 			{ item( 'main', __( 'Checkout', 'yaycheckout' ), cartIcon ) }
-			{ ! editorData.isPro && lockedThankYou }
-			{ editorData.isPro &&
-				( hasThankYou || current === 'thank-you'
-					? item( 'thank-you', __( 'Thank you', 'yaycheckout' ), thankYouIcon )
-					: item( 'thank-you', __( 'Add thank-you page', 'yaycheckout' ), addIcon, ' is-add' ) ) }
-			{ hasPayOrder || current === 'pay-order'
-				? item( 'pay-order', __( 'Pay order', 'yaycheckout' ), payOrderIcon )
-				: item( 'pay-order', __( 'Add pay-order page', 'yaycheckout' ), addIcon, ' is-add' ) }
+			{ ! editorData.isPro && (
+				<>
+					{ locked(
+						__( 'Thank you', 'yaycheckout' ),
+						__( 'Thank you (Pro)', 'yaycheckout' ),
+						__( 'Thank-you pages are part of YayCheckout Pro. Upgrade to customize the order-received page.', 'yaycheckout' ),
+						thankYouIcon
+					) }
+					{ locked(
+						__( 'Pay order', 'yaycheckout' ),
+						__( 'Pay order (Pro)', 'yaycheckout' ),
+						__( 'Pay-order pages are part of YayCheckout Pro. Upgrade to customize the page shoppers pay a pending order on.', 'yaycheckout' ),
+						payOrderIcon
+					) }
+				</>
+			) }
+			{ editorData.isPro && (
+				<>
+					{ hasThankYou || current === 'thank-you'
+						? item( 'thank-you', __( 'Thank you', 'yaycheckout' ), thankYouIcon )
+						: item( 'thank-you', __( 'Add thank-you page', 'yaycheckout' ), addIcon, ' is-add' ) }
+					{ hasPayOrder || current === 'pay-order'
+						? item( 'pay-order', __( 'Pay order', 'yaycheckout' ), payOrderIcon )
+						: item( 'pay-order', __( 'Add pay-order page', 'yaycheckout' ), addIcon, ' is-add' ) }
+				</>
+			) }
 			<button
 				type="button"
 				className="yaycheckout-layout-pages__toggle"

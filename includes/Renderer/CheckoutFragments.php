@@ -475,10 +475,10 @@ class CheckoutFragments {
      * On the pay-order page that is the order being paid, not the cart.
      */
     public static function payment_empty(): bool {
-        $pay_order = PayOrderPage::get_instance();
+        $pay_form = PayOrderForm::current();
 
-        if ( $pay_order->in_form() ) {
-            return null === $pay_order->order() || ! $pay_order->order()->needs_payment();
+        if ( null !== $pay_form ) {
+            return ! $pay_form['order']->needs_payment();
         }
 
         return ! WC()->cart instanceof \WC_Cart || ! WC()->cart->needs_payment();
@@ -749,7 +749,7 @@ class CheckoutFragments {
 
     /** Gateway radios only; Place order is a separate block. */
     public static function payment_methods_html(): string {
-        if ( PayOrderPage::get_instance()->in_form() ) {
+        if ( PayOrderForm::in_form() ) {
             return self::pay_order_payment_methods_html();
         }
 
@@ -815,11 +815,12 @@ class CheckoutFragments {
 
     /**
      * The Payment block's list on the pay-order page: the gateways WooCommerce offers for the order being paid
-     * (PayOrderPage::gateways()), as form-pay.php lists them. No cart, no review-order hooks and no AJAX refresh:
+     * (PayOrderForm::current()), as form-pay.php lists them. No cart, no review-order hooks and no AJAX refresh:
      * the pay form never updates its totals.
      */
     public static function pay_order_payment_methods_html(): string {
-        $gateways = PayOrderPage::get_instance()->gateways();
+        $pay_form = PayOrderForm::current();
+        $gateways = null !== $pay_form ? $pay_form['gateways'] : [];
         $empty    = self::payment_empty();
 
         ob_start();

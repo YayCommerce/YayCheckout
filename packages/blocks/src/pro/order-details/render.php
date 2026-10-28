@@ -14,7 +14,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // The thank-you page's order, else the pay-order page's (set once WooCommerce lets the shopper pay).
-$yaycheckout_order = \YayCheckout\Pro\Renderer\ThankYouPage::get_instance()->order() ?? \YayCheckout\Renderer\PayOrderPage::get_instance()->order();
+$yaycheckout_order = \YayCheckout\Pro\Renderer\ThankYouPage::get_instance()->order() ?? \YayCheckout\Pro\Renderer\PayOrderPage::get_instance()->order();
 
 if ( null === $yaycheckout_order ) {
     return;
@@ -48,7 +48,7 @@ $yaycheckout_print_table = static function () use ( $yaycheckout_order ): void {
 };
 
 // On the pay-order page the shopper is already paying: no Actions row (Pay, Cancel).
-if ( \YayCheckout\Renderer\PayOrderPage::get_instance()->in_form() ) {
+if ( \YayCheckout\Pro\Renderer\PayOrderPage::get_instance()->in_form() ) {
     $yaycheckout_print_bare_table = $yaycheckout_print_table;
     $yaycheckout_print_table      = static function () use ( $yaycheckout_print_bare_table ): void {
         \YayCheckout\Pro\Renderer\ThankYouPage::without_order_actions( $yaycheckout_print_bare_table );

@@ -1,7 +1,7 @@
 <?php
 /**
  * Prints the Place order button, WooCommerce's submit hooks and checkout nonce;
- * without a cart, only the disabled button. On the pay-order page, the Pay for order button
+ * without a cart, only the disabled button. On Pro's pay-order page, the Pay for order button
  * with WooCommerce's form-pay hooks instead. The terms and privacy text are the
  * Terms block's (terms/render.php), so they never widen the button's row. The
  * button is the block's root element, so its style supports land on it. Its label may hold live values, filled here so
@@ -15,8 +15,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_pay_page      = \YayCheckout\Renderer\PayOrderPage::get_instance();
-$yaycheckout_on_pay_form   = $yaycheckout_pay_page->in_form();
+// Pro's pay-order page (PayOrderForm): never in Free.
+$yaycheckout_pay_form      = \YayCheckout\Renderer\PayOrderForm::current();
+$yaycheckout_on_pay_form   = null !== $yaycheckout_pay_form;
 $yaycheckout_has_cart      = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart;
 $yaycheckout_default_label = __( 'Place order', 'yaycheckout' );
 $yaycheckout_plain_label   = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'buttonText' );
@@ -24,7 +25,7 @@ $yaycheckout_plain_label   = \YayCheckout\Services\LayoutMarkupReader::plain_tex
 if ( '' === $yaycheckout_plain_label || $yaycheckout_default_label === $yaycheckout_plain_label ) {
     // On the pay-order page, WooCommerce's pay text (woocommerce_pay_order_button_text) as form-pay.php gets it.
     $yaycheckout_label_html = $yaycheckout_on_pay_form
-        ? esc_html( $yaycheckout_pay_page->button_text() )
+        ? esc_html( $yaycheckout_pay_form['button_text'] )
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
         : esc_html( (string) apply_filters( 'woocommerce_order_button_text', $yaycheckout_default_label ) );
 } else {
@@ -42,7 +43,7 @@ $yaycheckout_button = '<button type="submit" '
     . ( $yaycheckout_has_cart || $yaycheckout_on_pay_form ? '' : ' disabled' )
     . '>' . $yaycheckout_label_html . '</button>';
 
-// The pay-order form: WooCommerce's pay hooks and button filter; templates/checkout-form-pay.php prints woocommerce_pay and its nonce.
+// The pay-order form: WooCommerce's pay hooks and button filter; Pro's checkout-form-pay.php prints woocommerce_pay and its nonce.
 if ( $yaycheckout_on_pay_form ) {
     ?>
 <div class="form-row place-order">

@@ -43,7 +43,7 @@ class ThemelessCheckout {
         $storefront = $this->is_storefront_request() && (
             ( $this->is_checkout_form_request() && $this->resolves_layout() )
             || ( $this->is_order_received_request() && $this->layout_renders_order_received() )
-            || ( $this->is_order_pay_request() && $this->resolves_pay_order_layout() )
+            || ( $this->is_order_pay_request() && $this->layout_renders_order_pay() )
         );
 
         if ( ! $storefront && ! $this->is_layout_editor_request() ) {
@@ -174,7 +174,7 @@ class ThemelessCheckout {
 
     /**
      * The order-pay endpoint on the checkout page, with pay_for_order (a "Customer payment page" link): the only
-     * order-pay request whose form PayOrderPage replaces. Matched from the URL at setup_theme, like is_order_received_request().
+     * order-pay request whose form Pro's pay-order page replaces. Matched from the URL at setup_theme, like is_order_received_request().
      */
     private function is_order_pay_request(): bool {
         $checkout_id = wc_get_page_id( 'checkout' );
@@ -251,11 +251,15 @@ class ThemelessCheckout {
         return (bool) apply_filters( 'yaycheckout_layout_renders_order_received', false );
     }
 
-    /** What PayOrderPage needs before takeover, short of the order: a layout with a pay-order page, the preview link's or the active one with safe mode off. */
-    private function resolves_pay_order_layout(): bool {
-        $layout = PreviewRequest::preview_or_active_layout();
-
-        return null !== $layout && $layout->has_pay_order();
+    /** Whether a layout renders this order-pay request. Free leaves order-pay to WooCommerce; Pro's pay-order page answers. */
+    private function layout_renders_order_pay(): bool {
+        /**
+         * Whether a layout renders this order-pay request (pay_for_order in the URL), short of checking the
+         * order. Runs at setup_theme, before the main query.
+         *
+         * @param bool $renders Default false.
+         */
+        return (bool) apply_filters( 'yaycheckout_layout_renders_order_pay', false );
     }
 
     /** The request path below home, decoded, without slashes at either end. */

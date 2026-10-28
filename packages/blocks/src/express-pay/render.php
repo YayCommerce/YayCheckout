@@ -1,7 +1,8 @@
 <?php
 /**
  * Prints the wallet buttons that gateways add on ExpressPay::HOOK when there is a cart, or, on the
- * pay-order page, on WooCommerce's woocommerce_pay_order_before_payment (PayOrderPage::fire_before_payment()).
+ * pay-order page (Pro), on WooCommerce's woocommerce_pay_order_before_payment, which Pro fires on
+ * yaycheckout_pay_order_express_pay (PayOrderForm::express_pay()).
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
@@ -17,8 +18,8 @@ $yaycheckout_has_cart = function_exists( 'WC' ) && WC()->cart instanceof WC_Cart
 // Buffered so an empty result prints nothing.
 ob_start();
 
-if ( \YayCheckout\Renderer\PayOrderPage::get_instance()->in_form() ) {
-    \YayCheckout\Renderer\PayOrderPage::get_instance()->fire_before_payment();
+if ( \YayCheckout\Renderer\PayOrderForm::in_form() ) {
+    \YayCheckout\Renderer\PayOrderForm::express_pay();
 } elseif ( $yaycheckout_has_cart ) {
     \YayCheckout\Renderer\WcHooks::in_place( \YayCheckout\Renderer\ExpressPay::HOOK );
     \YayCheckout\Renderer\WcHooks::in_place( \YayCheckout\Renderer\ExpressPay::AFTER_HOOK );

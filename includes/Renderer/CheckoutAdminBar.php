@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
  * On a checkout, order-received or order-pay page the layout renders, swaps core's Edit Page
  * and Edit site admin bar items, which edit neither the page nor the template shown,
  * for an Edit Layout item that opens the rendered layout in the admin SPA: its
- * checkout, or the view another page renders (the pay-order page, or Pro's thank-you page, through
+ * checkout, or the view another page renders (Pro's thank-you and pay-order pages, through
  * yaycheckout_admin_bar_layout).
  */
 class CheckoutAdminBar {
@@ -35,8 +35,8 @@ class CheckoutAdminBar {
         } else {
             /**
              * Another page a layout renders on this request, for the Edit Layout item: { layout: Layout, view: string },
-             * view naming the editor view to open (LayoutEditorEmbed), or null. PayOrderPage answers on order-pay, and
-             * Pro's thank-you page on order-received.
+             * view naming the editor view to open (LayoutEditorEmbed), or null. Pro's thank-you page answers on
+             * order-received, and its pay-order page on order-pay.
              *
              * @param null|array{layout: Layout, view: string} $rendered
              */

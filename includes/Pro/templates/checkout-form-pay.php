@@ -1,6 +1,6 @@
 <?php
 /**
- * Our checkout/form-pay.php while PayOrderPage takes over: WooCommerce includes it from order_pay() once the
+ * Pro: our checkout/form-pay.php while PayOrderPage takes over: WooCommerce includes it from order_pay() once the
  * shopper may pay this order. Prints the layout's pay-order blocks inside WooCommerce's #order_review form, with
  * the fields WooCommerce's pay_action() reads. Markup without a Checkout block, which Payment, Terms and
  * Place order need around them for their styles, is wrapped in one; one without a Payment or Place order
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$yaycheckout_pay_page = \YayCheckout\Renderer\PayOrderPage::get_instance();
+$yaycheckout_pay_page = \YayCheckout\Pro\Renderer\PayOrderPage::get_instance();
 $yaycheckout_layout   = $yaycheckout_pay_page->layout();
 
 if ( null === $yaycheckout_layout ) {

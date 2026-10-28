@@ -2,7 +2,7 @@
 """Build templates/layouts/<slug>/pay-order-preview.html (templates/layouts/pro/<slug>/ for a Pro template) for every
 catalogue template with a design.json.
 
-The page is the shared pay-order page (templates/layouts/pay-order.php) as a shopper sees it from a "Customer payment
+The page is the shared pay-order page (templates/layouts/pro/pay-order.php) as a shopper sees it from a "Customer payment
 page" link, with sample order data, coloured by the template's design.json, as the storefront colours it
 (Renderer\\DesignStyles). Express Pay shows nothing here: its buttons are the gateways', and without them the block and
 its OR divider hide. The New layout modal shows it in the Pay order card. Like preview.html, it may run no script and
