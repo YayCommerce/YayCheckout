@@ -12,7 +12,7 @@ interface EditProps {
 	setAttributes: ( attributes: Partial< OrderCustomerDetailsAttributes > ) => void;
 }
 
-/** Also the preview's sample order (Repositories\PreviewOrderRepository::create()); change both together. */
+/** Also the preview's sample order (Pro\Repositories\PreviewOrderRepository::create()); change both together. */
 const SAMPLE_BILLING = [ 'John Doe', 'YayCommerce', '7400 Edwards Rd', 'Edwards Rd' ];
 const SAMPLE_SHIPPING = [ 'John Doe', 'YayCommerce', '755 E North Grove Rd', 'Mayville, Michigan' ];
 const SAMPLE_PHONE = '(910) 529-1147';

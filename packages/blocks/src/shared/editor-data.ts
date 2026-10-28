@@ -45,7 +45,7 @@ export type EditorView = {
 	hasPayOrder: boolean;
 	/** LayoutEditorEmbed::QUERY_VIEW. */
 	queryArg: string;
-	/** The embedded editor for each view of this layout: LayoutEditorEmbed::view_urls(). */
+	/** The embedded editor for each view of this layout: LayoutEditorEmbed::view_urls(). thank-you is there only in Pro. */
 	urls: Record< 'main' | 'logged-out' | 'thank-you' | 'pay-order', string >;
 };
 

@@ -37,8 +37,8 @@ const COMING_SOON_TITLE = __('This template is coming soon', 'yaycheckout');
 
 const LOCKED_TITLE = __('Upgrade to Pro to use this template', 'yaycheckout');
 
-/** Veils a locked card like a Coming soon one; on hover it lightens and shows the Upgrade button. */
-function LockedOverlay() {
+/** Veils a locked card like a Coming soon one; on hover it lightens and shows the Upgrade button. Also the New layout modal's locked Thank you card. */
+export function LockedOverlay() {
   return (
     <div className="bg-background/60 group-hover:bg-background/25 group-focus-visible:bg-background/25 absolute inset-0 flex items-center justify-center backdrop-blur-[1px] transition-colors duration-300 group-hover:backdrop-blur-none">
       <UpgradeButton className="transition-default opacity-0 group-focus-within:opacity-100 group-hover:opacity-100" />

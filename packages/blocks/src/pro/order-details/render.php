@@ -14,7 +14,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // The thank-you page's order, else the pay-order page's (set once WooCommerce lets the shopper pay).
-$yaycheckout_order = \YayCheckout\Renderer\ThankYouPage::get_instance()->order() ?? \YayCheckout\Renderer\PayOrderPage::get_instance()->order();
+$yaycheckout_order = \YayCheckout\Pro\Renderer\ThankYouPage::get_instance()->order() ?? \YayCheckout\Renderer\PayOrderPage::get_instance()->order();
 
 if ( null === $yaycheckout_order ) {
     return;
@@ -51,18 +51,18 @@ $yaycheckout_print_table = static function () use ( $yaycheckout_order ): void {
 if ( \YayCheckout\Renderer\PayOrderPage::get_instance()->in_form() ) {
     $yaycheckout_print_bare_table = $yaycheckout_print_table;
     $yaycheckout_print_table      = static function () use ( $yaycheckout_print_bare_table ): void {
-        \YayCheckout\Renderer\ThankYouPage::without_order_actions( $yaycheckout_print_bare_table );
+        \YayCheckout\Pro\Renderer\ThankYouPage::without_order_actions( $yaycheckout_print_bare_table );
     };
 }
 
-\YayCheckout\Renderer\ThankYouPage::with_woocommerce_label_overrides( $yaycheckout_overrides, $yaycheckout_print_table );
+\YayCheckout\Pro\Renderer\ThankYouPage::with_woocommerce_label_overrides( $yaycheckout_overrides, $yaycheckout_print_table );
 $yaycheckout_table = (string) ob_get_clean();
 
 // woocommerce_order_details_table always appends order-details-customer.php; Order Addresses owns that.
-$yaycheckout_table = \YayCheckout\Renderer\ThankYouPage::without_customer_details( $yaycheckout_table );
+$yaycheckout_table = \YayCheckout\Pro\Renderer\ThankYouPage::without_customer_details( $yaycheckout_table );
 
 if ( ! $yaycheckout_show_title ) {
-    $yaycheckout_table = \YayCheckout\Renderer\ThankYouPage::without_order_details_title( $yaycheckout_table );
+    $yaycheckout_table = \YayCheckout\Pro\Renderer\ThankYouPage::without_order_details_title( $yaycheckout_table );
 }
 
 if ( '' === trim( $yaycheckout_table ) ) {

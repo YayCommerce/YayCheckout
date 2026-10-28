@@ -2,22 +2,22 @@
 namespace YayCheckout\Renderer;
 
 use YayCheckout\Helpers\JsonElementHelper;
+use YayCheckout\Models\Layout;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Live values: cart totals, cart counts, order overview values and shopper fields that a merchant drops
- * into the text of the blocks in BLOCKS in the layout editor (packages/blocks/src/live-value/). Each is a
- * span holding its key, fallback, prefix and suffix; its text is only the editor's label.
+ * Live values: cart totals, cart counts and shopper fields that a merchant drops into the text of the
+ * blocks in BLOCKS in the layout editor (packages/blocks/src/live-value/). Each is a span holding its key,
+ * fallback, prefix and suffix; its text is only the editor's label.
  *
  * On a taken-over checkout, fill() swaps each span's text for its value between its prefix and suffix, or
  * for its fallback alone while the value is empty. The cart's values reach view.js as a JSON element in
  * the footer, which update_order_review swaps as a fragment; view.js reads field values from the form as the shopper types.
  *
- * On a taken-over thank-you page, the same spans resolve from the validated order (cart_* mirrored from the
- * order, plus order_number / order_date / order_payment_method, and field: from order address / extra fields).
- * The footer JSON uses that same bag so view.js does not wipe the spans with an empty cart.
+ * Another page a layout renders (the pay-order page, Pro's thank-you page) fills the same spans from the values it hands over
+ * through the yaycheckout_live_values_source filter, which the footer JSON then carries instead of the cart's.
  */
 class LiveValues {
 
@@ -76,14 +76,15 @@ class LiveValues {
     private $rendered = false;
 
     /**
-     * Value bag for the active takeover (cart or order), set in fill_html().
+     * The values the spans resolve to: the cart's on the checkout, or the ones a yaycheckout_live_values_source
+     * callback handed over. Set by fill_html().
      *
      * @var array<string, array{text: string, empty: bool}>|null
      */
     private $bag = null;
 
-    /** @var \WC_Order|null Order when thank-you fills; null on checkout. */
-    private $order = null;
+    /** @var callable|null fn( string $field ): array{text, empty, known}, from a yaycheckout_live_values_source callback; null on the checkout. */
+    private $field_resolver = null;
 
     protected function __construct() {
         foreach ( array_merge( self::BLOCKS, self::DISPLAY_BLOCKS ) as $name ) {
@@ -114,27 +115,20 @@ class LiveValues {
     }
 
     /**
-     * Order-received overview keys for the live-value picker. Filled only on thank-you; empty on checkout.
-     * Mirrored by the Order received optgroup in packages/blocks/src/live-value/popover.tsx.
-     *
-     * @return array<string, string>
-     */
-    public static function order_received_values(): array {
-        return [
-            'order_number'         => __( 'Order number', 'yaycheckout' ),
-            'order_date'           => __( 'Order date', 'yaycheckout' ),
-            'order_email'          => __( 'Email', 'yaycheckout' ),
-            'order_payment_method' => __( 'Payment method', 'yaycheckout' ),
-        ];
-    }
-
-    /**
-     * Picker labels: cart totals/counts plus order-received overview keys.
+     * The live value picker's entries: cart_values(), plus any yaycheckout_live_value_labels adds (Pro's
+     * order-received values).
      *
      * @return array<string, string>
      */
     public static function picker_values(): array {
-        return array_merge( self::cart_values(), self::order_received_values() );
+        /**
+         * The live value picker's entries, key => label. Keys starting with `order_` form its Order received group.
+         *
+         * @param array<string, string> $labels Default cart_values().
+         */
+        $labels = apply_filters( 'yaycheckout_live_value_labels', self::cart_values() );
+
+        return is_array( $labels ) ? $labels : self::cart_values();
     }
 
     /**
@@ -156,53 +150,6 @@ class LiveValues {
         ];
 
         return array_merge( self::format_money( self::money() ), self::format_counts( $counts ) );
-    }
-
-    /**
-     * Cart_* totals/counts mirrored from a placed order, plus order overview keys for the thank-you strip.
-     *
-     * @return array<string, array{text: string, empty: bool}>
-     */
-    public static function order_values( \WC_Order $order ): array {
-        $item_count = 0;
-
-        foreach ( $order->get_items() as $item ) {
-            $item_count += (int) $item->get_quantity();
-        }
-
-        $created = $order->get_date_created();
-        $date    = $created ? wc_format_datetime( $created ) : '';
-        $number  = (string) $order->get_order_number();
-        $email   = (string) $order->get_billing_email();
-        $payment = wp_strip_all_tags( (string) $order->get_payment_method_title() );
-
-        return array_merge(
-            self::format_money( self::order_money( $order ) ),
-            self::format_counts(
-                [
-                    'cart_item_count' => $item_count,
-                    'cart_line_count' => count( $order->get_items() ),
-                ]
-            ),
-            [
-                'order_number'         => [
-                    'text'  => $number,
-                    'empty' => '' === $number,
-                ],
-                'order_date'           => [
-                    'text'  => $date,
-                    'empty' => '' === $date,
-                ],
-                'order_email'          => [
-                    'text'  => $email,
-                    'empty' => '' === $email,
-                ],
-                'order_payment_method' => [
-                    'text'  => $payment,
-                    'empty' => '' === $payment,
-                ],
-            ]
-        );
     }
 
     /**
@@ -230,25 +177,7 @@ class LiveValues {
     }
 
     /**
-     * Order money amounts using the same tax display mode as the cart totals live values.
-     *
-     * @return array<string, float>
-     */
-    private static function order_money( \WC_Order $order ): array {
-        $tax = self::display_prices_including_tax();
-
-        return [
-            'cart_total'          => (float) $order->get_total( 'edit' ),
-            // get_cart_tax(): item/fee tax, excluding shipping — closest to cart get_subtotal_tax() for display.
-            'cart_subtotal'       => (float) $order->get_subtotal() + ( $tax ? (float) $order->get_cart_tax() : 0.0 ),
-            'cart_shipping_total' => (float) $order->get_shipping_total() + ( $tax ? (float) $order->get_shipping_tax() : 0.0 ),
-            'cart_discount_total' => (float) $order->get_discount_total() + ( $tax ? (float) $order->get_discount_tax() : 0.0 ),
-            'cart_tax_total'      => (float) $order->get_total_tax(),
-        ];
-    }
-
-    /**
-     * Fills each live value span in an allow-listed block on a taken-over checkout or thank-you page.
+     * Fills each live value span in an allow-listed block on a taken-over checkout, or another page a layout renders.
      * Anywhere else, and in a block without one, the HTML comes back untouched. A Step's HTML holds its
      * inner blocks, filled already; filling a span again prints the same text.
      *
@@ -260,7 +189,7 @@ class LiveValues {
     }
 
     /**
-     * Fills each live value span in $html on a taken-over checkout, thank-you or pay-order page; anywhere else the
+     * Fills each live value span in $html on a taken-over checkout, or another page a layout renders; anywhere else the
      * HTML comes back untouched. Place Order's render.php calls it on its label, so value and data-value hold the values.
      */
     public function fill_html( string $html ): string {
@@ -268,32 +197,32 @@ class LiveValues {
             return $html;
         }
 
-        $checkout  = CheckoutPage::get_instance();
-        $thank_you = ThankYouPage::get_instance();
-        $pay_order = PayOrderPage::get_instance();
+        $checkout = CheckoutPage::get_instance();
 
-        // The checkout reads the cart; the thank-you and pay-order pages read their order.
         if ( $checkout->takes_over() ) {
-            $layout = $checkout->layout();
-            $order  = null;
-        } elseif ( $thank_you->takes_over() ) {
-            $layout = $thank_you->layout();
-            $order  = $thank_you->order();
-        } elseif ( $pay_order->takes_over() && null !== $pay_order->order() ) {
-            $layout = $pay_order->layout();
-            $order  = $pay_order->order();
+            $layout               = $checkout->layout();
+            $this->bag            = self::values();
+            $this->field_resolver = null;
         } else {
-            return $html;
+            /**
+             * The live values of another page a layout renders on this request, or null to leave its spans as
+             * they are. PayOrderPage answers on order-pay, and Pro's thank-you page on order-received, from their order.
+             *
+             * @param null|array{layout: Layout, values: array<string, array{text: string, empty: bool}>, field: callable} $source
+             *        `field` resolves a `field:<key>` span: fn( string $key ): array{text: string, empty: bool, known: bool}.
+             */
+            $source = apply_filters( 'yaycheckout_live_values_source', null );
+
+            if ( ! is_array( $source ) || ! ( $source['layout'] ?? null ) instanceof Layout ) {
+                return $html;
+            }
+
+            $layout               = $source['layout'];
+            $this->bag            = is_array( $source['values'] ?? null ) ? $source['values'] : [];
+            $this->field_resolver = is_callable( $source['field'] ?? null ) ? $source['field'] : null;
         }
 
-        // ThankYouPage and PayOrderPage reach here only with an order, so a null $order here is the checkout's.
-        if ( null === $layout ) {
-            return $html;
-        }
-
-        $this->order = $order;
-        $this->bag   = null !== $order ? self::order_values( $order ) : self::values();
-        $markup      = $layout->content;
+        $markup = $layout->content;
 
         $filled = preg_replace_callback(
             '#(<span\b[^>]*' . preg_quote( self::CLASS_NAME, '#' ) . '[^>]*>)(.*?)</span>#s',
@@ -381,8 +310,8 @@ class LiveValues {
     }
 
     /**
-     * A key's value: a bag value (cart or order), or `field:<key>` for a field. On thank-you, fields come
-     * from the order; on checkout, from ShowableFields for the layout. known is false for any other key.
+     * A key's value: one of fill_html()'s values, or `field:<key>` for a field: from ShowableFields for the
+     * layout on the checkout, else from the source's field resolver. known is false for any other key.
      *
      * @return array{text: string, empty: bool, known: bool}
      */
@@ -401,11 +330,13 @@ class LiveValues {
             ];
         }
 
-        if ( $this->order instanceof \WC_Order ) {
-            return $this->resolve_order_field( $field );
+        $found = null !== $this->field_resolver ? call_user_func( $this->field_resolver, $field ) : null;
+
+        if ( is_array( $found ) && isset( $found['text'], $found['empty'], $found['known'] ) ) {
+            return $found;
         }
 
-        if ( ! isset( ShowableFields::labels( $markup )[ $field ] ) ) {
+        if ( null !== $this->field_resolver || ! isset( ShowableFields::labels( $markup )[ $field ] ) ) {
             return [
                 'text'  => '',
                 'empty' => true,
@@ -423,98 +354,12 @@ class LiveValues {
     }
 
     /**
-     * A shopper field from the thank-you order: billing/shipping getters, or an extra-field snapshot row.
+     * Money amounts as plain text, as wc_price() prints them; empty at 0. Also read by Pro's order values.
      *
-     * @return array{text: string, empty: bool, known: bool}
-     */
-    private function resolve_order_field( string $field ): array {
-        $text = self::order_address_text( $this->order, $field );
-
-        if ( null !== $text ) {
-            return [
-                'text'  => $text,
-                'empty' => '' === $text,
-                'known' => true,
-            ];
-        }
-
-        $rows = $this->order->get_meta( CheckoutExtraFields::META_SNAPSHOT );
-
-        if ( is_array( $rows ) ) {
-            foreach ( $rows as $row ) {
-                if ( ! is_array( $row ) || ( $row['key'] ?? '' ) !== $field ) {
-                    continue;
-                }
-
-                $display = isset( $row['display'] ) && is_scalar( $row['display'] ) ? trim( (string) $row['display'] ) : '';
-
-                return [
-                    'text'  => $display,
-                    'empty' => '' === $display,
-                    'known' => true,
-                ];
-            }
-        }
-
-        return [
-            'text'  => '',
-            'empty' => true,
-            'known' => false,
-        ];
-    }
-
-    /**
-     * Plain text for a billing_/shipping_ order field, with country/state names like ShowableFields.
-     * Null when $field is not an order address getter.
-     */
-    private static function order_address_text( \WC_Order $order, string $field ): ?string {
-        // Only address-style getters: avoid get_id(), get_total(), etc. via a stray field: key.
-        if ( 0 !== strpos( $field, 'billing_' ) && 0 !== strpos( $field, 'shipping_' ) ) {
-            return null;
-        }
-
-        $method = 'get_' . $field;
-
-        if ( ! is_callable( [ $order, $method ] ) ) {
-            return null;
-        }
-
-        $raw   = $order->$method();
-        $value = is_scalar( $raw ) ? trim( (string) $raw ) : '';
-
-        if ( '' === $value || ! function_exists( 'WC' ) || ! WC()->countries instanceof \WC_Countries ) {
-            return $value;
-        }
-
-        $names = [];
-
-        if ( '_country' === substr( $field, -8 ) ) {
-            $names = WC()->countries->get_countries();
-        } elseif ( '_state' === substr( $field, -6 ) ) {
-            $prefix         = substr( $field, 0, -6 );
-            $country_method = 'get_' . $prefix . '_country';
-            $country_code   = is_callable( [ $order, $country_method ] ) ? $order->$country_method() : '';
-            $country_code   = is_scalar( $country_code ) ? (string) $country_code : '';
-            $names          = '' !== $country_code ? WC()->countries->get_states( $country_code ) : [];
-        }
-
-        return is_array( $names ) && isset( $names[ $value ] ) ? $names[ $value ] : $value;
-    }
-
-    /** Same tax display mode the cart live values use. */
-    private static function display_prices_including_tax(): bool {
-        if ( function_exists( 'WC' ) && WC()->cart instanceof \WC_Cart ) {
-            return WC()->cart->display_prices_including_tax();
-        }
-
-        return 'incl' === get_option( 'woocommerce_tax_display_cart' );
-    }
-
-    /**
      * @param array<string, float> $amounts
      * @return array<string, array{text: string, empty: bool}>
      */
-    private static function format_money( array $amounts ): array {
+    public static function format_money( array $amounts ): array {
         $values = [];
 
         foreach ( $amounts as $key => $amount ) {
@@ -529,10 +374,12 @@ class LiveValues {
     }
 
     /**
+     * Counts as localized numbers; empty at 0. Also read by Pro's order values.
+     *
      * @param array<string, int> $counts
      * @return array<string, array{text: string, empty: bool}>
      */
-    private static function format_counts( array $counts ): array {
+    public static function format_counts( array $counts ): array {
         $values = [];
 
         foreach ( $counts as $key => $count ) {

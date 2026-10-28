@@ -3,6 +3,7 @@
  * The shared thank-you page: what a shopper sees on order-received while the layout is active, for a
  * layout whose template ships no thank-you.php of its own. Printed by LayoutTemplateCatalogue::thank_you_markup(),
  * which seeds a new layout with it and gives it to the editor's Thank you view while a layout has none saved.
+ * Pro only: it is built from the Order Details and Order Addresses blocks, and the Free zip leaves templates/layouts/pro/ out.
  *
  * To update it, build it in the editor's Thank you view, copy it from the Code editor and paste it
  * here, then put back the PHP: translated text and the logo-or-title choice. Keep the markup as the

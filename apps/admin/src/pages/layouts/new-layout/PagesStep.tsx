@@ -6,11 +6,15 @@ import type { NewLayoutFormValues } from '@/lib/schema/layout.schema';
 import type { Template } from '@/lib/schema/template.schema';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
+import { isPro } from '@/lib/plan';
+import { ProBadge } from '@/components/pro/ProGate';
+import { LockedOverlay } from '@/components/shared/template-picker/TemplatePicker';
 import { TemplatePreview } from '@/components/shared/template-picker/TemplatePreview';
 
 /**
  * The pages the new layout comes with, previewed side by side: its checkout, thank-you and pay-order pages.
- * Create layout makes all three; the server writes the thank-you and pay-order pages from the template.
+ * Create layout makes all three in Pro; the server writes the thank-you and pay-order pages from the template.
+ * The thank-you page is Pro, so Free shows its card locked, an upsell only: Free's server makes no thank-you page.
  */
 export function PagesStep({
   template,
@@ -37,12 +41,22 @@ export function PagesStep({
         <PageCard title={__('Checkout', 'yaycheckout')}>
           <TemplatePreview template={template} />
         </PageCard>
-        <PageCard title={__('Thank you', 'yaycheckout')}>
+        <PageCard
+          title={__('Thank you', 'yaycheckout')}
+          hint={isPro ? undefined : __('Upgrade to Pro to customize the thank-you page', 'yaycheckout')}
+        >
           <TemplatePreview
             template={template}
             previewUrl={template.thankYouPreviewUrl}
             placeholder={__('Preview coming soon', 'yaycheckout')}
-          />
+          >
+            {!isPro && (
+              <>
+                <LockedOverlay />
+                <ProBadge className="absolute top-2 right-2 shadow-sm" />
+              </>
+            )}
+          </TemplatePreview>
         </PageCard>
         <PageCard title={__('Pay order', 'yaycheckout')}>
           <TemplatePreview
@@ -70,11 +84,12 @@ export function PagesStep({
 }
 
 /** Not selectable: a group, focusable so its preview still scrolls by keyboard as the picker's tiles do. */
-function PageCard({ title, children }: { title: string; children: ReactNode }) {
+function PageCard({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
     <div
       role="group"
       tabIndex={0}
+      title={hint}
       aria-label={title}
       className="group flex flex-col items-start gap-2 rounded-md border p-2 outline-none focus-visible:ring-2"
     >

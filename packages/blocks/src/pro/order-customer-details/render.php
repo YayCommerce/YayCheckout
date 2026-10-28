@@ -14,7 +14,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // The thank-you page's order, else the pay-order page's (set once WooCommerce lets the shopper pay).
-$yaycheckout_order = \YayCheckout\Renderer\ThankYouPage::get_instance()->order() ?? \YayCheckout\Renderer\PayOrderPage::get_instance()->order();
+$yaycheckout_order = \YayCheckout\Pro\Renderer\ThankYouPage::get_instance()->order() ?? \YayCheckout\Renderer\PayOrderPage::get_instance()->order();
 
 if ( null === $yaycheckout_order ) {
     return;
@@ -32,7 +32,7 @@ $yaycheckout_shipping_title = \YayCheckout\Services\LayoutMarkupReader::plain_te
 ?>
 <div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-order-customer-details' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php
-    \YayCheckout\Renderer\ThankYouPage::with_woocommerce_label_overrides(
+    \YayCheckout\Pro\Renderer\ThankYouPage::with_woocommerce_label_overrides(
         [
             'Billing address'  => $yaycheckout_billing_title,
             'Shipping address' => $yaycheckout_shipping_title,

@@ -2,7 +2,7 @@
 """Build templates/layouts/<slug>/thank-you-preview.html (templates/layouts/pro/<slug>/ for a Pro template) for every
 catalogue template with a design.json.
 
-The page is the shared thank-you page (templates/layouts/thank-you.php) as a shopper sees it after an order, with sample
+The page is the shared thank-you page (templates/layouts/pro/thank-you.php) as a shopper sees it after an order, with sample
 order data, coloured by the template's design.json, as the storefront colours it (Renderer\\DesignStyles). The New layout
 modal shows it in the Thank you card. Like preview.html, it may run no script and make no request.
 
@@ -46,7 +46,7 @@ FALLBACKS = {
 ITEMS = [('Linen overshirt', 'Olive / M', '$68.00'), ('Canvas tote', 'Natural', '$60.00')]
 TOTALS = [('Subtotal:', '$128.00'), ('Shipping:', '$8.00'), ('Tax:', '$10.24'),
           ('Payment method:', 'Direct bank transfer'), ('Total:', '$146.24')]
-# templates/layouts/thank-you.php's overview Row of Stacks: label, then the live value as an order fills it.
+# templates/layouts/pro/thank-you.php's overview Row of Stacks: label, then the live value as an order fills it.
 OVERVIEW = [('Order #:', '1042'), ('Date:', 'October 22, 2026'), ('Total:', '$146.24'), ('Email:', 'jane@example.com'),
             ('Payment method:', 'Direct bank transfer')]
 ADDRESS = 'Jane Cooper<br>1901 Thornridge Cir.<br>Shiloh, CA 81063<br>United States (US)'

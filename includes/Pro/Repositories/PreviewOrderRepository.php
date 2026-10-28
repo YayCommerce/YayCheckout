@@ -1,5 +1,5 @@
 <?php
-namespace YayCheckout\Repositories;
+namespace YayCheckout\Pro\Repositories;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -54,7 +54,7 @@ class PreviewOrderRepository {
             $order->add_product( $product, 1 );
         }
 
-        // The addresses packages/blocks/src/order-customer-details/edit.tsx shows in the editor; change both together.
+        // The addresses packages/blocks/src/pro/order-customer-details/edit.tsx shows in the editor; change both together.
         $name = [
             'first_name' => 'John',
             'last_name'  => 'Doe',

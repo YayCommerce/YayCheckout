@@ -22,24 +22,17 @@ class LayoutEditorEmbed {
 
     /**
      * The arg that opens a view other than the checkout: the logged-out view (the markup a guest who must log in
-     * sees), on post.php and on a preview link (CheckoutPage::resolve()); the thank-you and pay-order pages, on post.php.
+     * sees), on post.php and on a preview link (CheckoutPage::resolve()); the pay-order page and, in Pro, the
+     * thank-you page, on post.php.
      */
     public const QUERY_VIEW = 'yc-view';
 
     public const VIEW_MAIN       = 'main';
     public const VIEW_LOGGED_OUT = 'logged-out';
-    public const VIEW_THANK_YOU  = 'thank-you';
-    public const VIEW_PAY_ORDER  = 'pay-order';
-
-    /**
-     * Each view other than main, and the meta that holds its markup. Another page is one more entry here
-     * and one in LayoutTemplateCatalogue::VIEW_FILES, its starter markup.
-     */
-    private const VIEW_META = [
-        self::VIEW_LOGGED_OUT => Layout::META_LOGGED_OUT,
-        self::VIEW_THANK_YOU  => Layout::META_THANK_YOU,
-        self::VIEW_PAY_ORDER  => Layout::META_PAY_ORDER,
-    ];
+    /** Pro's thank-you page (Layout::META_THANK_YOU). Free has no such view: views() leaves it out, so its URL opens the checkout. */
+    public const VIEW_THANK_YOU = 'thank-you';
+    /** The pay-order page (Layout::META_PAY_ORDER), which PayOrderPage adds to views(). */
+    public const VIEW_PAY_ORDER = 'pay-order';
 
     /** Carries QUERY_VIEW to the editor's REST calls; read by LayoutCoreRestController. */
     public const VIEW_HEADER = 'X-YayCheckout-View';
@@ -140,7 +133,7 @@ class LayoutEditorEmbed {
             $view = isset( $_GET[ self::QUERY_VIEW ] ) ? sanitize_key( wp_unslash( $_GET[ self::QUERY_VIEW ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         }
 
-        return isset( self::VIEW_META[ $view ] ) ? $view : self::VIEW_MAIN;
+        return isset( self::views()[ $view ] ) ? $view : self::VIEW_MAIN;
     }
 
     /** Whether the logged-out view is asked for; see current_view(). */
@@ -150,14 +143,34 @@ class LayoutEditorEmbed {
 
     /** The meta that holds $view's markup, or '' for VIEW_MAIN, whose markup is post_content. */
     public static function view_meta_key( string $view ): string {
-        return self::VIEW_META[ $view ] ?? '';
+        return self::views()[ $view ] ?? '';
+    }
+
+    /**
+     * Each view other than main, and the meta that holds its markup: the logged-out view, plus what Pro adds
+     * (the thank-you page) and the pay-order page. Another page is one more entry, added through the filter,
+     * and one in LayoutTemplateCatalogue::VIEW_FILES, its starter markup.
+     *
+     * @return array<string, string> View => meta key.
+     */
+    public static function views(): array {
+        $core = [ self::VIEW_LOGGED_OUT => Layout::META_LOGGED_OUT ];
+
+        /**
+         * The editor views kept in layout meta, view => meta key. A view left out opens, saves and previews as the checkout.
+         *
+         * @param array<string, string> $views Default: the logged-out view.
+         */
+        $views = apply_filters( 'yaycheckout_editor_views', $core );
+
+        return is_array( $views ) ? $views : $core;
     }
 
     /**
      * The embedded editor for each view of a layout, keyed like the editor's view switch. The main
      * URL is also built by editorUrl in the SPA's apps/admin/src/pages/layouts/LayoutsPage.tsx: change both together.
      *
-     * @return array{main: string, logged-out: string, thank-you: string, pay-order: string}
+     * @return array<string, string> main, logged-out, pay-order, and thank-you in Pro.
      */
     public static function view_urls( int $post_id ): array {
         $main = add_query_arg(
@@ -171,7 +184,7 @@ class LayoutEditorEmbed {
 
         $urls = [ self::VIEW_MAIN => $main ];
 
-        foreach ( array_keys( self::VIEW_META ) as $view ) {
+        foreach ( array_keys( self::views() ) as $view ) {
             $urls[ $view ] = add_query_arg( self::QUERY_VIEW, $view, $main );
         }
 

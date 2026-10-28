@@ -1,8 +1,10 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Models\Layout;
-use YayCheckout\Repositories\PreviewOrderRepository;
+use YayCheckout\Pro\Renderer\OrderLiveValues;
+use YayCheckout\Pro\Repositories\PreviewOrderRepository;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -41,8 +43,71 @@ class PayOrderPage {
 
     private bool $before_payment_fired = false;
 
+    /** @var array<string, array{text: string, empty: bool}>|null The order's live values, read once per request. */
+    private $live_values = null;
+
     protected function __construct() {
         add_action( 'wp', [ $this, 'maybe_take_over' ] );
+        add_filter( 'yaycheckout_editor_views', [ $this, 'editor_views' ] );
+        add_filter( 'yaycheckout_admin_bar_layout', [ $this, 'admin_bar_layout' ] );
+        add_filter( 'yaycheckout_live_values_source', [ $this, 'live_values_source' ] );
+    }
+
+    /**
+     * Adds the Pay order editor view, kept in Layout::META_PAY_ORDER.
+     *
+     * @param array<string, string> $views View => meta key.
+     * @return array<string, string>
+     */
+    public function editor_views( $views ): array {
+        $views = is_array( $views ) ? $views : [];
+
+        $views[ LayoutEditorEmbed::VIEW_PAY_ORDER ] = Layout::META_PAY_ORDER;
+
+        return $views;
+    }
+
+    /**
+     * The Edit Layout item on a page this renders opens the layout's Pay order view.
+     *
+     * @param mixed $rendered
+     * @return mixed
+     */
+    public function admin_bar_layout( $rendered ) {
+        if ( null !== $rendered || ! $this->takes_over() ) {
+            return $rendered;
+        }
+
+        return [
+            'layout' => $this->layout(),
+            'view'   => LayoutEditorEmbed::VIEW_PAY_ORDER,
+        ];
+    }
+
+    /**
+     * Once WooCommerce lets the shopper pay, the live value spans read the order: its totals, overview and address fields.
+     *
+     * @param mixed $source
+     * @return mixed
+     */
+    public function live_values_source( $source ) {
+        $order = $this->order;
+
+        if ( null !== $source || ! $this->takes_over() || null === $order ) {
+            return $source;
+        }
+
+        if ( null === $this->live_values ) {
+            $this->live_values = OrderLiveValues::values( $order );
+        }
+
+        return [
+            'layout' => $this->layout(),
+            'values' => $this->live_values,
+            'field'  => static function ( string $field ) use ( $order ): ?array {
+                return OrderLiveValues::field( $order, $field );
+            },
+        ];
     }
 
     /** The layout to render, its content already the pay-order markup, or null when the renderer stands down. Memoised per request. */
