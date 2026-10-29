@@ -194,7 +194,8 @@ class CheckoutLogin {
             wp_send_json_success();
         }
 
-        $username = isset( $_POST['username'] ) && is_string( $_POST['username'] ) ? trim( wp_unslash( $_POST['username'] ) ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $username = isset( $_POST['username'] ) && is_string( $_POST['username'] ) ? sanitize_user( wp_unslash( $_POST['username'] ) ) : null;
+        // A password is checked against its hash as typed: sanitizing it would refuse valid ones.
         $password = isset( $_POST['password'] ) && is_string( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         if ( ! is_string( $username ) || ! is_string( $password ) ) {
