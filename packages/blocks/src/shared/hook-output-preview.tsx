@@ -13,10 +13,13 @@ interface HookOutputPreviewProps {
 	owner: 'block' | 'wc-hook';
 }
 
+/** The targets whose stand-in carries a checkbox, as their output does: YayBoost's order bump. */
+const TICKED_TARGETS = [ 'yayboost/order-bump' ];
+
 /**
  * A stand-in for what another Yay plugin prints on `hook` while the layout has no spot for it: YayBoost's order
- * bump lands on a WooCommerce hook the calling block fires (PluginBlockCatalogue's `hooks`). Gone once the layout
- * holds its placeholder, and from the original block while a Hook block takes the hook.
+ * bump and free shipping bar land on WooCommerce hooks that the calling block fires (PluginBlockCatalogue's `hooks`).
+ * Gone once the layout holds its placeholder, and from the original block while a Hook block takes the hook.
  */
 export function HookOutputPreview( { hook, owner }: HookOutputPreviewProps ) {
 	// Read at render: another block's script prints the catalogue, maybe after this bundle loaded.
@@ -55,7 +58,9 @@ export function HookOutputPreview( { hook, owner }: HookOutputPreviewProps ) {
 		<>
 			{ shown.map( ( entry ) => (
 				<div key={ entry.target } className="yaycheckout-hook-output-preview" role="note" contentEditable={ false }>
-					<input type="checkbox" className="yaycheckout-hook-output-preview__checkbox" disabled aria-hidden="true" tabIndex={ -1 } />
+					{ TICKED_TARGETS.includes( entry.target ) && (
+						<input type="checkbox" className="yaycheckout-hook-output-preview__checkbox" disabled aria-hidden="true" tabIndex={ -1 } />
+					) }
 					<span className="yaycheckout-hook-output-preview__body">
 						<span className="yaycheckout-hook-output-preview__title">
 							{ entry.title }

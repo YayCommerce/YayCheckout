@@ -698,17 +698,44 @@ body.yaycheckout-page .wc-block-components-notice-banner:is(.is-error, .is-succe
 	background: color-mix(in srgb, var(--yaycheckout-notice) 8%, transparent);
 }
 
-/* blockUI writes the overlay's white veil inline while totals update; the spinner was woocommerce-general's. */
+/*
+ * blockUI writes a white veil inline while totals update, which turns a tinted panel (Editorial's primary summary, a
+ * grey page) into a pale box. Drop the veil and dim the blocked region's content in place, so the surface keeps its
+ * colour. Opacity 1 keeps the spinner at full strength; blockUI would leave it at the veil's 0.6.
+ */
+body.yaycheckout-page .blockUI.blockOverlay {
+	background: transparent !important;
+	opacity: 1 !important;
+}
+
+/* The regions Woo's checkout.js and checkout-order-summary-loading.js block: the transition runs on unblock too. */
+body.yaycheckout-page
+	:is(
+		.wp-block-yaycheckout-order-summary,
+		.woocommerce-checkout-payment,
+		.woocommerce-checkout-review-order-table,
+		.checkout_coupon,
+		form.checkout
+	)
+	> * {
+	transition: opacity 0.2s ease;
+}
+
+body.yaycheckout-page :has(> .blockUI.blockOverlay) > :not(.blockUI) {
+	opacity: 0.4;
+}
+
+/* The spinner was woocommerce-general's. currentColor is the blocked region's text colour, so it reads on any panel. */
 body.yaycheckout-page .blockUI.blockOverlay::before {
 	content: "";
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	width: 24px;
-	height: 24px;
-	margin: -12px 0 0 -12px;
-	border: 2px solid var(--yaycheckout-primary-color);
-	border-inline-end-color: transparent;
+	width: 28px;
+	height: 28px;
+	margin: -14px 0 0 -14px;
+	border: 2.5px solid color-mix(in srgb, currentColor 20%, transparent);
+	border-top-color: currentColor;
 	border-radius: 50%;
 	animation: yaycheckout-spin 0.7s linear infinite;
 }

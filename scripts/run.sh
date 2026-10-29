@@ -209,9 +209,9 @@ get_wc_tested() {
     grep -E "^ \* WC tested up to:" "$MAIN_FILE" | sed -E "s/^ \* WC tested up to:[[:space:]]*//"
 }
 
-# Tested-up-to version: X.Y or X.Y.Z
+# Tested-up-to version: major.minor only (X.Y), as wordpress.org asks
 validate_tested_version() {
-    [[ "$1" =~ ^[0-9]+(\.[0-9]+){1,2}$ ]]
+    [[ "$1" =~ ^[0-9]+\.[0-9]+$ ]]
 }
 
 update_wp_tested() {
@@ -234,7 +234,7 @@ prompt_tested_version() {
         read -r -p "  $label tested up to [$current]: " value
         value=${value:-$current}
         validate_tested_version "$value" && break
-        print_error "Invalid version. Use: X.Y or X.Y.Z"
+        print_error "Invalid version. Use: X.Y (major.minor, e.g. 10.8)"
     done
 
     if [ "$value" != "$current" ]; then
@@ -340,7 +340,7 @@ cmd_release() {
     for arg in "$wp_tested" "$wc_tested"; do
         if [ -n "$arg" ] && ! validate_tested_version "$arg"; then
             print_error "Invalid tested-up-to version: $arg"
-            echo "Use: X.Y or X.Y.Z"
+            echo "Use: X.Y (major.minor, e.g. 10.8)"
             exit 1
         fi
     done
@@ -657,7 +657,7 @@ cmd_help() {
     echo "Commands:"
     echo "  dev                          Update admin shell + Vite dev server (:3040) + blocks watcher"
     echo "  build                        Build admin dashboard + blocks for production"
-    echo "  release [version] [--plan=free|pro] [--wp-tested=X.Y] [--wc-tested=X.Y.Z] [--no-prompt]"
+    echo "  release [version] [--plan=free|pro] [--wp-tested=X.Y] [--wc-tested=X.Y] [--no-prompt]"
     echo "                               Create release ZIP in release/ for this branch's edition"
     echo "                               (dev/edd: Pro, dev/lite: Free); --plan must match it"
     echo "                               Prompts for version and WP/WC tested-up-to unless given"
@@ -674,7 +674,7 @@ cmd_help() {
     echo "  ./scripts/run.sh release                # This branch's edition (prompts version)"
     echo "  ./scripts/run.sh release 1.0.1          # Bump to 1.0.1 and package"
     echo "  ./scripts/run.sh release --no-prompt    # Package current version"
-    echo "  ./scripts/run.sh release 1.0.1 --wp-tested=6.9 --wc-tested=10.8.0"
+    echo "  ./scripts/run.sh release 1.0.1 --wp-tested=6.9 --wc-tested=10.8"
 }
 
 # ─── Main ───────────────────────────────────────────────────────────────

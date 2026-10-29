@@ -4,6 +4,7 @@ namespace YayCheckout\Renderer;
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
+use YayCheckout\Services\LayoutAssignment;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -29,6 +30,9 @@ class ThemelessCheckout {
 
     private bool $active = false;
 
+    /** The request is the checkout form or one of its calls, and the filter allows the swap. */
+    private bool $allowed = false;
+
     protected function __construct() {
         // After PreviewRequest::read_token() at 0.
         add_action( 'setup_theme', [ $this, 'maybe_swap' ], 1 );
@@ -37,6 +41,14 @@ class ThemelessCheckout {
     /** True when this request loads the themeless theme. */
     public function is_active(): bool {
         return $this->active;
+    }
+
+    /**
+     * Whether the swap guessed wrong about this request resolving a layout, which a cart rule can make
+     * it do: the cart loads after setup_theme.
+     */
+    public function mispredicted( bool $resolved ): bool {
+        return $this->allowed && $this->active !== $resolved;
     }
 
     public function maybe_swap(): void {
@@ -56,6 +68,12 @@ class ThemelessCheckout {
          * @param bool $themeless Default true.
          */
         if ( ! apply_filters( 'yaycheckout_themeless_checkout', true ) ) {
+            return;
+        }
+
+        $this->allowed = $form;
+
+        if ( $form && ! $this->resolves_layout() ) {
             return;
         }
 
@@ -207,7 +225,24 @@ class ThemelessCheckout {
             return false;
         }
 
-        return null !== ( new LayoutRepository() )->active( CheckoutPage::shopper_context() );
+        $layouts = new LayoutRepository();
+
+        if ( ! $layouts->depends_on_cart() ) {
+            return null !== $layouts->active( CheckoutPage::shopper_context() );
+        }
+
+        // The cart is not loaded yet. A page load re-picks, so the rules decide unless they turn on the
+        // cart; the form's other calls keep the pinned layout, which the hint names.
+        $outlook = $layouts->outlook( CheckoutPage::shopper_context() );
+        $hint    = LayoutPin::hint();
+        $known   = null !== $hint && ( 0 === $hint || $layouts->is_active( $hint ) );
+
+        if ( $known && ( ! LayoutPin::is_page_request() || LayoutAssignment::OUTLOOK_MAYBE === $outlook ) ) {
+            return 0 !== $hint;
+        }
+
+        // A maybe without a hint guesses themeless; CheckoutPage reloads a page load the guess got wrong.
+        return LayoutAssignment::OUTLOOK_NO !== $outlook;
     }
 
     /** Whether a layout renders this order-received request. Free leaves order-received to WooCommerce; Pro's thank-you page answers. */

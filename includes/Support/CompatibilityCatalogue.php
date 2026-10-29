@@ -41,15 +41,17 @@ final class CompatibilityCatalogue {
 
         return [
             'gateways' => [
-                'cod'          => self::entry( self::STATUS_VERIFIED, $core ),
-                'bacs'         => self::entry( self::STATUS_VERIFIED, $core ),
-                'cheque'       => self::entry( self::STATUS_VERIFIED, $core ),
-                'stripe'       => self::entry( self::STATUS_COMMUNITY, $community ),
-                'ppcp-gateway' => self::entry( self::STATUS_COMMUNITY, $community ),
+                'cod'             => self::entry( self::STATUS_VERIFIED, $core ),
+                'bacs'            => self::entry( self::STATUS_VERIFIED, $core ),
+                'cheque'          => self::entry( self::STATUS_VERIFIED, $core ),
+                'stripe'          => self::entry( self::STATUS_COMMUNITY, $community ),
+                'ppcp-gateway'    => self::entry( self::STATUS_COMMUNITY, $community ),
+                'klarna_payments' => self::entry( self::STATUS_VERIFIED, __( 'Pay later and pay in parts.', 'yaycheckout' ) ),
             ],
             'plugins'  => [
-                'yayboost'   => self::entry( self::STATUS_VERIFIED, __( 'Order bumps you can place as a block.', 'yaycheckout' ) ),
-                'yayloyalty' => self::entry( self::STATUS_VERIFIED, __( 'Points balance and redemption at checkout.', 'yaycheckout' ) ),
+                'yayboost'                        => self::entry( self::STATUS_VERIFIED, __( 'Order bumps you can place as a block.', 'yaycheckout' ) ),
+                'yayloyalty'                      => self::entry( self::STATUS_VERIFIED, __( 'Points balance and redemption at checkout.', 'yaycheckout' ) ),
+                'klarna-payments-for-woocommerce' => self::entry( self::STATUS_VERIFIED, __( 'Klarna payments and Sign in with Klarna at checkout.', 'yaycheckout' ) ),
             ],
         ];
     }

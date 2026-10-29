@@ -133,39 +133,56 @@ async function submit( block: HTMLElement, form: HTMLFormElement ): Promise< voi
 	}
 }
 
-function openDialog( block: HTMLElement, trigger: HTMLElement ): void {
-	if ( ! dialog ) {
-		const template = block.querySelector< HTMLTemplateElement >( 'template.yaycheckout-login__template' );
-		const next = template?.content.querySelector( 'dialog' );
+/**
+ * Moves the closed dialog out of its template into the body. This runs on page load, not on the first click,
+ * because plugins that hook woocommerce_login_form_start (Sign in with Klarna) look for their placeholder once,
+ * when their SDK loads, and can't find it inside a template.
+ */
+function mountDialog( block: HTMLElement ): HTMLDialogElement | null {
+	if ( dialog ) {
+		return dialog;
+	}
 
-		if ( ! ( next instanceof HTMLDialogElement ) ) {
-			return;
-		}
+	const template = block.querySelector< HTMLTemplateElement >( 'template.yaycheckout-login__template' );
+	const next = template?.content.querySelector( 'dialog' );
 
-		document.body.appendChild( next );
-		dialog = next;
+	if ( ! ( next instanceof HTMLDialogElement ) ) {
+		return null;
+	}
 
-		const form = dialog.querySelector( 'form' );
+	document.body.appendChild( next );
+	dialog = next;
 
-		if ( form instanceof HTMLFormElement ) {
-			form.addEventListener( 'submit', ( event ) => {
-				event.preventDefault();
-				void submit( block, form );
-			} );
-		}
+	const form = dialog.querySelector( 'form' );
 
-		dialog.querySelector( '.yaycheckout-login__close' )?.addEventListener( 'click', () => {
-			dialog?.close();
-		} );
-		dialog.addEventListener( 'close', () => {
-			if ( returnFocus?.isConnected ) {
-				returnFocus.focus();
-			}
+	if ( form instanceof HTMLFormElement ) {
+		form.addEventListener( 'submit', ( event ) => {
+			event.preventDefault();
+			void submit( block, form );
 		} );
 	}
 
+	dialog.querySelector( '.yaycheckout-login__close' )?.addEventListener( 'click', () => {
+		dialog?.close();
+	} );
+	dialog.addEventListener( 'close', () => {
+		if ( returnFocus?.isConnected ) {
+			returnFocus.focus();
+		}
+	} );
+
+	return dialog;
+}
+
+function openDialog( block: HTMLElement, trigger: HTMLElement ): void {
+	const opened = mountDialog( block );
+
+	if ( ! opened ) {
+		return;
+	}
+
 	returnFocus = trigger;
-	dialog.showModal();
+	opened.showModal();
 }
 
 function onClick( event: MouseEvent ): void {
@@ -186,4 +203,18 @@ function onClick( event: MouseEvent ): void {
 	openDialog( block, trigger );
 }
 
+function mountOnLoad(): void {
+	const block = document.querySelector< HTMLElement >( '.yaycheckout-login[data-behavior="modal"]' );
+
+	if ( block ) {
+		mountDialog( block );
+	}
+}
+
 document.addEventListener( 'click', onClick );
+
+if ( document.readyState === 'loading' ) {
+	document.addEventListener( 'DOMContentLoaded', mountOnLoad );
+} else {
+	mountOnLoad();
+}
