@@ -203,3 +203,10 @@ export const wcHookIcon = /*#__PURE__*/ icon(
 		<path d="M10 6l2-3 2 3" />
 	</>
 );
+export const pluginBlockIcon = /*#__PURE__*/ icon(
+	<>
+		<path d="M9 3v4M15 3v4" />
+		<path d="M6 7h12v4a6 6 0 0 1-12 0z" />
+		<path d="M12 17v4" />
+	</>
+);

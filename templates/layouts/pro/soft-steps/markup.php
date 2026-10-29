@@ -8,12 +8,14 @@
  * cart icon's guard, the policy links and the address sections. Keep the markup as the editor saves it: a
  * hand edit that differs by one class or style makes the editor flag the block as invalid.
  *
- * One 560px column of filled, borderless fields under a full-width header bar that is the collapsible Order
- * Summary's header (logo, step dots, cart icon and total); the total opens a grey band below the bar. One step at a time (Delivery, Options, Payment), each
+ * One 560px column of filled, borderless fields under a full-width header bar outside the Checkout block (logo,
+ * step dots, and a Summary Toggle with the cart icon and total); the total opens the collapsible Order Summary, which
+ * holds only its Details, as a grey band below the bar. One step at a time (Delivery, Options, Payment), each
  * headed by a large question; Continue / Back / Place Order follow the step as pill buttons.
  * The address order follows WooCommerce's Shipping destination when the layout is created: with shipping
  * main, Step 1 asks for Shipping and Step 3 offers "Billing address is the same as shipping"; with billing
- * main, Step 1 asks for Billing and offers a different shipping address there, before the rates in Step 2;
+ * main, Step 1 asks for Billing and offers "Shipping address is the same as billing" there, ticked, before the
+ * rates in Step 2;
  * with shipping forced to billing, Billing alone.
  */
 
@@ -87,11 +89,8 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <?php
 };
 ?>
-<!-- wp:yaycheckout/checkout -->
-<!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>","collapsible":true,"style":{"border":{"bottom":{"color":"var:preset|color|yaycheckout-border","width":"1px","style":"solid"}},"spacing":{"blockGap":"0"}}} -->
-<!-- wp:yaycheckout/order-summary-header -->
-<!-- wp:group {"style":{"layout":{"selfStretch":"fill","flexSize":null},"spacing":{"padding":{"left":"24px","right":"24px"}}},"layout":{"type":"constrained","contentSize":"1080px"}} -->
-<div class="wp-block-group" style="padding-right:24px;padding-left:24px"><!-- wp:group {"style":{"dimensions":{"minHeight":"56px"},"spacing":{"blockGap":{"top":"8px","left":"16px"}}},"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
+<!-- wp:group {"tagName":"header","style":{"border":{"bottom":{"color":"var:preset|color|yaycheckout-border","width":"1px","style":"solid"}},"spacing":{"padding":{"left":"24px","right":"24px"}}},"layout":{"type":"constrained","contentSize":"1080px"}} -->
+<header class="wp-block-group" style="border-bottom-color:var(--wp--preset--color--yaycheckout-border);border-bottom-style:solid;border-bottom-width:1px;padding-right:24px;padding-left:24px"><!-- wp:group {"style":{"dimensions":{"minHeight":"56px"},"spacing":{"blockGap":{"top":"8px","left":"16px"}}},"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
 <div class="wp-block-group" style="min-height:56px"><?php if ( has_custom_logo() ) : ?>
 <!-- wp:site-logo {"width":24} /-->
 <?php else : ?>
@@ -109,11 +108,12 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <p style="margin-top:0;margin-bottom:0;font-size:14px;font-weight:600"><span class="yaycheckout-live-value" data-yaycheckout-value="cart_total" data-fallback="" data-prefix="" data-suffix=""><?php esc_html_e( 'Order total', 'yaycheckout' ); ?></span></p>
 <!-- /wp:paragraph -->
 <!-- /wp:yaycheckout/order-summary-toggle --></div>
-<!-- /wp:group --></div>
+<!-- /wp:group --></header>
 <!-- /wp:group -->
-<!-- /wp:yaycheckout/order-summary-header -->
 
-<!-- wp:yaycheckout/order-summary-details {"lock":{"remove":true},"style":{"color":{"background":"#f5f5f7"},"border":{"top":{"color":"var:preset|color|yaycheckout-border","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"20px","right":"24px","bottom":"20px","left":"24px"}}}} -->
+<!-- wp:yaycheckout/checkout -->
+<!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>","collapsible":true,"style":{"spacing":{"blockGap":"0"}}} -->
+<!-- wp:yaycheckout/order-summary-details {"lock":{"remove":true},"style":{"color":{"background":"#f5f5f7"},"border":{"bottom":{"color":"var:preset|color|yaycheckout-border","width":"1px","style":"solid"}},"spacing":{"padding":{"top":"20px","right":"24px","bottom":"20px","left":"24px"}}}} -->
 <!-- wp:group {"style":{"spacing":{"blockGap":"12px"},"typography":{"fontSize":"14px"}},"layout":{"type":"constrained","contentSize":"560px"}} -->
 <div class="wp-block-group" style="font-size:14px"><!-- wp:yaycheckout/order-summary-items {"showLabels":false,"thumbnailSize":52,"thumbnailRadius":12} /-->
 
@@ -129,7 +129,9 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- /wp:yaycheckout/order-summary -->
 
 <!-- wp:group {"style":{"spacing":{"padding":{"top":"56px","right":"24px","bottom":"80px","left":"24px"},"blockGap":"40px"}},"layout":{"type":"constrained","contentSize":"560px"}} -->
-<div class="wp-block-group" style="padding-top:56px;padding-right:24px;padding-bottom:80px;padding-left:24px"><!-- wp:yaycheckout/steps {"layout":"one-at-a-time","showHeadings":false} -->
+<div class="wp-block-group" style="padding-top:56px;padding-right:24px;padding-bottom:80px;padding-left:24px"><!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
+<!-- wp:yaycheckout/steps {"layout":"one-at-a-time","showHeadings":false} -->
 <!-- wp:yaycheckout/step {"title":"<?php esc_html_e( 'Delivery', 'yaycheckout' ); ?>","style":{"color":{"background":"transparent"},"border":{"width":"0px"},"spacing":{"padding":{"top":"0","right":"0","bottom":"0","left":"0"},"blockGap":"32px"}}} -->
 <!-- wp:group {"style":{"spacing":{"blockGap":"8px"}}} -->
 <div class="wp-block-group"><!-- wp:heading {"level":1,"style":{"typography":{"fontSize":"34px","fontWeight":"600","lineHeight":"1.15","letterSpacing":"-0.02em"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
@@ -152,7 +154,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <?php if ( 'billing' === $yaycheckout_destination ) : ?>
 
 
-<!-- wp:yaycheckout/different-address {"shipLabel":"<?php esc_html_e( 'Ship to a different address', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/different-address {"ticked":"same","sameShipLabel":"<?php esc_html_e( 'Shipping address is the same as billing', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:yaycheckout/shipping {"showTitle":false} -->
 <?php $yaycheckout_address_fields( 'shipping' ); ?>

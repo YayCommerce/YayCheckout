@@ -28,6 +28,15 @@ class LayoutTemplateCatalogueTest extends WP_UnitTestCase {
         }
     }
 
+    /** WooCommerce's before-form hook fires only where a Hook block places it, and plugins print notices there (YayCurrency). */
+    public function test_every_template_places_the_before_checkout_form_hook(): void {
+        $available = array_filter( LayoutTemplateCatalogue::templates( true ), static fn( $t ) => $t['available'] );
+
+        foreach ( array_column( $available, 'slug' ) as $slug ) {
+            $this->assertContains( 'woocommerce_before_checkout_form', LayoutMarkupReader::wc_hooks( LayoutTemplateCatalogue::markup( $slug ) ), $slug );
+        }
+    }
+
     public function test_free_lists_a_pro_template_locked(): void {
         $free = array_column( LayoutTemplateCatalogue::templates( false ), null, 'slug' );
         $this->assertTrue( $free[ LayoutTemplateCatalogue::DEFAULT_SLUG ]['available'] );
@@ -38,10 +47,10 @@ class LayoutTemplateCatalogueTest extends WP_UnitTestCase {
 
     public function test_a_template_without_files_is_coming_soon(): void {
         $available = array_column( LayoutTemplateCatalogue::templates( true ), 'available', 'slug' );
-        $this->assertFalse( $available['material-stepper'] );
+        $this->assertFalse( $available['digital-product'] );
 
         $this->expectException( \InvalidArgumentException::class );
         $this->expectExceptionMessage( 'This template is coming soon.' );
-        LayoutTemplateCatalogue::assert_available( 'material-stepper' );
+        LayoutTemplateCatalogue::assert_available( 'digital-product' );
     }
 }

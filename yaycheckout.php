@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       YayCheckout - WooCommerce Checkout Builder
+ * Plugin Name:       YayCheckout Pro - WooCommerce Checkout Builder
  * Plugin URI:        https://yaycommerce.com/
  * Description:       Checkout builder plugin for WooCommerce: customize checkout fields, layout and design.
  * Version:           1.0.0
@@ -12,7 +12,7 @@
  * Domain Path:       /languages
  * Requires at least: 6.5
  * Requires PHP: 7.4
- * WC requires at least: 10.0.0
+ * WC requires at least: 10.0
  * WC tested up to: 11.2
  */
 
@@ -20,7 +20,27 @@ namespace YayCheckout;
 
 defined( 'ABSPATH' ) || exit;
 
+// Pro supersedes Free. 'yaycheckout/' loads before 'yaycheckout-pro/', so without this the
+// guard below would keep Free and switch Pro off. Read the options: is_plugin_active()
+// isn't loaded on the storefront.
+$yaycheckout_pro_basename = 'yaycheckout-pro/yaycheckout.php';
+if ( 'yaycheckout-pro' !== basename( __DIR__ ) && (
+    in_array( $yaycheckout_pro_basename, (array) get_option( 'active_plugins', [] ), true )
+    || ( is_multisite() && isset( get_site_option( 'active_sitewide_plugins', [] )[ $yaycheckout_pro_basename ] ) )
+) ) {
+    $yaycheckout_fallback_reason = 'pro_active';
+    require_once plugin_dir_path( __FILE__ ) . 'includes/Fallback.php';
+    add_action(
+        'admin_init',
+        function () {
+            deactivate_plugins( plugin_basename( __FILE__ ) );
+        }
+    );
+    return;
+}
+
 if ( function_exists( 'YayCheckout\\plugin_init' ) ) {
+    $yaycheckout_fallback_reason = 'duplicate';
     require_once plugin_dir_path( __FILE__ ) . 'includes/Fallback.php';
     add_action(
         'admin_init',

@@ -208,9 +208,9 @@ get_wc_tested() {
     grep -E "^ \* WC tested up to:" "$MAIN_FILE" | sed -E "s/^ \* WC tested up to:[[:space:]]*//"
 }
 
-# Tested-up-to version: X.Y or X.Y.Z
+# Tested-up-to version: major.minor only (X.Y), as wordpress.org asks
 validate_tested_version() {
-    [[ "$1" =~ ^[0-9]+(\.[0-9]+){1,2}$ ]]
+    [[ "$1" =~ ^[0-9]+\.[0-9]+$ ]]
 }
 
 update_wp_tested() {
@@ -233,7 +233,7 @@ prompt_tested_version() {
         read -r -p "  $label tested up to [$current]: " value
         value=${value:-$current}
         validate_tested_version "$value" && break
-        print_error "Invalid version. Use: X.Y or X.Y.Z"
+        print_error "Invalid version. Use: X.Y (major.minor, e.g. 10.8)"
     done
 
     if [ "$value" != "$current" ]; then
@@ -281,7 +281,7 @@ cmd_build() {
 cmd_release() {
     local no_prompt=false
     local requested_version=""
-    local plan="free"
+    local plan=""
     local wp_tested=""
     local wc_tested=""
     local arg
@@ -295,10 +295,30 @@ cmd_release() {
         esac
     done
 
-    # Free by default, and anything else fails, so a mistyped release never ships Pro code.
+    # The branch decides the edition: dev/edd's adapter is Pro (LicenseConfigAdapter),
+    # dev/lite's is Free. --plan may only confirm it, so a Free zip never ships the Pro
+    # adapter and header, nor a Pro zip the Free ones.
+    local branch_plan="free"
+    local branch_name="dev/lite"
+    if grep -q 'LicenseConfigAdapter' "$PLUGIN_DIR/YayCheckoutPluginAdapter.php"; then
+        branch_plan="pro"
+        branch_name="dev/edd"
+    fi
+    [ -z "$plan" ] && plan="$branch_plan"
+
     if [ "$plan" != "free" ] && [ "$plan" != "pro" ]; then
         print_error "Invalid plan: $plan"
         echo "Use: --plan=free or --plan=pro"
+        exit 1
+    fi
+
+    if [ "$plan" != "$branch_plan" ]; then
+        print_error "This branch builds $branch_plan (see YayCheckoutPluginAdapter.php), not $plan"
+        if [ "$plan" = "pro" ]; then
+            echo "Check out dev/edd to build Pro."
+        else
+            echo "Check out dev/lite to build Free."
+        fi
         exit 1
     fi
 
@@ -306,10 +326,8 @@ cmd_release() {
     # otherwise overwrite a paid Pro install. When both copies are active,
     # yaycheckout.php deactivates the second.
     local plan_slug="$PLUGIN_SLUG"
-    local plan_label="YayCheckout"
     if [ "$plan" = "pro" ]; then
         plan_slug="${PLUGIN_SLUG}-pro"
-        plan_label="YayCheckout Pro"
     fi
 
     if [ -n "$requested_version" ] && ! validate_version "$requested_version"; then
@@ -321,7 +339,7 @@ cmd_release() {
     for arg in "$wp_tested" "$wc_tested"; do
         if [ -n "$arg" ] && ! validate_tested_version "$arg"; then
             print_error "Invalid tested-up-to version: $arg"
-            echo "Use: X.Y or X.Y.Z"
+            echo "Use: X.Y (major.minor, e.g. 10.8)"
             exit 1
         fi
     done
@@ -432,11 +450,6 @@ cmd_release() {
         print_info "Free build: removed the admin-shell licensing and Recommended Plugins"
     fi
 
-    # Distinguish the editions in wp-admin.
-    if [ "$plan" = "pro" ]; then
-        sed_inplace "s/^ \* Plugin Name: .*/ \* Plugin Name:       $plan_label - WooCommerce Checkout Builder/" "$temp_dir/$PLUGIN_SLUG.php"
-    fi
-
     # The source defaults to dev mode (Vite on :3040); a customer zip must load assets/dist.
     sed_inplace "s/define( 'YAYCHECKOUT_IS_DEVELOPMENT', true )/define( 'YAYCHECKOUT_IS_DEVELOPMENT', false )/" "$temp_dir/$PLUGIN_SLUG.php"
 
@@ -488,12 +501,27 @@ cmd_release() {
     fi
 
     if [ "$plan" = "pro" ]; then
-        for path in $PRO_PATHS; do
+        for path in $PRO_PATHS src/License/ src/License/EDD_SL_Plugin_Updater.php; do
+            case $path in
+                src/*) path="vendor-prefixed/$path" ;;
+            esac
             if ! unzip -l "$zip_name" | grep -q "$plan_slug/$path"; then
                 print_error "Pro artifact is missing $path"
                 exit 1
             fi
         done
+    fi
+
+    # The header comes from the branch; a mismatch means the wrong branch's files.
+    local plugin_name
+    plugin_name=$(unzip -p "$zip_name" "$plan_slug/$PLUGIN_SLUG.php" | grep -m1 '^ \* Plugin Name:' || true)
+    if [ "$plan" = "pro" ] && ! printf '%s' "$plugin_name" | grep -q 'YayCheckout Pro'; then
+        print_error "Pro artifact's header is not YayCheckout Pro: $plugin_name"
+        exit 1
+    fi
+    if [ "$plan" = "free" ] && printf '%s' "$plugin_name" | grep -q 'Pro'; then
+        print_error "Free artifact's header names Pro: $plugin_name"
+        exit 1
     fi
 
     if ! unzip -p "$zip_name" "$plan_slug/$PLUGIN_SLUG.php" | grep -q "define( 'YAYCHECKOUT_IS_DEVELOPMENT', false )"; then
@@ -623,8 +651,9 @@ cmd_help() {
     echo "Commands:"
     echo "  dev                          Update admin shell + Vite dev server (:3040) + blocks watcher"
     echo "  build                        Build admin dashboard + blocks for production"
-    echo "  release [version] [--plan=free|pro] [--wp-tested=X.Y] [--wc-tested=X.Y.Z] [--no-prompt]"
-    echo "                               Create release ZIP in release/ (default --plan=free)"
+    echo "  release [version] [--plan=free|pro] [--wp-tested=X.Y] [--wc-tested=X.Y] [--no-prompt]"
+    echo "                               Create release ZIP in release/ for this branch's edition"
+    echo "                               (dev/edd: Pro, dev/lite: Free); --plan must match it"
     echo "                               Prompts for version and WP/WC tested-up-to unless given"
     echo "  bump <version>               Bump version in plugin files"
     echo "  info                         Show current version info"
@@ -635,11 +664,10 @@ cmd_help() {
     echo ""
     echo "Examples:"
     echo "  ./scripts/run.sh dev                    # Dev server with HMR"
-    echo "  ./scripts/run.sh release                # Free package (prompts version)"
-    echo "  ./scripts/run.sh release --plan=pro      # Pro package"
+    echo "  ./scripts/run.sh release                # This branch's edition (prompts version)"
     echo "  ./scripts/run.sh release 1.0.1          # Bump to 1.0.1 and package"
     echo "  ./scripts/run.sh release --no-prompt    # Package current version"
-    echo "  ./scripts/run.sh release 1.0.1 --wp-tested=6.9 --wc-tested=10.8.0"
+    echo "  ./scripts/run.sh release 1.0.1 --wp-tested=6.9 --wc-tested=10.8"
 }
 
 # ─── Main ───────────────────────────────────────────────────────────────

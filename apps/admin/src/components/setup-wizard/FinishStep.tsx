@@ -28,13 +28,12 @@ export function FinishStep({
         <h2 className="text-xl font-semibold">{__('Your layout is ready', 'yaycheckout')}</h2>
         <p className="text-muted-foreground text-sm">
           {sprintf(
-            /* translators: 1: layout name, 2: template name */
+            /* translators: %s: layout name */
             __(
-              '"%1$s" was created from %2$s as a draft. Nothing is live yet: publish it from the editor when you are happy.',
+              '"%s" was created as a draft. Nothing is live yet: publish it from the editor when you are happy.',
               'yaycheckout',
             ),
             draft.title,
-            template?.name ?? templateSlug,
           )}
         </p>
       </div>

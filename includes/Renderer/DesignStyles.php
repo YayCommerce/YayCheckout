@@ -311,6 +311,19 @@ class DesignStyles {
             $vars['button-text-transform'] = $buttons['text_transform'];
         }
 
+        $notices = $sections['notices'];
+        $vars    = array_merge(
+            $vars,
+            array_filter(
+                [
+                    'notice-error-color'   => $notices['error'],
+                    'notice-success-color' => $notices['success'],
+                    'notice-info-color'    => $notices['info'],
+                ],
+                $not_empty
+            )
+        );
+
         return $vars;
     }
 }

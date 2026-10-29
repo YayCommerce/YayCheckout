@@ -13,6 +13,7 @@ import {
 	TextareaControl,
 	__experimentalToolsPanel as ToolsPanel,
 } from '@wordpress/components';
+import { useEntityProp } from '@wordpress/core-data';
 import { select, useDispatch, useSelect } from '@wordpress/data';
 import { addFilter } from '@wordpress/hooks';
 import { PluginSidebar, PluginSidebarMoreMenuItem, store as editorStore } from '@wordpress/editor';
@@ -22,7 +23,7 @@ import { registerPlugin } from '@wordpress/plugins';
 import { useCanvasStyle } from '../shared/canvas-style';
 import { DEFAULT_BASE_SIZE, designCss, isGradient } from '../shared/design-css';
 import { editorData, type DesignRule, type EditorDesign } from '../shared/editor-data';
-import { useIsLayoutEditor } from '../shared/layout-editor';
+import { useIsLayoutEditor, useIsPreviewingRevision } from '../shared/layout-editor';
 import { errorMessage } from '../shared/error-message';
 import { StateColourItem, type ColourState } from '../shared/state-colour-item';
 import './layout-design.css';
@@ -41,10 +42,11 @@ export type LayoutDesignMeta = {
 	radios: SectionTokens;
 	help_text: SectionTokens;
 	buttons: SectionTokens;
+	notices: SectionTokens;
 	custom_css: string;
 };
 
-type Section = 'colours' | 'typography' | 'inputs' | 'checkboxes' | 'radios' | 'help_text' | 'buttons';
+type Section = 'colours' | 'typography' | 'inputs' | 'checkboxes' | 'radios' | 'help_text' | 'buttons' | 'notices';
 
 /** In the sidebar's order. */
 const SECTIONS: Record< Section, string > = {
@@ -55,6 +57,7 @@ const SECTIONS: Record< Section, string > = {
 	checkboxes: __( 'Checkboxes', 'yaycheckout' ),
 	radios: __( 'Radios', 'yaycheckout' ),
 	help_text: __( 'Help text', 'yaycheckout' ),
+	notices: __( 'Notices', 'yaycheckout' ),
 };
 
 /** Each section's colour panel. A section of colours only shows that panel alone, under the section's name. */
@@ -88,6 +91,9 @@ const TOKEN_LABELS: Record< string, string > = {
 	link: __( 'Link', 'yaycheckout' ),
 	font_weight: __( 'Weight', 'yaycheckout' ),
 	text_transform: __( 'Letter case', 'yaycheckout' ),
+	error: __( 'Error', 'yaycheckout' ),
+	success: __( 'Success', 'yaycheckout' ),
+	info: __( 'Info', 'yaycheckout' ),
 };
 
 const ENUM_LABELS: Record< string, string > = {
@@ -151,22 +157,22 @@ function normalize( design: EditorDesign, raw: unknown ): LayoutDesignMeta {
 		radios: sectionTokens( design.schema.radios, meta.radios ),
 		help_text: sectionTokens( design.schema.help_text, meta.help_text ),
 		buttons: sectionTokens( design.schema.buttons, meta.buttons ),
+		notices: sectionTokens( design.schema.notices, meta.notices ),
 		custom_css: 'string' === typeof meta.custom_css ? meta.custom_css : '',
 	};
 }
 
-/** The edited design and its setter; writing marks the post dirty, and Save stores it with the markup. */
+/**
+ * The edited design and its setter; writing marks the post dirty, and Save stores it with the markup.
+ * While a revision is shown, core's entity provider answers with that revision's meta, so the canvas shows
+ * its design. The setter still writes the post, so an edit pending when a revision opens isn't lost.
+ */
 function useLayoutDesign( design: EditorDesign ): [ LayoutDesignMeta, ( next: LayoutDesignMeta ) => void ] {
-	const raw = useSelect(
-		( selectStore ) =>
-			( selectStore( editorStore ).getEditedPostAttribute( 'meta' ) as Record< string, unknown > | undefined )?.[
-				design.metaKey
-			],
-		[ design.metaKey ]
-	);
+	const postType = useSelect( ( selectStore ) => selectStore( editorStore ).getCurrentPostType(), [] );
+	const [ meta ] = useEntityProp( 'postType', postType, 'meta' ) as [ Record< string, unknown > | undefined ];
 	const { editPost } = useDispatch( editorStore );
 
-	return [ normalize( design, raw ), ( next ) => editPost( { meta: { [ design.metaKey ]: next } } ) ];
+	return [ normalize( design, meta?.[ design.metaKey ] ), ( next ) => editPost( { meta: { [ design.metaKey ]: next } } ) ];
 }
 
 /** Mirrors LayoutDesign::sanitize_custom_css() in PHP: its limits and its messages. */
@@ -713,7 +719,9 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 	// Edits live here while the merchant drags or types, and reach the post once they pause: every editPost
 	// re-renders the whole editor and adds an undo step, which made a dragged colour picker crawl.
 	const [ draft, setDraft ] = useState< LayoutDesignMeta | null >( null );
-	const current = draft ?? stored;
+	// A revision shows as it was saved. Core keeps its own sidebar open meanwhile, so this one can't be edited.
+	const isRevision = useIsPreviewingRevision();
+	const current = ( ! isRevision && draft ) || stored;
 	const pending = useRef< { next: LayoutDesignMeta | null; timer?: number } >( { next: null } );
 	const storeRef = useRef( store );
 	storeRef.current = store;

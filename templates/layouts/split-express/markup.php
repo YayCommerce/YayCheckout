@@ -12,8 +12,9 @@
  * Left column is the dark order panel; right column is the form. Delivery is the main
  * address, chosen from WooCommerce's Shipping destination when the layout is created:
  * Shipping when shipping is main, Billing when billing is main or shipping is forced to
- * billing. Different Address follows Payment, then the other section with five fields;
- * forced-to-billing has only Delivery. Delivery holds the structure
+ * billing. Different Address follows Payment, ticked for the same address, then the other
+ * section with the mock's five fields plus Country and State, which rates, tax and gateways
+ * need; forced-to-billing has only Delivery. Delivery holds the structure
  * packages/blocks/src/shared/address-template.ts gives a new section (country first here);
  * change both together. Their keys come from packages/blocks/src/shared/address-fields.ts.
  * Order Summary holds the tree TEMPLATE in packages/blocks/src/order-summary/edit.tsx gives
@@ -54,6 +55,8 @@ $yaycheckout_destination = \YayCheckout\Renderer\CheckoutDifferentAddress::desti
 
 // Delivery's fields (country first); $type is 'shipping' or 'billing'.
 $yaycheckout_delivery_fields = static function ( string $type ): void {
+    // The State column shows only while its State field isn't empty: a country without states leaves no gap.
+    $yaycheckout_state_id = 'billing' === $type ? 'bilstate' : 'shpstate';
     ?>
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_country","type":"country","label":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","required":true} /-->
 
@@ -71,19 +74,19 @@ $yaycheckout_delivery_fields = static function ( string $type ): void {
 
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_1","label":"<?php esc_html_e( 'Address', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Address *', 'yaycheckout' ); ?>","required":true} /-->
 
-<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_2","label":"<?php esc_html_e( 'Apartment, suite, unit, etc.', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Apartment, suite, etc. (optional)', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_2","label":"<?php esc_html_e( 'Apartment, suite, unit, etc.', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Apartment, suite, etc. (optional)', 'yaycheckout' ); ?>","disclosure":"link","disclosureText":"<?php esc_html_e( '+ Add apartment, suite, etc.', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns are-vertically-aligned-bottom"><!-- wp:column {"verticalAlignment":"bottom","width":"50%"} -->
 <div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:50%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'City *', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
-<!-- wp:column {"verticalAlignment":"bottom","width":"25%"} -->
-<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:column {"verticalAlignment":"bottom","width":"25%","yaycheckoutVisibility":{"action":"show","rules":[{"type":"block","block":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","is":"not_empty"}]}} -->
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"blockId":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
-<!-- wp:column {"verticalAlignment":"bottom","width":"25%"} -->
-<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_postcode","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'ZIP Code *', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:column {"verticalAlignment":"bottom"} -->
+<div class="wp-block-column is-vertically-aligned-bottom"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_postcode","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'ZIP Code *', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
@@ -93,7 +96,11 @@ $yaycheckout_delivery_fields = static function ( string $type ): void {
 
 // The address Different Address reveals: five fields as in the mock; $type is 'shipping' or 'billing'.
 $yaycheckout_secondary_fields = static function ( string $type ): void {
+    // The mock draws no country or state here, but shipping rates, tax and gateways need them.
+    $yaycheckout_state_id = 'billing' === $type ? 'bilstate' : 'shpstate';
     ?>
+<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_country","type":"country","label":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","required":true} /-->
+
 <!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_first_name","label":"<?php esc_html_e( 'First name', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'First name *', 'yaycheckout' ); ?>","required":true} /--></div>
@@ -106,13 +113,17 @@ $yaycheckout_secondary_fields = static function ( string $type ): void {
 
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_1","label":"<?php esc_html_e( 'Address', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Address *', 'yaycheckout' ); ?>","required":true} /-->
 
-<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
-<div class="wp-block-columns"><!-- wp:column -->
-<div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'City *', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
+<div class="wp-block-columns are-vertically-aligned-bottom"><!-- wp:column {"verticalAlignment":"bottom"} -->
+<div class="wp-block-column is-vertically-aligned-bottom"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'City *', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
-<!-- wp:column -->
-<div class="wp-block-column"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_postcode","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'ZIP Code *', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:column {"verticalAlignment":"bottom","width":"33.33%","yaycheckoutVisibility":{"action":"show","rules":[{"type":"block","block":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","is":"not_empty"}]}} -->
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:33.33%"><!-- wp:yaycheckout/field {"blockId":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- /wp:column -->
+
+<!-- wp:column {"verticalAlignment":"bottom"} -->
+<div class="wp-block-column is-vertically-aligned-bottom"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_postcode","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'ZIP Code *', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 <?php
@@ -163,7 +174,9 @@ $yaycheckout_secondary_fields = static function ( string $type ): void {
 
 <!-- wp:column -->
 <div class="wp-block-column"><!-- wp:group {"style":{"spacing":{"padding":{"top":"32px","right":"40px","bottom":"80px","left":"40px"},"blockGap":"32px"}},"layout":{"type":"constrained","contentSize":"600px"}} -->
-<div class="wp-block-group" style="padding-top:32px;padding-right:40px;padding-bottom:80px;padding-left:40px"><!-- wp:yaycheckout/express-pay {"blockId":"exprspay"} /-->
+<div class="wp-block-group" style="padding-top:32px;padding-right:40px;padding-bottom:80px;padding-left:40px"><!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
+<!-- wp:yaycheckout/express-pay {"blockId":"exprspay"} /-->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"12px"}},"layout":{"type":"flex","flexWrap":"nowrap","verticalAlignment":"center"},"yaycheckoutVisibility":{"action":"hide","rules":[{"type":"block","block":"exprspay","is":"empty"}]}} -->
 <div class="wp-block-group"><!-- wp:separator {"backgroundColor":"yaycheckout-border","style":{"spacing":{"margin":{"top":"0","bottom":"0"}},"layout":{"selfStretch":"fill","flexSize":null}}} -->
@@ -210,15 +223,15 @@ $yaycheckout_secondary_fields = static function ( string $type ): void {
 <!-- wp:yaycheckout/payment {"label":"<?php esc_html_e( 'Payment options', 'yaycheckout' ); ?>","description":"<?php esc_html_e( 'All transactions are secure and encrypted.', 'yaycheckout' ); ?>","layout":"box","style":{"border":{"radius":"4px"}}} /-->
 
 <?php if ( 'billing_only' !== $yaycheckout_destination ) : ?>
-<!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Use shipping address as billing address', 'yaycheckout' ); ?>","shipLabel":"<?php esc_html_e( 'Use shipping address as billing address', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Use shipping address as billing address', 'yaycheckout' ); ?>","ticked":"same","sameShipLabel":"<?php esc_html_e( 'Use billing address as shipping address', 'yaycheckout' ); ?>"} /-->
 <?php if ( 'shipping' === $yaycheckout_destination ) : ?>
 
-<!-- wp:yaycheckout/billing {"showTitle":false,"style":{"color":{"background":"#f0f0f1"},"border":{"radius":"8px"},"spacing":{"padding":{"top":"16px","right":"16px","bottom":"16px","left":"16px"}}}} -->
+<!-- wp:yaycheckout/billing {"borderColor":"yaycheckout-border","showTitle":false,"style":{"color":{"background":"#f0f0f1"},"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"16px","right":"16px","bottom":"16px","left":"16px"}}}} -->
 <?php $yaycheckout_secondary_fields( 'billing' ); ?>
 <!-- /wp:yaycheckout/billing -->
 <?php else : ?>
 
-<!-- wp:yaycheckout/shipping {"showTitle":false,"style":{"color":{"background":"#f0f0f1"},"border":{"radius":"8px"},"spacing":{"padding":{"top":"16px","right":"16px","bottom":"16px","left":"16px"}}}} -->
+<!-- wp:yaycheckout/shipping {"borderColor":"yaycheckout-border","showTitle":false,"style":{"color":{"background":"#f0f0f1"},"border":{"width":"1px","style":"solid","radius":"4px"},"spacing":{"padding":{"top":"16px","right":"16px","bottom":"16px","left":"16px"}}}} -->
 <?php $yaycheckout_secondary_fields( 'shipping' ); ?>
 <!-- /wp:yaycheckout/shipping -->
 <?php endif; ?>

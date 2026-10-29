@@ -28,5 +28,5 @@ Accepted, 2026-10-05, by Trace Bui, who confirmed the reasons. Backfilled: the p
 
 - Drafts, autosave, revisions and scheduling are core's, with no code of ours.
 - Editing a published layout changes what shoppers see on the next request: there is no staged copy.
-- Core's REST API answers reads of published posts without a capability check, so `LayoutCoreRestController` has to require one; and any shop manager can create a layout through `wp/v2`, so the Free limit is enforced on core's insert too (`Engine\LayoutCapGuard`).
+- Core's REST API answers reads of published posts without a capability check, so `LayoutCoreRestController` has to require one.
 - WordPress's own behaviours apply to layouts and need guards: trash purging (`Engine\LayoutTrashSync`), and trashing or unpublishing the active layout (`Engine\LayoutActiveGuard`).

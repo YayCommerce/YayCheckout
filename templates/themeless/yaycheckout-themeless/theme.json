@@ -632,16 +632,12 @@
 			},
 			"h5": {
 				"typography": {
-					"fontSize": "var:preset|font-size|small",
-					"letterSpacing": "0.5px"
+					"fontSize": "var:preset|font-size|small"
 				}
 			},
 			"h6": {
 				"typography": {
-					"fontSize": "var:preset|font-size|small",
-					"fontWeight": "700",
-					"letterSpacing": "1.4px",
-					"textTransform": "uppercase"
+					"fontSize": "var:preset|font-size|small"
 				}
 			},
 			"heading": {

@@ -26,7 +26,8 @@ if ( \YayCheckout\Renderer\CheckoutLogin::must_log_in() ) {
 
 $yaycheckout_placeholder = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'placeholder', __( 'Coupon code', 'yaycheckout' ) );
 
-$yaycheckout_wrapper_attrs = [ 'class' => 'yaycheckout-coupon-form' ];
+// It may sit outside Checkout (CheckoutScope).
+$yaycheckout_wrapper_attrs = [ 'class' => 'yaycheckout-coupon-form ' . \YayCheckout\Renderer\CheckoutScope::classes() ];
 
 // Inner block markup (the Coupon Button); a form saved without one gets the default button.
 $yaycheckout_button = '' !== trim( $content )
@@ -62,6 +63,6 @@ $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, '
         <?php echo $yaycheckout_button; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered block markup; its render.php escapes. ?>
     </div>
     <?php echo \YayCheckout\Renderer\CheckoutFragments::coupon_chips_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped by CheckoutFragments; update_order_review refreshes it. ?>
-    <div class="yaycheckout-coupon-form__notices" aria-live="polite" data-error-text="<?php esc_attr_e( 'The coupon could not be applied. Please try again.', 'yaycheckout' ); ?>"></div>
+    <div class="yaycheckout-coupon-form__notices" aria-live="polite" data-error-text="<?php esc_attr_e( 'The coupon could not be applied. Please try again.', 'yaycheckout' ); ?>" data-remove-error-text="<?php esc_attr_e( 'The coupon could not be removed. Please try again.', 'yaycheckout' ); ?>"></div>
     <?php echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
 </div>

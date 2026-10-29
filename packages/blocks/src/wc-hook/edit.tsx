@@ -3,6 +3,7 @@ import { Notice, PanelBody, SelectControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { wcHookIcon } from '../shared/block-icons';
+import { HookOutputPreview } from '../shared/hook-output-preview';
 import { type BlockEditorSelectors } from '../shared/section-fields';
 import metadata from './block.json';
 import { type WcHookGroup, wcHooksEditorData } from './editor-data';
@@ -86,7 +87,7 @@ export default function Edit( { attributes, setAttributes, isSelected }: EditPro
 					{ option && ! option.hasCallbacks && (
 						<Notice status="info" isDismissible={ false }>
 							{ __(
-								'Nothing on this store prints here yet, so shoppers see nothing.',
+								'Nothing hooks this in the editor. Some plugins add output only on the storefront, so preview to check.',
 								'yaycheckout'
 							) }
 						</Notice>
@@ -115,10 +116,9 @@ export default function Edit( { attributes, setAttributes, isSelected }: EditPro
 						{ option ? option.label : __( 'Choose a hook in the block settings', 'yaycheckout' ) }
 					</span>
 				</span>
-				{ option && ! option.hasCallbacks && (
-					<span className="yaycheckout-wc-hook__badge">{ __( 'Nothing prints here', 'yaycheckout' ) }</span>
-				) }
 				{ option && <code className="yaycheckout-wc-hook__name">{ option.hook }</code> }
+				{ /* Inside the block, as on the storefront, where the block wraps what the hook prints. */ }
+				<HookOutputPreview hook={ hook } owner="wc-hook" />
 			</div>
 		</>
 	);

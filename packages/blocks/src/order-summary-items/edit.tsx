@@ -17,6 +17,7 @@ import type { ReactNode } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 import { preventCanvasNavigation } from '../shared/canvas-link';
+import { HookOutputPreview } from '../shared/hook-output-preview';
 import { plainText } from '../shared/plain-text';
 import '../shared/tools-panel.css';
 import './editor.css';
@@ -510,6 +511,8 @@ export default function Edit( { attributes, setAttributes, clientId }: EditProps
 						</div>
 						<div className="product-total">$20.00</div>
 					</div>
+					{ /* Mirrors CheckoutFragments::order_items_html()'s print_order_items_hook() after the rows. */ }
+					<HookOutputPreview hook="woocommerce_review_order_after_cart_contents" owner="block" />
 				</div>
 			</div>
 		</>

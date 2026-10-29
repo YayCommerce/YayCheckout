@@ -14,6 +14,16 @@
 	text-align: left;
 }
 
+/* A stand-in for the hook's output (HookOutputPreview) takes a row of its own under the label. */
+.editor-styles-wrapper .yaycheckout-wc-hook:has(> .yaycheckout-hook-output-preview) {
+	flex-wrap: wrap;
+}
+
+.editor-styles-wrapper .yaycheckout-wc-hook > .yaycheckout-hook-output-preview {
+	flex: 1 0 100%;
+	margin: 0;
+}
+
 .editor-styles-wrapper .yaycheckout-wc-hook.is-selected {
 	border-style: solid;
 }
@@ -52,15 +62,6 @@
 
 .editor-styles-wrapper .yaycheckout-wc-hook__label {
 	font-weight: 600;
-}
-
-.editor-styles-wrapper .yaycheckout-wc-hook__badge {
-	flex: none;
-	padding: 2px 8px;
-	border-radius: 999px;
-	background: #f0f0f0;
-	color: #757575;
-	font-size: 11px;
 }
 
 .editor-styles-wrapper .yaycheckout-wc-hook__name {

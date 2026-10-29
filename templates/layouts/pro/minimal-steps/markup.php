@@ -8,8 +8,8 @@
  * lock icon's guard, the policy links and the address sections. Keep the markup as the editor saves it: a
  * hand edit that differs by one class or style makes the editor flag the block as invalid.
  *
- * One 440px column under a full-width progress bar: logo with "Step N of 3", a collapsible
- * Order Summary, then one step at a time (Address, Delivery, Payment). Continue / Back / Pay
+ * One 440px column under a header outside the Checkout block (a full-width progress bar, then logo with
+ * "Step N of 3"); inside Checkout, a collapsible Order Summary, then one step at a time (Address, Delivery, Payment). Continue / Back / Pay
  * and Secure checkout sit in a Group pinned to the bottom of the screen.
  */
 
@@ -57,6 +57,7 @@ $yaycheckout_destination = \YayCheckout\Renderer\CheckoutDifferentAddress::desti
 $yaycheckout_main        = 'shipping' === $yaycheckout_destination ? 'shipping' : 'billing';
 
 // Step 1's address fields; $type is 'shipping' or 'billing'. No company, apartment or phone.
+// City fills the row beside ZIP, two to one, and State takes a third of it when the country has states.
 $yaycheckout_address_fields = static function ( string $type ): void {
     // The State column shows only while its State field isn't empty: a country without states leaves no gap.
     // One blockId per section; each matches BlockEmptiness::BLOCK_ID_PATTERN.
@@ -75,28 +76,28 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_1","label":"<?php esc_html_e( 'Address', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Address', 'yaycheckout' ); ?>","required":true} /-->
 
 <!-- wp:columns {"verticalAlignment":"bottom","style":{"spacing":{"blockGap":{"top":"12px","left":"12px"}}}} -->
-<div class="wp-block-columns are-vertically-aligned-bottom"><!-- wp:column {"verticalAlignment":"bottom","width":"50%"} -->
-<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:50%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
+<div class="wp-block-columns are-vertically-aligned-bottom"><!-- wp:column {"verticalAlignment":"bottom"} -->
+<div class="wp-block-column is-vertically-aligned-bottom"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_city","label":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'City', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
-<!-- wp:column {"verticalAlignment":"bottom","width":"25%","yaycheckoutVisibility":{"action":"show","rules":[{"type":"block","block":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","is":"not_empty"}]}} -->
-<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"blockId":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:column {"verticalAlignment":"bottom","width":"33.33%","yaycheckoutVisibility":{"action":"show","rules":[{"type":"block","block":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","is":"not_empty"}]}} -->
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:33.33%"><!-- wp:yaycheckout/field {"blockId":"<?php echo esc_attr( $yaycheckout_state_id ); ?>","fieldKey":"<?php echo esc_attr( $type ); ?>_state","type":"state","label":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'State', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column -->
 
-<!-- wp:column {"verticalAlignment":"bottom","width":"25%"} -->
-<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:25%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_postcode","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","required":true} /--></div>
+<!-- wp:column {"verticalAlignment":"bottom","width":"33.33%"} -->
+<div class="wp-block-column is-vertically-aligned-bottom" style="flex-basis:33.33%"><!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_postcode","label":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'ZIP Code', 'yaycheckout' ); ?>","required":true} /--></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
-<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_country","type":"country","label":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Country/Region', 'yaycheckout' ); ?>","required":true} /-->
+<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_country","type":"country","label":"<?php esc_html_e( 'Country', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Country', 'yaycheckout' ); ?>","required":true} /-->
 <?php
 };
 ?>
-<!-- wp:yaycheckout/checkout -->
-<!-- wp:yaycheckout/steps-progress {"variant":"bar","showCount":false,"trackColor":"var(--yaycheckout-design-border)"} /-->
+<!-- wp:group {"tagName":"header","style":{"spacing":{"blockGap":"0"}},"layout":{"type":"default"}} -->
+<header class="wp-block-group"><!-- wp:yaycheckout/steps-progress {"variant":"bar","showCount":false,"trackColor":"var(--yaycheckout-design-border)"} /-->
 
-<!-- wp:group {"style":{"spacing":{"padding":{"top":"40px","right":"24px","bottom":"24px","left":"24px"},"blockGap":"32px"}},"layout":{"type":"constrained","contentSize":"440px"}} -->
-<div class="wp-block-group" style="padding-top:40px;padding-right:24px;padding-bottom:24px;padding-left:24px"><!-- wp:group {"style":{"spacing":{"blockGap":"12px"}},"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
+<!-- wp:group {"style":{"spacing":{"padding":{"top":"40px","right":"24px","left":"24px"}}},"layout":{"type":"constrained","contentSize":"440px"}} -->
+<div class="wp-block-group" style="padding-top:40px;padding-right:24px;padding-left:24px"><!-- wp:group {"style":{"spacing":{"blockGap":"12px"}},"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
 <div class="wp-block-group"><?php if ( has_custom_logo() ) : ?>
 <!-- wp:site-logo {"width":24} /-->
 <?php else : ?>
@@ -104,9 +105,13 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <?php endif; ?>
 
 <!-- wp:yaycheckout/steps-progress {"textColor":"yaycheckout-muted","variant":"text","style":{"typography":{"fontSize":"12px"}}} /--></div>
+<!-- /wp:group --></div>
+<!-- /wp:group --></header>
 <!-- /wp:group -->
 
-<!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>","showTitle":false,"collapsible":true,"initialState":"collapsed"} -->
+<!-- wp:yaycheckout/checkout -->
+<!-- wp:group {"style":{"spacing":{"padding":{"top":"32px","right":"24px","bottom":"24px","left":"24px"},"blockGap":"32px"}},"layout":{"type":"constrained","contentSize":"440px"}} -->
+<div class="wp-block-group" style="padding-top:32px;padding-right:24px;padding-bottom:24px;padding-left:24px"><!-- wp:yaycheckout/order-summary {"label":"<?php esc_html_e( 'Order summary', 'yaycheckout' ); ?>","showTitle":false,"collapsible":true,"initialState":"collapsed"} -->
 <!-- wp:yaycheckout/order-summary-header -->
 <!-- wp:yaycheckout/order-summary-toggle {"textColor":"yaycheckout-muted","style":{"spacing":{"blockGap":"8px"},"typography":{"fontSize":"14px"}}} -->
 <!-- wp:paragraph {"style":{"typography":{"fontSize":"14px"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
@@ -123,6 +128,8 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 <!-- wp:yaycheckout/order-summary-breakdown {"showSubtotal":false,"style":{"typography":{"fontSize":"13px"},"yaycheckout":{"label":{"color":{"text":"var:preset|color|yaycheckout-muted"}}}}} /-->
 <!-- /wp:yaycheckout/order-summary-details -->
 <!-- /wp:yaycheckout/order-summary -->
+
+<!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
 
 <!-- wp:yaycheckout/steps {"layout":"one-at-a-time","showHeadings":false} -->
 <!-- wp:yaycheckout/step {"title":"<?php esc_html_e( 'Address', 'yaycheckout' ); ?>","style":{"color":{"background":"transparent"},"border":{"width":"0px"},"spacing":{"padding":{"top":"0","right":"0","bottom":"0","left":"0"},"blockGap":"20px"}}} -->

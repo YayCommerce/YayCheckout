@@ -58,6 +58,8 @@
 	display: block;
 	width: var(--yaycheckout-thumbnail-size, 48px);
 	height: auto;
+	/* A broken lazy image is sized as a box, whose automatic min-height lets WP's 3000x1500 contain-intrinsic-size beat aspect-ratio. */
+	min-height: 0;
 	aspect-ratio: var(--yaycheckout-thumbnail-ratio, 1);
 	object-fit: cover;
 	border-radius: var(--yaycheckout-thumbnail-radius, var(--yaycheckout-field-radius));
@@ -239,10 +241,6 @@
 
 .yaycheckout-order-summary-items .yaycheckout-order-summary-items__remove:hover {
 	opacity: 1;
-}
-
-.wp-block-yaycheckout-order-summary-items[aria-busy="true"] .yaycheckout-order-summary-items {
-	opacity: 0.6;
 }
 
 .yaycheckout-order-summary-items__notices:not(:empty) {

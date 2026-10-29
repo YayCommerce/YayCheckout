@@ -67,7 +67,7 @@ $yaycheckout_address_fields = static function ( string $type ): void {
 
 <!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_1","label":"<?php esc_html_e( 'Address', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Address', 'yaycheckout' ); ?>","required":true} /-->
 
-<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_2","label":"<?php esc_html_e( 'Apartment, suite, unit, etc.', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Apartment, suite, etc. (optional)', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/field {"fieldKey":"<?php echo esc_attr( $type ); ?>_address_2","label":"<?php esc_html_e( 'Apartment, suite, etc.', 'yaycheckout' ); ?>","placeholder":"<?php esc_html_e( 'Apartment, suite, etc.', 'yaycheckout' ); ?>","disclosure":"link","disclosureText":"<?php esc_html_e( '+ Add apartment, suite, etc.', 'yaycheckout' ); ?>"} /-->
 
 <!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"12px","left":"20px"}}}} -->
 <div class="wp-block-columns"><!-- wp:column -->
@@ -161,6 +161,8 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 <!-- /wp:group --></div>
 <!-- /wp:group -->
 
+<!-- wp:yaycheckout/wc-hook {"hook":"woocommerce_before_checkout_form"} /-->
+
 <!-- wp:group {"style":{"spacing":{"blockGap":"20px"}}} -->
 <div class="wp-block-group"><!-- wp:group {"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
 <div class="wp-block-group"><!-- wp:heading {"style":{"typography":{"fontSize":"28px","fontWeight":"400","lineHeight":"1.1","fontFamily":"Georgia, \"Times New Roman\", serif","letterSpacing":"-0.01em"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
@@ -205,7 +207,7 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 <!-- wp:yaycheckout/payment {"showTitle":false,"layout":"lines","style":{"yaycheckout":{"border":"var(--yaycheckout-design-border)"}}} /-->
 
 <?php if ( 'billing_only' !== $yaycheckout_destination ) : ?>
-<!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Billing address is the same as shipping', 'yaycheckout' ); ?>","shipLabel":"<?php esc_html_e( 'Billing address is the same as shipping', 'yaycheckout' ); ?>"} /-->
+<!-- wp:yaycheckout/different-address {"sameLabel":"<?php esc_html_e( 'Billing address is the same as shipping', 'yaycheckout' ); ?>","ticked":"same","sameShipLabel":"<?php esc_html_e( 'Shipping address is the same as billing', 'yaycheckout' ); ?>"} /-->
 <?php if ( 'shipping' === $yaycheckout_destination ) : ?>
 
 <!-- wp:yaycheckout/billing {"showTitle":false} -->
@@ -231,7 +233,7 @@ $yaycheckout_address_heading = 'shipping' === $yaycheckout_destination
 
 <!-- wp:yaycheckout/terms {"textColor":"yaycheckout-muted","style":{"typography":{"fontSize":"12px"}}} /-->
 
-<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022\u0022 data-suffix=\u0022\u0022\u003e<?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","backgroundColor":"yaycheckout-text","style":{"color":{"text":"#ffffff"},"typography":{"fontSize":"13px","letterSpacing":"0.16em"},"dimensions":{"width":"var:preset|dimension|100"},"spacing":{"padding":{"top":"18px","right":"24px","bottom":"18px","left":"24px"}}},"spread":true} /-->
+<!-- wp:yaycheckout/place-order {"buttonText":"<?php esc_html_e( 'Place Order', 'yaycheckout' ); ?>\u003cspan class=\u0022yaycheckout-live-value\u0022 data-yaycheckout-value=\u0022cart_total\u0022 data-fallback=\u0022\u0022 data-prefix=\u0022\u0022 data-suffix=\u0022\u0022\u003e<?php esc_html_e( 'Order total', 'yaycheckout' ); ?>\u003c/span\u003e","style":{"typography":{"fontSize":"13px","letterSpacing":"0.16em"},"dimensions":{"width":"var:preset|dimension|100"},"spacing":{"padding":{"top":"18px","right":"24px","bottom":"18px","left":"24px"}}},"spread":true} /-->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"20px"}},"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"center"}} -->
 <div class="wp-block-group"><!-- wp:paragraph {"style":{"typography":{"fontSize":"11px","letterSpacing":"0.12em","textTransform":"uppercase"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->

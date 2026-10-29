@@ -109,6 +109,11 @@ class LayoutTemplateCatalogue {
         return (string) ob_get_clean();
     }
 
+    /** The template's name as the picker lists it, '' for an unknown slug. */
+    public static function name( string $slug ): string {
+        return self::entry( $slug )['name'] ?? '';
+    }
+
     /**
      * The template's design, from its design.json projected through LayoutDesign::schema().
      *
@@ -217,7 +222,7 @@ class LayoutTemplateCatalogue {
             [
                 'slug'       => 'material-stepper',
                 'name'       => 'Material stepper',
-                'categories' => [ 'Two column' ],
+                'categories' => [ 'Multi-step', 'Two column' ],
                 'pro'        => true,
             ],
             [
