@@ -124,6 +124,11 @@ button.yaycheckout-login__trigger {
 		font-size: 14px;
 	}
 
+	// What other plugins print through the WooCommerce login hooks, such as Sign in with Klarna's button.
+	form > div:not([class*="yaycheckout-login"]) {
+		margin: 0 0 16px;
+	}
+
 	.yaycheckout-login__field {
 		display: grid;
 		gap: 8px;
