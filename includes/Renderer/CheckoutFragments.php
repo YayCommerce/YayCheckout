@@ -2,6 +2,7 @@
 namespace YayCheckout\Renderer;
 
 use YayCheckout\Helpers\CheckoutSetupHelper;
+use YayCheckout\Helpers\KsesHelper;
 use YayCheckout\Services\LayoutMarkupReader;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -139,7 +140,7 @@ class CheckoutFragments {
      */
     public function print_applied_chips(): void {
         if ( self::is_coupon_form_request() ) {
-            echo self::coupon_chips_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped by coupon_chips_html().
+            echo wp_kses( self::coupon_chips_html(), KsesHelper::storefront_html() );
         }
     }
 
@@ -496,7 +497,7 @@ class CheckoutFragments {
 
         ob_start();
 
-        echo '<div class="' . esc_attr( self::SHIPPING_RATES_CLASS ) . '"' . self::live_attributes( $empty ) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- live_attributes() prints fixed names and values.
+        echo '<div class="' . esc_attr( self::SHIPPING_RATES_CLASS ) . '" ' . esc_attr( BlockEmptiness::LIVE_ATTR ) . '="1"' . ( $empty ? ' ' . esc_attr( BlockEmptiness::EMPTY_ATTR ) . '="1"' : '' ) . '>';
 
         if ( self::shipping_setup_hinted() ) {
             self::print_setup_hint(
@@ -602,11 +603,11 @@ class CheckoutFragments {
             echo '<label for="' . esc_attr( $input_id ) . '">';
             echo '<span class="yaycheckout-shipping-methods__indicator" aria-hidden="true"></span>';
             echo '<span class="yaycheckout-shipping-methods__body"><span class="yaycheckout-shipping-methods__name">';
-            echo $name; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered rate label, the HTML Woo prints inside the label.
+            echo wp_kses( $name, KsesHelper::storefront_html() );
             echo '</span></span>';
 
             if ( '' !== $price ) {
-                echo '<span class="yaycheckout-shipping-methods__price">' . $price . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wc_price() HTML, an escaped tax label, and what the rate-label filter appended.
+                echo '<span class="yaycheckout-shipping-methods__price">' . wp_kses( $price, KsesHelper::storefront_html() ) . '</span>';
             }
 
             echo '</label>';
@@ -759,7 +760,7 @@ class CheckoutFragments {
             WcHooks::in_place( 'woocommerce_review_order_before_payment' );
         }
         ?>
-<div id="payment" class="woocommerce-checkout-payment"<?php echo self::live_attributes( $empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- live_attributes() prints fixed names and values. ?>>
+<div id="payment" class="woocommerce-checkout-payment" <?php echo esc_attr( BlockEmptiness::LIVE_ATTR ); ?>="1"<?php echo $empty ? ' ' . esc_attr( BlockEmptiness::EMPTY_ATTR ) . '="1"' : ''; ?>>
         <?php if ( ! $empty && ! empty( $available_gateways ) ) : ?>
     <ul class="wc_payment_methods payment_methods methods" aria-label="<?php esc_attr_e( 'Payment methods', 'yaycheckout' ); ?>">
             <?php
@@ -810,8 +811,7 @@ class CheckoutFragments {
 
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
         echo '<div ' . BlockEmptiness::wrapper( [], $block->attributes, $empty ) . '>';
-        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sentence_html() escapes text and uses wc_price() HTML; live_attributes() is fixed.
-        echo self::savings_note_html( $block->attributes );
+        echo wp_kses( self::savings_note_html( $block->attributes ), KsesHelper::storefront_html() );
         echo '</div>';
     }
 
@@ -1018,7 +1018,7 @@ class CheckoutFragments {
                     $thumbnail = $link_open . ( $link_name ? ' tabindex="-1" aria-hidden="true"' : '' ) . '>' . $thumbnail . '</a>';
                 }
 
-                echo $thumbnail; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered image HTML, as cart/cart.php prints it, in a link escaped above.
+                echo wp_kses( $thumbnail, KsesHelper::storefront_html() );
                 ?>
                 <?php if ( $badge ) : ?>
             <span class="<?php echo esc_attr( self::ORDER_ITEMS_CLASS . '__badge' ); ?>"><span aria-hidden="true"><?php echo esc_html( $cart_item['quantity'] ); ?></span><span class="screen-reader-text">
@@ -1092,7 +1092,7 @@ class CheckoutFragments {
         if ( $options['show_unit_price'] ) {
             $price = apply_filters( 'woocommerce_cart_item_price', WC()->cart->get_product_price( $product ), $cart_item, $cart_item_key );
             /* translators: %s: product price */
-            echo '<div class="product-unit-price">' . sprintf( esc_html__( '%s each', 'yaycheckout' ), $price ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Woo's filtered price HTML.
+            echo '<div class="product-unit-price">' . wp_kses( sprintf( esc_html__( '%s each', 'yaycheckout' ), $price ), KsesHelper::storefront_html() ) . '</div>';
         }
 
         if ( $options['show_short_description'] ) {
@@ -1422,7 +1422,7 @@ class CheckoutFragments {
         ?>
         <tr class="yaycheckout-order-summary-breakdown__shipping">
             <th><?php echo esc_html( $label ); ?></th>
-            <td><?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above, wc_price() HTML, or a rate's filtered price. ?></td>
+            <td><?php echo wp_kses( $value, KsesHelper::storefront_html() ); ?></td>
         </tr>
         <?php
     }

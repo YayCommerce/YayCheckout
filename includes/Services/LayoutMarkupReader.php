@@ -411,8 +411,8 @@ class LayoutMarkupReader {
     /**
      * A string attribute edited on the canvas with the display-text toolbar, as HTML safe to echo: only the
      * tags in $tags (RICH_TEXT_TAGS by default) survive, any other tag is stripped to its text. The editor's entities (&amp;)
-     * stay as they are, so print it without escaping again. $fallback, plain text, while the attribute
-     * holds no text.
+     * stay as they are. $fallback, plain text, while the attribute holds no text. The rgb() colour filter
+     * stays on for the request, so the wp_kses() a render.php runs again at the echo keeps the same colours.
      */
     public static function rich_text( array $attrs, string $name, string $fallback = '', array $tags = self::RICH_TEXT_TAGS ): string {
         if ( '' === self::plain_text( $attrs, $name ) ) {
@@ -420,10 +420,8 @@ class LayoutMarkupReader {
         }
 
         add_filter( 'safecss_filter_attr_allow_css', [ self::class, 'allow_rgb_color' ], 10, 2 );
-        $html = wp_kses( self::text( $attrs, $name ), $tags );
-        remove_filter( 'safecss_filter_attr_allow_css', [ self::class, 'allow_rgb_color' ], 10 );
 
-        return trim( $html );
+        return trim( wp_kses( self::text( $attrs, $name ), $tags ) );
     }
 
     /**
