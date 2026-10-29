@@ -1,4 +1,4 @@
-=== YayCheckout - WooCommerce Checkout Builder ===
+=== YayCheckout – Checkout Builder for WooCommerce ===
 Contributors: yaycommerce
 Tags: checkout, checkout builder, checkout fields, woocommerce
 Requires at least: 6.5
