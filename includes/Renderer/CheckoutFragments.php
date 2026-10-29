@@ -530,7 +530,7 @@ class CheckoutFragments {
         $chosen        = WC()->session ? WC()->session->get( 'chosen_shipping_methods', array() ) : array();
         $chosen        = is_array( $chosen ) ? $chosen : array();
 
-        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Woo's shipping hooks and strings, so its translation still applies.
+        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's shipping hooks.
         foreach ( $packages as $index => $package ) {
             if ( ! is_array( $package ) ) {
                 continue;
@@ -553,9 +553,9 @@ class CheckoutFragments {
             if ( ! empty( $methods ) ) {
                 self::print_shipping_method_list( $methods, (int) $index, $chosen_method );
             } elseif ( ! $calculated || ! $formatted ) {
-                wc_print_notice( apply_filters( 'woocommerce_shipping_may_be_available_html', __( 'Enter your address to view shipping options.', 'woocommerce' ) ), 'notice' );
+                wc_print_notice( apply_filters( 'woocommerce_shipping_may_be_available_html', __( 'Enter your address to view shipping options.', 'yaycheckout' ) ), 'notice' );
             } else {
-                wc_print_notice( apply_filters( 'woocommerce_no_shipping_available_html', __( 'There are no shipping options available. Please ensure that your address has been entered correctly, or contact us if you need any help.', 'woocommerce' ) ), 'notice' );
+                wc_print_notice( apply_filters( 'woocommerce_no_shipping_available_html', __( 'There are no shipping options available. Please ensure that your address has been entered correctly, or contact us if you need any help.', 'yaycheckout' ) ), 'notice' );
             }
 
             if ( 1 < $package_count ) {
@@ -564,7 +564,7 @@ class CheckoutFragments {
 
             echo '</div>';
         }
-        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch
+        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
     }
 
     /**
@@ -942,10 +942,8 @@ class CheckoutFragments {
 
         return [
             'show_labels'            => self::bool_attr( $attributes, 'showLabels', true ),
-            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own header word, so its translation still applies.
-            'product_label'          => LayoutMarkupReader::plain_text( $attributes, 'productLabel', __( 'Product', 'woocommerce' ) ),
-            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own header word, so its translation still applies.
-            'subtotal_label'         => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
+            'product_label'          => LayoutMarkupReader::plain_text( $attributes, 'productLabel', __( 'Product', 'yaycheckout' ) ),
+            'subtotal_label'         => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'yaycheckout' ) ),
             'show_thumbnails'        => self::bool_attr( $attributes, 'showThumbnails', true ),
             'item_data'              => $choice( 'itemData', [ 'inline', 'list', 'hidden' ] ),
             'show_sku'               => self::bool_attr( $attributes, 'showSku', false ),
@@ -1088,8 +1086,7 @@ class CheckoutFragments {
         $sku = $options['show_sku'] ? $product->get_sku() : '';
 
         if ( '' !== $sku ) {
-            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
-            echo '<div class="product-sku">' . esc_html__( 'SKU:', 'woocommerce' ) . ' ' . esc_html( $sku ) . '</div>';
+            echo '<div class="product-sku">' . esc_html__( 'SKU:', 'yaycheckout' ) . ' ' . esc_html( $sku ) . '</div>';
         }
 
         if ( $options['show_unit_price'] ) {
@@ -1161,8 +1158,7 @@ class CheckoutFragments {
         $html   = '-' . wc_price( $amount );
 
         if ( $coupon->get_free_shipping() && empty( $amount ) ) {
-            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own string, so its translation still applies.
-            $html = __( 'Free shipping coupon', 'woocommerce' );
+            $html = __( 'Free shipping coupon', 'yaycheckout' );
         }
 
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's filter, so extensions still change the amount.
@@ -1179,7 +1175,7 @@ class CheckoutFragments {
             foreach ( WC()->cart->get_coupons() as $code => $coupon ) {
                 $code = (string) $code;
                 // translators: %s: coupon code.
-                $label = sprintf( __( 'Remove %s coupon', 'woocommerce' ), $code ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own string, so its translation still applies.
+                $label = sprintf( __( 'Remove %s coupon', 'yaycheckout' ), $code );
                 $html .= '<li class="yaycheckout-coupon-form__chip">'
                     . '<svg class="yaycheckout-coupon-form__chip-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg>'
                     . '<strong>' . esc_html( wc_strtoupper( $code ) ) . '</strong>'
@@ -1206,8 +1202,7 @@ class CheckoutFragments {
     public static function order_breakdown_options( array $attributes ): array {
         return [
             'show_subtotal'  => self::bool_attr( $attributes, 'showSubtotal', true ),
-            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
-            'subtotal_label' => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'woocommerce' ) ),
+            'subtotal_label' => LayoutMarkupReader::plain_text( $attributes, 'subtotalLabel', __( 'Subtotal', 'yaycheckout' ) ),
         ];
     }
 
@@ -1229,7 +1224,7 @@ class CheckoutFragments {
         // Without a Coupon form there are no chips, so the rows keep Woo's [Remove].
         $chips = null !== $layout && has_block( 'yaycheckout/coupon-form', $layout->content );
 
-        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Woo's review-order hooks and strings, so its translation still applies.
+        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Woo's review-order hooks.
         ob_start();
         ?>
 <table class="shop_table <?php echo esc_attr( self::ORDER_BREAKDOWN_CLASS ); ?>">
@@ -1282,7 +1277,7 @@ class CheckoutFragments {
     </tbody>
 </table>
         <?php
-        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch
+        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
         return (string) ob_get_clean();
     }
@@ -1296,8 +1291,7 @@ class CheckoutFragments {
     public static function order_total_options( array $attributes ): array {
         return [
             'show_label'         => self::bool_attr( $attributes, 'showLabel', true ),
-            // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own label, so its translation still applies.
-            'label'              => LayoutMarkupReader::plain_text( $attributes, 'label', __( 'Total', 'woocommerce' ) ),
+            'label'              => LayoutMarkupReader::plain_text( $attributes, 'label', __( 'Total', 'yaycheckout' ) ),
             'show_currency_code' => self::bool_attr( $attributes, 'showCurrencyCode', false ),
         ];
     }
@@ -1394,14 +1388,13 @@ class CheckoutFragments {
             }
         }
 
-        // phpcs:disable WordPress.WP.I18n.TextDomainMismatch -- Woo's strings, so its translation still applies.
         // The selected method(s), else the only available rate, else plain Shipping.
         if ( array() !== $selected_names ) {
             $label = implode( ', ', $selected_names );
         } elseif ( 1 === count( $available_names ) ) {
             $label = $available_names[0];
         } else {
-            $label = __( 'Shipping', 'woocommerce' );
+            $label = __( 'Shipping', 'yaycheckout' );
         }
 
         if ( $has_selected ) {
@@ -1415,18 +1408,17 @@ class CheckoutFragments {
             $rate_price = 1 === count( $selected_methods ) ? self::shipping_rate_label_parts( $selected_methods[0] )['price'] : '';
 
             if ( 0.0 === round( $amount, wc_get_price_decimals() ) ) {
-                $value = '<strong>' . esc_html__( 'Free', 'woocommerce' ) . '</strong>';
+                $value = '<strong>' . esc_html__( 'Free', 'yaycheckout' ) . '</strong>';
             } elseif ( '' !== $rate_price ) {
                 $value = $rate_price;
             } else {
                 $value = wc_price( $amount );
             }
         } elseif ( WC()->customer && WC()->customer->has_calculated_shipping() ) {
-            $value = esc_html__( 'No available delivery option', 'woocommerce' );
+            $value = esc_html__( 'No available delivery option', 'yaycheckout' );
         } else {
-            $value = esc_html__( 'Enter address to calculate', 'woocommerce' );
+            $value = esc_html__( 'Enter address to calculate', 'yaycheckout' );
         }
-        // phpcs:enable WordPress.WP.I18n.TextDomainMismatch
         ?>
         <tr class="yaycheckout-order-summary-breakdown__shipping">
             <th><?php echo esc_html( $label ); ?></th>

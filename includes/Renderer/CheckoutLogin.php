@@ -181,7 +181,7 @@ class CheckoutLogin {
      * @throws \Exception Login failed. Caught here and returned as JSON.
      */
     public function login(): void {
-        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Same hooks and strings as WC_Form_Handler::process_login().
+        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Same hooks as WC_Form_Handler::process_login().
         if ( ! check_ajax_referer( self::NONCE_ACTION, 'security', false ) ) {
             wp_send_json_error(
                 array(
@@ -200,7 +200,7 @@ class CheckoutLogin {
         if ( ! is_string( $username ) || ! is_string( $password ) ) {
             wp_send_json_error(
                 array(
-                    'message' => __( 'Username is required.', 'woocommerce' ),
+                    'message' => __( 'Username is required.', 'yaycheckout' ),
                 )
             );
         }
@@ -216,11 +216,11 @@ class CheckoutLogin {
             $validation_error = apply_filters( 'woocommerce_process_login_errors', $validation_error, $creds['user_login'], $creds['user_password'] );
 
             if ( $validation_error->get_error_code() ) {
-                throw new \Exception( '<strong>' . __( 'Error:', 'woocommerce' ) . '</strong> ' . $validation_error->get_error_message() );
+                throw new \Exception( '<strong>' . __( 'Error:', 'yaycheckout' ) . '</strong> ' . $validation_error->get_error_message() );
             }
 
             if ( '' === $creds['user_login'] ) {
-                throw new \Exception( '<strong>' . __( 'Error:', 'woocommerce' ) . '</strong> ' . __( 'Username is required.', 'woocommerce' ) );
+                throw new \Exception( '<strong>' . __( 'Error:', 'yaycheckout' ) . '</strong> ' . __( 'Username is required.', 'yaycheckout' ) );
             }
 
             $user = wp_signon( apply_filters( 'woocommerce_login_credentials', $creds ), is_ssl() );
@@ -242,7 +242,7 @@ class CheckoutLogin {
         }
 
         wp_send_json_success();
-        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch
+        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
     }
 
     /**

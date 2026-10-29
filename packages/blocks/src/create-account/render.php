@@ -16,8 +16,7 @@ if ( ! function_exists( 'WC' ) || is_user_logged_in() || ! WC()->checkout()->is_
 
 $yaycheckout_checkout = WC()->checkout();
 
-// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Verbatim WooCommerce string so the storefront matches classic checkout when the merchant leaves the label empty.
-$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'checkboxLabel', __( 'Create an account?', 'woocommerce' ) );
+$yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'checkboxLabel', __( 'Create an account?', 'yaycheckout' ) );
 
 $yaycheckout_wrapper = \YayCheckout\Renderer\BlockEmptiness::wrapper( [ 'class' => 'yaycheckout-create-account woocommerce-account-fields' ], $attributes );
 

@@ -27,8 +27,7 @@ if ( '' === $yaycheckout_block ) {
 <div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-different-address' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php if ( 'same' === $yaycheckout_block ) : ?>
         <?php
-        // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Verbatim WooCommerce string so the storefront matches WooCommerce's Checkout block when the merchant leaves the label empty.
-        $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'sameLabel', __( 'Use same address for billing', 'woocommerce' ) );
+        $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'sameLabel', __( 'Use same address for billing', 'yaycheckout' ) );
         ?>
         <p class="form-row form-row-wide yaycheckout-different-address__same">
             <label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox">
@@ -51,8 +50,7 @@ if ( '' === $yaycheckout_block ) {
         </div>
     <?php else : ?>
         <?php
-        // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Verbatim WooCommerce string so the storefront matches classic checkout when the merchant leaves the label empty.
-        $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'shipLabel', __( 'Ship to a different address?', 'woocommerce' ) );
+        $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'shipLabel', __( 'Ship to a different address?', 'yaycheckout' ) );
         ?>
         <div id="ship-to-different-address" class="form-row form-row-wide">
             <label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox">

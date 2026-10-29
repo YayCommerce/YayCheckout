@@ -15,9 +15,8 @@ if ( ! function_exists( 'woocommerce_form_field' ) ) {
     return;
 }
 
-// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Verbatim WooCommerce string so the storefront matches classic checkout when the merchant leaves the label empty.
-$yaycheckout_label       = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'label', __( 'Order notes', 'woocommerce' ) );
-$yaycheckout_placeholder = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'placeholder', __( 'Notes about your order, e.g. special notes for delivery.', 'woocommerce' ) ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Verbatim WooCommerce string, as above.
+$yaycheckout_label       = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'label', __( 'Order notes', 'yaycheckout' ) );
+$yaycheckout_placeholder = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'placeholder', __( 'Notes about your order, e.g. special notes for delivery.', 'yaycheckout' ) );
 $yaycheckout_description = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'description' );
 $yaycheckout_required    = ! empty( $attributes['required'] );
 

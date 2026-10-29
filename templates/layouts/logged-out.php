@@ -13,7 +13,6 @@ defined( 'ABSPATH' ) || exit;
 
 // The block markup prints as the editor saves it, so a PHP tag inside a branch can't be indented.
 // phpcs:disable Generic.WhiteSpace.ScopeIndent.Incorrect
-// phpcs:disable WordPress.WP.I18n.TextDomainMismatch -- The login message is WooCommerce's own, so its translation applies.
 ?>
 <!-- wp:yaycheckout/checkout -->
 <!-- wp:group {"style":{"spacing":{"padding":{"top":"72px","right":"24px","bottom":"96px","left":"24px"},"blockGap":"24px"}},"layout":{"type":"constrained","contentSize":"440px"}} -->
@@ -32,7 +31,7 @@ defined( 'ABSPATH' ) || exit;
 <!-- /wp:heading -->
 
 <!-- wp:paragraph {"align":"center","style":{"color":{"text":"#757575"},"spacing":{"margin":{"top":"0","bottom":"0"}}}} -->
-<p class="has-text-align-center has-text-color" style="color:#757575;margin-top:0;margin-bottom:0"><?php esc_html_e( 'You must be logged in to checkout.', 'woocommerce' ); ?></p>
+<p class="has-text-align-center has-text-color" style="color:#757575;margin-top:0;margin-bottom:0"><?php esc_html_e( 'You must be logged in to checkout.', 'yaycheckout' ); ?></p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:group -->
 
