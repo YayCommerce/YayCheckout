@@ -22,6 +22,8 @@ export const layoutExportWireSchema = z
           // Unchecked: PHP projects it through LayoutDesign::from_meta() and never refuses it.
           design: z.unknown().optional(),
           logged_out_content: z.string().optional(),
+          // Absent in files from before thank-you pages.
+          thank_you_content: z.string().optional(),
         })
         .strict(),
     ),

@@ -14,6 +14,7 @@ use YayCheckout\Renderer\BlockVisibility;
 use YayCheckout\Renderer\LiveValues;
 use YayCheckout\Renderer\PinToBottom;
 use YayCheckout\Renderer\WcHooks;
+use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Support\Plan;
 use YayCheckout\Utils\SingletonTrait;
 
@@ -92,11 +93,13 @@ class BlockRegistry {
         'place-order',
         'slot',
         'wc-hook',
+        'order-details',
+        'order-customer-details',
         'plugin-block',
     ];
 
     /**
-     * The Pro blocks: the step blocks, built under assets/dist/blocks/pro/. Free registers them only in
+     * The Pro blocks: the step blocks and the thank-you page's Order Details and Order Addresses, built under assets/dist/blocks/pro/. Free registers them only in
      * JavaScript, as locked stubs, so allowed_blocks() adds them to the layout editor's list. Lists the
      * folders under packages/blocks/src/pro/, as PRO_BLOCK_METAS in packages/blocks/src/shared/pro-blocks.ts
      * does; scripts/check-pro-boundary.sh checks both against those folders.
@@ -108,6 +111,8 @@ class BlockRegistry {
         'yaycheckout/step-button',
         'yaycheckout/back-button',
         'yaycheckout/go-to-step',
+        'yaycheckout/order-details',
+        'yaycheckout/order-customer-details',
     ];
 
     protected function __construct() {
@@ -378,18 +383,21 @@ class BlockRegistry {
         // Added after register_blocks()' own inline script, so window.yayCheckoutBlocks exists.
         self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.design', $design );
         // The live value picker's Cart totals and Counts.
-        self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.liveValues', LiveValues::cart_values() );
-        // The layout editor's Logged in / Logged out switch; other editors keep editor-data.ts's default.
+        self::inline_data( generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ), 'window.yayCheckoutBlocks.liveValues', LiveValues::picker_values() );
+        // The layout editor's view switch (Checkout, Logged out, Thank you); other editors keep editor-data.ts's default.
         if ( Layout::POST_TYPE !== get_post_type() ) {
             return;
         }
+
+        $layout = ( new LayoutRepository() )->find( (int) get_the_ID() );
 
         self::inline_data(
             generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ),
             'window.yayCheckoutBlocks.view',
             [
-                'current'       => LayoutEditorEmbed::is_logged_out_view() ? LayoutEditorEmbed::VIEW_LOGGED_OUT : LayoutEditorEmbed::VIEW_MAIN,
+                'current'       => LayoutEditorEmbed::current_view(),
                 'loginRequired' => CheckoutLogin::login_required(),
+                'hasThankYou'   => null !== $layout && $layout->has_thank_you(),
                 'queryArg'      => LayoutEditorEmbed::QUERY_VIEW,
                 'urls'          => LayoutEditorEmbed::view_urls( (int) get_the_ID() ),
             ]

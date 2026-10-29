@@ -9,6 +9,7 @@ export const templateWireSchema = z
     pro: z.boolean(),
     available: z.boolean(),
     preview_url: z.string(),
+    thank_you_preview_url: z.string(),
   })
   .strict();
 
@@ -26,4 +27,6 @@ export type Template = {
   available: boolean;
   /** '' when the template has no preview file. */
   previewUrl: string;
+  /** The Thank you card on the New layout modal's preview step; '' until the template ships thank-you-preview.html. */
+  thankYouPreviewUrl: string;
 };

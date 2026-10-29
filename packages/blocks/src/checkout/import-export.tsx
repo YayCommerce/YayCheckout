@@ -11,7 +11,7 @@ import { editorData } from '../shared/editor-data';
 import { useIsLayoutEditor } from '../shared/layout-editor';
 import { errorMessage } from '../shared/error-message';
 import type { LayoutDesignMeta } from './layout-design';
-import { isLoggedOutView } from './layout-view';
+import { isMainView } from './layout-view';
 import { filenameFromHeaders, isJsonFileName, saveFile } from '../shared/export-file';
 import { ProUpgradeNotice } from '../shared/pro-upgrade-notice';
 import './import-export.css';
@@ -213,8 +213,8 @@ function LayoutImportExport() {
 	const { resetEditorBlocks, editPost } = useDispatch( editorStore );
 	const { createSuccessNotice, createErrorNotice } = useDispatch( noticesStore );
 
-	// Import and Export carry the main view; in the logged-out view an import would land in its meta.
-	if ( ! isLayout || isLoggedOutView() ) {
+	// Import and Export carry the main view; in the logged-out view or thank-you page an import would land in its meta.
+	if ( ! isLayout || ! isMainView() ) {
 		return null;
 	}
 

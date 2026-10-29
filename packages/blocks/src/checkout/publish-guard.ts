@@ -14,7 +14,7 @@ import {
 import { editorData } from '../shared/editor-data';
 import checkoutMeta from './block.json';
 import { layoutStateStore } from './layout-state';
-import { isLoggedOutView } from './layout-view';
+import { isMainView } from './layout-view';
 
 const CHECKOUT_BLOCK = checkoutMeta.name;
 export const LAYOUT_INVALID_LOCK = 'yaycheckout-layout-invalid';
@@ -58,12 +58,12 @@ function focusKeyControl( attempts = 20 ) {
 /**
  * Why the layout cannot take an order: no Checkout block at any depth, a locked Pro block
  * (editorData.lockedBlocks, checkout/locked-pro-blocks.tsx), or an extra field Key that is empty, malformed or shared. Mirrors LayoutMarkupReader::publish_error(). The
- * logged-out view takes no order and the server checks none of it, so it has no problem.
+ * logged-out view and the thank-you page take no order and the server checks none of it, so they have no problem.
  * layout-actions.tsx reads it too, to hold Activate.
  */
 export function useLayoutProblem(): LayoutProblem {
 	return useSelect( ( select ): LayoutProblem => {
-		if ( select( editorStore ).getCurrentPostType() !== editorData.postType || isLoggedOutView() ) {
+		if ( select( editorStore ).getCurrentPostType() !== editorData.postType || ! isMainView() ) {
 			return NO_PROBLEM;
 		}
 

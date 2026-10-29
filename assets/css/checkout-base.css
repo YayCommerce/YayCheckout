@@ -891,6 +891,37 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	display: none;
 }
 
+/*
+ * WooCommerce's shop styles box each thank-you address (1px + thicker right/bottom). Order Addresses
+ * is a layout block, so drop that box so billing/shipping follow the layout instead of the shop skin.
+ */
+.yaycheckout-order-customer-details .woocommerce-customer-details address {
+	border: 0;
+	border-radius: 0;
+	padding: 0;
+}
+
+/* WooCommerce prints the email and phone as paragraphs inside the address, with an icon and a paragraph gap; keep them plain address lines. */
+.yaycheckout-order-customer-details .woocommerce-customer-details address :is(.woocommerce-customer-details--email, .woocommerce-customer-details--phone) {
+	margin: 0;
+	padding: 0;
+}
+
+.yaycheckout-order-customer-details .woocommerce-customer-details address :is(.woocommerce-customer-details--email, .woocommerce-customer-details--phone)::before {
+	content: none;
+	display: none;
+}
+
+/* Order details' amounts line up on the right, as in WooCommerce's default thank-you table. */
+.yaycheckout-order-details .woocommerce-table--order-details :is(th, td):last-child:not(:first-child) {
+	text-align: right;
+}
+
+/* WooCommerce bolds the totals' values too (.woocommerce table.shop_table tfoot td); only their labels stay bold. */
+.yaycheckout-order-details .woocommerce-table--order-details.shop_table tfoot td {
+	font-weight: 400;
+}
+
 /* iOS zooms into a focused field whose text is under 16px. */
 @media (pointer: coarse) {
 	:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.input-text, select, textarea, .yaycheckout-coupon-form__code) {

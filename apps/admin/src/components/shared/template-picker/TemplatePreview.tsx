@@ -17,13 +17,24 @@ const FALLBACK_PAGE_HEIGHT = FRAME_PAGE_HEIGHT;
 
 /**
  * A template's mock page, scaled into a 4:3 frame, that scrolls to its bottom while the enclosing
- * `group` card is hovered or focused. Falls back to the template's name when there is no preview.
- * `children` overlay the frame, such as a badge on its corner.
+ * `group` card is hovered or focused. Falls back to `placeholder`, or the template's name, when there is no preview.
+ * `children` overlay the frame, such as a badge on its corner. `previewUrl` shows another of the
+ * template's pages, such as its thank-you page; it defaults to the checkout's.
  *
  * The sandbox allows same-origin but not scripts: we can read the page's height, and nothing in the
  * preview can run.
  */
-export function TemplatePreview({ template, children }: { template: Template; children?: ReactNode }) {
+export function TemplatePreview({
+  template,
+  previewUrl = template.previewUrl,
+  placeholder,
+  children,
+}: {
+  template: Template;
+  previewUrl?: string;
+  placeholder?: ReactNode;
+  children?: ReactNode;
+}) {
   const frameRef = useRef<HTMLDivElement>(null);
   const [frameWidth, setFrameWidth] = useState(0);
   const [pageHeight, setPageHeight] = useState(FALLBACK_PAGE_HEIGHT);
@@ -49,7 +60,7 @@ export function TemplatePreview({ template, children }: { template: Template; ch
     if (height > 0) setPageHeight(height);
   }
 
-  const showPreview = template.previewUrl !== '' && !failed;
+  const showPreview = previewUrl !== '' && !failed;
 
   // The border sits on the outer box, so the measured inner box is exactly 4:3 and a one-screen page fits it.
   return (
@@ -74,7 +85,7 @@ export function TemplatePreview({ template, children }: { template: Template; ch
             )}
           >
             <iframe
-              src={template.previewUrl}
+              src={previewUrl}
               title={template.name}
               sandbox="allow-same-origin"
               loading="lazy"
@@ -88,7 +99,7 @@ export function TemplatePreview({ template, children }: { template: Template; ch
           </div>
         ) : (
           <div className="text-muted-foreground flex size-full items-center justify-center p-2 text-center text-xs">
-            {template.name}
+            {placeholder ?? template.name}
           </div>
         )}
       </div>

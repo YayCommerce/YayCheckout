@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { formatDateAtTime } from '@/lib/helpers/date.helper';
-import { editLayoutIdFrom, withEditLayout } from '@/lib/helpers/layout.helper';
+import { editLayoutIdFrom, editViewFrom, withEditLayout, type EditView } from '@/lib/helpers/layout.helper';
 import { isPro } from '@/lib/plan';
 import {
   LAYOUT_KEYS,
@@ -184,9 +184,10 @@ function LayoutsPageBody({
   const [newLayoutOpen, setNewLayoutOpen] = useState(false);
   // The URL is the only record of the open editor, so browser Back closes it and other screens can deep-link to it.
   const editingLayoutId = editLayoutIdFrom(searchParams);
+  const editingView = editViewFrom(searchParams);
   // The state marks an entry this page pushed, so closing pops it instead of leaving a duplicate behind.
-  const openEditor = (id: number) =>
-    setSearchParams(withEditLayout(searchParams, id), { state: { isEditorPushed: true } });
+  const openEditor = (id: number, editView: EditView = 'main') =>
+    setSearchParams(withEditLayout(searchParams, id, editView), { state: { isEditorPushed: true } });
   const lastEditingLayoutId = useRef(editingLayoutId);
   const [activatingLayout, setActivatingLayout] = useState<LayoutSummary | null>(null);
   const [deactivatingLayout, setDeactivatingLayout] = useState<LayoutSummary | null>(null);
@@ -325,8 +326,12 @@ function LayoutsPageBody({
     url.searchParams.set('post', String(editingLayoutId));
     url.searchParams.set('action', 'edit');
     url.searchParams.set('yc-embed', '1');
+    // LayoutEditorEmbed::QUERY_VIEW; view_urls() there builds the same URLs.
+    if (editingView === 'thank-you') {
+      url.searchParams.set('yc-view', 'thank-you');
+    }
     return url.toString();
-  }, [editingLayoutId]);
+  }, [editingLayoutId, editingView]);
 
   // Refetch once the editor closes. Watched on the URL, not the dialog: browser Back closes it without onOpenChange.
   useEffect(() => {
@@ -622,7 +627,7 @@ function LayoutsTable({
   view: View;
   selectedIds: ReadonlySet<number>;
   onSelectedIdsChange: (ids: ReadonlySet<number>) => void;
-  onEditLayout: (id: number) => void;
+  onEditLayout: (id: number, view?: EditView) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
   onArchive: (layout: LayoutSummary) => void;
@@ -728,7 +733,7 @@ function LayoutTableRow({
   view: View;
   selected: boolean;
   onSelectedChange: (selected: boolean) => void;
-  onEditLayout: (id: number) => void;
+  onEditLayout: (id: number, view?: EditView) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
   onArchive: (layout: LayoutSummary) => void;
@@ -809,7 +814,7 @@ function LayoutRowActions({
 }: {
   layout: LayoutSummary;
   view: View;
-  onEditLayout: (id: number) => void;
+  onEditLayout: (id: number, view?: EditView) => void;
   onSetActive: (layout: LayoutSummary) => void;
   onDeactivate: (layout: LayoutSummary) => void;
   onArchive: (layout: LayoutSummary) => void;

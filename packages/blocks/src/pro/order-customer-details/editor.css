@@ -1,0 +1,19 @@
+.yaycheckout-order-customer-details__preview {
+	margin: 0;
+}
+
+.yaycheckout-order-customer-details__columns {
+	display: grid;
+	grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	gap: 1.5em;
+}
+
+.yaycheckout-order-customer-details__preview .woocommerce-column__title {
+	margin: 0 0 0.5em;
+	font-size: 1.1em;
+}
+
+.yaycheckout-order-customer-details__preview address {
+	font-style: normal;
+	opacity: 0.85;
+}

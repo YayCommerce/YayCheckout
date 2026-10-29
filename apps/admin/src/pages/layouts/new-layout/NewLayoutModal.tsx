@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -10,10 +11,12 @@ import { newLayoutFormSchema, type NewLayoutFormValues } from '@/lib/schema/layo
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { LibraryStep } from '@/pages/layouts/new-layout/LibraryStep';
+import { PagesStep } from '@/pages/layouts/new-layout/PagesStep';
 
 /**
- * The "New layout" flow: name and template, then the new draft opens in the editor. State lives in
- * NewLayoutForm inside DialogContent: Radix unmounts it on close, so each open starts fresh.
+ * The "New layout" flow: name and template, then a preview of the checkout and thank-you pages it comes
+ * with, then the new draft opens in the editor. State, the step included, lives in NewLayoutForm inside
+ * DialogContent: Radix unmounts it on close, so each open starts fresh.
  */
 export function NewLayoutModal({
   open,
@@ -36,7 +39,10 @@ export function NewLayoutModal({
 function NewLayoutForm({ onClose, onCreated }: { onClose: () => void; onCreated: (id: number) => void }) {
   // The first pickable template starts selected, so Create layout works in one click. Its name is not
   // marked dirty, so picking another template replaces it.
-  const firstPickable = useTemplates().find(isPickable);
+  const templates = useTemplates();
+  const firstPickable = templates.find(isPickable);
+  // One form across both steps, so Back keeps the name and the template.
+  const [step, setStep] = useState<'library' | 'pages'>('library');
   const form = useForm<NewLayoutFormValues>({
     resolver: zodResolver(newLayoutFormSchema),
     defaultValues: {
@@ -46,6 +52,8 @@ function NewLayoutForm({ onClose, onCreated }: { onClose: () => void; onCreated:
   });
 
   const mutation = useCreateLayoutDraftMutation();
+  const selectedSlug = form.watch('templateSlug');
+  const selectedTemplate = templates.find((template) => template.slug === selectedSlug);
 
   async function onValid(values: NewLayoutFormValues) {
     try {
@@ -70,11 +78,19 @@ function NewLayoutForm({ onClose, onCreated }: { onClose: () => void; onCreated:
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onValid)}>
-          <LibraryStep
-            onCancel={onClose}
-            isPending={mutation.isPending}
-            rootError={form.formState.errors.root?.message}
-          />
+          {step === 'pages' && selectedTemplate ? (
+            <PagesStep
+              template={selectedTemplate}
+              onBack={() => {
+                form.clearErrors('root');
+                setStep('library');
+              }}
+              isPending={mutation.isPending}
+              rootError={form.formState.errors.root?.message}
+            />
+          ) : (
+            <LibraryStep onCancel={onClose} onNext={() => setStep('pages')} />
+          )}
         </form>
       </Form>
     </>

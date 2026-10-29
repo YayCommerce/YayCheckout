@@ -8,6 +8,7 @@ function templateFromWire(wire: TemplateWire): Template {
     pro: wire.pro,
     available: wire.available,
     previewUrl: wire.preview_url,
+    thankYouPreviewUrl: wire.thank_you_preview_url,
   };
 }
 

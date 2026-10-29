@@ -21,8 +21,9 @@ class LayoutImportReview {
     public const RULES_NONE     = 'none';
 
     /**
-     * @return array { title, content, rules, design, logged_out_content } rules as the file holds them, unchecked (see rules_from_file());
-     *               design projected through LayoutDesign::from_meta(); logged_out_content '' when the file has none.
+     * @return array { title, content, rules, design, logged_out_content, thank_you_content } rules as the file holds them, unchecked
+     *               (see rules_from_file()); design projected through LayoutDesign::from_meta(); logged_out_content and
+     *               thank_you_content '' when the file has none.
      * @throws \InvalidArgumentException When the file is not an export or has no Checkout block.
      */
     public static function from_envelope( array $envelope ): array {
@@ -68,9 +69,10 @@ class LayoutImportReview {
     /**
      * The design is projected, never refused: a bad value only changes how the layout looks, so a missing
      * or malformed section imports as empty and an invalid token reads as its empty default. A file from before
-     * layout designs has none. The logged-out view takes no order, so it needs no Checkout block.
+     * layout designs has none. The logged-out view and the thank-you page take no order, so they need no
+     * Checkout block; a file from before thank-you pages has none.
      *
-     * @return array { title, content, rules, design, logged_out_content }
+     * @return array { title, content, rules, design, logged_out_content, thank_you_content }
      * @throws \InvalidArgumentException When the envelope is not a YayCheckout export.
      */
     private static function layout( array $envelope ): array {
@@ -91,6 +93,7 @@ class LayoutImportReview {
             'rules'              => $layout['rules'] ?? null,
             'design'             => LayoutDesign::from_meta( $layout['design'] ?? null ),
             'logged_out_content' => is_string( $layout['logged_out_content'] ?? null ) ? $layout['logged_out_content'] : '',
+            'thank_you_content'  => is_string( $layout['thank_you_content'] ?? null ) ? $layout['thank_you_content'] : '',
         ];
     }
 }

@@ -1,0 +1,39 @@
+.yaycheckout-order-details__preview {
+	margin: 0;
+}
+
+.yaycheckout-order-details__preview .woocommerce-order-details__title {
+	margin: 0 0 0.5em;
+	font-size: 1.1em;
+}
+
+/* Boxed like WooCommerce's shop_table on the storefront: an outer border with rounded corners and a rule between rows. */
+.yaycheckout-order-details__preview table {
+	width: 100%;
+	margin: 0;
+	border: 1px solid rgba( 0, 0, 0, 0.1 );
+	border-radius: 5px;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+.yaycheckout-order-details__preview th,
+.yaycheckout-order-details__preview td {
+	padding: 9px 12px;
+	border: 0;
+	border-top: 1px solid rgba( 0, 0, 0, 0.1 );
+	text-align: left;
+	vertical-align: middle;
+}
+
+.yaycheckout-order-details__preview th {
+	font-weight: 700;
+}
+
+.yaycheckout-order-details__preview :is( th, td ):last-child {
+	text-align: right;
+}
+
+.yaycheckout-order-details__preview thead th {
+	border-top: 0;
+}
