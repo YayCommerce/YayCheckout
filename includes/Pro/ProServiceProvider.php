@@ -5,6 +5,8 @@ use YayCheckout\Pro\Controllers\AssignmentOptionsRestController;
 use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Pro\Controllers\LayoutImportRestController;
 use YayCheckout\Pro\Controllers\LayoutRulesRestController;
+use YayCheckout\Pro\Controllers\ThankYouRestController;
+use YayCheckout\Pro\Renderer\ThankYouPage;
 use YayCheckout\Blocks\BlockRegistry;
 use YayCheckout\Pro\Services\AssignmentStoreData;
 use YayCheckout\Support\Plan;
@@ -25,10 +27,13 @@ class ProServiceProvider {
         add_action( 'rest_api_init', [ $this, 'rest_endpoints' ] );
         add_filter( 'yaycheckout_localize_admin_data', [ $this, 'admin_data' ] );
         add_filter( 'yaycheckout_built_blocks', [ $this, 'built_blocks' ] );
+
+        // The thank-you page: order-received takeover, its editor view, admin bar item and live values.
+        ThankYouPage::get_instance();
     }
 
     /**
-     * Adds the Pro blocks (the step blocks), built under assets/dist/blocks/pro/, which the Free zip leaves out.
+     * Adds the Pro blocks (the step blocks and the thank-you page's order blocks), built under assets/dist/blocks/pro/, which the Free zip leaves out.
      *
      * @param array<string, string> $built Block directory name => path.
      * @return array<string, string>
@@ -50,5 +55,6 @@ class ProServiceProvider {
         LayoutExportRestController::get_instance();
         LayoutImportRestController::get_instance();
         LayoutRulesRestController::get_instance();
+        ThankYouRestController::get_instance();
     }
 }

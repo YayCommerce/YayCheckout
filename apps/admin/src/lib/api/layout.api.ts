@@ -31,6 +31,7 @@ function summaryFromWire(wire: LayoutSummaryWire): LayoutSummary {
     scheduledAt: wire.scheduled_at,
     updatedAt: wire.updated_at,
     rules: wire.rules,
+    hasThankYou: wire.has_thank_you,
   };
 }
 

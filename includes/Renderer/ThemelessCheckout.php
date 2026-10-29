@@ -52,9 +52,12 @@ class ThemelessCheckout {
     }
 
     public function maybe_swap(): void {
-        $form = $this->is_storefront_request() && $this->is_checkout_form_request();
+        $storefront = $this->is_storefront_request() && (
+            ( $this->is_checkout_form_request() && $this->resolves_layout() )
+            || ( $this->is_order_received_request() && $this->layout_renders_order_received() )
+        );
 
-        if ( ! $form && ! $this->is_layout_editor_request() ) {
+        if ( ! $storefront && ! $this->is_layout_editor_request() ) {
             return;
         }
 
@@ -154,6 +157,39 @@ class ThemelessCheckout {
     }
 
     /**
+     * The order-received endpoint on the checkout page. Not order-pay: that stays WooCommerce's
+     * pay-for-order screen. Matched from the URL at setup_theme, before the main query exists.
+     */
+    private function is_order_received_request(): bool {
+        $checkout_id = wc_get_page_id( 'checkout' );
+
+        if ( $checkout_id <= 0 ) {
+            return false;
+        }
+
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only routing, as core's own parse_request.
+        if ( isset( $_GET['wc-ajax'] ) || isset( $_GET['order-pay'] ) ) {
+            return false;
+        }
+
+        if ( isset( $_GET['order-received'] ) ) {
+            if ( isset( $_GET['page_id'] ) ) {
+                return absint( $_GET['page_id'] ) === $checkout_id;
+            }
+
+            return true;
+        }
+        // phpcs:enable
+
+        $path         = preg_replace( '#^index\.php(/|$)#', '', $this->request_path() );
+        $checkout_uri = get_page_uri( $checkout_id );
+        // The merchant may rename the endpoint (Settings → Advanced); is_order_received_page() reads the same setting.
+        $endpoint = WC()->query->get_query_vars()['order-received'] ?? 'order-received';
+
+        return '' !== $path && '' !== $checkout_uri && '' !== $endpoint && 0 === strpos( $path, $checkout_uri . '/' . $endpoint );
+    }
+
+    /**
      * The layout editor, so its canvas gets the theme.json and editor styles the storefront gets: the
      * editor screen of a layout, and the REST calls its embed tags (LayoutEditorEmbed::REST_HEADER).
      */
@@ -207,6 +243,17 @@ class ThemelessCheckout {
 
         // A maybe without a hint guesses themeless; CheckoutPage reloads a page load the guess got wrong.
         return LayoutAssignment::OUTLOOK_NO !== $outlook;
+    }
+
+    /** Whether a layout renders this order-received request. Free leaves order-received to WooCommerce; Pro's thank-you page answers. */
+    private function layout_renders_order_received(): bool {
+        /**
+         * Whether a layout renders this order-received request, short of checking the order. Runs at
+         * setup_theme, before the main query.
+         *
+         * @param bool $renders Default false.
+         */
+        return (bool) apply_filters( 'yaycheckout_layout_renders_order_received', false );
     }
 
     /** The request path below home, decoded, without slashes at either end. */

@@ -2,6 +2,7 @@
 namespace YayCheckout\Renderer;
 
 use YayCheckout\Helpers\JsonElementHelper;
+use YayCheckout\Models\Layout;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -14,6 +15,9 @@ defined( 'ABSPATH' ) || exit;
  * On a taken-over checkout, fill() swaps each span's text for its value between its prefix and suffix, or
  * for its fallback alone while the value is empty. The cart's values reach view.js as a JSON element in
  * the footer, which update_order_review swaps as a fragment; view.js reads field values from the form as the shopper types.
+ *
+ * Another page a layout renders (Pro's thank-you page) fills the same spans from the values it hands over
+ * through the yaycheckout_live_values_source filter, which the footer JSON then carries instead of the cart's.
  */
 class LiveValues {
 
@@ -71,8 +75,16 @@ class LiveValues {
     /** Set once fill() printed a span, so the footer prints the values view.js reads. */
     private $rendered = false;
 
-    /** @var array<string, array{text: string, empty: bool}>|null The cart's values, read once per request by resolve(). */
-    private $cart = null;
+    /**
+     * The values the spans resolve to: the cart's on the checkout, or the ones a yaycheckout_live_values_source
+     * callback handed over. Set by fill_html().
+     *
+     * @var array<string, array{text: string, empty: bool}>|null
+     */
+    private $bag = null;
+
+    /** @var callable|null fn( string $field ): array{text, empty, known}, from a yaycheckout_live_values_source callback; null on the checkout. */
+    private $field_resolver = null;
 
     protected function __construct() {
         foreach ( array_merge( self::BLOCKS, self::DISPLAY_BLOCKS ) as $name ) {
@@ -103,6 +115,23 @@ class LiveValues {
     }
 
     /**
+     * The live value picker's entries: cart_values(), plus any yaycheckout_live_value_labels adds (Pro's
+     * order-received values).
+     *
+     * @return array<string, string>
+     */
+    public static function picker_values(): array {
+        /**
+         * The live value picker's entries, key => label. Keys starting with `order_` form its Order received group.
+         *
+         * @param array<string, string> $labels Default cart_values().
+         */
+        $labels = apply_filters( 'yaycheckout_live_value_labels', self::cart_values() );
+
+        return is_array( $labels ) ? $labels : self::cart_values();
+    }
+
+    /**
      * Each cart value for the current cart, as text: money as the cart shows it (with tax when WooCommerce
      * shows prices with tax, so it matches the Order Summary Total block), counts as numbers. Empty at 0. [] without a cart.
      *
@@ -120,24 +149,7 @@ class LiveValues {
             'cart_line_count' => count( $cart->get_cart() ),
         ];
 
-        $values = [];
-
-        foreach ( self::money() as $key => $amount ) {
-            $values[ $key ] = [
-                // wc_price()'s markup and entities removed: the value is plain text, escaped where it prints.
-                'text'  => html_entity_decode( wp_strip_all_tags( wc_price( $amount ) ), ENT_QUOTES, 'UTF-8' ),
-                'empty' => 0.0 === round( $amount, wc_get_price_decimals() ),
-            ];
-        }
-
-        foreach ( $counts as $key => $count ) {
-            $values[ $key ] = [
-                'text'  => number_format_i18n( $count ),
-                'empty' => 0 === $count,
-            ];
-        }
-
-        return $values;
+        return array_merge( self::format_money( self::money() ), self::format_counts( $counts ) );
     }
 
     /**
@@ -165,9 +177,9 @@ class LiveValues {
     }
 
     /**
-     * Fills each live value span in an allow-listed block on a taken-over checkout. Anywhere else, and in a
-     * block without one, the HTML comes back untouched. A Step's HTML holds its inner blocks, filled already;
-     * filling a span again prints the same text.
+     * Fills each live value span in an allow-listed block on a taken-over checkout, or another page a layout renders.
+     * Anywhere else, and in a block without one, the HTML comes back untouched. A Step's HTML holds its
+     * inner blocks, filled already; filling a span again prints the same text.
      *
      * @param string $block_content Rendered block.
      * @param array  $block         Parsed block.
@@ -177,17 +189,41 @@ class LiveValues {
     }
 
     /**
-     * Fills each live value span in $html on a taken-over checkout; anywhere else the HTML comes back
-     * untouched. Place Order's render.php calls it on its label, so value and data-value hold the values.
+     * Fills each live value span in $html on a taken-over checkout, or another page a layout renders; anywhere else the
+     * HTML comes back untouched. Place Order's render.php calls it on its label, so value and data-value hold the values.
      */
     public function fill_html( string $html ): string {
-        $page = CheckoutPage::get_instance();
-
-        if ( false === strpos( $html, self::CLASS_NAME ) || ! $page->takes_over() ) {
+        if ( false === strpos( $html, self::CLASS_NAME ) ) {
             return $html;
         }
 
-        $markup = $page->layout()->content;
+        $checkout = CheckoutPage::get_instance();
+
+        if ( $checkout->takes_over() ) {
+            $layout               = $checkout->layout();
+            $this->bag            = self::values();
+            $this->field_resolver = null;
+        } else {
+            /**
+             * The live values of another page a layout renders on this request, or null to leave its spans as
+             * they are. Pro's thank-you page answers on order-received, from its order.
+             *
+             * @param null|array{layout: Layout, values: array<string, array{text: string, empty: bool}>, field: callable} $source
+             *        `field` resolves a `field:<key>` span: fn( string $key ): array{text: string, empty: bool, known: bool}.
+             */
+            $source = apply_filters( 'yaycheckout_live_values_source', null );
+
+            if ( ! is_array( $source ) || ! ( $source['layout'] ?? null ) instanceof Layout ) {
+                return $html;
+            }
+
+            $layout               = $source['layout'];
+            $this->bag            = is_array( $source['values'] ?? null ) ? $source['values'] : [];
+            $this->field_resolver = is_callable( $source['field'] ?? null ) ? $source['field'] : null;
+        }
+
+        $markup = $layout->content;
+
         $filled = preg_replace_callback(
             '#(<span\b[^>]*' . preg_quote( self::CLASS_NAME, '#' ) . '[^>]*>)(.*?)</span>#s',
             function ( array $found ) use ( $markup ): string {
@@ -199,11 +235,15 @@ class LiveValues {
         return is_string( $filled ) ? $filled : $html;
     }
 
-    /** Prints the cart's values for view.js, once a span was filled. */
+    /** Prints the active bag's values for view.js, once a span was filled. */
     public function print_values(): void {
-        if ( $this->rendered ) {
-            echo self::values_element(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON encoded with JSON_HEX_TAG and JSON_HEX_AMP, so it can't close the element.
+        if ( ! $this->rendered ) {
+            return;
         }
+
+        $bag = null !== $this->bag ? $this->bag : self::values();
+
+        echo JsonElementHelper::html( self::VALUES_ID, (object) $bag ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON encoded with JSON_HEX_TAG and JSON_HEX_AMP, so it can't close the element.
     }
 
     /** Swaps the footer's values for the recalculated cart's, when the served layout holds a live value. */
@@ -270,23 +310,33 @@ class LiveValues {
     }
 
     /**
-     * A key's value: a cart value, or `field:<key>` for a field the layout can show. known is false for
-     * any other key.
+     * A key's value: one of fill_html()'s values, or `field:<key>` for a field: from ShowableFields for the
+     * layout on the checkout, else from the source's field resolver. known is false for any other key.
      *
      * @return array{text: string, empty: bool, known: bool}
      */
     private function resolve( string $key, string $markup ): array {
-        if ( null === $this->cart ) {
-            $this->cart = self::values();
-        }
-
-        if ( isset( $this->cart[ $key ] ) ) {
-            return $this->cart[ $key ] + [ 'known' => true ];
+        if ( is_array( $this->bag ) && isset( $this->bag[ $key ] ) ) {
+            return $this->bag[ $key ] + [ 'known' => true ];
         }
 
         $field = 0 === strpos( $key, self::FIELD_PREFIX ) ? substr( $key, strlen( self::FIELD_PREFIX ) ) : '';
 
-        if ( '' === $field || ! isset( ShowableFields::labels( $markup )[ $field ] ) ) {
+        if ( '' === $field ) {
+            return [
+                'text'  => '',
+                'empty' => true,
+                'known' => false,
+            ];
+        }
+
+        $found = null !== $this->field_resolver ? call_user_func( $this->field_resolver, $field ) : null;
+
+        if ( is_array( $found ) && isset( $found['text'], $found['empty'], $found['known'] ) ) {
+            return $found;
+        }
+
+        if ( null !== $this->field_resolver || ! isset( ShowableFields::labels( $markup )[ $field ] ) ) {
             return [
                 'text'  => '',
                 'empty' => true,
@@ -301,5 +351,44 @@ class LiveValues {
             'empty' => '' === $text,
             'known' => true,
         ];
+    }
+
+    /**
+     * Money amounts as plain text, as wc_price() prints them; empty at 0. Also read by Pro's order values.
+     *
+     * @param array<string, float> $amounts
+     * @return array<string, array{text: string, empty: bool}>
+     */
+    public static function format_money( array $amounts ): array {
+        $values = [];
+
+        foreach ( $amounts as $key => $amount ) {
+            $values[ $key ] = [
+                // wc_price()'s markup and entities removed: the value is plain text, escaped where it prints.
+                'text'  => html_entity_decode( wp_strip_all_tags( wc_price( $amount ) ), ENT_QUOTES, 'UTF-8' ),
+                'empty' => 0.0 === round( $amount, wc_get_price_decimals() ),
+            ];
+        }
+
+        return $values;
+    }
+
+    /**
+     * Counts as localized numbers; empty at 0. Also read by Pro's order values.
+     *
+     * @param array<string, int> $counts
+     * @return array<string, array{text: string, empty: bool}>
+     */
+    public static function format_counts( array $counts ): array {
+        $values = [];
+
+        foreach ( $counts as $key => $count ) {
+            $values[ $key ] = [
+                'text'  => number_format_i18n( $count ),
+                'empty' => 0 === $count,
+            ];
+        }
+
+        return $values;
     }
 }

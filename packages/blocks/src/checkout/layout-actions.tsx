@@ -20,6 +20,8 @@ const MOUNTED_CLASS = 'yaycheckout-has-layout-actions';
 /** The header's settings area (right) and toolbar (left): editor-header from WordPress 6.6, edit-post-header in 6.5. */
 const HEADER_SELECTOR = '.editor-header__settings, .edit-post-header__settings';
 const TOOLBAR_SELECTOR = '.editor-header__toolbar, .edit-post-header__toolbar';
+/** The header and, below it, the canvas and sidebars, above the footer. The pages column goes first in it, left of both. */
+const EDITOR_SELECTOR = '.interface-interface-skeleton__editor';
 
 type Action = 'activate' | 'deactivate';
 
@@ -58,9 +60,10 @@ function copyFor( action: Action, title: string ) {
 /**
  * A container added to a header area once it renders; the header can appear after the plugin, and core
  * rebuilds it on entering and leaving revisions mode, so the container is put back whenever it drops out.
- * The settings slot also tags the body with MOUNTED_CLASS while it is in the header.
+ * The settings slot also tags the body with MOUNTED_CLASS while it is in the header. The pages slot goes
+ * first in the editor area instead, left of the header and the body, above the footer.
  */
-function useHeaderSlot( enabled: boolean, area: 'settings' | 'toolbar' ): HTMLElement | null {
+function useHeaderSlot( enabled: boolean, area: 'settings' | 'toolbar' | 'pages' ): HTMLElement | null {
 	const [ slot, setSlot ] = useState< HTMLElement | null >( null );
 
 	useEffect( () => {
@@ -70,14 +73,14 @@ function useHeaderSlot( enabled: boolean, area: 'settings' | 'toolbar' ): HTMLEl
 
 		const isSettings = area === 'settings';
 		const container = document.createElement( 'div' );
-		container.className = isSettings ? 'yaycheckout-layout-actions' : 'yaycheckout-layout-view';
+		container.className = { settings: 'yaycheckout-layout-actions', toolbar: 'yaycheckout-layout-view', pages: 'yaycheckout-layout-pages' }[ area ];
 
 		const mount = () => {
 			if ( container.isConnected ) {
 				return;
 			}
 
-			const header = document.querySelector( isSettings ? HEADER_SELECTOR : TOOLBAR_SELECTOR );
+			const header = document.querySelector( { settings: HEADER_SELECTOR, toolbar: TOOLBAR_SELECTOR, pages: EDITOR_SELECTOR }[ area ] );
 
 			if ( isSettings ) {
 				document.body.classList.toggle( MOUNTED_CLASS, !! header );
@@ -87,7 +90,7 @@ function useHeaderSlot( enabled: boolean, area: 'settings' | 'toolbar' ): HTMLEl
 				return;
 			}
 
-			if ( isSettings ) {
+			if ( area !== 'toolbar' ) {
 				header.prepend( container );
 			} else {
 				header.append( container );
@@ -147,6 +150,7 @@ function LayoutActions() {
 	const isRevision = useIsPreviewingRevision();
 	const slot = useHeaderSlot( isLayout && ! isRevision, 'settings' );
 	const viewSlot = useHeaderSlot( isLayout && ! isRevision, 'toolbar' );
+	const pagesSlot = useHeaderSlot( isLayout && ! isRevision, 'pages' );
 
 	useEffect( () => {
 		if ( ! isLayout || ! postId ) {
@@ -207,7 +211,11 @@ function LayoutActions() {
 		setPreviewing( true );
 		try {
 			const link = await apiFetch< PreviewLinkWire >( {
-				path: `/yaycheckout/v1/layouts/${ postId }/preview-link`,
+				// Thank you (Pro's route) opens the sample order's order-received page; every other view, the checkout.
+				path:
+					editorData.view.current === 'thank-you'
+						? `/yaycheckout/v1/layouts/${ postId }/thank-you/preview-link`
+						: `/yaycheckout/v1/layouts/${ postId }/preview-link`,
 				method: 'POST',
 			} );
 
@@ -239,7 +247,7 @@ function LayoutActions() {
 
 	return (
 		<>
-			{ viewSlot && createPortal( <LayoutViewSwitch />, viewSlot ) }
+			{ viewSlot && createPortal( <LayoutViewSwitch pagesSlot={ pagesSlot } />, viewSlot ) }
 			{ createPortal(
 		<>
 			<Flex gap={ 2 } expanded={ false }>
