@@ -36,6 +36,10 @@ src/Pages/LicensesPage.php src/Pages/RecommendedPluginsPage.php views/license-ca
 views/licenses-page.php views/recommended-plugins-data.php views/recommended-plugins-page.php
 assets/css/licenses.css assets/css/other-plugins.css assets/js/license.js assets/js/other-plugins.js"
 FREE_SHELL_PATCH="$PLUGIN_DIR/scripts/free-admin-shell.patch"
+# A gettext call whose text domain is admin-shell's 'yaycommerce'. wordpress.org rejects a zip whose text domain
+# differs from the plugin slug, so the release rewrites it. The menu slug 'yaycommerce' sits outside these calls
+# and stays. Kept out of scoper.inc.php, which the admin-shell sync regenerates.
+SHELL_TEXT_DOMAIN_CALL='\b((?:__|_e|_x|_n|_nx|esc_html__|esc_html_e|esc_html_x|esc_attr__|esc_attr_e|esc_attr_x)\((?:[^()\x27"]|\x27(?:[^\x27\\]|\\.)*\x27|"(?:[^"\\]|\\.)*")*?)\x27yaycommerce\x27\)'
 PLUGIN_SLUG="yaycheckout"
 MAIN_FILE="$PLUGIN_DIR/$PLUGIN_SLUG.php"
 
@@ -450,6 +454,8 @@ cmd_release() {
         print_info "Free build: removed the admin-shell licensing and Recommended Plugins"
     fi
 
+    find "$temp_dir/vendor-prefixed" -name "*.php" -exec perl -pi -e "s/$SHELL_TEXT_DOMAIN_CALL/\$1\x27$PLUGIN_SLUG\x27)/g" {} +
+
     # The source defaults to dev mode (Vite on :3040); a customer zip must load assets/dist.
     sed_inplace "s/define( 'YAYCHECKOUT_IS_DEVELOPMENT', true )/define( 'YAYCHECKOUT_IS_DEVELOPMENT', false )/" "$temp_dir/$PLUGIN_SLUG.php"
 
@@ -526,6 +532,13 @@ cmd_release() {
 
     if ! unzip -p "$zip_name" "$plan_slug/$PLUGIN_SLUG.php" | grep -q "define( 'YAYCHECKOUT_IS_DEVELOPMENT', false )"; then
         print_error "Artifact does not set YAYCHECKOUT_IS_DEVELOPMENT to false"
+        exit 1
+    fi
+
+    if unzip -p "$zip_name" "$plan_slug/vendor-prefixed/*" | perl -ne "exit 1 if /$SHELL_TEXT_DOMAIN_CALL/"; then
+        :
+    else
+        print_error "Artifact's admin-shell still uses the 'yaycommerce' text domain"
         exit 1
     fi
 
