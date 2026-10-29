@@ -51,9 +51,32 @@ class LayoutRepository {
      * @param array $context Shopper facts; see LayoutAssignment::matches().
      */
     public function active( array $context ): ?Layout {
-        $layouts = array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
+        $layouts = $this->active_layouts();
 
         return Plan::is_pro() ? LayoutAssignment::pick( $layouts, $context ) : ( $layouts[0] ?? null );
+    }
+
+    /**
+     * Whether active() would find a layout, from facts that may lack the cart. See LayoutAssignment::outlook().
+     *
+     * @return string A LayoutAssignment::OUTLOOK_* constant.
+     */
+    public function outlook( array $context ): string {
+        if ( ! Plan::is_pro() ) {
+            return [] === $this->active_ids() ? LayoutAssignment::OUTLOOK_NO : LayoutAssignment::OUTLOOK_YES;
+        }
+
+        return LayoutAssignment::outlook( $this->active_layouts(), $context );
+    }
+
+    /** Whether the active set's rules read the cart, so which layout serves is pinned per checkout page load. Never in Free, which ignores rules. */
+    public function depends_on_cart(): bool {
+        return Plan::is_pro() && LayoutAssignment::reads_cart( $this->active_layouts() );
+    }
+
+    /** @return Layout[] The active set, most recently activated first. */
+    private function active_layouts(): array {
+        return array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
     }
 
     /**

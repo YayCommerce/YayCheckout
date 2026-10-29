@@ -13,6 +13,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ConfirmPopover } from '@/components/shared/ConfirmPopover';
 import { TrashButton } from '@/components/shared/TrashButton';
+import { AsyncMultiSelect } from '@/pages/layouts/assignment/AsyncMultiSelect';
 import {
   CONDITION_TYPE_KEYS,
   CONDITION_TYPES,
@@ -34,6 +35,20 @@ const OPTION_PICKERS = {
     emptyText: __('No roles found.', 'yaycheckout'),
   }),
 } satisfies Partial<Record<ConditionType, () => object>>;
+
+/** Copy for the types whose value the server searches for: those with CONDITION_TYPES' `ids`. */
+const ASYNC_PICKERS = {
+  product: {
+    placeholder: __('Select products', 'yaycheckout'),
+    searchPlaceholder: __('Search products', 'yaycheckout'),
+    emptyText: __('No products found.', 'yaycheckout'),
+  },
+  product_category: {
+    placeholder: __('Select categories', 'yaycheckout'),
+    searchPlaceholder: __('Search categories', 'yaycheckout'),
+    emptyText: __('No categories found.', 'yaycheckout'),
+  },
+} satisfies Partial<Record<ConditionType, object>>;
 
 export function ConditionGroup({
   index,
@@ -150,6 +165,20 @@ function ConditionRow({
 }
 
 function ValuePicker({ condition, onChange }: { condition: Condition; onChange: (value: Condition['value']) => void }) {
+  const kind = CONDITION_TYPES[condition.type].ids;
+
+  if (kind) {
+    return (
+      <AsyncMultiSelect
+        className="flex-1"
+        kind={kind}
+        {...ASYNC_PICKERS[condition.type as keyof typeof ASYNC_PICKERS]}
+        value={condition.value as string[]}
+        onChange={onChange}
+      />
+    );
+  }
+
   if (condition.type in OPTION_PICKERS) {
     return (
       <OptionsMultiSelect

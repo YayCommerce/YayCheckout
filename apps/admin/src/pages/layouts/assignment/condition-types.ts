@@ -1,13 +1,14 @@
 import { __ } from '@wordpress/i18n';
 
 import type { StoreData } from '@/types/localize.type';
+import type { AssignmentOptionKind } from '@/lib/schema/assignment.schema';
 import type { LayoutRulesWire } from '@/lib/schema/layout.schema';
 
 /** Mirrors Enums\ConditionType (types, operators, value kind, choices); PHP validates on save. */
-export type ConditionType = 'customer_role' | 'login_status' | 'device';
+export type ConditionType = 'customer_role' | 'login_status' | 'device' | 'product' | 'product_category';
 
 /**
- * Value is a list for multi-select types (role slugs), one of the type's `choices` otherwise.
+ * Value is a list for multi-select types (role slugs, or ids as strings), one of the type's `choices` otherwise.
  * `id` is form-only, the React key: rows keyed by position would hand a removed row's picker state to the next one.
  */
 export type Condition = { id: string; type: ConditionType; operator: string; value: string | string[] };
@@ -34,10 +35,23 @@ const LIST_OPERATORS = [
   { value: 'not_in', label: __('not in list', 'yaycheckout') },
 ];
 
+/** Over the cart's items: "only" means every item matches, so an empty cart contains none, never only. */
+const CART_OPERATORS = [
+  { value: 'contains_any', label: __('contains any of', 'yaycheckout') },
+  { value: 'contains_all', label: __('contains only', 'yaycheckout') },
+  { value: 'contains_none', label: __('contains none of', 'yaycheckout') },
+];
+
 type Option = { value: string; label: string };
 
-/** `choices`: the values a single-choice type takes; types without it pick several from a list. */
-export const CONDITION_TYPES: Record<ConditionType, { label: string; operators: Option[]; choices?: Option[] }> = {
+/**
+ * `choices`: the values a single-choice type takes; types without it pick several from a list.
+ * `ids`: the list is searched on the server, and the value is its ids, sent as numbers.
+ */
+export const CONDITION_TYPES: Record<
+  ConditionType,
+  { label: string; operators: Option[]; choices?: Option[]; ids?: AssignmentOptionKind }
+> = {
   customer_role: { label: __('Customer role', 'yaycheckout'), operators: LIST_OPERATORS },
   login_status: {
     label: __('Login status', 'yaycheckout'),
@@ -55,6 +69,8 @@ export const CONDITION_TYPES: Record<ConditionType, { label: string; operators: 
       { value: 'mobile', label: __('Mobile', 'yaycheckout') },
     ],
   },
+  product: { label: __('Products', 'yaycheckout'), operators: CART_OPERATORS, ids: 'products' },
+  product_category: { label: __('Categories', 'yaycheckout'), operators: CART_OPERATORS, ids: 'categories' },
 };
 
 export const CONDITION_TYPE_KEYS = Object.keys(CONDITION_TYPES) as ConditionType[];
@@ -93,9 +109,15 @@ export function groupsFromWire(rules: LayoutRulesWire): Group[] {
   }));
 }
 
-/** Form state to the rules the route stores: ids stripped. */
+/** Form state to the rules the route stores: ids stripped, and id values back to numbers. */
 export function groupsToWire(groups: Group[]): LayoutRulesWire {
-  return groups.map((group) => group.conditions.map(({ type, operator, value }) => ({ type, operator, value })));
+  return groups.map((group) =>
+    group.conditions.map(({ type, operator, value }) => ({
+      type,
+      operator,
+      value: isKnownType(type) && CONDITION_TYPES[type].ids && Array.isArray(value) ? value.map(Number) : value,
+    })),
+  );
 }
 
 /** The page's store lists. Only the Pro page carries them, and only Pro renders the drawer. */
