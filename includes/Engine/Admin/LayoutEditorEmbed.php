@@ -22,7 +22,8 @@ class LayoutEditorEmbed {
 
     /**
      * The arg that opens a view other than the checkout: the logged-out view (the markup a guest who must log in
-     * sees), on post.php and on a preview link (CheckoutPage::resolve()); in Pro, the thank-you page, on post.php.
+     * sees), on post.php and on a preview link (CheckoutPage::resolve()); in Pro, the thank-you and pay-order
+     * pages, on post.php.
      */
     public const QUERY_VIEW = 'yc-view';
 
@@ -30,6 +31,8 @@ class LayoutEditorEmbed {
     public const VIEW_LOGGED_OUT = 'logged-out';
     /** Pro's thank-you page (Layout::META_THANK_YOU). Free has no such view: views() leaves it out, so its URL opens the checkout. */
     public const VIEW_THANK_YOU = 'thank-you';
+    /** Pro's pay-order page (Layout::META_PAY_ORDER). Free has no such view, as for VIEW_THANK_YOU. */
+    public const VIEW_PAY_ORDER = 'pay-order';
 
     /** Carries QUERY_VIEW to the editor's REST calls; read by LayoutCoreRestController. */
     public const VIEW_HEADER = 'X-YayCheckout-View';
@@ -145,8 +148,8 @@ class LayoutEditorEmbed {
 
     /**
      * Each view other than main, and the meta that holds its markup: the logged-out view, plus what Pro adds
-     * (the thank-you page). A pay-order page would be one more entry here and one in
-     * LayoutTemplateCatalogue::VIEW_FILES, its starter markup.
+     * (the thank-you and pay-order pages). Another page is one more entry, added through the filter, and one
+     * in LayoutTemplateCatalogue::VIEW_FILES, its starter markup.
      *
      * @return array<string, string> View => meta key.
      */
@@ -167,7 +170,7 @@ class LayoutEditorEmbed {
      * The embedded editor for each view of a layout, keyed like the editor's view switch. The main
      * URL is also built by editorUrl in the SPA's apps/admin/src/pages/layouts/LayoutsPage.tsx: change both together.
      *
-     * @return array<string, string> main, logged-out, and thank-you in Pro.
+     * @return array<string, string> main, logged-out, and thank-you and pay-order in Pro.
      */
     public static function view_urls( int $post_id ): array {
         $main = add_query_arg(

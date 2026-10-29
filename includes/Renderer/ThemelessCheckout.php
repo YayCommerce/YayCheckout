@@ -43,6 +43,7 @@ class ThemelessCheckout {
         $storefront = $this->is_storefront_request() && (
             ( $this->is_checkout_form_request() && $this->resolves_layout() )
             || ( $this->is_order_received_request() && $this->layout_renders_order_received() )
+            || ( $this->is_order_pay_request() && $this->layout_renders_order_pay() )
         );
 
         if ( ! $storefront && ! $this->is_layout_editor_request() ) {
@@ -102,7 +103,7 @@ class ThemelessCheckout {
 
     /**
      * The checkout form or one of its wc-ajax calls. Not order-received or order-pay: they share the
-     * checkout page, render WooCommerce's templates, and keep the theme.
+     * checkout page and are matched on their own (is_order_received_request(), is_order_pay_request()).
      */
     private function is_checkout_form_request(): bool {
         $checkout_id = wc_get_page_id( 'checkout' );
@@ -139,8 +140,8 @@ class ThemelessCheckout {
     }
 
     /**
-     * The order-received endpoint on the checkout page. Not order-pay: that stays WooCommerce's
-     * pay-for-order screen. Matched from the URL at setup_theme, before the main query exists.
+     * The order-received endpoint on the checkout page. Not order-pay, which is_order_pay_request() matches.
+     * Matched from the URL at setup_theme, before the main query exists.
      */
     private function is_order_received_request(): bool {
         $checkout_id = wc_get_page_id( 'checkout' );
@@ -167,6 +168,35 @@ class ThemelessCheckout {
         $checkout_uri = get_page_uri( $checkout_id );
         // The merchant may rename the endpoint (Settings → Advanced); is_order_received_page() reads the same setting.
         $endpoint = WC()->query->get_query_vars()['order-received'] ?? 'order-received';
+
+        return '' !== $path && '' !== $checkout_uri && '' !== $endpoint && 0 === strpos( $path, $checkout_uri . '/' . $endpoint );
+    }
+
+    /**
+     * The order-pay endpoint on the checkout page, with pay_for_order (a "Customer payment page" link): the only
+     * order-pay request whose form Pro's pay-order page replaces. Matched from the URL at setup_theme, like is_order_received_request().
+     */
+    private function is_order_pay_request(): bool {
+        $checkout_id = wc_get_page_id( 'checkout' );
+
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only routing, as core's own parse_request.
+        if ( $checkout_id <= 0 || isset( $_GET['wc-ajax'] ) || ! isset( $_GET['pay_for_order'] ) ) {
+            return false;
+        }
+
+        if ( isset( $_GET['order-pay'] ) ) {
+            if ( isset( $_GET['page_id'] ) ) {
+                return absint( $_GET['page_id'] ) === $checkout_id;
+            }
+
+            return true;
+        }
+        // phpcs:enable
+
+        $path         = preg_replace( '#^index\.php(/|$)#', '', $this->request_path() );
+        $checkout_uri = get_page_uri( $checkout_id );
+        // The merchant may rename the endpoint (Settings → Advanced); is_checkout_pay_page() reads the same setting.
+        $endpoint = WC()->query->get_query_vars()['order-pay'] ?? 'order-pay';
 
         return '' !== $path && '' !== $checkout_uri && '' !== $endpoint && 0 === strpos( $path, $checkout_uri . '/' . $endpoint );
     }
@@ -219,6 +249,17 @@ class ThemelessCheckout {
          * @param bool $renders Default false.
          */
         return (bool) apply_filters( 'yaycheckout_layout_renders_order_received', false );
+    }
+
+    /** Whether a layout renders this order-pay request. Free leaves order-pay to WooCommerce; Pro's pay-order page answers. */
+    private function layout_renders_order_pay(): bool {
+        /**
+         * Whether a layout renders this order-pay request (pay_for_order in the URL), short of checking the
+         * order. Runs at setup_theme, before the main query.
+         *
+         * @param bool $renders Default false.
+         */
+        return (bool) apply_filters( 'yaycheckout_layout_renders_order_pay', false );
     }
 
     /** The request path below home, decoded, without slashes at either end. */

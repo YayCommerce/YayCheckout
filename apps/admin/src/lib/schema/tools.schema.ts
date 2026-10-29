@@ -24,6 +24,8 @@ export const layoutExportWireSchema = z
           logged_out_content: z.string().optional(),
           // Absent in files from before thank-you pages.
           thank_you_content: z.string().optional(),
+          // Absent in files from before pay-order pages.
+          pay_order_content: z.string().optional(),
         })
         .strict(),
     ),

@@ -10,6 +10,7 @@ export const templateWireSchema = z
     available: z.boolean(),
     preview_url: z.string(),
     thank_you_preview_url: z.string(),
+    pay_order_preview_url: z.string(),
   })
   .strict();
 
@@ -29,4 +30,6 @@ export type Template = {
   previewUrl: string;
   /** The Thank you card on the New layout modal's preview step; '' until the template ships thank-you-preview.html. */
   thankYouPreviewUrl: string;
+  /** The Pay order card on the New layout modal's preview step; '' until the template ships pay-order-preview.html. */
+  payOrderPreviewUrl: string;
 };

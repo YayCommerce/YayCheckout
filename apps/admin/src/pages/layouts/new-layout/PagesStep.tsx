@@ -12,9 +12,9 @@ import { LockedOverlay } from '@/components/shared/template-picker/TemplatePicke
 import { TemplatePreview } from '@/components/shared/template-picker/TemplatePreview';
 
 /**
- * The pages the new layout comes with, previewed side by side: its checkout and its thank-you page.
- * In Pro, Create layout makes both; the server writes the thank-you page from the template. The thank-you
- * page is Pro, so Free shows its card locked, an upsell only: Free's server makes the checkout alone.
+ * The pages the new layout comes with, previewed side by side: its checkout, thank-you and pay-order pages.
+ * In Pro, Create layout makes all three; the server writes the thank-you and pay-order pages from the template.
+ * Those two pages are Pro, so Free shows their cards locked, an upsell only: Free's server makes the checkout alone.
  */
 export function PagesStep({
   template,
@@ -37,7 +37,7 @@ export function PagesStep({
         <p className="text-muted-foreground text-sm">{name}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <PageCard title={__('Checkout', 'yaycheckout')}>
           <TemplatePreview template={template} />
         </PageCard>
@@ -48,6 +48,23 @@ export function PagesStep({
           <TemplatePreview
             template={template}
             previewUrl={template.thankYouPreviewUrl}
+            placeholder={__('Preview coming soon', 'yaycheckout')}
+          >
+            {!isPro && (
+              <>
+                <LockedOverlay />
+                <ProBadge className="absolute top-2 right-2 shadow-sm" />
+              </>
+            )}
+          </TemplatePreview>
+        </PageCard>
+        <PageCard
+          title={__('Pay order', 'yaycheckout')}
+          hint={isPro ? undefined : __('Upgrade to Pro to customize the pay-order page', 'yaycheckout')}
+        >
+          <TemplatePreview
+            template={template}
+            previewUrl={template.payOrderPreviewUrl}
             placeholder={__('Preview coming soon', 'yaycheckout')}
           >
             {!isPro && (

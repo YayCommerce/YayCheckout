@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * for its fallback alone while the value is empty. The cart's values reach view.js as a JSON element in
  * the footer, which update_order_review swaps as a fragment; view.js reads field values from the form as the shopper types.
  *
- * Another page a layout renders (Pro's thank-you page) fills the same spans from the values it hands over
+ * Another page a layout renders (Pro's thank-you and pay-order pages) fills the same spans from the values it hands over
  * through the yaycheckout_live_values_source filter, which the footer JSON then carries instead of the cart's.
  */
 class LiveValues {
@@ -206,7 +206,7 @@ class LiveValues {
         } else {
             /**
              * The live values of another page a layout renders on this request, or null to leave its spans as
-             * they are. Pro's thank-you page answers on order-received, from its order.
+             * they are. Pro's thank-you page answers on order-received, and its pay-order page on order-pay, from their order.
              *
              * @param null|array{layout: Layout, values: array<string, array{text: string, empty: bool}>, field: callable} $source
              *        `field` resolves a `field:<key>` span: fn( string $key ): array{text: string, empty: bool, known: bool}.

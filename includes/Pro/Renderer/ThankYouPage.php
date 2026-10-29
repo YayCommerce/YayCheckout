@@ -5,10 +5,7 @@ use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Models\Layout;
 use YayCheckout\Pro\Repositories\PreviewOrderRepository;
 use YayCheckout\Renderer\CheckoutBaseStyles;
-use YayCheckout\Renderer\CheckoutPage;
 use YayCheckout\Renderer\PreviewRequest;
-use YayCheckout\Repositories\LayoutRepository;
-use YayCheckout\Repositories\SettingsRepository;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -72,7 +69,7 @@ class ThankYouPage {
             return true;
         }
 
-        $layout = self::preview_or_active_layout();
+        $layout = PreviewRequest::preview_or_active_layout();
 
         return null !== $layout && $layout->has_thank_you();
     }
@@ -275,6 +272,19 @@ class ThankYouPage {
     }
 
     /**
+     * Runs $callback with no order actions, so order-details.php prints no Actions row (Pay, Cancel): on the
+     * pay-order page the shopper is already paying.
+     *
+     * @param callable $callback Printer that echoes WooCommerce template output.
+     */
+    public static function without_order_actions( callable $callback ): void {
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's filter.
+        add_filter( 'woocommerce_my_account_my_orders_actions', '__return_empty_array', PHP_INT_MAX );
+        $callback();
+        remove_filter( 'woocommerce_my_account_my_orders_actions', '__return_empty_array', PHP_INT_MAX );
+    }
+
+    /**
      * Resolves layout and order together. Both null when this is not a valid takeover.
      */
     private function resolve(): void {
@@ -285,7 +295,7 @@ class ThankYouPage {
             return;
         }
 
-        $layout = self::preview_or_active_layout();
+        $layout = PreviewRequest::preview_or_active_layout();
 
         if ( null === $layout || ! $layout->has_thank_you() ) {
             return;
@@ -294,7 +304,7 @@ class ThankYouPage {
         $order = $this->validated_order();
 
         // A preview link shows only the sample order, so a token can't put a layout over a shopper's order.
-        if ( null === $order || ( null !== PreviewRequest::get_instance()->layout_id() && ! self::is_preview_order( $order ) ) ) {
+        if ( null === $order || ( null !== PreviewRequest::get_instance()->layout_id() && ! ( new PreviewOrderRepository() )->is_sample( $order ) ) ) {
             return;
         }
 
@@ -303,31 +313,6 @@ class ThankYouPage {
 
         $this->layout = $layout;
         $this->order  = $order;
-    }
-
-    /**
-     * A preview link's layout, any state, before the safe-mode check as on the checkout: safe mode protects
-     * shoppers, a preview is the merchant looking. Otherwise the active layout, unless safe mode is on.
-     * renders_order_received() decides ThemelessCheckout's swap with it too.
-     */
-    public static function preview_or_active_layout(): ?Layout {
-        $preview_id = PreviewRequest::get_instance()->layout_id();
-
-        if ( null !== $preview_id ) {
-            return ( new LayoutRepository() )->find( $preview_id );
-        }
-
-        if ( ( new SettingsRepository() )->is_safe_mode() ) {
-            return null;
-        }
-
-        return ( new LayoutRepository() )->active( CheckoutPage::shopper_context() );
-    }
-
-    private static function is_preview_order( \WC_Order $order ): bool {
-        $sample = ( new PreviewOrderRepository() )->find();
-
-        return null !== $sample && $sample->get_id() === $order->get_id();
     }
 
     /**

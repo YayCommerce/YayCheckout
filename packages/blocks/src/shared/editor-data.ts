@@ -32,18 +32,21 @@ export type EditorDesign = {
 /** The layout editor's view switch, from BlockRegistry::editor_design_data(). */
 export type EditorView = {
 	/**
-	 * LayoutEditorEmbed::VIEW_MAIN, VIEW_LOGGED_OUT or VIEW_THANK_YOU. Logged out edits the markup a guest who must log in
-	 * sees (Layout::META_LOGGED_OUT); Thank you edits the order-received page (Layout::META_THANK_YOU).
+	 * LayoutEditorEmbed::VIEW_MAIN, VIEW_LOGGED_OUT, VIEW_THANK_YOU or VIEW_PAY_ORDER. Logged out edits the markup a guest
+	 * who must log in sees (Layout::META_LOGGED_OUT); in Pro, Thank you edits the order-received page
+	 * (Layout::META_THANK_YOU) and Pay order the order-pay page (Layout::META_PAY_ORDER).
 	 */
-	current: 'main' | 'logged-out' | 'thank-you';
+	current: 'main' | 'logged-out' | 'thank-you' | 'pay-order';
 	/** CheckoutLogin::login_required(): WooCommerce makes guests log in before checkout. */
 	loginRequired: boolean;
 	/** Layout::has_thank_you(): the layout has a thank-you page to edit. */
 	hasThankYou: boolean;
+	/** Layout::has_pay_order(): the layout has a pay-order page to edit. */
+	hasPayOrder: boolean;
 	/** LayoutEditorEmbed::QUERY_VIEW. */
 	queryArg: string;
-	/** The embedded editor for each view of this layout: LayoutEditorEmbed::view_urls(). thank-you is there only in Pro. */
-	urls: Record< 'main' | 'logged-out' | 'thank-you', string >;
+	/** The embedded editor for each view of this layout: LayoutEditorEmbed::view_urls(). thank-you and pay-order are there only in Pro. */
+	urls: Record< 'main' | 'logged-out' | 'thank-you' | 'pay-order', string >;
 };
 
 type EditorData = {
@@ -79,8 +82,9 @@ export const editorData: EditorData = {
 		current: 'main',
 		loginRequired: false,
 		hasThankYou: false,
+		hasPayOrder: false,
 		queryArg: '',
-		urls: { main: '', 'logged-out': '', 'thank-you': '' },
+		urls: { main: '', 'logged-out': '', 'thank-you': '', 'pay-order': '' },
 	},
 	...window.yayCheckoutBlocks,
 };

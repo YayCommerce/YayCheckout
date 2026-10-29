@@ -470,8 +470,17 @@ class CheckoutFragments {
         );
     }
 
-    /** Payment is empty when the order needs no payment; the "no available payment methods" notice counts as content. */
+    /**
+     * Payment is empty when the order needs no payment; the "no available payment methods" notice counts as content.
+     * On the pay-order page that is the order being paid, not the cart.
+     */
     public static function payment_empty(): bool {
+        $pay_form = PayOrderForm::current();
+
+        if ( null !== $pay_form ) {
+            return ! $pay_form['order']->needs_payment();
+        }
+
         return ! WC()->cart instanceof \WC_Cart || ! WC()->cart->needs_payment();
     }
 
@@ -740,6 +749,10 @@ class CheckoutFragments {
 
     /** Gateway radios only; Place order is a separate block. */
     public static function payment_methods_html(): string {
+        if ( PayOrderForm::in_form() ) {
+            return self::pay_order_payment_methods_html();
+        }
+
         if ( ! WC()->cart instanceof \WC_Cart ) {
             return '';
         }
@@ -797,6 +810,45 @@ class CheckoutFragments {
             WcHooks::in_place( 'woocommerce_review_order_after_payment' );
         }
 
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * The Payment block's list on the pay-order page: the gateways WooCommerce offers for the order being paid
+     * (PayOrderForm::current()), as form-pay.php lists them. No cart, no review-order hooks and no AJAX refresh:
+     * the pay form never updates its totals.
+     */
+    public static function pay_order_payment_methods_html(): string {
+        $pay_form = PayOrderForm::current();
+        $gateways = null !== $pay_form ? $pay_form['gateways'] : [];
+        $empty    = self::payment_empty();
+
+        ob_start();
+        ?>
+<div id="payment" class="woocommerce-checkout-payment"<?php echo self::live_attributes( $empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- live_attributes() prints fixed names and values. ?>>
+        <?php if ( ! $empty && ! empty( $gateways ) ) : ?>
+    <ul class="wc_payment_methods payment_methods methods" aria-label="<?php esc_attr_e( 'Payment methods', 'yaycheckout' ); ?>">
+            <?php
+            foreach ( $gateways as $gateway ) {
+                wc_get_template( 'checkout/payment-method.php', [ 'gateway' => $gateway ] );
+            }
+            ?>
+    </ul>
+            <?php
+        elseif ( ! $empty ) :
+            // Outside the list, unlike Woo's form-pay.php, so the row styles never draw the notice as a selected method.
+            wc_print_notice(
+                apply_filters(
+                    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Classic checkout contract.
+                    'woocommerce_no_available_payment_methods_message',
+                    esc_html__( 'Sorry, it seems that there are no available payment methods for your location. Please contact us if you require assistance or wish to make alternate arrangements.', 'yaycheckout' )
+                ),
+                'notice'
+            );
+        endif;
+        ?>
+</div>
+        <?php
         return (string) ob_get_clean();
     }
 

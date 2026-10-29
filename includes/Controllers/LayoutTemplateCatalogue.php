@@ -13,8 +13,9 @@ defined( 'ABSPATH' ) || exit;
  * template (one built from Pro blocks). Free lists a Pro template as locked and ships only its
  * preview.html. A template missing either file is Coming soon.
  * preview.html, the picker's preview of the mock, sits beside them and availability ignores it,
- * as it does the optional logged-out.php and thank-you.php, the template's own logged-out view and thank-you page.
- * The thank-you page is Pro: its shared starter lives in templates/layouts/pro/, which the Free zip leaves out.
+ * as it does the optional logged-out.php, thank-you.php and pay-order.php, the template's own logged-out view,
+ * thank-you page and pay-order page. Those two pages are Pro: their shared starters live in templates/layouts/pro/,
+ * which the Free zip leaves out.
  */
 class LayoutTemplateCatalogue {
 
@@ -27,23 +28,28 @@ class LayoutTemplateCatalogue {
     /** A template's optional thank-you page (Pro), and the shared one in templates/layouts/pro/. */
     private const THANK_YOU_FILE = 'thank-you.php';
 
+    /** A template's optional pay-order page (Pro), and the shared one in templates/layouts/pro/. */
+    private const PAY_ORDER_FILE = 'pay-order.php';
+
     /** The shared starter for each view file, used when a template has none of its own. */
     private const SHARED_FILES = [
         self::LOGGED_OUT_FILE => 'templates/layouts/logged-out.php',
         self::THANK_YOU_FILE  => 'templates/layouts/pro/thank-you.php',
+        self::PAY_ORDER_FILE  => 'templates/layouts/pro/pay-order.php',
     ];
 
     /** Each editor view kept in meta (LayoutEditorEmbed::views()), and the file its starter markup comes from. */
     private const VIEW_FILES = [
         LayoutEditorEmbed::VIEW_LOGGED_OUT => self::LOGGED_OUT_FILE,
         LayoutEditorEmbed::VIEW_THANK_YOU  => self::THANK_YOU_FILE,
+        LayoutEditorEmbed::VIEW_PAY_ORDER  => self::PAY_ORDER_FILE,
     ];
 
     /**
      * Every template, for the picker. In Free a Pro template is listed with `available` false, so its
      * preview shows locked and it can't be created from.
      *
-     * @return array{ slug: string, name: string, categories: string[], pro: bool, available: bool, preview_url: string, thank_you_preview_url: string }[]
+     * @return array{ slug: string, name: string, categories: string[], pro: bool, available: bool, preview_url: string, thank_you_preview_url: string, pay_order_preview_url: string }[]
      */
     public static function templates( bool $is_pro ): array {
         $templates = [];
@@ -53,6 +59,7 @@ class LayoutTemplateCatalogue {
             $template['available']             = self::is_available( $template['slug'], $is_pro );
             $template['preview_url']           = self::preview_url( $template['slug'] );
             $template['thank_you_preview_url'] = self::thank_you_preview_url( $template['slug'] );
+            $template['pay_order_preview_url'] = self::pay_order_preview_url( $template['slug'] );
             $templates[]                       = $template;
         }
 
@@ -130,8 +137,17 @@ class LayoutTemplateCatalogue {
     }
 
     /**
-     * The starter markup of an editor view kept in meta, for a layout from $slug: logged_out_markup() or
-     * thank_you_markup(). '' for a view with no starter file, such as VIEW_MAIN.
+     * The pay-order page a layout from $slug starts with: the template's pay-order.php, or the shared
+     * templates/layouts/pro/pay-order.php when the template has none or $slug is not an available template.
+     * '' in Free, whose zip has neither.
+     */
+    public static function pay_order_markup( string $slug ): string {
+        return self::markup_file( $slug, self::PAY_ORDER_FILE );
+    }
+
+    /**
+     * The starter markup of an editor view kept in meta, for a layout from $slug: logged_out_markup(),
+     * thank_you_markup() or pay_order_markup(). '' for a view with no starter file, such as VIEW_MAIN.
      */
     public static function view_markup( string $view, string $slug ): string {
         return isset( self::VIEW_FILES[ $view ] ) ? self::markup_file( $slug, self::VIEW_FILES[ $view ] ) : '';
@@ -188,6 +204,11 @@ class LayoutTemplateCatalogue {
     /** The URL of the template's thank-you-preview.html, the New layout modal's Thank you card, or '' when it has none. Called only with catalogue slugs. */
     private static function thank_you_preview_url( string $slug ): string {
         return self::file_url( $slug, 'thank-you-preview.html' );
+    }
+
+    /** The URL of the template's pay-order-preview.html, the New layout modal's Pay order card, or '' when it has none. Called only with catalogue slugs. */
+    private static function pay_order_preview_url( string $slug ): string {
+        return self::file_url( $slug, 'pay-order-preview.html' );
     }
 
     /** The versioned URL of one of the template's files, or '' when it has none. Called only with catalogue slugs. */

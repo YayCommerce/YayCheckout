@@ -335,8 +335,8 @@ class LayoutRepository {
 
     /**
      * Creates a layout draft from a catalogue template: its markup, which is a complete checkout, so
-     * activating it as-is lets a shopper place an order, its design, its logged-out view and, in Pro, its thank-you page.
-     * The post type's template only applies to auto-drafts, not to this insert.
+     * activating it as-is lets a shopper place an order, its design, its logged-out view and, in Pro, its thank-you
+     * and pay-order pages. The post type's template only applies to auto-drafts, not to this insert.
      *
      * @throws \InvalidArgumentException When the template is not available or the insert fails.
      */
@@ -348,13 +348,14 @@ class LayoutRepository {
             LayoutTemplateCatalogue::design( $template_slug ),
             $template_slug,
             LayoutTemplateCatalogue::logged_out_markup( $template_slug ),
-            // The thank-you page is Pro; Free has neither its blocks nor its starter markup.
-            Plan::is_pro() ? LayoutTemplateCatalogue::thank_you_markup( $template_slug ) : ''
+            // The thank-you and pay-order pages are Pro; Free has neither their order blocks nor their starter markup.
+            Plan::is_pro() ? LayoutTemplateCatalogue::thank_you_markup( $template_slug ) : '',
+            Plan::is_pro() ? LayoutTemplateCatalogue::pay_order_markup( $template_slug ) : ''
         );
     }
 
     /**
-     * Copies a layout's content, logged-out view, thank-you page, assignment rules, design and template into a new draft layout.
+     * Copies a layout's content, logged-out view, thank-you page, pay-order page, assignment rules, design and template into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -362,27 +363,28 @@ class LayoutRepository {
         $source = $this->find_or_throw( $id );
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template, $source->logged_out_content, $source->thank_you_content );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template, $source->logged_out_content, $source->thank_you_content, $source->pay_order_content );
     }
 
     /**
-     * Creates a draft from an export file's title, markup, assignment rules, design, logged-out view and thank-you page, as the current user
+     * Creates a draft from an export file's title, markup, assignment rules, design, logged-out view, thank-you page and pay-order page, as the current user
      * may store them (kses-filtered without unfiltered_html).
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
      * @param array  $rules              Already sanitized (Layout::sanitize_rules()); [] for none.
      * @param string $logged_out_content The logged-out view's markup; '' when none.
      * @param string $thank_you_content  The thank-you page's markup; '' when none.
+     * @param string $pay_order_content  The pay-order page's markup; '' when none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    public function import( string $title, string $content, array $rules, LayoutDesign $design, string $logged_out_content = '', string $thank_you_content = '' ): Layout {
-        return $this->insert_draft( $title, $content, $rules, $design, '', $logged_out_content, $thank_you_content );
+    public function import( string $title, string $content, array $rules, LayoutDesign $design, string $logged_out_content = '', string $thank_you_content = '', string $pay_order_content = '' ): Layout {
+        return $this->insert_draft( $title, $content, $rules, $design, '', $logged_out_content, $thank_you_content, $pay_order_content );
     }
 
     /**
      * Puts a layout's blocks and design back to its template's, or to the default template's when it has
      * none available on this plan (a Pro template in Free falls back to the default one).
-     * Title, status, rules, the template, the thank-you page and the active flag stay. The old markup and design are already
+     * Title, status, rules, the template, the thank-you and pay-order pages and the active flag stay. The old markup and design are already
      * a revision (every layout gets one when created), so the editor can undo it.
      *
      * @throws \InvalidArgumentException When the layout is missing or the update fails.
@@ -432,6 +434,38 @@ class LayoutRepository {
             [
                 'ID'         => $id,
                 'meta_input' => [ Layout::META_THANK_YOU => self::filter_view_markup( LayoutTemplateCatalogue::thank_you_markup( $layout->template ) ) ],
+            ]
+        );
+
+        return $this->find( $id );
+    }
+
+    /**
+     * Gives a layout made before pay-order pages, or in Free, its template's pay-order page (or the shared one),
+     * from the layout editor's Add pay-order page button through Pro's route. Never overwrites one the layout already has.
+     *
+     * @throws \InvalidArgumentException When this is not Pro, the layout is missing, archived, already has a pay-order page, or the update fails.
+     */
+    public function add_pay_order( int $id ): Layout {
+        if ( ! Plan::is_pro() ) {
+            throw new \InvalidArgumentException( esc_html__( 'Pay-order pages are part of YayCheckout Pro.', 'yaycheckout' ) );
+        }
+
+        $layout = $this->find_or_throw( $id );
+
+        if ( LayoutStatus::ARCHIVED === $layout->post_status ) {
+            throw new \InvalidArgumentException( esc_html__( 'Restore this layout from the archive first.', 'yaycheckout' ) );
+        }
+
+        if ( $layout->has_pay_order() ) {
+            throw new \InvalidArgumentException( esc_html__( 'This layout already has a pay-order page.', 'yaycheckout' ) );
+        }
+
+        // Slashed by update_post(), like the markup Reset writes.
+        $this->update_post(
+            [
+                'ID'         => $id,
+                'meta_input' => [ Layout::META_PAY_ORDER => self::filter_view_markup( LayoutTemplateCatalogue::pay_order_markup( $layout->template ) ) ],
             ]
         );
 
@@ -489,7 +523,7 @@ class LayoutRepository {
     /**
      * A view's markup as the current user may store it: kses-filtered unless they have unfiltered_html, as core's
      * content_save_pre filters post_content. Core never filters meta, so every writer of a view meta
-     * (Layout::META_LOGGED_OUT, Layout::META_THANK_YOU) calls this.
+     * (Layout::META_LOGGED_OUT, Layout::META_THANK_YOU, Layout::META_PAY_ORDER) calls this.
      *
      * @param string $markup Unslashed.
      */
@@ -505,9 +539,10 @@ class LayoutRepository {
      * @param string $template_slug The catalogue template it comes from; '' when none (an import).
      * @param string $logged_out_content The logged-out view's markup; '' when none.
      * @param string $thank_you_content  The thank-you page's markup; '' when none.
+     * @param string $pay_order_content  The pay-order page's markup; '' when none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug, string $logged_out_content = '', string $thank_you_content = '' ): Layout {
+    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug, string $logged_out_content = '', string $thank_you_content = '', string $pay_order_content = '' ): Layout {
         $meta = [ Layout::META_DESIGN => $design->to_meta() ];
 
         if ( [] !== $rules ) {
@@ -524,6 +559,10 @@ class LayoutRepository {
 
         if ( '' !== $thank_you_content ) {
             $meta[ Layout::META_THANK_YOU ] = self::filter_view_markup( $thank_you_content );
+        }
+
+        if ( '' !== $pay_order_content ) {
+            $meta[ Layout::META_PAY_ORDER ] = self::filter_view_markup( $pay_order_content );
         }
 
         // wp_insert_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
