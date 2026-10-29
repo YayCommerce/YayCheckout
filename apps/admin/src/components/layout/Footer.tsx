@@ -126,7 +126,7 @@ export default function Footer({
           <p className="text-center text-xs">
             {createInterpolateElement(
               __(
-                'We need your support to keep updating and improving the plugin. Please <review>help us by leaving a good review</review>. Thanks!',
+                'Your feedback helps us keep improving the plugin. Please <review>leave a review on WordPress.org</review>. Thanks!',
                 'yaycheckout',
               ),
               {
