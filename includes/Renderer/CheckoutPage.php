@@ -3,6 +3,7 @@ namespace YayCheckout\Renderer;
 
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Enums\ConditionType;
+use YayCheckout\Helpers\Logger;
 use YayCheckout\Models\Layout;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
@@ -27,23 +28,39 @@ class CheckoutPage {
 
     private const FLOATING_LABELS_SCRIPT = 'yaycheckout-floating-labels';
 
+    /** After WooCommerce's empty-cart redirect at 10. */
+    private const REPICK_PRIORITY = 20;
+
     /** @var Layout|null|false false until first resolved. */
     private $layout = false;
 
     /** The resolved layout's content is its logged-out view. */
     private bool $logged_out_view = false;
 
+    /** The last resolve() could not see the cart a cart rule needs, so it is not memoised. */
+    private bool $provisional = false;
+
+    /** This request is a checkout page load that picked, and pinned, from the cart. */
+    private bool $picked = false;
+
     protected function __construct() {
         add_action( 'wp', [ $this, 'maybe_take_over' ] );
+        add_action( 'template_redirect', [ $this, 'maybe_repick' ], self::REPICK_PRIORITY );
     }
 
-    /** The layout to render, or null when the renderer stands down. Memoised per request. */
+    /** The layout to render, or null when the renderer stands down. Memoised per request once the cart has loaded. */
     public function layout(): ?Layout {
-        if ( false === $this->layout ) {
-            $this->layout = $this->resolve();
+        if ( false !== $this->layout ) {
+            return $this->layout;
         }
 
-        return $this->layout;
+        $layout = $this->resolve();
+
+        if ( ! $this->provisional ) {
+            $this->layout = $layout;
+        }
+
+        return $layout;
     }
 
     /** True when the layout renders its logged-out view: a guest WooCommerce makes log in, or a preview of that view. */
@@ -70,6 +87,26 @@ class CheckoutPage {
         if ( has_block( ExpressPay::BLOCK, $this->layout()->content ) ) {
             add_filter( 'wc_stripe_express_checkout_params', [ ExpressPay::class, 'stripe_params' ] );
         }
+    }
+
+    /**
+     * Reloads a checkout page load whose theme ThemelessCheckout guessed wrong, before the cart
+     * was known. The pin is written by now, so the reload's guess is exact. Once only: with cookies
+     * blocked the guess stays wrong, and the page renders under the theme it got.
+     */
+    public function maybe_repick(): void {
+        if ( ! $this->picked || ! ThemelessCheckout::get_instance()->mispredicted( null !== $this->layout() ) ) {
+            return;
+        }
+
+        if ( isset( $_GET[ LayoutPin::REPICK_ARG ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only flag.
+            Logger::warning( 'The checkout theme was guessed wrong again after a reload; is the layout pin cookie blocked?' );
+
+            return;
+        }
+
+        wp_safe_redirect( add_query_arg( LayoutPin::REPICK_ARG, '1' ) );
+        exit;
     }
 
     public function page_template(): string {
@@ -102,7 +139,8 @@ class CheckoutPage {
     }
 
     private function resolve(): ?Layout {
-        $preview_id = PreviewRequest::get_instance()->layout_id();
+        $this->provisional = false;
+        $preview_id        = PreviewRequest::get_instance()->layout_id();
 
         // Before the safe-mode check: safe mode protects shoppers, a preview is the merchant looking.
         if ( null !== $preview_id ) {
@@ -114,8 +152,24 @@ class CheckoutPage {
             return null;
         }
 
-        // Picked afresh by every request, AJAX and order submit too, with no pin: safe because every ConditionType reads a fact that holds for the life of the form.
-        return $this->with_view( ( new LayoutRepository() )->active( self::shopper_context() ), CheckoutLogin::must_log_in() );
+        $layouts = new LayoutRepository();
+
+        // Without cart rules, every request, AJAX and order submit too, picks afresh: shopper facts hold for the life of the form.
+        if ( ! $layouts->depends_on_cart() ) {
+            return $this->with_view( $layouts->active( self::shopper_context() ), CheckoutLogin::must_log_in() );
+        }
+
+        // The cart loads at wp_loaded; a page is told apart from an endpoint only once the main query runs at wp.
+        $page_request      = LayoutPin::is_page_request();
+        $this->provisional = ! did_action( 'wp' ) && ( $page_request || ! did_action( 'wp_loaded' ) );
+
+        if ( $page_request && ! $this->provisional && $this->on_checkout_page() ) {
+            $this->picked = true;
+
+            return $this->with_view( LayoutPin::pick( $layouts, self::shopper_context() ), CheckoutLogin::must_log_in() );
+        }
+
+        return $this->with_view( LayoutPin::pinned( $layouts, self::shopper_context() ), CheckoutLogin::must_log_in() );
     }
 
     /**

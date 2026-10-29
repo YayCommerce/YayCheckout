@@ -113,7 +113,7 @@ class Layout {
     }
 
     /**
-     * Validates and normalizes assignment rules: list values de-duplicated.
+     * Validates and normalizes assignment rules: list values de-duplicated, ids stored as ints.
      * Strict, not forgiving: an incomplete condition is refused, never stored half-filled.
      *
      * @param mixed $input Decoded request body `rules`.
@@ -182,6 +182,12 @@ class Layout {
                 $invalid = array_filter( $list, static fn( $key ) => ! is_string( $key ) || ! preg_match( '/^[A-Za-z0-9_.-]{1,100}$/', $key ) );
                 // Unique only once all are strings: array_unique then compares as strings, so '10' and '1e1' stay two keys.
                 return [] === $list || [] !== $invalid ? null : array_values( array_unique( $list ) );
+
+            case ConditionType::VALUE_IDS:
+                $list = is_array( $value ) ? $value : [];
+                // Digit strings too: an id may arrive from a form or a file as text.
+                $invalid = array_filter( $list, static fn( $id ) => ! ( is_int( $id ) && $id > 0 ) && ! ( is_string( $id ) && preg_match( '/^[1-9][0-9]{0,17}$/', $id ) ) );
+                return [] === $list || count( $list ) > ConditionType::MAX_IDS || [] !== $invalid ? null : array_values( array_unique( array_map( 'intval', $list ) ) );
 
             case ConditionType::VALUE_CHOICE:
                 return in_array( $value, $definition['choices'], true ) ? $value : null;
