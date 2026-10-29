@@ -25,6 +25,9 @@ class CheckoutLogin {
 
     public const NONCE_ACTION = 'yaycheckout-login';
 
+    /** Guards login_state. login() creates it for the customer it just signed in. */
+    public const STATE_NONCE_ACTION = 'yaycheckout-login-state';
+
     protected function __construct() {
         // wc-ajax serves guests and logged-in shoppers on the same hook.
         add_action( 'wc_ajax_yaycheckout_login', [ $this, 'login' ] );
@@ -191,7 +194,7 @@ class CheckoutLogin {
         }
 
         if ( is_user_logged_in() ) {
-            wp_send_json_success();
+            wp_send_json_success( [ 'state_nonce' => wp_create_nonce( self::STATE_NONCE_ACTION ) ] );
         }
 
         $username = isset( $_POST['username'] ) && is_string( $_POST['username'] ) ? sanitize_user( wp_unslash( $_POST['username'] ) ) : null;
@@ -224,6 +227,7 @@ class CheckoutLogin {
                 throw new \Exception( '<strong>' . __( 'Error:', 'yaycheckout' ) . '</strong> ' . __( 'Username is required.', 'yaycheckout' ) );
             }
 
+            add_action( 'set_logged_in_cookie', [ self::class, 'use_logged_in_cookie' ] );
             $user = wp_signon( apply_filters( 'woocommerce_login_credentials', $creds ), is_ssl() );
 
             if ( is_wp_error( $user ) ) {
@@ -242,8 +246,20 @@ class CheckoutLogin {
             );
         }
 
-        wp_send_json_success();
+        // A nonce for login_state belongs to the signed-in customer, so it can only be made once they are current.
+        wp_set_current_user( $user->ID );
+        wp_send_json_success( [ 'state_nonce' => wp_create_nonce( self::STATE_NONCE_ACTION ) ] );
         // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+    }
+
+    /**
+     * Puts the new login cookie on this request, so wp_create_nonce() reads the session it starts.
+     * WooCommerce's Store API does the same after a checkout sign-in.
+     *
+     * @param string $logged_in_cookie The cookie wp_set_auth_cookie() just sent.
+     */
+    public static function use_logged_in_cookie( $logged_in_cookie ): void {
+        $_COOKIE[ LOGGED_IN_COOKIE ] = $logged_in_cookie;
     }
 
     /**
@@ -251,6 +267,10 @@ class CheckoutLogin {
      * is on the request.
      */
     public function state(): void {
+        if ( ! check_ajax_referer( self::STATE_NONCE_ACTION, 'security', false ) ) {
+            wp_send_json_error( null, 403 );
+        }
+
         if ( ! is_user_logged_in() || ! function_exists( 'WC' ) ) {
             wp_send_json_error( null, 401 );
         }
