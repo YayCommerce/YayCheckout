@@ -12,7 +12,52 @@ Checkout builder plugin for WooCommerce: customize checkout fields, layout and d
 
 == Description ==
 
-YayCheckout lets you customize the WooCommerce checkout page: manage fields, layout, and design with a visual builder.
+YayCheckout replaces WooCommerce's checkout form with a layout you build in the block editor. Pick a starting template, move fields and sections where you want them, set colours and fonts, and publish. Shoppers see your layout; orders, payments and emails stay WooCommerce's own.
+
+= Build the checkout with blocks =
+
+* Billing and shipping sections whose fields you add, remove, reorder, relabel and mark required or optional.
+* Email, order note, create account, different address, login reminder and terms blocks, each following WooCommerce's own settings.
+* Extra fields (text, select, radio, checkbox, date and time) saved on the order and shown on the order screen and the customer's order page.
+* An order summary with line items, breakdown and total that update as the cart changes, plus a coupon form, savings note and shipping methods.
+* Payment methods and the Place order button from WooCommerce's classic checkout, so payment gateways that support it keep working.
+* WooCommerce Hook blocks that print what other plugins add to checkout hooks, where you place them.
+
+= Design without code =
+
+* Templates to start from: Classic two-column, Split express, Editorial fashion, Upsell & cross-sell, Live receipt and Digital product.
+* One design panel for colours, typography, inputs, buttons and notices, with Google Fonts installed into your site.
+* Preview links to check a layout before shoppers see it.
+
+= Safe to try =
+
+* Turn the layout off, or deactivate the plugin, and WooCommerce's standard checkout returns at once.
+* The Compatibility screen lists the checkout plugins and gateways that have been tested with YayCheckout.
+
+== Installation ==
+
+1. Install and activate WooCommerce 10.0 or later.
+2. In WordPress, go to Plugins > Add New, search for "YayCheckout", then install and activate it.
+3. Open YayCommerce > YayCheckout. The setup wizard asks for a template and creates your first layout.
+4. Edit the layout, then activate it. Your store's checkout page now shows it.
+
+== Frequently Asked Questions ==
+
+= Does YayCheckout need WooCommerce? =
+
+Yes. It requires WooCommerce 10.0 or later, and it changes nothing while WooCommerce is inactive.
+
+= Will my payment gateway work? =
+
+YayCheckout prints WooCommerce's classic checkout payment section, so gateways that support the classic checkout work. The Compatibility screen in the plugin lists the gateways and plugins that have been checked.
+
+= What happens if I deactivate the plugin? =
+
+The checkout page goes back to WooCommerce's own checkout. Your layouts stay saved and come back when you reactivate the plugin.
+
+= Is my data removed when I delete the plugin? =
+
+Only if you turn on "Delete all data on uninstall" in the plugin's settings. Then deleting the plugin removes its layouts and settings. Extra-field values saved on orders always stay with the orders.
 
 == External services ==
 
@@ -33,4 +78,4 @@ This service is provided by Google: [Google Fonts API Terms of Service](https://
 == Changelog ==
 
 = 1.0.0 =
-* Initial backbone
+* Initial release.
