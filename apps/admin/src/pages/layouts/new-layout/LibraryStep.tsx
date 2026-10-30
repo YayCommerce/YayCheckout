@@ -8,17 +8,9 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { TemplatePicker } from '@/components/shared/template-picker/TemplatePicker';
 import { NameField } from '@/pages/layouts/new-layout/NameField';
 
-/** Name plus template pick, then Create layout. */
-export function LibraryStep({
-  onCancel,
-  isPending,
-  rootError,
-}: {
-  onCancel: () => void;
-  isPending: boolean;
-  rootError?: string;
-}) {
-  const { control, setValue, getFieldState } = useFormContext<NewLayoutFormValues>();
+/** Name plus template pick, then Next to the pages it comes with. */
+export function LibraryStep({ onCancel, onNext }: { onCancel: () => void; onNext: () => void }) {
+  const { control, setValue, getFieldState, trigger } = useFormContext<NewLayoutFormValues>();
   const templates = useTemplates();
   const name = useWatch<NewLayoutFormValues, 'name'>({ control, name: 'name' });
   const selectedSlug = useWatch<NewLayoutFormValues, 'templateSlug'>({ control, name: 'templateSlug' });
@@ -35,21 +27,25 @@ export function LibraryStep({
 
   const disabled = !layoutNameSchema.safeParse(name).success || !selectedSlug;
 
+  async function next() {
+    if (await trigger()) {
+      onNext();
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <NameField />
 
       <TemplatePicker selectedSlug={selectedSlug} onSelect={selectTemplate} />
 
-      {rootError && <p className="text-destructive text-sm">{rootError}</p>}
-
       <DialogFooter className="items-center gap-3 border-t pt-4 sm:justify-end">
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={onCancel}>
             {__('Cancel', 'yaycheckout')}
           </Button>
-          <Button type="submit" disabled={disabled || isPending}>
-            {isPending ? __('Creating…', 'yaycheckout') : __('Create layout', 'yaycheckout')}
+          <Button type="button" disabled={disabled} onClick={next}>
+            {__('Next', 'yaycheckout')}
           </Button>
         </div>
       </DialogFooter>

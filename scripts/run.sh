@@ -12,6 +12,7 @@
 #   clean              - Remove admin build artifacts (blocks output is left)
 #   backlog            - List docs/backlog/ items and their open boxes
 #   previews [mock]    - Capture templates/layouts/{,pro/}*/preview.html from the HTML mock
+#   thank-you-previews - Build templates/layouts/{,pro/}*/thank-you-preview.html from each design.json
 #   help               - Show this help message
 #
 
@@ -29,6 +30,11 @@ RELEASE_DIR="$PLUGIN_DIR/release"
 # Owners: includes/Pro/ (YayCheckout::boot_pro()), assets/dist/blocks/pro/ (ProServiceProvider::built_blocks())
 # and templates/layouts/pro/ (LayoutTemplateCatalogue::relative_path()).
 PRO_PATHS="includes/Pro/ assets/dist/blocks/pro/ templates/layouts/pro/"
+# The build workspace the Free zip ships, tracked files only, so wordpress.org can rebuild assets/dist/,
+# plus the gitignored pnpm-lock.yaml the build used. Free only. Of packages/blocks/src/pro/ it keeps only each
+# block.json: Free's locked Pro blocks import that metadata, and the built Free bundle already carries it.
+# Not in PRO_PATHS: the Pro check wants every PRO_PATHS entry in its zip.
+FREE_SOURCE_PATHS="apps/admin packages/blocks package.json pnpm-workspace.yaml .nvmrc"
 # Admin-shell files the Free zip deletes: its licensing (with the EDD updater) and the Recommended Plugins
 # page. FREE_SHELL_PATCH first removes every reference to them; the artifact check enforces both.
 FREE_SHELL_STRIP="src/License/ src/Registry/ src/Contracts/AddonHostAdapter.php src/Menu/ExternalPluginMenuAdapter.php
@@ -426,6 +432,26 @@ cmd_release() {
     # and the templates made from them go with it: Free registers neither. Only the templates'
     # preview.html stays, a static page Free's picker shows behind a Pro badge.
     if [ "$plan" = "free" ]; then
+        # shellcheck disable=SC2086 # FREE_SOURCE_PATHS is a list of pathspecs.
+        git -C "$PLUGIN_DIR" ls-files -z -- $FREE_SOURCE_PATHS | (cd "$PLUGIN_DIR" && xargs -0 tar -cf -) | tar -xf - -C "$temp_dir"
+        if [ ! -f "$PLUGIN_DIR/pnpm-lock.yaml" ]; then
+            print_error "pnpm-lock.yaml is missing: run pnpm install"
+            exit 1
+        fi
+        cp "$PLUGIN_DIR/pnpm-lock.yaml" "$temp_dir/"
+        find "${temp_dir:?}/packages/blocks/src/pro" -type f ! -name block.json -delete
+        find "${temp_dir:?}/packages/blocks/src/pro" -depth -type d -empty -delete
+        # These scripts run composer install (the private admin-shell package) or scripts/run.sh, neither shipped.
+        local root_script
+        for root_script in postinstall dev build release; do
+            sed_inplace "/^ *\"$root_script\":/d" "$temp_dir/package.json"
+        done
+        if ! php -r 'exit( null === json_decode( file_get_contents( $argv[1] ) ) ? 1 : 0 );' "$temp_dir/package.json"; then
+            print_error "Free package.json is not valid JSON after removing its scripts"
+            exit 1
+        fi
+        print_info "Free build: copied the JS source ($FREE_SOURCE_PATHS pnpm-lock.yaml)"
+
         local pro_path
         for pro_path in $PRO_PATHS; do
             [ -d "${temp_dir:?}/$pro_path" ] || continue
@@ -512,6 +538,21 @@ cmd_release() {
             print_error "Free artifact's Composer autoloader still names a removed class"
             exit 1
         fi
+        for path in apps/admin/src/ packages/blocks/src/ pnpm-lock.yaml; do
+            if ! unzip -l "$zip_name" | grep -q "$plan_slug/$path"; then
+                print_error "Free artifact is missing the source in $path"
+                exit 1
+            fi
+        done
+        if unzip -l "$zip_name" | grep -q "/node_modules/"; then
+            print_error "Free artifact contains node_modules"
+            exit 1
+        fi
+        if unzip -l "$zip_name" | grep "$plan_slug/packages/blocks/src/pro/" | grep -qvE '/$|/block\.json$'; then
+            print_error "Free artifact contains the Pro blocks' source:"
+            unzip -l "$zip_name" | grep "$plan_slug/packages/blocks/src/pro/" | grep -vE '/$|/block\.json$'
+            exit 1
+        fi
     fi
 
     if [ "$plan" = "pro" ]; then
@@ -524,6 +565,10 @@ cmd_release() {
                 exit 1
             fi
         done
+        if unzip -l "$zip_name" | grep -qE "$plan_slug/(apps|packages)/"; then
+            print_error "Pro artifact contains the JS source, which only Free ships"
+            exit 1
+        fi
     fi
 
     # The header comes from the branch; a mismatch means the wrong branch's files.
@@ -609,6 +654,11 @@ cmd_previews() {
     python3 -I "$PLUGIN_DIR/scripts/capture-template-previews.py" ${1:+--mock "$1"}
 }
 
+# Builds each template's Thank you card preview from its design.json; re-run after a design.json changes.
+cmd_thank_you_previews() {
+    python3 -I "$PLUGIN_DIR/scripts/build-thank-you-previews.py"
+}
+
 # Lists docs/backlog/: open items with their unticked boxes, then items whose boxes are all ticked.
 cmd_backlog() {
     local dir="$PLUGIN_DIR/docs/backlog"
@@ -681,6 +731,7 @@ cmd_help() {
     echo "  clean                        Remove admin build artifacts (blocks output is left)"
     echo "  backlog                      List docs/backlog/ items and their open boxes"
     echo "  previews [mock-path]         Capture templates/layouts/{,pro/}*/preview.html from the HTML mock"
+    echo "  thank-you-previews           Build templates/layouts/{,pro/}*/thank-you-preview.html from each design.json"
     echo "  help                         Show this help message"
     echo ""
     echo "Examples:"
@@ -706,6 +757,7 @@ main() {
         clean)   cmd_clean "$@" ;;
         backlog) cmd_backlog "$@" ;;
         previews) cmd_previews "$@" ;;
+        thank-you-previews) cmd_thank_you_previews ;;
         help|*)  cmd_help ;;
     esac
 }

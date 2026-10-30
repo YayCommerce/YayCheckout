@@ -38,6 +38,8 @@ const layoutSummaryWireFields = {
   updated_at: z.string().nullable(),
   /** [] when the layout has none. */
   rules: rulesWireSchema,
+  /** Layout::has_thank_you(): it has a thank-you page (Layout::META_THANK_YOU). */
+  has_thank_you: z.boolean(),
 };
 
 /** Collection row. Mirrors Layout::to_summary_array(): no markup. */
@@ -121,6 +123,8 @@ export type LayoutSummary = {
   updatedAt: string | null;
   /** Groups ORed, conditions ANDed; [] means the layout applies to everyone. */
   rules: LayoutRulesWire;
+  /** It has a thank-you page, shown on order-received while it is active. */
+  hasThankYou: boolean;
 };
 
 export type Layout = LayoutSummary & {

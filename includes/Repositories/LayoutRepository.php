@@ -51,9 +51,32 @@ class LayoutRepository {
      * @param array $context Shopper facts; see LayoutAssignment::matches().
      */
     public function active( array $context ): ?Layout {
-        $layouts = array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
+        $layouts = $this->active_layouts();
 
         return Plan::is_pro() ? LayoutAssignment::pick( $layouts, $context ) : ( $layouts[0] ?? null );
+    }
+
+    /**
+     * Whether active() would find a layout, from facts that may lack the cart. See LayoutAssignment::outlook().
+     *
+     * @return string A LayoutAssignment::OUTLOOK_* constant.
+     */
+    public function outlook( array $context ): string {
+        if ( ! Plan::is_pro() ) {
+            return [] === $this->active_ids() ? LayoutAssignment::OUTLOOK_NO : LayoutAssignment::OUTLOOK_YES;
+        }
+
+        return LayoutAssignment::outlook( $this->active_layouts(), $context );
+    }
+
+    /** Whether the active set's rules read the cart, so which layout serves is pinned per checkout page load. Never in Free, which ignores rules. */
+    public function depends_on_cart(): bool {
+        return Plan::is_pro() && LayoutAssignment::reads_cart( $this->active_layouts() );
+    }
+
+    /** @return Layout[] The active set, most recently activated first. */
+    private function active_layouts(): array {
+        return array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
     }
 
     /**
@@ -335,8 +358,8 @@ class LayoutRepository {
 
     /**
      * Creates a layout draft from a catalogue template: its markup, which is a complete checkout, so
-     * activating it as-is lets a shopper place an order, its design, and its logged-out view. The post
-     * type's template only applies to auto-drafts, not to this insert.
+     * activating it as-is lets a shopper place an order, its design, its logged-out view and, in Pro, its thank-you page.
+     * The post type's template only applies to auto-drafts, not to this insert.
      *
      * @throws \InvalidArgumentException When the template is not available or the insert fails.
      */
@@ -347,12 +370,14 @@ class LayoutRepository {
             [],
             LayoutTemplateCatalogue::design( $template_slug ),
             $template_slug,
-            LayoutTemplateCatalogue::logged_out_markup( $template_slug )
+            LayoutTemplateCatalogue::logged_out_markup( $template_slug ),
+            // The thank-you page is Pro; Free has neither its blocks nor its starter markup.
+            Plan::is_pro() ? LayoutTemplateCatalogue::thank_you_markup( $template_slug ) : ''
         );
     }
 
     /**
-     * Copies a layout's content, logged-out view, assignment rules, design and template into a new draft layout.
+     * Copies a layout's content, logged-out view, thank-you page, assignment rules, design and template into a new draft layout.
      *
      * @throws \InvalidArgumentException When the source is missing, the limit is reached, or the insert fails.
      */
@@ -360,26 +385,27 @@ class LayoutRepository {
         $source = $this->find_or_throw( $id );
 
         /* translators: %s: source layout title. */
-        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template, $source->logged_out_content );
+        return $this->insert_draft( sprintf( __( 'Duplicate of %s', 'yaycheckout' ), $source->title ), $source->content, $source->rules, $source->design, $source->template, $source->logged_out_content, $source->thank_you_content );
     }
 
     /**
-     * Creates a draft from an export file's title, markup, assignment rules, design and logged-out view, as the current user
+     * Creates a draft from an export file's title, markup, assignment rules, design, logged-out view and thank-you page, as the current user
      * may store them (kses-filtered without unfiltered_html).
      * Never overwrites: a same-titled layout is a second layout, and the merchant archives the one they do not want.
      *
      * @param array  $rules              Already sanitized (Layout::sanitize_rules()); [] for none.
      * @param string $logged_out_content The logged-out view's markup; '' when none.
+     * @param string $thank_you_content  The thank-you page's markup; '' when none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    public function import( string $title, string $content, array $rules, LayoutDesign $design, string $logged_out_content = '' ): Layout {
-        return $this->insert_draft( $title, $content, $rules, $design, '', $logged_out_content );
+    public function import( string $title, string $content, array $rules, LayoutDesign $design, string $logged_out_content = '', string $thank_you_content = '' ): Layout {
+        return $this->insert_draft( $title, $content, $rules, $design, '', $logged_out_content, $thank_you_content );
     }
 
     /**
      * Puts a layout's blocks and design back to its template's, or to the default template's when it has
      * none available on this plan (a Pro template in Free falls back to the default one).
-     * Title, status, rules, the template and the active flag stay. The old markup and design are already
+     * Title, status, rules, the template, the thank-you page and the active flag stay. The old markup and design are already
      * a revision (every layout gets one when created), so the editor can undo it.
      *
      * @throws \InvalidArgumentException When the layout is missing or the update fails.
@@ -397,6 +423,38 @@ class LayoutRepository {
                 'ID'           => $id,
                 'post_content' => LayoutTemplateCatalogue::markup( $slug ),
                 'meta_input'   => [ Layout::META_DESIGN => LayoutTemplateCatalogue::design( $slug )->to_meta() ],
+            ]
+        );
+
+        return $this->find( $id );
+    }
+
+    /**
+     * Gives a layout made before thank-you pages, or in Free, its template's thank-you page (or the shared one),
+     * from the layout editor's Add thank-you page button through Pro's route. Never overwrites one the layout already has.
+     *
+     * @throws \InvalidArgumentException When this is not Pro, the layout is missing, archived, already has a thank-you page, or the update fails.
+     */
+    public function add_thank_you( int $id ): Layout {
+        if ( ! Plan::is_pro() ) {
+            throw new \InvalidArgumentException( esc_html__( 'Thank-you pages are part of YayCheckout Pro.', 'yaycheckout' ) );
+        }
+
+        $layout = $this->find_or_throw( $id );
+
+        if ( LayoutStatus::ARCHIVED === $layout->post_status ) {
+            throw new \InvalidArgumentException( esc_html__( 'Restore this layout from the archive first.', 'yaycheckout' ) );
+        }
+
+        if ( $layout->has_thank_you() ) {
+            throw new \InvalidArgumentException( esc_html__( 'This layout already has a thank-you page.', 'yaycheckout' ) );
+        }
+
+        // Slashed by update_post(), like the markup Reset writes.
+        $this->update_post(
+            [
+                'ID'         => $id,
+                'meta_input' => [ Layout::META_THANK_YOU => self::filter_view_markup( LayoutTemplateCatalogue::thank_you_markup( $layout->template ) ) ],
             ]
         );
 
@@ -452,12 +510,13 @@ class LayoutRepository {
     }
 
     /**
-     * The logged-out view as the current user may store it: kses-filtered unless they have unfiltered_html, as core's
-     * content_save_pre filters post_content. Core never filters meta, so every writer of Layout::META_LOGGED_OUT calls this.
+     * A view's markup as the current user may store it: kses-filtered unless they have unfiltered_html, as core's
+     * content_save_pre filters post_content. Core never filters meta, so every writer of a view meta
+     * (Layout::META_LOGGED_OUT, Layout::META_THANK_YOU) calls this.
      *
      * @param string $markup Unslashed.
      */
-    public static function filter_logged_out_content( string $markup ): string {
+    public static function filter_view_markup( string $markup ): string {
         // wp_filter_post_kses() is content_save_pre's filter and takes slashed data.
         return current_user_can( 'unfiltered_html' ) ? $markup : wp_unslash( wp_filter_post_kses( wp_slash( $markup ) ) );
     }
@@ -468,9 +527,10 @@ class LayoutRepository {
      * @param array  $rules         Already sanitized; written with the post, like the design, so the draft never exists without them.
      * @param string $template_slug The catalogue template it comes from; '' when none (an import).
      * @param string $logged_out_content The logged-out view's markup; '' when none.
+     * @param string $thank_you_content  The thank-you page's markup; '' when none.
      * @throws \InvalidArgumentException When the limit is reached or the insert fails.
      */
-    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug, string $logged_out_content = '' ): Layout {
+    private function insert_draft( string $title, string $content, array $rules, LayoutDesign $design, string $template_slug, string $logged_out_content = '', string $thank_you_content = '' ): Layout {
         $meta = [ Layout::META_DESIGN => $design->to_meta() ];
 
         if ( [] !== $rules ) {
@@ -482,7 +542,11 @@ class LayoutRepository {
         }
 
         if ( '' !== $logged_out_content ) {
-            $meta[ Layout::META_LOGGED_OUT ] = self::filter_logged_out_content( $logged_out_content );
+            $meta[ Layout::META_LOGGED_OUT ] = self::filter_view_markup( $logged_out_content );
+        }
+
+        if ( '' !== $thank_you_content ) {
+            $meta[ Layout::META_THANK_YOU ] = self::filter_view_markup( $thank_you_content );
         }
 
         // wp_insert_post() unslashes; without wp_slash() block attributes lose their \uXXXX escapes.
