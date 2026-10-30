@@ -15,6 +15,41 @@ class Disclosure {
     public const COLLAPSIBLE = 'collapsible';
     public const CHECKBOX    = 'checkbox';
 
+    /** The tags open() and close() print, for the wp_kses() a render.php runs at the echo. */
+    public const ALLOWED_HTML = [
+        'label'  => [
+            'class'     => true,
+            'data-mode' => true,
+        ],
+        'input'  => [
+            'type'          => true,
+            'class'         => true,
+            'aria-controls' => true,
+        ],
+        'button' => [
+            'type'          => true,
+            'class'         => true,
+            'data-mode'     => true,
+            'aria-expanded' => true,
+            'aria-controls' => true,
+        ],
+        'span'   => [],
+        'div'    => [
+            'class'  => true,
+            'id'     => true,
+            'hidden' => true,
+        ],
+        'svg'    => [
+            'class'       => true,
+            'viewbox'     => true,
+            'aria-hidden' => true,
+            'focusable'   => true,
+        ],
+        'path'   => [
+            'd' => true,
+        ],
+    ];
+
     /** Behind a link unless the merchant says otherwise; every other field is shown unless asked. */
     public const APARTMENT_KEYS = [ 'billing_address_2', 'shipping_address_2' ];
 

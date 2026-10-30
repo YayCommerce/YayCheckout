@@ -48,7 +48,7 @@ $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, '
 ?>
 <div <?php echo \YayCheckout\Renderer\BlockEmptiness::wrapper( $yaycheckout_wrapper_attrs, $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php
-    echo \YayCheckout\Services\Disclosure::open_if( $attributes, 'yaycheckout-coupon-code', __( 'Coupon code', 'yaycheckout' ), $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
+    echo wp_kses( \YayCheckout\Services\Disclosure::open_if( $attributes, 'yaycheckout-coupon-code', __( 'Coupon code', 'yaycheckout' ), $yaycheckout_disclosure ), \YayCheckout\Services\Disclosure::ALLOWED_HTML );
     ?>
     <div class="yaycheckout-coupon-form__row">
         <span class="yaycheckout-coupon-form__field">
@@ -62,7 +62,7 @@ $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, '
         </span>
         <?php echo $yaycheckout_button; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered block markup; its render.php escapes. ?>
     </div>
-    <?php echo \YayCheckout\Renderer\CheckoutFragments::coupon_chips_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped by CheckoutFragments; update_order_review refreshes it. ?>
+    <?php echo wp_kses( \YayCheckout\Renderer\CheckoutFragments::coupon_chips_html(), \YayCheckout\Helpers\KsesHelper::storefront_html() ); ?>
     <div class="yaycheckout-coupon-form__notices" aria-live="polite" data-error-text="<?php esc_attr_e( 'The coupon could not be applied. Please try again.', 'yaycheckout' ); ?>" data-remove-error-text="<?php esc_attr_e( 'The coupon could not be removed. Please try again.', 'yaycheckout' ); ?>"></div>
-    <?php echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
+    <?php echo wp_kses( \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ), \YayCheckout\Services\Disclosure::ALLOWED_HTML ); ?>
 </div>

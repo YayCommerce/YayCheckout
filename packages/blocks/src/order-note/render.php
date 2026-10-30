@@ -15,9 +15,8 @@ if ( ! function_exists( 'woocommerce_form_field' ) ) {
     return;
 }
 
-// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Verbatim WooCommerce string so the storefront matches classic checkout when the merchant leaves the label empty.
-$yaycheckout_label       = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'label', __( 'Order notes', 'woocommerce' ) );
-$yaycheckout_placeholder = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'placeholder', __( 'Notes about your order, e.g. special notes for delivery.', 'woocommerce' ) ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Verbatim WooCommerce string, as above.
+$yaycheckout_label       = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'label', __( 'Order notes', 'yaycheckout' ) );
+$yaycheckout_placeholder = \YayCheckout\Services\LayoutMarkupReader::text( $attributes, 'placeholder', __( 'Notes about your order, e.g. special notes for delivery.', 'yaycheckout' ) );
 $yaycheckout_description = \YayCheckout\Services\LayoutMarkupReader::plain_text( $attributes, 'description' );
 $yaycheckout_required    = ! empty( $attributes['required'] );
 
@@ -27,7 +26,7 @@ $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, $
 
 echo '<div ' . get_block_wrapper_attributes( [ 'class' => 'yaycheckout-order-note form-row' ] ) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
 
-echo \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
+echo wp_kses( \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ), \YayCheckout\Services\Disclosure::ALLOWED_HTML );
 
 woocommerce_form_field(
     $yaycheckout_key,
@@ -44,4 +43,4 @@ woocommerce_form_field(
     $yaycheckout_value
 );
 
-echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup.
+echo wp_kses( \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ), \YayCheckout\Services\Disclosure::ALLOWED_HTML ) . '</div>';

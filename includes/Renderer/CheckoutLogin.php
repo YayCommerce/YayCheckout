@@ -25,6 +25,9 @@ class CheckoutLogin {
 
     public const NONCE_ACTION = 'yaycheckout-login';
 
+    /** Guards login_state. login() creates it for the customer it just signed in. */
+    public const STATE_NONCE_ACTION = 'yaycheckout-login-state';
+
     protected function __construct() {
         // wc-ajax serves guests and logged-in shoppers on the same hook.
         add_action( 'wc_ajax_yaycheckout_login', [ $this, 'login' ] );
@@ -181,7 +184,7 @@ class CheckoutLogin {
      * @throws \Exception Login failed. Caught here and returned as JSON.
      */
     public function login(): void {
-        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Same hooks and strings as WC_Form_Handler::process_login().
+        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Same hooks as WC_Form_Handler::process_login().
         if ( ! check_ajax_referer( self::NONCE_ACTION, 'security', false ) ) {
             wp_send_json_error(
                 array(
@@ -191,16 +194,17 @@ class CheckoutLogin {
         }
 
         if ( is_user_logged_in() ) {
-            wp_send_json_success();
+            wp_send_json_success( [ 'state_nonce' => wp_create_nonce( self::STATE_NONCE_ACTION ) ] );
         }
 
-        $username = isset( $_POST['username'] ) && is_string( $_POST['username'] ) ? trim( wp_unslash( $_POST['username'] ) ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $username = isset( $_POST['username'] ) && is_string( $_POST['username'] ) ? sanitize_user( wp_unslash( $_POST['username'] ) ) : null;
+        // A password is checked against its hash as typed: sanitizing it would refuse valid ones.
         $password = isset( $_POST['password'] ) && is_string( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         if ( ! is_string( $username ) || ! is_string( $password ) ) {
             wp_send_json_error(
                 array(
-                    'message' => __( 'Username is required.', 'woocommerce' ),
+                    'message' => __( 'Username is required.', 'yaycheckout' ),
                 )
             );
         }
@@ -216,13 +220,14 @@ class CheckoutLogin {
             $validation_error = apply_filters( 'woocommerce_process_login_errors', $validation_error, $creds['user_login'], $creds['user_password'] );
 
             if ( $validation_error->get_error_code() ) {
-                throw new \Exception( '<strong>' . __( 'Error:', 'woocommerce' ) . '</strong> ' . $validation_error->get_error_message() );
+                throw new \Exception( '<strong>' . __( 'Error:', 'yaycheckout' ) . '</strong> ' . $validation_error->get_error_message() );
             }
 
             if ( '' === $creds['user_login'] ) {
-                throw new \Exception( '<strong>' . __( 'Error:', 'woocommerce' ) . '</strong> ' . __( 'Username is required.', 'woocommerce' ) );
+                throw new \Exception( '<strong>' . __( 'Error:', 'yaycheckout' ) . '</strong> ' . __( 'Username is required.', 'yaycheckout' ) );
             }
 
+            add_action( 'set_logged_in_cookie', [ self::class, 'use_logged_in_cookie' ] );
             $user = wp_signon( apply_filters( 'woocommerce_login_credentials', $creds ), is_ssl() );
 
             if ( is_wp_error( $user ) ) {
@@ -241,8 +246,20 @@ class CheckoutLogin {
             );
         }
 
-        wp_send_json_success();
-        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch
+        // A nonce for login_state belongs to the signed-in customer, so it can only be made once they are current.
+        wp_set_current_user( $user->ID );
+        wp_send_json_success( [ 'state_nonce' => wp_create_nonce( self::STATE_NONCE_ACTION ) ] );
+        // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+    }
+
+    /**
+     * Puts the new login cookie on this request, so wp_create_nonce() reads the session it starts.
+     * WooCommerce's Store API does the same after a checkout sign-in.
+     *
+     * @param string $logged_in_cookie The cookie wp_set_auth_cookie() just sent.
+     */
+    public static function use_logged_in_cookie( $logged_in_cookie ): void {
+        $_COOKIE[ LOGGED_IN_COOKIE ] = $logged_in_cookie;
     }
 
     /**
@@ -250,6 +267,10 @@ class CheckoutLogin {
      * is on the request.
      */
     public function state(): void {
+        if ( ! check_ajax_referer( self::STATE_NONCE_ACTION, 'security', false ) ) {
+            wp_send_json_error( null, 403 );
+        }
+
         if ( ! is_user_logged_in() || ! function_exists( 'WC' ) ) {
             wp_send_json_error( null, 401 );
         }

@@ -27,12 +27,11 @@ if ( '' === $yaycheckout_block ) {
 <div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-different-address' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php if ( 'same' === $yaycheckout_block ) : ?>
         <?php
-        // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Verbatim WooCommerce string so the storefront matches WooCommerce's Checkout block when the merchant leaves the label empty.
-        $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'sameLabel', __( 'Use same address for billing', 'woocommerce' ) );
+        $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'sameLabel', __( 'Use same address for billing', 'yaycheckout' ) );
         ?>
         <p class="form-row form-row-wide yaycheckout-different-address__same">
             <label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox">
-                <input class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" id="yaycheckout-same-billing" <?php checked( ! \YayCheckout\Renderer\CheckoutDifferentAddress::saved_addresses_differ() ); ?> type="checkbox" name="<?php echo esc_attr( \YayCheckout\Renderer\CheckoutDifferentAddress::SAME_BILLING_FIELD ); ?>" value="1" /> <span><?php echo $yaycheckout_label; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered by wp_kses in LayoutMarkupReader::rich_text(). ?></span>
+                <input class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" id="yaycheckout-same-billing" <?php checked( ! \YayCheckout\Renderer\CheckoutDifferentAddress::saved_addresses_differ() ); ?> type="checkbox" name="<?php echo esc_attr( \YayCheckout\Renderer\CheckoutDifferentAddress::SAME_BILLING_FIELD ); ?>" value="1" /> <span><?php echo wp_kses( $yaycheckout_label, \YayCheckout\Services\LayoutMarkupReader::RICH_TEXT_TAGS ); ?></span>
             </label>
         </p>
     <?php elseif ( 'same' === ( $attributes['ticked'] ?? 'different' ) ) : ?>
@@ -43,7 +42,7 @@ if ( '' === $yaycheckout_block ) {
         ?>
         <p class="form-row form-row-wide yaycheckout-different-address__same">
             <label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox">
-                <input class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" id="yaycheckout-same-shipping" <?php checked( ! $yaycheckout_ship_different ); ?> type="checkbox" value="1" data-summary-key="ship_to_different_address" /> <span><?php echo $yaycheckout_label; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered by wp_kses in LayoutMarkupReader::rich_text(). ?></span>
+                <input class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" id="yaycheckout-same-shipping" <?php checked( ! $yaycheckout_ship_different ); ?> type="checkbox" value="1" data-summary-key="ship_to_different_address" /> <span><?php echo wp_kses( $yaycheckout_label, \YayCheckout\Services\LayoutMarkupReader::RICH_TEXT_TAGS ); ?></span>
             </label>
         </p>
         <div id="ship-to-different-address" hidden>
@@ -51,12 +50,11 @@ if ( '' === $yaycheckout_block ) {
         </div>
     <?php else : ?>
         <?php
-        // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Verbatim WooCommerce string so the storefront matches classic checkout when the merchant leaves the label empty.
-        $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'shipLabel', __( 'Ship to a different address?', 'woocommerce' ) );
+        $yaycheckout_label = \YayCheckout\Services\LayoutMarkupReader::rich_text( $attributes, 'shipLabel', __( 'Ship to a different address?', 'yaycheckout' ) );
         ?>
         <div id="ship-to-different-address" class="form-row form-row-wide">
             <label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox">
-                <input id="ship-to-different-address-checkbox" class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" <?php checked( apply_filters( 'woocommerce_ship_to_different_address_checked', 0 ), 1 ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce filter; its default is 0 because billing is main here. ?> type="checkbox" name="ship_to_different_address" value="1" /> <span><?php echo $yaycheckout_label; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Filtered by wp_kses in LayoutMarkupReader::rich_text(); the second sniff is for the WooCommerce filter earlier on this line, since only the last ignore on a line counts. ?></span>
+                <input id="ship-to-different-address-checkbox" class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" <?php checked( apply_filters( 'woocommerce_ship_to_different_address_checked', 0 ), 1 ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce filter; its default is 0 because billing is main here. ?> type="checkbox" name="ship_to_different_address" value="1" /> <span><?php echo wp_kses( $yaycheckout_label, \YayCheckout\Services\LayoutMarkupReader::RICH_TEXT_TAGS ); ?></span>
             </label>
         </div>
     <?php endif; ?>
