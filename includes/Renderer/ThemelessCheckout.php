@@ -52,12 +52,10 @@ class ThemelessCheckout {
     }
 
     public function maybe_swap(): void {
-        $storefront = $this->is_storefront_request() && (
-            ( $this->is_checkout_form_request() && $this->resolves_layout() )
-            || ( $this->is_order_received_request() && $this->layout_renders_order_received() )
-        );
+        $form    = $this->is_storefront_request() && $this->is_checkout_form_request();
+        $receipt = $this->is_storefront_request() && $this->is_order_received_request() && $this->layout_renders_order_received();
 
-        if ( ! $storefront && ! $this->is_layout_editor_request() ) {
+        if ( ! $form && ! $receipt && ! $this->is_layout_editor_request() ) {
             return;
         }
 
