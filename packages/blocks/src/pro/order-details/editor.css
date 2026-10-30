@@ -11,19 +11,25 @@
 .yaycheckout-order-details__preview table {
 	width: 100%;
 	margin: 0;
-	border: 1px solid rgba( 0, 0, 0, 0.1 );
-	border-radius: 5px;
 	border-collapse: separate;
 	border-spacing: 0;
+}
+
+.yaycheckout-order-details:not(.yaycheckout-order-details--minimal) .yaycheckout-order-details__preview table {
+	border: 1px solid rgba( 0, 0, 0, 0.1 );
+	border-radius: 5px;
 }
 
 .yaycheckout-order-details__preview th,
 .yaycheckout-order-details__preview td {
 	padding: 9px 12px;
 	border: 0;
-	border-top: 1px solid rgba( 0, 0, 0, 0.1 );
 	text-align: left;
 	vertical-align: middle;
+}
+
+.yaycheckout-order-details:not(.yaycheckout-order-details--minimal) .yaycheckout-order-details__preview :is( tbody, tfoot ) :is( th, td ) {
+	border-top: 1px solid rgba( 0, 0, 0, 0.1 );
 }
 
 .yaycheckout-order-details__preview th {
@@ -34,6 +40,11 @@
 	text-align: right;
 }
 
-.yaycheckout-order-details__preview thead th {
-	border-top: 0;
+/* The sample row's thumbnail: a grey box sized like the storefront image (style.css). */
+.yaycheckout-order-details .yaycheckout-order-details__placeholder {
+	display: block;
+	width: var(--yaycheckout-thumbnail-size, 48px);
+	aspect-ratio: var(--yaycheckout-thumbnail-ratio, 1);
+	border-radius: var(--yaycheckout-thumbnail-radius, var(--yaycheckout-field-radius));
+	background: rgba( 0, 0, 0, 0.08 );
 }
