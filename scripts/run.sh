@@ -30,9 +30,10 @@ RELEASE_DIR="$PLUGIN_DIR/release"
 # Owners: includes/Pro/ (YayCheckout::boot_pro()), assets/dist/blocks/pro/ (ProServiceProvider::built_blocks())
 # and templates/layouts/pro/ (LayoutTemplateCatalogue::relative_path()).
 PRO_PATHS="includes/Pro/ assets/dist/blocks/pro/ templates/layouts/pro/"
-# The build workspace the Free zip ships, tracked files only, so wordpress.org can rebuild assets/dist/.
-# Free only, without packages/blocks/src/pro/. Not in PRO_PATHS: the Pro check wants every PRO_PATHS entry in its zip.
-FREE_SOURCE_PATHS="apps/admin packages/blocks package.json pnpm-workspace.yaml pnpm-lock.yaml .nvmrc"
+# The build workspace the Free zip ships, tracked files only, so wordpress.org can rebuild assets/dist/,
+# plus the gitignored pnpm-lock.yaml the build used. Free only, without packages/blocks/src/pro/.
+# Not in PRO_PATHS: the Pro check wants every PRO_PATHS entry in its zip.
+FREE_SOURCE_PATHS="apps/admin packages/blocks package.json pnpm-workspace.yaml .nvmrc"
 # Admin-shell files the Free zip deletes: its licensing (with the EDD updater) and the Recommended Plugins
 # page. FREE_SHELL_PATCH first removes every reference to them; the artifact check enforces both.
 FREE_SHELL_STRIP="src/License/ src/Registry/ src/Contracts/AddonHostAdapter.php src/Menu/ExternalPluginMenuAdapter.php
@@ -428,6 +429,11 @@ cmd_release() {
     if [ "$plan" = "free" ]; then
         # shellcheck disable=SC2086 # FREE_SOURCE_PATHS is a list of pathspecs.
         git -C "$PLUGIN_DIR" ls-files -z -- $FREE_SOURCE_PATHS | (cd "$PLUGIN_DIR" && xargs -0 tar -cf -) | tar -xf - -C "$temp_dir"
+        if [ ! -f "$PLUGIN_DIR/pnpm-lock.yaml" ]; then
+            print_error "pnpm-lock.yaml is missing: run pnpm install"
+            exit 1
+        fi
+        cp "$PLUGIN_DIR/pnpm-lock.yaml" "$temp_dir/"
         rm -rf "${temp_dir:?}/packages/blocks/src/pro"
         # These scripts run composer install (the private admin-shell package) or scripts/run.sh, neither shipped.
         local root_script
@@ -438,7 +444,7 @@ cmd_release() {
             print_error "Free package.json is not valid JSON after removing its scripts"
             exit 1
         fi
-        print_info "Free build: copied the JS source ($FREE_SOURCE_PATHS)"
+        print_info "Free build: copied the JS source ($FREE_SOURCE_PATHS pnpm-lock.yaml)"
 
         local pro_path
         for pro_path in $PRO_PATHS; do
@@ -516,7 +522,7 @@ cmd_release() {
             print_error "Free artifact's admin-shell still names a removed class"
             exit 1
         fi
-        for path in apps/admin/src/ packages/blocks/src/; do
+        for path in apps/admin/src/ packages/blocks/src/ pnpm-lock.yaml; do
             if ! unzip -l "$zip_name" | grep -q "$plan_slug/$path"; then
                 print_error "Free artifact is missing the source in $path"
                 exit 1
