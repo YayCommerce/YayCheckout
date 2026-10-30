@@ -241,7 +241,7 @@ class BlockVisibility {
     /** Prints the state for the script, once a block was decorated. */
     public function print_state(): void {
         if ( $this->rendered ) {
-            echo self::state_element(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON encoded with JSON_HEX_TAG and JSON_HEX_AMP, so it can't close the element.
+            JsonElementHelper::print( self::STATE_ID, self::state_data() );
         }
     }
 
@@ -258,9 +258,14 @@ class BlockVisibility {
         return $fragments;
     }
 
-    /** The state() and the layout's step count as a JSON element. */
+    /** The state_data() as a JSON element. */
     private static function state_element(): string {
-        return JsonElementHelper::html( self::STATE_ID, self::state() + [ 'step_count' => self::step_count() ] );
+        return JsonElementHelper::html( self::STATE_ID, self::state_data() );
+    }
+
+    /** The state() and the layout's step count, as the script reads them. */
+    private static function state_data(): array {
+        return self::state() + [ 'step_count' => self::step_count() ];
     }
 
     /**

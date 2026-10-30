@@ -243,7 +243,7 @@ class LiveValues {
 
         $bag = null !== $this->bag ? $this->bag : self::values();
 
-        echo JsonElementHelper::html( self::VALUES_ID, (object) $bag ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON encoded with JSON_HEX_TAG and JSON_HEX_AMP, so it can't close the element.
+        JsonElementHelper::print( self::VALUES_ID, (object) $bag );
     }
 
     /** Swaps the footer's values for the recalculated cart's, when the served layout holds a live value. */
