@@ -30,6 +30,16 @@ When you save a checkout layout whose design uses a Google font that is not inst
 
 This service is provided by Google: [Google Fonts API Terms of Service](https://developers.google.com/fonts/terms), [Privacy Policy](https://policies.google.com/privacy). The font list is provided by WordPress.org: [Privacy Policy](https://wordpress.org/about/privacy/).
 
+== Source code ==
+
+The JavaScript and CSS in `assets/dist/admin/` are built from `apps/admin/` (React, Vite, TypeScript), and those in `assets/dist/blocks/` from `packages/blocks/` (`@wordpress/scripts`). Both source folders are included in this plugin.
+
+To rebuild them, use Node 22 and pnpm 11, and run these from the plugin folder:
+
+1. `pnpm install`
+2. `pnpm build:admin`
+3. `pnpm build:blocks`
+
 == Changelog ==
 
 = 1.0.0 =
