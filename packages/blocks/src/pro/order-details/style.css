@@ -1,0 +1,56 @@
+/*
+ * Order Details display options. Classes and vars come from OrderDetailsTable::wrapper_attributes(); the table is
+ * WooCommerce's, and the order-received page keeps the site's theme, so selectors carry the table's own
+ * classes to beat WooCommerce's and themes' `.woocommerce table.shop_table td` (0,2,2).
+ */
+
+/* Thumbnail beside the name (showThumbnails); the quantity after it is centred on the same line. */
+.yaycheckout-order-details .yaycheckout-order-details__item {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	max-width: 100%;
+	vertical-align: middle;
+}
+
+.yaycheckout-order-details .yaycheckout-order-details__item + .product-quantity {
+	vertical-align: middle;
+}
+
+.yaycheckout-order-details .yaycheckout-order-details__thumbnail {
+	flex: none;
+}
+
+/* Cropped to the ratio, as Order Summary Items crops its thumbnails; with original (auto) the image keeps its own proportions. */
+.yaycheckout-order-details .yaycheckout-order-details__thumbnail img {
+	display: block;
+	width: var(--yaycheckout-thumbnail-size, 48px);
+	height: auto;
+	min-height: 0;
+	margin: 0;
+	aspect-ratio: var(--yaycheckout-thumbnail-ratio, 1);
+	object-fit: cover;
+	border-radius: var(--yaycheckout-thumbnail-radius, var(--yaycheckout-field-radius));
+}
+
+/* Minimal: no box and no rules between rows. */
+.yaycheckout-order-details--minimal .woocommerce-table--order-details.shop_table {
+	border: 0;
+	border-radius: 0;
+}
+
+.yaycheckout-order-details--minimal .woocommerce-table--order-details.shop_table :is(th, td) {
+	border: 0;
+	padding-inline: 0;
+}
+
+/* Minimal + divider: one rule between the line items and the totals. */
+.yaycheckout-order-details--divider .woocommerce-table--order-details.shop_table tfoot tr:first-child :is(th, td) {
+	border-top: 1px solid var(--yaycheckout-order-details-divider, rgba(0, 0, 0, 0.1));
+}
+
+/* Total colour: the order total's row, label and value, in the colour and bold. */
+.yaycheckout-order-details--total-color .woocommerce-table--order-details.shop_table tfoot tr:has(.yaycheckout-order-details__total) :is(th, td) {
+	color: var(--yaycheckout-order-details-total-color);
+	font-weight: 700;
+}

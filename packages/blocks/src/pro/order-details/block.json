@@ -4,7 +4,7 @@
   "name": "yaycheckout/order-details",
   "title": "Order Details",
   "category": "yaycheckout",
-  "description": "WooCommerce's order details table on the thank-you page: line items, totals, downloads, addresses and plugin output on its hooks.",
+  "description": "WooCommerce's order details table on the thank-you page: line items, totals, downloads and plugin output on its hooks, with optional product thumbnails, a minimal table style and a highlighted total.",
   "textdomain": "yaycheckout",
   "keywords": [ "thank you", "order", "receipt", "items" ],
   "example": {},
@@ -40,6 +40,42 @@
     "orderTotalLabel": {
       "type": "string",
       "default": ""
+    },
+    "showThumbnails": {
+      "type": "boolean",
+      "default": false
+    },
+    "thumbnailRatio": {
+      "type": "string",
+      "enum": [ "square", "portrait", "landscape", "original" ],
+      "default": "square"
+    },
+    "thumbnailSize": {
+      "type": "number"
+    },
+    "thumbnailRadius": {
+      "type": "number"
+    },
+    "tableStyle": {
+      "type": "string",
+      "enum": [ "boxed", "minimal" ],
+      "default": "boxed"
+    },
+    "showDivider": {
+      "type": "boolean",
+      "default": false
+    },
+    "dividerColor": {
+      "type": "string",
+      "default": ""
+    },
+    "totalLast": {
+      "type": "boolean",
+      "default": false
+    },
+    "totalColor": {
+      "type": "string",
+      "default": ""
     }
   },
   "supports": {
@@ -73,5 +109,6 @@
   },
   "editorScript": "file:./index.js",
   "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css",
   "render": "file:./render.php"
 }

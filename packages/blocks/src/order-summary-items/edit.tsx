@@ -19,6 +19,13 @@ import { useBlockGapCSS, type BlockGapStyles } from '../shared/block-gap';
 import { preventCanvasNavigation } from '../shared/canvas-link';
 import { HookOutputPreview } from '../shared/hook-output-preview';
 import { plainText } from '../shared/plain-text';
+import {
+	clampedPx,
+	THUMBNAIL_RADIUS,
+	THUMBNAIL_SIZE,
+	thumbnailStyleVars,
+	type ThumbnailRatio,
+} from '../shared/thumbnail-style';
 import '../shared/tools-panel.css';
 import './editor.css';
 
@@ -27,7 +34,7 @@ interface OrderSummaryItemsAttributes {
 	productLabel?: string;
 	subtotalLabel?: string;
 	showThumbnails: boolean;
-	thumbnailRatio: 'square' | 'portrait' | 'landscape' | 'original';
+	thumbnailRatio: ThumbnailRatio;
 	thumbnailSize?: number;
 	thumbnailRadius?: number;
 	linkImage: boolean;
@@ -57,37 +64,14 @@ const BADGE_PANEL = 'yaycheckout-order-summary-items-badge';
 const STEPPER_PANEL = 'yaycheckout-order-summary-items-stepper';
 const THUMBNAIL_PANEL = 'yaycheckout-order-summary-items-thumbnail';
 
-// Mirrors the px ranges CheckoutFragments::order_items_style_vars() clamps badgeSize, stepperSize, thumbnailSize and
-// thumbnailRadius to.
+// Mirrors the px ranges CheckoutFragments::order_items_style_vars() clamps badgeSize and stepperSize to.
 const BADGE_SIZE = { min: 16, max: 32 };
 const STEPPER_SIZE = { min: 20, max: 40 };
-const THUMBNAIL_SIZE = { min: 40, max: 96 };
-const THUMBNAIL_RADIUS = { min: 0, max: 48 };
-
-// Mirrors the ratios in CheckoutFragments::order_items_style_vars(); square is style.css's fallback. Original is
-// the image's own ratio on the storefront, and square here, where the placeholder has none.
-const THUMBNAIL_RATIOS: Partial< Record< OrderSummaryItemsAttributes[ 'thumbnailRatio' ], string > > = {
-	portrait: '3 / 4',
-	landscape: '4 / 3',
-};
-
-function clampedPx( value: number, { min, max }: { min: number; max: number } ) {
-	return `${ Math.max( min, Math.min( max, value ) ) }px`;
-}
 
 // Mirrors CheckoutFragments::order_items_style_vars(): the badge, stepper and thumbnail settings as
 // --yaycheckout-badge-*, --yaycheckout-stepper-* and --yaycheckout-thumbnail-* vars.
-function itemsStyleVars( {
-	badgeBackgroundColor,
-	badgeTextColor,
-	badgeSize,
-	stepperBorderColor,
-	stepperSize,
-	thumbnailRatio,
-	thumbnailSize,
-	thumbnailRadius,
-}: OrderSummaryItemsAttributes ) {
-	const ratio = THUMBNAIL_RATIOS[ thumbnailRatio ];
+function itemsStyleVars( attributes: OrderSummaryItemsAttributes ) {
+	const { badgeBackgroundColor, badgeTextColor, badgeSize, stepperBorderColor, stepperSize } = attributes;
 
 	return {
 		...( badgeBackgroundColor ? { '--yaycheckout-badge-bg': badgeBackgroundColor } : {} ),
@@ -95,11 +79,7 @@ function itemsStyleVars( {
 		...( typeof badgeSize === 'number' ? { '--yaycheckout-badge-size': clampedPx( badgeSize, BADGE_SIZE ) } : {} ),
 		...( stepperBorderColor ? { '--yaycheckout-stepper-border': stepperBorderColor } : {} ),
 		...( typeof stepperSize === 'number' ? { '--yaycheckout-stepper-size': clampedPx( stepperSize, STEPPER_SIZE ) } : {} ),
-		...( typeof thumbnailSize === 'number' ? { '--yaycheckout-thumbnail-size': clampedPx( thumbnailSize, THUMBNAIL_SIZE ) } : {} ),
-		...( ratio ? { '--yaycheckout-thumbnail-ratio': ratio } : {} ),
-		...( typeof thumbnailRadius === 'number'
-			? { '--yaycheckout-thumbnail-radius': clampedPx( thumbnailRadius, THUMBNAIL_RADIUS ) }
-			: {} ),
+		...thumbnailStyleVars( attributes ),
 	};
 }
 
