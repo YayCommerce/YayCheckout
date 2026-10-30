@@ -31,7 +31,8 @@ RELEASE_DIR="$PLUGIN_DIR/release"
 # and templates/layouts/pro/ (LayoutTemplateCatalogue::relative_path()).
 PRO_PATHS="includes/Pro/ assets/dist/blocks/pro/ templates/layouts/pro/"
 # The build workspace the Free zip ships, tracked files only, so wordpress.org can rebuild assets/dist/,
-# plus the gitignored pnpm-lock.yaml the build used. Free only, without packages/blocks/src/pro/.
+# plus the gitignored pnpm-lock.yaml the build used. Free only. Of packages/blocks/src/pro/ it keeps only each
+# block.json: Free's locked Pro blocks import that metadata, and the built Free bundle already carries it.
 # Not in PRO_PATHS: the Pro check wants every PRO_PATHS entry in its zip.
 FREE_SOURCE_PATHS="apps/admin packages/blocks package.json pnpm-workspace.yaml .nvmrc"
 # Admin-shell files the Free zip deletes: its licensing (with the EDD updater) and the Recommended Plugins
@@ -434,7 +435,8 @@ cmd_release() {
             exit 1
         fi
         cp "$PLUGIN_DIR/pnpm-lock.yaml" "$temp_dir/"
-        rm -rf "${temp_dir:?}/packages/blocks/src/pro"
+        find "${temp_dir:?}/packages/blocks/src/pro" -type f ! -name block.json -delete
+        find "${temp_dir:?}/packages/blocks/src/pro" -depth -type d -empty -delete
         # These scripts run composer install (the private admin-shell package) or scripts/run.sh, neither shipped.
         local root_script
         for root_script in postinstall dev build release; do
@@ -528,8 +530,13 @@ cmd_release() {
                 exit 1
             fi
         done
-        if unzip -l "$zip_name" | grep -qE "/node_modules/|$plan_slug/packages/blocks/src/pro/"; then
-            print_error "Free artifact contains node_modules or the Pro blocks' source"
+        if unzip -l "$zip_name" | grep -q "/node_modules/"; then
+            print_error "Free artifact contains node_modules"
+            exit 1
+        fi
+        if unzip -l "$zip_name" | grep "$plan_slug/packages/blocks/src/pro/" | grep -qvE '/$|/block\.json$'; then
+            print_error "Free artifact contains the Pro blocks' source:"
+            unzip -l "$zip_name" | grep "$plan_slug/packages/blocks/src/pro/" | grep -vE '/$|/block\.json$'
             exit 1
         fi
     fi
