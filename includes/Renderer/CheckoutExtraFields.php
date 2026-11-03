@@ -77,8 +77,7 @@ class CheckoutExtraFields {
         $fields = array_filter( $this->fields(), static fn( $field ) => $field['remember'] );
         $values = [];
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce checked above; only remembered Keys are read and ExtraFieldSubmission sanitizes them.
-        foreach ( ExtraFieldSubmission::collect( $fields, wp_unslash( $_POST ) )['rows'] as $row ) {
+        foreach ( ExtraFieldSubmission::collect( $fields, self::posted( $fields ) )['rows'] as $row ) {
             $values[ $row['key'] ] = $row['value'];
         }
 
@@ -146,8 +145,27 @@ class CheckoutExtraFields {
      * @return array{rows: array, errors: array<string, string>}
      */
     private function submission( $data ): array {
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Woo verifies the checkout nonce before these hooks; only the layout's Keys are read and ExtraFieldSubmission sanitizes them.
-        return ExtraFieldSubmission::collect( $this->submitted_fields( is_array( $data ) ? $data : [] ), wp_unslash( $_POST ) );
+        $fields = $this->submitted_fields( is_array( $data ) ? $data : [] );
+
+        return ExtraFieldSubmission::collect( $fields, self::posted( $fields ) );
+    }
+
+    /**
+     * The posted values of $fields' Keys only, unslashed and sanitized. Callers run after a nonce check:
+     * remember() checks its own, and WooCommerce checks the checkout nonce before validate() and persist().
+     */
+    private static function posted( array $fields ): array {
+        $posted = [];
+
+        foreach ( array_keys( $fields ) as $key ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- See above.
+            if ( isset( $_POST[ $key ] ) ) {
+                // phpcs:ignore WordPress.Security.NonceVerification.Missing -- See above.
+                $posted[ $key ] = map_deep( wp_unslash( $_POST[ $key ] ), 'sanitize_text_field' );
+            }
+        }
+
+        return $posted;
     }
 
     /**

@@ -89,7 +89,7 @@ class CartItemQuantity {
 
         if ( $product->is_sold_individually() && $quantity > 1 ) {
             /* translators: %s: product name */
-            return sprintf( __( 'You can only have 1 %s in your cart.', 'woocommerce' ), $product->get_name() ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Woo's own message, so its translation still applies.
+            return sprintf( __( 'You can only have 1 %s in your cart.', 'yaycheckout' ), $product->get_name() );
         }
 
         $max = $product->get_max_purchase_quantity();

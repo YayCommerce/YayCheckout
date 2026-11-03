@@ -41,7 +41,7 @@ if ( ! function_exists( 'WC' ) || \YayCheckout\Renderer\CheckoutPage::get_instan
     return;
 }
 
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- Verbatim from WooCommerce's form-checkout.php so its filter and translation still apply.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim from WooCommerce's form-checkout.php so its filter still applies.
 if ( \YayCheckout\Renderer\CheckoutLogin::must_log_in() ) {
     if ( \YayCheckout\Renderer\CheckoutLogin::reminder_shown() ) {
         $yaycheckout_login = null;
@@ -69,11 +69,11 @@ if ( \YayCheckout\Renderer\CheckoutLogin::must_log_in() ) {
         echo $yaycheckout_login->render();
     }
 
-    echo esc_html( apply_filters( 'woocommerce_checkout_must_be_logged_in_message', __( 'You must be logged in to checkout.', 'woocommerce' ) ) );
+    echo esc_html( apply_filters( 'woocommerce_checkout_must_be_logged_in_message', __( 'You must be logged in to checkout.', 'yaycheckout' ) ) );
     return;
 }
 
 ?>
-<form <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?> name="checkout" method="post" action="<?php echo esc_url( wc_get_checkout_url() ); ?>" enctype="multipart/form-data" aria-label="<?php echo esc_attr__( 'Checkout', 'woocommerce' ); ?>">
+<form <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?> name="checkout" method="post" action="<?php echo esc_url( wc_get_checkout_url() ); ?>" enctype="multipart/form-data" aria-label="<?php echo esc_attr__( 'Checkout', 'yaycheckout' ); ?>">
     <?php echo \YayCheckout\Renderer\CheckoutNestedForms::neutralize( $content ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inner block markup, already rendered and escaped by core; only form tags are renamed. ?>
 </form>

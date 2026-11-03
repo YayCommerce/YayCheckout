@@ -15,6 +15,8 @@ class ScriptName {
 
     public const STYLE_YAYBOOST = 'yaycheckout/style/yayboost';
 
+    public const STYLE_LAYOUT_EMBED = 'yaycheckout/style/layout-embed';
+
     public const MODULE_PREFIX = 'yaycheckout/module/';
 
     public const PAGE_SETTINGS = 'yaycheckout/module/page-settings';

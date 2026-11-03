@@ -43,7 +43,7 @@ $yaycheckout_label_html  = 'checkbox' === $yaycheckout_type
     ? \YayCheckout\Services\LayoutMarkupReader::rich_text( is_array( $attributes ) ? $attributes : [], 'label', $yaycheckout_label, \YayCheckout\Services\LayoutMarkupReader::LABEL_TAGS )
     : esc_html( $yaycheckout_label );
 $yaycheckout_wrapper     = get_block_wrapper_attributes( $yaycheckout_wrapper_attrs );
-$yaycheckout_describedby = '' !== $yaycheckout_description ? ' aria-describedby="' . esc_attr( $yaycheckout_key . '-description' ) . '"' : '';
+$yaycheckout_describedby = '' !== $yaycheckout_description ? $yaycheckout_key . '-description' : '';
 
 $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, $yaycheckout_key, $yaycheckout_required, $yaycheckout_value );
 
@@ -65,31 +65,31 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
 
     echo '<div ' . $yaycheckout_wrapper . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
 
-    echo \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
+    echo wp_kses( \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ), \YayCheckout\Services\Disclosure::ALLOWED_HTML );
 
     woocommerce_form_field( $yaycheckout_key, $yaycheckout_args, is_string( $yaycheckout_value ) ? $yaycheckout_value : null );
-    echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup.
+    echo wp_kses( \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ), \YayCheckout\Services\Disclosure::ALLOWED_HTML ) . '</div>';
     return;
 }
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php
-    echo \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
+    echo wp_kses( \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ), \YayCheckout\Services\Disclosure::ALLOWED_HTML );
     ?>
     <?php if ( $yaycheckout_checkbox_choices ) : ?>
         <span class="yaycheckout-extra-field__label" id="<?php echo esc_attr( $yaycheckout_key . '-label' ); ?>">
-            <?php echo $yaycheckout_label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered by wp_kses in LayoutMarkupReader::rich_text(). ?>
-            <?php echo \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- html() escapes. ?>
+            <?php echo wp_kses( $yaycheckout_label_html, \YayCheckout\Services\LayoutMarkupReader::LABEL_TAGS ); ?>
+            <?php echo wp_kses( \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ), \YayCheckout\Services\RequiredIndicator::ALLOWED_HTML ); ?>
         </span>
     <?php elseif ( 'checkbox' !== $yaycheckout_type ) : ?>
         <label for="<?php echo esc_attr( $yaycheckout_key ); ?>">
             <?php echo esc_html( $yaycheckout_label ); ?>
-            <?php echo \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- html() escapes. ?>
+            <?php echo wp_kses( \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ), \YayCheckout\Services\RequiredIndicator::ALLOWED_HTML ); ?>
         </label>
     <?php endif; ?>
     <?php if ( 'select' === $yaycheckout_type ) : ?>
-        <select class="input-text" name="<?php echo esc_attr( $yaycheckout_key ); ?>" id="<?php echo esc_attr( $yaycheckout_key ); ?>"<?php echo $yaycheckout_describedby; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where built. ?> <?php echo $yaycheckout_required ? 'required' : ''; ?>>
+        <select class="input-text" name="<?php echo esc_attr( $yaycheckout_key ); ?>" id="<?php echo esc_attr( $yaycheckout_key ); ?>"<?php echo '' !== $yaycheckout_describedby ? ' aria-describedby="' . esc_attr( $yaycheckout_describedby ) . '"' : ''; ?> <?php echo $yaycheckout_required ? 'required' : ''; ?>>
             <?php foreach ( $yaycheckout_options as $yaycheckout_option_value => $yaycheckout_option_label ) : ?>
                 <option value="<?php echo esc_attr( (string) $yaycheckout_option_value ); ?>"><?php echo esc_html( $yaycheckout_option_label ); ?></option>
             <?php endforeach; ?>
@@ -97,7 +97,7 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
     <?php elseif ( 'radio' === $yaycheckout_type ) : ?>
         <?php foreach ( $yaycheckout_options as $yaycheckout_option_value => $yaycheckout_option_label ) : ?>
             <label>
-                <input type="radio" name="<?php echo esc_attr( $yaycheckout_key ); ?>" value="<?php echo esc_attr( (string) $yaycheckout_option_value ); ?>"<?php echo $yaycheckout_describedby; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where built. ?> <?php echo $yaycheckout_required ? 'required' : ''; ?> />
+                <input type="radio" name="<?php echo esc_attr( $yaycheckout_key ); ?>" value="<?php echo esc_attr( (string) $yaycheckout_option_value ); ?>"<?php echo '' !== $yaycheckout_describedby ? ' aria-describedby="' . esc_attr( $yaycheckout_describedby ) . '"' : ''; ?> <?php echo $yaycheckout_required ? 'required' : ''; ?> />
                 <?php echo esc_html( $yaycheckout_option_label ); ?>
             </label>
         <?php endforeach; ?>
@@ -105,16 +105,16 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
         <div class="yaycheckout-extra-field__choices" role="group" aria-labelledby="<?php echo esc_attr( $yaycheckout_key . '-label' ); ?>">
         <?php foreach ( $yaycheckout_options as $yaycheckout_option_value => $yaycheckout_option_label ) : ?>
             <label>
-                <input type="checkbox" name="<?php echo esc_attr( $yaycheckout_key ); ?>[]" value="<?php echo esc_attr( (string) $yaycheckout_option_value ); ?>"<?php echo $yaycheckout_describedby; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where built. ?><?php checked( is_array( $yaycheckout_value ) && in_array( (string) $yaycheckout_option_value, $yaycheckout_value, true ) ); ?> />
+                <input type="checkbox" name="<?php echo esc_attr( $yaycheckout_key ); ?>[]" value="<?php echo esc_attr( (string) $yaycheckout_option_value ); ?>"<?php echo '' !== $yaycheckout_describedby ? ' aria-describedby="' . esc_attr( $yaycheckout_describedby ) . '"' : ''; ?><?php checked( is_array( $yaycheckout_value ) && in_array( (string) $yaycheckout_option_value, $yaycheckout_value, true ) ); ?> />
                 <?php echo esc_html( $yaycheckout_option_label ); ?>
             </label>
         <?php endforeach; ?>
         </div>
     <?php elseif ( 'checkbox' === $yaycheckout_type ) : ?>
         <label class="checkbox">
-            <input type="checkbox" class="input-checkbox" name="<?php echo esc_attr( $yaycheckout_key ); ?>" id="<?php echo esc_attr( $yaycheckout_key ); ?>" value="1"<?php echo $yaycheckout_describedby; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where built. ?> <?php echo $yaycheckout_required ? 'required' : ''; ?> />
-            <?php echo $yaycheckout_label_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered by wp_kses in LayoutMarkupReader::rich_text(). ?>
-            <?php echo \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- html() escapes. ?>
+            <input type="checkbox" class="input-checkbox" name="<?php echo esc_attr( $yaycheckout_key ); ?>" id="<?php echo esc_attr( $yaycheckout_key ); ?>" value="1"<?php echo '' !== $yaycheckout_describedby ? ' aria-describedby="' . esc_attr( $yaycheckout_describedby ) . '"' : ''; ?> <?php echo $yaycheckout_required ? 'required' : ''; ?> />
+            <?php echo wp_kses( $yaycheckout_label_html, \YayCheckout\Services\LayoutMarkupReader::LABEL_TAGS ); ?>
+            <?php echo wp_kses( \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ), \YayCheckout\Services\RequiredIndicator::ALLOWED_HTML ); ?>
         </label>
     <?php else : ?>
         <input
@@ -123,12 +123,12 @@ if ( function_exists( 'woocommerce_form_field' ) && ! $yaycheckout_checkbox_choi
             name="<?php echo esc_attr( $yaycheckout_key ); ?>"
             id="<?php echo esc_attr( $yaycheckout_key ); ?>"
             placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>"
-            <?php echo $yaycheckout_describedby; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where built. ?>
+            <?php echo '' !== $yaycheckout_describedby ? ' aria-describedby="' . esc_attr( $yaycheckout_describedby ) . '"' : ''; ?>
             <?php echo $yaycheckout_required ? 'required' : ''; ?>
         />
     <?php endif; ?>
     <?php if ( '' !== $yaycheckout_description ) : ?>
         <span class="description" id="<?php echo esc_attr( $yaycheckout_key . '-description' ); ?>"><?php echo esc_html( $yaycheckout_description ); ?></span>
     <?php endif; ?>
-    <?php echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
+    <?php echo wp_kses( \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ), \YayCheckout\Services\Disclosure::ALLOWED_HTML ); ?>
 </div>

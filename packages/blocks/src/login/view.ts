@@ -18,7 +18,7 @@ interface LoginState {
 
 interface JsonBody {
 	success?: boolean;
-	data?: LoginState & { message?: string };
+	data?: LoginState & { message?: string; state_nonce?: string };
 }
 
 let dialog: HTMLDialogElement | null = null;
@@ -118,7 +118,10 @@ async function submit( block: HTMLElement, form: HTMLFormElement ): Promise< voi
 			return;
 		}
 
-		const stateResponse = await fetch( stateUrl, { credentials: 'same-origin' } );
+		const stateRequest = new URL( stateUrl, window.location.href );
+		stateRequest.searchParams.set( 'security', loginBody.data?.state_nonce ?? '' );
+
+		const stateResponse = await fetch( stateRequest, { credentials: 'same-origin' } );
 		const stateBody = ( await stateResponse.json() ) as JsonBody;
 		const checkout = document.querySelector< HTMLFormElement >( 'form.checkout' );
 

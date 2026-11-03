@@ -17,7 +17,7 @@ $yaycheckout_required    = true;
 $yaycheckout_key         = 'billing_email';
 
 $yaycheckout_wrapper     = get_block_wrapper_attributes( [ 'class' => 'yaycheckout-email form-row' ] );
-$yaycheckout_describedby = '' !== $yaycheckout_description ? ' aria-describedby="' . esc_attr( $yaycheckout_key . '-description' ) . '"' : '';
+$yaycheckout_describedby = '' !== $yaycheckout_description ? $yaycheckout_key . '-description' : '';
 
 if ( function_exists( 'woocommerce_form_field' ) ) {
     echo '<div ' . $yaycheckout_wrapper . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
@@ -43,7 +43,7 @@ if ( function_exists( 'woocommerce_form_field' ) ) {
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <label for="<?php echo esc_attr( $yaycheckout_key ); ?>">
         <?php echo esc_html( $yaycheckout_label ); ?>
-        <?php echo \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- html() escapes. ?>
+        <?php echo wp_kses( \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ), \YayCheckout\Services\RequiredIndicator::ALLOWED_HTML ); ?>
     </label>
     <input
         type="email"
@@ -52,7 +52,7 @@ if ( function_exists( 'woocommerce_form_field' ) ) {
         id="<?php echo esc_attr( $yaycheckout_key ); ?>"
         placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>"
         autocomplete="email"
-        <?php echo $yaycheckout_describedby; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where built. ?>
+        <?php echo '' !== $yaycheckout_describedby ? ' aria-describedby="' . esc_attr( $yaycheckout_describedby ) . '"' : ''; ?>
         <?php echo $yaycheckout_required ? 'required' : ''; ?>
     />
     <?php if ( '' !== $yaycheckout_description ) : ?>

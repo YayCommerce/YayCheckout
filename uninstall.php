@@ -1,6 +1,7 @@
 <?php
 /**
- * Removes layouts, yaycheckout_* options and transients, only when the merchant opted in.
+ * Removes layouts, yaycheckout_* options and transients, only when the merchant opted in and no
+ * other YayCheckout copy (Free or Pro) stays installed.
  *
  * No autoloader here, so the literals below mirror Settings::OPTION_SETTINGS,
  * general.delete_data_on_uninstall and Layout::POST_TYPE. Keep them in sync.
@@ -13,6 +14,18 @@ $yaycheckout_settings = get_option( 'yaycheckout_settings', [] );
 
 if ( empty( $yaycheckout_settings['general']['delete_data_on_uninstall'] ) ) {
     return;
+}
+
+// Free and Pro share these options and layouts, so deleting one copy while another stays installed
+// (Pro replacing Free, or the reverse) must keep them for the copy that remains.
+if ( ! function_exists( 'get_plugins' ) ) {
+    require_once ABSPATH . 'wp-admin/includes/plugin.php';
+}
+
+foreach ( array_keys( get_plugins() ) as $yaycheckout_plugin_file ) {
+    if ( 'yaycheckout.php' === basename( $yaycheckout_plugin_file ) && dirname( $yaycheckout_plugin_file ) !== basename( __DIR__ ) ) {
+        return;
+    }
 }
 
 global $wpdb;

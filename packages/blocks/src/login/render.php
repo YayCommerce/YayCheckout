@@ -65,17 +65,17 @@ $yaycheckout_wrapper   = \YayCheckout\Renderer\BlockEmptiness::wrapper(
                         </div>
                         <input type="hidden" name="security" value="<?php echo esc_attr( wp_create_nonce( \YayCheckout\Renderer\CheckoutLogin::NONCE_ACTION ) ); ?>" />
                         <?php
-                        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch -- WooCommerce login form hooks and strings, so plugins and existing translations apply.
+                        // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce login form hooks, so plugins on them still apply.
                         do_action( 'woocommerce_login_form_start' );
                         ?>
                         <p class="form-row yaycheckout-login__field">
-                            <label for="yaycheckout-login-username"><?php esc_html_e( 'Username or email', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span></label>
+                            <label for="yaycheckout-login-username"><?php esc_html_e( 'Username or email', 'yaycheckout' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span></label>
                             <input type="text" class="input-text" name="username" id="yaycheckout-login-username" autocomplete="username" required />
                         </p>
                         <p class="form-row yaycheckout-login__field">
                             <span class="yaycheckout-login__label-row">
-                                <label for="yaycheckout-login-password"><?php esc_html_e( 'Password', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span></label>
-                                <a class="yaycheckout-login__forgot" href="<?php echo esc_url( wp_lostpassword_url() ); ?>"><?php esc_html_e( 'Lost your password?', 'woocommerce' ); ?></a>
+                                <label for="yaycheckout-login-password"><?php esc_html_e( 'Password', 'yaycheckout' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span></label>
+                                <a class="yaycheckout-login__forgot" href="<?php echo esc_url( wp_lostpassword_url() ); ?>"><?php esc_html_e( 'Lost your password?', 'yaycheckout' ); ?></a>
                             </span>
                             <input type="password" class="input-text" name="password" id="yaycheckout-login-password" autocomplete="current-password" required />
                         </p>
@@ -83,13 +83,13 @@ $yaycheckout_wrapper   = \YayCheckout\Renderer\BlockEmptiness::wrapper(
                         <p class="form-row yaycheckout-login__remember">
                             <label>
                                 <input type="checkbox" name="rememberme" value="forever" />
-                                <?php esc_html_e( 'Remember me', 'woocommerce' ); ?>
+                                <?php esc_html_e( 'Remember me', 'yaycheckout' ); ?>
                             </label>
                         </p>
                         <?php do_action( 'woocommerce_login_form_end' ); ?>
                         <p class="yaycheckout-login__error" role="alert" hidden></p>
                         <button type="submit" class="button yaycheckout-login__submit"><?php esc_html_e( 'Log in', 'yaycheckout' ); ?></button>
-                        <?php // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.WP.I18n.TextDomainMismatch ?>
+                        <?php // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound ?>
                     </form>
                 </dialog>
             </template>
