@@ -54,9 +54,10 @@ fi
 
 # The Pro blocks are named in two hand-kept lists, BlockRegistry::PRO_BLOCKS (PHP) and
 # PRO_BLOCK_METAS (packages/blocks/src/shared/pro-blocks.ts), which must match the folders
-# under packages/blocks/src/pro/: a block missing from either list has no Free stub, or a stub
-# Free's inserter never offers.
-pro_dirs=$(ls -1 packages/blocks/src/pro | sort)
+# under packages/blocks/src/pro/ that hold a block.json: a block missing from either list has no
+# Free stub, or a stub Free's inserter never offers. A folder without one (related-products, which
+# holds only scripts) is no block.
+pro_dirs=$(ls -1 packages/blocks/src/pro/*/block.json | sed -E 's#^packages/blocks/src/pro/([^/]+)/block\.json$#\1#' | sort)
 pro_php=$(sed -n '/const PRO_BLOCKS = \[/,/\];/p' includes/Blocks/BlockRegistry.php \
     | grep -oE "'yaycheckout/[a-z-]+'" | sed -E "s#'yaycheckout/([a-z-]+)'#\1#" | sort)
 pro_ts=$(grep -oE "'\.\./pro/[a-z-]+/block\.json'" packages/blocks/src/shared/pro-blocks.ts \

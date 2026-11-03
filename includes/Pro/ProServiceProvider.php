@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Pro;
 
+use YayCheckout\Pro\Blocks\RelatedProductsCollection;
 use YayCheckout\Pro\Controllers\AssignmentOptionsRestController;
 use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Pro\Controllers\LayoutImportRestController;
@@ -30,6 +31,9 @@ class ProServiceProvider {
 
         // The thank-you page: order-received takeover, its editor view, admin bar item and live values.
         ThankYouPage::get_instance();
+
+        // The Related products collection of WooCommerce's Product Collection block: its editor script and query.
+        RelatedProductsCollection::get_instance();
     }
 
     /**

@@ -182,6 +182,14 @@ export const orderCustomerDetailsIcon = /*#__PURE__*/ icon(
 		<path d="M14 10h4M14 14h4" />
 	</>
 );
+/** Pro's Related products collection: two product cards, an image above a title and a price line each. */
+export const relatedProductsIcon = /*#__PURE__*/ icon(
+	<>
+		<rect x="3" y="4" width="8" height="8" rx="2" />
+		<rect x="13" y="4" width="8" height="8" rx="2" />
+		<path d="M3 15.5h8M3 19h5M13 15.5h8M13 19h5" />
+	</>
+);
 export const orderSummaryToggleIcon = /*#__PURE__*/ icon( <path d="M4 7h16v10H4zM9 11l3 3 3-3" /> );
 export const orderSummaryItemsIcon = /*#__PURE__*/ icon( <path d="M4 6h16M4 12h16M4 18h10" /> );
 export const orderSummaryBreakdownIcon = /*#__PURE__*/ icon( <path d="M4 7h16M4 12h16M12 17h8" /> );

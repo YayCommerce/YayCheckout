@@ -432,8 +432,24 @@ class BlockRegistry {
         $this->enqueue_layout_editor_style( BlockVisibility::EDITOR_STYLE, 'visibility/index' );
     }
 
-    /** A built editor entry's script as $handle, after the Checkout editor script, with translations. Skipped without a build. */
-    private static function enqueue_editor_script( string $handle, string $entry ): void {
+    /**
+     * A built editor entry's script, in the layout editor only, for code that attaches through hooks (Pro's
+     * Related products collection). $extra_deps are handles the build can't declare, such as WooCommerce's.
+     *
+     * @param string[] $extra_deps
+     */
+    public function enqueue_layout_editor_script( string $handle, string $entry, array $extra_deps = [] ): void {
+        if ( 'layout' === $this->editor( null ) ) {
+            self::enqueue_editor_script( $handle, $entry, $extra_deps );
+        }
+    }
+
+    /**
+     * A built editor entry's script as $handle, after the Checkout editor script, with translations. Skipped without a build.
+     *
+     * @param string[] $extra_deps
+     */
+    private static function enqueue_editor_script( string $handle, string $entry, array $extra_deps = [] ): void {
         $asset = self::built_asset( $entry );
 
         if ( null === $asset ) {
@@ -443,7 +459,7 @@ class BlockRegistry {
         wp_enqueue_script(
             $handle,
             $asset['url'] . '.js',
-            array_merge( $asset['dependencies'], [ generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ) ] ),
+            array_merge( $asset['dependencies'], [ generate_block_asset_handle( 'yaycheckout/checkout', 'editorScript' ) ], $extra_deps ),
             $asset['version'],
             true
         );
@@ -623,11 +639,11 @@ class BlockRegistry {
     /**
      * A webpack entry no block.json names (packages/blocks/webpack.config.js), from its built asset file: its
      * URL without the extension, dependencies and version. Null without a build, or without its CSS when
-     * $with_css.
+     * $with_css. Public for code that attaches through hooks (Pro's Related products collection).
      *
      * @return array{url: string, dependencies: string[], version: string}|null
      */
-    private static function built_asset( string $entry, bool $with_css = false ): ?array {
+    public static function built_asset( string $entry, bool $with_css = false ): ?array {
         $path = YAYCHECKOUT_PLUGIN_DIR . 'assets/dist/blocks/' . $entry;
 
         if ( ! is_readable( $path . '.asset.php' ) || ( $with_css && ! is_readable( $path . '.css' ) ) ) {
