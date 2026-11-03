@@ -66,8 +66,8 @@ if ( ! $yaycheckout_empty ) {
 
 ?>
 <div <?php echo \YayCheckout\Renderer\BlockEmptiness::wrapper( [ 'class' => 'yaycheckout-field-value' ], $attributes, $yaycheckout_empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
-    <span class="yaycheckout-field-value__value<?php echo $yaycheckout_empty ? ' is-empty' : ''; ?>" data-field-keys="<?php echo esc_attr( (string) wp_json_encode( $yaycheckout_keys ) ); ?>" data-separator="<?php echo esc_attr( $yaycheckout_separator ); ?>" data-labels="<?php echo esc_attr( (string) wp_json_encode( $yaycheckout_labels ) ); ?>" data-placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>"><?php echo $yaycheckout_shown; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above, or filtered by wp_kses in LayoutMarkupReader::rich_text(). ?></span>
+    <span class="yaycheckout-field-value__value<?php echo $yaycheckout_empty ? ' is-empty' : ''; ?>" data-field-keys="<?php echo esc_attr( (string) wp_json_encode( $yaycheckout_keys ) ); ?>" data-separator="<?php echo esc_attr( $yaycheckout_separator ); ?>" data-labels="<?php echo esc_attr( (string) wp_json_encode( $yaycheckout_labels ) ); ?>" data-placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>"><?php echo wp_kses( $yaycheckout_shown, \YayCheckout\Services\LayoutMarkupReader::RICH_TEXT_TAGS ); ?></span>
     <?php if ( '' !== $yaycheckout_placeholder ) : ?>
-        <template class="yaycheckout-field-value__placeholder"><?php echo $yaycheckout_placeholder_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered by wp_kses in LayoutMarkupReader::rich_text(). ?></template>
+        <template class="yaycheckout-field-value__placeholder"><?php echo wp_kses( $yaycheckout_placeholder_html, \YayCheckout\Services\LayoutMarkupReader::RICH_TEXT_TAGS ); ?></template>
     <?php endif; ?>
 </div>

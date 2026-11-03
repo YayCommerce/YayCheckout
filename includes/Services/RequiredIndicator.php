@@ -9,6 +9,14 @@ defined( 'ABSPATH' ) || exit;
  */
 class RequiredIndicator {
 
+    /** The tags html() prints, for the wp_kses() a render.php runs at the echo. */
+    public const ALLOWED_HTML = [
+        'span' => [
+            'class'       => true,
+            'aria-hidden' => true,
+        ],
+    ];
+
     /**
      * Suffix for block templates that print their own label.
      *

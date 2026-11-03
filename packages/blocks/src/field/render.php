@@ -58,7 +58,7 @@ $yaycheckout_disclosure = \YayCheckout\Services\Disclosure::mode( $attributes, $
 if ( function_exists( 'woocommerce_form_field' ) ) {
     echo '<div ' . $yaycheckout_wrapper . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it.
 
-    echo \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
+    echo wp_kses( \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ), \YayCheckout\Services\Disclosure::ALLOWED_HTML );
 
     woocommerce_form_field(
         $yaycheckout_key,
@@ -75,26 +75,26 @@ if ( function_exists( 'woocommerce_form_field' ) ) {
         ],
         $yaycheckout_value
     );
-    echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup.
+    echo wp_kses( \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ), \YayCheckout\Services\Disclosure::ALLOWED_HTML ) . '</div>';
     return;
 }
 
 $yaycheckout_input_type  = in_array( $yaycheckout_type, [ 'email', 'tel', 'password', 'hidden' ], true ) ? $yaycheckout_type : 'text';
-$yaycheckout_describedby = '' !== $yaycheckout_description ? ' aria-describedby="' . esc_attr( $yaycheckout_key . '-description' ) . '"' : '';
+$yaycheckout_describedby = '' !== $yaycheckout_description ? $yaycheckout_key . '-description' : '';
 
 ?>
 <div <?php echo $yaycheckout_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php
-    echo \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- open() escapes.
+    echo wp_kses( \YayCheckout\Services\Disclosure::open_if( $attributes, $yaycheckout_key, $yaycheckout_label, $yaycheckout_disclosure ), \YayCheckout\Services\Disclosure::ALLOWED_HTML );
     ?>
     <label for="<?php echo esc_attr( $yaycheckout_key ); ?>">
         <?php echo esc_html( $yaycheckout_label ); ?>
-        <?php echo \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- html() escapes. ?>
+        <?php echo wp_kses( \YayCheckout\Services\RequiredIndicator::html( $yaycheckout_required, is_array( $attributes ) ? $attributes : [] ), \YayCheckout\Services\RequiredIndicator::ALLOWED_HTML ); ?>
     </label>
     <?php if ( 'textarea' === $yaycheckout_type ) : ?>
-        <textarea class="input-text" name="<?php echo esc_attr( $yaycheckout_key ); ?>" id="<?php echo esc_attr( $yaycheckout_key ); ?>" placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>"<?php echo $yaycheckout_describedby; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where built. ?> <?php echo $yaycheckout_required ? 'required' : ''; ?>></textarea>
+        <textarea class="input-text" name="<?php echo esc_attr( $yaycheckout_key ); ?>" id="<?php echo esc_attr( $yaycheckout_key ); ?>" placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>"<?php echo '' !== $yaycheckout_describedby ? ' aria-describedby="' . esc_attr( $yaycheckout_describedby ) . '"' : ''; ?> <?php echo $yaycheckout_required ? 'required' : ''; ?>></textarea>
     <?php elseif ( 'checkbox' === $yaycheckout_type ) : ?>
-        <input type="checkbox" name="<?php echo esc_attr( $yaycheckout_key ); ?>" id="<?php echo esc_attr( $yaycheckout_key ); ?>" value="1"<?php echo $yaycheckout_describedby; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where built. ?> <?php echo $yaycheckout_required ? 'required' : ''; ?> />
+        <input type="checkbox" name="<?php echo esc_attr( $yaycheckout_key ); ?>" id="<?php echo esc_attr( $yaycheckout_key ); ?>" value="1"<?php echo '' !== $yaycheckout_describedby ? ' aria-describedby="' . esc_attr( $yaycheckout_describedby ) . '"' : ''; ?> <?php echo $yaycheckout_required ? 'required' : ''; ?> />
     <?php else : ?>
         <input
             type="<?php echo esc_attr( $yaycheckout_input_type ); ?>"
@@ -103,12 +103,12 @@ $yaycheckout_describedby = '' !== $yaycheckout_description ? ' aria-describedby=
             id="<?php echo esc_attr( $yaycheckout_key ); ?>"
             placeholder="<?php echo esc_attr( $yaycheckout_placeholder ); ?>"
             autocomplete="<?php echo esc_attr( $yaycheckout_autocomplete ); ?>"
-            <?php echo $yaycheckout_describedby; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped where built. ?>
+            <?php echo '' !== $yaycheckout_describedby ? ' aria-describedby="' . esc_attr( $yaycheckout_describedby ) . '"' : ''; ?>
             <?php echo $yaycheckout_required ? 'required' : ''; ?>
         />
     <?php endif; ?>
     <?php if ( '' !== $yaycheckout_description ) : ?>
         <span class="description" id="<?php echo esc_attr( $yaycheckout_key . '-description' ); ?>"><?php echo esc_html( $yaycheckout_description ); ?></span>
     <?php endif; ?>
-    <?php echo \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static markup. ?>
+    <?php echo wp_kses( \YayCheckout\Services\Disclosure::close_if( $yaycheckout_disclosure ), \YayCheckout\Services\Disclosure::ALLOWED_HTML ); ?>
 </div>
