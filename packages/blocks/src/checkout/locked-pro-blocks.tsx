@@ -4,6 +4,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import {
 	backButtonIcon,
 	goToStepIcon,
+	orderAgainIcon,
 	orderCustomerDetailsIcon,
 	orderDetailsIcon,
 	stepButtonIcon,
@@ -32,6 +33,7 @@ const PRO_BLOCK_ICONS: Record< string, JSX.Element > = {
 	'yaycheckout/go-to-step': goToStepIcon,
 	'yaycheckout/order-details': orderDetailsIcon,
 	'yaycheckout/order-customer-details': orderCustomerDetailsIcon,
+	'yaycheckout/order-again-button': orderAgainIcon,
 };
 
 /**
