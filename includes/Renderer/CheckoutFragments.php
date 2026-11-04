@@ -901,20 +901,39 @@ class CheckoutFragments {
             }
         }
 
-        // Attribute => [ var, min px, max px ].
-        $sizes = [
-            'badgeSize'       => [ '--yaycheckout-badge-size', 16, 32 ],
-            'stepperSize'     => [ '--yaycheckout-stepper-size', 20, 40 ],
-            'thumbnailSize'   => [ '--yaycheckout-thumbnail-size', 40, 96 ],
-            'thumbnailRadius' => [ '--yaycheckout-thumbnail-radius', 0, 48 ],
-        ];
-        foreach ( $sizes as $key => list( $var, $min, $max ) ) {
-            if ( isset( $attributes[ $key ] ) && is_numeric( $attributes[ $key ] ) ) {
-                $decls[] = $var . ':' . max( $min, min( $max, (int) $attributes[ $key ] ) ) . 'px';
-            }
-        }
+        $decls = array_merge(
+            $decls,
+            self::clamped_px_vars(
+                $attributes,
+                [
+                    'badgeSize'   => [ '--yaycheckout-badge-size', 16, 32 ],
+                    'stepperSize' => [ '--yaycheckout-stepper-size', 20, 40 ],
+                ]
+            ),
+            self::thumbnail_style_vars( $attributes )
+        );
 
-        // Square, the default, is style.css's fallback; original keeps the image's own proportions.
+        return implode( ';', $decls );
+    }
+
+    /**
+     * --yaycheckout-thumbnail-* declarations from a block's thumbnailSize, thumbnailRadius and thumbnailRatio
+     * attributes; empty when none are set. Used by Order Summary Items and the Pro Order Details block.
+     * thumbnailStyleVars() in packages/blocks/src/shared/thumbnail-style.ts mirrors it.
+     *
+     * @param array $attributes Block attributes.
+     * @return string[] Declarations such as '--yaycheckout-thumbnail-size:64px'.
+     */
+    public static function thumbnail_style_vars( array $attributes ): array {
+        $decls = self::clamped_px_vars(
+            $attributes,
+            [
+                'thumbnailSize'   => [ '--yaycheckout-thumbnail-size', 40, 96 ],
+                'thumbnailRadius' => [ '--yaycheckout-thumbnail-radius', 0, 48 ],
+            ]
+        );
+
+        // Square, the default, is the stylesheets' fallback; original keeps the image's own proportions.
         $ratios = [
             'portrait'  => '3 / 4',
             'landscape' => '4 / 3',
@@ -925,7 +944,25 @@ class CheckoutFragments {
             $decls[] = '--yaycheckout-thumbnail-ratio:' . $ratios[ $ratio ];
         }
 
-        return implode( ';', $decls );
+        return $decls;
+    }
+
+    /**
+     * One px declaration per numeric attribute, clamped to its range.
+     *
+     * @param array                               $attributes Block attributes.
+     * @param array<string, array{string,int,int}> $sizes      Attribute => [ var, min px, max px ].
+     * @return string[]
+     */
+    private static function clamped_px_vars( array $attributes, array $sizes ): array {
+        $decls = [];
+        foreach ( $sizes as $key => list( $var, $min, $max ) ) {
+            if ( isset( $attributes[ $key ] ) && is_numeric( $attributes[ $key ] ) ) {
+                $decls[] = $var . ':' . max( $min, min( $max, (int) $attributes[ $key ] ) ) . 'px';
+            }
+        }
+
+        return $decls;
     }
 
     /**

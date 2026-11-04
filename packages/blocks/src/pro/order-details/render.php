@@ -4,7 +4,9 @@
  * downloads and plugin hooks on that template — without the billing/shipping section, which the
  * Order Addresses block prints via order-details-customer.php. Optional title / column / totals-row
  * labels from the block override WooCommerce's gettext while the table prints. Show title off strips
- * the WC heading. Wrapper holds block style supports.
+ * the WC heading. Thumbnails, the totals order and the total's marker come from filters that
+ * OrderDetailsTable adds only while the table prints. Wrapper holds block style supports plus
+ * OrderDetailsTable's classes and CSS vars, which style.css reads.
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    Unused; this block is a leaf.
@@ -44,8 +46,13 @@ if ( $yaycheckout_show_title ) {
 ob_start();
 \YayCheckout\Pro\Renderer\ThankYouPage::with_woocommerce_label_overrides(
     $yaycheckout_overrides,
-    static function () use ( $yaycheckout_order ): void {
-        woocommerce_order_details_table( $yaycheckout_order->get_id() );
+    static function () use ( $yaycheckout_order, $attributes ): void {
+        \YayCheckout\Pro\Renderer\OrderDetailsTable::with_display_filters(
+            $attributes,
+            static function () use ( $yaycheckout_order ): void {
+                woocommerce_order_details_table( $yaycheckout_order->get_id() );
+            }
+        );
     }
 );
 $yaycheckout_table = (string) ob_get_clean();
@@ -61,7 +68,14 @@ if ( '' === trim( $yaycheckout_table ) ) {
     return;
 }
 
+$yaycheckout_display = \YayCheckout\Pro\Renderer\OrderDetailsTable::wrapper_attributes( $attributes );
+$yaycheckout_wrapper = [ 'class' => trim( 'yaycheckout-order-details ' . $yaycheckout_display['class'] ) ];
+
+if ( '' !== $yaycheckout_display['style'] ) {
+    $yaycheckout_wrapper['style'] = $yaycheckout_display['style'];
+}
+
 ?>
-<div <?php echo get_block_wrapper_attributes( [ 'class' => 'yaycheckout-order-details' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
+<div <?php echo get_block_wrapper_attributes( $yaycheckout_wrapper ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes the attribute string; running it through kses would corrupt it. ?>>
     <?php echo $yaycheckout_table; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WooCommerce template output, customer section removed. ?>
 </div>
