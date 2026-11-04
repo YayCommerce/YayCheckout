@@ -2,6 +2,7 @@
 namespace YayCheckout\Pro\Renderer;
 
 use YayCheckout\Engine\Admin\LayoutEditorEmbed;
+use YayCheckout\Models\Layout;
 use YayCheckout\Renderer\CheckoutFragments;
 
 defined( 'ABSPATH' ) || exit;
@@ -103,7 +104,7 @@ class ThankYouText {
             // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A local plugin file.
             $svg = is_readable( $path ) ? (string) file_get_contents( $path ) : '';
 
-            // The viewBox size becomes the natural size, so the artwork shows at its own width until Max width or its container narrows it.
+            // The viewBox size becomes the natural size, so the artwork shows at its own width until Width or its container changes it.
             $size = preg_match( '/viewBox="0 0 ([\d.]+) ([\d.]+)"/', $svg, $match ) ? ' width="' . $match[1] . '" height="' . $match[2] . '"' : '';
 
             self::$svgs[ $id ] = '' === $svg ? '' : (string) preg_replace( '/^<svg\b/', '<svg aria-hidden="true" focusable="false"' . $size, trim( $svg ), 1 );
@@ -114,9 +115,14 @@ class ThankYouText {
 
     /**
      * Prints the editor's artworks before the block's editor script, and whether this editor is the Thank you
-     * view. Each view is its own page load, so the view is known here.
+     * view, in the layout editor only: every block editor loads the block's script, and the artworks are large.
+     * Each view is its own page load, so the view is known here.
      */
     public static function editor_data(): void {
+        if ( Layout::POST_TYPE !== get_post_type() ) {
+            return;
+        }
+
         $handle = generate_block_asset_handle( 'yaycheckout/thank-you-text', 'editorScript' );
 
         if ( wp_script_is( $handle, 'registered' ) ) {
@@ -165,7 +171,7 @@ class ThankYouText {
         $max_width = $attributes['maxWidth'] ?? null;
 
         if ( is_numeric( $max_width ) && $max_width > 0 ) {
-            $style .= '--yaycheckout-thank-you-text-max-width:' . (float) $max_width . 'px;';
+            $style .= '--yaycheckout-thank-you-text-width:' . (float) $max_width . 'px;';
         }
 
         $args = [

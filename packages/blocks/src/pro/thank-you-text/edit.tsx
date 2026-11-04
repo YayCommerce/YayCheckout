@@ -73,7 +73,7 @@ function wrapperProps( attributes: Attributes, variant: Variant | undefined ) {
 	}
 
 	if ( attributes.maxWidth && attributes.maxWidth > 0 ) {
-		style[ '--yaycheckout-thank-you-text-max-width' ] = `${ attributes.maxWidth }px`;
+		style[ '--yaycheckout-thank-you-text-width' ] = `${ attributes.maxWidth }px`;
 	}
 
 	return { className: classes.join( ' ' ), style: style as CSSProperties };
@@ -97,6 +97,17 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		onChange: ( value?: string ) => setAttributes( { [ COLOR_ATTRIBUTES[ slot ] ]: value ?? '' } ),
 		clearable: true,
 	} ) );
+
+	// Outside the Thank you view there is nothing to set: the canvas shows only the warning.
+	if ( ! INSERTABLE ) {
+		return (
+			<div { ...blockProps }>
+				<Warning>
+					{ __( 'Thank You Text shows only on the thank-you page. Move it to the Thank you view, or remove it.', 'yaycheckout' ) }
+				</Warning>
+			</div>
+		);
+	}
 
 	return (
 		<>
@@ -128,7 +139,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 				<PanelBody title={ __( 'Size', 'yaycheckout' ) }>
 					<NumberControl
-						label={ __( 'Max width (px)', 'yaycheckout' ) }
+						label={ __( 'Width (px)', 'yaycheckout' ) }
 						help={ __( 'Leave empty for the style’s own width. It never grows wider than its container.', 'yaycheckout' ) }
 						min={ 1 }
 						value={ attributes.maxWidth ?? '' }
@@ -156,15 +167,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					</PanelColorSettings>
 				</InspectorControls>
 			) }
-			{ INSERTABLE ? (
-				<div { ...blockProps } dangerouslySetInnerHTML={ { __html: variant?.svg ?? '' } } />
-			) : (
-				<div { ...blockProps }>
-					<Warning>
-						{ __( 'Thank You Text shows only on the thank-you page. Move it to the Thank you view, or remove it.', 'yaycheckout' ) }
-					</Warning>
-				</div>
-			) }
+			<div { ...blockProps } dangerouslySetInnerHTML={ { __html: variant?.svg ?? '' } } />
 		</>
 	);
 }

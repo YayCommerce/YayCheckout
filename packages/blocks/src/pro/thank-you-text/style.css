@@ -13,13 +13,13 @@
 
 .yaycheckout-thank-you-text svg {
 	display: block;
-	width: var(--yaycheckout-thank-you-text-max-width, auto);
+	width: var(--yaycheckout-thank-you-text-width, auto);
 	max-width: 100%;
 	height: auto;
 }
 
 .yaycheckout-thank-you-text .ty-light {
-	fill: var(--yaycheckout-color-background, #ffffff);
+	fill: var(--yaycheckout-design-background, #ffffff);
 }
 
 /* Only under the modifier: var() of an unset variable would paint black instead of the SVG's own colour. */

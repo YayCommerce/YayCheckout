@@ -31,7 +31,7 @@
 	height: 100%;
 }
 
-/* The picker sits outside the canvas, where the layout background variable is unset. */
+/* The picker sits outside the canvas, on its own white tiles. */
 .yaycheckout-thank-you-text-picker__item .ty-light {
 	fill: #fff;
 }
