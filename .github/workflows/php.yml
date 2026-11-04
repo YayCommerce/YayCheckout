@@ -1,0 +1,71 @@
+name: PHP
+
+# Runs only when product PHP, the blocks' render.php or the Pro boundary inputs change.
+# Docs-only and SPA-only changes skip it.
+on:
+  pull_request:
+    branches: [dev/edd, dev/lite]
+    paths:
+      - 'includes/**'
+      - 'packages/blocks/src/**'
+      - 'templates/**'
+      - 'yaycheckout.php'
+      - 'YayCheckoutPluginAdapter.php'
+      - 'uninstall.php'
+      - 'index.php'
+      - 'scripts/check-pro-boundary.sh'
+      - '.github/workflows/php.yml'
+  push:
+    branches: [dev/edd, dev/lite]
+    paths:
+      - 'includes/**'
+      - 'packages/blocks/src/**'
+      - 'templates/**'
+      - 'yaycheckout.php'
+      - 'YayCheckoutPluginAdapter.php'
+      - 'uninstall.php'
+      - 'index.php'
+      - 'scripts/check-pro-boundary.sh'
+      - '.github/workflows/php.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  php-lint:
+    name: PHP 7.4 syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          tools: none
+          coverage: none
+
+      # Product PHP must run on PHP 7.4 (CLAUDE.md hard rule 4). scoper.inc.php is dev tooling and is skipped.
+      - name: Lint product PHP
+        run: |
+          find includes packages/blocks/src templates yaycheckout.php YayCheckoutPluginAdapter.php uninstall.php index.php \
+            -name '*.php' -print0 \
+            | xargs -0 -n1 -P4 php -l > lint.log 2>&1 || {
+              grep -v '^No syntax errors' lint.log
+              exit 1
+            }
+          echo "$(wc -l < lint.log) files OK"
+
+  pro-boundary:
+    name: Pro boundary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The first half of `composer lint` (CLAUDE.md hard rule 2); needs only bash and grep.
+      - name: check-pro-boundary.sh
+        run: bash scripts/check-pro-boundary.sh
