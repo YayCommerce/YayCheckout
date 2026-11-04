@@ -4,7 +4,8 @@
 # Usage: ./scripts/run.sh [command]
 #
 # Commands:
-#   dev                - Update admin shell + start Vite dev server (HMR on :3040) + blocks watcher
+#   dev                - Start Vite dev server (HMR on :3040) + blocks watcher (never touches vendor-prefixed/)
+#   shell-update       - Update admin-shell and rebuild vendor-prefixed/ (atomic swap); commit the result
 #   build              - Build admin dashboard + blocks for production
 #   release [version]  - Create release ZIP package (prompts for version and WP/WC tested up to)
 #   bump <version>     - Bump version number in plugin files
@@ -128,24 +129,24 @@ install_blocks_deps() {
     fi
 }
 
-# Admin Shell — install/update and regenerate vendor-prefixed via php-scoper.
-# Pass "prerelease" to use the release variant of the shell updater when present.
-update_shell() {
-    local mode=${1:-dev}
-    print_step "Check Admin Shell"
+# Composer autoload for dev. vendor-prefixed/ is committed, so this never rescopes it: a running site keeps
+# working while dev starts. Only installs when vendor/ is missing or lacks php-scoper (a release needs it).
+ensure_composer() {
     cd "$PLUGIN_DIR"
-    mkdir -p "$PLUGIN_DIR/vendor-prefixed/src"
-    composer update
-    local bin="$PLUGIN_DIR/vendor/bin/yaycommerce-update"
-    if [ "$mode" = "prerelease" ] && [ -f "$PLUGIN_DIR/vendor/bin/yaycommerce-prerelease" ]; then
-        bin="$PLUGIN_DIR/vendor/bin/yaycommerce-prerelease"
+    if [ ! -f "$PLUGIN_DIR/vendor/autoload.php" ] || [ ! -x "$PLUGIN_DIR/vendor/bin/php-scoper" ]; then
+        print_step "Installing Composer dependencies..."
+        composer install --no-interaction
     fi
-    if [ -f "$bin" ]; then
-        "$bin"
-        print_success "Admin Shell updated"
-    else
-        print_warning "Admin Shell updater not found, skipped"
-    fi
+}
+
+# Admin Shell — update the package and rebuild vendor-prefixed/ via php-scoper (yaycommerce-update).
+# The rebuild goes into a temp folder that is swapped in, so the site never loses vendor-prefixed/.
+# Commit vendor-prefixed/ afterwards.
+update_shell() {
+    print_step "Update Admin Shell"
+    ensure_composer
+    "$PLUGIN_DIR/vendor/bin/yaycommerce-update"
+    print_success "Admin Shell updated: review and commit vendor-prefixed/"
 }
 
 # ─── Version helpers ────────────────────────────────────────────────────
@@ -254,7 +255,7 @@ prompt_tested_version() {
 # ─── Commands ───────────────────────────────────────────────────────────
 
 cmd_dev() {
-    update_shell
+    ensure_composer
     resolve_pnpm
     install_admin_deps
     install_blocks_deps
@@ -392,11 +393,9 @@ cmd_release() {
     print_info "Output: release/$zip_name"
     echo ""
 
-    update_shell prerelease
-
-    # Regenerate autoload without dev deps for a consistent release
-    cd "$PLUGIN_DIR"
-    composer dump-autoload --no-dev --classmap-authoritative --quiet
+    # The release never changes the plugin folder's vendor/ or vendor-prefixed/: the shell is rescoped
+    # into the staging copy below (yaycommerce-prerelease --stage) and its autoload dumped there.
+    ensure_composer
 
     # vite.config.ts reads this; without it a build falls back to free.
     export YAYCHECKOUT_PLAN="$plan"
@@ -426,6 +425,9 @@ cmd_release() {
     mkdir -p "$temp_dir/vendor"
     cp "$PLUGIN_DIR/vendor/autoload.php" "$temp_dir/vendor/"
     cp -r "$PLUGIN_DIR/vendor/composer" "$temp_dir/vendor/"
+
+    # Rescope the installed admin-shell into the copy (warns if the committed vendor-prefixed/ is stale).
+    (cd "$PLUGIN_DIR" && ./vendor/bin/yaycommerce-prerelease --stage "$temp_dir")
 
     # includes/Pro/ is the only Pro PHP and nothing else names it (scripts/check-pro-boundary.sh),
     # so removing it leaves a working Free build. The Pro blocks (built from packages/blocks/src/pro/)
@@ -478,11 +480,11 @@ cmd_release() {
             fi
         done
         print_info "Free build: removed the admin-shell licensing and Recommended Plugins"
-
-        # The copied classmap still lists the files just deleted, and wordpress.org reads a listed
-        # EDD_SL_Plugin_Updater as an update checker. Rebuild it from what this copy holds.
-        composer dump-autoload --no-dev --classmap-authoritative --no-scripts --quiet --working-dir="$temp_dir"
     fi
+
+    # The copied classmap is the dev one, and for Free it still lists the files just deleted (wordpress.org
+    # reads a listed EDD_SL_Plugin_Updater as an update checker). Rebuild it from what this copy holds.
+    composer dump-autoload --no-dev --classmap-authoritative --no-scripts --quiet --working-dir="$temp_dir"
 
     find "$temp_dir/vendor-prefixed" -name "*.php" -exec perl -pi -e "s/$SHELL_TEXT_DOMAIN_CALL/\$1\x27$PLUGIN_SLUG\x27)/g" {} +
 
@@ -596,10 +598,6 @@ cmd_release() {
     fi
 
     print_success "Artifact matches plan '$plan' ($pro_entries pro file(s))"
-
-    # Restore dev autoload maps so local development still works
-    cd "$PLUGIN_DIR"
-    composer dump-autoload --classmap-authoritative --quiet
 
     local size
     size=$(du -h "$RELEASE_DIR/$zip_name" | cut -f1)
@@ -720,7 +718,8 @@ cmd_help() {
     echo "Usage: ./scripts/run.sh [command]"
     echo ""
     echo "Commands:"
-    echo "  dev                          Update admin shell + Vite dev server (:3040) + blocks watcher"
+    echo "  dev                          Vite dev server (:3040) + blocks watcher (vendor-prefixed/ untouched)"
+    echo "  shell-update                 Update admin-shell, rebuild vendor-prefixed/ (atomic); commit it"
     echo "  build                        Build admin dashboard + blocks for production"
     echo "  release [version] [--plan=free|pro] [--wp-tested=X.Y] [--wc-tested=X.Y] [--no-prompt]"
     echo "                               Create release ZIP in release/ for this branch's edition"
@@ -750,6 +749,7 @@ main() {
 
     case $cmd in
         dev)     cmd_dev "$@" ;;
+        shell-update) update_shell ;;
         build)   cmd_build "$@" ;;
         release) cmd_release "$@" ;;
         bump)    cmd_bump "$@" ;;
