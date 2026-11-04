@@ -1,0 +1,37 @@
+.yaycheckout-thank-you-text-picker {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px;
+}
+
+.yaycheckout-thank-you-text-picker__item {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 72px;
+	padding: 8px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	background: #fff;
+	cursor: pointer;
+}
+
+.yaycheckout-thank-you-text-picker__item:hover {
+	border-color: #949494;
+}
+
+.yaycheckout-thank-you-text-picker__item[aria-pressed="true"] {
+	border-color: var(--wp-admin-theme-color, #3858e9);
+	box-shadow: 0 0 0 1px var(--wp-admin-theme-color, #3858e9);
+}
+
+.yaycheckout-thank-you-text-picker__item svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* The picker sits outside the canvas, where the layout background variable is unset. */
+.yaycheckout-thank-you-text-picker__item .ty-light {
+	fill: #fff;
+}

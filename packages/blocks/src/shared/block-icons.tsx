@@ -182,6 +182,13 @@ export const orderCustomerDetailsIcon = /*#__PURE__*/ icon(
 		<path d="M14 10h4M14 14h4" />
 	</>
 );
+/** Pro's Thank You Text: a heart above a handwritten line. */
+export const thankYouTextIcon = /*#__PURE__*/ icon(
+	<>
+		<path d="M12 12.5s-4.5-2.6-4.5-5.4A2.25 2.25 0 0 1 12 6a2.25 2.25 0 0 1 4.5 1.1c0 2.8-4.5 5.4-4.5 5.4Z" />
+		<path d="M4 18c1.5-1.5 2.5-1.5 3.5 0s2 1.5 3 0 2-1.5 3 0 2 1.5 3 0 1.5-1.5 3.5 0" />
+	</>
+);
 export const orderSummaryToggleIcon = /*#__PURE__*/ icon( <path d="M4 7h16v10H4zM9 11l3 3 3-3" /> );
 export const orderSummaryItemsIcon = /*#__PURE__*/ icon( <path d="M4 6h16M4 12h16M4 18h10" /> );
 export const orderSummaryBreakdownIcon = /*#__PURE__*/ icon( <path d="M4 7h16M4 12h16M12 17h8" /> );

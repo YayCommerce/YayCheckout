@@ -1,0 +1,40 @@
+.yaycheckout-thank-you-text {
+	display: flex;
+	justify-content: center;
+}
+
+.yaycheckout-thank-you-text.is-align-left {
+	justify-content: flex-start;
+}
+
+.yaycheckout-thank-you-text.is-align-right {
+	justify-content: flex-end;
+}
+
+.yaycheckout-thank-you-text svg {
+	display: block;
+	width: var(--yaycheckout-thank-you-text-max-width, auto);
+	max-width: 100%;
+	height: auto;
+}
+
+.yaycheckout-thank-you-text .ty-light {
+	fill: var(--yaycheckout-color-background, #ffffff);
+}
+
+/* Only under the modifier: var() of an unset variable would paint black instead of the SVG's own colour. */
+.yaycheckout-thank-you-text.has-main-color .ty-main {
+	fill: var(--yaycheckout-thank-you-text-main);
+}
+
+.yaycheckout-thank-you-text.has-main-color .ty-main-stroke {
+	stroke: var(--yaycheckout-thank-you-text-main);
+}
+
+.yaycheckout-thank-you-text.has-secondary-color .ty-secondary {
+	fill: var(--yaycheckout-thank-you-text-secondary);
+}
+
+.yaycheckout-thank-you-text.has-secondary-color .ty-secondary-stroke {
+	stroke: var(--yaycheckout-thank-you-text-secondary);
+}
