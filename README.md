@@ -60,7 +60,7 @@ The git rules are in [CLAUDE.md § Git](CLAUDE.md#git): branch names, Convention
 
 - **Review.** Every PR into `dev/edd` needs one approval from a teammate other than its author, then it is squash-merged.
 - **Promotion.** `dev/edd` reaches `main` by a PR with a merge commit, before a release.
-- **Releases.** Build Pro from `dev/edd` and Free from `dev/lite`, after merging `dev/edd` into `dev/lite`. The release commands are in [CLAUDE.md § Commands](CLAUDE.md#commands). What the release builds and checks is in [docs/architecture.md § Build and release](docs/architecture.md#build-and-release), and the rules for changing it are in [.claude/rules/release.md](.claude/rules/release.md). Release notes go in `readme.txt`.
+- **Releases.** Build Pro from `dev/edd` and Free from `dev/lite`, after merging `dev/edd` into `dev/lite`, with the release skills below; they wrap `./scripts/run.sh release` and record which commit each zip came from ([RELEASING.md](RELEASING.md)). The release commands are in [CLAUDE.md § Commands](CLAUDE.md#commands). What the release builds and checks is in [docs/architecture.md § Build and release](docs/architecture.md#build-and-release), and the rules for changing it are in [.claude/rules/release.md](.claude/rules/release.md). Release notes go in `readme.txt`.
 
 ## Agent tooling
 
@@ -76,6 +76,20 @@ The team's skills cover a change from idea to PR. Each one is called by name, an
 | [`/build-checkout-template`](.claude/skills/build-checkout-template/SKILL.md) | you build one template of the HTML checkout-templates mock as a layout template | `templates/layouts/<slug>/markup.php` and `design.json`, committed on a branch |
 
 A typical change runs `/yaybrainstorming`, then `/yayplan`, then you implement it, running `/yayplancheck` after each phase. Before the final review, `/yayplancheck` asks whether to run `/yaytidy` first. A change may also skip the design and go straight to `/yayplan`. A review finding you don't fix in the PR goes to the backlog with `/yaybacklog add`, and the PR that fixes it later ticks its boxes with `/yaybacklog check`.
+
+The release skills take a finished change from a test build to a tagged release. They wrap `./scripts/run.sh release` and never upload anything: the manager uploads every zip by hand. [RELEASING.md](RELEASING.md) explains the workflow; this repo's config is `.claude/release.config.json` ([why](docs/decisions/2026-11-04-release-kit.md)). They come from [YayCommerce/Yay-Release-Kit](https://github.com/YayCommerce/Yay-Release-Kit) (see the shared skills note below).
+
+| Skill | Run it when | It writes |
+|---|---|---|
+| [`/yaystatus`](.claude/skills/yaystatus/SKILL.md) | you want to know what is released, unreleased, open or not yet ported between editions | nothing (read-only) |
+| [`/yaybuild`](.claude/skills/yaybuild/SKILL.md) | dev work or a tester fix is ready for the tester | a test zip and BUILD.json in `dist/`, and a tester note |
+| [`/yayrelease`](.claude/skills/yayrelease/SKILL.md) | testing passed | a release branch, the version bump and changelog, the release zip and HANDOFF.md |
+| [`/yayrelease-fix`](.claude/skills/yayrelease-fix/SKILL.md) | a store sent the zip back | a fix on the release branch and a resubmission zip |
+| [`/yayfinalize`](.claude/skills/yayfinalize/SKILL.md) | the manager confirms the release is live | merges, the release tag, released support fixes |
+| [`/yayhotfix`](.claude/skills/yayhotfix/SKILL.md) | the live release has a bug and the dev branch has unreleased work | a release branch from the live tag, client builds (X.Y.Z-hotfix.N), the held release |
+| [`/yaysupport`](.claude/skills/yaysupport/SKILL.md) | a customer needs a patched zip now | a support branch, a client build, a support-log entry, a customer note |
+| [`/yayorchestrate`](.claude/skills/yayorchestrate/SKILL.md) | you build or release several plugin editions at once | the same, for every edition, after one review |
+| [`/yayinit`](.claude/skills/yayinit/SKILL.md) | a repo starts using the release skills, or its editions change | `.claude/release.config.json`, baseline tags |
 
 **Status lifecycle.** A spec or plan is deleted once its work ships; git history keeps it. An agent acts only on a spec whose Status is `accepted` or a plan whose Status is `active`. The Status words and when each one is set belong to the templates: [the design template](.claude/skills/yaybrainstorming/references/design-template.md) for specs, and [the plan template](.claude/skills/yayplan/references/plan-template.md) for plans.
 
@@ -100,6 +114,7 @@ A typical change runs `/yaybrainstorming`, then `/yayplan`, then you implement i
 | Duplicated facts before a PR, and the stacked-branch PR base | the `yaytidy` skill |
 | Turning a template of the HTML mock into a layout template, and the pitfalls templates 01–03 taught | the `build-checkout-template` skill |
 | Onboarding, review, promotion and release practice, agent tooling, harness upkeep | this README |
+| Builds, versions, changelogs, release branches and tags | `RELEASING.md`, the release skills and `.claude/release-kit/` |
 
 **Update-when triggers.** Every harness file opens with a Purpose line and an Update when line: in an HTML comment in `CLAUDE.md`, this README and the rules, in the first lines of each doc, decision record and backlog item, and in YAML comments in each skill's frontmatter. When your change matches a file's trigger, update that file in the same PR.
 
@@ -107,7 +122,7 @@ A typical change runs `/yaybrainstorming`, then `/yayplan`, then you implement i
 - `.claude/settings.local.json`: your own permissions and settings on top of `.claude/settings.json`;
 - `CLAUDE.local.md`: your own instructions on top of `CLAUDE.md`. It may drop the commit and PR trailers that `CLAUDE.md` asks for.
 
-**Shared skills.** The YayCommerce plugins share the five skills, and their canonical copy lives in [YayCommerce/YayLoyalty](https://github.com/YayCommerce/YayLoyalty/tree/dev/edd/.claude/skills). This repo copies each skill's directory whole and never edits it: a fix lands in YayLoyalty first, then the directory here is replaced. See [the harness record](docs/decisions/2026-10-05-harness-with-review-backlog.md).
+**Shared skills.** The YayCommerce plugins share the five skills, and their canonical copy lives in [YayCommerce/YayLoyalty](https://github.com/YayCommerce/YayLoyalty/tree/dev/edd/.claude/skills). This repo copies each skill's directory whole and never edits it: a fix lands in YayLoyalty first, then the directory here is replaced. See [the harness record](docs/decisions/2026-10-05-harness-with-review-backlog.md). The nine release skills, `.claude/release-kit/`, `.claude/agents/yayrelease-worker.md` and `RELEASING.md` are a copy of [YayCommerce/Yay-Release-Kit](https://github.com/YayCommerce/Yay-Release-Kit): change them there, then update this copy with its `install` script. See [the release kit record](docs/decisions/2026-11-04-release-kit.md).
 
 **Mechanical checks.** Run `./scripts/check-harness.sh` before merging a PR that changes a harness file. It checks paths, links, headers, rule globs, skill names, decision records and backlog items, prints one line per finding, and exits 1 if there is any. It fails on `dev/edd` today ([known issue](docs/known-issues.md)); your change must not add a finding.
 

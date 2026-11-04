@@ -1,0 +1,194 @@
+{
+    "schema": 1,
+    "settings": {
+        "dist": "dist",
+        "size_jump_pct": 25,
+        "remote": "origin"
+    },
+    "plugins": {
+        "yaycheckout": {
+            "name": "YayCheckout",
+            "version_policy": "shared",
+            "propagation": {
+                "method": "cherry-pick",
+                "flow": [
+                    [ "pro", "free" ]
+                ],
+                "note": "Pro is built from dev/edd and Free from dev/lite; fixes are cherry-picked from dev/edd to dev/lite"
+            },
+            "tag_format": "{plugin}-{edition}/v{version}",
+            "shared_code": [
+                {
+                    "package": "yaycommerce/admin-shell"
+                }
+            ],
+            "editions": {
+                "pro": {
+                    "label": "YayCheckout Pro (EDD store)",
+                    "target": "edd",
+                    "dev_branch": "dev/edd",
+                    "released_branch": "released/pro",
+                    "slug": "yaycheckout-pro",
+                    "main_file": "yaycheckout.php",
+                    "version_files": [
+                        {
+                            "path": "yaycheckout.php",
+                            "pattern": "^[ \\t/*#@]*Version:\\s*(?<v>[0-9][0-9.]*)"
+                        },
+                        {
+                            "path": "yaycheckout.php",
+                            "pattern": "define\\(\\s*'YAYCHECKOUT_VERSION',\\s*'(?<v>[^']+)'"
+                        },
+                        {
+                            "path": "readme.txt",
+                            "pattern": "^Stable tag:\\s*(?<v>\\S+)"
+                        }
+                    ],
+                    "prepare": "mkdir -p vendor-prefixed/src",
+                    "build": {
+                        "cmd": "./scripts/run.sh release --no-prompt --plan=pro",
+                        "output": "release/yaycheckout-pro-*.zip"
+                    },
+                    "changelog": {
+                        "file": "readme.txt",
+                        "section": "== Changelog ==",
+                        "heading": "= {version} =",
+                        "line": "* {prefix}: {text}",
+                        "prefixes": {
+                            "new": "New",
+                            "improved": "Improved",
+                            "fixed": "Fixed",
+                            "security": "Security"
+                        }
+                    },
+                    "zip_rules": {
+                        "must_contain": [
+                            {
+                                "path": "^includes/Pro/",
+                                "why": "the Pro build"
+                            },
+                            {
+                                "content": "LicenseConfigAdapter",
+                                "files": "(^|/)YayCheckoutPluginAdapter\\.php$",
+                                "why": "Pro is licensed through EDD (LicenseConfigAdapter)"
+                            }
+                        ]
+                    },
+                    "extra_gates": [
+                        {
+                            "id": "pro-boundary",
+                            "cmd": "bash scripts/check-pro-boundary.sh",
+                            "label": "scripts/check-pro-boundary.sh"
+                        }
+                    ],
+                    "store": {
+                        "item": "(EDD download not recorded yet)",
+                        "url": ""
+                    },
+                    "baseline": {
+                        "first_release": true,
+                        "version": null,
+                        "sha": null,
+                        "tag": null,
+                        "confirmed": true,
+                        "confirmed_by": "Trace Bui",
+                        "confirmed_on": "2026-11-04",
+                        "source": "never released (no store sale, not on WordPress.org); the first release ships the dev version"
+                    }
+                },
+                "free": {
+                    "label": "YayCheckout (WordPress.org)",
+                    "target": "wporg",
+                    "dev_branch": "dev/lite",
+                    "released_branch": "released/free",
+                    "slug": "yaycheckout",
+                    "main_file": "yaycheckout.php",
+                    "version_files": [
+                        {
+                            "path": "yaycheckout.php",
+                            "pattern": "^[ \\t/*#@]*Version:\\s*(?<v>[0-9][0-9.]*)"
+                        },
+                        {
+                            "path": "yaycheckout.php",
+                            "pattern": "define\\(\\s*'YAYCHECKOUT_VERSION',\\s*'(?<v>[^']+)'"
+                        },
+                        {
+                            "path": "readme.txt",
+                            "pattern": "^Stable tag:\\s*(?<v>\\S+)"
+                        }
+                    ],
+                    "prepare": "mkdir -p vendor-prefixed/src",
+                    "build": {
+                        "cmd": "./scripts/run.sh release --no-prompt --plan=free",
+                        "output": "release/yaycheckout-[0-9]*.zip"
+                    },
+                    "changelog": {
+                        "file": "readme.txt",
+                        "section": "== Changelog ==",
+                        "heading": "= {version} =",
+                        "line": "* {prefix}: {text}",
+                        "prefixes": {
+                            "new": "New",
+                            "improved": "Improved",
+                            "fixed": "Fixed",
+                            "security": "Security"
+                        }
+                    },
+                    "zip_rules": {
+                        "must_not_contain": [
+                            {
+                                "path": "^(includes/Pro|assets/dist/blocks/pro|templates/layouts/pro)/(?!(.*/)?preview\\.html$).*[^/]$",
+                                "why": "Free has no Pro PHP, blocks or templates (only the locked preview.html pages)"
+                            },
+                            {
+                                "path": "^packages/blocks/src/pro/(?!.*block\\.json$).*[^/]$",
+                                "why": "Free keeps only each Pro block's block.json"
+                            },
+                            {
+                                "path": "^vendor-prefixed/src/(License|Registry)/",
+                                "why": "Free strips admin-shell licensing and Recommended Plugins (scripts/free-admin-shell.patch)"
+                            },
+                            {
+                                "content": "EDD_SL_Plugin_Updater",
+                                "files": "\\.php$",
+                                "why": "wp.org rejects a plugin with its own updater"
+                            }
+                        ],
+                        "must_contain": [
+                            {
+                                "path": "^readme\\.txt$"
+                            },
+                            {
+                                "path": "^pnpm-lock\\.yaml$",
+                                "why": "wp.org needs the build source of assets/dist/"
+                            }
+                        ],
+                        "allow": [
+                            "lockfiles",
+                            "^apps/admin/(eslint\\.config\\.js|tsconfig(\\.node)?\\.json|vite\\.config\\.ts)$",
+                            "^packages/blocks/tsconfig\\.json$"
+                        ]
+                    },
+                    "extra_gates": [
+                        {
+                            "id": "pro-boundary",
+                            "cmd": "bash scripts/check-pro-boundary.sh",
+                            "label": "scripts/check-pro-boundary.sh"
+                        }
+                    ],
+                    "plugin_check": true,
+                    "baseline": {
+                        "first_release": true,
+                        "version": null,
+                        "sha": null,
+                        "tag": null,
+                        "confirmed": true,
+                        "confirmed_by": "Trace Bui",
+                        "confirmed_on": "2026-11-04",
+                        "source": "never released (not on WordPress.org: the API answers 'Plugin not found' for yaycheckout); the first release ships the dev version"
+                    }
+                }
+            }
+        }
+    }
+}
