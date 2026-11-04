@@ -1,4 +1,4 @@
-import { AlignmentControl, BlockControls, InspectorControls, PanelColorSettings, useBlockProps } from '@wordpress/block-editor';
+import { AlignmentControl, BlockControls, InspectorControls, PanelColorSettings, useBlockProps, Warning } from '@wordpress/block-editor';
 import { __experimentalNumberControl as NumberControl, PanelBody, ToggleControl } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import type { CSSProperties } from 'react';
@@ -29,12 +29,15 @@ interface EditProps {
 
 declare global {
 	interface Window {
-		yaycheckoutThankYouText?: { variants: Variant[] };
+		yaycheckoutThankYouText?: { insertable: boolean; variants: Variant[] };
 	}
 }
 
 /** Printed by ThankYouText::editor_data() before this script. */
 const VARIANTS: Variant[] = window.yaycheckoutThankYouText?.variants ?? [];
+
+/** Whether this editor is the layout's Thank you view, from ThankYouText::editor_data(). */
+export const INSERTABLE = window.yaycheckoutThankYouText?.insertable ?? false;
 
 /** Mirrors ThankYouText::DEFAULT_VARIANT. */
 const DEFAULT_VARIANT = '1e';
@@ -83,11 +86,10 @@ function wrapperProps( attributes: Attributes, variant: Variant | undefined ) {
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const variant = findVariant( attributes.variant );
 	const slots = variant?.slots ?? [];
-	const blockProps = useBlockProps( {
-		...wrapperProps( attributes, variant ),
-		role: 'img',
-		'aria-label': __( 'Thank you', 'yaycheckout' ),
-	} );
+	// Outside the Thank you view the canvas shows a warning instead, as the storefront prints nothing there.
+	const blockProps = useBlockProps(
+		INSERTABLE ? { ...wrapperProps( attributes, variant ), role: 'img', 'aria-label': __( 'Thank you', 'yaycheckout' ) } : {}
+	);
 
 	const colorSettings = slots.map( ( slot ) => ( {
 		label: slot === 'main' ? __( 'Main', 'yaycheckout' ) : __( 'Secondary', 'yaycheckout' ),
@@ -154,7 +156,15 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					</PanelColorSettings>
 				</InspectorControls>
 			) }
-			<div { ...blockProps } dangerouslySetInnerHTML={ { __html: variant?.svg ?? '' } } />
+			{ INSERTABLE ? (
+				<div { ...blockProps } dangerouslySetInnerHTML={ { __html: variant?.svg ?? '' } } />
+			) : (
+				<div { ...blockProps }>
+					<Warning>
+						{ __( 'Thank You Text shows only on the thank-you page. Move it to the Thank you view, or remove it.', 'yaycheckout' ) }
+					</Warning>
+				</div>
+			) }
 		</>
 	);
 }

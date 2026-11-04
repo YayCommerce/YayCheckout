@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Pro\Renderer;
 
+use YayCheckout\Engine\Admin\LayoutEditorEmbed;
 use YayCheckout\Renderer\CheckoutFragments;
 
 defined( 'ABSPATH' ) || exit;
@@ -10,6 +11,9 @@ defined( 'ABSPATH' ) || exit;
  * optionally recoloured. Each artwork keeps its original colours in its fill and stroke attributes; a colour
  * the merchant sets becomes a variable that style.css applies to the slot's classes only while the wrapper
  * carries has-main-color or has-secondary-color, so an unset slot keeps the original.
+ *
+ * It belongs to the thank-you page only: the editor offers it only in the Thank you view, and it prints
+ * nothing on any other page, such as the checkout, should it reach another view by copy or import.
  */
 class ThankYouText {
 
@@ -108,22 +112,34 @@ class ThankYouText {
         return self::$svgs[ $id ];
     }
 
-    /** Prints the editor's artworks before the block's editor script. */
+    /**
+     * Prints the editor's artworks before the block's editor script, and whether this editor is the Thank you
+     * view. Each view is its own page load, so the view is known here.
+     */
     public static function editor_data(): void {
         $handle = generate_block_asset_handle( 'yaycheckout/thank-you-text', 'editorScript' );
 
         if ( wp_script_is( $handle, 'registered' ) ) {
-            wp_add_inline_script( $handle, 'window.yaycheckoutThankYouText = ' . wp_json_encode( [ 'variants' => self::variants() ] ) . ';', 'before' );
+            $data = [
+                'insertable' => LayoutEditorEmbed::VIEW_THANK_YOU === LayoutEditorEmbed::current_view(),
+                'variants'   => self::variants(),
+            ];
+
+            wp_add_inline_script( $handle, 'window.yaycheckoutThankYouText = ' . wp_json_encode( $data ) . ';', 'before' );
         }
     }
 
     /**
-     * The block's markup. An unknown variant prints the default; a colour applies only to a slot the artwork has.
-     * Mirrors wrapperProps() in thank-you-text/edit.tsx.
+     * The block's markup on the thank-you page (a preview link's too), empty anywhere else. An unknown variant
+     * prints the default; a colour applies only to a slot the artwork has. Mirrors wrapperProps() in thank-you-text/edit.tsx.
      *
      * @param array $attributes Block attributes.
      */
     public static function markup( array $attributes ): string {
+        if ( ! ThankYouPage::get_instance()->takes_over() ) {
+            return '';
+        }
+
         $variant = $attributes['variant'] ?? '';
         $variant = is_string( $variant ) && isset( self::VARIANTS[ $variant ] ) ? $variant : self::DEFAULT_VARIANT;
 
