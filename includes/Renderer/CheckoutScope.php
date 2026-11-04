@@ -1,6 +1,8 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Models\Layout;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -15,9 +17,13 @@ final class CheckoutScope {
 
     public const FLOATING_LABELS_CLASS = 'yaycheckout-scope--floating-labels';
 
-    /** The scope classes for the served layout, space-separated. */
-    public static function classes(): string {
-        $layout = CheckoutPage::get_instance()->layout();
+    /**
+     * The scope classes for $layout, or for the served checkout layout without one, space-separated.
+     *
+     * @param Layout|null $layout The layout the page renders, when it isn't the checkout's (Pro's thank-you page).
+     */
+    public static function classes( ?Layout $layout = null ): string {
+        $layout = $layout ?? CheckoutPage::get_instance()->layout();
 
         return null !== $layout && $layout->design->has_floating_labels()
             ? self::CLASS_NAME . ' ' . self::FLOATING_LABELS_CLASS

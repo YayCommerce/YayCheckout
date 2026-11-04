@@ -20,8 +20,9 @@ $yaycheckout_order     = $yaycheckout_thank_you->order();
  * and the browser refuses to load it.
  */
 ob_start();
+// The thank-you page has no Checkout block, so the scope class carries the checkout's styles (the design's buttons and fields) to its blocks.
 ?>
-<div class="woocommerce yaycheckout-page">
+<div class="woocommerce yaycheckout-page <?php echo esc_attr( \YayCheckout\Renderer\CheckoutScope::classes( $yaycheckout_layout ) ); ?>">
     <?php
     $yaycheckout_preview = \YayCheckout\Renderer\PreviewRequest::get_instance();
 

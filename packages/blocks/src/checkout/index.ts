@@ -10,6 +10,7 @@ import './layout-actions';
 import './layout-design';
 import './locked-pro-blocks';
 import './publish-guard';
+import './thank-you-scope';
 import '../shared/pin-to-bottom';
 
 registerDynamicBlock( metadata, checkoutIcon, Edit, saveNestedBlocks );
