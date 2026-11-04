@@ -23,7 +23,7 @@ Accepted, 2026-10-05, by Trace Bui, who confirmed the reasons. Backfilled: the d
 ## Consequences
 
 - YayCheckout runs beside any other YayCommerce plugin, whatever admin-shell version each one bundles.
-- `vendor-prefixed/` is generated and gitignored, so a fresh clone can't install until the sync has run once: see [known-issues.md](../known-issues.md).
+- `vendor-prefixed/` is generated but committed (since admin-shell 2.10), so a fresh clone installs with `composer install`; `composer shell-update` regenerates it.
 - The sync updates dependencies and may rewrite `composer.json` and `scoper.inc.php`, and a lasting change to `scoper.inc.php` belongs in admin-shell's template.
 - The tooling needs a newer PHP than the product: php-scoper needs PHP 8.2 or later, while the plugin must still run on 7.4.
 - Every global name the shell uses, such as a WordPress function, class or constant, has to be excluded in `scoper.inc.php`. A name that isn't excluded gets the prefix and no longer reaches WordPress.

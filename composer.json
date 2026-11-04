@@ -2,7 +2,7 @@
   "name": "yaycommerce/yaycheckout",
   "type": "wordpress-plugin",
   "require": {
-    "yaycommerce/admin-shell": "^2.5"
+    "yaycommerce/admin-shell": "^2.10"
   },
   "repositories": {
     "admin-shell": {

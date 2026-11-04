@@ -11,13 +11,6 @@
 - **Workaround:** run `nvm use` in the repo root, which reads `.nvmrc`, before any pnpm command.
 - **Remove when:** every teammate's shell defaults to Node 22 or later.
 
-## A fresh clone's first install fails on `vendor-prefixed/src`
-
-- **Symptom:** on a fresh clone, `composer install`, and so `pnpm install` through the root `postinstall`, fails with `Could not scan for classes inside "vendor-prefixed/src" which does not appear to be a file nor a folder`. Composer downloads the packages but never writes `vendor/autoload.php`, which `yaycheckout.php` requires, so WordPress fatals when it loads the plugin.
-- **Cause:** `composer.json` classmaps `vendor-prefixed/src`, a gitignored directory that only the [admin-shell sync](architecture.md#admin-shell-sync-and-scoping) fills. Composer stops on a classmap path that doesn't exist.
-- **Workaround:** on a fresh clone, run `./scripts/run.sh dev` first; it creates the directory before it installs. Or run `mkdir -p vendor-prefixed/src`, then `composer install` and `composer shell-update`.
-- **Remove when:** `composer install` succeeds on a fresh clone.
-
 ## pnpm installs on its own, and the install runs `composer install`
 
 - **Symptom:** a command that should only run a tool first runs `pnpm install`, for example `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit` on a clone without `node_modules`. The root `postinstall` then runs `composer install`, which can rewrite `vendor/`. `.claude/settings.json` lets Claude run the admin lint and type-check without asking, so Claude can set off both installs with no prompt.
