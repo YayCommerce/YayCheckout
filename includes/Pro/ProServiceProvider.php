@@ -6,6 +6,7 @@ use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Pro\Controllers\LayoutImportRestController;
 use YayCheckout\Pro\Controllers\LayoutRulesRestController;
 use YayCheckout\Pro\Controllers\ThankYouRestController;
+use YayCheckout\Pro\Renderer\OrderAgain;
 use YayCheckout\Pro\Renderer\ThankYouPage;
 use YayCheckout\Blocks\BlockRegistry;
 use YayCheckout\Pro\Services\AssignmentStoreData;
@@ -30,6 +31,9 @@ class ProServiceProvider {
 
         // The thank-you page: order-received takeover, its editor view, admin bar item and live values.
         ThankYouPage::get_instance();
+
+        // The Order Again Button's form: refills the cart from a past order, then opens the checkout.
+        OrderAgain::get_instance();
     }
 
     /**
