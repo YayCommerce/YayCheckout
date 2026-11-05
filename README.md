@@ -59,7 +59,6 @@ A checkout builder for WooCommerce: merchants build checkout layouts from blocks
 The git rules are in [CLAUDE.md § Git](CLAUDE.md#git): branch names, Conventional Commits, PR-only into `dev/edd`, and what an agent may never do. The parts only people do:
 
 - **Review.** Every PR into `dev/edd` needs one approval from a teammate other than its author, then it is squash-merged.
-- **Promotion.** `dev/edd` reaches `main` by a PR with a merge commit, before a release.
 - **Releases.** Build Pro from `dev/edd` and Free from `dev/lite`, after merging `dev/edd` into `dev/lite`. The release commands are in [CLAUDE.md § Commands](CLAUDE.md#commands). What the release builds and checks is in [docs/architecture.md § Build and release](docs/architecture.md#build-and-release), and the rules for changing it are in [.claude/rules/release.md](.claude/rules/release.md). Release notes go in `readme.txt`.
 
 ## Agent tooling

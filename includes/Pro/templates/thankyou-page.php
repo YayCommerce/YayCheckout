@@ -38,6 +38,11 @@ ob_start();
     if ( null !== $yaycheckout_order ) {
         $yaycheckout_order_id = $yaycheckout_order->get_id();
 
+        // When the Save as PDF Button printed a payment slot above, a wrapper lets it copy the gateway's output (bank details)
+        // without running the gateway's hook again. Otherwise the output stays unwrapped, as WooCommerce prints it. The Payment
+        // Instructions block carries the wrapper's class itself, so the copy comes from it when the layout has one.
+        $yaycheckout_wrap_gateway = \YayCheckout\Pro\Renderer\OrderPrintSummary::has_payment_slot();
+
         // Same order as WooCommerce's checkout/thankyou.php so gateway instructions still print.
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce thank-you hooks.
         do_action( 'woocommerce_before_thankyou', $yaycheckout_order_id );
@@ -45,7 +50,17 @@ ob_start();
         // phpcs:enable
 
         // woocommerce_thankyou_<gateway>, unless the Payment Instructions block already fired it in the layout. Gateways and tracking scripts on it still run without the block.
-        echo $yaycheckout_thank_you->payment_instructions(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Whatever the gateway's callbacks print, as do_action() would.
+        $yaycheckout_gateway_output = $yaycheckout_thank_you->payment_instructions();
+
+        if ( $yaycheckout_wrap_gateway && '' !== $yaycheckout_gateway_output ) {
+            echo '<div class="' . esc_attr( \YayCheckout\Pro\Renderer\OrderPrintSummary::GATEWAY_CLASS ) . '">';
+        }
+
+        echo $yaycheckout_gateway_output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Whatever the gateway's callbacks print, as do_action() would.
+
+        if ( $yaycheckout_wrap_gateway && '' !== $yaycheckout_gateway_output ) {
+            echo '</div>';
+        }
     }
     ?>
 </div>

@@ -189,11 +189,27 @@ export const paymentInstructionsIcon = /*#__PURE__*/ icon(
 		<path d="M5 10v7M9.5 10v7M14.5 10v7M19 10v7M3 20h18" />
 	</>
 );
+// A cart with a loop arrow: the order's items going back in the cart.
+export const orderAgainIcon = /*#__PURE__*/ icon(
+	<>
+		<path d="M3 4.5h2.5l2 10h11l1.75-7H6" />
+		<circle cx="9" cy="18.5" r="1.25" />
+		<circle cx="17" cy="18.5" r="1.25" />
+		<path d="M15.5 11a2.75 2.75 0 1 1-1-2.1M14.75 7.5v1.6h-1.6" />
+	</>
+);
 /** Pro's Thank You Text: a heart above a handwritten line. */
 export const thankYouTextIcon = /*#__PURE__*/ icon(
 	<>
 		<path d="M12 12.5s-4.5-2.6-4.5-5.4A2.25 2.25 0 0 1 12 6a2.25 2.25 0 0 1 4.5 1.1c0 2.8-4.5 5.4-4.5 5.4Z" />
 		<path d="M4 18c1.5-1.5 2.5-1.5 3.5 0s2 1.5 3 0 2-1.5 3 0 2 1.5 3 0 1.5-1.5 3.5 0" />
+	</>
+);
+/** Pro's Save as PDF Button: a page with a download arrow. */
+export const savePdfIcon = /*#__PURE__*/ icon(
+	<>
+		<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+		<path d="M14 3v5h5M12 11v6M9.5 14.5 12 17l2.5-2.5" />
 	</>
 );
 export const orderSummaryToggleIcon = /*#__PURE__*/ icon( <path d="M4 7h16v10H4zM9 11l3 3 3-3" /> );

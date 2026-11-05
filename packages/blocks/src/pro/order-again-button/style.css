@@ -1,0 +1,72 @@
+/*
+ * The button takes the layout design's button look, as Place order does (place-order/style.css; change both
+ * together). On the canvas it is a RichText div, so it also takes a button's border-box. The form is only
+ * the button's carrier and adds no space of its own.
+ */
+.yaycheckout-order-again-form {
+	margin: 0;
+}
+
+:where(.wp-block-yaycheckout-order-again-button) {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	cursor: pointer;
+}
+
+.wp-block-yaycheckout-order-again-button:disabled {
+	cursor: not-allowed;
+	opacity: 0.7;
+}
+
+/* Classic themes (Storefront) set button { border: none }, which beats core's :where() border-style fallback. */
+.wp-block-yaycheckout-order-again-button:where(.has-border-color, [style*="border-width"], [style*="border-top-width"], [style*="border-right-width"], [style*="border-bottom-width"], [style*="border-left-width"]) {
+	border-style: solid;
+}
+
+/* Two classes, to outrank the theme's `:root :where(.wp-element-button)`. The block's own settings win. */
+.wp-block-yaycheckout-order-again-button.wp-element-button {
+	border-radius: var(--yaycheckout-button-radius, var(--yaycheckout-neutral-radius, 2px));
+	font-weight: var(--yaycheckout-button-font-weight, 600);
+	text-transform: var(--yaycheckout-button-text-transform, none);
+}
+
+.wp-block-yaycheckout-order-again-button:not(.has-background),
+.wp-block-yaycheckout-order-again-button:not(.has-background):focus {
+	background: var(--yaycheckout-button-background, var(--yaycheckout-primary-color, #3858e9));
+}
+
+.wp-block-yaycheckout-order-again-button:not(.has-background):hover {
+	background: var(--yaycheckout-button-hover-background, var(--yaycheckout-button-background, var(--yaycheckout-primary-color, #3858e9)));
+}
+
+.wp-block-yaycheckout-order-again-button:not(.has-text-color),
+.wp-block-yaycheckout-order-again-button:not(.has-text-color):focus {
+	color: var(--yaycheckout-button-color, #fff);
+}
+
+.wp-block-yaycheckout-order-again-button:not(.has-text-color):hover {
+	color: var(--yaycheckout-button-hover-color, var(--yaycheckout-button-color, #fff));
+}
+
+/* The align support's classes; a theme's floats would wrap what follows around the button. */
+.wp-block-yaycheckout-order-again-button.alignleft,
+.wp-block-yaycheckout-order-again-button.aligncenter,
+.wp-block-yaycheckout-order-again-button.alignright {
+	display: flex;
+	width: fit-content;
+	float: none;
+}
+
+.wp-block-yaycheckout-order-again-button.alignleft {
+	margin-inline: 0 auto;
+}
+
+.wp-block-yaycheckout-order-again-button.aligncenter {
+	margin-inline: auto;
+}
+
+.wp-block-yaycheckout-order-again-button.alignright {
+	margin-inline: auto 0;
+}

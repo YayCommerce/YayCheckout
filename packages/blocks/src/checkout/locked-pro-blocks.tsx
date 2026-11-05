@@ -4,9 +4,11 @@ import { __, sprintf } from '@wordpress/i18n';
 import {
 	backButtonIcon,
 	goToStepIcon,
+	orderAgainIcon,
 	orderCustomerDetailsIcon,
 	orderDetailsIcon,
 	paymentInstructionsIcon,
+	savePdfIcon,
 	stepButtonIcon,
 	stepIcon,
 	stepsIcon,
@@ -35,7 +37,9 @@ const PRO_BLOCK_ICONS: Record< string, JSX.Element > = {
 	'yaycheckout/order-details': orderDetailsIcon,
 	'yaycheckout/order-customer-details': orderCustomerDetailsIcon,
 	'yaycheckout/payment-instructions': paymentInstructionsIcon,
+	'yaycheckout/order-again-button': orderAgainIcon,
 	'yaycheckout/thank-you-text': thankYouTextIcon,
+	'yaycheckout/save-pdf-button': savePdfIcon,
 };
 
 /**

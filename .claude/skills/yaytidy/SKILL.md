@@ -74,7 +74,7 @@ Branch mode against feature/parent (a1b2c3d): 12 changed files, untracked: src/n
 In commit mode, it gives the commit's short SHA, its subject, its file count and the number of rewritten lines, and says when the commit is already in the base:
 
 ```
-Commit mode: 3f2c1ab "Add order export": 4 files, 6 changed lines rewritten later (not checked); already in origin/main
+Commit mode: 3f2c1ab "Add order export": 4 files, 6 changed lines rewritten later (not checked); already in origin/dev/edd
 ```
 
 In path mode, it gives the paths as typed and their file count:
