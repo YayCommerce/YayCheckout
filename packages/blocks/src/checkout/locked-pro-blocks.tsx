@@ -11,6 +11,7 @@ import {
 	stepIcon,
 	stepsIcon,
 	stepsProgressIcon,
+	thankYouTextIcon,
 } from '../shared/block-icons';
 import { editorData } from '../shared/editor-data';
 import { PRO_BLOCK_METAS } from '../shared/pro-blocks';
@@ -34,6 +35,7 @@ const PRO_BLOCK_ICONS: Record< string, JSX.Element > = {
 	'yaycheckout/order-details': orderDetailsIcon,
 	'yaycheckout/order-customer-details': orderCustomerDetailsIcon,
 	'yaycheckout/order-again-button': orderAgainIcon,
+	'yaycheckout/thank-you-text': thankYouTextIcon,
 };
 
 /**
