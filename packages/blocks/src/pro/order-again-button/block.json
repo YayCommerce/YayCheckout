@@ -1,0 +1,72 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/order-again-button",
+  "title": "Order Again Button",
+  "category": "yaycheckout",
+  "description": "On the thank-you page, puts the order's items back in the cart, without coupons, and opens the checkout.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "thank you", "order again", "reorder", "buy again" ],
+  "example": {
+    "attributes": {
+      "buttonText": "Order again"
+    }
+  },
+  "attributes": {
+    "buttonText": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false,
+    "align": [
+      "left",
+      "center",
+      "right"
+    ],
+    "color": {
+      "gradients": true,
+      "__experimentalDefaultControls": {
+        "background": true,
+        "text": true
+      }
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "__experimentalFontFamily": true,
+      "__experimentalFontWeight": true,
+      "__experimentalFontStyle": true,
+      "__experimentalTextTransform": true,
+      "__experimentalTextDecoration": true,
+      "__experimentalLetterSpacing": true,
+      "__experimentalDefaultControls": {
+        "fontSize": true
+      }
+    },
+    "spacing": {
+      "margin": [ "top", "bottom" ],
+      "padding": [ "horizontal", "vertical" ],
+      "__experimentalDefaultControls": {
+        "margin": true,
+        "padding": true
+      }
+    },
+    "dimensions": {
+      "width": true
+    },
+    "shadow": true,
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    }
+  },
+  "editorScript": "file:./index.js",
+  "style": "file:./style-index.css",
+  "render": "file:./render.php"
+}
