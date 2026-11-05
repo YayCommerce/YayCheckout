@@ -6,6 +6,8 @@
 
 ## Status
 
+Superseded, 2026-11-05, by [One branch builds both editions](2026-11-05-one-branch-both-editions.md). The editions are still told apart by the adapter and the header, but `--plan` picks them at release time and there is only one branch. Kept as the record of why Pro's licensing is the admin-shell's.
+
 Accepted, 2026-10-19, by Trace Bui.
 
 ## Context

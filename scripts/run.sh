@@ -43,6 +43,10 @@ src/Pages/LicensesPage.php src/Pages/RecommendedPluginsPage.php views/license-ca
 views/licenses-page.php views/recommended-plugins-data.php views/recommended-plugins-page.php
 assets/css/licenses.css assets/css/other-plugins.css assets/js/license.js assets/js/other-plugins.js"
 FREE_SHELL_PATCH="$PLUGIN_DIR/scripts/free-admin-shell.patch"
+
+# The Free edition's adapter (no licensing, a Go Pro link). Staged over the root
+# YayCheckoutPluginAdapter.php, which is Pro, when --plan=free.
+FREE_ADAPTER="$PLUGIN_DIR/editions/YayCheckoutPluginAdapter.free.php"
 # A gettext call whose text domain is admin-shell's 'yaycommerce'. wordpress.org rejects a zip whose text domain
 # differs from the plugin slug, so the release rewrites it. The menu slug 'yaycommerce' sits outside these calls
 # and stays. Kept out of scoper.inc.php, which the admin-shell sync regenerates.
@@ -70,6 +74,41 @@ print_success() { print_msg "$GREEN" "✓ $1"; }
 print_error()   { print_msg "$RED" "✗ $1"; }
 print_warning() { print_msg "$YELLOW" "⚠ $1"; }
 print_info()    { print_msg "$CYAN" "ℹ $1"; }
+
+# Fail unless the staged copy's adapter and plugin name match the plan being built. The
+# editions differ in these two files alone, so a wrong one here is a wrong edition shipped:
+# Pro's adapter implements LicenseConfigAdapter and its header names YayCheckout Pro, and
+# Free's adapter must name neither.
+assert_staged_plan() {
+    local dir=$1
+    local want=$2
+    local adapter="$dir/YayCheckoutPluginAdapter.php"
+    local has_license="no"
+    local name
+
+    if grep -q 'LicenseConfigAdapter' "$adapter"; then
+        has_license="yes"
+    fi
+    name=$(grep -m1 '^ \* Plugin Name:' "$dir/$PLUGIN_SLUG.php" || true)
+
+    if [ "$want" = "pro" ] && [ "$has_license" = "no" ]; then
+        print_error "Staged Pro adapter does not implement LicenseConfigAdapter: $adapter"
+        exit 1
+    fi
+    if [ "$want" = "free" ] && [ "$has_license" = "yes" ]; then
+        print_error "Staged Free adapter implements LicenseConfigAdapter: $adapter"
+        exit 1
+    fi
+    if [ "$want" = "pro" ] && ! printf '%s' "$name" | grep -q 'YayCheckout Pro'; then
+        print_error "Staged Pro header is not YayCheckout Pro: $name"
+        exit 1
+    fi
+    if [ "$want" = "free" ] && printf '%s' "$name" | grep -q 'Pro'; then
+        print_error "Staged Free header names Pro: $name"
+        exit 1
+    fi
+    print_info "Staged edition matches plan '$want'"
+}
 
 # Portable in-place sed edit (macOS/Linux compatible)
 sed_inplace() {
@@ -306,30 +345,15 @@ cmd_release() {
         esac
     done
 
-    # The branch decides the edition: dev/edd's adapter is Pro (LicenseConfigAdapter),
-    # dev/lite's is Free. --plan may only confirm it, so a Free zip never ships the Pro
-    # adapter and header, nor a Pro zip the Free ones.
-    local branch_plan="free"
-    local branch_name="dev/lite"
-    if grep -q 'LicenseConfigAdapter' "$PLUGIN_DIR/YayCheckoutPluginAdapter.php"; then
-        branch_plan="pro"
-        branch_name="dev/edd"
-    fi
-    [ -z "$plan" ] && plan="$branch_plan"
+    # --plan decides the edition; one branch builds both. The branch's own files are Pro
+    # (the root adapter and the 'YayCheckout Pro' header), so Pro is the default and Free
+    # is the one that swaps them in the staging copy below. assert_staged_plan() checks
+    # the swap happened before anything is zipped, and the artifact checks after it.
+    [ -z "$plan" ] && plan="pro"
 
     if [ "$plan" != "free" ] && [ "$plan" != "pro" ]; then
         print_error "Invalid plan: $plan"
         echo "Use: --plan=free or --plan=pro"
-        exit 1
-    fi
-
-    if [ "$plan" != "$branch_plan" ]; then
-        print_error "This branch builds $branch_plan (see YayCheckoutPluginAdapter.php), not $plan"
-        if [ "$plan" = "pro" ]; then
-            echo "Check out dev/edd to build Pro."
-        else
-            echo "Check out dev/lite to build Free."
-        fi
         exit 1
     fi
 
@@ -480,6 +504,20 @@ cmd_release() {
             fi
         done
         print_info "Free build: removed the admin-shell licensing and Recommended Plugins"
+
+        # The edition's two remaining files. The branch carries the Pro adapter and the Pro
+        # header; Free's adapter is a build input beside it, and its header differs in the
+        # plugin name and the wordpress.org dependency line Pro has no use for.
+        if [ ! -f "$FREE_ADAPTER" ]; then
+            print_error "Free adapter is missing: $FREE_ADAPTER"
+            exit 1
+        fi
+        cp "$FREE_ADAPTER" "$temp_dir/YayCheckoutPluginAdapter.php"
+        sed_inplace "s/^ \\* Plugin Name:       YayCheckout Pro - / * Plugin Name:       YayCheckout - /" "$temp_dir/$PLUGIN_SLUG.php"
+        # perl, not sed_inplace: a literal newline in the replacement is not portable
+        # between GNU and BSD sed. Same reason the text-domain rewrite below uses perl.
+        perl -pi -e 's{^ \* Requires PHP: (.*)$}{ * Requires PHP: $1\n * Requires Plugins:  woocommerce}' "$temp_dir/$PLUGIN_SLUG.php"
+        print_info "Free build: staged the Free adapter and header"
     fi
 
     # The copied classmap is the dev one, and for Free it still lists the files just deleted (wordpress.org
@@ -505,6 +543,10 @@ cmd_release() {
             rm -f "$rtl_css"
         fi
     done
+
+    # The staged adapter is what tells the editions apart now that no branch does. Check it
+    # before the zip, so a mis-staged adapter fails here rather than shipping.
+    assert_staged_plan "$temp_dir" "$plan"
 
     print_step "Creating ZIP archive..."
     cd "$RELEASE_DIR"
@@ -722,8 +764,8 @@ cmd_help() {
     echo "  shell-update                 Update admin-shell, rebuild vendor-prefixed/ (atomic); commit it"
     echo "  build                        Build admin dashboard + blocks for production"
     echo "  release [version] [--plan=free|pro] [--wp-tested=X.Y] [--wc-tested=X.Y] [--no-prompt]"
-    echo "                               Create release ZIP in release/ for this branch's edition"
-    echo "                               (dev/edd: Pro, dev/lite: Free); --plan must match it"
+    echo "                               Create release ZIP in release/ for the chosen edition"
+    echo "                               (--plan selects it; Pro by default)"
     echo "                               Prompts for version and WP/WC tested-up-to unless given"
     echo "  bump <version>               Bump version in plugin files"
     echo "  info                         Show current version info"

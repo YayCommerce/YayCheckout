@@ -4,25 +4,27 @@ name: PHP
 # Docs-only and SPA-only changes skip it.
 on:
   pull_request:
-    branches: [dev/edd, dev/lite]
+    branches: [dev/edd]
     paths:
       - 'includes/**'
       - 'packages/blocks/src/**'
       - 'templates/**'
       - 'yaycheckout.php'
       - 'YayCheckoutPluginAdapter.php'
+      - 'editions/**'
       - 'uninstall.php'
       - 'index.php'
       - 'scripts/check-pro-boundary.sh'
       - '.github/workflows/php.yml'
   push:
-    branches: [dev/edd, dev/lite]
+    branches: [dev/edd]
     paths:
       - 'includes/**'
       - 'packages/blocks/src/**'
       - 'templates/**'
       - 'yaycheckout.php'
       - 'YayCheckoutPluginAdapter.php'
+      - 'editions/**'
       - 'uninstall.php'
       - 'index.php'
       - 'scripts/check-pro-boundary.sh'
@@ -52,7 +54,7 @@ jobs:
       # Product PHP must run on PHP 7.4 (CLAUDE.md hard rule 4). scoper.inc.php is dev tooling and is skipped.
       - name: Lint product PHP
         run: |
-          find includes packages/blocks/src templates yaycheckout.php YayCheckoutPluginAdapter.php uninstall.php index.php \
+          find includes editions packages/blocks/src templates yaycheckout.php YayCheckoutPluginAdapter.php uninstall.php index.php \
             -name '*.php' -print0 \
             | xargs -0 -n1 -P4 php -l > lint.log 2>&1 || {
               grep -v '^No syntax errors' lint.log

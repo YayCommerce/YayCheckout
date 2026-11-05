@@ -5,7 +5,7 @@ Update when: a requirement or a setup step changes, the review, promotion or rel
 
 # YayCheckout: WooCommerce Checkout Builder
 
-A checkout builder for WooCommerce: merchants build checkout layouts from blocks, assign them to shoppers, and style them, and the storefront renders the active layout in place of WooCommerce's checkout form. One repository ships a Pro build from `dev/edd` and a Free build from `dev/lite` ([how they split](docs/architecture.md#free-and-pro)).
+A checkout builder for WooCommerce: merchants build checkout layouts from blocks, assign them to shoppers, and style them, and the storefront renders the active layout in place of WooCommerce's checkout form. One branch, `dev/edd`, ships both a Pro and a Free build, chosen by `--plan` at release time ([how they split](docs/architecture.md#free-and-pro)).
 
 ## Requirements
 
@@ -59,7 +59,7 @@ A checkout builder for WooCommerce: merchants build checkout layouts from blocks
 The git rules are in [CLAUDE.md § Git](CLAUDE.md#git): branch names, Conventional Commits, PR-only into `dev/edd`, and what an agent may never do. The parts only people do:
 
 - **Review.** Every PR into `dev/edd` needs one approval from a teammate other than its author, then it is squash-merged.
-- **Releases.** Build Pro from `dev/edd` and Free from `dev/lite`, after merging `dev/edd` into `dev/lite`. The release commands are in [CLAUDE.md § Commands](CLAUDE.md#commands). What the release builds and checks is in [docs/architecture.md § Build and release](docs/architecture.md#build-and-release), and the rules for changing it are in [.claude/rules/release.md](.claude/rules/release.md). Release notes go in `readme.txt`.
+- **Releases.** Build both editions from `dev/edd` with `--plan=pro` and `--plan=free`. The release commands are in [CLAUDE.md § Commands](CLAUDE.md#commands). What the release builds and checks is in [docs/architecture.md § Build and release](docs/architecture.md#build-and-release), and the rules for changing it are in [.claude/rules/release.md](.claude/rules/release.md). Release notes go in `readme.txt`.
 
 ## Agent tooling
 

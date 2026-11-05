@@ -7,6 +7,8 @@
     <file>yaycheckout.php</file>
     <file>index.php</file>
     <file>YayCheckoutPluginAdapter.php</file>
+    <!-- The Free edition's adapter: a release build input, linted like the Pro one beside it. -->
+    <file>editions</file>
     <file>uninstall.php</file>
     <!-- Block render callbacks live beside their block.json, per wp-scripts convention. -->
     <file>packages/blocks/src</file>
@@ -27,6 +29,16 @@
     <exclude-pattern>*/release/*</exclude-pattern>
     <!-- php-scoper build config: compact symbol lists, not WordPress runtime code. -->
     <exclude-pattern>scoper.inc.php</exclude-pattern>
+
+    <!--
+        editions/ holds the Free build input, which declares the same
+        YayCheckoutPluginAdapter as the root file on purpose: the release stages one over
+        the other, so only ever one of them is loaded. Flagging the duplicate would mean
+        flagging the design.
+    -->
+    <rule ref="Generic.Classes.DuplicateClassName.Found">
+        <exclude-pattern>editions/*</exclude-pattern>
+    </rule>
 
     <arg name="extensions" value="php"/>
     <arg name="colors"/>
