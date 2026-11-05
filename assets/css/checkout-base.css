@@ -922,6 +922,36 @@ body.yaycheckout-page .blockUI.blockOverlay::before {
 	font-weight: 400;
 }
 
+/*
+ * The thank-you blocks start and end flush, so the layout's block gap alone spaces one from the next: WooCommerce's
+ * markup inside brings its own margins (a heading's top, the bank list's 3em, the table's 24px, a section's 2em).
+ * div: outranks .woocommerce .woocommerce-order-details. Margins between the parts inside a block stay.
+ */
+div:is(.yaycheckout-payment-instructions, .yaycheckout-order-details, .yaycheckout-order-customer-details) > :first-child,
+:is(.yaycheckout-payment-instructions, .yaycheckout-order-details, .yaycheckout-order-customer-details) :is(section, .woocommerce-column) > :first-child {
+	margin-top: 0;
+}
+
+div:is(.yaycheckout-payment-instructions, .yaycheckout-order-details, .yaycheckout-order-customer-details) > :last-child,
+:is(.yaycheckout-payment-instructions, .yaycheckout-order-details, .yaycheckout-order-customer-details) :is(section, .woocommerce-column) > :last-child {
+	margin-bottom: 0;
+}
+
+/*
+ * The thank-you blocks' headings, sized from the block's own text so they sit under the page title instead of
+ * taking the theme's h2/h3 (x-large and large), and still follow a font size the merchant gives the block. The
+ * layout editor loads this file too, so the canvas shows the same sizes.
+ */
+:is(.yaycheckout-payment-instructions, .yaycheckout-order-details, .yaycheckout-order-customer-details) h2 {
+	font-size: 1.25em;
+}
+
+/* Direct bank transfer's account name: a label over its account fields. */
+.yaycheckout-payment-instructions h3 {
+	font-size: 1em;
+	font-weight: 600;
+}
+
 /* iOS zooms into a focused field whose text is under 16px. */
 @media (pointer: coarse) {
 	:is(.yaycheckout-checkout, .yaycheckout-scope) :is(.input-text, select, textarea, .yaycheckout-coupon-form__code) {
