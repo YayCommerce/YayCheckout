@@ -40,7 +40,7 @@ The team keeps only tests that guard real risk, so a test is warranted in two ca
 ## Git
 
 - Branch from `dev/edd` as `<name>/<type>/<topic>`.
-- Every change, docs included, lands through a PR into `dev/edd` (squash merge). Never commit to `dev/edd`, `dev/lite` or `main` directly; `dev/edd` reaches `main` through its own PR.
+- Every change, docs included, lands through a PR into `dev/edd` (squash merge). Never commit to `dev/edd` or `dev/lite` directly. `dev/edd` is the repository's default branch; there is no `main`.
 - `dev/lite` is the Free edition: `dev/edd` is merged into it (merge commit, not squash), keeping its own `YayCheckoutPluginAdapter.php` and `Plugin Name` header. Never carry either file's edition lines across.
 - Commit messages follow Conventional Commits: `type(scope): summary`.
 - End each commit message with `Co-Authored-By: Claude <model> <noreply@anthropic.com>`, naming the model you run as, and each PR description you write with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. A personal `CLAUDE.local.md` may drop them.
