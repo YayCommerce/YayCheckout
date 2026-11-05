@@ -10,6 +10,7 @@ import {
 	stepIcon,
 	stepsIcon,
 	stepsProgressIcon,
+	thankYouTextIcon,
 } from '../shared/block-icons';
 import { editorData } from '../shared/editor-data';
 import { PRO_BLOCK_METAS } from '../shared/pro-blocks';
@@ -32,6 +33,7 @@ const PRO_BLOCK_ICONS: Record< string, JSX.Element > = {
 	'yaycheckout/go-to-step': goToStepIcon,
 	'yaycheckout/order-details': orderDetailsIcon,
 	'yaycheckout/order-customer-details': orderCustomerDetailsIcon,
+	'yaycheckout/thank-you-text': thankYouTextIcon,
 };
 
 /**

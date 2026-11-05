@@ -7,6 +7,7 @@ use YayCheckout\Pro\Controllers\LayoutImportRestController;
 use YayCheckout\Pro\Controllers\LayoutRulesRestController;
 use YayCheckout\Pro\Controllers\ThankYouRestController;
 use YayCheckout\Pro\Renderer\ThankYouPage;
+use YayCheckout\Pro\Renderer\ThankYouText;
 use YayCheckout\Blocks\BlockRegistry;
 use YayCheckout\Pro\Services\AssignmentStoreData;
 use YayCheckout\Support\Plan;
@@ -30,6 +31,9 @@ class ProServiceProvider {
 
         // The thank-you page: order-received takeover, its editor view, admin bar item and live values.
         ThankYouPage::get_instance();
+
+        // The Thank You Text block's artworks, for its editor picker and canvas.
+        add_action( 'enqueue_block_editor_assets', [ ThankYouText::class, 'editor_data' ] );
     }
 
     /**
