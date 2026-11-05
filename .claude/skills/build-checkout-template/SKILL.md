@@ -85,7 +85,7 @@ For each Out item the user calls essential, the missing block feature, token, ic
 
 ## Phase 4: Write the markup
 
-First check `git status`, and ask before working over uncommitted changes. Then branch from an up-to-date `dev/edd` as `<prefix>/feat/template-<id>-<slug>`. Use the user's own branch prefix: CLAUDE.local.md or memory may say it; if not, ask.
+First check `git status`, and ask before working over uncommitted changes. Then branch from an up-to-date `dev` as `<prefix>/feat/template-<id>-<slug>`. Use the user's own branch prefix: CLAUDE.local.md or memory may say it; if not, ask.
 
 Read [references/pitfalls.md](references/pitfalls.md) next. Every item in it shipped once and needed a fix.
 
@@ -130,4 +130,4 @@ Invoking this skill is the user asking for the commit, so commit on the branch o
 - Each fix from the fidelity pass is its own `fix(templates): …` commit.
 - Don't push or open a PR unless asked.
 
-If a check is still failing, don't commit over it. Report the failure and ask. If it also fails on `dev/edd`, say so; it predates this work.
+If a check is still failing, don't commit over it. Report the failure and ask. If it also fails on `dev`, say so; it predates this work.

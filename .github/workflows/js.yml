@@ -4,7 +4,7 @@ name: JS
 # workspace setup changes.
 on:
   pull_request:
-    branches: [dev/edd]
+    branches: [dev]
     paths:
       - 'apps/admin/**'
       - 'packages/blocks/src/shared/**'
@@ -13,7 +13,7 @@ on:
       - '.nvmrc'
       - '.github/workflows/js.yml'
   push:
-    branches: [dev/edd]
+    branches: [dev]
     paths:
       - 'apps/admin/**'
       - 'packages/blocks/src/shared/**'
@@ -54,7 +54,7 @@ jobs:
       - name: tsc --noEmit
         run: pnpm --filter @yaycheckout/admin-page exec tsc --noEmit
 
-      # ESLint only: the package's `lint` script also runs `prettier --check`, which fails on dev/edd
+      # ESLint only: the package's `lint` script also runs `prettier --check`, which fails on dev
       # (docs/known-issues.md). Warnings are shown but don't block.
       - name: ESLint
         run: pnpm --filter @yaycheckout/admin-page exec eslint .

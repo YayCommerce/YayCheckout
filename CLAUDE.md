@@ -5,7 +5,7 @@ Update when: a command, hard rule, the test rule or a git rule changes, or a har
 
 # YayCheckout
 
-WooCommerce checkout builder. A merchant builds checkout layouts from blocks in an embedded block editor, and the storefront renders the active layout in place of WooCommerce's checkout form. One branch, `dev/edd`, ships two builds: `./scripts/run.sh release --plan=free|pro` picks the edition, Pro by default. Free's zip is Pro without `includes/Pro/`, with the SPA built as `free`, and with `editions/YayCheckoutPluginAdapter.free.php` (no licensing) and a header naming no Pro staged over the branch's Pro ones.
+WooCommerce checkout builder. A merchant builds checkout layouts from blocks in an embedded block editor, and the storefront renders the active layout in place of WooCommerce's checkout form. One branch, `dev`, ships two builds: `./scripts/run.sh release --plan=free|pro` picks the edition, Pro by default. Free's zip is Pro without `includes/Pro/`, with the SPA built as `free`, and with `editions/YayCheckoutPluginAdapter.free.php` (no licensing) and a header naming no Pro staged over the branch's Pro ones.
 PHP lives in `includes/`. The admin SPA is `apps/admin/` (React, Vite, TypeScript), and the checkout blocks are `packages/blocks/` (`@wordpress/scripts`).
 
 ## Commands
@@ -22,9 +22,9 @@ Run from the repo root on Node 22: `nvm use` reads `.nvmrc`, and pnpm 11 [fails 
 - `./scripts/run.sh build`: type-check and build the SPA into `assets/dist/admin/`, then the blocks into `assets/dist/blocks/`.
 - `./scripts/run.sh release [version] [--plan=free|pro] [--wp-tested=X.Y] [--wc-tested=X.Y] [--no-prompt]`: package and check a zip in `release/` for the edition `--plan` names, Pro by default. It prompts for the version and the WP and WC tested-up-to versions. Pass a version or `--no-prompt` when there is no terminal to answer the prompts; then the tested-up-to values change only through their flags. It leaves [only `--no-dev` packages](docs/known-issues.md): run `composer install` afterwards.
 - `./scripts/run.sh backlog`: list the open items in `docs/backlog/` and their unticked boxes.
-- CI runs on PRs and pushes to dev/edd, only for the files a change touches: `.github/workflows/php.yml` (`php -l` on PHP 7.4 and `scripts/check-pro-boundary.sh`) when PHP changes, and `.github/workflows/js.yml` (the SPA's `tsc --noEmit` and eslint, not prettier) when `apps/admin/` or `packages/blocks/src/shared/` changes. Add a path to a workflow's `paths:` when its job starts reading one. It runs no `composer install`, phpcs or `composer test`.
+- CI runs on PRs and pushes to dev, only for the files a change touches: `.github/workflows/php.yml` (`php -l` on PHP 7.4 and `scripts/check-pro-boundary.sh`) when PHP changes, and `.github/workflows/js.yml` (the SPA's `tsc --noEmit` and eslint, not prettier) when `apps/admin/` or `packages/blocks/src/shared/` changes. Add a path to a workflow's `paths:` when its job starts reading one. It runs no `composer install`, phpcs or `composer test`.
 
-Any pnpm command may [run `pnpm install`, and with it `composer install`, first](docs/known-issues.md). `./scripts/run.sh help` lists the rest. Judge a failing check against `dev/edd`. If it fails there too, it was already failing: leave it unless asked, and don't add to it.
+Any pnpm command may [run `pnpm install`, and with it `composer install`, first](docs/known-issues.md). `./scripts/run.sh help` lists the rest. Judge a failing check against `dev`. If it fails there too, it was already failing: leave it unless asked, and don't add to it.
 
 ## Hard rules
 
@@ -39,8 +39,8 @@ The team keeps only tests that guard real risk, so a test is warranted in two ca
 
 ## Git
 
-- Branch from `dev/edd` as `<name>/<type>/<topic>`.
-- Every change, docs included, lands through a PR into `dev/edd` (squash merge). Never commit to `dev/edd` directly. `dev/edd` is the repository's only long-lived branch and its default; there is no `main` and no edition branch.
+- Branch from `dev` as `<name>/<type>/<topic>`.
+- Every change, docs included, lands through a PR into `dev` (squash merge). Never commit to `dev` directly. `dev` is the repository's only long-lived branch and its default; there is no `main` and no edition branch.
 - Commit messages follow Conventional Commits: `type(scope): summary`.
 - End each commit message with `Co-Authored-By: Claude <model> <noreply@anthropic.com>`, naming the model you run as, and each PR description you write with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. A personal `CLAUDE.local.md` may drop them.
 - Commit or push only when asked. Never force-push a shared branch, rewrite pushed history, skip hooks (`--no-verify`) or change git config.

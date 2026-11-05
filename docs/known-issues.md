@@ -1,6 +1,6 @@
 # Known issues
 
-**Purpose:** the checks that fail today and the gotchas that bite, each reproduced or traced to the code that causes it, with its cause, a workaround and the condition for deleting it. A check listed here was already failing on `dev/edd`, so judge your change by not adding to it ([CLAUDE.md](../CLAUDE.md)).
+**Purpose:** the checks that fail today and the gotchas that bite, each reproduced or traced to the code that causes it, with its cause, a workaround and the condition for deleting it. A check listed here was already failing on `dev`, so judge your change by not adding to it ([CLAUDE.md](../CLAUDE.md)).
 
 **Update when:** an issue is fixed (delete its entry), a new one is reproduced (add it with all four fields), or a symptom changes.
 
@@ -18,12 +18,12 @@
 - **Workaround:** run `pnpm install` on purpose after pulling or switching branches, so the check finds nothing to do. To run a check with no install at all, call the tool directly, for example `npx --no-install tsc --noEmit` from `apps/admin`.
 - **Remove when:** the root `postinstall` is gone, or pnpm's pre-run check is off for this repo.
 
-## The admin lint fails on `dev/edd`
+## The admin lint fails on `dev`
 
 - **Symptom:** `pnpm --filter @yaycheckout/admin-page lint` exits 1. eslint reports 6 warnings and exits 0: five from Tailwind's `enforce-canonical-classes` rule (in `apps/admin/src/components/ui/dialog.tsx` and `apps/admin/src/pages/layouts/LayoutsPage.tsx`) and an unused `result` in `apps/admin/src/pages/tools/components/ImportCard.tsx`. Prettier then fails on `apps/admin/src/lib/utils.ts`, `apps/admin/src/styles/custom-header.css` and `apps/admin/tsconfig.node.json`, and warns that it ignores five `importOrder*` options.
 - **Cause:** code that landed without the lint passing. Five `importOrder*` options in `apps/admin/package.json` are ones `@ianvs/prettier-plugin-sort-imports` 4 no longer accepts.
 - **Workaround:** check only your own files: `npx --no-install eslint <files>` and `npx --no-install prettier --check <files>` from `apps/admin`. Your change must not add a finding.
-- **Remove when:** the lint exits 0 on `dev/edd`.
+- **Remove when:** the lint exits 0 on `dev`.
 
 ## The dev script and release rewrite `composer.json` and `scoper.inc.php`
 
@@ -81,9 +81,9 @@
 - **Workaround:** never write into `vendor/`, `vendor-prefixed/`, `node_modules/`, `assets/dist/` or `release/` from the shell; change the input and rerun its build (hard rule 1 in `CLAUDE.md`). Install `jq`.
 - **Remove when:** the guard also checks shell commands, or the generated directories are made read-only.
 
-## The harness check fails on `dev/edd`
+## The harness check fails on `dev`
 
 - **Symptom:** `./scripts/check-harness.sh` exits 1 with 27 `[backticked_paths] MISSING` lines, from `docs/architecture.md`, `docs/conventions.md` and `.claude/rules/blocks.md`.
 - **Cause:** `check_backticked_paths` resolves every backticked name with a slash against the repo root, so paths relative to `packages/blocks/src/`, WooCommerce template paths, block names and data store names count as missing.
-- **Workaround:** compare the output with `dev/edd`'s; your change must not add a line.
-- **Remove when:** the check exits 0 on `dev/edd`.
+- **Workaround:** compare the output with `dev`'s; your change must not add a line.
+- **Remove when:** the check exits 0 on `dev`.
