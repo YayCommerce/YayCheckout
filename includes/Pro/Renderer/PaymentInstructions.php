@@ -1,6 +1,7 @@
 <?php
 namespace YayCheckout\Pro\Renderer;
 
+use YayCheckout\Models\Layout;
 use YayCheckout\Services\LayoutMarkupReader;
 
 defined( 'ABSPATH' ) || exit;
@@ -23,6 +24,43 @@ class PaymentInstructions {
         'iban'           => 'ibanLabel',
         'bic'            => 'bicLabel',
     ];
+
+    /** Direct bank transfer's settings section, which the editor notice links to. */
+    private const BACS_SETTINGS = 'admin.php?page=wc-settings&tab=checkout&section=bacs';
+
+    /** Whether Direct bank transfer is turned off, so the block prints no bank details for it. */
+    public static function bacs_disabled(): bool {
+        if ( ! function_exists( 'WC' ) ) {
+            return false;
+        }
+
+        $bacs = WC()->payment_gateways()->payment_gateways()['bacs'] ?? null;
+
+        return ! $bacs instanceof \WC_Payment_Gateway || 'yes' !== $bacs->enabled;
+    }
+
+    /**
+     * Prints before the block's editor script whether Direct bank transfer is turned off, for its notice.
+     * In the layout editor only, which is the one that offers the block.
+     */
+    public static function editor_data(): void {
+        if ( Layout::POST_TYPE !== get_post_type() ) {
+            return;
+        }
+
+        $handle = generate_block_asset_handle( 'yaycheckout/payment-instructions', 'editorScript' );
+
+        if ( ! wp_script_is( $handle, 'registered' ) ) {
+            return;
+        }
+
+        $data = [
+            'needsSetup'  => self::bacs_disabled(),
+            'settingsUrl' => admin_url( self::BACS_SETTINGS ),
+        ];
+
+        wp_add_inline_script( $handle, 'window.yayCheckoutBacsSetup = ' . wp_json_encode( $data ) . ';', 'before' );
+    }
 
     /** Whether the block shows Direct bank transfer's heading. On unless turned off. */
     public static function shows_title( array $attributes ): bool {

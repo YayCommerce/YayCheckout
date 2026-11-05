@@ -1,7 +1,17 @@
 import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { type MethodSetupData, SetupNotice } from '../../shared/setup-notice';
 import './editor.css';
+
+declare global {
+	interface Window {
+		yayCheckoutBacsSetup?: MethodSetupData;
+	}
+}
+
+/** What PaymentInstructions::editor_data() prints before this bundle runs; needsSetup mirrors bacs_disabled(). */
+const bacsSetup = window.yayCheckoutBacsSetup ?? { needsSetup: false, settingsUrl: '' };
 
 type LabelKey = 'bankLabel' | 'accountNumberLabel' | 'sortCodeLabel' | 'ibanLabel' | 'bicLabel';
 
@@ -56,6 +66,11 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
+				<SetupNotice
+					data={ bacsSetup }
+					message={ __( 'Direct bank transfer is turned off, so customers see no bank details here.', 'yaycheckout' ) }
+					linkText={ __( 'Direct bank transfer settings', 'yaycheckout' ) }
+				/>
 				<section className="woocommerce-bacs-bank-details">
 					{ showTitle && (
 						<RichText
@@ -87,7 +102,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</section>
 				<p className="yaycheckout-payment-instructions__note">
 					{ __(
-						"Sample. Shoppers see the instructions of their order's payment method, such as your bank details for Direct bank transfer, or nothing when it has none.",
+						"Sample. Customers see the instructions of their order's payment method, such as your bank details for Direct bank transfer, or nothing when it has none.",
 						'yaycheckout'
 					) }
 				</p>
