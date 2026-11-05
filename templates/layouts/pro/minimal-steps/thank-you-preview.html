@@ -20,12 +20,18 @@ td small{display:block;color:var(--muted);font-size:.85em}
 tfoot tr:last-child th,tfoot tr:last-child td{font-weight:600}
 .addresses{display:grid;grid-template-columns:1fr 1fr;gap:24px}
 address{font-style:normal}
+.bank{display:flex;flex-wrap:wrap;gap:12px 0;margin:0;padding:0;list-style:none}
+.bank li{margin-right:16px;padding-right:16px;border-right:1px dashed var(--border);font-size:.75em;text-transform:uppercase}
+.bank li:last-child{margin-right:0;padding-right:0;border-right:0}
+.bank strong{display:block;margin-top:4px;font-size:1.4em;text-transform:none}
+h3{margin:0 0 8px;font-size:1em;font-weight:600}
 a{color:var(--link)}
 </style></head>
 <body><div class="page">
 <div class="brand"><i>S</i>Storefront</div>
 <h1>Thank you. Your order has been received.</h1>
 <div class="overview"><div><p>Order #:</p><p>1042</p></div><div><p>Date:</p><p>October 22, 2026</p></div><div><p>Total:</p><p>$146.24</p></div><div><p>Email:</p><p>jane@example.com</p></div><div><p>Payment method:</p><p>Direct bank transfer</p></div></div>
+<section><h2>Our bank details</h2><h3>Storefront:</h3><ul class="bank"><li>Bank:<strong>Example Bank</strong></li><li>Account number:<strong>12345678</strong></li><li>Sort code:<strong>12-34-56</strong></li><li>IBAN:<strong>GB33BUKB20201555555555</strong></li><li>BIC:<strong>BUKBGB22</strong></li></ul></section>
 <section><h2>Order details</h2>
 <table><thead><tr><th>Product</th><th>Total</th></tr></thead><tbody><tr><td>Linen overshirt × 1<small>Olive / M</small></td><td>$68.00</td></tr><tr><td>Canvas tote × 1<small>Natural</small></td><td>$60.00</td></tr></tbody><tfoot><tr class="total"><th>Subtotal:</th><td>$128.00</td></tr><tr class="total"><th>Shipping:</th><td>$8.00</td></tr><tr class="total"><th>Tax:</th><td>$10.24</td></tr><tr class="total"><th>Payment method:</th><td>Direct bank transfer</td></tr><tr class="total"><th>Total:</th><td>$146.24</td></tr></tfoot></table>
 </section>
