@@ -182,6 +182,15 @@ export const orderCustomerDetailsIcon = /*#__PURE__*/ icon(
 		<path d="M14 10h4M14 14h4" />
 	</>
 );
+// A cart with a loop arrow: the order's items going back in the cart.
+export const orderAgainIcon = /*#__PURE__*/ icon(
+	<>
+		<path d="M3 4.5h2.5l2 10h11l1.75-7H6" />
+		<circle cx="9" cy="18.5" r="1.25" />
+		<circle cx="17" cy="18.5" r="1.25" />
+		<path d="M15.5 11a2.75 2.75 0 1 1-1-2.1M14.75 7.5v1.6h-1.6" />
+	</>
+);
 /** Pro's Thank You Text: a heart above a handwritten line. */
 export const thankYouTextIcon = /*#__PURE__*/ icon(
 	<>
