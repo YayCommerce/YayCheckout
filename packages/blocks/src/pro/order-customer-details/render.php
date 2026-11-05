@@ -19,9 +19,8 @@ if ( null === $yaycheckout_order ) {
     return;
 }
 
-// Same gate as woocommerce/templates/order/order-details.php before order-details-customer.php. A preview
-// shows the guest sample order to the merchant, so it skips the gate.
-if ( null === \YayCheckout\Renderer\PreviewRequest::get_instance()->layout_id() && $yaycheckout_order->get_user_id() !== get_current_user_id() ) {
+// Same gate as woocommerce/templates/order/order-details.php before order-details-customer.php.
+if ( ! \YayCheckout\Pro\Renderer\ThankYouPage::shows_customer_details( $yaycheckout_order ) ) {
     return;
 }
 

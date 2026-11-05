@@ -7,6 +7,7 @@ import {
 	orderAgainIcon,
 	orderCustomerDetailsIcon,
 	orderDetailsIcon,
+	savePdfIcon,
 	stepButtonIcon,
 	stepIcon,
 	stepsIcon,
@@ -36,6 +37,7 @@ const PRO_BLOCK_ICONS: Record< string, JSX.Element > = {
 	'yaycheckout/order-customer-details': orderCustomerDetailsIcon,
 	'yaycheckout/order-again-button': orderAgainIcon,
 	'yaycheckout/thank-you-text': thankYouTextIcon,
+	'yaycheckout/save-pdf-button': savePdfIcon,
 };
 
 /**

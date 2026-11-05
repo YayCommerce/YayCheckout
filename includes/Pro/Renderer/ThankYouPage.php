@@ -184,6 +184,19 @@ class ThankYouPage {
     }
 
     /**
+     * Who sees an order's customer details (its addresses): an order with an account, that account only; a guest
+     * order, the holder of the key in the URL. A preview link shows the sample order's to the merchant. The Order
+     * Addresses block and the Save as PDF Button's summary follow it.
+     *
+     * One step looser than WooCommerce's gate before order-details-customer.php, which also asks
+     * is_user_logged_in() and so shows a guest nothing of their own order. The overview's email keeps
+     * WooCommerce's gate (OrderPrintSummary::shows_overview_email()), as checkout/thankyou.php does.
+     */
+    public static function shows_customer_details( \WC_Order $order ): bool {
+        return null !== PreviewRequest::get_instance()->layout_id() || $order->get_user_id() === get_current_user_id();
+    }
+
+    /**
      * Runs $print while WooCommerce gettext for the given English source strings returns the merchant's
      * labels. Empty overrides are skipped so the shop's WooCommerce locale stays in force.
      *

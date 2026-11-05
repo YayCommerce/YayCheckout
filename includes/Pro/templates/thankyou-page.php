@@ -37,10 +37,24 @@ ob_start();
     if ( null !== $yaycheckout_order ) {
         $yaycheckout_order_id = $yaycheckout_order->get_id();
 
+        // When the Save as PDF Button printed a payment slot above, a wrapper lets it copy the gateway's output (bank details)
+        // without running the gateway's hook again. Otherwise the output stays unwrapped, as WooCommerce prints it.
+        $yaycheckout_wrap_gateway = \YayCheckout\Pro\Renderer\OrderPrintSummary::has_payment_slot();
+
         // Same order as WooCommerce's checkout/thankyou.php so gateway instructions still print.
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce thank-you hooks.
         do_action( 'woocommerce_before_thankyou', $yaycheckout_order_id );
+
+        if ( $yaycheckout_wrap_gateway ) {
+            echo '<div class="' . esc_attr( \YayCheckout\Pro\Renderer\OrderPrintSummary::GATEWAY_CLASS ) . '">';
+        }
+
         do_action( 'woocommerce_thankyou_' . $yaycheckout_order->get_payment_method(), $yaycheckout_order_id );
+
+        if ( $yaycheckout_wrap_gateway ) {
+            echo '</div>';
+        }
+
         // Not woocommerce_thankyou: WooCommerce prints its order table and addresses on it, which the Order Details and Order Addresses blocks already place.
         // phpcs:enable
     }
