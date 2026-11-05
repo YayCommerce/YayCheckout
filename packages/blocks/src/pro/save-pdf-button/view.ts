@@ -8,11 +8,12 @@
  * it once printed.
  *
  * The click opens the print dialog with the document titled after the button's data-filename, since browsers
- * name the PDF after the title, and puts the title back once the dialog has closed.
+ * name the PDF after the title, and puts the title back once the dialog has closed (watchForPrintEnd).
  */
 
 import { bindOnce } from '../../shared/bind-once';
 import { onDomReady } from '../../shared/dom-ready';
+import { HIDDEN_CLASS } from '../../shared/visibility-rules';
 
 const BUTTON = 'button.yaycheckout-save-pdf';
 /** Mirrors OrderPrintSummary::CLASS_NAME. */
@@ -23,8 +24,6 @@ const GATEWAY = '.yaycheckout-thankyou-gateway';
 const PAYMENT_SLOT = '[data-yaycheckout-print-payment]';
 /** The body class style.css's print rules key on. */
 const BODY_CLASS = 'yaycheckout-has-print-summary';
-/** Mirrors BlockVisibility::HIDDEN_CLASS. */
-const HIDDEN_BY_VISIBILITY = 'yaycheckout-hidden-by-visibility';
 
 function fillPaymentSlot( summary: HTMLElement ): void {
 	const slot = summary.querySelector< HTMLElement >( PAYMENT_SLOT );
@@ -84,7 +83,7 @@ function addPageMargin(): HTMLStyleElement {
  */
 function setActive( summary: HTMLElement, margin: HTMLStyleElement ): boolean {
 	const button = summary.ownerDocument.querySelector( BUTTON );
-	const active = !! button && ! button.closest( `.${ HIDDEN_BY_VISIBILITY }` ) && button.getClientRects().length > 0;
+	const active = !! button && ! button.closest( `.${ HIDDEN_CLASS }` ) && button.getClientRects().length > 0;
 
 	document.body.classList.toggle( BODY_CLASS, active );
 	margin.media = active ? 'print' : 'not all';
@@ -102,6 +101,27 @@ function restoreTitle(): void {
 	}
 }
 
+/**
+ * Puts the title back: on afterprint, and, for a browser that never fires it (an in-app webview, iOS, where
+ * print() hands off to a share sheet), the first time the page is looked at again after being hidden. Without
+ * the second one the tab keeps the file name for the rest of the visit, and a later click, which keeps the
+ * title it already saved, would print under it too. Tab-switching while the dialog is still open also puts the
+ * page's title back, so a save made after that is named after the page, not the order: a file name, not the file.
+ */
+function watchForPrintEnd(): void {
+	let wasHidden = false;
+
+	window.addEventListener( 'afterprint', restoreTitle );
+	document.addEventListener( 'visibilitychange', () => {
+		if ( 'hidden' === document.visibilityState ) {
+			wasHidden = true;
+		} else if ( wasHidden ) {
+			wasHidden = false;
+			restoreTitle();
+		}
+	} );
+}
+
 function onClick( event: MouseEvent ): void {
 	const button = event.target instanceof Element ? event.target.closest< HTMLButtonElement >( BUTTON ) : null;
 
@@ -117,7 +137,6 @@ function onClick( event: MouseEvent ): void {
 	if ( filename !== '' && swappedTitle === null ) {
 		swappedTitle = document.title;
 		document.title = filename;
-		window.addEventListener( 'afterprint', restoreTitle, { once: true } );
 	}
 
 	window.print();
@@ -139,6 +158,7 @@ function boot(): void {
 		window.addEventListener( 'afterprint', () => summary.querySelector( PAYMENT_SLOT )?.replaceChildren() );
 	}
 
+	watchForPrintEnd();
 	document.addEventListener( 'click', onClick );
 }
 

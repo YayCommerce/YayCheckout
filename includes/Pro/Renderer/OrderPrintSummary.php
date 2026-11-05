@@ -269,6 +269,7 @@ class OrderPrintSummary {
         echo '</section>';
     }
 
+    /** The note as order-details.php prints it: its own texturising, line breaks kept and every other tag dropped. */
     private static function print_customer_note( \WC_Order $order ): void {
         $note = trim( $order->get_customer_note() );
 
@@ -277,7 +278,7 @@ class OrderPrintSummary {
         }
 
         echo '<section class="' . esc_attr( self::CLASS_NAME ) . '__note"><h2>' . esc_html__( 'Note', 'yaycheckout' ) . '</h2>';
-        echo wp_kses_post( wpautop( wptexturize( esc_html( $note ) ) ) );
+        echo '<p>' . wp_kses( nl2br( wc_wptexturize_order_note( $note ) ), [ 'br' => [] ] ) . '</p>';
         echo '</section>';
     }
 }
