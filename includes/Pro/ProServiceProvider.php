@@ -7,6 +7,7 @@ use YayCheckout\Pro\Controllers\LayoutImportRestController;
 use YayCheckout\Pro\Controllers\LayoutRulesRestController;
 use YayCheckout\Pro\Controllers\ThankYouRestController;
 use YayCheckout\Pro\Renderer\OrderAgain;
+use YayCheckout\Pro\Renderer\PaymentInstructions;
 use YayCheckout\Pro\Renderer\ThankYouPage;
 use YayCheckout\Pro\Renderer\ThankYouText;
 use YayCheckout\Blocks\BlockRegistry;
@@ -38,6 +39,9 @@ class ProServiceProvider {
 
         // The Thank You Text block's artworks, for its editor picker and canvas.
         add_action( 'enqueue_block_editor_assets', [ ThankYouText::class, 'editor_data' ] );
+
+        // Whether Direct bank transfer has bank details to print, for the Payment Instructions block's notice.
+        add_action( 'enqueue_block_editor_assets', [ PaymentInstructions::class, 'editor_data' ] );
     }
 
     /**

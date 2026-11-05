@@ -49,6 +49,9 @@ TOTALS = [('Subtotal:', '$128.00'), ('Shipping:', '$8.00'), ('Tax:', '$10.24'),
 # templates/layouts/pro/thank-you.php's overview Row of Stacks: label, then the live value as an order fills it.
 OVERVIEW = [('Order #:', '1042'), ('Date:', 'October 22, 2026'), ('Total:', '$146.24'), ('Email:', 'jane@example.com'),
             ('Payment method:', 'Direct bank transfer')]
+# The Payment Instructions block's sample: Direct bank transfer's bank details, as packages/blocks/src/pro/payment-instructions/edit.tsx shows them.
+BANK = [('Bank', 'Example Bank'), ('Account number', '12345678'), ('Sort code', '12-34-56'), ('IBAN', 'GB33BUKB20201555555555'),
+        ('BIC', 'BUKBGB22')]
 ADDRESS = 'Jane Cooper<br>1901 Thornridge Cir.<br>Shiloh, CA 81063<br>United States (US)'
 
 
@@ -70,6 +73,7 @@ def page(name, t):
         for item, variant, price in ITEMS
     )
     overview = ''.join('<div><p>%s</p><p>%s</p></div>' % (label, html.escape(value)) for label, value in OVERVIEW)
+    bank = ''.join('<li>%s:<strong>%s</strong></li>' % (label, html.escape(value)) for label, value in BANK)
     totals = ''.join('<tr class="total"><th>%s</th><td>%s</td></tr>' % (label, value) for label, value in TOTALS)
     css = '''
 :root{--primary:%(primary)s;--text:%(text)s;--bg:%(background)s;--border:%(border)s;--muted:%(muted)s;--link:%(link)s}
@@ -91,6 +95,11 @@ td small{display:block;color:var(--muted);font-size:.85em}
 tfoot tr:last-child th,tfoot tr:last-child td{font-weight:600}
 .addresses{display:grid;grid-template-columns:1fr 1fr;gap:24px}
 address{font-style:normal}
+.bank{display:flex;flex-wrap:wrap;gap:12px 0;margin:0;padding:0;list-style:none}
+.bank li{margin-right:16px;padding-right:16px;border-right:1px dashed var(--border);font-size:.75em;text-transform:uppercase}
+.bank li:last-child{margin-right:0;padding-right:0;border-right:0}
+.bank strong{display:block;margin-top:4px;font-size:1.4em;text-transform:none}
+h3{margin:0 0 8px;font-size:1em;font-weight:600}
 a{color:var(--link)}
 ''' % t
     return '''<!doctype html>
@@ -99,6 +108,7 @@ a{color:var(--link)}
 <div class="brand"><i>S</i>Storefront</div>
 <h1>Thank you. Your order has been received.</h1>
 <div class="overview">%(overview)s</div>
+<section><h2>Our bank details</h2><h3>Storefront:</h3><ul class="bank">%(bank)s</ul></section>
 <section><h2>Order details</h2>
 <table><thead><tr><th>Product</th><th>Total</th></tr></thead><tbody>%(rows)s</tbody><tfoot>%(totals)s</tfoot></table>
 </section>
@@ -107,7 +117,7 @@ a{color:var(--link)}
 <section><h2>Shipping address</h2><address>%(address)s</address></section>
 </div>
 </div></body></html>
-''' % {'csp': capture.CSP, 'name': html.escape(name), 'css': css, 'rows': rows, 'overview': overview, 'totals': totals, 'address': ADDRESS}
+''' % {'csp': capture.CSP, 'name': html.escape(name), 'css': css, 'rows': rows, 'overview': overview, 'totals': totals, 'bank': bank, 'address': ADDRESS}
 
 
 def main():

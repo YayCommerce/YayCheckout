@@ -1,0 +1,47 @@
+/* The editor's sample of Direct bank transfer's details, drawn as WooCommerce's ul.order_details looks on the storefront. */
+.editor-styles-wrapper .yaycheckout-payment-instructions .wc-bacs-bank-details-heading {
+	margin: 0 0 0.5em;
+}
+
+.editor-styles-wrapper .yaycheckout-payment-instructions .wc-bacs-bank-details-account-name {
+	margin: 0 0 0.75em;
+}
+
+.editor-styles-wrapper .yaycheckout-payment-instructions ul.order_details {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1em 0;
+	margin: 0 0 1em;
+	padding: 0;
+	list-style: none;
+}
+
+.editor-styles-wrapper .yaycheckout-payment-instructions ul.order_details li {
+	margin-right: 1.5em;
+	padding-right: 1.5em;
+	border-right: 1px dashed #d3ced2;
+	font-size: 0.75em;
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.editor-styles-wrapper .yaycheckout-payment-instructions ul.order_details li:last-child {
+	margin-right: 0;
+	padding-right: 0;
+	border-right: 0;
+}
+
+.editor-styles-wrapper .yaycheckout-payment-instructions ul.order_details li strong {
+	display: block;
+	margin-top: 0.5em;
+	font-size: 1.4em;
+	line-height: 1.5;
+	text-transform: none;
+}
+
+.editor-styles-wrapper .yaycheckout-payment-instructions__note {
+	margin: 0;
+	font-size: 12px;
+	font-style: italic;
+	opacity: 0.7;
+}

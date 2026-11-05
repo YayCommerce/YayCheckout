@@ -38,6 +38,9 @@ class ThankYouPage {
     /** @var array<string, array{text: string, empty: bool}>|null The order's live values, read once per request. */
     private $live_values = null;
 
+    /** @var bool Set once payment_instructions() fired the gateway's thank-you hook this request. */
+    private $payment_instructions_fired = false;
+
     protected function __construct() {
         add_action( 'wp', [ $this, 'maybe_take_over' ] );
         add_filter( 'yaycheckout_editor_views', [ $this, 'editor_views' ] );
@@ -143,6 +146,38 @@ class ThankYouPage {
         return null !== $this->layout() && null !== $this->order();
     }
 
+    /**
+     * What the order's gateway prints on woocommerce_thankyou_<gateway>, such as Direct bank transfer's bank
+     * details. Fires the hook at most once per request, so the Payment Instructions block and the thank-you
+     * template's fallback after the layout never both print it; '' on any later call or without an order.
+     *
+     * @param callable|null $around Called with the function that fires the hook, to run it inside filters of its own.
+     */
+    public function payment_instructions( ?callable $around = null ): string {
+        $order = $this->order();
+
+        if ( $this->payment_instructions_fired || null === $order ) {
+            return '';
+        }
+
+        $this->payment_instructions_fired = true;
+
+        $fire = static function () use ( $order ): void {
+            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce thank-you hook.
+            do_action( 'woocommerce_thankyou_' . $order->get_payment_method(), $order->get_id() );
+        };
+
+        ob_start();
+
+        if ( null !== $around ) {
+            $around( $fire );
+        } else {
+            $fire();
+        }
+
+        return (string) ob_get_clean();
+    }
+
     public function maybe_take_over(): void {
         if ( ! $this->takes_over() ) {
             return;
@@ -174,8 +209,8 @@ class ThankYouPage {
             wp_dequeue_style( $handle );
         }
 
-        // Order Details / Order Addresses print WooCommerce order templates; they need classic shop styles.
-        if ( has_block( 'yaycheckout/order-details', $layout->content ) || has_block( 'yaycheckout/order-customer-details', $layout->content ) ) {
+        // Order Details / Order Addresses print WooCommerce order templates and Payment Instructions a gateway's ul.order_details; they need classic shop styles.
+        if ( has_block( 'yaycheckout/order-details', $layout->content ) || has_block( 'yaycheckout/order-customer-details', $layout->content ) || has_block( 'yaycheckout/payment-instructions', $layout->content ) ) {
             wp_enqueue_style( 'woocommerce-general' );
             wp_enqueue_style( 'woocommerce-layout' );
         }

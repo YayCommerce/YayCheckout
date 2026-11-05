@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yaycheckout/payment-instructions",
+  "title": "Payment Instructions",
+  "category": "yaycheckout",
+  "description": "What the order's payment method prints on the thank-you page, such as the bank details for Direct bank transfer. Prints nothing when the method has none.",
+  "textdomain": "yaycheckout",
+  "keywords": [ "thank you", "bank", "bacs", "transfer", "payment" ],
+  "example": {},
+  "attributes": {
+    "showTitle": {
+      "type": "boolean",
+      "default": true
+    },
+    "title": {
+      "type": "string",
+      "default": ""
+    },
+    "bankLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "accountNumberLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "sortCodeLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "ibanLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "bicLabel": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "multiple": false,
+    "reusable": false,
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "__experimentalFontFamily": true,
+      "__experimentalFontStyle": true,
+      "__experimentalFontWeight": true,
+      "__experimentalLetterSpacing": true,
+      "__experimentalTextDecoration": true,
+      "__experimentalTextTransform": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "render": "file:./render.php"
+}

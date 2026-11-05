@@ -13,14 +13,15 @@ defined( 'ABSPATH' ) || exit;
  *
  * The gateway's thank-you output (bank details) is not printed here: the page already ran
  * woocommerce_thankyou_<gateway> once, and running it again would repeat a gateway's side effects. This
- * prints an empty slot that view.ts fills with a copy of that output (thankyou-page.php's GATEWAY_CLASS) before printing.
+ * prints an empty slot that view.ts fills with a copy of that output (GATEWAY_CLASS, on the Payment Instructions block or
+ * thankyou-page.php's wrapper) before printing.
  */
 class OrderPrintSummary {
 
     /** The summary's class; save-pdf-button/view.ts and style.css read it. */
     public const CLASS_NAME = 'yaycheckout-print-summary';
 
-    /** The wrapper thankyou-page.php puts around the gateway's thank-you output. Mirrored in save-pdf-button/view.ts. */
+    /** On the gateway's thank-you output: the Payment Instructions block, or thankyou-page.php's wrapper. Mirrored in save-pdf-button/view.ts. */
     public const GATEWAY_CLASS = 'yaycheckout-thankyou-gateway';
 
     /** The slot for the gateway's output. Mirrored in save-pdf-button/view.ts. */
