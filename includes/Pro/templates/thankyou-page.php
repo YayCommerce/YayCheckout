@@ -2,7 +2,8 @@
 /**
  * Pro's thank-you page (Pro\Renderer\ThankYouPage::page_template()): the layout's blocks in our own document, with no theme header
  * or footer, on every theme. After the markup, WooCommerce's thank-you hooks
- * fire so gateways can print payment instructions. wp_head() loads the bundled
+ * fire so gateways can print payment instructions, unless the layout's Payment
+ * Instructions block already printed them in place. wp_head() loads the bundled
  * themeless theme's styles (ThemelessCheckout), or the site theme's when that
  * is turned off.
  */
@@ -40,9 +41,11 @@ ob_start();
         // Same order as WooCommerce's checkout/thankyou.php so gateway instructions still print.
         // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Verbatim WooCommerce thank-you hooks.
         do_action( 'woocommerce_before_thankyou', $yaycheckout_order_id );
-        do_action( 'woocommerce_thankyou_' . $yaycheckout_order->get_payment_method(), $yaycheckout_order_id );
         // Not woocommerce_thankyou: WooCommerce prints its order table and addresses on it, which the Order Details and Order Addresses blocks already place.
         // phpcs:enable
+
+        // woocommerce_thankyou_<gateway>, unless the Payment Instructions block already fired it in the layout. Gateways and tracking scripts on it still run without the block.
+        echo $yaycheckout_thank_you->payment_instructions(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Whatever the gateway's callbacks print, as do_action() would.
     }
     ?>
 </div>

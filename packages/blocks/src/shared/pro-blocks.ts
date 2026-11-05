@@ -2,6 +2,7 @@ import backButtonMeta from '../pro/back-button/block.json';
 import goToStepMeta from '../pro/go-to-step/block.json';
 import orderCustomerDetailsMeta from '../pro/order-customer-details/block.json';
 import orderDetailsMeta from '../pro/order-details/block.json';
+import paymentInstructionsMeta from '../pro/payment-instructions/block.json';
 import stepButtonMeta from '../pro/step-button/block.json';
 import stepMeta from '../pro/step/block.json';
 import stepsMeta from '../pro/steps/block.json';
@@ -22,5 +23,6 @@ export const PRO_BLOCK_METAS = [
 	goToStepMeta,
 	orderDetailsMeta,
 	orderCustomerDetailsMeta,
+	paymentInstructionsMeta,
 	thankYouTextMeta,
 ];

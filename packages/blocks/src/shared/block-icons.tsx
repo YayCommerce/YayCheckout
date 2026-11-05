@@ -182,6 +182,13 @@ export const orderCustomerDetailsIcon = /*#__PURE__*/ icon(
 		<path d="M14 10h4M14 14h4" />
 	</>
 );
+/** Pro's Payment Instructions: a bank building. */
+export const paymentInstructionsIcon = /*#__PURE__*/ icon(
+	<>
+		<path d="M3 9.5 12 4l9 5.5H3Z" />
+		<path d="M5 10v7M9.5 10v7M14.5 10v7M19 10v7M3 20h18" />
+	</>
+);
 /** Pro's Thank You Text: a heart above a handwritten line. */
 export const thankYouTextIcon = /*#__PURE__*/ icon(
 	<>
