@@ -5,7 +5,7 @@ Update when: a command, hard rule, the test rule or a git rule changes, or a har
 
 # YayCheckout
 
-WooCommerce checkout builder. A merchant builds checkout layouts from blocks in an embedded block editor, and the storefront renders the active layout in place of WooCommerce's checkout form. One repo ships two builds from two branches: Pro from `dev/edd`, and Free from `dev/lite`, which differs only in `YayCheckoutPluginAdapter.php` (no licensing) and the plugin header, and whose zip is Pro without `includes/Pro/` and with the SPA built as `free`.
+WooCommerce checkout builder. A merchant builds checkout layouts from blocks in an embedded block editor, and the storefront renders the active layout in place of WooCommerce's checkout form. One branch, `dev/edd`, ships two builds: `./scripts/run.sh release --plan=free|pro` picks the edition, Pro by default. Free's zip is Pro without `includes/Pro/`, with the SPA built as `free`, and with `editions/YayCheckoutPluginAdapter.free.php` (no licensing) and a header naming no Pro staged over the branch's Pro ones.
 PHP lives in `includes/`. The admin SPA is `apps/admin/` (React, Vite, TypeScript), and the checkout blocks are `packages/blocks/` (`@wordpress/scripts`).
 
 ## Commands
@@ -20,9 +20,9 @@ Run from the repo root on Node 22: `nvm use` reads `.nvmrc`, and pnpm 11 [fails 
 - `pnpm build:blocks`: build the blocks into `assets/dist/blocks/`. Without a build, the editor has no YayCheckout blocks and says nothing.
 - `./scripts/run.sh dev`: Vite on :3040, which wp-admin loads while `YAYCHECKOUT_IS_DEVELOPMENT` is true (the default), plus a blocks watcher. It first runs `composer update` and the admin-shell sync, which can [rewrite `composer.json` and `scoper.inc.php`](docs/known-issues.md): check `git status` before committing.
 - `./scripts/run.sh build`: type-check and build the SPA into `assets/dist/admin/`, then the blocks into `assets/dist/blocks/`.
-- `./scripts/run.sh release [version] [--plan=free|pro] [--wp-tested=X.Y] [--wc-tested=X.Y] [--no-prompt]`: package and check a zip in `release/` for the branch's edition (Pro on `dev/edd`, Free on `dev/lite`); a `--plan` that disagrees fails. It prompts for the version and the WP and WC tested-up-to versions. Pass a version or `--no-prompt` when there is no terminal to answer the prompts; then the tested-up-to values change only through their flags. It leaves [only `--no-dev` packages](docs/known-issues.md): run `composer install` afterwards.
+- `./scripts/run.sh release [version] [--plan=free|pro] [--wp-tested=X.Y] [--wc-tested=X.Y] [--no-prompt]`: package and check a zip in `release/` for the edition `--plan` names, Pro by default. It prompts for the version and the WP and WC tested-up-to versions. Pass a version or `--no-prompt` when there is no terminal to answer the prompts; then the tested-up-to values change only through their flags. It leaves [only `--no-dev` packages](docs/known-issues.md): run `composer install` afterwards.
 - `./scripts/run.sh backlog`: list the open items in `docs/backlog/` and their unticked boxes.
-- CI runs on PRs and pushes to dev/edd and dev/lite, only for the files a change touches: `.github/workflows/php.yml` (`php -l` on PHP 7.4 and `scripts/check-pro-boundary.sh`) when PHP changes, and `.github/workflows/js.yml` (the SPA's `tsc --noEmit` and eslint, not prettier) when `apps/admin/` or `packages/blocks/src/shared/` changes. Add a path to a workflow's `paths:` when its job starts reading one. It runs no `composer install`, phpcs or `composer test`.
+- CI runs on PRs and pushes to dev/edd, only for the files a change touches: `.github/workflows/php.yml` (`php -l` on PHP 7.4 and `scripts/check-pro-boundary.sh`) when PHP changes, and `.github/workflows/js.yml` (the SPA's `tsc --noEmit` and eslint, not prettier) when `apps/admin/` or `packages/blocks/src/shared/` changes. Add a path to a workflow's `paths:` when its job starts reading one. It runs no `composer install`, phpcs or `composer test`.
 
 Any pnpm command may [run `pnpm install`, and with it `composer install`, first](docs/known-issues.md). `./scripts/run.sh help` lists the rest. Judge a failing check against `dev/edd`. If it fails there too, it was already failing: leave it unless asked, and don't add to it.
 
@@ -40,8 +40,7 @@ The team keeps only tests that guard real risk, so a test is warranted in two ca
 ## Git
 
 - Branch from `dev/edd` as `<name>/<type>/<topic>`.
-- Every change, docs included, lands through a PR into `dev/edd` (squash merge). Never commit to `dev/edd` or `dev/lite` directly. `dev/edd` is the repository's default branch; there is no `main`.
-- `dev/lite` is the Free edition: `dev/edd` is merged into it (merge commit, not squash), keeping its own `YayCheckoutPluginAdapter.php` and `Plugin Name` header. Never carry either file's edition lines across.
+- Every change, docs included, lands through a PR into `dev/edd` (squash merge). Never commit to `dev/edd` directly. `dev/edd` is the repository's only long-lived branch and its default; there is no `main` and no edition branch.
 - Commit messages follow Conventional Commits: `type(scope): summary`.
 - End each commit message with `Co-Authored-By: Claude <model> <noreply@anthropic.com>`, naming the model you run as, and each PR description you write with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. A personal `CLAUDE.local.md` may drop them.
 - Commit or push only when asked. Never force-push a shared branch, rewrite pushed history, skip hooks (`--no-verify`) or change git config.

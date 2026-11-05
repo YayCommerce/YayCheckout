@@ -4,7 +4,7 @@ name: JS
 # workspace setup changes.
 on:
   pull_request:
-    branches: [dev/edd, dev/lite]
+    branches: [dev/edd]
     paths:
       - 'apps/admin/**'
       - 'packages/blocks/src/shared/**'
@@ -13,7 +13,7 @@ on:
       - '.nvmrc'
       - '.github/workflows/js.yml'
   push:
-    branches: [dev/edd, dev/lite]
+    branches: [dev/edd]
     paths:
       - 'apps/admin/**'
       - 'packages/blocks/src/shared/**'

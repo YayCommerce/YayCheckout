@@ -3,8 +3,10 @@
  * Un-namespaced and excluded from PHP-Scoper so class_exists() checks hit real
  * WordPress/WooCommerce symbols.
  *
- * The edition lives here: dev/edd carries this Pro adapter (licensing on), dev/lite
- * a PluginMenuAdapter. Never merge this file across the two branches.
+ * The Pro edition's adapter, with licensing on: what the branch runs and what the Pro
+ * zip ships. Free's is editions/YayCheckoutPluginAdapter.free.php, which `cmd_release`
+ * in scripts/run.sh stages over this file when --plan=free. Keep the menu methods
+ * identical in both; only the licensing half, the page title and get_pro_url() differ.
  */
 
 defined( 'ABSPATH' ) || exit;
