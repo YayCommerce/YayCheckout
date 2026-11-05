@@ -189,6 +189,13 @@ export const thankYouTextIcon = /*#__PURE__*/ icon(
 		<path d="M4 18c1.5-1.5 2.5-1.5 3.5 0s2 1.5 3 0 2-1.5 3 0 2 1.5 3 0 1.5-1.5 3.5 0" />
 	</>
 );
+/** Pro's Save as PDF Button: a page with a download arrow. */
+export const savePdfIcon = /*#__PURE__*/ icon(
+	<>
+		<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+		<path d="M14 3v5h5M12 11v6M9.5 14.5 12 17l2.5-2.5" />
+	</>
+);
 export const orderSummaryToggleIcon = /*#__PURE__*/ icon( <path d="M4 7h16v10H4zM9 11l3 3 3-3" /> );
 export const orderSummaryItemsIcon = /*#__PURE__*/ icon( <path d="M4 6h16M4 12h16M4 18h10" /> );
 export const orderSummaryBreakdownIcon = /*#__PURE__*/ icon( <path d="M4 7h16M4 12h16M12 17h8" /> );
