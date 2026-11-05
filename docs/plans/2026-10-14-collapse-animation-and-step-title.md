@@ -4,7 +4,7 @@
 **Goal:** Collapsible panels on the storefront open and close with an animation the layout's Design picks, and a Step's title is edited from its settings sidebar while its header hides on the canvas when Steps hides headings.
 **Tests:** none. CLAUDE.md's test rule doesn't cover this (no publish, assignment, required-field or import logic); every task ends in an exact manual check.
 
-> Two unrelated changes: ship Task 1 as its own PR (`trace/feat/step-title-sidebar`) and Tasks 2–5 as a second (`trace/feat/collapse-animation`), both from `dev/edd`.
+> Two unrelated changes: ship Task 1 as its own PR (`trace/feat/step-title-sidebar`) and Tasks 2–5 as a second (`trace/feat/collapse-animation`), both from `dev`.
 
 ## Requirements
 
@@ -98,7 +98,7 @@ Design token: `LayoutDesign::schema()['motion']['collapse'] = [ 'type' => 'enum'
 3. Verify: Accordion one-page and a timeline Steps: Continue slides the current step shut and the next open, then scrolls only if its header is off-screen; Edit on a complete step and a Go to step block do the same in reverse; an invalid step doesn't animate. One-at-a-time and headings-hidden Steps switch instantly with no flicker. Place order still posts every step's fields.
 4. Commit `packages/blocks/src/pro/steps/view.ts`: `feat(steps): animate opening and closing steps`.
 
-Final check for PR 2: `./scripts/run.sh build` succeeds, `composer lint` passes (judge failures against `dev/edd`), and the Task 3–5 checks pass with the design set to Slide, Fade and None in turn.
+Final check for PR 2: `./scripts/run.sh build` succeeds, `composer lint` passes (judge failures against `dev`), and the Task 3–5 checks pass with the design set to Slide, Fade and None in turn.
 
 ## Review focus
 

@@ -8,6 +8,8 @@
 
 Accepted, 2026-11-05, by Trace Bui.
 
+Amended 2026-11-05: the branch this record calls `dev/edd` was renamed to `dev` the same day, once it was the only long-lived branch and the `dev/` prefix was free. Read every `dev/edd` below as `dev`; the decision itself is unchanged.
+
 ## Context
 
 - [Two edition branches](2026-10-19-edition-branches.md) put each edition's identity on its own branch: `dev/edd` Pro, `dev/lite` Free. Every release needed a merge into `dev/lite`, and every merge had to dodge a conflict on the adapter and the header.

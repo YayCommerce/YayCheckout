@@ -5,7 +5,7 @@ Update when: a requirement or a setup step changes, the review, promotion or rel
 
 # YayCheckout: WooCommerce Checkout Builder
 
-A checkout builder for WooCommerce: merchants build checkout layouts from blocks, assign them to shoppers, and style them, and the storefront renders the active layout in place of WooCommerce's checkout form. One branch, `dev/edd`, ships both a Pro and a Free build, chosen by `--plan` at release time ([how they split](docs/architecture.md#free-and-pro)).
+A checkout builder for WooCommerce: merchants build checkout layouts from blocks, assign them to shoppers, and style them, and the storefront renders the active layout in place of WooCommerce's checkout form. One branch, `dev`, ships both a Pro and a Free build, chosen by `--plan` at release time ([how they split](docs/architecture.md#free-and-pro)).
 
 ## Requirements
 
@@ -46,7 +46,7 @@ A checkout builder for WooCommerce: merchants build checkout layouts from blocks
 
 4. Activate the plugin in wp-admin. `YAYCHECKOUT_IS_DEVELOPMENT` defaults to `true`, so wp-admin loads the SPA from the dev server: keep `./scripts/run.sh dev` running while you work in the admin. To load a built bundle instead, define the constant as `false` in `wp-config.php` and run `./scripts/run.sh build` ([known issue](docs/known-issues.md#the-admin-page-is-blank-without-the-dev-server)).
 
-5. Run the lint and test commands in [CLAUDE.md § Commands](CLAUDE.md#commands). The admin lint fails today on `dev/edd`, and `composer test` needs a test database; [docs/known-issues.md](docs/known-issues.md) gives the output to expect and the setup. Your result should match it.
+5. Run the lint and test commands in [CLAUDE.md § Commands](CLAUDE.md#commands). The admin lint fails today on `dev`, and `composer test` needs a test database; [docs/known-issues.md](docs/known-issues.md) gives the output to expect and the setup. Your result should match it.
 
 6. Start Claude Code in the repo with `claude`, and accept the trust dialog. Until you do, Claude ignores the command allowlist in `.claude/settings.json`. Then:
    - `CLAUDE.md` loads at the start of every session;
@@ -56,10 +56,10 @@ A checkout builder for WooCommerce: merchants build checkout layouts from blocks
 
 ## Daily workflow
 
-The git rules are in [CLAUDE.md § Git](CLAUDE.md#git): branch names, Conventional Commits, PR-only into `dev/edd`, and what an agent may never do. The parts only people do:
+The git rules are in [CLAUDE.md § Git](CLAUDE.md#git): branch names, Conventional Commits, PR-only into `dev`, and what an agent may never do. The parts only people do:
 
-- **Review.** Every PR into `dev/edd` needs one approval from a teammate other than its author, then it is squash-merged.
-- **Releases.** Build both editions from `dev/edd` with `--plan=pro` and `--plan=free`. The release commands are in [CLAUDE.md § Commands](CLAUDE.md#commands). What the release builds and checks is in [docs/architecture.md § Build and release](docs/architecture.md#build-and-release), and the rules for changing it are in [.claude/rules/release.md](.claude/rules/release.md). Release notes go in `readme.txt`.
+- **Review.** Every PR into `dev` needs one approval from a teammate other than its author, then it is squash-merged.
+- **Releases.** Build both editions from `dev` with `--plan=pro` and `--plan=free`. The release commands are in [CLAUDE.md § Commands](CLAUDE.md#commands). What the release builds and checks is in [docs/architecture.md § Build and release](docs/architecture.md#build-and-release), and the rules for changing it are in [.claude/rules/release.md](.claude/rules/release.md). Release notes go in `readme.txt`.
 
 ## Agent tooling
 
@@ -108,7 +108,7 @@ A typical change runs `/yaybrainstorming`, then `/yayplan`, then you implement i
 
 **Shared skills.** The YayCommerce plugins share the five skills, and their canonical copy lives in [YayCommerce/YayLoyalty](https://github.com/YayCommerce/YayLoyalty/tree/dev/edd/.claude/skills). This repo copies each skill's directory whole and never edits it: a fix lands in YayLoyalty first, then the directory here is replaced. See [the harness record](docs/decisions/2026-10-05-harness-with-review-backlog.md).
 
-**Mechanical checks.** Run `./scripts/check-harness.sh` before merging a PR that changes a harness file. It checks paths, links, headers, rule globs, skill names, decision records and backlog items, prints one line per finding, and exits 1 if there is any. It fails on `dev/edd` today ([known issue](docs/known-issues.md)); your change must not add a finding.
+**Mechanical checks.** Run `./scripts/check-harness.sh` before merging a PR that changes a harness file. It checks paths, links, headers, rule globs, skill names, decision records and backlog items, prints one line per finding, and exits 1 if there is any. It fails on `dev` today ([known issue](docs/known-issues.md)); your change must not add a finding.
 
 **Prompt audit.** Run `/doctor prompt-audit` in Claude Code after upgrading Claude Code and before merging a PR that changes `CLAUDE.md`, a rule or a skill. Every finding gets a fix, or a reason to keep the text.
 
