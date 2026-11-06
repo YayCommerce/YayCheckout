@@ -1,7 +1,7 @@
 ---
 name: yayrelease
-description: Cuts a YayCheckout release end to end: preflight, version, the changelog through /yaychangelog, the bump, both edition zips, a release PR into dev, then the annotated tag, the released branch and the GitHub Release. Use when the user types /yayrelease, or says "release 1.1.0", "cut a release", "ship a release", "bump the version" or "publish the release". Do not use to draft release notes alone (/yaychangelog) or to build a test zip (./scripts/run.sh release).
-argument-hint: "[version] [both|free|pro] [--publish] [--draft] [--dry-run]"
+description: Cuts a YayCheckout release end to end: preflight, version, the changelog through /yaychangelog, the bump, both edition zips, a release PR into dev, then the annotated tag, the released branch and a draft GitHub Release. Use when the user types /yayrelease, or says "release 1.1.0", "cut a release", "ship a release", "bump the version" or "publish the release". Do not use to draft release notes alone (/yaychangelog) or to build a test zip (./scripts/run.sh release).
+argument-hint: "[version] [both|free|pro] [--publish] [--no-draft] [--dry-run]"
 disable-model-invocation: true
 allowed-tools: Read, Edit, Bash, Grep, Glob
 # Purpose: the one linear flow that cuts a release of this plugin, from preflight to the published
@@ -49,7 +49,7 @@ arguments — **keep the two in step**, because a stale hint is worse than none:
 | `<version>` | `X.Y.Z`, `X.Y.Z.W` or `X.Y.Z-tag`. Omitted, phase 1 proposes one and asks. |
 | `both` *(default)*, `free`, `pro` | Which editions to build, as a bare word after the version. `both` is what a release is and what you get by passing nothing. `free` and `pro` narrow phase 4 to one edition, **only with `--dry-run`**; on a real run they abort (see phase 4). `full` is an alias for `pro` and `lite` for `free`, and `--plan=<name>` is a synonym. |
 | `--publish` | Force **stage 2 only**: skip phases 0–6 and publish an already-merged release PR. Rarely needed — publishing is the default endpoint (see below), so this is for when stage 1 ran elsewhere or you want to skip its verification build. |
-| `--draft` | `gh release create --draft`, so the Release is inspectable before it is public. Without it the Release is published outright. Use it for this repo's first real release. |
+| `--no-draft` | Publish the Release outright instead of as a draft. **The default is a draft**, so this is the opt-out; `--draft` is still accepted and does nothing. |
 | `--dry-run` | Run phases 0–5 for real, print phase 7 and execute none of it, then unwind. |
 
 Both bare arguments are positional and tell themselves apart by shape, so their order does not
@@ -419,7 +419,9 @@ Co-authored-by: Claude <model> <noreply@anthropic.com>
 3. `git show --stat HEAD`.
 4. Every artifact path with its byte size, and — for each — whether it will be attached in
    stage 2, with the reason.
-5. The exact commands about to run.
+5. Whether the Release will be a draft. It is, unless `--no-draft` was passed; say which, because
+   it decides whether anything becomes public without a further click.
+6. The exact commands about to run.
 
 Then wait for the operator's answer.
 
@@ -484,11 +486,21 @@ git push origin "released/$NEW"
 creating one of its own at whatever the remote's default branch happens to point to.
 
 ```bash
-gh release create "v$NEW" --title "v$NEW" --notes-file <notes> [--draft] <assets>
+gh release create "v$NEW" --title "v$NEW" --notes-file <notes> --draft <assets>
 ```
 
-Use `--draft` for the first real release: nothing has ever been published here, so the first one
-should be inspectable before it is public. The notes are the changelog entry.
+**`--draft` is the default and is passed unless the operator asked for `--no-draft`.** The notes
+are the changelog entry. Tell them where the draft is and that publishing it is a click in the
+GitHub UI — a draft that nobody publishes is the one way this flow quietly does nothing, so it
+must be said at the end of every run, not assumed.
+
+Drafting by default buys two things worth knowing:
+
+- **Release creation stops being irreversible.** A draft is visible only to people who can write
+  to the repository, so a wrong one is deleted with `gh release delete "v$NEW"` and recreated.
+  The tag is still permanent — see phase 8, which marks exactly where that line now falls.
+- **Draft assets are not public yet.** They become public the moment the draft is published, which
+  is why the asset decision below is unchanged: a draft is a delay, not a safeguard.
 
 ### Which assets — the one step visibility decides
 
@@ -510,20 +522,31 @@ So this one step reads the visibility recorded in preflight:
 This is not a second opinion about their decision. It is the preflight visibility check they
 asked for, pointed at the only step it can protect.
 
+**The draft does not relax this.** A draft's assets are hidden only until someone clicks Publish,
+and that click carries no warning and runs no check. Treat attaching the Pro zip as publishing it,
+because from the operator's next click onwards it is.
+
 ### After
 
 Nothing in CI runs on tags, and no workflow builds or inspects the zip
 ([.github/workflows/php.yml](../../../.github/workflows/php.yml) and the JS one trigger on
 `dev` pushes and PRs only). So the build's own checks plus phase 4's are the whole verification.
-Do not wait for a check that will not arrive; say the Release is published and what was and was
-not verified.
+Do not wait for a check that will not arrive; say what was and was not verified.
 
-Then: the zips in `release/` still need uploading to wordpress.org (Free) and the store (Pro) by
-hand. That is outside this skill. Say so.
+Then say what is left for a person, because by default none of it has happened yet:
+
+1. **The Release is a draft.** Give its URL and say it goes live only when someone clicks Publish
+   in the GitHub UI — and that the Pro zip, if attached, becomes a public download at that moment.
+2. The zips in `release/` still need uploading to wordpress.org (Free) and the store (Pro) by
+   hand. That is outside this skill.
+
+Never report a drafted Release as released.
 
 ## Phase 8 — Failure handling
 
-Reversibility ends at the **first push in phase 7**. Everything before it is local.
+Reversibility ends at the **first push in phase 7**. Everything before it is local — and because
+the Release is a draft by default, the last step is reversible again: the tag is what cannot be
+taken back, not the Release.
 
 | Where it fails | Reversible | Recovery |
 |---|---|---|
@@ -540,7 +563,8 @@ Reversibility ends at the **first push in phase 7**. Everything before it is loc
 | **Tag pushed** | no | The tag is public. If it is wrong, release the next patch version. Never delete or move a pushed tag, and never force-push. |
 | `git push released/$NEW` fails after the tag landed | no | The tag is correct and that is what matters. Retry the branch push alone. |
 | **`gh release create` fails after the pushes** | no | The git side is already correct and complete. **Retry only the release creation.** Never re-run the pushes, and never re-tag. |
-| Release created with wrong notes | yes | `gh release edit "v$NEW" --notes-file <fixed>`. Notes are editable; the tag is not. |
+| Draft Release wrong in any way | yes | It is a draft: `gh release edit "v$NEW" --notes-file <fixed>`, or `gh release delete "v$NEW"` and create it again. Deleting a draft does not touch the tag, and nobody outside the repository ever saw it. |
+| **A published Release is wrong** | mostly | `gh release edit` fixes the notes and `gh release delete-asset` removes an asset, but anything already downloaded is out. Prefer leaving it and releasing the next patch version. |
 
 Two rules sit above the table. After the first push, the answer is always to **roll forward** —
 a new commit, a new patch version, an edited release — never a force-push and never a rewrite of
@@ -550,7 +574,8 @@ pushed history, which `CLAUDE.md` forbids outright. And after **any** failed or 
 ## Phase 9 — Dry run (`--dry-run`)
 
 Run phases 0 to 5 for real. Print phase 7 in full — every command, the tag, the branch, the
-assets and their sizes, the visibility decision — and execute **none** of it. Open no PR.
+assets and their sizes, the visibility decision, and whether the Release would be a draft — and
+execute **none** of it. Open no PR.
 
 Given `free` or `pro` — `/yayrelease 1.1.0 pro --dry-run` — phase 4 builds that one only, and the
 run says which cross-edition checks it therefore did not make (see phase 4). With `both`, or

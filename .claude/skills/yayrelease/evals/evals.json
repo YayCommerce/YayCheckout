@@ -5,7 +5,7 @@
       "id": 1,
       "name": "stage-1-named-version",
       "prompt": "/yayrelease 1.1.0",
-      "expected_output": "Runs preflight first: branch is dev, tree clean, not behind origin/dev (reports the ahead count and asks whether those commits belong in the release), no local or remote v1.1.0 tag, gh authed, repo visibility recorded, build prerequisites present. Computes the release date once. Asserts 1.1.0 > the YAYCHECKOUT_VERSION define. Invokes /yaychangelog 1.1.0 --write rather than drafting the entry itself, and shows the result for editing before anything else. Bumps with ./scripts/run.sh bump, then greps all three locations and asserts git diff -U0 adds no @since or @deprecated line. Builds Pro then Free with --no-prompt, each as its own command with a warning that it takes minutes, then reverts composer.json and scoper.inc.php and runs composer install. Checks the version, root directory and header name inside each zip. Commits on trace/chore/yayrelease-1.1.0 with files staged by name and a Co-authored-by trailer. Stops at Gate A printing the version, the changelog, git show --stat HEAD, each artifact path with its byte size and whether it will be attached, and the exact commands. Pushes and opens the PR only after the operator answers, then stops without tagging, saying the same /yayrelease 1.1.0 picks up at stage 2 once a teammate has squash-merged it.",
+      "expected_output": "Runs preflight first: branch is dev, tree clean, not behind origin/dev (reports the ahead count and asks whether those commits belong in the release), no local or remote v1.1.0 tag, gh authed, repo visibility recorded, build prerequisites present. Computes the release date once. Asserts 1.1.0 > the YAYCHECKOUT_VERSION define. Invokes /yaychangelog 1.1.0 --write rather than drafting the entry itself, and shows the result for editing before anything else. Bumps with ./scripts/run.sh bump, then greps all three locations and asserts git diff -U0 adds no @since or @deprecated line. Builds Pro then Free with --no-prompt, each as its own command with a warning that it takes minutes, then reverts composer.json and scoper.inc.php and runs composer install. Checks the version, root directory and header name inside each zip. Commits on trace/chore/yayrelease-1.1.0 with files staged by name and a Co-authored-by trailer. Stops at Gate A printing the version, the changelog, git show --stat HEAD, each artifact path with its byte size and whether it will be attached, that the Release will be a draft, and the exact commands. Pushes and opens the PR only after the operator answers, then stops without tagging, saying the same /yayrelease 1.1.0 picks up at stage 2 once a teammate has squash-merged it.",
       "files": []
     },
     {
@@ -26,7 +26,7 @@
       "id": 4,
       "name": "publish-pro-asset-on-public-repo",
       "prompt": "/yayrelease 1.1.0",
-      "expected_output": "With the release PR already squash-merged and v1.1.0 untagged, phase 0 routes this to stage 2 and says so, rather than needing --publish. Pulls dev ff-only, confirms the squashed release commit is HEAD, version untagged locally and on the remote, tree clean, visibility read again. Rebuilds both zips from the merged commit rather than shipping stage 1's. Tags v1.1.0 annotated, pushes dev, then the tag, then creates released/1.1.0 and pushes it, and only then runs gh release create. Attaches the Free zip; while gh reports PUBLIC it stops before the Pro upload, prints the visibility and the Pro zip's path and size, and attaches it only on an explicit answer. Says nothing in CI runs on tags and that the zips still need uploading to wordpress.org and the store by hand.",
+      "expected_output": "With the release PR already squash-merged and v1.1.0 untagged, phase 0 routes this to stage 2 and says so, rather than needing --publish. Pulls dev ff-only, confirms the squashed release commit is HEAD, version untagged locally and on the remote, tree clean, visibility read again. Rebuilds both zips from the merged commit rather than shipping stage 1's. Tags v1.1.0 annotated, pushes dev, then the tag, then creates released/1.1.0 and pushes it, and only then runs gh release create with --draft, which is the default. Attaches the Free zip; while gh reports PUBLIC it stops before the Pro upload, prints the visibility and the Pro zip's path and size, and attaches it only on an explicit answer. Reports the Release as a draft, never as released, with its URL and the note that publishing it is a click that also makes any attached Pro zip a public download. Says nothing in CI runs on tags and that the zips still need uploading to wordpress.org and the store by hand.",
       "files": []
     },
     {
@@ -76,6 +76,13 @@
       "name": "routes-by-repository-state",
       "prompt": "/yayrelease 1.1.0",
       "expected_output": "Reads which stage to run from the repository, not a flag: stage 1 when no release commit for the version is on dev, stage 2 when it is merged and v1.1.0 is untagged locally and on the remote. Says the version is already released and stops when the tag exists, and says the PR is awaiting review and links it when one is open and unmerged. Never waits in a loop for the merge, and never commits to dev directly to avoid the wait.",
+      "files": []
+    },
+    {
+      "id": 12,
+      "name": "draft-is-the-default",
+      "prompt": "/yayrelease 1.1.0 --no-draft",
+      "expected_output": "Passes no --draft, so the Release is published outright, and says at Gate A that it will be. Without the flag it passes --draft, treats a wrong draft as reversible (gh release edit, or delete and recreate, neither touching the tag), and never reports a drafted Release as released. Accepts a redundant --draft without complaint.",
       "files": []
     }
   ]
