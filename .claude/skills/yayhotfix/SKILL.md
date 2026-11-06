@@ -520,6 +520,11 @@ already cherry-picked across excluded by patch-id. Empty means the fix is in `de
 done. Non-empty is the work. Do not substitute `git branch --contains` or a version comparison:
 after a squash merge the SHAs differ, and only the patch-id comparison gets the right answer.
 
+That is not a guess. It was tested in this repository by squash-merging a branch into a copy of
+`dev` and running both: the squashed commit had a different SHA, the command above correctly
+reported the change as present, and `git branch --contains` did **not** list the squashed copy —
+it would have reported the fix missing and sent you to port it a second time.
+
 ```bash
 git switch dev && git pull --ff-only origin dev
 DEVV=$(./scripts/run.sh info)                     # what dev claims BEFORE the port
