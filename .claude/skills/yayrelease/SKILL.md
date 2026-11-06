@@ -55,6 +55,17 @@ than none:
 | `--publish` | Force **stage 2 only**: skip phases 0–6 and publish an already-merged release PR. Rarely needed — publishing is the default endpoint (see below), so this is for when stage 1 ran elsewhere or you want to skip its verification build. |
 | `--dry-run` | Run phases 0–5 for real, print phase 7 and execute none of it, then unwind. |
 
+**Nothing parses any of this.** The whole line after the skill name arrives as one string of free
+text, and the table above is the only thing that gives it meaning. So read it generously:
+`--plan=pro`, `pro` and `full` are one request, quotes are readability rather than syntax, and an
+obvious misspelling of a flag is that flag. Being generous about *reading* is not being generous
+about *acting* — when a value is genuinely ambiguous, say what was passed and ask; never invent
+one, and never widen what was asked for.
+
+It is also why nothing irreversible here rests on a flag. A typo cannot fail loudly in free text,
+so phase 0 reads which stage to run from the repository rather than from `--publish`, the editions
+are resolved and named back in the output, and Gate A and Gate B stop the run whatever was typed.
+
 **Accepted, but not in the hint, because they change nothing.** Take them without complaint and
 say what the behaviour already is, rather than treating them as errors:
 

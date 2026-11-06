@@ -37,8 +37,17 @@ arguments — **keep the two in step**, because a stale hint is worse than none:
 | `--write` | Write the entry into `readme.txt`. Needs a version; without one, say so and print the draft instead. |
 | `--date 'Mon D, YYYY'` | The release date for the heading. `/yayrelease` passes the date it computed once in its preflight, so the heading and the tag annotation cannot disagree. Omitted, this skill uses today's: `LC_ALL=C date +'%b %e, %Y' \| tr -s ' '`. |
 
+**Nothing parses any of this.** The whole line after the skill name arrives as one string of free
+text, and the table above is the only thing that gives it meaning. So read it generously:
+`--date "Oct 28, 2026"`, `--date Oct 28 2026` and "use Oct 28 as the release date" are one
+request, quotes are readability rather than syntax, and an obvious misspelling of a flag is that
+flag. Being generous about *reading* is not being generous about *acting* — when a value is
+genuinely ambiguous, say what was passed and ask; never invent a date or a version.
+
 Default behaviour is to print, not to write. A draft costs nothing; a bad entry in `readme.txt`
-is read by every site owner in their updates screen.
+is read by every site owner in their updates screen. That default is also what makes the free-text
+reading safe: `--write` is the only argument here that changes a file, so a misread costs a reread
+rather than a wrong `readme.txt`.
 
 ## 1. Collect and screen the range
 
