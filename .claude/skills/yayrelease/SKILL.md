@@ -1,7 +1,7 @@
 ---
 name: yayrelease
 description: Cuts a YayCheckout release end to end: preflight, version, the changelog through /yaychangelog, the bump, both edition zips, a release PR into dev, then the annotated tag, the released branch and a draft GitHub Release. Use when the user types /yayrelease, or says "release 1.1.0", "cut a release", "ship a release", "bump the version" or "publish the release". Do not use to draft release notes alone (/yaychangelog) or to build a test zip (./scripts/run.sh release).
-argument-hint: "[version] [both|free|pro] [--publish] [--draft] [--dry-run]"
+argument-hint: "[version] [both|free|pro] [--publish] [--dry-run]"
 disable-model-invocation: true
 allowed-tools: Read, Edit, Bash, Grep, Glob
 # Purpose: the one linear flow that cuts a release of this plugin, from preflight to the published
@@ -41,16 +41,27 @@ found. Each is marked **[new]** and named in one place, so the team can change i
 
 ## Arguments
 
-`argument-hint` in the frontmatter is display text with no parser behind it. These are the real
-arguments — **keep the two in step**, because a stale hint is worse than none:
+`argument-hint` in the frontmatter is display text with no parser behind it. The hint lists only
+what **varies**: `both|free|pro` is a real choice, so it is shown even though `both` is the
+default. A flag with nothing to vary is not in the hint, however much it is accepted.
+
+These are the real arguments — **keep them and the hint in step**, because a stale hint is worse
+than none:
 
 | Argument | Meaning |
 |---|---|
 | `<version>` | `X.Y.Z`, `X.Y.Z.W` or `X.Y.Z-tag`. Omitted, phase 1 proposes one and asks. |
-| `both` *(default)*, `free`, `pro` | Which editions to build, as a bare word after the version. `both` is what a release is and what you get by passing nothing. `free` and `pro` narrow phase 4 to one edition, **only with `--dry-run`**; on a real run they abort (see phase 4). `full` is an alias for `pro` and `lite` for `free`, and `--plan=<name>` is a synonym. |
+| `both` *(default)*, `free`, `pro` | Which editions to build, as a bare word after the version. `both` is what a release is and what you get by passing nothing. `free` and `pro` narrow phase 4 to one edition, **only with `--dry-run`**; on a real run they abort (see phase 4). |
 | `--publish` | Force **stage 2 only**: skip phases 0–6 and publish an already-merged release PR. Rarely needed — publishing is the default endpoint (see below), so this is for when stage 1 ran elsewhere or you want to skip its verification build. |
-| `--draft` *(default, and the only behaviour)* | The Release is always created as a draft. The flag is accepted so it can be written out, and changes nothing. There is deliberately **no opt-out** — see phase 7. |
 | `--dry-run` | Run phases 0–5 for real, print phase 7 and execute none of it, then unwind. |
+
+**Accepted, but not in the hint, because they change nothing.** Take them without complaint and
+say what the behaviour already is, rather than treating them as errors:
+
+- `--draft`, and `--no-draft` — the Release is **always** a draft, and there is deliberately no
+  way to publish one outright. Phase 7 says why.
+- `full` and `lite` — aliases for `pro` and `free`.
+- `--plan=<name>` — a synonym for the bare edition word, since that is `run.sh`'s own flag.
 
 Both bare arguments are positional and tell themselves apart by shape, so their order does not
 matter: anything that looks like a version (`1.1.0`) is the version, and `both`, `free`, `pro`,
