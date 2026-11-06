@@ -19,7 +19,7 @@
       "id": 3,
       "name": "writes-above-the-previous-heading",
       "prompt": "/yaychangelog 1.1.0 --write",
-      "expected_output": "Inserts `= 1.1.0 =` and its bullets below `== Changelog ==` and above the previous heading, with no date in the heading. Every bullet starts with a hyphen, not an asterisk, and carries exactly one of Added:, Updated: or Fixed:, grouped in that order, and `* Initial release.` under = 1.0.0 = is left unlabelled because history is not rewritten. Then checks that the new version is first, that its heading appears exactly once, that the awk check for unlabelled bullets prints nothing, and that git diff --stat names readme.txt alone. Bumps nothing and commits nothing.",
+      "expected_output": "Inserts a heading of the shape `= Mon D, Version X.Y.Z =` — the release date, a spaced hyphen, the word Version, then the version, with the day unpadded and the month in English — and its bullets, below `== Changelog ==` and above the previous heading. Uses today's date when no --date was passed. Every bullet starts with a hyphen, not an asterisk, and carries exactly one of Added:, Updated: or Fixed:, grouped in that order, and `- Initial release.` under the bare `= 1.0.0 =` is left unlabelled and undated, because 1.0.0 has not been released and has no date to carry. Then checks that the new version is first, that its full heading shape matches exactly once (not merely the version), that the awk check for unlabelled bullets prints nothing, and that git diff --stat names readme.txt alone. Bumps nothing and commits nothing.",
       "files": []
     },
     {
@@ -48,6 +48,13 @@
       "name": "label-from-what-the-owner-sees",
       "prompt": "/yaychangelog 1.1.0",
       "expected_output": "Picks each label from what the change does to an installation, not from the commit's Conventional Commits type: a feat that alters an existing default is Updated:, and a feature that shipped broken and now works for the first time is Added: rather than Fixed:. Splits a bullet that would need two labels into two. Uses only Added:, Updated: and Fixed: — never New:, Changed:, Improved:, Removed:, Deprecated: or Security: — and writes a removal as Updated:. Writes every bullet with a leading `- `.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "date-comes-from-the-caller",
+      "prompt": "/yaychangelog 1.1.0 --write --date 'Oct 28, 2026'",
+      "expected_output": "Writes `= Oct 28, 2026 - Version 1.1.0 =` using the date it was given, not today's, because /yayrelease computes the release date once in its preflight so the changelog heading and the tag annotation cannot disagree across midnight. Run without --date it takes today's with LC_ALL=C date +'%b %e, %Y' | tr -s ' ' — LC_ALL=C for the English month, %e rather than the GNU-only %-d, and tr -s to squeeze the padding on days 1 to 9.",
       "files": []
     }
   ]

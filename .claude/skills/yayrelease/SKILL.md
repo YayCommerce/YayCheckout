@@ -157,12 +157,17 @@ Rules for reading those:
 Compute the release date **once**, here, and reuse it:
 
 ```bash
-RELEASE_DATE=$(date +%F)
+RELEASE_DATE=$(LC_ALL=C date +'%b %e, %Y' | tr -s ' ')      # Nov 6, 2026
 ```
 
-It is used in the tag annotation and nowhere else. The `readme.txt` changelog headings in this
-repo carry **no date** — do not add one. Computing it once is still right: it stops the tag
-annotation and anything else dated from disagreeing when a run straddles midnight.
+It has two consumers — the changelog heading phase 2 writes
+(`= Nov 6, 2026 - Version 1.1.0 =`) and the tag annotation in phase 7 — which is exactly why it is
+computed once here and passed on rather than taken again later. A release run that straddles
+midnight would otherwise ship a changelog and a tag that disagree about the day it happened.
+
+`LC_ALL=C` pins the month to English, `%e` is the portable unpadded day (`%-d` is GNU-only and
+this tooling must run under macOS's BSD `date`), and `tr -s ' '` squeezes the padding `%e` leaves
+on days 1–9. All three matter; the changelog style file explains each.
 
 Finally, read [docs/known-issues.md](../../../docs/known-issues.md) before this run. Two entries
 change what phases 4 and 5 must do, and both are live.
@@ -198,8 +203,12 @@ Do not bump anything in this phase. Phase 3 writes.
 `--write`, and let it draft the entry, decide each `(Pro)` suffix and write it into `readme.txt`:
 
 ```
-/yaychangelog <version> --write
+/yaychangelog <version> --write --date "$RELEASE_DATE"
 ```
+
+Pass `--date`. Without it the changelog skill takes today's date for itself, which is almost
+always the same day and occasionally not — and "occasionally not" is the whole reason phase 0
+computes it once.
 
 It resolves the range itself (the newest `v*` tag to HEAD, the whole history when there is none),
 screens the commits, reads their bodies, and reports the range it used. One skill owning those
@@ -496,7 +505,7 @@ that ship.
 Then tag, push, and only then create the Release:
 
 ```bash
-git tag -a "v$NEW" -m "YayCheckout $NEW — released $RELEASE_DATE"
+git tag -a "v$NEW" -m "YayCheckout $NEW — released $RELEASE_DATE"   # the date phase 0 computed
 git push origin dev
 git push origin "v$NEW"
 git branch "released/$NEW" "v$NEW"

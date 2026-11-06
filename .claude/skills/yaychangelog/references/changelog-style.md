@@ -17,7 +17,7 @@ There is no CHANGELOG.md, and nothing else in the repo carries release notes.
 ```
 == Changelog ==
 
-= 1.1.0 =
+= Oct 28, 2026 - Version 1.1.0 =
 - Added: A thing that did not exist before.
 - Added: Order Again button on the thank-you page. (Pro)
 - Updated: Something that existed and now behaves differently.
@@ -28,9 +28,9 @@ There is no CHANGELOG.md, and nothing else in the repo carries release notes.
 ```
 
 - Newest version first. Append above the previous heading, never below it.
-- The heading is `= X.Y.Z =` — the version alone. **No date.** The 1.0.0 entry carries none,
-  and wordpress.org does not ask for one. Do not add a date to a heading because some other
-  plugin does.
+- The heading is `= <Mon D, YYYY> - Version <X.Y.Z> =` — the release date, a spaced hyphen, the
+  word `Version`, then the version. For example `= Oct 28, 2026 - Version 3.2.3 =`. See below for
+  the date's exact shape and where it comes from.
 - Each bullet is `- `, then its label, then one sentence ending in a full stop. A hyphen, not an
   asterisk.
 - **Every bullet carries one of exactly three labels**, spelled `Added:`, `Updated:` or `Fixed:` —
@@ -40,11 +40,47 @@ There is no CHANGELOG.md, and nothing else in the repo carries release notes.
   owners in the WordPress updates screen.
 - Order within a version: all the `Added:` bullets, then all the `Updated:`, then all the
   `Fixed:`. Within each group, the one a site owner is most likely to notice goes first.
-- **The 1.0.0 entry stays unlabelled.** `- Initial release.` carries no label. It was converted to
-  a hyphen when the markers changed, which is safe only because 1.0.0 has never been released:
-  there is no tag and no wordpress.org listing, so no published changelog exists to preserve. Once
-  a version ships, its entry is history and is never touched again — not to add a label, not to
-  change a marker, not for anything.
+- **The 1.0.0 entry stays unlabelled**, and keeps its bare `= 1.0.0 =` heading. See below: it is a
+  placeholder for a release that has not happened. Once a version ships, its entry is history and
+  is never touched again — not to add a label, not to change a marker, not for anything.
+
+### The date in the heading
+
+`Mon D, YYYY`: a three-letter English month, the day **unpadded**, a comma, the four-digit year —
+`Oct 28, 2026`, `Nov 6, 2026`, not `Nov 06, 2026`.
+
+The date is the release date, and `/yayrelease` computes it **once** in its preflight and passes it
+to this skill with `--date`, so the changelog heading and the tag annotation cannot disagree when a
+release run straddles midnight. Run on its own, this skill uses today's date.
+
+Produce it with this and nothing else:
+
+```bash
+LC_ALL=C date +'%b %e, %Y' | tr -s ' '
+```
+
+Each piece is load-bearing, and all three were checked on this machine:
+
+- **`LC_ALL=C`** pins the month to English. Without it `%b` follows the operator's locale, and a
+  French one writes `nov. 6, 2026` into the readme.
+- **`%e`, not `%-d`** — `%-d` is a GNU extension. `%e` is space-padded on both GNU and BSD, which
+  is why `tr -s ' '` follows it to squeeze `Nov  6` into `Nov 6`. The repo's release tooling must
+  run under macOS's BSD tools as well as GNU (`.claude/rules/release.md`), and `date` there has no
+  `--version`, let alone `%-d` as a documented flag.
+- **`tr -s ' '`** collapses the padding. Without it, days 1–9 get two spaces.
+
+The version still belongs in the heading, after `Version `, so anything scanning the changelog for
+a version number finds one.
+
+### The 1.0.0 entry keeps its bare heading
+
+`= 1.0.0 =` stays as it is, with no date, because **1.0.0 has not been released and so has no
+release date** — and a date is not something to invent. It is a placeholder for a release that
+has not happened, not an entry in a published changelog, which is also why its bullet marker was
+converted when the markers changed.
+
+The first real release rewrites that heading into the new shape with its actual date. After that,
+a shipped version's heading is never touched again.
 
 ### Why a hyphen, when wordpress.org's own example uses an asterisk
 
@@ -85,8 +121,9 @@ Rules that keep it mechanical:
 
 ## This repo had no house style to copy
 
-Before 1.1.0 the only entry was `- Initial release.` for 1.0.0 — a placeholder, not a style.
-The rules above, the three labels included, are the ones this skill establishes. They are a decision, not a
+Before 1.1.0 the only entry was `- Initial release.` under a bare `= 1.0.0 =` — a placeholder,
+not a style. The rules above, the dated heading and the three labels included, are the ones this
+skill establishes. They are a decision, not a
 discovery, so they can be changed; change them **here**, in this file, and the skill follows.
 
 ## What earns a bullet
