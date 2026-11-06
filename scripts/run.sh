@@ -36,6 +36,11 @@ PRO_PATHS="includes/Pro/ assets/dist/blocks/pro/ templates/layouts/pro/"
 # block.json: Free's locked Pro blocks import that metadata, and the built Free bundle already carries it.
 # Not in PRO_PATHS: the Pro check wants every PRO_PATHS entry in its zip.
 FREE_SOURCE_PATHS="apps/admin packages/blocks package.json pnpm-workspace.yaml .nvmrc"
+# Dev-only files inside FREE_SOURCE_PATHS: lint config nothing in the zip runs, and an env/ directory whose
+# two files hold only comments (vite.config.ts path.resolve()s the directory and loadEnv() tolerates its
+# absence, so the documented rebuild is unaffected). A .env file in a distributed zip is something
+# wordpress.org reviewers and scanners flag on sight. Space-separated; the artifact check enforces it.
+FREE_DEV_STRIP="apps/admin/env apps/admin/.prettierignore apps/admin/eslint.config.js"
 # Admin-shell files the Free zip deletes: its licensing (with the EDD updater) and the Recommended Plugins
 # page. FREE_SHELL_PATCH first removes every reference to them; the artifact check enforces both.
 FREE_SHELL_STRIP="src/License/ src/Registry/ src/Contracts/AddonHostAdapter.php src/Menu/ExternalPluginMenuAdapter.php
@@ -465,6 +470,12 @@ cmd_release() {
             exit 1
         fi
         cp "$PLUGIN_DIR/pnpm-lock.yaml" "$temp_dir/"
+        # git ls-files copies every tracked file under apps/admin and packages/blocks, dev-only ones included.
+        local dev_path
+        for dev_path in $FREE_DEV_STRIP; do
+            rm -rf "${temp_dir:?}/$dev_path"
+        done
+        print_info "Free build: removed the dev-only files ($FREE_DEV_STRIP)"
         find "${temp_dir:?}/packages/blocks/src/pro" -type f ! -name block.json -delete
         find "${temp_dir:?}/packages/blocks/src/pro" -depth -type d -empty -delete
         # These scripts run composer install (the private admin-shell package) or scripts/run.sh, neither shipped.
@@ -523,6 +534,15 @@ cmd_release() {
     # The copied classmap is the dev one, and for Free it still lists the files just deleted (wordpress.org
     # reads a listed EDD_SL_Plugin_Updater as an update checker). Rebuild it from what this copy holds.
     composer dump-autoload --no-dev --classmap-authoritative --no-scripts --quiet --working-dir="$temp_dir"
+
+    # dump-autoload rewrites the autoload maps but not installed.json, which only composer
+    # install/update writes: the copy above is the dev tree's, 161 KB describing 59 packages the zip
+    # ships none of, dev-only ones (php-scoper, phpunit, php_codesniffer) among them. Nothing reads it
+    # at runtime, so it goes. installed.php stays: it is the data behind Composer\InstalledVersions,
+    # which this copy classmaps, so on a site where another plugin calls that class our autoloader may
+    # be the one that registers it -- and InstalledVersions::getInstalled() ends in an unguarded
+    # `require __DIR__ . '/installed.php'`, so a missing file is a fatal error, not a graceful degrade.
+    rm -f "$temp_dir/vendor/composer/installed.json"
 
     find "$temp_dir/vendor-prefixed" -name "*.php" -exec perl -pi -e "s/$SHELL_TEXT_DOMAIN_CALL/\$1\x27$PLUGIN_SLUG\x27)/g" {} +
 
@@ -592,6 +612,12 @@ cmd_release() {
             print_error "Free artifact contains node_modules"
             exit 1
         fi
+        for path in $FREE_DEV_STRIP; do
+            if unzip -l "$zip_name" | grep -q "$plan_slug/$path"; then
+                print_error "Free artifact contains the dev-only $path"
+                exit 1
+            fi
+        done
         if unzip -l "$zip_name" | grep "$plan_slug/packages/blocks/src/pro/" | grep -qvE '/$|/block\.json$'; then
             print_error "Free artifact contains the Pro blocks' source:"
             unzip -l "$zip_name" | grep "$plan_slug/packages/blocks/src/pro/" | grep -vE '/$|/block\.json$'
@@ -614,6 +640,19 @@ cmd_release() {
             exit 1
         fi
     fi
+
+    # The Composer manifest is the dev tree's whatever dump-autoload does, so a zip that holds it
+    # is describing packages it does not ship. installed.php stays for Composer\InstalledVersions.
+    if unzip -l "$zip_name" | grep -q "$plan_slug/vendor/composer/installed.json"; then
+        print_error "Artifact contains vendor/composer/installed.json, the dev tree's package manifest"
+        exit 1
+    fi
+    for path in vendor/autoload.php vendor/composer/autoload_static.php vendor/composer/autoload_classmap.php vendor/composer/installed.php; do
+        if ! unzip -l "$zip_name" | grep -q "$plan_slug/$path"; then
+            print_error "Artifact is missing $path, which the autoloader needs"
+            exit 1
+        fi
+    done
 
     # The header comes from the branch; a mismatch means the wrong branch's files.
     local plugin_name
