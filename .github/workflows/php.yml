@@ -2,9 +2,13 @@ name: PHP
 
 # Runs only when product PHP, the blocks' render.php or the Pro boundary inputs change.
 # Docs-only and SPA-only changes skip it.
+#
+# The base-branch filter covers dev and the transient hotfix/<X.Y>.x lines /yayhotfix cuts from a
+# released tag, so a hotfix PR gets the same php -l and Pro-boundary checks a dev PR does. A
+# hotfix ships straight to customers, so it is the last place to skip them.
 on:
   pull_request:
-    branches: [dev]
+    branches: [dev, "hotfix/**"]
     paths:
       - 'includes/**'
       - 'packages/blocks/src/**'
@@ -17,7 +21,7 @@ on:
       - 'scripts/check-pro-boundary.sh'
       - '.github/workflows/php.yml'
   push:
-    branches: [dev]
+    branches: [dev, "hotfix/**"]
     paths:
       - 'includes/**'
       - 'packages/blocks/src/**'

@@ -1,0 +1,96 @@
+{
+  "skill_name": "yayhotfix",
+  "evals": [
+    {
+      "id": 1,
+      "name": "refuses-when-dev-is-the-released-tree",
+      "prompt": "/yayhotfix 1.0.1",
+      "expected_output": "Resolves the base tag (newest v* tag by sort -V, after fetching tags explicitly) and names the commit it points at. Counts the commits between that tag and origin/dev; when the count is 0 it stops and says dev is already the released tree, so /yayrelease 1.0.1 is the right flow — it gets CI, the normal review path and no forward-port to forget. Does not cut a hotfix line anyway just because a hotfix was asked for.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "stage-1-from-tag",
+      "prompt": "/yayhotfix 1.0.1 --from v1.0.0",
+      "expected_output": "Preflight: clean tree, tags fetched with an explicit refspec, v1.0.0 present locally and on the remote, the commits on dev past the tag printed with a request to confirm they must not ship, v1.0.1 untagged locally and remotely, gh authed, visibility recorded, toolchain and node checked. Checks whether packaging moved since the tag with git log over scripts/, editions/, scoper.inc.php and composer.json, and asks whether to cherry-pick those commits or ship with the old packaging rather than deciding alone. Computes the release date once. Reads the base version out of the tag with git show, not from the working tree, and asserts 1.0.1 is strictly greater. Cuts the hotfix line hotfix/1.0.x from the tag and the working branch trace/fix/hotfix-1.0.1 from that, writes the fix against the old tree, runs check-pro-boundary.sh, composer lint and php -l locally. Invokes /yaychangelog 1.0.1 with an explicit v1.0.0..HEAD range and --date. Bumps with ./scripts/run.sh bump, then commits the changelog and bump BEFORE building. Builds both editions per build-and-verify.md, and additionally asserts the base tag is an ancestor of HEAD and that the commit list between them contains only the fix, the changelog and the bump. Stops at Gate A, which also states that dev will not have the fix until phase 8. Opens the PR with the hotfix line as its base, not dev.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "does-not-compare-against-dev-version",
+      "prompt": "/yayhotfix 1.0.1",
+      "expected_output": "With dev claiming 1.1.0 from a release in flight, does not treat 1.0.1 < 1.1.0 as an error and does not refuse the version. Compares only against the base tag's own YAYCHECKOUT_VERSION, says the dev-version difference is expected on a hotfix, and notes that phase 8 reconciles it.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "narrowing-aborts-on-a-real-run",
+      "prompt": "/yayhotfix 1.0.1 free",
+      "expected_output": "Aborts the build rather than shipping one edition: both zips must come from the same tagged commit at the same version, readme.txt is copied into both unchanged, and the leak checks only work when both are built. Says free and pro are for --dry-run only and that a hotfix builds both. Does not silently build both and ignore the word.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "stage-2-tag-and-draft",
+      "prompt": "/yayhotfix 1.0.1",
+      "expected_output": "With the hotfix PR squash-merged into the hotfix line and v1.0.1 untagged, routes to stage 2 from the repository rather than needing a flag. Pulls the hotfix line ff-only, confirms the squashed commit is HEAD, the tree clean, the version untagged locally and remotely, and the base tag still an ancestor. Rebuilds both zips from the squashed commit rather than shipping stage 1's. Stops at Gate B. Tags v1.0.1 annotated naming it a hotfix of 1.0.0, pushes the hotfix line, then the tag, then creates and pushes released/1.0.1, and only then runs gh release create with --draft. Does not push dev, and says why. Reads the recorded visibility to decide the Pro asset. Ends by printing the forward-port as outstanding with the command that does it, and by saying the Release is a draft and the zips still need uploading by hand.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "forward-port-detection-is-patch-id",
+      "prompt": "/yayhotfix 1.0.1 --forward-port",
+      "expected_output": "Detects whether dev already has the fix with git log --cherry-pick --right-only over origin/dev...v1.0.1, and says why: after a squash merge the SHAs differ, so git branch --contains and any version comparison give the wrong answer. Empty output means done. Non-empty means it cherry-picks the squashed hotfix commit with -x onto a forward-port branch off dev.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "forward-port-version-reconciliation",
+      "prompt": "/yayhotfix 1.0.1 --forward-port",
+      "expected_output": "Records what dev claims before the cherry-pick. When dev was still on the base version it keeps the hotfix's bump so dev ends up claiming 1.0.1; when dev already claimed something higher it restores that with ./scripts/run.sh bump, because the hotfix's bump is not wanted there. States the rule as dev ending up claiming the greater of the two, and says the cost of getting it wrong: a dev that claims less than what shipped makes /yayrelease's strictly-greater assertion a lie and lets the same version be cut twice. Also repositions the changelog entry below any higher unreleased entry rather than leaving it at the top, and expects a readme.txt conflict when dev has its own newer entry.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "forward-port-pr-into-dev",
+      "prompt": "/yayhotfix 1.0.1 --forward-port",
+      "expected_output": "Opens the forward-port from trace/fix/forward-port-1.0.1 as its own PR with base dev and a squash merge, never by merging the hotfix line into dev — dev has no merge commits and a merge would drag the version bump in regardless. Stages by name, runs composer lint, and writes a body that links the hotfix PR and the tag and states which of the three reconciliations applied, especially whether the bump was kept or restored. After it merges, re-runs the patch-id detection and requires it to be empty before deleting the hotfix line locally and on the remote.",
+      "files": []
+    },
+    {
+      "id": 9,
+      "name": "scope-discipline",
+      "prompt": "/yayhotfix 1.0.1 and while you're in there pull in the new related-products block from dev",
+      "expected_output": "Does not widen the hotfix. Says a hotfix carries the fix and nothing else, that anything more means it needs reviewing as a release and defeats the reason for shipping off an old tag, and that the commit list between the tag and HEAD is checked in phase 5 for exactly this. Offers the alternative — ship the block through the normal /yayrelease flow on dev — and ships only the fix here.",
+      "files": []
+    },
+    {
+      "id": 10,
+      "name": "dry-run-unwinds-gitignored-state",
+      "prompt": "/yayhotfix 1.0.1 --dry-run",
+      "expected_output": "Runs phases 0 to 5 for real, stops at Gate A without pushing, prints phases 7 and 8 in full including the forward-port commands and which reconciliation today's dev would need, and executes none of it. Opens no PR. Unwinds by deleting the working branch and the hotfix line, restoring the four tracked files, removing only this version's two zips by name plus the two staging directories — never rm -rf release/*, because that directory holds the zips that actually shipped — then runs composer install and proves the tree with git status, ./scripts/run.sh info reporting dev's original version, and composer lint.",
+      "files": []
+    },
+    {
+      "id": 11,
+      "name": "tag-pushed-is-the-point-of-no-return",
+      "prompt": "the tag went out with the wrong changelog, undo it",
+      "expected_output": "Does not delete or move the pushed tag and does not force-push. Says the tag is permanent and the answer is to roll forward with the next patch version, that the draft Release itself is still editable or deletable because it is a draft and that deleting it does not touch the tag, and that if gh release create failed after the pushes only the release creation is retried, never the pushes or the tag.",
+      "files": []
+    },
+    {
+      "id": 12,
+      "name": "never-leaves-dev-without-the-fix",
+      "prompt": "/yayhotfix 1.0.1 — we're done once it's tagged, right?",
+      "expected_output": "Says no: a tagged hotfix that never reaches dev is the same bug rescheduled for the next release. Names phase 8 as part of the flow rather than a follow-up, keeps it as a todo item, and refuses to report the hotfix as complete until the patch-id detection against origin/dev comes back empty. Also separates what is still a person's job: publishing the draft Release, and uploading the Free zip to wordpress.org with its Stable tag moved and the Pro zip to the store.",
+      "files": []
+    },
+    {
+      "id": 13,
+      "name": "commits-before-building",
+      "prompt": "/yayhotfix 1.0.1 — build the zips first so we know it packages, then commit",
+      "expected_output": "Does not take that order. Explains that cmd_release resolves HEAD and stamps it into readme.txt's Source code section before building, and that for --plan=free a dirty tree is fatal, so building straight after the bump fails in the first second and never produces the Free zip. Says the opposite rationale does not hold: the build's rewrites to composer.json and scoper.inc.php are discarded rather than shipped, so nothing the build touches needed to be in the commit. Commits the fix, then the changelog and bump, then builds, then reverts those two files and runs composer install.",
+      "files": []
+    }
+  ]
+}
