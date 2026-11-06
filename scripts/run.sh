@@ -386,6 +386,25 @@ cmd_release() {
     print_msg "$CYAN" "╚════════════════════════════════════════════╝"
     echo ""
 
+    # Resolved before the build, so a tree that cannot back the readme's claim fails in a second
+    # rather than after a few minutes of building. The commit is stamped into the staging copy below.
+    local source_commit
+    source_commit=$(git -C "$PLUGIN_DIR" rev-parse HEAD 2>/dev/null || true)
+    if [ -z "$source_commit" ]; then
+        print_error "Cannot read HEAD: readme.txt § Source code must name the commit the zip was built from"
+        exit 1
+    fi
+    if [ -n "$(git -C "$PLUGIN_DIR" status --porcelain 2>/dev/null)" ]; then
+        # Free is the edition wordpress.org fetches the source for, so there the mismatch is fatal.
+        # Pro ships to customers who never fetch it: a warning is enough.
+        if [ "$plan" = "free" ]; then
+            print_error "Working tree is dirty: the zip would name commit $source_commit, which does not match it"
+            echo "wordpress.org fetches the source at that commit. Commit or stash the changes, then re-run."
+            exit 1
+        fi
+        print_warning "Working tree is dirty: readme.txt will name commit $source_commit, which does not match it"
+    fi
+
     local version
     if [ "$no_prompt" = true ]; then
         version=${requested_version:-$(get_version)}
@@ -519,23 +538,6 @@ cmd_release() {
 
     # readme.txt § Source code stands in for the source tree neither edition ships, so the commit it
     # names has to be the one this zip was built from. Stamped into the copy, never the branch's file.
-    # A dirty tree means the zip does not match any commit: the reviewer would fetch something else.
-    local source_commit
-    source_commit=$(git -C "$PLUGIN_DIR" rev-parse HEAD 2>/dev/null || true)
-    if [ -z "$source_commit" ]; then
-        print_error "Cannot read HEAD: readme.txt § Source code must name the commit the zip was built from"
-        exit 1
-    fi
-    if [ -n "$(git -C "$PLUGIN_DIR" status --porcelain 2>/dev/null)" ]; then
-        # Free is the edition wordpress.org reviews against that commit, so there the mismatch is fatal.
-        # Pro ships to customers who never fetch the source: a warning is enough.
-        if [ "$plan" = "free" ]; then
-            print_error "Working tree is dirty: the zip would name commit $source_commit, which does not match it"
-            echo "wordpress.org fetches the source at that commit. Commit or stash the changes, then re-run."
-            exit 1
-        fi
-        print_warning "Working tree is dirty: readme.txt names commit $source_commit, which does not match it"
-    fi
     sed_inplace "s/@SOURCE_COMMIT@/$source_commit/" "$temp_dir/readme.txt"
     print_info "Source link: $SOURCE_REPO_URL at $source_commit"
 
