@@ -18,20 +18,21 @@ There is no CHANGELOG.md, and nothing else in the repo carries release notes.
 == Changelog ==
 
 = 1.1.0 =
-* Added: A thing that did not exist before.
-* Added: Order Again button on the thank-you page. (Pro)
-* Updated: Something that existed and now behaves differently.
-* Fixed: Something that was broken and now works.
+- Added: A thing that did not exist before.
+- Added: Order Again button on the thank-you page. (Pro)
+- Updated: Something that existed and now behaves differently.
+- Fixed: Something that was broken and now works.
 
 = 1.0.0 =
-* Initial release.
+- Initial release.
 ```
 
 - Newest version first. Append above the previous heading, never below it.
 - The heading is `= X.Y.Z =` — the version alone. **No date.** The 1.0.0 entry carries none,
   and wordpress.org does not ask for one. Do not add a date to a heading because some other
   plugin does.
-- Each bullet is `* `, then its label, then one sentence ending in a full stop.
+- Each bullet is `- `, then its label, then one sentence ending in a full stop. A hyphen, not an
+  asterisk.
 - **Every bullet carries one of exactly three labels**, spelled `Added:`, `Updated:` or `Fixed:` —
   capitalised, colon, one space, then the sentence. See the next section for which.
 - No commit hashes, no PR numbers, no issue links, no contributor names. Those live in the
@@ -39,8 +40,23 @@ There is no CHANGELOG.md, and nothing else in the repo carries release notes.
   owners in the WordPress updates screen.
 - Order within a version: all the `Added:` bullets, then all the `Updated:`, then all the
   `Fixed:`. Within each group, the one a site owner is most likely to notice goes first.
-- **The 1.0.0 entry stays unlabelled.** `* Initial release.` is history, and history is never
-  rewritten — not to add a label, not for anything.
+- **The 1.0.0 entry stays unlabelled.** `- Initial release.` carries no label. It was converted to
+  a hyphen when the markers changed, which is safe only because 1.0.0 has never been released:
+  there is no tag and no wordpress.org listing, so no published changelog exists to preserve. Once
+  a version ships, its entry is history and is never touched again — not to add a label, not to
+  change a marker, not for anything.
+
+### Why a hyphen, when wordpress.org's own example uses an asterisk
+
+The directory renders readme sections through a Markdown parser, and Markdown accepts `-`, `*` and
+`+` alike for an unordered list, so a hyphen is expected to render as a list item. But every
+official example and nearly every plugin in the wild uses `*`, and no documentation found says in
+so many words that `-` is parsed — so treat this as very likely rather than confirmed.
+
+It is cheap to be sure, and worth doing once: after the first wordpress.org submission, look at
+the rendered Changelog tab on the plugin page. If the bullets came out as one run-on paragraph
+instead of a list, the markers are the cause, and switching back is one `sed` over `readme.txt`
+plus one edit here.
 
 ## Which label
 
@@ -65,11 +81,11 @@ Rules that keep it mechanical:
   broken and is now usable for the first time reads as `Fixed:` to the author and `Added:` to the
   site owner. Write for the site owner.
 - **The label goes before the sentence, the `(Pro)` suffix after it**:
-  `* Added: Order Again button on the thank-you page. (Pro)`
+  `- Added: Order Again button on the thank-you page. (Pro)`
 
 ## This repo had no house style to copy
 
-Before 1.1.0 the only entry was `* Initial release.` for 1.0.0 — a placeholder, not a style.
+Before 1.1.0 the only entry was `- Initial release.` for 1.0.0 — a placeholder, not a style.
 The rules above, the three labels included, are the ones this skill establishes. They are a decision, not a
 discovery, so they can be changed; change them **here**, in this file, and the skill follows.
 
@@ -161,7 +177,7 @@ all: the Free build ships the block locked behind a Pro badge, so a Free site ow
 appear — they just cannot use it. Hence the suffix rather than silence.
 
 Suffix spelling: ` (Pro)` after the sentence's full stop, with the label still first —
-`* Added: Order Again button on the thank-you page. (Pro)`. Never `[Pro]`, `(pro)`, `Pro:` or a
+`- Added: Order Again button on the thank-you page. (Pro)`. Never `[Pro]`, `(pro)`, `Pro:` or a
 leading badge, and never in place of the label.
 
 ## Zero entries is a valid outcome
@@ -171,7 +187,7 @@ If the range holds nothing user-facing, say so:
 > Nothing user-facing to release — the range is CI, docs and refactors only.
 
 Then stop and let the operator decide whether to release at all. Do **not** invent a bullet,
-and do **not** write `* Minor improvements and bug fixes.` A release whose changelog says
+and do **not** write `- Minor improvements and bug fixes.` A release whose changelog says
 nothing is worse than no release: it trains site owners to ignore the notes.
 
 ## Writing the sentences
@@ -183,5 +199,5 @@ nothing is worse than no release: it trains site owners to ignore the notes.
   behaviour, and then only when the symptom needs it.
 - One sentence after the label. If it needs two, it is probably two bullets.
 - Do not restate the label in the sentence. `* Fixed: The Coupon form keeps its width on mobile.`
-  not `* Fixed: Fixed the Coupon form's width on mobile.`
+  not `- Fixed: Fixed the Coupon form's width on mobile.`
 - Do not promise. No "improved performance" without a number, no "better compatibility".

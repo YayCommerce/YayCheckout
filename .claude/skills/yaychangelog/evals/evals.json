@@ -19,7 +19,7 @@
       "id": 3,
       "name": "writes-above-the-previous-heading",
       "prompt": "/yaychangelog 1.1.0 --write",
-      "expected_output": "Inserts `= 1.1.0 =` and its bullets below `== Changelog ==` and above the previous heading, with no date in the heading. Every bullet carries exactly one of Added:, Updated: or Fixed:, grouped in that order, and `* Initial release.` under = 1.0.0 = is left unlabelled because history is not rewritten. Then checks that the new version is first, that its heading appears exactly once, that the awk check for unlabelled bullets prints nothing, and that git diff --stat names readme.txt alone. Bumps nothing and commits nothing.",
+      "expected_output": "Inserts `= 1.1.0 =` and its bullets below `== Changelog ==` and above the previous heading, with no date in the heading. Every bullet starts with a hyphen, not an asterisk, and carries exactly one of Added:, Updated: or Fixed:, grouped in that order, and `* Initial release.` under = 1.0.0 = is left unlabelled because history is not rewritten. Then checks that the new version is first, that its heading appears exactly once, that the awk check for unlabelled bullets prints nothing, and that git diff --stat names readme.txt alone. Bumps nothing and commits nothing.",
       "files": []
     },
     {
@@ -47,7 +47,7 @@
       "id": 7,
       "name": "label-from-what-the-owner-sees",
       "prompt": "/yaychangelog 1.1.0",
-      "expected_output": "Picks each label from what the change does to an installation, not from the commit's Conventional Commits type: a feat that alters an existing default is Updated:, and a feature that shipped broken and now works for the first time is Added: rather than Fixed:. Splits a bullet that would need two labels into two. Uses only Added:, Updated: and Fixed: — never New:, Changed:, Improved:, Removed:, Deprecated: or Security: — and writes a removal as Updated:.",
+      "expected_output": "Picks each label from what the change does to an installation, not from the commit's Conventional Commits type: a feat that alters an existing default is Updated:, and a feature that shipped broken and now works for the first time is Added: rather than Fixed:. Splits a bullet that would need two labels into two. Uses only Added:, Updated: and Fixed: — never New:, Changed:, Improved:, Removed:, Deprecated: or Security: — and writes a removal as Updated:. Writes every bullet with a leading `- `.",
       "files": []
     }
   ]

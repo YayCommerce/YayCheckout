@@ -92,4 +92,4 @@ That writes the same `assets/dist/admin/` and `assets/dist/blocks/` this plugin 
 == Changelog ==
 
 = 1.0.0 =
-* Initial release.
+- Initial release.

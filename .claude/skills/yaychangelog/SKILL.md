@@ -70,7 +70,8 @@ usually written for a reviewer; the symptom in the body is usually the bullet.
 
 ## 3. Write the bullets
 
-Apply the style file. Every bullet is `* `, then one of exactly three labels — `Added:`,
+Apply the style file. Every bullet is `- ` — a hyphen, not an asterisk — then one of exactly
+three labels: `Added:`,
 `Updated:` or `Fixed:` — then one sentence; the style file's table says which label and why it is
 decided from what a site owner sees rather than from the commit's type.
 
@@ -113,26 +114,29 @@ git diff --stat readme.txt             # readme.txt only
 Then read the diff once and check all of it:
 
 - No date in the heading — this repo's headings carry none.
-- Every new bullet starts `* ` and then `Added: `, `Updated: ` or `Fixed: `, and nothing else.
+- Every new bullet starts `- ` and then `Added: `, `Updated: ` or `Fixed: `, and nothing else.
+  A `* ` bullet is the old marker and must be changed.
 - The groups are in that order, `Added:` first and `Fixed:` last.
 - One sentence per bullet, and any suffix spelled exactly ` (Pro)`, after the full stop.
-- No earlier entry changed — `* Initial release.` under `= 1.0.0 =` stays unlabelled.
+- No earlier entry changed — `- Initial release.` under `= 1.0.0 =` stays unlabelled.
 
 ```bash
 awk '/^== Changelog ==/{c=1} c && /^= /{v=$0}
-     c && /^\* / { if ($0 !~ /^\* (Added|Updated|Fixed): / && $0 != "* Initial release.") print v": "$0 }' readme.txt
+     c && /^[-*] / { if ($0 !~ /^- (Added|Updated|Fixed): / && $0 != "- Initial release.") print v": "$0 }' readme.txt
 ```
 
-That prints every unlabelled bullet with its version, and nothing on a correct file. Run it rather
+That prints every bullet that is unlabelled **or** still uses the old `*` marker, with its
+version, and nothing on a correct file. Run it rather
 than reading for it: a missing label is the easiest thing here to skim past.
 
 The `c` flag is not decoration. `readme.txt`'s Description uses the same `= Heading =` and `* `
+and `- `
 shapes for its feature lists — eleven bullets of them — so an `awk` that scans the whole file
 reports every one of those as unlabelled. Only the `== Changelog ==` section has labels.
 
 ## Zero bullets is a valid answer
 
 If the range holds nothing user-facing, say "nothing user-facing to release", name the range you
-read, and stop. Do not invent a bullet, do not write `* Minor improvements and bug fixes.`, and do
+read, and stop. Do not invent a bullet, do not write `- Minor improvements and bug fixes.`, and do
 not write an empty heading into `readme.txt`. When `/yayrelease` called this skill, that answer is
 its cue to stop too and ask whether to release at all.
