@@ -31,16 +31,13 @@ RELEASE_DIR="$PLUGIN_DIR/release"
 # Owners: includes/Pro/ (YayCheckout::boot_pro()), assets/dist/blocks/pro/ (ProServiceProvider::built_blocks())
 # and templates/layouts/pro/ (LayoutTemplateCatalogue::relative_path()).
 PRO_PATHS="includes/Pro/ assets/dist/blocks/pro/ templates/layouts/pro/"
-# The build workspace the Free zip ships, tracked files only, so wordpress.org can rebuild assets/dist/,
-# plus the gitignored pnpm-lock.yaml the build used. Free only. Of packages/blocks/src/pro/ it keeps only each
-# block.json: Free's locked Pro blocks import that metadata, and the built Free bundle already carries it.
-# Not in PRO_PATHS: the Pro check wants every PRO_PATHS entry in its zip.
-FREE_SOURCE_PATHS="apps/admin packages/blocks package.json pnpm-workspace.yaml .nvmrc"
-# Dev-only files inside FREE_SOURCE_PATHS: lint config nothing in the zip runs, and an env/ directory whose
-# two files hold only comments (vite.config.ts path.resolve()s the directory and loadEnv() tolerates its
-# absence, so the documented rebuild is unaffected). A .env file in a distributed zip is something
-# wordpress.org reviewers and scanners flag on sight. Space-separated; the artifact check enforces it.
-FREE_DEV_STRIP="apps/admin/env apps/admin/.prettierignore apps/admin/eslint.config.js"
+# The build workspace neither zip ships: wordpress.org guideline 4 takes a readme link to the public
+# development location instead of the source in the plugin, and readme.txt § Source code is that link.
+# No edition ships a JS source tree, so the artifact check enforces its absence for both.
+JS_SOURCE_PATHS="apps packages pnpm-lock.yaml pnpm-workspace.yaml package.json .nvmrc"
+# The public development location readme.txt § Source code points at, which is what guideline 4 asks for
+# now that no source ships. The artifact check fails the release if the readme stops naming it.
+SOURCE_REPO_URL="https://github.com/YayCommerce/YayCheckout"
 # Admin-shell files the Free zip deletes: its licensing (with the EDD updater) and the Recommended Plugins
 # page. FREE_SHELL_PATCH first removes every reference to them; the artifact check enforces both.
 FREE_SHELL_STRIP="src/License/ src/Registry/ src/Contracts/AddonHostAdapter.php src/Menu/ExternalPluginMenuAdapter.php
@@ -463,32 +460,6 @@ cmd_release() {
     # and the templates made from them go with it: Free registers neither. Only the templates'
     # preview.html stays, a static page Free's picker shows behind a Pro badge.
     if [ "$plan" = "free" ]; then
-        # shellcheck disable=SC2086 # FREE_SOURCE_PATHS is a list of pathspecs.
-        git -C "$PLUGIN_DIR" ls-files -z -- $FREE_SOURCE_PATHS | (cd "$PLUGIN_DIR" && xargs -0 tar -cf -) | tar -xf - -C "$temp_dir"
-        if [ ! -f "$PLUGIN_DIR/pnpm-lock.yaml" ]; then
-            print_error "pnpm-lock.yaml is missing: run pnpm install"
-            exit 1
-        fi
-        cp "$PLUGIN_DIR/pnpm-lock.yaml" "$temp_dir/"
-        # git ls-files copies every tracked file under apps/admin and packages/blocks, dev-only ones included.
-        local dev_path
-        for dev_path in $FREE_DEV_STRIP; do
-            rm -rf "${temp_dir:?}/$dev_path"
-        done
-        print_info "Free build: removed the dev-only files ($FREE_DEV_STRIP)"
-        find "${temp_dir:?}/packages/blocks/src/pro" -type f ! -name block.json -delete
-        find "${temp_dir:?}/packages/blocks/src/pro" -depth -type d -empty -delete
-        # These scripts run composer install (the private admin-shell package) or scripts/run.sh, neither shipped.
-        local root_script
-        for root_script in postinstall dev build release; do
-            sed_inplace "/^ *\"$root_script\":/d" "$temp_dir/package.json"
-        done
-        if ! php -r 'exit( null === json_decode( file_get_contents( $argv[1] ) ) ? 1 : 0 );' "$temp_dir/package.json"; then
-            print_error "Free package.json is not valid JSON after removing its scripts"
-            exit 1
-        fi
-        print_info "Free build: copied the JS source ($FREE_SOURCE_PATHS pnpm-lock.yaml)"
-
         local pro_path
         for pro_path in $PRO_PATHS; do
             [ -d "${temp_dir:?}/$pro_path" ] || continue
@@ -546,6 +517,28 @@ cmd_release() {
 
     find "$temp_dir/vendor-prefixed" -name "*.php" -exec perl -pi -e "s/$SHELL_TEXT_DOMAIN_CALL/\$1\x27$PLUGIN_SLUG\x27)/g" {} +
 
+    # readme.txt § Source code stands in for the source tree neither edition ships, so the commit it
+    # names has to be the one this zip was built from. Stamped into the copy, never the branch's file.
+    # A dirty tree means the zip does not match any commit: the reviewer would fetch something else.
+    local source_commit
+    source_commit=$(git -C "$PLUGIN_DIR" rev-parse HEAD 2>/dev/null || true)
+    if [ -z "$source_commit" ]; then
+        print_error "Cannot read HEAD: readme.txt § Source code must name the commit the zip was built from"
+        exit 1
+    fi
+    if [ -n "$(git -C "$PLUGIN_DIR" status --porcelain 2>/dev/null)" ]; then
+        # Free is the edition wordpress.org reviews against that commit, so there the mismatch is fatal.
+        # Pro ships to customers who never fetch the source: a warning is enough.
+        if [ "$plan" = "free" ]; then
+            print_error "Working tree is dirty: the zip would name commit $source_commit, which does not match it"
+            echo "wordpress.org fetches the source at that commit. Commit or stash the changes, then re-run."
+            exit 1
+        fi
+        print_warning "Working tree is dirty: readme.txt names commit $source_commit, which does not match it"
+    fi
+    sed_inplace "s/@SOURCE_COMMIT@/$source_commit/" "$temp_dir/readme.txt"
+    print_info "Source link: $SOURCE_REPO_URL at $source_commit"
+
     # The source defaults to dev mode (Vite on :3040); a customer zip must load assets/dist.
     sed_inplace "s/define( 'YAYCHECKOUT_IS_DEVELOPMENT', true )/define( 'YAYCHECKOUT_IS_DEVELOPMENT', false )/" "$temp_dir/$PLUGIN_SLUG.php"
 
@@ -602,27 +595,6 @@ cmd_release() {
             print_error "Free artifact's Composer autoloader still names a removed class"
             exit 1
         fi
-        for path in apps/admin/src/ packages/blocks/src/ pnpm-lock.yaml; do
-            if ! unzip -l "$zip_name" | grep -q "$plan_slug/$path"; then
-                print_error "Free artifact is missing the source in $path"
-                exit 1
-            fi
-        done
-        if unzip -l "$zip_name" | grep -q "/node_modules/"; then
-            print_error "Free artifact contains node_modules"
-            exit 1
-        fi
-        for path in $FREE_DEV_STRIP; do
-            if unzip -l "$zip_name" | grep -q "$plan_slug/$path"; then
-                print_error "Free artifact contains the dev-only $path"
-                exit 1
-            fi
-        done
-        if unzip -l "$zip_name" | grep "$plan_slug/packages/blocks/src/pro/" | grep -qvE '/$|/block\.json$'; then
-            print_error "Free artifact contains the Pro blocks' source:"
-            unzip -l "$zip_name" | grep "$plan_slug/packages/blocks/src/pro/" | grep -vE '/$|/block\.json$'
-            exit 1
-        fi
     fi
 
     if [ "$plan" = "pro" ]; then
@@ -635,10 +607,29 @@ cmd_release() {
                 exit 1
             fi
         done
-        if unzip -l "$zip_name" | grep -qE "$plan_slug/(apps|packages)/"; then
-            print_error "Pro artifact contains the JS source, which only Free ships"
+    fi
+
+    # Neither edition ships a JS source tree: readme.txt § Source code points wordpress.org at the
+    # public repository instead. A zip that holds one is shipping a build workspace to customers.
+    for path in $JS_SOURCE_PATHS; do
+        if unzip -l "$zip_name" | grep -q "$plan_slug/$path"; then
+            print_error "Artifact contains the build workspace's $path; the source is linked, not shipped"
             exit 1
         fi
+    done
+    if unzip -l "$zip_name" | grep -q "/node_modules/"; then
+        print_error "Artifact contains node_modules"
+        exit 1
+    fi
+    # The link is the only thing standing in for the source now, so it has to be in the readme,
+    # with the placeholder stamped: an unstamped @SOURCE_COMMIT@ would ship as literal text.
+    if ! unzip -p "$zip_name" "$plan_slug/readme.txt" | grep -q "$SOURCE_REPO_URL"; then
+        print_error "Artifact's readme.txt does not link the source at $SOURCE_REPO_URL"
+        exit 1
+    fi
+    if unzip -p "$zip_name" "$plan_slug/readme.txt" | grep -q '@SOURCE_COMMIT@'; then
+        print_error "Artifact's readme.txt still holds the unstamped @SOURCE_COMMIT@ placeholder"
+        exit 1
     fi
 
     # The Composer manifest is the dev tree's whatever dump-autoload does, so a zip that holds it

@@ -77,13 +77,17 @@ This service is provided by Google: [Google Fonts API Terms of Service](https://
 
 == Source code ==
 
-The JavaScript and CSS in `assets/dist/admin/` are built from `apps/admin/` (React, Vite, TypeScript), and those in `assets/dist/blocks/` from `packages/blocks/` (`@wordpress/scripts`). Both source folders are included in this plugin.
+The JavaScript and CSS in `assets/dist/admin/` are built from `apps/admin/` (React, Vite, TypeScript), and those in `assets/dist/blocks/` from `packages/blocks/` (`@wordpress/scripts`). Neither is minified or obfuscated by hand: both are the plain output of those two builds.
 
-To rebuild them, use Node 22 and pnpm 11, and run these from the plugin folder:
+The full, human-readable source of both, with the build tooling and configuration, is public at [github.com/YayCommerce/YayCheckout](https://github.com/YayCommerce/YayCheckout). This release was built from commit `@SOURCE_COMMIT@` of that repository.
+
+To rebuild the assets from that source, use Node 22 and pnpm 11, and run these from the repository root:
 
 1. `pnpm install`
 2. `pnpm build:admin`
 3. `pnpm build:blocks`
+
+That writes the same `assets/dist/admin/` and `assets/dist/blocks/` this plugin ships.
 
 == Changelog ==
 
