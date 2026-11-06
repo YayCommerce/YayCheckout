@@ -80,9 +80,9 @@
     },
     {
       "id": 12,
-      "name": "draft-is-the-default",
+      "name": "always-a-draft",
       "prompt": "/yayrelease 1.1.0 --no-draft",
-      "expected_output": "Passes no --draft, so the Release is published outright, and says at Gate A that it will be. Without the flag it passes --draft, treats a wrong draft as reversible (gh release edit, or delete and recreate, neither touching the tag), and never reports a drafted Release as released. Accepts a redundant --draft without complaint.",
+      "expected_output": "Does not publish the Release outright: there is no such flag. Says so, that gh release create always gets --draft, and that making it live is a click in the GitHub UI or gh release edit --draft=false — then carries on with the release rather than aborting over it. A redundant --draft is accepted without complaint. Treats a wrong draft as reversible (edit, or delete and recreate, neither touching the tag) and never reports a drafted Release as released.",
       "files": []
     }
   ]
