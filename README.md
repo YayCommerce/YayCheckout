@@ -51,8 +51,8 @@ A checkout builder for WooCommerce: merchants build checkout layouts from blocks
 6. Start Claude Code in the repo with `claude`, and accept the trust dialog. Until you do, Claude ignores the command allowlist in `.claude/settings.json`. Then:
    - `CLAUDE.md` loads at the start of every session;
    - a rule in `.claude/rules/` loads when Claude reads a file its `paths` match;
-   - the skills in `.claude/skills/` show up in the skill list, and each loads when you call it or your request matches its description;
-   - the yay skills arrive from the harness marketplace declared in `.claude/settings.json`, and read this repo's facts from `.claude/yay-profile.json`;
+   - the yay skills arrive from the harness marketplace declared in `.claude/settings.json`, prefixed as `/yay:…`, and read this repo's facts from `.claude/yay-profile.json`. `/yay:release` and `/yay:hotfix` run only when you call them by name, so they are not in the skill list;
+   - `build-checkout-template`, the one skill still in `.claude/skills/`, loads unprefixed when you call it or your request matches its description;
    - the guard hook the harness ships stops Claude's file tools from editing the generated directories that profile names.
 
 ## Daily workflow

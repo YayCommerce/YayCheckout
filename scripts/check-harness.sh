@@ -98,7 +98,7 @@ check_decisions() {
     done
 }
 
-# Backlog items follow the yaybacklog skill's template: the name, the four
+# Backlog items follow the /yay:backlog skill's template: the name, the four
 # headings, and at least one box under Done when.
 check_backlog() {
     for f in docs/backlog/*.md; do
