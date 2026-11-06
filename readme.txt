@@ -92,4 +92,22 @@ That writes the same `assets/dist/admin/` and `assets/dist/blocks/` this plugin 
 == Changelog ==
 
 = 1.0.0 =
-* Initial release.
+* Checkout layouts built from blocks in the block editor replace WooCommerce's checkout form, and WooCommerce's own checkout returns as soon as the layout is turned off.
+* A setup wizard picks a template and creates your first layout.
+* Billing, shipping, email, order note, create account, different address, login reminder and terms blocks, each following WooCommerce's own settings.
+* Extra fields (text, select, radio, checkbox, date and time) are saved on the order and shown on the order screen and the customer's order page.
+* An order summary whose items, breakdown and total update with the cart, plus a coupon form, savings note and shipping methods.
+* Payment methods, express payment buttons and the Place order button come from WooCommerce's classic checkout, so gateways that support it keep working.
+* WooCommerce Hook blocks print what other plugins add to checkout hooks, where you place them.
+* YayBoost's order bump, frequently bought together and free shipping bar can be placed in a layout as blocks.
+* Any block can be shown or hidden on conditions set in its Visibility panel.
+* Templates to start from: Classic two-column, Split express, Editorial fashion, Upsell & cross-sell, Live receipt and Digital product.
+* Multi-step templates to start from: Multi-step wizard, Accordion one-page, Minimal steps, Soft steps and Material stepper. (Pro)
+* Multi-step checkouts with a steps progress bar, next and back buttons, and links to any step. (Pro)
+* One design panel for colours, typography, inputs, buttons and notices, with Google Fonts installed into your site.
+* Preview links to check a layout before shoppers see it.
+* Several layouts can be active at once, each assigned by customer role, login status, device, or the products and categories in the cart. (Pro)
+* A thank-you page built from blocks, with order details, customer details, an Order again button and a Save as PDF button. (Pro)
+* Layouts can be exported and imported, with a review of what an imported layout needs before it is saved. (Pro)
+* The Compatibility screen lists the checkout plugins and gateways that have been tested with YayCheckout.
+* A "Delete all data on uninstall" setting removes layouts and settings when the plugin is deleted.
