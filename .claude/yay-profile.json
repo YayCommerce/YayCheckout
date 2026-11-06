@@ -1,0 +1,156 @@
+{
+  "$schema": "../../../../../../../yay-plugin-harness/schema/yay-profile.schema.json",
+  "$comment": "Every fact the yay harness skills substitute into a path, a command, a branch name or a pattern. What a person has to understand is in CLAUDE.md, the rules and docs/decisions/ instead, and nothing is in both. Checked by ./scripts/check-harness.sh.",
+  "profile_version": 1,
+
+  "identity": {
+    "name": "YayCheckout",
+    "pro_name": "YayCheckout Pro",
+    "slug": "yaycheckout",
+    "pro_slug": "yaycheckout-pro",
+    "main_file": "yaycheckout.php",
+    "text_domain": "yaycheckout",
+    "version_constant": "YAYCHECKOUT_VERSION",
+    "repo": "YayCommerce/YayCheckout",
+    "remote_name": "origin",
+    "wporg_slug": "yaycheckout"
+  },
+
+  "layout": {
+    "php_src_roots": ["includes"],
+    "php_namespace": "YayCheckout\\",
+    "php_style": "psr-4",
+    "php_floor": "7.4",
+    "frontend": {
+      "kind": "pnpm-workspace",
+      "root": ".",
+      "apps": {
+        "admin": { "path": "apps/admin", "package": "@yaycheckout/admin-page", "dev_port": 3040 }
+      }
+    },
+    "blocks_path": "packages/blocks",
+    "docs_root": "docs",
+    "instructions_file": "CLAUDE.md",
+    "generated_paths": [
+      { "glob": "vendor/", "rebuilt_by": "composer install" },
+      { "glob": "vendor-prefixed/", "rebuilt_by": "./scripts/run.sh shell-update" },
+      { "glob": "node_modules/", "rebuilt_by": "pnpm install" },
+      { "glob": "assets/dist/admin/", "rebuilt_by": "pnpm build:admin" },
+      { "glob": "assets/dist/blocks/", "rebuilt_by": "pnpm build:blocks, from packages/blocks/src/" },
+      { "glob": "assets/dist/", "rebuilt_by": "./scripts/run.sh build" },
+      { "glob": "release/", "rebuilt_by": "./scripts/run.sh release" },
+      { "glob": "templates/layouts/*/preview.html", "rebuilt_by": "./scripts/run.sh previews" },
+      { "glob": "templates/layouts/*/thank-you-preview.html", "rebuilt_by": "./scripts/run.sh thank-you-previews" }
+    ],
+    "release_dir": "release"
+  },
+
+  "commands": {
+    "task_runner": "./scripts/run.sh",
+    "install": "pnpm install",
+    "lint_php": "composer lint",
+    "test_php": "composer test",
+    "lint_js": "pnpm --filter @yaycheckout/admin-page lint",
+    "typecheck": "pnpm --filter @yaycheckout/admin-page exec tsc --noEmit",
+    "build": "./scripts/run.sh build",
+    "dev": "./scripts/run.sh dev",
+    "release": "./scripts/run.sh release",
+    "version_read": "./scripts/run.sh info",
+    "bump": "./scripts/run.sh bump {version}",
+    "backlog_list": "./scripts/run.sh backlog",
+    "harness_check": "./scripts/check-harness.sh",
+    "boundary_check": "./scripts/check-pro-boundary.sh",
+    "known_failing": ["lint_js", "harness_check"],
+    "checks_by_path": [
+      { "glob": "apps/admin/", "commands": ["lint_js", "typecheck"] },
+      { "glob": "packages/blocks/src/", "commands": ["typecheck", "build"], "note": "the editor has no YayCheckout blocks until the blocks are built" },
+      { "glob": "templates/", "commands": ["lint_php"], "note": "a preview.html is rebuilt with the previews runner, never hand-edited" },
+      { "glob": "tests/", "commands": ["test_php"] },
+      { "glob": "scripts/", "commands": [], "note": "the release tooling has no automated check; exercise it with a dry run" },
+      { "glob": "includes/", "commands": ["lint_php", "test_php", "boundary_check"] }
+    ]
+  },
+
+  "git": {
+    "base_branch": "dev",
+    "default_branch": "dev",
+    "long_lived_branches": ["dev"],
+    "protected_refs": ["dev"],
+    "branch_pattern": "{prefix}/{type}/{topic}",
+    "branch_types": ["feat", "fix", "refactor", "chore"],
+    "commit_convention": "conventional",
+    "trailers": { "coauthor": true, "pr_footer": true },
+    "pr_required": true,
+    "merge_strategy": "squash",
+    "approvals": 1
+  },
+
+  "release": {
+    "releases_from_git": true,
+    "version_sources": [
+      { "file": "yaycheckout.php", "grep": "^ \\* Version:", "note": "the plugin header WordPress reads" },
+      { "file": "yaycheckout.php", "grep": "define\\( 'YAYCHECKOUT_VERSION', '", "note": "the constant the code reads" },
+      { "file": "readme.txt", "grep": "^Stable tag:", "note": "what wordpress.org serves" }
+    ],
+    "version_untouched": [
+      "apps/admin/package.json",
+      "packages/blocks/package.json",
+      "templates/themeless/yaycheckout-themeless/style.css",
+      "languages/yaycheckout.pot",
+      "vendor-prefixed/"
+    ],
+    "version_shape": "X.Y.Z",
+    "tag_format": "v{version}",
+    "tag_annotated": true,
+    "released_branch_format": "released/{version}",
+    "hotfix_line_format": "hotfix/{minor}.x",
+    "artifacts": [
+      { "path_template": "release/yaycheckout-{version}.zip", "edition": "free", "attach_when": "private-only" },
+      { "path_template": "release/yaycheckout-pro-{version}.zip", "edition": "pro", "attach_when": "private-only" }
+    ],
+    "release_draft": true,
+    "ci_on_tags": false,
+    "manual_steps": [
+      "upload the Free zip to wordpress.org by hand; there is no SVN automation here",
+      "upload the Pro zip to the store"
+    ]
+  },
+
+  "editions": {
+    "model": "pro-dir",
+    "pro_dirs": ["includes/Pro", "packages/blocks/src/pro", "templates/layouts/pro"],
+    "plan_flag": "--plan=",
+    "pro_verdict_sources": [
+      { "file": "includes/Blocks/BlockRegistry.php", "symbol": "PRO_BLOCKS" },
+      { "file": "includes/Controllers/LayoutTemplateCatalogue.php", "symbol": "'pro' => true" }
+    ],
+    "leak_assertions": ["includes/Pro/", "vendor-prefixed/src/License/"]
+  },
+
+  "changelog": {
+    "file": "readme.txt",
+    "section": "== Changelog ==",
+    "heading_format": "= {date} - Version {version} =",
+    "date_format": "%b %e, %Y",
+    "bullet_prefix": "- ",
+    "labels": ["Added", "Updated", "Fixed"],
+    "pro_suffix": " (Pro)",
+    "drop_paths": [
+      ".github/", ".claude/", ".vscode/", "docs/", "tests/", "scripts/", "languages/",
+      "editions/", "vendor/", "vendor-prefixed/", "assets/dist/",
+      "CLAUDE.md", "README.md", "phpcs.xml", "phpunit.xml.dist", "composer.json",
+      "scoper.inc.php", ".gitignore", ".nvmrc", "pnpm-workspace.yaml", "package.json"
+    ],
+    "pro_paths": ["includes/Pro/", "packages/blocks/src/pro/", "templates/layouts/pro/"]
+  },
+
+  "workflow": {
+    "backlog_dir": "docs/backlog",
+    "decisions_dir": "docs/decisions",
+    "plans_dir": "docs/plans",
+    "rules_dir": ".claude/rules",
+    "review_cmd": "/code-review high",
+    "simplify_cmd": "/simplify",
+    "test_policy": "ask"
+  }
+}

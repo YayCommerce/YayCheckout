@@ -1,5 +1,16 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "extraKnownMarketplaces": {
+    "yay-plugin-harness": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/shrief/yay-plugin-harness"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "yay@yay-plugin-harness": true
+  },
   "permissions": {
     "allow": [
       "Bash(composer lint *)",
@@ -10,22 +21,6 @@
       "Bash(git log *)",
       "Bash(./scripts/run.sh backlog)",
       "Bash(./scripts/check-harness.sh)"
-    ]
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-generated-paths.sh"
-            ]
-          }
-        ]
-      }
     ]
   },
   "includeGitInstructions": false

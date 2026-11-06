@@ -4,6 +4,9 @@ description: Builds a YayCheckout layout template (templates/layouts/<slug>/mark
 # Purpose: the workflow for turning one template of the HTML mock into a layout template: extract, map,
 #   gaps, markup, register, verify, commit. It owns the mapping format, the extract and design.json scripts,
 #   and the pitfalls list learned from templates 01–03. This header covers the whole skill directory.
+#   This skill is repo-local on purpose: it is tied to this product's layout templates, its
+#   block registry and its design-token schema, so it does not belong in the shared yay
+#   harness and is not installed from it. Do not move it there.
 # Update when: a template fix teaches a new pitfall (references/pitfalls.md), the files a template touches
 #   change (references/checklist.md), LayoutTemplateCatalogue or LayoutDesign changes shape, or the mock's
 #   bundle format changes (scripts/extract_mock.py).

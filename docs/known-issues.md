@@ -77,13 +77,34 @@
 ## The generated-directory guard doesn't see the shell
 
 - **Symptom:** the guard stops Claude's file tools from editing generated output, but a shell command that writes there, such as `sed -i`, `cp` or a redirect, goes through. The generated directories are gitignored, so `git status` doesn't show the change either. Without `jq`, every edit shows a `PreToolUse` hook error and nothing is blocked.
-- **Cause:** `.claude/settings.json` runs `.claude/hooks/guard-generated-paths.sh` only for the Edit, Write, MultiEdit and NotebookEdit tools, and the script needs `jq` to read the tool's input.
-- **Workaround:** never write into `vendor/`, `vendor-prefixed/`, `node_modules/`, `assets/dist/` or `release/` from the shell; change the input and rerun its build (hard rule 1 in `CLAUDE.md`). Install `jq`.
+- **Cause:** the guard the yay harness ships runs only for the Edit, Write, MultiEdit and NotebookEdit tools, and it needs `jq` to read the tool's input. Without `jq`, or without `.claude/yay-profile.json`, it exits 0 and blocks nothing — it fails open on purpose, because what it guards is a mistake rather than an attack.
+- **Workaround:** never write into a directory `layout.generated_paths` names in `.claude/yay-profile.json` from the shell; change the input and rerun its build (hard rule 1 in `CLAUDE.md`). Install `jq`.
 - **Remove when:** the guard also checks shell commands, or the generated directories are made read-only.
 
 ## The harness check fails on `dev`
 
-- **Symptom:** `./scripts/check-harness.sh` exits 1 with 27 `[backticked_paths] MISSING` lines, from `docs/architecture.md`, `docs/conventions.md` and `.claude/rules/blocks.md`.
+- **Symptom:** `./scripts/check-harness.sh` exits 1 with about 30 `[backticked_paths] MISSING` lines, from `docs/architecture.md`, `docs/conventions.md` and `.claude/rules/blocks.md`.
 - **Cause:** `check_backticked_paths` resolves every backticked name with a slash against the repo root, so paths relative to `packages/blocks/src/`, WooCommerce template paths, block names and data store names count as missing.
 - **Workaround:** compare the output with `dev`'s; your change must not add a line.
 - **Remove when:** the check exits 0 on `dev`.
+
+## Nothing checks a release artifact after the release
+
+- **Symptom:** a release builds and ships with no downstream verification. No workflow runs on a tag, and none builds or inspects a zip.
+- **Cause:** `.github/workflows/php.yml` and the JS workflow trigger on `dev` pushes and PRs only.
+- **Workaround:** the build's own in-script checks, plus the artifact checks the release flow makes, are the whole verification. `/yay:release` says so at the end of a run rather than letting anyone wait for a check that will not arrive.
+- **Remove when:** a workflow runs on tags and inspects the artifacts.
+
+## `languages/yaycheckout.pot` is stale and no release regenerates it
+
+- **Symptom:** the template's `Project-Id-Version` names a plugin title the header no longer uses, and its `POT-Creation-Date` predates every release.
+- **Cause:** the release never regenerates it, `pnpm makepot` needs WP-CLI, and whether the template should carry the Pro or the Free title is a product question nobody has answered.
+- **Workaround:** mention it once per release and move on; it blocks nothing. It is in `release.version_untouched` in the profile, so a release leaves it alone deliberately rather than by oversight.
+- **Remove when:** the release regenerates it, or the question about which title it carries is settled.
+
+## CI on a hotfix line is untested
+
+- **Symptom:** a hotfix PR may get no checks at all.
+- **Cause:** both workflows' branch filters cover the hotfix lines, so a hotfix PR is meant to get CI — but their paths filters still apply, so a fix outside those paths triggers nothing, and no hotfix has yet been cut to prove the filters work.
+- **Workaround:** `/yay:hotfix` runs the equivalents locally and puts their output in the PR body. On a hotfix, with CI thin or absent, the person is the check — in particular for the PHP floor, which no local tool here enforces.
+- **Remove when:** a hotfix has been cut and its PR observed to run the checks.

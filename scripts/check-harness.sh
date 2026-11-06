@@ -8,7 +8,8 @@
 # It changes nothing.
 #
 # Update when: a harness file, a skill or a decision record is added in a place
-# these checks don't cover, or a check's rule changes.
+# these checks don't cover, a check's rule changes, or the harness plugin moves
+# and check_profile can no longer find its checker.
 #
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -29,12 +30,12 @@ check_feature_ids() {
     git grep -nwE 'F[0-9]{2}(-[0-9]+)?' -- includes apps packages templates assets/js tests scripts ':!scripts/check-harness.sh'
 }
 
-# Every docs/*.md path cited outside plans, specs and the shared skills exists.
-# Plans and specs describe history; the skills are copied from YayLoyalty, and
-# their headers and evals name that repo's files. A path inside a URL
-# (github.com/.../docs/...) names another repo's file, so it isn't checked.
+# Every docs/*.md path cited outside plans and specs exists. Plans and specs
+# describe history. A path inside a URL (github.com/.../docs/...) names another
+# repo's file, so it isn't checked. The skills are NOT excluded: the exclusion
+# that used to be here hid a dead decision-record reference for a month.
 check_cited_docs() {
-    git grep -ohE '(^|[^/[:alnum:]_.-])docs/[A-Za-z0-9_./-]+\.md' -- . ':!docs/plans/' ':!docs/specs/' ':!.claude/skills/' \
+    git grep -ohE '(^|[^/[:alnum:]_.-])docs/[A-Za-z0-9_./-]+\.md' -- . ':!docs/plans/' ':!docs/specs/' \
         | sed -E 's#^[^d]*##' | sort -u | while read -r p; do [ -f "$p" ] || echo "MISSING $p"; done
 }
 
@@ -108,8 +109,24 @@ check_backlog() {
     done
 }
 
+# The profile the yay skills read: validated against its schema and against this
+# repo by the checker the harness plugin ships. Located from the marketplace entry
+# in .claude/settings.json; a github-sourced harness lives in the plugin cache instead.
+check_profile() {
+    [ -f .claude/yay-profile.json ] || { echo "no .claude/yay-profile.json; /yay:init writes one"; return; }
+    command -v jq >/dev/null || { echo "jq is not installed, so the profile was not checked"; return; }
+    root=$(jq -r '.extraKnownMarketplaces["yay-plugin-harness"].source.path // empty' .claude/settings.json)
+    checker=""
+    [ -n "$root" ] && [ -x "$root/yay/scripts/check-profile.sh" ] && checker="$root/yay/scripts/check-profile.sh"
+    if [ -z "$checker" ]; then
+        checker=$(ls -t "$HOME"/.claude/plugins/cache/yay-plugin-harness/yay/*/scripts/check-profile.sh 2>/dev/null | head -1)
+    fi
+    [ -n "$checker" ] || { echo "the harness plugin's profile checker was not found, so the profile was not checked"; return; }
+    bash "$checker" "$PWD" | grep -v '^check-profile: no findings$'
+}
+
 failed=0
-for check in removed_refs section_citations feature_ids cited_docs links headers rule_globs skills imports backticked_paths decisions backlog; do
+for check in profile removed_refs section_citations feature_ids cited_docs links headers rule_globs skills imports backticked_paths decisions backlog; do
     out=$("check_$check")
     if [ -n "$out" ]; then
         printf '%s\n' "$out" | sed "s/^/[$check] /"
