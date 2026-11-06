@@ -17,31 +17,113 @@ There is no CHANGELOG.md, and nothing else in the repo carries release notes.
 ```
 == Changelog ==
 
-= 1.1.0 =
-* A sentence a site owner would recognise after updating.
-* Another one. (Pro)
+= Oct 28, 2026 - Version 1.1.0 =
+- Added: A thing that did not exist before.
+- Added: Order Again button on the thank-you page. (Pro)
+- Updated: Something that existed and now behaves differently.
+- Fixed: Something that was broken and now works.
 
 = 1.0.0 =
-* Initial release.
+- Initial release.
 ```
 
 - Newest version first. Append above the previous heading, never below it.
-- The heading is `= X.Y.Z =` — the version alone. **No date.** The 1.0.0 entry carries none,
-  and wordpress.org does not ask for one. Do not add a date to a heading because some other
-  plugin does.
-- Each bullet is `* ` then one sentence, ending in a full stop. Sentence case.
-- No bullet labels (`Fixed:`, `Added:`, `New:`). The 1.0.0 entry uses none, and wordpress.org
-  renders these as a plain list.
+- The heading is `= <Mon D, YYYY> - Version <X.Y.Z> =` — the release date, a spaced hyphen, the
+  word `Version`, then the version. For example `= Oct 28, 2026 - Version 3.2.3 =`. See below for
+  the date's exact shape and where it comes from.
+- Each bullet is `- `, then its label, then one sentence ending in a full stop. A hyphen, not an
+  asterisk.
+- **Every bullet carries one of exactly three labels**, spelled `Added:`, `Updated:` or `Fixed:` —
+  capitalised, colon, one space, then the sentence. See the next section for which.
 - No commit hashes, no PR numbers, no issue links, no contributor names. Those live in the
   commit body and in the PR, which is where a developer looks; `readme.txt` is read by site
   owners in the WordPress updates screen.
-- Order within a version: new capabilities first, then changes to existing behaviour, then
-  fixes. Within each of those, the one a site owner is most likely to notice goes first.
+- Order within a version: all the `Added:` bullets, then all the `Updated:`, then all the
+  `Fixed:`. Within each group, the one a site owner is most likely to notice goes first.
+- **The 1.0.0 entry stays unlabelled**, and keeps its bare `= 1.0.0 =` heading. See below: it is a
+  placeholder for a release that has not happened. Once a version ships, its entry is history and
+  is never touched again — not to add a label, not to change a marker, not for anything.
+
+### The date in the heading
+
+`Mon D, YYYY`: a three-letter English month, the day **unpadded**, a comma, the four-digit year —
+`Oct 28, 2026`, `Nov 6, 2026`, not `Nov 06, 2026`.
+
+The date is the release date, and `/yayrelease` computes it **once** in its preflight and passes it
+to this skill with `--date`, so the changelog heading and the tag annotation cannot disagree when a
+release run straddles midnight. Run on its own, this skill uses today's date.
+
+Produce it with this and nothing else:
+
+```bash
+LC_ALL=C date +'%b %e, %Y' | tr -s ' '
+```
+
+Each piece is load-bearing, and all three were checked on this machine:
+
+- **`LC_ALL=C`** pins the month to English. Without it `%b` follows the operator's locale, and a
+  French one writes `nov. 6, 2026` into the readme.
+- **`%e`, not `%-d`** — `%-d` is a GNU extension. `%e` is space-padded on both GNU and BSD, which
+  is why `tr -s ' '` follows it to squeeze `Nov  6` into `Nov 6`. The repo's release tooling must
+  run under macOS's BSD tools as well as GNU (`.claude/rules/release.md`), and `date` there has no
+  `--version`, let alone `%-d` as a documented flag.
+- **`tr -s ' '`** collapses the padding. Without it, days 1–9 get two spaces.
+
+The version still belongs in the heading, after `Version `, so anything scanning the changelog for
+a version number finds one.
+
+### The 1.0.0 entry keeps its bare heading
+
+`= 1.0.0 =` stays as it is, with no date, because **1.0.0 has not been released and so has no
+release date** — and a date is not something to invent. It is a placeholder for a release that
+has not happened, not an entry in a published changelog, which is also why its bullet marker was
+converted when the markers changed.
+
+The first real release rewrites that heading into the new shape with its actual date. After that,
+a shipped version's heading is never touched again.
+
+### Why a hyphen, when wordpress.org's own example uses an asterisk
+
+The directory renders readme sections through a Markdown parser, and Markdown accepts `-`, `*` and
+`+` alike for an unordered list, so a hyphen is expected to render as a list item. But every
+official example and nearly every plugin in the wild uses `*`, and no documentation found says in
+so many words that `-` is parsed — so treat this as very likely rather than confirmed.
+
+It is cheap to be sure, and worth doing once: after the first wordpress.org submission, look at
+the rendered Changelog tab on the plugin page. If the bullets came out as one run-on paragraph
+instead of a list, the markers are the cause, and switching back is one `sed` over `readme.txt`
+plus one edit here.
+
+## Which label
+
+Decide from what the bullet does to a site owner's installation, not from the commit's
+Conventional Commits type — a `feat(...)` can be an `Updated:` and a `refactor(...)` that changes
+a default is one too.
+
+| Label | The thing… | Examples |
+|---|---|---|
+| `Added:` | did not exist before | a new block, template, setting, condition, design token, admin screen, integration or compatibility entry |
+| `Updated:` | existed, and now behaves or looks different | a changed default, a redesigned panel, a raised minimum or tested-up-to version, a reworked flow, a capability withdrawn |
+| `Fixed:` | was broken, and now works | a field that stayed required, a price shown twice, a layout that broke on a theme, a gateway that stopped working |
+
+Rules that keep it mechanical:
+
+- **Three labels, and no others.** Never `New:`, `Changed:`, `Improved:`, `Removed:`,
+  `Deprecated:` or `Security:`. A removal is an `Updated:` — the plugin now behaves differently —
+  and saying so plainly in the sentence is clearer than a label nobody else uses here.
+- **If a bullet needs two labels, it is two bullets.** A change that adds a setting *and* alters
+  an existing default is an `Added:` and an `Updated:`; the splitting rule below already covers it.
+- **`Added:` wins over `Fixed:` for something that never worked.** A feature that was shipped
+  broken and is now usable for the first time reads as `Fixed:` to the author and `Added:` to the
+  site owner. Write for the site owner.
+- **The label goes before the sentence, the `(Pro)` suffix after it**:
+  `- Added: Order Again button on the thank-you page. (Pro)`
 
 ## This repo had no house style to copy
 
-Before 1.1.0 the only entry was `* Initial release.` for 1.0.0 — a placeholder, not a style.
-The rules above are the ones the release skill establishes. They are a decision, not a
+Before 1.1.0 the only entry was `- Initial release.` under a bare `= 1.0.0 =` — a placeholder,
+not a style. The rules above, the dated heading and the three labels included, are the ones this
+skill establishes. They are a decision, not a
 discovery, so they can be changed; change them **here**, in this file, and the skill follows.
 
 ## What earns a bullet
@@ -131,8 +213,9 @@ That shared registry edit is also why a Pro block still earns a bullet in the Fr
 all: the Free build ships the block locked behind a Pro badge, so a Free site owner does see it
 appear — they just cannot use it. Hence the suffix rather than silence.
 
-Suffix spelling: ` (Pro)` after the sentence's full stop — `* Order Again button on the thank-you
-page. (Pro)`. Never `[Pro]`, `(pro)`, `Pro:` or a leading badge.
+Suffix spelling: ` (Pro)` after the sentence's full stop, with the label still first —
+`- Added: Order Again button on the thank-you page. (Pro)`. Never `[Pro]`, `(pro)`, `Pro:` or a
+leading badge, and never in place of the label.
 
 ## Zero entries is a valid outcome
 
@@ -141,7 +224,7 @@ If the range holds nothing user-facing, say so:
 > Nothing user-facing to release — the range is CI, docs and refactors only.
 
 Then stop and let the operator decide whether to release at all. Do **not** invent a bullet,
-and do **not** write `* Minor improvements and bug fixes.` A release whose changelog says
+and do **not** write `- Minor improvements and bug fixes.` A release whose changelog says
 nothing is worse than no release: it trains site owners to ignore the notes.
 
 ## Writing the sentences
@@ -151,5 +234,7 @@ nothing is worse than no release: it trains site owners to ignore the notes.
 - Name the thing. "The Coupon form keeps its width on mobile." beats "Fixed a styling issue."
 - Present tense for what the plugin now does; past tense only for a fix describing the old
   behaviour, and then only when the symptom needs it.
-- One sentence. If it needs two, it is probably two bullets.
+- One sentence after the label. If it needs two, it is probably two bullets.
+- Do not restate the label in the sentence. `* Fixed: The Coupon form keeps its width on mobile.`
+  not `- Fixed: Fixed the Coupon form's width on mobile.`
 - Do not promise. No "improved performance" without a number, no "better compatibility".

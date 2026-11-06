@@ -55,6 +55,17 @@ than none:
 | `--publish` | Force **stage 2 only**: skip phases 0–6 and publish an already-merged release PR. Rarely needed — publishing is the default endpoint (see below), so this is for when stage 1 ran elsewhere or you want to skip its verification build. |
 | `--dry-run` | Run phases 0–5 for real, print phase 7 and execute none of it, then unwind. |
 
+**Nothing parses any of this.** The whole line after the skill name arrives as one string of free
+text, and the table above is the only thing that gives it meaning. So read it generously:
+`--plan=pro`, `pro` and `full` are one request, quotes are readability rather than syntax, and an
+obvious misspelling of a flag is that flag. Being generous about *reading* is not being generous
+about *acting* — when a value is genuinely ambiguous, say what was passed and ask; never invent
+one, and never widen what was asked for.
+
+It is also why nothing irreversible here rests on a flag. A typo cannot fail loudly in free text,
+so phase 0 reads which stage to run from the repository rather than from `--publish`, the editions
+are resolved and named back in the output, and Gate A and Gate B stop the run whatever was typed.
+
 **Accepted, but not in the hint, because they change nothing.** Take them without complaint and
 say what the behaviour already is, rather than treating them as errors:
 
@@ -142,8 +153,8 @@ Rules for reading those:
   --search "chore(release): $NEW"` answers the awaiting-review row. Say which stage you are
   entering and why, in one line, before phase 1. A run that routes to "neither" ends here.
 - **Prerequisites.** Composer needs SSH access to the private admin-shell repository, which it
-  clones; a release cannot build without it. `pnpm-lock.yaml` must exist (Free's zip ships it) —
-  run `pnpm install` if it does not. `vendor/bin/php-scoper` must be executable; `ensure_composer`
+  clones; a release cannot build without it. `pnpm-lock.yaml` must exist for the build to install
+  from — run `pnpm install` if it does not; it is no longer shipped in either zip. `vendor/bin/php-scoper` must be executable; `ensure_composer`
   installs it, but say so rather than letting the build fail three minutes in.
 - **Node, not pnpm, is the gate.** `node --version` must satisfy `.nvmrc`; pnpm 11 crashes on
   anything older than 22 ([docs/known-issues.md](../../../docs/known-issues.md)), and on a machine
@@ -157,12 +168,17 @@ Rules for reading those:
 Compute the release date **once**, here, and reuse it:
 
 ```bash
-RELEASE_DATE=$(date +%F)
+RELEASE_DATE=$(LC_ALL=C date +'%b %e, %Y' | tr -s ' ')      # Nov 6, 2026
 ```
 
-It is used in the tag annotation and nowhere else. The `readme.txt` changelog headings in this
-repo carry **no date** — do not add one. Computing it once is still right: it stops the tag
-annotation and anything else dated from disagreeing when a run straddles midnight.
+It has two consumers — the changelog heading phase 2 writes
+(`= Nov 6, 2026 - Version 1.1.0 =`) and the tag annotation in phase 7 — which is exactly why it is
+computed once here and passed on rather than taken again later. A release run that straddles
+midnight would otherwise ship a changelog and a tag that disagree about the day it happened.
+
+`LC_ALL=C` pins the month to English, `%e` is the portable unpadded day (`%-d` is GNU-only and
+this tooling must run under macOS's BSD `date`), and `tr -s ' '` squeezes the padding `%e` leaves
+on days 1–9. All three matter; the changelog style file explains each.
 
 Finally, read [docs/known-issues.md](../../../docs/known-issues.md) before this run. Two entries
 change what phases 4 and 5 must do, and both are live.
@@ -198,8 +214,12 @@ Do not bump anything in this phase. Phase 3 writes.
 `--write`, and let it draft the entry, decide each `(Pro)` suffix and write it into `readme.txt`:
 
 ```
-/yaychangelog <version> --write
+/yaychangelog <version> --write --date "$RELEASE_DATE"
 ```
+
+Pass `--date`. Without it the changelog skill takes today's date for itself, which is almost
+always the same day and occasionally not — and "occasionally not" is the whole reason phase 0
+computes it once.
 
 It resolves the range itself (the newest `v*` tag to HEAD, the whole history when there is none),
 screens the commits, reads their bodies, and reports the range it used. One skill owning those
@@ -326,8 +346,8 @@ build both anyway and ignore the argument, and do not ask whether to proceed —
 means the operator expected one, and silently doing something else is worse than the abort.
 
 A single-plan dry run is therefore a **build check, not an edition check**: it cannot test that
-Pro's files are absent from Free, or that Pro carries no `apps/` source. Say that in the dry run's
-output, and run the last rehearsal before a real release with both editions.
+Pro's files are absent from the Free zip. Say that in the dry run's output, and run the last
+rehearsal before a real release with both editions.
 
 ### Build before commit, and why
 
@@ -359,7 +379,10 @@ unwind too.
 
 `cmd_release` already checks a great deal inside the zip — Pro leaks per plan, the stripped
 admin-shell and its autoloader, the text-domain rewrite, the header name, the development
-constant, and `assert_staged_plan()` before zipping. **Print its output and read it.** Then add
+constant, the absence of every `JS_SOURCE_PATHS` entry and of `node_modules/`, the absence of
+`vendor/composer/installed.json` with the autoloader's own files still present, the stamped
+`@SOURCE_COMMIT@` and the source-repository link in `readme.txt`, and `assert_staged_plan()`
+before zipping. **Print its output and read it.** Then add
 the checks it does not make — it never asserts the version inside the zip:
 
 ```bash
@@ -380,9 +403,16 @@ leak is invisible there:
 - The Pro zip's root directory is `yaycheckout-pro`, the Free zip's is `yaycheckout`. Different
   slugs on purpose: a wordpress.org update to `yaycheckout` must not overwrite a paid install.
 - Pro contains `includes/Pro/` and the shell's `vendor-prefixed/src/License/`; Free contains
-  neither, and nothing under `packages/blocks/src/pro/` but `block.json` files.
-- Pro contains no `apps/` or `packages/` source; Free contains both, plus `pnpm-lock.yaml`, and
-  no `node_modules/`.
+  neither.
+- **Neither** contains a JS source tree. `apps/`, `packages/`, `pnpm-lock.yaml`,
+  `pnpm-workspace.yaml`, the root `package.json`, `.nvmrc` and `node_modules/` are absent from
+  both: since [#267](https://github.com/YayCommerce/YayCheckout/pull/267) the source is *linked*
+  rather than shipped, and `readme.txt`'s Source code section is that link. `JS_SOURCE_PATHS` in
+  `scripts/run.sh` is the list, and it is a must-**not**-contain list for both editions.
+- `readme.txt` inside each zip names the public repository and carries a real commit in place of
+  the `@SOURCE_COMMIT@` placeholder. That link is now the only thing standing in for the source,
+  so a zip whose readme lost it, or kept the literal placeholder, fails wordpress.org's guideline
+  4 — which is why `cmd_release` checks both.
 - Both headers carry the version from phase 3; Pro's names `YayCheckout Pro`, Free's names no Pro.
 
 Any mismatch: stop. Nothing has been pushed yet, and a wrong zip at this point costs one rebuild.
@@ -486,7 +516,7 @@ that ship.
 Then tag, push, and only then create the Release:
 
 ```bash
-git tag -a "v$NEW" -m "YayCheckout $NEW — released $RELEASE_DATE"
+git tag -a "v$NEW" -m "YayCheckout $NEW — released $RELEASE_DATE"   # the date phase 0 computed
 git push origin dev
 git push origin "v$NEW"
 git branch "released/$NEW" "v$NEW"
