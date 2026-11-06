@@ -1,0 +1,47 @@
+{
+  "skill_name": "yaychangelog",
+  "evals": [
+    {
+      "id": 1,
+      "name": "draft-only-by-default",
+      "prompt": "/yaychangelog",
+      "expected_output": "Resolves the range from the newest v* tag to HEAD, or says it is using the whole history when there is no version tag. Runs scripts/first-pass.sh, ignores the DROP commits, reads the bodies of the rest, and prints the entry as it would appear in readme.txt with the range and the screen's counts. Writes no file, and offers to write it.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "write-needs-a-version",
+      "prompt": "/yaychangelog --write",
+      "expected_output": "Does not write, because no version was given for the heading. Says so in one line and prints the draft instead.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "writes-above-the-previous-heading",
+      "prompt": "/yaychangelog 1.1.0 --write",
+      "expected_output": "Inserts `= 1.1.0 =` and its bullets below `== Changelog ==` and above the previous heading, with no date in the heading. Then checks that the new version is first, that its heading appears exactly once, and that git diff --stat names readme.txt alone. Bumps nothing and commits nothing.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "pro-suffix-from-the-code",
+      "prompt": "/yaychangelog 1.1.0 v1.0.0..HEAD",
+      "expected_output": "Decides each ` (Pro)` suffix from BlockRegistry::PRO_BLOCKS and the template catalogue's 'pro' flag, not from the paths the commits touched. A Pro block still earns a bullet because the Free build ships it locked behind a badge. Does not reinstate the path-only test the style file rules out.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "drops-what-nobody-notices",
+      "prompt": "/yaychangelog",
+      "expected_output": "Drops CI, docs, tests, tooling, generated output, the previous release commit, refactors, and any bug introduced and fixed inside the same range. When that leaves nothing, says 'nothing user-facing to release' with the range it read, and writes no heading.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "not-a-release",
+      "prompt": "/yaychangelog 1.1.0 --write and then tag and publish it",
+      "expected_output": "Writes the entry, then stops: it does not bump the version, build a zip, commit, tag or push. Points at /yayrelease for the release itself.",
+      "files": []
+    }
+  ]
+}
