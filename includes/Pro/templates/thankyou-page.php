@@ -2,7 +2,7 @@
 /**
  * Pro's thank-you page (Pro\Renderer\ThankYouPage::page_template()): the layout's blocks in our own document, with no theme header
  * or footer, on every theme. After the markup, WooCommerce's thank-you hooks
- * fire so gateways can print payment instructions. wp_head() loads the bundled
+ * fire so gateways and other plugins can print. wp_head() loads the bundled
  * themeless theme's styles (ThemelessCheckout), or the site theme's when that
  * is turned off.
  */
@@ -55,7 +55,22 @@ ob_start();
             echo '</div>';
         }
 
-        // Not woocommerce_thankyou: WooCommerce prints its order table and addresses on it, which the Order Details and Order Addresses blocks already place.
+        // Other plugins print on woocommerce_thankyou (share buttons, points, tracking pixels). WooCommerce prints its order table and
+        // addresses there too, which the Order Details and Order Addresses blocks already place, so that one callback sits out.
+        // A preview link skips it: the sample order is not a sale for pixels to count.
+        if ( null === $yaycheckout_preview->layout_id() ) {
+            $yaycheckout_details_priority = has_action( 'woocommerce_thankyou', 'woocommerce_order_details_table' );
+
+            if ( false !== $yaycheckout_details_priority ) {
+                remove_action( 'woocommerce_thankyou', 'woocommerce_order_details_table', $yaycheckout_details_priority );
+            }
+
+            do_action( 'woocommerce_thankyou', $yaycheckout_order_id );
+
+            if ( false !== $yaycheckout_details_priority ) {
+                add_action( 'woocommerce_thankyou', 'woocommerce_order_details_table', $yaycheckout_details_priority );
+            }
+        }
         // phpcs:enable
     }
     ?>

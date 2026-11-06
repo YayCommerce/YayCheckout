@@ -16,8 +16,9 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Pro: makes the active layout's thank-you page (Layout::META_THANK_YOU) the order-received page: our
  * template in place of WooCommerce's thankyou.php, printing its blocks then the thank-you hooks
- * gateways rely on. Leaves WooCommerce untouched when safe mode is on, no layout is active, the
- * active layout has no thank-you page, or the order key is missing or wrong. A preview link renders
+ * gateways and other plugins rely on. Leaves WooCommerce untouched when safe mode is on, no layout is
+ * active, the active layout has no thank-you page, the order key is missing or wrong, or WooCommerce
+ * would ask the visitor to log in or confirm their email (passes_woocommerce_gate()). A preview link renders
  * its own layout over the sample order (PreviewOrderRepository), and nothing else.
  *
  * Attaches to core through its filters only: the Thank you editor view, the themeless swap, the admin
@@ -372,6 +373,42 @@ class ThankYouPage {
             return null;
         }
 
+        // A preview link shows the merchant the sample order; resolve() refuses it any other.
+        if ( null === PreviewRequest::get_instance()->layout_id() && ! self::passes_woocommerce_gate( $order ) ) {
+            return null;
+        }
+
         return $order;
+    }
+
+    /**
+     * WooCommerce's gate after the key (WC_Shortcode_Checkout::order_received()): an account's order needs that
+     * account logged in, and a guest order may need its billing email confirmed. Failing it, the renderer stands
+     * down and WooCommerce's shortcode prints its own login or verify-email form, so a leaked link shows nothing.
+     * Fails closed when WooCommerce's helper is missing.
+     */
+    private static function passes_woocommerce_gate( \WC_Order $order ): bool {
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's own filter, honoured as its shortcode does.
+        $verify_known_shoppers = apply_filters( 'woocommerce_order_received_verify_known_shoppers', true );
+        $customer_id           = $order->get_customer_id();
+
+        if ( $verify_known_shoppers && $customer_id && get_current_user_id() !== $customer_id ) {
+            return false;
+        }
+
+        $users = '\Automattic\WooCommerce\Internal\Utilities\Users';
+
+        if ( ! method_exists( $users, 'should_user_verify_order_email' ) ) {
+            return false;
+        }
+
+        // The email the verify form posts, read as WooCommerce's shortcode reads it.
+        $supplied_email = null;
+
+        if ( wp_verify_nonce( (string) filter_input( INPUT_POST, 'check_submission' ), 'wc_verify_email' ) ) {
+            $supplied_email = sanitize_email( wp_unslash( (string) filter_input( INPUT_POST, 'email' ) ) );
+        }
+
+        return ! $users::should_user_verify_order_email( $order->get_id(), $supplied_email, 'order-received' );
     }
 }
