@@ -54,7 +54,7 @@
       "id": 8,
       "name": "edition-is-dry-run-only",
       "prompt": "/yayrelease 1.1.0 free",
-      "expected_output": "Aborts without building: free and pro narrow the build and narrowing is for --dry-run only, because both zips must come from the same tagged commit at the same version, readme.txt's changelog is shared between the editions, and the leak checks are cross-edition. Names full as the word for a whole release. Does not build both anyway and ignore the argument, and does not ask whether to proceed.",
+      "expected_output": "Aborts without building: naming an edition narrows the build and narrowing is for --dry-run only, because both zips must come from the same tagged commit at the same version, readme.txt's changelog is shared between the editions, and the leak checks are cross-edition. Says a release builds both, so no edition should be passed. Does not build both anyway and ignore the argument, and does not ask whether to proceed.",
       "files": []
     },
     {
@@ -66,9 +66,9 @@
     },
     {
       "id": 10,
-      "name": "full-and-the-aliases",
-      "prompt": "/yayrelease 1.1.0 full",
-      "expected_output": "Treats full as both editions, which is the default, so it does NOT abort on a real run and does not pass full to run.sh as a plan. lite resolves to free and narrows, so it would abort on a real run. Says which plans it resolved to. The order of the two bare arguments does not matter, since the version is told apart by its shape, and a bare word that is neither a version nor one of free, pro, full or lite aborts naming what was passed, instead of being guessed at.",
+      "name": "the-edition-aliases",
+      "prompt": "/yayrelease 1.1.0 full --dry-run",
+      "expected_output": "Resolves full to pro, and lite to free the same way, naming the plan it resolved to so nobody is left believing there is a third edition. Never passes full or lite to run.sh, which takes only free and pro. The order of the two bare arguments does not matter, since the version is told apart by its shape, and a bare word that is neither a version nor one of free, pro, full or lite aborts naming what was passed, instead of being guessed at.",
       "files": []
     }
   ]
