@@ -6,9 +6,10 @@ disable-model-invocation: true
 allowed-tools: Read, Edit, Bash, Grep, Glob
 # Purpose: the one linear flow that cuts a release of this plugin, from preflight to the published
 #   GitHub Release, with the irreversible steps gated. It owns the tag format, the release commit
-#   and PR shape, the artifact checks beyond the ones run.sh already does, and the unwind table.
-#   The changelog rules and their commit screen are NOT here: they belong to the yaychangelog
-#   skill, which phase 2 invokes. This header covers the whole skill directory.
+#   and PR shape, and the unwind table. Two pieces are deliberately NOT here: the changelog rules
+#   and their commit screen belong to the yaychangelog skill, which phase 2 invokes, and the
+#   build-and-verify mechanics live in references/build-and-verify.md, which yayhotfix reads too.
+#   This header covers this file and that reference.
 # Update when: cmd_release in scripts/run.sh changes its flags, its copy list or its artifact
 #   checks; a version location is added or removed; the branch model, tag format or PR rule
 #   changes; the repository's visibility changes; the Free and Pro zips stop being two zips from
@@ -51,7 +52,7 @@ than none:
 | Argument | Meaning |
 |---|---|
 | `<version>` | `X.Y.Z`, `X.Y.Z.W` or `X.Y.Z-tag`. Omitted, phase 1 proposes one and asks. |
-| `both` *(default)*, `free`, `pro` | Which editions to build, as a bare word after the version. `both` is what a release is and what you get by passing nothing. `free` and `pro` narrow phase 4 to one edition, **only with `--dry-run`**; on a real run they abort (see phase 4). |
+| `both` *(default)*, `free`, `pro` | Which editions to build, as a bare word after the version. `both` is what a release is and what you get by passing nothing. `free` and `pro` narrow phase 5 to one edition, **only with `--dry-run`**; on a real run they abort (see phase 5). |
 | `--publish` | Force **stage 2 only**: skip phases 0–6 and publish an already-merged release PR. Rarely needed — publishing is the default endpoint (see below), so this is for when stage 1 ran elsewhere or you want to skip its verification build. |
 | `--dry-run` | Run phases 0–5 for real, print phase 7 and execute none of it, then unwind. |
 
@@ -281,146 +282,14 @@ git diff -U0 | grep -E '^\+.*(@since|@deprecated)'                        # must
 The last one is the positive assertion that no historical marker moved. If it prints anything,
 stop: something rewrote a docblock, and this skill does not know what else it touched.
 
-## Phase 4 — Build (verification build)
+## Phase 4 — Commit the bump
 
-Stage 1's build exists to prove the release builds **before** a teammate is asked to review it.
-Its zips are discarded; stage 2 rebuilds the ones that ship, from the merged commit. Say that
-out loud, so nobody "simplifies" it later by attaching stage 1's artifacts.
+Branch, then commit — **before** the build, not after. The Free build hard-fails on a dirty
+tree, and the bump has just made the tree dirty;
+[build-and-verify.md](references/build-and-verify.md) sets out both constraints and why this is
+the only order that satisfies them. Do not reorder these two phases.
 
-**Warn the operator first: each build takes minutes** — a Composer update, an admin-shell
-rescope, a TypeScript build and a blocks build per edition. On the machine this skill was
-rehearsed on, each edition took roughly a minute; a cold `vendor/` or `node_modules/` makes it
-several. Give each edition its own command, never both in one, and either run it in the
-background and wait to be notified, or run it in the foreground with the maximum timeout the
-tool allows. Do not ask for a timeout above that maximum: the call is rejected, and the build
-you were trying to protect never starts.
-
-```bash
-PLANS="pro free"                 # both, unless a dry run named one edition to narrow to
-for plan in $PLANS; do ./scripts/run.sh release --plan="$plan" --no-prompt; done
-```
-
-Run each edition as its own tool call, not the loop above in one call — the loop is only there to
-name `$PLANS`, which phase 4's artifact checks reuse so a single-plan dry run checks one zip.
-
-`--no-prompt` is not optional. `scripts/run.sh` runs under `set -e`, so a `read` that reaches
-the end of input ends the run with exit 1 — and with no version argument, `--no-prompt` also
-means the build uses the version phase 3 already wrote and leaves the tested-up-to lines alone.
-To move those, pass `--wp-tested=X.Y` and `--wc-tested=X.Y` (major.minor only) on both commands;
-otherwise they stay as they are.
-
-### The edition argument narrows a rehearsal, never a release
-
-**The plugin has two editions, `free` and `pro`.** `cmd_release` accepts only those two names and
-exits on anything else, so the skill resolves the argument before it reaches `run.sh`:
-
-| Typed | `$PLANS` | |
-|---|---|---|
-| `both`, or nothing | `pro free` | A whole release. The default. |
-| `pro`, `full` | `pro` | The paid build. |
-| `free`, `lite` | `free` | The wordpress.org build. |
-
-`both` is never passed to `run.sh`; it is the word for building each edition in turn. `full` and
-`lite` are aliases kept because the team says them — the deleted dev/lite was the Free edition's
-branch until one branch started building both. Resolve any of these and say which plans you
-resolved to in the output, so nobody is left believing there is a third edition. Anything else
-aborts: name what was passed and the words accepted, and do not pass it through to `run.sh` to
-fail there with a less helpful message.
-
-`free` and `pro` **narrow** the build, and narrowing is for a rehearsal. Each build takes about a
-minute, so halving it is worth having on the step you repeat most.
-
-**On a real run, narrowing aborts** — `both` is accepted anywhere, being the default — with this
-reason and not a softer one: releasing one edition alone does not work here.
-
-- Both zips must come from the same tagged commit at the same version. Ship Free at 1.1.0 alone
-  and Pro's newest zip is still 1.0.0, while `yaycheckout.php` and `readme.txt` on `dev` already
-  say 1.1.0 — so the next Pro build silently carries notes for a release Pro never had.
-- `readme.txt`, changelog and all, is copied into both zips unchanged. That is why the `(Pro)`
-  suffix exists; one changelog cannot describe half a release.
-- The leak checks are cross-edition by construction. `cmd_release` can only prove the Free zip
-  carries no Pro code by building the Free zip. Build one and you have verified half.
-
-So say: "`free` and `pro` are for `--dry-run` only; a release builds `both`", and stop. Do not
-build both anyway and ignore the argument, and do not ask whether to proceed — naming one edition
-means the operator expected one, and silently doing something else is worse than the abort.
-
-A single-plan dry run is therefore a **build check, not an edition check**: it cannot test that
-Pro's files are absent from the Free zip. Say that in the dry run's output, and run the last
-rehearsal before a real release with both editions.
-
-### Build before commit, and why
-
-The build **can** rewrite tracked files: the admin-shell sync changes `composer.json` (its
-`require-dev`) and regenerates `scoper.inc.php` ([docs/known-issues.md](../../../docs/known-issues.md)).
-Whether it does on a given run depends on what has moved upstream — in the rehearsal that validated
-this skill, neither file changed. That is exactly why the order matters: committing first would, on
-the run where it *does* rewrite them, leave those changes uncommitted and outside the tag. So:
-build, then discard those two, then commit. Do **not** reorder this on the grounds that it did
-nothing last time.
-
-```bash
-git status --porcelain                     # see what the build actually touched
-git checkout -- composer.json scoper.inc.php
-composer install
-```
-
-`git checkout` discards the sync's rewrites — they are not part of the release, and known-issues
-says to revert them unless they were meant. It is a no-op when the build left them alone, so run
-it either way rather than deciding. `composer install` puts the dev packages back: the sync is
-documented to end with `composer install --no-dev`, which leaves `composer lint` and `composer
-test` failing with phpcs and PHPUnit simply gone. The `--stage` path this skill uses reported
-leaving the plugin root untouched in the rehearsal and `vendor/bin/phpcs` survived, so treat this
-as cheap insurance rather than a certainty — and still run it, because the known issue is live and
-the failure it causes is very hard to connect back to a release. Both commands belong in the
-unwind too.
-
-### Verify the artifacts, not the exit status
-
-`cmd_release` already checks a great deal inside the zip — Pro leaks per plan, the stripped
-admin-shell and its autoloader, the text-domain rewrite, the header name, the development
-constant, the absence of every `JS_SOURCE_PATHS` entry and of `node_modules/`, the absence of
-`vendor/composer/installed.json` with the autoloader's own files still present, the stamped
-`@SOURCE_COMMIT@` and the source-repository link in `readme.txt`, and `assert_staged_plan()`
-before zipping. **Print its output and read it.** Then add
-the checks it does not make — it never asserts the version inside the zip:
-
-```bash
-for plan in $PLANS; do            # both, or the one edition a dry run narrowed to
-  slug=yaycheckout; [ "$plan" = pro ] && slug=yaycheckout-pro
-  zip="release/$slug-$NEW.zip"
-  ls -l "$zip"
-  unzip -Z1 "$zip" | cut -d/ -f1 | sort -u                                 # exactly: $slug
-  unzip -p "$zip" "$slug/yaycheckout.php" | grep -E "^ \* Version:|YAYCHECKOUT_VERSION"
-  unzip -p "$zip" "$slug/readme.txt" | grep '^Stable tag:'
-  unzip -p "$zip" "$slug/yaycheckout.php" | grep -m1 '^ \* Plugin Name:'
-done
-```
-
-Cross-check the editions against each other, since a dev tree always contains every file and a
-leak is invisible there:
-
-- The Pro zip's root directory is `yaycheckout-pro`, the Free zip's is `yaycheckout`. Different
-  slugs on purpose: a wordpress.org update to `yaycheckout` must not overwrite a paid install.
-- Pro contains `includes/Pro/` and the shell's `vendor-prefixed/src/License/`; Free contains
-  neither.
-- **Neither** contains a JS source tree. `apps/`, `packages/`, `pnpm-lock.yaml`,
-  `pnpm-workspace.yaml`, the root `package.json`, `.nvmrc` and `node_modules/` are absent from
-  both: since [#267](https://github.com/YayCommerce/YayCheckout/pull/267) the source is *linked*
-  rather than shipped, and `readme.txt`'s Source code section is that link. `JS_SOURCE_PATHS` in
-  `scripts/run.sh` is the list, and it is a must-**not**-contain list for both editions.
-- `readme.txt` inside each zip names the public repository and carries a real commit in place of
-  the `@SOURCE_COMMIT@` placeholder. That link is now the only thing standing in for the source,
-  so a zip whose readme lost it, or kept the literal placeholder, fails wordpress.org's guideline
-  4 — which is why `cmd_release` checks both.
-- Both headers carry the version from phase 3; Pro's names `YayCheckout Pro`, Free's names no Pro.
-
-Any mismatch: stop. Nothing has been pushed yet, and a wrong zip at this point costs one rebuild.
-
-## Phase 5 — Commit
-
-Branch, then commit. Conventional Commits, as `CLAUDE.md` requires, with this repo's long
-explanatory body:
+Conventional Commits, as `CLAUDE.md` requires, with this repo's long explanatory body:
 
 ```bash
 git switch -c "trace/chore/release-$NEW"
@@ -450,6 +319,34 @@ not part of this release.
 
 Co-authored-by: Claude <model> <noreply@anthropic.com>
 ```
+
+## Phase 5 — Build (verification build)
+
+**The mechanics are in [build-and-verify.md](references/build-and-verify.md)** — the build
+commands and why `--no-prompt` is not optional, how an edition word resolves, the two tracked
+files the build can rewrite and the order that implies, and the artifact checks that go beyond
+`cmd_release`'s own. Read it and follow it. `/yayhotfix` phase 5 reads the same file, which is
+why it is a file: one copy of the packaging rules, and no drift for `/yaytidy` to find.
+
+The tree is clean at this point, which is what lets `--plan=free` run at all — see the
+reference's "Commit the version bump *before* building".
+
+What is this skill's own here is **why the build happens at this point, and which zips ship**:
+
+Stage 1's build exists to prove the release builds **before** a teammate is asked to review it.
+Its zips are discarded; stage 2 rebuilds the ones that ship, from the merged commit. Say that out
+loud, so nobody "simplifies" it later by attaching stage 1's artifacts.
+
+And **narrowing to one edition is for a rehearsal only**:
+
+- With `both`, or nothing, build both. That is what a release is.
+- Given `free` or `pro` **together with `--dry-run`**, build that one. Each build takes about a
+  minute, so halving it is worth having on the step you repeat most.
+- Given `free` or `pro` on a **real** run, **abort**. Say "`free` and `pro` are for `--dry-run`
+  only; a release builds `both`", give the reasons from the reference's "Why narrowing is never a
+  whole release", and stop. Do not build both anyway and ignore the argument, and do not ask
+  whether to proceed — naming one edition means the operator expected one, and silently doing
+  something else is worse than the abort.
 
 ## Phase 6 — Gate A, then open the PR
 
@@ -506,11 +403,11 @@ gh repo view --json visibility
 If the release commit is not `HEAD`, say so and stop: either the PR is not merged, or something
 merged after it. A tag must name a commit whose tree is what was built.
 
-**Rebuild both zips from this commit** (phase 4's commands and all of its checks). Stage 1's
+**Rebuild both zips from this commit** (phase 5's commands and all of its checks). Stage 1's
 zips were built from the pre-squash commit and must not be shipped — the squash gives a new
 commit, and the artifact has to be the tagged tree. The rebuild writes the same two file names,
 and `cmd_release` removes an existing zip before writing it, so there is no way to attach a
-stale one by mistake. Re-run every phase 4 check on the rebuilt zips anyway; they are the ones
+stale one by mistake. Re-run every phase 5 check on the rebuilt zips anyway; they are the ones
 that ship.
 
 Then tag, push, and only then create the Release:
@@ -577,7 +474,7 @@ publishing a Release outright: that click is where the decision belongs.
 
 Nothing in CI runs on tags, and no workflow builds or inspects the zip
 ([.github/workflows/php.yml](../../../.github/workflows/php.yml) and the JS one trigger on
-`dev` pushes and PRs only). So the build's own checks plus phase 4's are the whole verification.
+`dev` pushes and PRs only). So the build's own checks plus phase 5's are the whole verification.
 Do not wait for a check that will not arrive; say what was and was not verified.
 
 Then say what is left for a person, because by default none of it has happened yet:
@@ -600,9 +497,9 @@ taken back, not the Release.
 | Phase 0 preflight | — | Fix the condition yourself and re-run. Never stash, commit or pull to make a check pass. |
 | Phase 2 changelog | yes | `git checkout -- readme.txt`. |
 | Phase 3 bump | yes | `git checkout -- yaycheckout.php readme.txt`. |
-| Phase 4 build fails | yes | Read the error. `scripts/free-admin-shell.patch` no longer applying means the admin-shell moved: regenerate the patch, do not skip the step. Then `git checkout -- composer.json scoper.inc.php`, `composer install`, and remove **only this version's** leftovers (see the warning under phase 9). |
-| Phase 4 artifact check fails | yes | Nothing is committed. Fix the cause and rebuild. Do not edit a zip. |
-| Phase 5 commit | yes | `git reset --soft HEAD~1`, then `git switch dev && git branch -D trace/chore/release-$NEW`. |
+| Phase 5 build fails | yes | Read the error. `scripts/free-admin-shell.patch` no longer applying means the admin-shell moved: regenerate the patch, do not skip the step. Then `git checkout -- composer.json scoper.inc.php`, `composer install`, and remove **only this version's** leftovers (see the warning under phase 9). |
+| Phase 5 artifact check fails | yes | The bump is committed, but nothing has been pushed. Fix the cause and rebuild; amend the commit if the fix touches a tracked file. Do not edit a zip. |
+| Phase 4 commit | yes | `git reset --soft HEAD~1`, then `git switch dev && git branch -D trace/chore/release-$NEW`. |
 | Gate A declined | yes | Same as above. Nothing left the machine. |
 | **Branch pushed / PR open** | mostly | `gh pr close` and `git push origin --delete trace/chore/release-$NEW`. Shared, but no tag and no release exist. |
 | **PR merged** | no | `dev` now carries the bump. Roll forward: either publish it, or land a follow-up PR. Never rewrite `dev`. |
@@ -624,8 +521,8 @@ Run phases 0 to 5 for real. Print phase 7 in full — every command, the tag, th
 assets and their sizes, the visibility decision, and that the Release would be a draft — and
 execute **none** of it. Open no PR.
 
-Given `free` or `pro` — `/yayrelease 1.1.0 pro --dry-run` — phase 4 builds that one only, and the
-run says which cross-edition checks it therefore did not make (see phase 4). With `both`, or
+Given `free` or `pro` — `/yayrelease 1.1.0 pro --dry-run` — phase 5 builds that one only, and the
+run says which cross-edition checks it therefore did not make (see phase 5). With `both`, or
 nothing, both are built. The unwind below removes whichever zips were produced;
 `rm -f` on a name that was never written is harmless, so run both lines either way.
 
@@ -669,6 +566,6 @@ connect to a dry run days earlier. Restore gitignored state explicitly, then pro
   Pro or the Free title is a product question nobody has answered. Mention it once per release and
   move on; it does not block one.
 - **Nothing downstream checks the artifact.** No workflow runs on tags. The in-script checks and
-  phase 4's are all there is.
+  phase 5's are all there is.
 - **The changelog is shared between editions.** `readme.txt` is copied into both zips unchanged,
   which is why the `(Pro)` suffix is decided mechanically rather than by feel.

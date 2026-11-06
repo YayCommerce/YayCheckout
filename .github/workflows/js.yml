@@ -2,9 +2,12 @@ name: JS
 
 # Runs only when the admin SPA, the blocks' shared code it imports (@blocks-shared), or the
 # workspace setup changes.
+#
+# The base-branch filter covers dev and the transient hotfix/<X.Y>.x lines /yayhotfix cuts from a
+# released tag, so a hotfix PR gets the same checks a dev PR does.
 on:
   pull_request:
-    branches: [dev]
+    branches: [dev, "hotfix/**"]
     paths:
       - 'apps/admin/**'
       - 'packages/blocks/src/shared/**'
@@ -13,7 +16,7 @@ on:
       - '.nvmrc'
       - '.github/workflows/js.yml'
   push:
-    branches: [dev]
+    branches: [dev, "hotfix/**"]
     paths:
       - 'apps/admin/**'
       - 'packages/blocks/src/shared/**'
