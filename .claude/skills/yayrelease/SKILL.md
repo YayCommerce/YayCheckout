@@ -1,25 +1,31 @@
 ---
-name: release
-description: Cuts a YayCheckout release end to end: preflight, version, the readme.txt changelog, the bump, both edition zips, a release PR into dev, then the annotated tag, the released branch and the GitHub Release. Use when the user types /release, or says "release 1.1.0", "cut a release", "ship a release", "bump the version", "prepare release notes" or "publish the release". Do not use to build a zip for local testing: that is ./scripts/run.sh release on its own.
-argument-hint: "[version] [--publish] [--draft] [--dry-run]"
+name: yayrelease
+description: Cuts a YayCheckout release end to end: preflight, version, the changelog through /yaychangelog, the bump, both edition zips, a release PR into dev, then the annotated tag, the released branch and the GitHub Release. Use when the user types /yayrelease, or says "release 1.1.0", "cut a release", "ship a release", "bump the version" or "publish the release". Do not use to draft release notes alone (/yaychangelog) or to build a test zip (./scripts/run.sh release).
+argument-hint: "[version] [--publish] [--draft] [--dry-run] [--plan=free|pro]"
 disable-model-invocation: true
 allowed-tools: Read, Edit, Bash, Grep, Glob
 # Purpose: the one linear flow that cuts a release of this plugin, from preflight to the published
 #   GitHub Release, with the irreversible steps gated. It owns the tag format, the release commit
 #   and PR shape, the artifact checks beyond the ones run.sh already does, and the unwind table.
-#   The changelog rules live in references/changelog-style.md and its commit screen in
-#   scripts/first-pass.sh. This header covers the whole skill directory.
+#   The changelog rules and their commit screen are NOT here: they belong to the yaychangelog
+#   skill, which phase 2 invokes. This header covers the whole skill directory.
 # Update when: cmd_release in scripts/run.sh changes its flags, its copy list or its artifact
 #   checks; a version location is added or removed; the branch model, tag format or PR rule
 #   changes; the repository's visibility changes; the Free and Pro zips stop being two zips from
-#   one branch; or the paths that can produce a user-visible change move (scripts/first-pass.sh).
+#   one branch; or yaychangelog is renamed, moved or stops writing readme.txt.
 ---
 
 # Cut a YayCheckout release
 
-One flow, with one irreversible end. Separate changelog, build and publish skills invite
-half-releases — a tag with no bump, a zip that does not match its own header — so this skill
-owns all of it.
+One flow, with one irreversible end. The failure mode to avoid is a **half-release** — a tag with
+no bump, a zip that does not match its own header — so the sequence from preflight to published
+Release is one skill, not a set of steps anyone can run out of order.
+
+The changelog is the one piece that lives in its own skill, `/yaychangelog`, because drafting
+release notes is useful on its own: it reads commits and writes `readme.txt`, and it bumps,
+builds, commits and tags nothing. Phase 2 invokes it. Splitting it out costs no ordering
+guarantee — a release still cannot reach phase 3 without it — and it keeps the `(Pro)` rule, which
+is pinned to the code, in exactly one place.
 
 This repo had **never published a release** when this skill was written: `gh release list` was
 empty, the only tag was `harness-v1-final`, and the `readme.txt` changelog held one placeholder
@@ -30,7 +36,8 @@ found. Each is marked **[new]** and named in one place, so the team can change i
   version tag, so there was no precedent.
 - **[new] Release branch:** a `released/<version>` branch pushed at the tagged commit, so a
   hotfix has somewhere to branch from without rewinding `dev`.
-- **[new] Changelog house style:** see [references/changelog-style.md](references/changelog-style.md).
+- **[new] Changelog house style:** owned by `/yaychangelog`, in
+  [its style file](../yaychangelog/references/changelog-style.md).
 
 ## Arguments
 
@@ -43,6 +50,7 @@ arguments — **keep the two in step**, because a stale hint is worse than none:
 | `--publish` | Run **stage 2** only: tag, branch and publish an already-merged release PR. |
 | `--draft` | `gh release create --draft`. Use it for this repo's first real release. |
 | `--dry-run` | Run phases 0–5 for real, print phase 7 and execute none of it, then unwind. |
+| `--plan=free\|pro` | **Only with `--dry-run`.** Build and check that one edition instead of both, for a faster rehearsal. Rejected on a real run — see phase 4. |
 
 ## Two stages, because the merge happens outside this skill
 
@@ -148,43 +156,32 @@ content and **ask**:
 
 Do not bump anything in this phase. Phase 3 writes.
 
-## Phase 2 — Changelog
+## Phase 2 — Changelog, through `/yaychangelog`
 
-Read [references/changelog-style.md](references/changelog-style.md) before writing a single
-bullet. It holds what earns an entry, what to drop, how to group and split, the mechanical
-`(Pro)` rule, and that zero entries is a valid answer.
+**This skill does not own the changelog rules.** Invoke `/yaychangelog` with the new version and
+`--write`, and let it draft the entry, decide each `(Pro)` suffix and write it into `readme.txt`:
 
-Collect the range and screen it:
-
-```bash
-PREV=$(git tag --list 'v*' --sort=-v:refname | head -1)
-RANGE=${PREV:+$PREV..HEAD}
-bash .claude/skills/release/scripts/first-pass.sh ${RANGE:-HEAD}
+```
+/yaychangelog <version> --write
 ```
 
-[scripts/first-pass.sh](scripts/first-pass.sh) sorts each commit into `DROP`, `PRO?` or
-`BULLET?` by the paths it touches. `DROP` is reliable and needs no further reading. For the rest,
-read the subjects **and bodies** — this repo's bodies hold the user-visible symptom, and the
-subject usually does not:
+It resolves the range itself (the newest `v*` tag to HEAD, the whole history when there is none),
+screens the commits, reads their bodies, and reports the range it used. One skill owning those
+rules is the point: the `(Pro)` rule is pinned to `BlockRegistry::PRO_BLOCKS` and the template
+catalogue, and a second copy of it here would be the drift `/yaytidy` exists to find.
 
-```bash
-git log --no-merges --format='--- %h %s%n%b' ${RANGE:-HEAD}
-```
+**If `/yaychangelog` is not available**, do not stop and do not improvise: read
+[its style file](../yaychangelog/references/changelog-style.md) and follow it here, then carry on.
+The rules are what matter; which skill applies them does not.
 
-The screen is an aid, not the decision. `PRO?` means only that the commit touched a Pro
-directory; whether the bullet is Pro-only is settled by `BlockRegistry::PRO_BLOCKS` and the
-template catalogue's `'pro'` flag, as the style file explains.
+Two things stay this skill's business:
 
-When there is no previous version tag — true for the first release this skill cuts — the range is
-the whole history. Say so explicitly, and expect to drop most of it: the 1.0.0 entry already
-covers everything that shipped as the initial release.
-
-Then write the entry into `readme.txt`, above the previous heading, inside `== Changelog ==`.
-Show the operator the draft and let them edit it **before anything else happens**. The changelog
-is the one part of a release no later step can check, so it is the one part a human must read.
-
-If the honest answer is zero bullets, say "nothing user-facing to release", give the range you
-read, and stop. Do not invent an entry.
+- **Show the operator the draft and let them edit it before anything else happens.** The changelog
+  is the one part of a release no later step can check, so it is the one part a human must read.
+  Do not move on to phase 3 until they have seen it.
+- **Zero bullets stops the release.** If `/yaychangelog` reports nothing user-facing, repeat its
+  range, say there is nothing to release, and stop. Do not bump, do not build, and do not talk the
+  operator into an entry.
 
 ## Phase 3 — Bump
 
@@ -243,15 +240,45 @@ tool allows. Do not ask for a timeout above that maximum: the call is rejected, 
 you were trying to protect never starts.
 
 ```bash
-./scripts/run.sh release --plan=pro  --no-prompt
-./scripts/run.sh release --plan=free --no-prompt
+PLANS="pro free"                 # or the single plan --plan named, on a dry run
+for plan in $PLANS; do ./scripts/run.sh release --plan="$plan" --no-prompt; done
 ```
+
+Run each edition as its own tool call, not the loop above in one call — the loop is only there to
+name `$PLANS`, which phase 4's artifact checks reuse so a single-plan dry run checks one zip.
 
 `--no-prompt` is not optional. `scripts/run.sh` runs under `set -e`, so a `read` that reaches
 the end of input ends the run with exit 1 — and with no version argument, `--no-prompt` also
 means the build uses the version phase 3 already wrote and leaves the tested-up-to lines alone.
 To move those, pass `--wp-tested=X.Y` and `--wc-tested=X.Y` (major.minor only) on both commands;
 otherwise they stay as they are.
+
+### `--plan` narrows a rehearsal, never a release
+
+The editions are **two**: `free` and `pro`. There is no `full` and no `lite` — `cmd_release`
+rejects anything else, and the lite branch was deleted when one branch started building both.
+
+With `--dry-run`, `--plan=free` or `--plan=pro` builds and checks that edition alone. Each build
+takes about a minute, so halving it is worth having on the step you repeat most.
+
+**On a real run, `--plan` aborts**, with this reason and not a softer one: releasing one edition
+alone does not work here.
+
+- Both zips must come from the same tagged commit at the same version. Ship Free at 1.1.0 alone
+  and Pro's newest zip is still 1.0.0, while `yaycheckout.php` and `readme.txt` on `dev` already
+  say 1.1.0 — so the next Pro build silently carries notes for a release Pro never had.
+- `readme.txt`, changelog and all, is copied into both zips unchanged. That is why the `(Pro)`
+  suffix exists; one changelog cannot describe half a release.
+- The leak checks are cross-edition by construction. `cmd_release` can only prove the Free zip
+  carries no Pro code by building the Free zip. Build one and you have verified half.
+
+So say: "`--plan` is for `--dry-run` only; a release builds both editions", and stop. Do not build
+both anyway and ignore the flag, and do not ask whether to proceed — the flag means the operator
+expected one edition, and silently doing something else is worse than the abort.
+
+A single-plan dry run is therefore a **build check, not an edition check**: it cannot test that
+Pro's files are absent from Free, or that Pro carries no `apps/` source. Say that in the dry run's
+output, and run the last rehearsal before a real release with both editions.
 
 ### Build before commit, and why
 
@@ -287,7 +314,7 @@ constant, and `assert_staged_plan()` before zipping. **Print its output and read
 the checks it does not make — it never asserts the version inside the zip:
 
 ```bash
-for plan in pro free; do
+for plan in $PLANS; do            # "pro free", or the one --plan named on a dry run
   slug=yaycheckout; [ "$plan" = pro ] && slug=yaycheckout-pro
   zip="release/$slug-$NEW.zip"
   ls -l "$zip"
@@ -483,6 +510,11 @@ pushed history, which `CLAUDE.md` forbids outright. And after **any** failed or 
 
 Run phases 0 to 5 for real. Print phase 7 in full — every command, the tag, the branch, the
 assets and their sizes, the visibility decision — and execute **none** of it. Open no PR.
+
+With `--plan=free` or `--plan=pro`, phase 4 builds that edition only, and the run says which
+cross-edition checks it therefore did not make (see phase 4). Without it, both are built. The
+unwind below removes whichever zips were produced; `rm -f` on a name that was never written is
+harmless, so run both lines either way.
 
 Then unwind completely, and print the commands as they run:
 

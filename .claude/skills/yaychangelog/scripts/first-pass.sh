@@ -2,8 +2,8 @@
 #
 # First pass over a release range: screen each commit into DROP, PRO? or BULLET?.
 # Usage, from anywhere in the repo:
-#   bash .claude/skills/release/scripts/first-pass.sh v1.0.0..HEAD
-#   bash .claude/skills/release/scripts/first-pass.sh -25
+#   bash .claude/skills/yaychangelog/scripts/first-pass.sh v1.0.0..HEAD
+#   bash .claude/skills/yaychangelog/scripts/first-pass.sh -25
 #
 # It is a SCREEN, not the verdict. DROP is reliable: those paths cannot produce a
 # user-visible change. PRO? and BULLET? are prompts to read the commit body and apply
