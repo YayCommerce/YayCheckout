@@ -1,7 +1,7 @@
 ---
 name: yayrelease
 description: Cuts a YayCheckout release end to end: preflight, version, the changelog through /yaychangelog, the bump, both edition zips, a release PR into dev, then the annotated tag, the released branch and the GitHub Release. Use when the user types /yayrelease, or says "release 1.1.0", "cut a release", "ship a release", "bump the version" or "publish the release". Do not use to draft release notes alone (/yaychangelog) or to build a test zip (./scripts/run.sh release).
-argument-hint: "[version] [free|pro] [--publish] [--draft] [--dry-run]"
+argument-hint: "[version] [free|pro|full] [--publish] [--draft] [--dry-run]"
 disable-model-invocation: true
 allowed-tools: Read, Edit, Bash, Grep, Glob
 # Purpose: the one linear flow that cuts a release of this plugin, from preflight to the published
@@ -50,12 +50,12 @@ arguments — **keep the two in step**, because a stale hint is worse than none:
 | `--publish` | Run **stage 2** only: tag, branch and publish an already-merged release PR. |
 | `--draft` | `gh release create --draft`. Use it for this repo's first real release. |
 | `--dry-run` | Run phases 0–5 for real, print phase 7 and execute none of it, then unwind. |
-| `free` or `pro` | A bare edition name, positionally — `/yayrelease 1.1.0 pro --dry-run`. **Only with `--dry-run`.** Builds and checks that edition alone, for a faster rehearsal. Rejected on a real run; see phase 4. `lite` and `full` are accepted as aliases, and `--plan=<name>` as a synonym. |
+| `free`, `pro`, `full` | What to build, as a bare word after the version — `/yayrelease 1.1.0 pro --dry-run`. `full` is both editions and the default. `free` and `pro` narrow phase 4 to one, **only with `--dry-run`**; on a real run they abort (see phase 4). `lite` is an alias for `free`, and `--plan=<name>` a synonym. |
 
 Both bare arguments are positional and tell themselves apart by shape, so their order does not
-matter: anything that looks like a version (`1.1.0`) is the version, and anything that names an
-edition is the edition. A bare word that is neither aborts rather than being guessed at — say what
-was passed and what the two shapes are.
+matter: anything that looks like a version (`1.1.0`) is the version, and `free`, `pro`, `full` or
+`lite` is what to build. A bare word that is neither aborts rather than being guessed at — say
+what was passed and what the two shapes are.
 
 ## Two stages, because the merge happens outside this skill
 
@@ -245,7 +245,7 @@ tool allows. Do not ask for a timeout above that maximum: the call is rejected, 
 you were trying to protect never starts.
 
 ```bash
-PLANS="pro free"                 # or the one edition a dry run named, resolved to free/pro
+PLANS="pro free"                 # full/unset; or the one edition a dry run narrowed to
 for plan in $PLANS; do ./scripts/run.sh release --plan="$plan" --no-prompt; done
 ```
 
@@ -258,26 +258,31 @@ means the build uses the version phase 3 already wrote and leaves the tested-up-
 To move those, pass `--wp-tested=X.Y` and `--wc-tested=X.Y` (major.minor only) on both commands;
 otherwise they stay as they are.
 
-### The edition argument narrows a rehearsal, never a release
+### The edition argument, and why only `full` is allowed on a real run
 
-**There are two editions, `free` and `pro`.** `cmd_release` accepts only those two and exits on
-anything else, so the skill resolves the name before it reaches `run.sh`:
+**The plugin has two editions, `free` and `pro`.** `cmd_release` accepts only those two names and
+exits on anything else, so the skill resolves the argument into a plan list before any of it
+reaches `run.sh`:
 
-| Typed | Builds | Why the alias exists |
+| Typed | `$PLANS` | What it is |
 |---|---|---|
-| `pro`, `full` | Pro | The paid, full-featured build. |
-| `free`, `lite` | Free | The wordpress.org build. The deleted dev/lite was this edition's branch until one branch started building both. |
+| `full`, or nothing | `pro free` | Both editions — a whole release. The default. |
+| `pro` | `pro` | The paid build alone. |
+| `free`, `lite` | `free` | The wordpress.org build alone. |
 
-`lite` and `full` are accepted because the team still says them, not because they are real plan
-names — resolve them silently and name the plan you resolved to in the output, so nobody is left
-thinking there is a third edition. Anything else aborts: name what was passed and the two
-editions, and do not pass it through to `run.sh` to fail there with a less helpful message.
+`full` is **not** a third edition and is never passed to `run.sh`; it is the word for building
+both, which is what a release is. `lite` is an alias kept because the team still says it — the
+deleted dev/lite was the Free edition's branch until one branch started building both. Say which
+plans you resolved to in the output, so nobody is left believing there are three builds.
 
-With `--dry-run`, the edition argument builds and checks that one alone. Each build takes about a
+Anything else aborts: name what was passed and the three accepted words, and do not pass it
+through to `run.sh` to fail there with a less helpful message.
+
+`pro` and `free` **narrow** the build, and narrowing is for a rehearsal. Each build takes about a
 minute, so halving it is worth having on the step you repeat most.
 
-**On a real run it aborts**, with this reason and not a softer one: releasing one edition alone
-does not work here.
+**On a real run, a narrowing value aborts** — `full` is accepted anywhere, because it changes
+nothing — with this reason and not a softer one: releasing one edition alone does not work here.
 
 - Both zips must come from the same tagged commit at the same version. Ship Free at 1.1.0 alone
   and Pro's newest zip is still 1.0.0, while `yaycheckout.php` and `readme.txt` on `dev` already
@@ -287,9 +292,10 @@ does not work here.
 - The leak checks are cross-edition by construction. `cmd_release` can only prove the Free zip
   carries no Pro code by building the Free zip. Build one and you have verified half.
 
-So say: "an edition is for `--dry-run` only; a release builds both", and stop. Do not build both
-anyway and ignore the argument, and do not ask whether to proceed — naming an edition means the
-operator expected one, and silently doing something else is worse than the abort.
+So say: "`free` and `pro` are for `--dry-run` only; a release builds both, which is `full`", and
+stop. Do not build both anyway and ignore the argument, and do not ask whether to proceed — naming
+one edition means the operator expected one, and silently doing something else is worse than the
+abort.
 
 A single-plan dry run is therefore a **build check, not an edition check**: it cannot test that
 Pro's files are absent from Free, or that Pro carries no `apps/` source. Say that in the dry run's
@@ -526,9 +532,9 @@ pushed history, which `CLAUDE.md` forbids outright. And after **any** failed or 
 Run phases 0 to 5 for real. Print phase 7 in full — every command, the tag, the branch, the
 assets and their sizes, the visibility decision — and execute **none** of it. Open no PR.
 
-Given an edition — `/yayrelease 1.1.0 pro --dry-run`, or its `full` alias — phase 4 builds that
-one only, and the run says which cross-edition checks it therefore did not make (see phase 4).
-Without one, both are built. The
+Given `pro` or `free` — `/yayrelease 1.1.0 pro --dry-run` — phase 4 builds that one only, and the
+run says which cross-edition checks it therefore did not make (see phase 4). With `full`, or with
+no edition at all, both are built. The
 unwind below removes whichever zips were produced; `rm -f` on a name that was never written is
 harmless, so run both lines either way.
 
