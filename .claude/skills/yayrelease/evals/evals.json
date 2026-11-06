@@ -52,16 +52,23 @@
     },
     {
       "id": 8,
-      "name": "plan-is-dry-run-only",
-      "prompt": "/yayrelease 1.1.0 --plan=free",
-      "expected_output": "Aborts without building: --plan is accepted only with --dry-run, because both zips must come from the same tagged commit at the same version, readme.txt's changelog is shared between the editions, and the leak checks are cross-edition. Does not build both anyway and ignore the flag, and does not ask whether to proceed.",
+      "name": "edition-is-dry-run-only",
+      "prompt": "/yayrelease 1.1.0 free",
+      "expected_output": "Aborts without building: an edition is accepted only with --dry-run, because both zips must come from the same tagged commit at the same version, readme.txt's changelog is shared between the editions, and the leak checks are cross-edition. Does not build both anyway and ignore the argument, and does not ask whether to proceed.",
       "files": []
     },
     {
       "id": 9,
-      "name": "single-plan-dry-run",
-      "prompt": "/yayrelease 1.1.0 --dry-run --plan=pro",
-      "expected_output": "Builds and checks the Pro zip only, and says which cross-edition checks it therefore did not make: that Pro's files are absent from the Free zip, and that Pro carries no apps/ or packages/ source. Rejects an edition name other than free or pro rather than passing it to run.sh. Unwinds both zip names, since rm -f on an unwritten name is harmless.",
+      "name": "single-edition-dry-run",
+      "prompt": "/yayrelease 1.1.0 pro --dry-run",
+      "expected_output": "Builds and checks the Pro zip only, and says which cross-edition checks it therefore did not make: that Pro's files are absent from the Free zip, and that Pro carries no apps/ or packages/ source. Unwinds both zip names, since rm -f on an unwritten name is harmless.",
+      "files": []
+    },
+    {
+      "id": 10,
+      "name": "edition-aliases-and-bad-names",
+      "prompt": "/yayrelease 1.1.0 full --dry-run",
+      "expected_output": "Resolves full to pro and says so in the output, so nobody is left thinking there is a third edition; lite resolves to free the same way. The order of the two bare arguments does not matter, since the version is told apart by its shape. A bare word that is neither a version nor an edition aborts, naming what was passed, instead of being guessed at or passed through to run.sh to fail there.",
       "files": []
     }
   ]
