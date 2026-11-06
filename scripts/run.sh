@@ -32,10 +32,10 @@ RELEASE_DIR="$PLUGIN_DIR/release"
 # and templates/layouts/pro/ (LayoutTemplateCatalogue::relative_path()).
 PRO_PATHS="includes/Pro/ assets/dist/blocks/pro/ templates/layouts/pro/"
 # The build workspace neither zip ships: wordpress.org guideline 4 takes a readme link to the public
-# development location instead of the source in the plugin, and readme.txt § Source code is that link.
+# development location instead of the source in the plugin, and readme.txt's Source code section is that link.
 # No edition ships a JS source tree, so the artifact check enforces its absence for both.
 JS_SOURCE_PATHS="apps packages pnpm-lock.yaml pnpm-workspace.yaml package.json .nvmrc"
-# The public development location readme.txt § Source code points at, which is what guideline 4 asks for
+# The public development location readme.txt's Source code section points at, which is what guideline 4 asks for
 # now that no source ships. The artifact check fails the release if the readme stops naming it.
 SOURCE_REPO_URL="https://github.com/YayCommerce/YayCheckout"
 # Admin-shell files the Free zip deletes: its licensing (with the EDD updater) and the Recommended Plugins
@@ -391,7 +391,7 @@ cmd_release() {
     local source_commit
     source_commit=$(git -C "$PLUGIN_DIR" rev-parse HEAD 2>/dev/null || true)
     if [ -z "$source_commit" ]; then
-        print_error "Cannot read HEAD: readme.txt § Source code must name the commit the zip was built from"
+        print_error "Cannot read HEAD: readme.txt's Source code section must name the commit the zip was built from"
         exit 1
     fi
     if [ -n "$(git -C "$PLUGIN_DIR" status --porcelain 2>/dev/null)" ]; then
@@ -536,7 +536,7 @@ cmd_release() {
 
     find "$temp_dir/vendor-prefixed" -name "*.php" -exec perl -pi -e "s/$SHELL_TEXT_DOMAIN_CALL/\$1\x27$PLUGIN_SLUG\x27)/g" {} +
 
-    # readme.txt § Source code stands in for the source tree neither edition ships, so the commit it
+    # readme.txt's Source code section stands in for the source tree neither edition ships, so the commit it
     # names has to be the one this zip was built from. Stamped into the copy, never the branch's file.
     sed_inplace "s/@SOURCE_COMMIT@/$source_commit/" "$temp_dir/readme.txt"
     print_info "Source link: $SOURCE_REPO_URL at $source_commit"
@@ -611,7 +611,7 @@ cmd_release() {
         done
     fi
 
-    # Neither edition ships a JS source tree: readme.txt § Source code points wordpress.org at the
+    # Neither edition ships a JS source tree: readme.txt's Source code section points wordpress.org at the
     # public repository instead. A zip that holds one is shipping a build workspace to customers.
     for path in $JS_SOURCE_PATHS; do
         if unzip -l "$zip_name" | grep -q "$plan_slug/$path"; then
