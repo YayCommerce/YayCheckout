@@ -1,0 +1,54 @@
+{
+  "skill_name": "release",
+  "evals": [
+    {
+      "id": 1,
+      "name": "stage-1-named-version",
+      "prompt": "/release 1.1.0",
+      "expected_output": "Runs preflight first: branch is dev, tree clean, not behind origin/dev (reports the ahead count and asks whether those commits belong in the release), no local or remote v1.1.0 tag, gh authed, repo visibility recorded, build prerequisites present. Computes the release date once. Asserts 1.1.0 > the YAYCHECKOUT_VERSION define. Drafts the readme.txt changelog from git log --no-merges with bodies, in the house style, and shows it for editing before anything else. Bumps with ./scripts/run.sh bump, then greps all three locations and asserts git diff -U0 adds no @since or @deprecated line. Builds Pro then Free with --no-prompt, each as its own command with a warning that it takes minutes, then reverts composer.json and scoper.inc.php and runs composer install. Checks the version, root directory and header name inside each zip. Commits on trace/chore/release-1.1.0 with files staged by name and a Co-authored-by trailer. Stops at Gate A printing the version, the changelog, git show --stat HEAD, each artifact path with its byte size and whether it will be attached, and the exact commands. Pushes and opens the PR only after the operator answers, then stops without tagging.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "stage-1-no-version-proposes",
+      "prompt": "cut a release",
+      "expected_output": "Does not guess a version. Runs preflight, drafts the changelog first, then proposes minor or patch from the bullets it wrote (a new capability means minor, fixes only mean patch) and asks the operator to pick before bumping anything.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "nothing-user-facing",
+      "prompt": "/release 1.0.1",
+      "expected_output": "When the range since the last version tag holds only CI, docs, refactors and the previous release commit, says 'nothing user-facing to release', names the range it read, and stops. Invents no bullet and writes no 'minor improvements and bug fixes' entry.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "publish-pro-asset-on-public-repo",
+      "prompt": "/release --publish",
+      "expected_output": "Re-preflights: pulls dev ff-only, confirms the squashed release commit is HEAD, version untagged locally and on the remote, tree clean, visibility read again. Rebuilds both zips from the merged commit rather than shipping stage 1's. Tags v<version> annotated, pushes dev, then the tag, then creates released/<version> and pushes it, and only then runs gh release create. Attaches the Free zip; while gh reports PUBLIC it stops before the Pro upload, prints the visibility and the Pro zip's path and size, and attaches it only on an explicit answer. Says nothing in CI runs on tags and that the zips still need uploading to wordpress.org and the store by hand.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "dry-run-restores-gitignored-state",
+      "prompt": "/release 1.1.0 --dry-run",
+      "expected_output": "Runs phases 0-5 for real, prints phase 7 in full and executes none of it, and opens no PR. Then unwinds: deletes the release branch, checks out yaycheckout.php, readme.txt, composer.json and scoper.inc.php, removes release/ and runs composer install because both are gitignored and git reset would not touch them, then proves it with git status --porcelain empty, ./scripts/run.sh info reporting the original version, and composer lint on one file.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "refuses-dirty-tree",
+      "prompt": "/release 1.1.0",
+      "expected_output": "With uncommitted changes, or on a branch other than dev, or behind origin/dev, aborts with the message for that one check and changes nothing. Does not stash, commit, pull or clean to make the check pass, and does not offer to.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "not-a-test-build",
+      "prompt": "build me a Free zip so I can try it on a staging site",
+      "expected_output": "Does not run this skill. Runs ./scripts/run.sh release --plan=free on its own, and says afterwards to run composer install because the build leaves production packages only.",
+      "files": []
+    }
+  ]
+}

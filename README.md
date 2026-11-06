@@ -59,11 +59,11 @@ A checkout builder for WooCommerce: merchants build checkout layouts from blocks
 The git rules are in [CLAUDE.md § Git](CLAUDE.md#git): branch names, Conventional Commits, PR-only into `dev`, and what an agent may never do. The parts only people do:
 
 - **Review.** Every PR into `dev` needs one approval from a teammate other than its author, then it is squash-merged.
-- **Releases.** Build both editions from `dev` with `--plan=pro` and `--plan=free`. The release commands are in [CLAUDE.md § Commands](CLAUDE.md#commands). What the release builds and checks is in [docs/architecture.md § Build and release](docs/architecture.md#build-and-release), and the rules for changing it are in [.claude/rules/release.md](.claude/rules/release.md). Release notes go in `readme.txt`.
+- **Releases.** Build both editions from `dev` with `--plan=pro` and `--plan=free`. The release commands are in [CLAUDE.md § Commands](CLAUDE.md#commands). What the release builds and checks is in [docs/architecture.md § Build and release](docs/architecture.md#build-and-release), and the rules for changing it are in [.claude/rules/release.md](.claude/rules/release.md). Release notes go in `readme.txt`. [`/release`](.claude/skills/release/SKILL.md) runs the whole flow: the bump, the notes, both zips, the release PR, then the tag and the GitHub Release.
 
 ## Agent tooling
 
-The team's skills cover a change from idea to PR. Each one is called by name, and its `SKILL.md` holds the details:
+The team's skills cover a change from idea to PR, and the release that ships it. Each one is called by name, and its `SKILL.md` holds the details:
 
 | Skill | Run it when | It writes |
 |---|---|---|
@@ -73,6 +73,7 @@ The team's skills cover a change from idea to PR. Each one is called by name, an
 | [`/yayplancheck`](.claude/skills/yayplancheck/SKILL.md) | after each phase of a plan, and before merging | a PASS or FAIL review against the plan, from a fresh subagent |
 | [`/yaybacklog`](.claude/skills/yaybacklog/SKILL.md) | you want to see what reviews left open, check whether an item is done, or record a finding you won't fix in this PR | ticked boxes and new items in `docs/backlog/`, and removes the items that are done |
 | [`/build-checkout-template`](.claude/skills/build-checkout-template/SKILL.md) | you build one template of the HTML checkout-templates mock as a layout template | `templates/layouts/<slug>/markup.php` and `design.json`, committed on a branch |
+| [`/release`](.claude/skills/release/SKILL.md) | you cut a release of the plugin | the version bump, the `readme.txt` changelog entry and a release PR into `dev`, then the annotated tag, the released branch and the GitHub Release |
 
 A typical change runs `/yaybrainstorming`, then `/yayplan`, then you implement it, running `/yayplancheck` after each phase. Before the final review, `/yayplancheck` asks whether to run `/yaytidy` first. A change may also skip the design and go straight to `/yayplan`. A review finding you don't fix in the PR goes to the backlog with `/yaybacklog add`, and the PR that fixes it later ticks its boxes with `/yaybacklog check`.
 
@@ -98,6 +99,7 @@ A typical change runs `/yaybrainstorming`, then `/yayplan`, then you implement i
 | The backlog item format, and checking items against the code | the `yaybacklog` skill |
 | Duplicated facts before a PR, and the stacked-branch PR base | the `yaytidy` skill |
 | Turning a template of the HTML mock into a layout template, and the pitfalls templates 01–03 taught | the `build-checkout-template` skill |
+| Cutting a release: the flow and its gates, the tag format, the released branch and the changelog style | the `release` skill |
 | Onboarding, review, promotion and release practice, agent tooling, harness upkeep | this README |
 
 **Update-when triggers.** Every harness file opens with a Purpose line and an Update when line: in an HTML comment in `CLAUDE.md`, this README and the rules, in the first lines of each doc, decision record and backlog item, and in YAML comments in each skill's frontmatter. When your change matches a file's trigger, update that file in the same PR.

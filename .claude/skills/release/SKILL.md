@@ -1,0 +1,529 @@
+---
+name: release
+description: Cuts a YayCheckout release end to end: preflight, version, the readme.txt changelog, the bump, both edition zips, a release PR into dev, then the annotated tag, the released branch and the GitHub Release. Use when the user types /release, or says "release 1.1.0", "cut a release", "ship a release", "bump the version", "prepare release notes" or "publish the release". Do not use to build a zip for local testing: that is ./scripts/run.sh release on its own.
+argument-hint: "[version] [--publish] [--draft] [--dry-run]"
+disable-model-invocation: true
+allowed-tools: Read, Edit, Bash, Grep, Glob
+# Purpose: the one linear flow that cuts a release of this plugin, from preflight to the published
+#   GitHub Release, with the irreversible steps gated. It owns the tag format, the release commit
+#   and PR shape, the artifact checks beyond the ones run.sh already does, and the unwind table.
+#   The changelog rules live in references/changelog-style.md and its commit screen in
+#   scripts/first-pass.sh. This header covers the whole skill directory.
+# Update when: cmd_release in scripts/run.sh changes its flags, its copy list or its artifact
+#   checks; a version location is added or removed; the branch model, tag format or PR rule
+#   changes; the repository's visibility changes; the Free and Pro zips stop being two zips from
+#   one branch; or the paths that can produce a user-visible change move (scripts/first-pass.sh).
+---
+
+# Cut a YayCheckout release
+
+One flow, with one irreversible end. Separate changelog, build and publish skills invite
+half-releases — a tag with no bump, a zip that does not match its own header — so this skill
+owns all of it.
+
+This repo had **never published a release** when this skill was written: `gh release list` was
+empty, the only tag was `harness-v1-final`, and the `readme.txt` changelog held one placeholder
+entry. So several things here are conventions this skill *establishes* rather than ones it
+found. Each is marked **[new]** and named in one place, so the team can change it:
+
+- **[new] Tag format:** `v<version>`, annotated — `v1.1.0`. The repo's one existing tag is not a
+  version tag, so there was no precedent.
+- **[new] Release branch:** a `released/<version>` branch pushed at the tagged commit, so a
+  hotfix has somewhere to branch from without rewinding `dev`.
+- **[new] Changelog house style:** see [references/changelog-style.md](references/changelog-style.md).
+
+## Arguments
+
+`argument-hint` in the frontmatter is display text with no parser behind it. These are the real
+arguments — **keep the two in step**, because a stale hint is worse than none:
+
+| Argument | Meaning |
+|---|---|
+| `<version>` | `X.Y.Z`, `X.Y.Z.W` or `X.Y.Z-tag`. Omitted, phase 1 proposes one and asks. |
+| `--publish` | Run **stage 2** only: tag, branch and publish an already-merged release PR. |
+| `--draft` | `gh release create --draft`. Use it for this repo's first real release. |
+| `--dry-run` | Run phases 0–5 for real, print phase 7 and execute none of it, then unwind. |
+
+## Two stages, because the merge happens outside this skill
+
+`CLAUDE.md` says every change lands through a squash-merged PR into `dev` and never a direct
+commit. The release's version bump and changelog are a change, so they go the same way. That
+splits the flow:
+
+- **Stage 1** — `/release 1.1.0` — phases 0 to 6. Ends with a pushed branch, an open PR, and
+  nothing tagged. Stop.
+- **A teammate reviews and squash-merges** the PR. Not this skill's work.
+- **Stage 2** — `/release --publish` — phases 7 to 8. Rebuilds the zips from the merged commit,
+  tags it, pushes the tag and the released branch, creates the GitHub Release.
+
+So there are **two** stop-and-wait gates, not one: Gate A before the first push in stage 1, and
+Gate B before the tag in stage 2. The merge in between is the reason. Do not collapse them.
+
+Keep a todo list with one item per phase, so the operator can see where the flow is.
+
+---
+
+## Phase 0 — Preflight
+
+Every check aborts with its own message. **Never make a check pass on the operator's behalf** —
+no stashing, no committing, no pulling, no `git clean`. Report and stop.
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+git rev-parse --abbrev-ref HEAD          # must be exactly: dev
+git status --porcelain                   # must be empty
+git fetch origin dev
+git rev-list --count HEAD..origin/dev    # must be 0  -> else "behind origin/dev"
+git rev-list --count origin/dev..HEAD    # report it  -> ahead is fine, see below
+./scripts/run.sh info                    # current version
+git tag --list 'v*'                      # local version tags
+git ls-remote --tags origin 'v*'         # remote version tags
+gh auth status
+gh repo view --json visibility,nameWithOwner
+command -v composer php zip unzip perl patch git gh
+php -r 'exit(version_compare(PHP_VERSION, "8.2", ">=") ? 0 : 1);'
+node --version                           # must satisfy .nvmrc (22); run `nvm use` if not
+pnpm --version || corepack pnpm --version # either one is enough
+```
+
+Rules for reading those:
+
+- **Branch.** Must be `dev`. Nothing else releases.
+- **Clean tree.** Must be empty. A release that starts dirty ships files the tag does not cover.
+- **Behind, not ahead.** Abort only when the count of commits in HEAD..origin/dev is non-zero. Being *ahead* is the
+  normal case — commits already merged into `dev` locally but not yet pushed, which stage 1
+  pushes anyway. Print the ahead count and the subjects (`git log --oneline origin/dev..HEAD`)
+  and ask the operator to confirm those commits belong in this release.
+- **Not already tagged.** Check both local **and** remote. A tag that exists only on the remote
+  is invisible to `git tag`, and `git push --tags` would then fail after the branch push had
+  already landed.
+- **Prerequisites.** Composer needs SSH access to the private admin-shell repository, which it
+  clones; a release cannot build without it. `pnpm-lock.yaml` must exist (Free's zip ships it) —
+  run `pnpm install` if it does not. `vendor/bin/php-scoper` must be executable; `ensure_composer`
+  installs it, but say so rather than letting the build fail three minutes in.
+- **Node, not pnpm, is the gate.** `node --version` must satisfy `.nvmrc`; pnpm 11 crashes on
+  anything older than 22 ([docs/known-issues.md](../../../docs/known-issues.md)), and on a machine
+  whose active node is older the `pnpm` shim itself errors out. Do not abort on that: `resolve_pnpm`
+  in `scripts/run.sh` falls back to `corepack pnpm`, and then to the newest node under the nvm
+  directory. Abort only when neither `pnpm --version` nor `corepack pnpm --version` works. Tell the
+  operator to run `nvm use` rather than relying on the fallback, because the fallback picks the
+  newest installed node, which is not necessarily the one `.nvmrc` names.
+- **Visibility.** Record it. It decides one step in phase 7, and only that step.
+
+Compute the release date **once**, here, and reuse it:
+
+```bash
+RELEASE_DATE=$(date +%F)
+```
+
+It is used in the tag annotation and nowhere else. The `readme.txt` changelog headings in this
+repo carry **no date** — do not add one. Computing it once is still right: it stops the tag
+annotation and anything else dated from disagreeing when a run straddles midnight.
+
+Finally, read [docs/known-issues.md](../../../docs/known-issues.md) before this run. Two entries
+change what phases 4 and 5 must do, and both are live.
+
+## Phase 1 — Version
+
+The source of truth is the `YAYCHECKOUT_VERSION` define in `yaycheckout.php` — it is what
+`get_version()` in `scripts/run.sh` reads back, and what `./scripts/run.sh info` prints.
+
+Assert the new version is **strictly greater**:
+
+```bash
+[ "$(printf '%s\n%s\n' "$CURRENT" "$NEW" | sort -V | tail -1)" = "$NEW" ] && [ "$CURRENT" != "$NEW" ]
+```
+
+Shape must satisfy `validate_version` in `scripts/run.sh`: `X.Y.Z`, `X.Y.Z.W`, or either with a
+`-tag` suffix. Anything else is rejected by the build too.
+
+If the operator named no version, draft the changelog first (phase 2), then propose from its
+content and **ask**:
+
+- Any bullet that is a new capability → **minor** (`1.0.0` → `1.1.0`).
+- Fixes and behaviour corrections only → **patch** (`1.0.0` → `1.0.1`).
+- A change that breaks a stored layout, a setting, or the minimum WordPress, WooCommerce or PHP
+  version → say so and let the operator pick; this plugin has no shipped users yet, so a major
+  bump is a product decision, not a mechanical one.
+
+Do not bump anything in this phase. Phase 3 writes.
+
+## Phase 2 — Changelog
+
+Read [references/changelog-style.md](references/changelog-style.md) before writing a single
+bullet. It holds what earns an entry, what to drop, how to group and split, the mechanical
+`(Pro)` rule, and that zero entries is a valid answer.
+
+Collect the range and screen it:
+
+```bash
+PREV=$(git tag --list 'v*' --sort=-v:refname | head -1)
+RANGE=${PREV:+$PREV..HEAD}
+bash .claude/skills/release/scripts/first-pass.sh ${RANGE:-HEAD}
+```
+
+[scripts/first-pass.sh](scripts/first-pass.sh) sorts each commit into `DROP`, `PRO?` or
+`BULLET?` by the paths it touches. `DROP` is reliable and needs no further reading. For the rest,
+read the subjects **and bodies** — this repo's bodies hold the user-visible symptom, and the
+subject usually does not:
+
+```bash
+git log --no-merges --format='--- %h %s%n%b' ${RANGE:-HEAD}
+```
+
+The screen is an aid, not the decision. `PRO?` means only that the commit touched a Pro
+directory; whether the bullet is Pro-only is settled by `BlockRegistry::PRO_BLOCKS` and the
+template catalogue's `'pro'` flag, as the style file explains.
+
+When there is no previous version tag — true for the first release this skill cuts — the range is
+the whole history. Say so explicitly, and expect to drop most of it: the 1.0.0 entry already
+covers everything that shipped as the initial release.
+
+Then write the entry into `readme.txt`, above the previous heading, inside `== Changelog ==`.
+Show the operator the draft and let them edit it **before anything else happens**. The changelog
+is the one part of a release no later step can check, so it is the one part a human must read.
+
+If the honest answer is zero bullets, say "nothing user-facing to release", give the range you
+read, and stop. Do not invent an entry.
+
+## Phase 3 — Bump
+
+```bash
+./scripts/run.sh bump "$NEW"
+```
+
+That one command writes all three live locations — the header `Version:` line and the
+`YAYCHECKOUT_VERSION` define in `yaycheckout.php`, and `Stable tag:` in `readme.txt` — through
+`sed`, with exact context. **Never run a repo-wide `sed` of a bare version string**, and never
+hand-edit the three lines: `scripts/run.sh` and [.claude/rules/release.md](../../rules/release.md)
+own their shape, and a fourth location added by hand would go stale on the next release.
+
+### Do not touch
+
+These also hold `1.0.0` and are **not** release locations. Nothing syncs them, and changing one
+is a silent bug:
+
+| Location | Why it stays |
+|---|---|
+| `apps/admin/package.json`, `packages/blocks/package.json` | Private workspace packages. Nothing reads their version; it matches the plugin's only by coincidence. |
+| `templates/themeless/yaycheckout-themeless/style.css` | The bundled fallback theme's own version. |
+| `languages/yaycheckout.pot` | Generated by `pnpm makepot`. Already stale, and the release does not regenerate it — see the note at the end of this file. |
+| `readme.txt` changelog headings for earlier versions | History. |
+| Anything under `vendor-prefixed/` | Generated output, hard rule 1 in `CLAUDE.md`. |
+
+There are no `@since` or `@deprecated` tags in this codebase, so there is no historical marker in
+product code to move. The self-check below asserts that stays true rather than assuming it.
+
+### Self-check
+
+```bash
+grep -c "^ \* Version:           $NEW\$" yaycheckout.php                 # 1
+grep -c "define( 'YAYCHECKOUT_VERSION', '$NEW' )" yaycheckout.php         # 1
+grep -c "^Stable tag: $NEW\$" readme.txt                                  # 1
+./scripts/run.sh info                                                     # reports $NEW
+git diff --name-only                                                      # only those two (phase 0 left the tree clean)
+git diff -U0 | grep -E '^\+.*(@since|@deprecated)'                        # must print NOTHING
+```
+
+The last one is the positive assertion that no historical marker moved. If it prints anything,
+stop: something rewrote a docblock, and this skill does not know what else it touched.
+
+## Phase 4 — Build (verification build)
+
+Stage 1's build exists to prove the release builds **before** a teammate is asked to review it.
+Its zips are discarded; stage 2 rebuilds the ones that ship, from the merged commit. Say that
+out loud, so nobody "simplifies" it later by attaching stage 1's artifacts.
+
+**Warn the operator first: each build takes minutes** — a Composer update, an admin-shell
+rescope, a TypeScript build and a blocks build per edition. On the machine this skill was
+rehearsed on, each edition took roughly a minute; a cold `vendor/` or `node_modules/` makes it
+several. Give each edition its own command, never both in one, and either run it in the
+background and wait to be notified, or run it in the foreground with the maximum timeout the
+tool allows. Do not ask for a timeout above that maximum: the call is rejected, and the build
+you were trying to protect never starts.
+
+```bash
+./scripts/run.sh release --plan=pro  --no-prompt
+./scripts/run.sh release --plan=free --no-prompt
+```
+
+`--no-prompt` is not optional. `scripts/run.sh` runs under `set -e`, so a `read` that reaches
+the end of input ends the run with exit 1 — and with no version argument, `--no-prompt` also
+means the build uses the version phase 3 already wrote and leaves the tested-up-to lines alone.
+To move those, pass `--wp-tested=X.Y` and `--wc-tested=X.Y` (major.minor only) on both commands;
+otherwise they stay as they are.
+
+### Build before commit, and why
+
+The build **can** rewrite tracked files: the admin-shell sync changes `composer.json` (its
+`require-dev`) and regenerates `scoper.inc.php` ([docs/known-issues.md](../../../docs/known-issues.md)).
+Whether it does on a given run depends on what has moved upstream — in the rehearsal that validated
+this skill, neither file changed. That is exactly why the order matters: committing first would, on
+the run where it *does* rewrite them, leave those changes uncommitted and outside the tag. So:
+build, then discard those two, then commit. Do **not** reorder this on the grounds that it did
+nothing last time.
+
+```bash
+git status --porcelain                     # see what the build actually touched
+git checkout -- composer.json scoper.inc.php
+composer install
+```
+
+`git checkout` discards the sync's rewrites — they are not part of the release, and known-issues
+says to revert them unless they were meant. It is a no-op when the build left them alone, so run
+it either way rather than deciding. `composer install` puts the dev packages back: the sync is
+documented to end with `composer install --no-dev`, which leaves `composer lint` and `composer
+test` failing with phpcs and PHPUnit simply gone. The `--stage` path this skill uses reported
+leaving the plugin root untouched in the rehearsal and `vendor/bin/phpcs` survived, so treat this
+as cheap insurance rather than a certainty — and still run it, because the known issue is live and
+the failure it causes is very hard to connect back to a release. Both commands belong in the
+unwind too.
+
+### Verify the artifacts, not the exit status
+
+`cmd_release` already checks a great deal inside the zip — Pro leaks per plan, the stripped
+admin-shell and its autoloader, the text-domain rewrite, the header name, the development
+constant, and `assert_staged_plan()` before zipping. **Print its output and read it.** Then add
+the checks it does not make — it never asserts the version inside the zip:
+
+```bash
+for plan in pro free; do
+  slug=yaycheckout; [ "$plan" = pro ] && slug=yaycheckout-pro
+  zip="release/$slug-$NEW.zip"
+  ls -l "$zip"
+  unzip -Z1 "$zip" | cut -d/ -f1 | sort -u                                 # exactly: $slug
+  unzip -p "$zip" "$slug/yaycheckout.php" | grep -E "^ \* Version:|YAYCHECKOUT_VERSION"
+  unzip -p "$zip" "$slug/readme.txt" | grep '^Stable tag:'
+  unzip -p "$zip" "$slug/yaycheckout.php" | grep -m1 '^ \* Plugin Name:'
+done
+```
+
+Cross-check the editions against each other, since a dev tree always contains every file and a
+leak is invisible there:
+
+- The Pro zip's root directory is `yaycheckout-pro`, the Free zip's is `yaycheckout`. Different
+  slugs on purpose: a wordpress.org update to `yaycheckout` must not overwrite a paid install.
+- Pro contains `includes/Pro/` and the shell's `vendor-prefixed/src/License/`; Free contains
+  neither, and nothing under `packages/blocks/src/pro/` but `block.json` files.
+- Pro contains no `apps/` or `packages/` source; Free contains both, plus `pnpm-lock.yaml`, and
+  no `node_modules/`.
+- Both headers carry the version from phase 3; Pro's names `YayCheckout Pro`, Free's names no Pro.
+
+Any mismatch: stop. Nothing has been pushed yet, and a wrong zip at this point costs one rebuild.
+
+## Phase 5 — Commit
+
+Branch, then commit. Conventional Commits, as `CLAUDE.md` requires, with this repo's long
+explanatory body:
+
+```bash
+git switch -c "trace/chore/release-$NEW"
+git add yaycheckout.php readme.txt
+git status --short            # confirm: nothing else staged
+git commit
+```
+
+Stage files **by name**. `git add -A` would sweep in whatever the build left behind.
+
+The subject is `chore(release): <version>`. The body says what the release contains and what was
+verified, in the house style — what changed, what was checked, what was deliberately left alone —
+and ends with the trailer naming the model, as `CLAUDE.md` asks:
+
+```
+chore(release): 1.1.0
+
+<one paragraph: what a site owner gets, in the same words as the changelog entry>
+
+Bumped the three version locations (the yaycheckout.php header and define, and readme.txt's
+Stable tag) with ./scripts/run.sh bump. Built both editions with --no-prompt and checked each
+zip: the version inside the header and Stable tag, the root directory and slug, the plan's
+header name, and Pro's files absent from the Free zip.
+
+The admin-shell sync's rewrites to composer.json and scoper.inc.php were reverted; they are
+not part of this release.
+
+Co-authored-by: Claude <model> <noreply@anthropic.com>
+```
+
+## Phase 6 — Gate A, then open the PR
+
+**Stop and wait.** Print, in this order:
+
+1. The version, and the version it replaces.
+2. The changelog entry exactly as it will ship, read back out of `readme.txt`.
+3. `git show --stat HEAD`.
+4. Every artifact path with its byte size, and — for each — whether it will be attached in
+   stage 2, with the reason.
+5. The exact commands about to run.
+
+Then wait for the operator's answer.
+
+> A `--dry-run` request, a plan they approved earlier, a go-ahead given before this gate, and
+> this skill's own confidence that everything is fine are **none of them an answer to this
+> gate**. The only answer is the operator saying yes, now, to what was just printed.
+
+On yes:
+
+```bash
+git push -u origin "trace/chore/release-$NEW"
+gh pr create --base dev --title "chore(release): $NEW" --body "<notes>"
+```
+
+The PR body carries the changelog entry and the artifact check results, and ends with the
+generated-with line `CLAUDE.md` asks for. Then **stop**, and tell the operator the PR needs one
+approval from someone other than its author and a squash merge before `/release --publish`.
+
+Expect a permission prompt on the push and on `gh pr create`. That is a feature on an
+outward-facing command — warn the operator it is coming so it does not look stuck, and do not
+try to smooth it away.
+
+---
+
+## Phase 7 — Publish (stage 2, `--publish`)
+
+Re-preflight first; stage 2 may run hours later, on a tree that has moved:
+
+```bash
+git switch dev && git pull --ff-only origin dev
+git log --oneline -3                              # the squashed release commit is HEAD
+./scripts/run.sh info                             # reports the version being released
+git status --porcelain                            # empty
+git tag --list "v$NEW"; git ls-remote --tags origin "v$NEW"   # both empty
+gh repo view --json visibility
+```
+
+If the release commit is not `HEAD`, say so and stop: either the PR is not merged, or something
+merged after it. A tag must name a commit whose tree is what was built.
+
+**Rebuild both zips from this commit** (phase 4's commands and all of its checks). Stage 1's
+zips were built from the pre-squash commit and must not be shipped — the squash gives a new
+commit, and the artifact has to be the tagged tree. The rebuild writes the same two file names,
+and `cmd_release` removes an existing zip before writing it, so there is no way to attach a
+stale one by mistake. Re-run every phase 4 check on the rebuilt zips anyway; they are the ones
+that ship.
+
+Then tag, push, and only then create the Release:
+
+```bash
+git tag -a "v$NEW" -m "YayCheckout $NEW — released $RELEASE_DATE"
+git push origin dev
+git push origin "v$NEW"
+git branch "released/$NEW" "v$NEW"
+git push origin "released/$NEW"
+```
+
+**Push the tag before creating the Release**, so `gh` attaches to the existing tag instead of
+creating one of its own at whatever the remote's default branch happens to point to.
+
+```bash
+gh release create "v$NEW" --title "v$NEW" --notes-file <notes> [--draft] <assets>
+```
+
+Use `--draft` for the first real release: nothing has ever been published here, so the first one
+should be inspectable before it is public. The notes are the changelog entry.
+
+### Which assets — the one step visibility decides
+
+The operator's standing decision is **both zips**, on the grounds that the repository is going
+private. The repository was **PUBLIC** when this skill was written, and a GitHub release asset
+on a public repo is a permanent, indexable, mirrorable public download. For the Free zip that is
+intended. For the Pro zip it would publish paid code, and no later deletion takes it back.
+
+So this one step reads the visibility recorded in preflight:
+
+- **`PRIVATE`** → attach both:
+  `release/yaycheckout-$NEW.zip` and `release/yaycheckout-pro-$NEW.zip`. No extra step.
+- **`PUBLIC`** → attach the Free zip, and **stop before the Pro upload**. Print the repository's
+  visibility, the Pro zip's path and size, and the sentence "attaching this publishes the paid
+  Pro build as a public download". Attach it only if the operator says so in words, in answer to
+  that. Their earlier "both zips" is not that answer — it was given on the premise that the
+  repository would be private by now, and the premise is checkable, so check it.
+
+This is not a second opinion about their decision. It is the preflight visibility check they
+asked for, pointed at the only step it can protect.
+
+### After
+
+Nothing in CI runs on tags, and no workflow builds or inspects the zip
+([.github/workflows/php.yml](../../../.github/workflows/php.yml) and the JS one trigger on
+`dev` pushes and PRs only). So the build's own checks plus phase 4's are the whole verification.
+Do not wait for a check that will not arrive; say the Release is published and what was and was
+not verified.
+
+Then: the zips in `release/` still need uploading to wordpress.org (Free) and the store (Pro) by
+hand. That is outside this skill. Say so.
+
+## Phase 8 — Failure handling
+
+Reversibility ends at the **first push in phase 7**. Everything before it is local.
+
+| Where it fails | Reversible | Recovery |
+|---|---|---|
+| Phase 0 preflight | — | Fix the condition yourself and re-run. Never stash, commit or pull to make a check pass. |
+| Phase 2 changelog | yes | `git checkout -- readme.txt`. |
+| Phase 3 bump | yes | `git checkout -- yaycheckout.php readme.txt`. |
+| Phase 4 build fails | yes | Read the error. `scripts/free-admin-shell.patch` no longer applying means the admin-shell moved: regenerate the patch, do not skip the step. Then `git checkout -- composer.json scoper.inc.php`, `composer install`, and remove **only this version's** leftovers (see the warning under phase 9). |
+| Phase 4 artifact check fails | yes | Nothing is committed. Fix the cause and rebuild. Do not edit a zip. |
+| Phase 5 commit | yes | `git reset --soft HEAD~1`, then `git switch dev && git branch -D trace/chore/release-$NEW`. |
+| Gate A declined | yes | Same as above. Nothing left the machine. |
+| **Branch pushed / PR open** | mostly | `gh pr close` and `git push origin --delete trace/chore/release-$NEW`. Shared, but no tag and no release exist. |
+| **PR merged** | no | `dev` now carries the bump. Roll forward: either publish it, or land a follow-up PR. Never rewrite `dev`. |
+| `git push origin dev` fails | yes | Rejected means someone pushed first. Re-run stage 2's preflight from the top; do not force. |
+| **Tag pushed** | no | The tag is public. If it is wrong, release the next patch version. Never delete or move a pushed tag, and never force-push. |
+| `git push released/$NEW` fails after the tag landed | no | The tag is correct and that is what matters. Retry the branch push alone. |
+| **`gh release create` fails after the pushes** | no | The git side is already correct and complete. **Retry only the release creation.** Never re-run the pushes, and never re-tag. |
+| Release created with wrong notes | yes | `gh release edit "v$NEW" --notes-file <fixed>`. Notes are editable; the tag is not. |
+
+Two rules sit above the table. After the first push, the answer is always to **roll forward** —
+a new commit, a new patch version, an edited release — never a force-push and never a rewrite of
+pushed history, which `CLAUDE.md` forbids outright. And after **any** failed or abandoned run,
+`composer install`, because the build can leave `vendor/` with production packages only.
+
+## Phase 9 — Dry run (`--dry-run`)
+
+Run phases 0 to 5 for real. Print phase 7 in full — every command, the tag, the branch, the
+assets and their sizes, the visibility decision — and execute **none** of it. Open no PR.
+
+Then unwind completely, and print the commands as they run:
+
+```bash
+git tag -d "v$NEW" 2>/dev/null                   # only if phase 7 tagged locally
+git branch -D "released/$NEW" 2>/dev/null
+git switch dev
+git branch -D "trace/chore/release-$NEW"         # drops the release commit
+git checkout -- yaycheckout.php readme.txt composer.json scoper.inc.php
+rm -f "release/yaycheckout-$NEW.zip" "release/yaycheckout-pro-$NEW.zip"
+rm -rf release/yaycheckout release/yaycheckout-pro   # staging dirs an aborted build left
+composer install                                 # gitignored: restores the dev packages
+git status --porcelain                           # must be empty
+./scripts/run.sh info                            # must report the ORIGINAL version
+composer lint -- yaycheckout.php                 # proves composer install took
+```
+
+> **Never `rm -rf release/*`.** That directory is gitignored, so nothing in it is recoverable
+> from git, and it holds **earlier releases' zips** alongside this run's. Deleting them loses the
+> exact artifacts that were shipped; the only way back is to rebuild at that version, which gives
+> a functionally equal but not byte-identical zip. Remove this version's two files by name, plus
+> the two staging directories a failed build can leave behind. The first rehearsal of this skill
+> wiped two earlier zips with exactly that glob, which is why this paragraph is here.
+
+The last four commands in that block — `composer install`, `git status`, `run.sh info` and
+`composer lint` — are the point. `release/`, `vendor/` and the lockfiles are gitignored, so
+`git reset` and `git checkout` do not touch them — a rehearsal that stops at `git status` leaves
+`vendor/` without phpcs and PHPUnit, and the next `composer test` fails for a reason nobody will
+connect to a dry run days earlier. Restore gitignored state explicitly, then prove it.
+
+---
+
+## Known gaps, named on purpose
+
+- **`languages/yaycheckout.pot` is stale and this skill does not fix it.** Its
+  `Project-Id-Version` still reads `YayCheckout - WooCommerce Checkout Builder 1.0.0`, its
+  `POT-Creation-Date` is 2026-09-16, and it names a plugin title the header no longer uses. The
+  release never regenerates it, `pnpm makepot` needs WP-CLI, and whether the pot should carry the
+  Pro or the Free title is a product question nobody has answered. Mention it once per release and
+  move on; it does not block one.
+- **Nothing downstream checks the artifact.** No workflow runs on tags. The in-script checks and
+  phase 4's are all there is.
+- **The changelog is shared between editions.** `readme.txt` is copied into both zips unchanged,
+  which is why the `(Pro)` suffix is decided mechanically rather than by feel.
