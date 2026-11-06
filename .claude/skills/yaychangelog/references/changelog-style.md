@@ -18,8 +18,10 @@ There is no CHANGELOG.md, and nothing else in the repo carries release notes.
 == Changelog ==
 
 = 1.1.0 =
-* A sentence a site owner would recognise after updating.
-* Another one. (Pro)
+* Added: A thing that did not exist before.
+* Added: Order Again button on the thank-you page. (Pro)
+* Updated: Something that existed and now behaves differently.
+* Fixed: Something that was broken and now works.
 
 = 1.0.0 =
 * Initial release.
@@ -29,19 +31,46 @@ There is no CHANGELOG.md, and nothing else in the repo carries release notes.
 - The heading is `= X.Y.Z =` — the version alone. **No date.** The 1.0.0 entry carries none,
   and wordpress.org does not ask for one. Do not add a date to a heading because some other
   plugin does.
-- Each bullet is `* ` then one sentence, ending in a full stop. Sentence case.
-- No bullet labels (`Fixed:`, `Added:`, `New:`). The 1.0.0 entry uses none, and wordpress.org
-  renders these as a plain list.
+- Each bullet is `* `, then its label, then one sentence ending in a full stop.
+- **Every bullet carries one of exactly three labels**, spelled `Added:`, `Updated:` or `Fixed:` —
+  capitalised, colon, one space, then the sentence. See the next section for which.
 - No commit hashes, no PR numbers, no issue links, no contributor names. Those live in the
   commit body and in the PR, which is where a developer looks; `readme.txt` is read by site
   owners in the WordPress updates screen.
-- Order within a version: new capabilities first, then changes to existing behaviour, then
-  fixes. Within each of those, the one a site owner is most likely to notice goes first.
+- Order within a version: all the `Added:` bullets, then all the `Updated:`, then all the
+  `Fixed:`. Within each group, the one a site owner is most likely to notice goes first.
+- **The 1.0.0 entry stays unlabelled.** `* Initial release.` is history, and history is never
+  rewritten — not to add a label, not for anything.
+
+## Which label
+
+Decide from what the bullet does to a site owner's installation, not from the commit's
+Conventional Commits type — a `feat(...)` can be an `Updated:` and a `refactor(...)` that changes
+a default is one too.
+
+| Label | The thing… | Examples |
+|---|---|---|
+| `Added:` | did not exist before | a new block, template, setting, condition, design token, admin screen, integration or compatibility entry |
+| `Updated:` | existed, and now behaves or looks different | a changed default, a redesigned panel, a raised minimum or tested-up-to version, a reworked flow, a capability withdrawn |
+| `Fixed:` | was broken, and now works | a field that stayed required, a price shown twice, a layout that broke on a theme, a gateway that stopped working |
+
+Rules that keep it mechanical:
+
+- **Three labels, and no others.** Never `New:`, `Changed:`, `Improved:`, `Removed:`,
+  `Deprecated:` or `Security:`. A removal is an `Updated:` — the plugin now behaves differently —
+  and saying so plainly in the sentence is clearer than a label nobody else uses here.
+- **If a bullet needs two labels, it is two bullets.** A change that adds a setting *and* alters
+  an existing default is an `Added:` and an `Updated:`; the splitting rule below already covers it.
+- **`Added:` wins over `Fixed:` for something that never worked.** A feature that was shipped
+  broken and is now usable for the first time reads as `Fixed:` to the author and `Added:` to the
+  site owner. Write for the site owner.
+- **The label goes before the sentence, the `(Pro)` suffix after it**:
+  `* Added: Order Again button on the thank-you page. (Pro)`
 
 ## This repo had no house style to copy
 
 Before 1.1.0 the only entry was `* Initial release.` for 1.0.0 — a placeholder, not a style.
-The rules above are the ones the release skill establishes. They are a decision, not a
+The rules above, the three labels included, are the ones this skill establishes. They are a decision, not a
 discovery, so they can be changed; change them **here**, in this file, and the skill follows.
 
 ## What earns a bullet
@@ -131,8 +160,9 @@ That shared registry edit is also why a Pro block still earns a bullet in the Fr
 all: the Free build ships the block locked behind a Pro badge, so a Free site owner does see it
 appear — they just cannot use it. Hence the suffix rather than silence.
 
-Suffix spelling: ` (Pro)` after the sentence's full stop — `* Order Again button on the thank-you
-page. (Pro)`. Never `[Pro]`, `(pro)`, `Pro:` or a leading badge.
+Suffix spelling: ` (Pro)` after the sentence's full stop, with the label still first —
+`* Added: Order Again button on the thank-you page. (Pro)`. Never `[Pro]`, `(pro)`, `Pro:` or a
+leading badge, and never in place of the label.
 
 ## Zero entries is a valid outcome
 
@@ -151,5 +181,7 @@ nothing is worse than no release: it trains site owners to ignore the notes.
 - Name the thing. "The Coupon form keeps its width on mobile." beats "Fixed a styling issue."
 - Present tense for what the plugin now does; past tense only for a fix describing the old
   behaviour, and then only when the symptom needs it.
-- One sentence. If it needs two, it is probably two bullets.
+- One sentence after the label. If it needs two, it is probably two bullets.
+- Do not restate the label in the sentence. `* Fixed: The Coupon form keeps its width on mobile.`
+  not `* Fixed: Fixed the Coupon form's width on mobile.`
 - Do not promise. No "improved performance" without a number, no "better compatibility".

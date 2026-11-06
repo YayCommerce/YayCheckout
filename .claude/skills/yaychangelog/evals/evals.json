@@ -19,14 +19,14 @@
       "id": 3,
       "name": "writes-above-the-previous-heading",
       "prompt": "/yaychangelog 1.1.0 --write",
-      "expected_output": "Inserts `= 1.1.0 =` and its bullets below `== Changelog ==` and above the previous heading, with no date in the heading. Then checks that the new version is first, that its heading appears exactly once, and that git diff --stat names readme.txt alone. Bumps nothing and commits nothing.",
+      "expected_output": "Inserts `= 1.1.0 =` and its bullets below `== Changelog ==` and above the previous heading, with no date in the heading. Every bullet carries exactly one of Added:, Updated: or Fixed:, grouped in that order, and `* Initial release.` under = 1.0.0 = is left unlabelled because history is not rewritten. Then checks that the new version is first, that its heading appears exactly once, that the awk check for unlabelled bullets prints nothing, and that git diff --stat names readme.txt alone. Bumps nothing and commits nothing.",
       "files": []
     },
     {
       "id": 4,
       "name": "pro-suffix-from-the-code",
       "prompt": "/yaychangelog 1.1.0 v1.0.0..HEAD",
-      "expected_output": "Decides each ` (Pro)` suffix from BlockRegistry::PRO_BLOCKS and the template catalogue's 'pro' flag, not from the paths the commits touched. A Pro block still earns a bullet because the Free build ships it locked behind a badge. Does not reinstate the path-only test the style file rules out.",
+      "expected_output": "Decides each ` (Pro)` suffix from BlockRegistry::PRO_BLOCKS and the template catalogue's 'pro' flag, not from the paths the commits touched. A Pro block still earns a bullet because the Free build ships it locked behind a badge. Does not reinstate the path-only test the style file rules out. Keeps the label before the sentence and the (Pro) suffix after its full stop, never using (Pro) in place of a label.",
       "files": []
     },
     {
@@ -41,6 +41,13 @@
       "name": "not-a-release",
       "prompt": "/yaychangelog 1.1.0 --write and then tag and publish it",
       "expected_output": "Writes the entry, then stops: it does not bump the version, build a zip, commit, tag or push. Points at /yayrelease for the release itself.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "label-from-what-the-owner-sees",
+      "prompt": "/yaychangelog 1.1.0",
+      "expected_output": "Picks each label from what the change does to an installation, not from the commit's Conventional Commits type: a feat that alters an existing default is Updated:, and a feature that shipped broken and now works for the first time is Added: rather than Fixed:. Splits a bullet that would need two labels into two. Uses only Added:, Updated: and Fixed: — never New:, Changed:, Improved:, Removed:, Deprecated: or Security: — and writes a removal as Updated:.",
       "files": []
     }
   ]

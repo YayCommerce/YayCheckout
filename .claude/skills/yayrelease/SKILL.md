@@ -142,8 +142,8 @@ Rules for reading those:
   --search "chore(release): $NEW"` answers the awaiting-review row. Say which stage you are
   entering and why, in one line, before phase 1. A run that routes to "neither" ends here.
 - **Prerequisites.** Composer needs SSH access to the private admin-shell repository, which it
-  clones; a release cannot build without it. `pnpm-lock.yaml` must exist (Free's zip ships it) —
-  run `pnpm install` if it does not. `vendor/bin/php-scoper` must be executable; `ensure_composer`
+  clones; a release cannot build without it. `pnpm-lock.yaml` must exist for the build to install
+  from — run `pnpm install` if it does not; it is no longer shipped in either zip. `vendor/bin/php-scoper` must be executable; `ensure_composer`
   installs it, but say so rather than letting the build fail three minutes in.
 - **Node, not pnpm, is the gate.** `node --version` must satisfy `.nvmrc`; pnpm 11 crashes on
   anything older than 22 ([docs/known-issues.md](../../../docs/known-issues.md)), and on a machine
@@ -326,8 +326,8 @@ build both anyway and ignore the argument, and do not ask whether to proceed —
 means the operator expected one, and silently doing something else is worse than the abort.
 
 A single-plan dry run is therefore a **build check, not an edition check**: it cannot test that
-Pro's files are absent from Free, or that Pro carries no `apps/` source. Say that in the dry run's
-output, and run the last rehearsal before a real release with both editions.
+Pro's files are absent from the Free zip. Say that in the dry run's output, and run the last
+rehearsal before a real release with both editions.
 
 ### Build before commit, and why
 
@@ -359,7 +359,10 @@ unwind too.
 
 `cmd_release` already checks a great deal inside the zip — Pro leaks per plan, the stripped
 admin-shell and its autoloader, the text-domain rewrite, the header name, the development
-constant, and `assert_staged_plan()` before zipping. **Print its output and read it.** Then add
+constant, the absence of every `JS_SOURCE_PATHS` entry and of `node_modules/`, the absence of
+`vendor/composer/installed.json` with the autoloader's own files still present, the stamped
+`@SOURCE_COMMIT@` and the source-repository link in `readme.txt`, and `assert_staged_plan()`
+before zipping. **Print its output and read it.** Then add
 the checks it does not make — it never asserts the version inside the zip:
 
 ```bash
@@ -380,9 +383,16 @@ leak is invisible there:
 - The Pro zip's root directory is `yaycheckout-pro`, the Free zip's is `yaycheckout`. Different
   slugs on purpose: a wordpress.org update to `yaycheckout` must not overwrite a paid install.
 - Pro contains `includes/Pro/` and the shell's `vendor-prefixed/src/License/`; Free contains
-  neither, and nothing under `packages/blocks/src/pro/` but `block.json` files.
-- Pro contains no `apps/` or `packages/` source; Free contains both, plus `pnpm-lock.yaml`, and
-  no `node_modules/`.
+  neither.
+- **Neither** contains a JS source tree. `apps/`, `packages/`, `pnpm-lock.yaml`,
+  `pnpm-workspace.yaml`, the root `package.json`, `.nvmrc` and `node_modules/` are absent from
+  both: since [#267](https://github.com/YayCommerce/YayCheckout/pull/267) the source is *linked*
+  rather than shipped, and `readme.txt`'s Source code section is that link. `JS_SOURCE_PATHS` in
+  `scripts/run.sh` is the list, and it is a must-**not**-contain list for both editions.
+- `readme.txt` inside each zip names the public repository and carries a real commit in place of
+  the `@SOURCE_COMMIT@` placeholder. That link is now the only thing standing in for the source,
+  so a zip whose readme lost it, or kept the literal placeholder, fails wordpress.org's guideline
+  4 — which is why `cmd_release` checks both.
 - Both headers carry the version from phase 3; Pro's names `YayCheckout Pro`, Free's names no Pro.
 
 Any mismatch: stop. Nothing has been pushed yet, and a wrong zip at this point costs one rebuild.
