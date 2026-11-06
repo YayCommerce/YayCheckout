@@ -1,7 +1,7 @@
 ---
 name: yayrelease
 description: Cuts a YayCheckout release end to end: preflight, version, the changelog through /yaychangelog, the bump, both edition zips, a release PR into dev, then the annotated tag, the released branch and the GitHub Release. Use when the user types /yayrelease, or says "release 1.1.0", "cut a release", "ship a release", "bump the version" or "publish the release". Do not use to draft release notes alone (/yaychangelog) or to build a test zip (./scripts/run.sh release).
-argument-hint: "[version] [free|pro|full] [--publish] [--draft] [--dry-run]"
+argument-hint: "[version] [both|free|pro] [--publish] [--draft] [--dry-run]"
 disable-model-invocation: true
 allowed-tools: Read, Edit, Bash, Grep, Glob
 # Purpose: the one linear flow that cuts a release of this plugin, from preflight to the published
@@ -47,30 +47,46 @@ arguments — **keep the two in step**, because a stale hint is worse than none:
 | Argument | Meaning |
 |---|---|
 | `<version>` | `X.Y.Z`, `X.Y.Z.W` or `X.Y.Z-tag`. Omitted, phase 1 proposes one and asks. |
-| `--publish` | Run **stage 2** only: tag, branch and publish an already-merged release PR. |
-| `--draft` | `gh release create --draft`. Use it for this repo's first real release. |
+| `both` *(default)*, `free`, `pro` | Which editions to build, as a bare word after the version. `both` is what a release is and what you get by passing nothing. `free` and `pro` narrow phase 4 to one edition, **only with `--dry-run`**; on a real run they abort (see phase 4). `full` is an alias for `pro` and `lite` for `free`, and `--plan=<name>` is a synonym. |
+| `--publish` | Force **stage 2 only**: skip phases 0–6 and publish an already-merged release PR. Rarely needed — publishing is the default endpoint (see below), so this is for when stage 1 ran elsewhere or you want to skip its verification build. |
+| `--draft` | `gh release create --draft`, so the Release is inspectable before it is public. Without it the Release is published outright. Use it for this repo's first real release. |
 | `--dry-run` | Run phases 0–5 for real, print phase 7 and execute none of it, then unwind. |
-| `free`, `pro`, `full` | Which edition to build, as a bare word after the version — `/yayrelease 1.1.0 pro --dry-run`. `full` means `pro` and `lite` means `free`. **Only with `--dry-run`**: naming one narrows phase 4 to that edition, and on a real run it aborts (see phase 4). Pass none and both are built, which is what a release is. `--plan=<name>` is a synonym. |
 
 Both bare arguments are positional and tell themselves apart by shape, so their order does not
-matter: anything that looks like a version (`1.1.0`) is the version, and `free`, `pro`, `full` or
-`lite` is the edition. A bare word that is neither aborts rather than being guessed at — say
+matter: anything that looks like a version (`1.1.0`) is the version, and `both`, `free`, `pro`,
+`full` or `lite` is what to build. A bare word that is neither aborts rather than being guessed at — say
 what was passed and what the two shapes are.
 
-## Two stages, because the merge happens outside this skill
+## One command that resumes, in two stages
 
-`CLAUDE.md` says every change lands through a squash-merged PR into `dev` and never a direct
-commit. The release's version bump and changelog are a change, so they go the same way. That
-splits the flow:
+**Publishing is the default endpoint.** `/yayrelease 1.1.0` means "take this release as far as it
+can go", and that includes the tag and the GitHub Release. There is no mode to opt into.
 
-- **Stage 1** — `/release 1.1.0` — phases 0 to 6. Ends with a pushed branch, an open PR, and
-  nothing tagged. Stop.
-- **A teammate reviews and squash-merges** the PR. Not this skill's work.
-- **Stage 2** — `/release --publish` — phases 7 to 8. Rebuilds the zips from the merged commit,
-  tags it, pushes the tag and the released branch, creates the GitHub Release.
+What it cannot do is skip the merge. `CLAUDE.md` says every change lands through a squash-merged
+PR into `dev` and never a direct commit, and the release's bump and changelog are a change — so a
+human merges in the middle of the flow, and the flow stops there and resumes:
 
-So there are **two** stop-and-wait gates, not one: Gate A before the first push in stage 1, and
-Gate B before the tag in stage 2. The merge in between is the reason. Do not collapse them.
+- **Stage 1** — phases 0 to 6. Ends with a pushed branch, an open PR, and nothing tagged.
+- **A teammate reviews and squash-merges** the PR. Not this skill's work, and not something to
+  wait on in a loop — the run ends.
+- **Stage 2** — phases 7 to 8. Rebuilds the zips from the merged commit, tags it, pushes the tag
+  and the released branch, creates the Release.
+
+**Which stage runs is read from the repository, not from a flag.** On entry, after phase 0:
+
+| State | Run |
+|---|---|
+| No release commit for this version on `dev` | Stage 1 |
+| The release commit is on `dev`, and `v<version>` is untagged locally and on the remote | Stage 2 |
+| `v<version>` is already tagged | Neither. Say the version is released and stop. |
+| A release PR for this version is open but unmerged | Neither. Say it is awaiting review, link it, and stop. |
+
+So the operator runs the same `/yayrelease 1.1.0` again after the merge and it carries on.
+`--publish` forces stage 2 without that detection; it is an override, not the normal path.
+
+There are still **two** stop-and-wait gates, not one: Gate A before the first push in stage 1, and
+Gate B before the tag in stage 2. The merge in between is the reason. Do not collapse them, and do
+not treat "publishing is the default" as licence to pass either one.
 
 Keep a todo list with one item per phase, so the operator can see where the flow is.
 
@@ -110,6 +126,10 @@ Rules for reading those:
 - **Not already tagged.** Check both local **and** remote. A tag that exists only on the remote
   is invisible to `git tag`, and `git push --tags` would then fail after the branch push had
   already landed.
+- **Then route.** With the tags and `git log` already in hand, read which stage this run is: the
+  state table under "One command that resumes" decides, and `gh pr list --base dev --state open
+  --search "chore(release): $NEW"` answers the awaiting-review row. Say which stage you are
+  entering and why, in one line, before phase 1. A run that routes to "neither" ends here.
 - **Prerequisites.** Composer needs SSH access to the private admin-shell repository, which it
   clones; a release cannot build without it. `pnpm-lock.yaml` must exist (Free's zip ships it) —
   run `pnpm install` if it does not. `vendor/bin/php-scoper` must be executable; `ensure_composer`
@@ -265,21 +285,22 @@ exits on anything else, so the skill resolves the argument before it reaches `ru
 
 | Typed | `$PLANS` | |
 |---|---|---|
-| nothing | `pro free` | Both editions — a whole release, and the default. |
+| `both`, or nothing | `pro free` | A whole release. The default. |
 | `pro`, `full` | `pro` | The paid build. |
 | `free`, `lite` | `free` | The wordpress.org build. |
 
-`full` and `lite` are aliases kept because the team says them, not plan names — the deleted
-dev/lite was the Free edition's branch until one branch started building both. Resolve them and
-say which plan you resolved to in the output, so nobody is left believing there is a third
-edition. Anything else aborts: name what was passed and the words accepted, and do not pass it
-through to `run.sh` to fail there with a less helpful message.
+`both` is never passed to `run.sh`; it is the word for building each edition in turn. `full` and
+`lite` are aliases kept because the team says them — the deleted dev/lite was the Free edition's
+branch until one branch started building both. Resolve any of these and say which plans you
+resolved to in the output, so nobody is left believing there is a third edition. Anything else
+aborts: name what was passed and the words accepted, and do not pass it through to `run.sh` to
+fail there with a less helpful message.
 
-Naming an edition **narrows** the build, and narrowing is for a rehearsal. Each build takes about
-a minute, so halving it is worth having on the step you repeat most.
+`free` and `pro` **narrow** the build, and narrowing is for a rehearsal. Each build takes about a
+minute, so halving it is worth having on the step you repeat most.
 
-**On a real run, naming one aborts**, with this reason and not a softer one: releasing one edition
-alone does not work here.
+**On a real run, narrowing aborts** — `both` is accepted anywhere, being the default — with this
+reason and not a softer one: releasing one edition alone does not work here.
 
 - Both zips must come from the same tagged commit at the same version. Ship Free at 1.1.0 alone
   and Pro's newest zip is still 1.0.0, while `yaycheckout.php` and `readme.txt` on `dev` already
@@ -289,10 +310,9 @@ alone does not work here.
 - The leak checks are cross-edition by construction. `cmd_release` can only prove the Free zip
   carries no Pro code by building the Free zip. Build one and you have verified half.
 
-So say: "an edition is for `--dry-run` only; a release builds both, so pass none", and stop. Do
-not build both anyway and ignore the argument, and do not ask whether to proceed — naming one
-edition means the operator expected one, and silently doing something else is worse than the
-abort.
+So say: "`free` and `pro` are for `--dry-run` only; a release builds `both`", and stop. Do not
+build both anyway and ignore the argument, and do not ask whether to proceed — naming one edition
+means the operator expected one, and silently doing something else is worse than the abort.
 
 A single-plan dry run is therefore a **build check, not an edition check**: it cannot test that
 Pro's files are absent from Free, or that Pro carries no `apps/` source. Say that in the dry run's
@@ -416,7 +436,8 @@ gh pr create --base dev --title "chore(release): $NEW" --body "<notes>"
 
 The PR body carries the changelog entry and the artifact check results, and ends with the
 generated-with line `CLAUDE.md` asks for. Then **stop**, and tell the operator the PR needs one
-approval from someone other than its author and a squash merge before `/release --publish`.
+approval from someone other than its author and a squash merge — then the same
+`/yayrelease <version>` picks up at stage 2.
 
 Expect a permission prompt on the push and on `gh pr create`. That is a feature on an
 outward-facing command — warn the operator it is coming so it does not look stuck, and do not
@@ -424,9 +445,11 @@ try to smooth it away.
 
 ---
 
-## Phase 7 — Publish (stage 2, `--publish`)
+## Phase 7 — Publish (stage 2)
 
-Re-preflight first; stage 2 may run hours later, on a tree that has moved:
+Stage 2 runs when phase 0's state check says the release commit is merged and untagged, or when
+`--publish` forces it. Re-preflight first either way; it may be hours later, on a tree that has
+moved:
 
 ```bash
 git switch dev && git pull --ff-only origin dev
@@ -529,9 +552,9 @@ pushed history, which `CLAUDE.md` forbids outright. And after **any** failed or 
 Run phases 0 to 5 for real. Print phase 7 in full — every command, the tag, the branch, the
 assets and their sizes, the visibility decision — and execute **none** of it. Open no PR.
 
-Given an edition — `/yayrelease 1.1.0 pro --dry-run`, or `full` for the same thing — phase 4
-builds that one only, and the run says which cross-edition checks it therefore did not make (see
-phase 4). With no edition, both are built. The unwind below removes whichever zips were produced;
+Given `free` or `pro` — `/yayrelease 1.1.0 pro --dry-run` — phase 4 builds that one only, and the
+run says which cross-edition checks it therefore did not make (see phase 4). With `both`, or
+nothing, both are built. The unwind below removes whichever zips were produced;
 `rm -f` on a name that was never written is harmless, so run both lines either way.
 
 Then unwind completely, and print the commands as they run:
