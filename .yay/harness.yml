@@ -1,0 +1,86 @@
+# Purpose: the facts about this repo that the kit's abilities read. It records only this
+# repo's DELTAS from the wp-plugin profile (§2.2); anything the profile already says is
+# not repeated here.
+# Update when: a fact below stops being true. A fact listed under needs_confirmation is a
+# question, not a value, and nothing may treat it as one (§4.1).
+schema: 1
+profile: wp-plugin
+
+name: YayCheckout
+slug: yaycheckout
+main_file: yaycheckout.php      # derived — NOT the folder name by default (§11.2)
+text_domain: yaycheckout
+hook_prefix: yaycheckout_       # derived: the text domain, confirmed fired in code.
+                                # Agreement is not identity — 10 of 15 repos disagree.
+version: 1.0.0
+
+min:
+  php: "7.4"
+  wp: "6.5"
+  wc: "10.0"
+tested_up_to:
+  wp: "7.1"                     # readme.txt ONLY — never the plugin header (§11.14)
+  wc: "11.2"                    # main file "WC tested up to"
+
+capabilities: [ woocommerce, hpos, blocks, rest ]
+
+# Every file that carries the version, with its role. The incidental ones are recorded so
+# a check does not re-report them every run; `version set` writes only authoritative ones.
+version_sources:
+  - { kind: plugin_header, key: Version, file: yaycheckout.php, role: authoritative }
+  - { kind: php_const, key: YAYCHECKOUT_VERSION, file: yaycheckout.php, role: authoritative }
+  - { kind: readme_field, key: "Stable tag", file: readme.txt, role: authoritative }
+  - { kind: json_path, key: version, file: apps/admin/package.json, role: incidental }
+  - { kind: json_path, key: version, file: packages/blocks/package.json, role: incidental }
+
+editions:
+  strategy: directory           # free's zip is pro minus includes/Pro/
+  pro_path: includes/Pro/
+  default_plan: pro
+  free:
+    stages:
+      - editions/YayCheckoutPluginAdapter.free.php
+      - plugin header naming no Pro
+    boundary_check: scripts/check-pro-boundary.sh
+
+# DELTAS from the wp-plugin profile
+workflow:
+  base_branch: dev              # the only long-lived branch; there is no main
+  branch_pattern: "{author}/{type}/{topic}"   # profile has -p{phase}; this repo does not
+
+runner: scripts/run.sh
+
+stored_surface:
+  options: [ yaycheckout_settings ]
+  post_types: [ yay_checkout_layout ]   # verified: includes/PostTypes/LayoutPostType.php:27
+                                        # via Layout::POST_TYPE (includes/Models/Layout.php:16)
+  tables: []                    # verified absent: no dbDelta, CREATE TABLE or
+                                # $wpdb->prefix anywhere in includes/ or uninstall.php
+  reads_foreign:
+    - active_plugins
+    - woocommerce_enable_order_comments
+    - woocommerce_enable_signup_and_login_from_checkout
+    - woocommerce_ship_to_destination
+    - woocommerce_tax_display_cart
+    - woocommerce_tax_total_display
+
+wporg:
+  slug: ""                      # asked 2026-11-08: NOT submitted yet, so no slug is
+                                # claimed. The text domain is `yaycheckout`, but a matching
+                                # value is not the same fact (§13).
+  published: false              # asked 2026-11-08 — new-submission strictness
+  source_repo: "https://github.com/YayCommerce/YayCheckout"   # asked 2026-11-08
+  source_repo_checked: ""       # NOT dated. On 2026-11-08 the repo exists but is PRIVATE
+                                # (gh: private=true), so the link 404s for anyone not in the
+                                # org — including a reviewer. Date this only once an
+                                # anonymous request returns 200 (§8).
+
+plugin_check:
+  wp_root: /Users/shrief/Local-Sites/yaydevs/app/public
+  blocking: [ plugin_repo ]
+  advisory: [ security, performance ]
+
+needs_confirmation:
+  - wporg.slug
+  - wporg.source_repo
+  - api.yml stability
