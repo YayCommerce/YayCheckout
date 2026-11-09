@@ -8,8 +8,7 @@
       "Bash(pnpm --filter @yaycheckout/admin-page exec tsc --noEmit)",
       "Bash(git diff *)",
       "Bash(git log *)",
-      "Bash(./scripts/run.sh backlog)",
-      "Bash(./scripts/check-harness.sh)"
+      "Bash(./scripts/run.sh backlog)"
     ]
   },
   "hooks": {

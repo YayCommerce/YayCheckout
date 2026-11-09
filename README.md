@@ -42,7 +42,7 @@ A checkout builder for WooCommerce: merchants build checkout layouts from blocks
    pnpm install
    ```
 
-   On a fresh clone, `pnpm install` fails until the dev script has created `vendor-prefixed/` ([known issue](docs/known-issues.md#a-fresh-clones-first-install-fails-on-vendor-prefixedsrc)). The dev script ends by starting Vite on port 3040 and a blocks watcher, which keep running. Run `git status` once it has started: the dev script can rewrite `composer.json` and `scoper.inc.php`.
+   The dev script installs what is missing, then starts Vite on port 3040 and a blocks watcher, which keep running. `vendor-prefixed/` is committed, so a fresh clone needs no rescoping.
 
 4. Activate the plugin in wp-admin. `YAYCHECKOUT_IS_DEVELOPMENT` defaults to `true`, so wp-admin loads the SPA from the dev server: keep `./scripts/run.sh dev` running while you work in the admin. To load a built bundle instead, define the constant as `false` in `wp-config.php` and run `./scripts/run.sh build` ([known issue](docs/known-issues.md#the-admin-page-is-blank-without-the-dev-server)).
 

@@ -6,7 +6,7 @@
 
 ## Status
 
-Accepted, 2026-10-05, by Trace Bui. It takes [the harness YayLoyalty settled on](https://github.com/YayCommerce/YayLoyalty/blob/dev/edd/docs/decisions/2026-10-05-harness-with-review-backlog.md), restated for YayCheckout. The harness it replaces is preserved at the tag `harness-v1-final`.
+Superseded, 2026-11-09, by [The harness comes from the team's yay kit](2026-11-09-harness-from-the-yay-kit.md). The harness this record described is archived in `.yay/archive/old-harness/`. Kept as the record of why the hand-written harness had its shape.
 
 ## Context
 

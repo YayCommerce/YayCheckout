@@ -38,7 +38,7 @@ Update when: run.sh gains or loses a step, a shipped path, a prompt or a version
 
 What the release does is in [docs/architecture.md § Build and release](../../docs/architecture.md#build-and-release). The commands are in `CLAUDE.md`.
 
-- **`scoper.inc.php` is generated.** Every `./scripts/run.sh dev`, `release` and `composer shell-update` rewrites it from a template in admin-shell's own scripts (`vendor/bin/yaycommerce-update` and `yaycommerce-prerelease`), keeping only the `prefix` and the adapter class. Any other edit is lost on the next run, so change the template upstream, in admin-shell.
+- **`scoper.inc.php` is generated.** `composer shell-update` (`./scripts/run.sh shell-update`) rewrites it from a template in admin-shell's own scripts (`vendor/bin/yaycommerce-update`), keeping only the `prefix` and the adapter class. Any other edit is lost on the next run, so change the template upstream, in admin-shell.
 - **`run.sh` runs under macOS's `/bin/bash` 3.2 and BSD tools, as well as GNU.** Use no bash 4 features, such as `mapfile`, `declare -A` or `${x,,}`. Edit files in place only through `sed_inplace`.
 - **Every prompt needs a way around it.** `set -e` is on, so a `read` that reaches the end of input ends the run with exit 1. `release` skips its prompts when given a version or `--no-prompt`, and skips a tested-up-to prompt when given `--wp-tested=` or `--wc-tested=`; give any new prompt the same escape.
 - **The zip holds only what `cmd_release` in `scripts/run.sh` copies.** A new runtime file outside its copy list must be added to that list. A dev-only file inside a shipped directory must be deleted in its strip step — for example the strip after `composer dump-autoload` for `vendor/composer/installed.json`, which that dump does not rewrite. `vendor/composer/installed.php` must stay: `Composer\InstalledVersions::getInstalled()` ends in an unguarded `require` of it, and this copy classmaps that class. Each strip has an artifact check; add one with any new strip.
@@ -52,4 +52,4 @@ What the release does is in [docs/architecture.md § Build and release](../../do
 ## Checking a change
 
 - phpcs doesn't scan `scripts/`. Run `bash -n` on each shell script you changed, and `php -l` on any PHP script.
-- Run `release` only to cut a release. It writes the version into `yaycheckout.php` and `readme.txt` when you pass one or type a new one at the prompt, always runs the admin-shell sync, and leaves only `--no-dev` packages behind ([docs/known-issues.md](../../docs/known-issues.md)).
+- Run `release` only to cut a release. It writes the version into `yaycheckout.php` and `readme.txt` when you pass one or type a new one at the prompt. It scopes admin-shell into its staging copy (`yaycommerce-prerelease --stage`) and leaves the plugin folder's `vendor/` alone.

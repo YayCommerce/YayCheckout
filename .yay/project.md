@@ -85,8 +85,7 @@ Commands live in `harness.yml` (`commands.*`), and this file does not duplicate 
 
 Expected failures today, each recorded in `docs/known-issues.md`:
 - the SPA lint (eslint warnings, prettier fails on three files);
-- `composer test` without a local `phpunit.xml` pointing at a test database;
-- `./scripts/check-harness.sh`, which also still checks the removed harness's skills and rules.
+- `composer test` without a local `phpunit.xml` pointing at a test database.
 <!-- /yay:generated:workflows -->
 
 ---

@@ -25,19 +25,12 @@
 - **Workaround:** check only your own files: `npx --no-install eslint <files>` and `npx --no-install prettier --check <files>` from `apps/admin`. Your change must not add a finding.
 - **Remove when:** the lint exits 0 on `dev`.
 
-## The dev script and release rewrite `composer.json` and `scoper.inc.php`
+## `shell-update` rewrites `composer.json` and `scoper.inc.php`
 
-- **Symptom:** after `./scripts/run.sh dev`, `./scripts/run.sh release` or `composer shell-update`, `git status` can show `composer.json` (its `require-dev`) or `scoper.inc.php` changed, and the installed versions of every Composer package can move.
-- **Cause:** `./scripts/run.sh dev` and `release` run a full `composer update`, then admin-shell's `yaycommerce-update` or `yaycommerce-prerelease`. `composer shell-update` runs `yaycommerce-update` alone, which updates only admin-shell when `composer.lock` exists and every package when it doesn't. The scripts require php-scoper and thecodingmachine/safe at their latest versions, with all their dependencies, and regenerate `scoper.inc.php` from a template, keeping only the prefix and the adapter's name.
-- **Workaround:** check `git status` before committing, and revert those two files unless you meant to change them. A lasting edit to `scoper.inc.php` belongs in admin-shell's template.
+- **Symptom:** after `./scripts/run.sh shell-update` (or `composer shell-update`), `git status` can show `composer.json` (its `require-dev`) or `scoper.inc.php` changed, and the installed versions of Composer packages can move.
+- **Cause:** admin-shell's `yaycommerce-update` runs `composer update` (admin-shell only when `composer.lock` exists, every package when it doesn't), requires php-scoper and thecodingmachine/safe at their latest versions with all their dependencies, and regenerates `scoper.inc.php` from a template, keeping only the prefix and the adapter's name. `./scripts/run.sh dev` and `release` no longer run it: `dev` runs `composer install` only when `vendor/` is missing, and `release` scopes into its staging copy with `yaycommerce-prerelease --stage`, leaving the plugin folder alone.
+- **Workaround:** check `git status` after a shell update, commit `vendor-prefixed/`, and revert `composer.json` and `scoper.inc.php` unless you meant to change them. A lasting edit to `scoper.inc.php` belongs in admin-shell's template.
 - **Remove when:** the admin-shell sync stops writing tracked files.
-
-## Release leaves only production packages
-
-- **Symptom:** after `./scripts/run.sh release`, even a failed one, `composer lint` and `composer test` fail because phpcs and PHPUnit are gone from `vendor/`.
-- **Cause:** admin-shell's `yaycommerce-prerelease` ends with `composer install --no-dev`.
-- **Workaround:** run `composer install` after every release run.
-- **Remove when:** the release builds from a copy of the tree, or restores the dev packages itself.
 
 ## The lockfiles aren't tracked
 
@@ -80,10 +73,3 @@
 - **Cause:** `.claude/settings.json` runs `.claude/hooks/guard-generated-paths.sh` only for the Edit, Write, MultiEdit and NotebookEdit tools, and the script needs `jq` to read the tool's input.
 - **Workaround:** never write into `vendor/`, `vendor-prefixed/`, `node_modules/`, `assets/dist/` or `release/` from the shell; change the input and rerun its build (hard rule 1 in `CLAUDE.md`). Install `jq`.
 - **Remove when:** the guard also checks shell commands, or the generated directories are made read-only.
-
-## The harness check fails on `dev`
-
-- **Symptom:** `./scripts/check-harness.sh` exits 1 with 27 `[backticked_paths] MISSING` lines, from `docs/architecture.md`, `docs/conventions.md` and `.claude/rules/blocks.md`.
-- **Cause:** `check_backticked_paths` resolves every backticked name with a slash against the repo root, so paths relative to `packages/blocks/src/`, WooCommerce template paths, block names and data store names count as missing.
-- **Workaround:** compare the output with `dev`'s; your change must not add a line.
-- **Remove when:** the check exits 0 on `dev`.

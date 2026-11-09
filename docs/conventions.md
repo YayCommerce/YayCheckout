@@ -73,4 +73,4 @@
   - A comment states only what is true of the code beneath it. It never cites a doc, a doc section, a plan or a feature ID; if the reason is cross-cutting, the comment states the reason itself.
   - A to-do names its topic: `TODO(<topic>): what, and why not now`.
 - **Why:** a comment about other code rots when that code changes, and a doc pointer breaks when the doc moves. Docs cite code; code never cites docs.
-- **In code:** `./scripts/check-harness.sh` fails a `§` or a feature ID in code; review catches the rest.
+- **In code:** nothing checks it mechanically; review catches it.
