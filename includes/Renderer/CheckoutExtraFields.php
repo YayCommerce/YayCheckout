@@ -9,7 +9,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Validates the served layout's extra fields at checkout, stores them on the
- * order, and prints them on the admin and customer order screens. Fields with
+ * order, and prints them on the admin and customer order screens and in order
+ * emails. Fields with
  * Remember value on keep the shopper's entries in the WooCommerce session until
  * the order is created, and WC_Checkout::get_value() returns them, so a reload
  * prints them again.
@@ -35,6 +36,7 @@ class CheckoutExtraFields {
         add_action( 'woocommerce_checkout_create_order', [ $this, 'persist' ], 10, 2 );
         add_action( 'woocommerce_admin_order_data_after_billing_address', [ $this, 'print_admin' ] );
         add_action( 'woocommerce_order_details_after_order_table', [ $this, 'print_customer' ] );
+        add_filter( 'woocommerce_email_order_meta_fields', [ $this, 'email_fields' ], 10, 3 );
         add_action( 'wc_ajax_yaycheckout_remember_extra_fields', [ $this, 'remember' ] );
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WooCommerce's checkout value filter.
         add_filter( 'woocommerce_checkout_get_value', [ $this, 'remembered_value' ], 10, 2 );
@@ -138,6 +140,41 @@ class CheckoutExtraFields {
 
     public function print_customer( \WC_Order $order ): void {
         $this->print_rows( $order, false );
+    }
+
+    /**
+     * Adds the order's snapshot rows to WooCommerce's order emails, so a resent email keeps the labels
+     * the shopper saw. WC_Emails::order_meta() prints them, as HTML or plain text, through wp_kses_post(),
+     * so they go in unescaped: esc_html() would show `&amp;` in plain text. It skips rows with no value.
+     *
+     * @param  mixed $fields        Label/value rows other plugins added.
+     * @param  mixed $sent_to_admin Whether the email goes to the admin.
+     * @param  mixed $order         Order the email is about.
+     * @return array
+     */
+    public function email_fields( $fields, $sent_to_admin, $order ): array {
+        $fields = is_array( $fields ) ? $fields : [];
+
+        if ( ! $order instanceof \WC_Order ) {
+            return $fields;
+        }
+
+        $rows = $order->get_meta( self::META_SNAPSHOT );
+
+        foreach ( is_array( $rows ) ? $rows : [] as $row ) {
+            $display = (string) ( $row['display'] ?? '' );
+
+            if ( '' === $display ) {
+                continue;
+            }
+
+            $fields[ 'yaycheckout_' . (string) ( $row['key'] ?? '' ) ] = [
+                'label' => (string) ( $row['label'] ?? '' ),
+                'value' => $display,
+            ];
+        }
+
+        return $fields;
     }
 
     /**
