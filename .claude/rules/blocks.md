@@ -4,6 +4,26 @@ paths:
 ---
 
 <!--
+Purpose: the rules for editing blocks, where the built output and the source look alike.
+Ownership: anything below the `your rules` marker at the foot is this repo's and is
+  never regenerated; everything above it comes from the kit.
+Update when: the block build's input or output path changes.
+-->
+
+- **A block is edited in its source package, never in the built output.** The two look
+  alike, and editing the build means your change disappears at the next build with no error.
+- **Without a build, the editor has no blocks and says nothing.** A missing block is not a
+  registration bug until you have built.
+- **Markup a block renders is output**: escape it in context, and never escape markup the
+  block system already produced.
+
+<!-- --- your rules --- -->
+
+<!-- Carried wholesale from this repo's own .yay/archive/old-harness/.claude/rules/blocks.md when the kit was adopted. The kit
+     wrote none of it and has not checked any of it. Trim what the rules above now cover;
+     keep every line they do not — that is why this was kept rather than replaced. -->
+
+<!--
 Purpose: rules for writing the checkout blocks in packages/blocks/: how a block is built, registered and placed, and its couplings to PHP and the admin SPA. Loads when Claude reads a matching file.
 Update when: how blocks are built or registered changes, a new coupling to PHP or the SPA appears, or the build config changes.
 -->

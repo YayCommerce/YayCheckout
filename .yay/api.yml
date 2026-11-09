@@ -1,0 +1,82 @@
+# YayCheckout's public contract: what another plugin, a theme or a customer's snippet may be
+# relying on. The reason removing something is a breaking change rather than a tidy-up.
+#
+# Update when: a hook, route, option or table is added, removed or re-signatured, or a
+# stability is reviewed. `/yay:harness-scout --update` re-derives the list; the stabilities are
+# human-owned and are never overwritten by a scan.
+#
+# public | internal | deprecated | unreviewed (the default: unknown, so treat as possibly consumed).
+# Review asked 2026-11-09; nothing classified yet (harness.yml needs_confirmation: api.stability).
+schema: 1
+
+hooks:
+  - { name: yaycheckout_admin_bar_layout, kind: filter, stability: unreviewed, at: includes/Renderer/CheckoutAdminBar.php:42 }
+  - { name: yaycheckout_built_blocks, kind: filter, stability: unreviewed, at: includes/Blocks/BlockRegistry.php:211 }
+  - { name: yaycheckout_checkout_terms, kind: action, stability: unreviewed, at: packages/blocks/src/terms/render.php:35 }
+  - { name: yaycheckout_editor_views, kind: filter, stability: unreviewed, at: includes/Engine/Admin/LayoutEditorEmbed.php:122 }
+  - { name: yaycheckout_layout_renders_order_received, kind: filter, stability: unreviewed, at: includes/Renderer/ThemelessCheckout.php:254 }
+  - { name: yaycheckout_live_value_labels, kind: filter, stability: unreviewed, at: includes/Renderer/LiveValues.php:129 }
+  - { name: yaycheckout_live_values_source, kind: filter, stability: unreviewed, at: includes/Renderer/LiveValues.php:214 }
+  - { name: yaycheckout_localize_admin_data, kind: filter, stability: unreviewed, at: includes/Helpers/LocalizeHelper.php:28 }
+  - { name: yaycheckout_localize_meta, kind: filter, stability: unreviewed, at: includes/Helpers/LocalizeHelper.php:55 }
+  - { name: yaycheckout_order_again_statuses, kind: filter, stability: unreviewed, at: includes/Pro/Renderer/OrderAgain.php:53 }
+  - { name: yaycheckout_themeless_checkout, kind: filter, stability: unreviewed, at: includes/Renderer/ThemelessCheckout.php:68 }
+  # Built from a class constant, so the literal scan saw only self::FILTER:
+  - { name: yaycheckout_integrations, kind: filter, stability: unreviewed, at: includes/Helpers/IntegrationsHelper.php:44 }
+  - { name: yaycheckout_plugin_blocks, kind: filter, stability: unreviewed, at: includes/Helpers/PluginBlockCatalogue.php:97 }
+
+routes:
+  - { route: "yaycheckout/v1/assignment/", stability: unreviewed, at: includes/Pro/Controllers/AssignmentOptionsRestController.php:26 }
+  - { route: "yaycheckout/v1/compatibility", stability: unreviewed, at: includes/Controllers/CompatibilityRestController.php:23 }
+  - { route: "yaycheckout/v1/fonts/(?P<slug>[a-z0-9-]+)", stability: unreviewed, at: includes/Controllers/FontRestController.php:16 }
+  - { route: "yaycheckout/v1/layouts", stability: unreviewed, at: includes/Controllers/LayoutRestController.php:29 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)", stability: unreviewed, at: includes/Controllers/LayoutRestController.php:111 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)/activate", stability: unreviewed, at: includes/Controllers/LayoutRestController.php:149 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)/archive", stability: unreviewed, at: includes/Controllers/LayoutRestController.php:175 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)/deactivate", stability: unreviewed, at: includes/Controllers/LayoutRestController.php:162 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)/duplicate", stability: unreviewed, at: includes/Controllers/LayoutRestController.php:215 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)/export", stability: unreviewed, at: includes/Pro/Controllers/LayoutExportRestController.php:22 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)/preview-link", stability: unreviewed, at: includes/Controllers/LayoutRestController.php:201 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)/publish", stability: unreviewed, at: includes/Controllers/LayoutRestController.php:136 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)/reset", stability: unreviewed, at: includes/Controllers/LayoutRestController.php:228 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)/restore", stability: unreviewed, at: includes/Controllers/LayoutRestController.php:188 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)/rules", stability: unreviewed, at: includes/Pro/Controllers/LayoutRulesRestController.php:24 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)/thank-you", stability: unreviewed, at: includes/Pro/Controllers/ThankYouRestController.php:28 }
+  - { route: "yaycheckout/v1/layouts/(?P<id>\\d+)/thank-you/preview-link", stability: unreviewed, at: includes/Pro/Controllers/ThankYouRestController.php:41 }
+  - { route: "yaycheckout/v1/layouts/bulk", stability: unreviewed, at: includes/Controllers/LayoutRestController.php:82 }
+  - { route: "yaycheckout/v1/layouts/counts", stability: unreviewed, at: includes/Controllers/LayoutRestController.php:70 }
+  - { route: "yaycheckout/v1/layouts/import", stability: unreviewed, at: includes/Pro/Controllers/LayoutImportRestController.php:36 }
+  - { route: "yaycheckout/v1/layouts/import/review", stability: unreviewed, at: includes/Pro/Controllers/LayoutImportRestController.php:49 }
+  - { route: "yaycheckout/v1/mark-reviewed", stability: unreviewed, at: includes/Controllers/SettingsRestController.php:36 }
+  - { route: "yaycheckout/v1/mark-setup-done", stability: unreviewed, at: includes/Controllers/SettingsRestController.php:46 }
+  - { route: "yaycheckout/v1/settings", stability: unreviewed, at: includes/Controllers/SettingsRestController.php:19 }
+  - { route: "yaycheckout/v1/setup", stability: unreviewed, at: includes/Controllers/SetupRestController.php:23 }
+
+options:
+  - { option: yaycheckout_settings, stability: unreviewed }
+  - { option: yaycheckout_settings_updated_at, stability: unreviewed }
+  - { option: yaycheckout_reviewed, stability: unreviewed }
+  - { option: yaycheckout_setup_done, stability: unreviewed }
+  - { option: yaycheckout_active_layout, stability: unreviewed }
+  - { option: yaycheckout_preview_order_id, stability: unreviewed }
+
+tables: [ ]
+
+# Options this plugin READS and never writes.
+reads_foreign:
+  - { option: active_plugins, owner: wordpress-core }
+  - { option: woocommerce_enable_order_comments, owner: woocommerce }
+  - { option: woocommerce_enable_signup_and_login_from_checkout, owner: woocommerce }
+  - { option: woocommerce_ship_to_destination, owner: woocommerce }
+  - { option: woocommerce_tax_display_cart, owner: woocommerce }
+  - { option: woocommerce_tax_total_display, owner: woocommerce }
+  - { option: woocommerce_enable_checkout_login_reminder, owner: woocommerce }   # CheckoutLogin::OPTION_REMINDER (constant; scan missed it)
+
+# Hook names built at runtime. A scan cannot resolve these.
+dynamic:
+  - "includes/Pro/templates/thankyou-page.php:52 'woocommerce_thankyou_' . <runtime> (prefix only)"
+  - "includes/Renderer/WcHooks.php:284 $hook"
+  - "includes/Renderer/WcHooks.php:395 $hook"
+  - "includes/Renderer/WcHooks.php:404 $hook"
+  - "packages/blocks/src/slot/render.php:21 'yaycheckout_slot_' . <runtime> (prefix only)"
+  # WcHooks re-fires the 30 classic-checkout actions listed in Renderer\WcHooks::HOOKS (WooCommerce's names, not ours).

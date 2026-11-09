@@ -1,0 +1,26 @@
+{
+  "skill_name": "build-checkout-template",
+  "evals": [
+    {
+      "id": 1,
+      "name": "minimal-steps-06",
+      "prompt": "Build template 06 (Minimal steps) from the checkout templates mock. Show me the block mapping first, before you write any files.",
+      "expected_output": "Extracts template 06 from the default mock in ~/Downloads, maps it to slug minimal-steps, and writes a mapping (regions -> blocks with px values from the mock, design tokens, the three shipping destinations, an Out list, questions), then stops at the checkpoint without touching the repo.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "accordion-one-page-04",
+      "prompt": "can you turn the Accordion one-page mock into a layout template? the mock html is in my Downloads. map it out first, no code yet",
+      "expected_output": "Finds the default mock, resolves 'Accordion one-page' to template 04 and slug accordion-one-page, maps its accordion sections to steps/blocks, lists what no block supports, and stops at the checkpoint.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "editorial-fashion-08-explicit-path",
+      "prompt": "Design handoff is at ~/Downloads/WooCommerce Checkout Templates_v1.1.html. I want Editorial fashion as our next layout template. Start with how the mock's sections map to our blocks and design tokens.",
+      "expected_output": "Uses the given mock path, template 08, slug editorial-fashion (a two-column template), maps it with tokens from the mock, puts panel colours on blocks rather than colours.background, and stops at the checkpoint.",
+      "files": []
+    }
+  ]
+}

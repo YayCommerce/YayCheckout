@@ -1,0 +1,133 @@
+# YayCheckout's facts. Machine-readable, derived from the code, and the only place a skill
+# reads them from. Records DELTAS from profiles/wp-plugin.yml only.
+#
+# Update when: a fact here stops matching the code. `/yay:harness-scout --check` reports that
+# without changing anything; `--update` diffs and rewrites on approval.
+#
+# A value you cannot derive is LEFT OUT and listed in needs_confirmation.
+schema: 1
+profile: wp-plugin
+
+name: "YayCheckout Pro - WooCommerce Checkout Builder"   # yaycheckout.php:3 (the branch is the Pro side; Free's release rewrites it)
+slug: yaycheckout                 # plugin folder + PLUGIN_SLUG in scripts/run.sh; Pro zips as yaycheckout-pro (run.sh:367)
+main_file: yaycheckout.php        # read from the header
+text_domain: yaycheckout          # yaycheckout.php:11
+hook_prefix: yaycheckout_         # matches the text domain AND confirmed in use: 11 own hooks fire with it (api.yml)
+version: 1.0.0                    # tagged v1.0.0 on origin
+
+min: { php: "7.4", wp: "6.5", wc: "10.0" }
+tested_up_to:
+  wp: "7.1"                       # readme.txt `Tested up to:` only
+  wc: "11.2"                      # yaycheckout.php header `WC tested up to:`
+capabilities: [ woocommerce, hpos, blocks, rest ]
+
+version_sources:
+  - { kind: plugin_header, key: Version, file: yaycheckout.php, role: authoritative }
+  - { kind: php_const, key: YAYCHECKOUT_VERSION, file: yaycheckout.php, role: authoritative }
+  - { kind: readme_field, key: "Stable tag", file: readme.txt, role: authoritative }
+  - { kind: json_path, key: version, file: apps/admin/package.json, role: incidental }
+  - { kind: json_path, key: version, file: packages/blocks/package.json, role: incidental }
+
+# One branch builds both editions; --plan picks, Pro by default (scripts/run.sh cmd_release).
+editions:
+  strategy: directory
+  default: pro
+  free:
+    build: "./scripts/run.sh release --plan=free --no-prompt"
+    artifact: "release/yaycheckout-{version}.zip"
+    stages:                       # SUBSTITUTED over the branch's Pro files in the staging copy
+      - "editions/YayCheckoutPluginAdapter.free.php"   # → YayCheckoutPluginAdapter.php; asserted by assert_staged_plan()
+    rewrites:                     # not files: header edits run.sh makes on the staged copy
+      - "yaycheckout.php: `Plugin Name:` loses ' Pro'"
+      - "yaycheckout.php: ` * Requires Plugins:  woocommerce` inserted after `Requires PHP:`"
+    patches:
+      - "scripts/free-admin-shell.patch"   # applied to the staged vendor-prefixed/; fails when the shell changes
+  pro:
+    build: "./scripts/run.sh release --plan=pro --no-prompt"
+    artifact: "release/yaycheckout-pro-{version}.zip"
+    markers:                      # Free holds none; Pro holds all (except Pro templates' preview.html, which Free keeps)
+      paths:
+        - "includes/Pro/**"
+        - "assets/dist/blocks/pro/**"
+        - "templates/layouts/pro/**/*.php"
+        - "templates/layouts/pro/**/design.json"
+        - "vendor-prefixed/src/License/**"
+      classes: [ "YayCheckout\\Pro\\*" ]
+  boundary_check: "scripts/check-pro-boundary.sh"      # exactly one YayCheckout\Pro reference outside includes/Pro/, in includes/YayCheckout.php
+
+workflow:
+  base_branch: dev                # origin/HEAD → dev; no main, no edition branch
+  branch_pattern: "{author}/{type}/{topic}"
+
+runner: scripts/run.sh
+
+# Read by the kit's skills (commands.build/lint/test). NOTE: yay-lib 0.23.0's schema-1
+# validator omits `commands` from MANIFEST_KEYS, so `scout check` refuses this file; kit bug.
+commands:
+  lint: "composer lint"           # boundary check, then phpcs
+  lint_js: "pnpm --filter @yaycheckout/admin-page lint"   # fails on dev today: docs/known-issues.md
+  typecheck: "pnpm --filter @yaycheckout/admin-page exec tsc --noEmit"
+  test: "composer test"           # needs its own DB; Local sites need phpunit.xml with the socket: docs/known-issues.md
+  build: "./scripts/run.sh build"
+  build_blocks: "pnpm build:blocks"
+  dev: "./scripts/run.sh dev"
+  release: "./scripts/run.sh release"   # stages in a temp copy; the plugin root's vendor/ is untouched (prerelease --stage)
+  shell_update: "./scripts/run.sh shell-update"   # rescopes vendor-prefixed/; can rewrite composer.json and scoper.inc.php
+
+build:
+  must_not_contain:               # profile list + this repo's (release check in run.sh)
+    - ".git"
+    - "node_modules"
+    - "tests"
+    - "*.map"
+    - ".env"
+    - ".github"
+    - "apps"                      # JS_SOURCE_PATHS (run.sh:37): no edition ships the JS source
+    - "packages"
+    - "pnpm-lock.yaml"
+    - "pnpm-workspace.yaml"
+    - "package.json"
+    - ".nvmrc"
+    - "editions"
+    - "includes/Engine/Register/RegisterDev.php"
+    - "vendor/composer/installed.json"
+  must_contain:
+    - "vendor/autoload.php"
+    - "vendor/composer/installed.php"       # InstalledVersions::getInstalled() requires it unguarded
+    - "vendor/composer/autoload_static.php"
+    - "vendor/composer/autoload_classmap.php"
+    - "composer.json"                       # Plugin Check wants it beside vendor/
+
+stored_surface:
+  options:
+    - yaycheckout_settings                  # Models\Settings::OPTION_SETTINGS
+    - yaycheckout_settings_updated_at
+    - yaycheckout_reviewed
+    - yaycheckout_setup_done
+    - yaycheckout_active_layout             # Models\Layout::OPTION_ACTIVE
+    - yaycheckout_preview_order_id          # Pro: PreviewOrderRepository::OPTION_ORDER_ID
+    - yaycheckout_license_key               # Pro: admin-shell licensing (adapter slug)
+    - yaycheckout_license_info
+  transients: [ yaycheckout_compatibility_catalogue ]
+  post_types: [ yay_checkout_layout ]       # Models\Layout::POST_TYPE (registered via constant; the literal scan missed it)
+  post_meta:
+    - _yaycheckout_rules
+    - _yaycheckout_self_test
+    - _yaycheckout_design
+    - _yaycheckout_template
+    - _yaycheckout_logged_out_content
+    - _yaycheckout_thank_you_content
+  order_meta: [ _yaycheckout_extra_fields, _yaycheckout_preview_order ]
+  wc_session: [ yaycheckout_extra_field_values, yaycheckout_layout_pin ]
+  cookies: [ yaycheckout_layout_pin ]
+  tables: [ ]                               # none: no dbDelta, CREATE TABLE or $wpdb->prefix anywhere in includes/
+
+wporg:
+  published: false                          # answered 2026-11-09
+  source_repo: "https://github.com/YayCommerce/YayCheckout"   # SOURCE_REPO_URL, scripts/run.sh:40
+  source_repo_checked: ""                   # anonymous request returned 404 on 2026-11-09 (repo private)
+
+needs_confirmation:
+  - { key: wporg.slug, status: unanswered, note: "asked 2026-11-09: not decided yet" }
+  - { key: wporg.source_repo, status: open, note: "anonymous 404 on 2026-11-09; user says the repo will be public soon. readme.txt § Source code claims it is public. Re-check before any Free release (wp.org guideline 4)." }
+  - { key: api.stability, status: unanswered, note: "asked 2026-11-09; no hook or route marked public yet; all 11 hooks and 25 routes stay unreviewed" }

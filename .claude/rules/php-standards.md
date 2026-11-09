@@ -1,13 +1,42 @@
 ---
 paths:
   - "includes/**/*.php"
-  - "yaycheckout.php"
+  - "packages/**/*.php"
+  - "templates/**/*.php"
   - "YayCheckoutPluginAdapter.php"
   - "uninstall.php"
-  - "templates/**/*.php"
-  - "packages/blocks/src/**/*.php"
-  - "tests/**/*.php"
+  - "yaycheckout.php"
 ---
+
+<!--
+Purpose: the PHP rules this repo's code cannot state about itself.
+Ownership: anything below the `your rules` marker at the foot is this repo's and is
+  never regenerated; everything above it comes from the kit.
+Update when: the PHP floor moves, or a rule stops being true.
+-->
+
+- **Product PHP must run on PHP 7.4.** No syntax newer than that: check before
+  using enums, `match`, `readonly`, promoted constructor properties, `?->`, named arguments
+  or union types. The linter checks no PHP version and the dev tooling runs on a newer one,
+  so only review catches this.
+- **Escape at output, in the output's context** — `esc_html`, `esc_attr`, `esc_url`,
+  `esc_textarea`, `wp_kses_post`, `wp_json_encode`. Read where a value came from before
+  wrapping it: escaping something already escaped upstream double-escapes it.
+- **Sanitize at entry**, with the most restrictive fitting function, and `wp_unslash` before
+  reading request data.
+- **Every handler reading `$_GET`, `$_POST`, `$_REQUEST` or `$_FILES` verifies a nonce**, and
+  checks `current_user_can()` wherever the action is privileged.
+- **`$wpdb` queries use `prepare()`.** Interpolation is not escaping.
+- **Prefix everything with `yaycheckout_`** — functions, classes, globals, `define()`,
+  options, transients, post meta, shortcodes, post types, menu pages, script handles and
+  `wp_ajax_*`. Renaming an existing one is a breaking change, not a tidy-up: check
+  `.yay/api.yml` first, and migrate rather than rename when the symbol is `public`.
+
+<!-- --- your rules --- -->
+
+<!-- Carried wholesale from this repo's own .yay/archive/old-harness/.claude/rules/php-standards.md when the kit was adopted. The kit
+     wrote none of it and has not checked any of it. Trim what the rules above now cover;
+     keep every line they do not — that is why this was kept rather than replaced. -->
 
 <!--
 Purpose: rules for writing the plugin's PHP: the house style, the parts of the PHP 7.4 floor that no tool checks, and the patterns new code follows. Loads when Claude reads a matching file.

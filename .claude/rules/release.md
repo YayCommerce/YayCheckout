@@ -5,6 +5,31 @@ paths:
 ---
 
 <!--
+Purpose: what the release tooling will do to your working tree, and what it must never ship.
+Ownership: anything below the `your rules` marker at the foot is this repo's and is
+  never regenerated; everything above it comes from the kit.
+Update when: the build's inputs or outputs change.
+-->
+
+- **Never hand-edit generated output.** Change the input and rerun the command that builds
+  it. The guards refuse the write, including from the shell.
+- **Ship by allowlist, not by exclusion.** An exclude list silently ships whatever is added
+  later and not added to the list; an allowlist fails closed.
+- **Deleting a file is not enough to un-ship it.** A Composer classmap entry for an update
+  checker reads as an update checker even once the file is gone — rebuild the autoloader
+  from what the copy actually holds.
+- **A staged substitution is verified as a replacement, not an absence.** The original is
+  gone whether the staging applied or failed, so assert the replacement's content is there.
+- **Check `git status` before committing after a build.** These commands can rewrite tracked
+  files, and a dev-mode default or a dependency bump must not land by accident.
+
+<!-- --- your rules --- -->
+
+<!-- Carried wholesale from this repo's own .yay/archive/old-harness/.claude/rules/release.md when the kit was adopted. The kit
+     wrote none of it and has not checked any of it. Trim what the rules above now cover;
+     keep every line they do not — that is why this was kept rather than replaced. -->
+
+<!--
 Purpose: rules for changing the build and release tooling in scripts/ and the php-scoper config, scoper.inc.php. Loads when Claude reads a matching file.
 Update when: run.sh gains or loses a step, a shipped path, a prompt or a version location; the boundary check changes; or admin-shell's sync changes what it regenerates.
 -->
