@@ -308,7 +308,13 @@ class LayoutCheck {
             self::finding(
                 'logged_out_without_login',
                 self::ERROR,
-                __( 'Add a Login block to the Guest view: your store makes guests log in before checkout, and this view gives them no way to.', 'yaycheckout' )
+                __( 'Add a Login block to the Guest view: your store makes guests log in before checkout, and this view gives them no way to.', 'yaycheckout' ),
+                // The Login block is what's missing, so the ref names the view, at its Checkout block.
+                [
+                    'view'  => self::VIEW_LOGGED_OUT,
+                    'name'  => self::CHECKOUT,
+                    'index' => 0,
+                ]
             ),
         ];
     }
