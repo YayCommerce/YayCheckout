@@ -4,7 +4,10 @@ namespace YayCheckout\Tests\Integration;
 use WP_UnitTestCase;
 use YayCheckout\Blocks\BlockRegistry;
 use YayCheckout\Controllers\LayoutTemplateCatalogue;
+use YayCheckout\Helpers\LayoutCheckFacts;
+use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
+use YayCheckout\Services\LayoutCheck;
 use YayCheckout\Services\LayoutMarkupReader;
 
 /** Every template a merchant can create from yields a publishable layout with its whole design. */
@@ -34,6 +37,37 @@ class LayoutTemplateCatalogueTest extends WP_UnitTestCase {
 
         foreach ( array_column( $available, 'slug' ) as $slug ) {
             $this->assertContains( 'woocommerce_before_checkout_form', LayoutMarkupReader::wc_hooks( LayoutTemplateCatalogue::markup( $slug ) ), $slug );
+        }
+    }
+
+    /** Run test finds nothing that stops an order in a layout fresh from any template, on a fully set-up store. */
+    public function test_every_available_template_passes_the_layout_check(): void {
+        $available = array_filter( LayoutTemplateCatalogue::templates( true ), static fn( $t ) => $t['available'] );
+        $facts     = [
+            'locked_blocks'           => BlockRegistry::locked_blocks(),
+            'terms_page'              => true,
+            'ships'                   => true,
+            'shipping_needs_setup'    => false,
+            'payment_needs_setup'     => false,
+            'login_required'          => true,
+            'block_only_gateways'     => [],
+            'express_pay_has_buttons' => true,
+            'plugin_spot_states'      => [],
+            'before_form_hooked'      => true,
+        ];
+
+        foreach ( array_column( $available, 'slug' ) as $slug ) {
+            $layout           = new Layout();
+            $layout->content  = LayoutTemplateCatalogue::markup( $slug );
+            $layout->design   = LayoutTemplateCatalogue::design( $slug );
+            $layout->template = $slug;
+
+            $errors = array_filter(
+                LayoutCheck::run( $layout, LayoutCheckFacts::logged_out_markup( $layout ), $facts ),
+                static fn( array $finding ): bool => LayoutCheck::ERROR === $finding['severity']
+            );
+
+            $this->assertSame( [], array_column( $errors, 'code' ), $slug );
         }
     }
 

@@ -4,11 +4,13 @@ namespace YayCheckout\Controllers;
 use YayCheckout\Enums\LayoutStatus;
 use YayCheckout\Helpers\DateHelper;
 use YayCheckout\Helpers\ExceptionHelper;
+use YayCheckout\Helpers\LayoutCheckFacts;
 use YayCheckout\Helpers\PreviewToken;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutQuery;
 use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Repositories\SettingsRepository;
+use YayCheckout\Services\LayoutCheck;
 use YayCheckout\Utils\SingletonTrait;
 
 defined( 'ABSPATH' ) || exit;
@@ -214,6 +216,19 @@ class LayoutRestController extends BaseRestController {
 
         register_rest_route(
             self::REST_NAMESPACE,
+            '/layouts/(?P<id>\d+)/check',
+            [
+                [
+                    'methods'             => \WP_REST_Server::READABLE,
+                    'callback'            => fn( $request ) => $this->exec_read( [ $this, 'check_layout' ], $request ),
+                    'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => $this->id_args(),
+                ],
+            ]
+        );
+
+        register_rest_route(
+            self::REST_NAMESPACE,
             '/layouts/(?P<id>\d+)/duplicate',
             [
                 [
@@ -384,6 +399,21 @@ class LayoutRestController extends BaseRestController {
      */
     public function reset_layout( \WP_REST_Request $request ) {
         return $this->change_layout( $request, fn( int $id ) => $this->layouts->reset( $id ) );
+    }
+
+    /**
+     * Run test's static check of the saved layout on this store (Services\LayoutCheck). Reads only.
+     *
+     * @return array|\WP_Error { findings }
+     */
+    public function check_layout( \WP_REST_Request $request ) {
+        $layout = $this->layouts->find( (int) $request->get_param( 'id' ) );
+
+        if ( null === $layout ) {
+            return $this->error_layout_not_found();
+        }
+
+        return [ 'findings' => LayoutCheck::run( $layout, LayoutCheckFacts::logged_out_markup( $layout ), LayoutCheckFacts::current() ) ];
     }
 
     /**
