@@ -1,7 +1,7 @@
 ---
 area: release
 updated: 2026-11-12
-updated_ref: 164770c
+updated_ref: ee4784a
 covers: [scripts/, scoper.inc.php, composer.json, package.json, pnpm-workspace.yaml, .nvmrc, phpcs.xml, phpunit.xml.dist, tests/, .github/workflows/, readme.txt, editions/]
 ---
 # Build, release, tests and CI
@@ -67,6 +67,7 @@ There's no PHP typecheck. The only typecheck is the admin `tsc --noEmit`, inside
   - The overrides are `WP_TESTS_DB_NAME`, `_USER`, `_PASSWORD`, `_HOST` and `WP_TESTS_ABSPATH` (in `tests/wp-tests-config.php`).
   - On Local, `WP_TESTS_DB_HOST` needs the site's socket (`localhost:/…/mysqld.sock`).
 - **Run one test:** `vendor/bin/phpunit --filter <TestName>`.
+- **Build first.** Block render tests need `./scripts/run.sh build`, because unbuilt blocks never register.
 - **Worktrees can't run the suite as it stands.** The bootstrap assumes the checkout sits at `wp-content/plugins/yaycheckout/`; see [known-issues.md](known-issues.md#tests-dont-run-from-a-worktree).
 
 ## CI

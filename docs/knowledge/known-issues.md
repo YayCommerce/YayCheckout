@@ -1,7 +1,7 @@
 ---
 area: known-issues
 updated: 2026-11-12
-updated_ref: 164770c
+updated_ref: ee4784a
 covers: [tests/bootstrap.php, tests/wp-tests-config.php, scripts/free-admin-shell.patch, apps/admin/package.json, .github/workflows/, yaycheckout.php, uninstall.php, includes/Controllers/LayoutTemplateCatalogue.php]
 ---
 # Known issues
@@ -14,6 +14,14 @@ covers: [tests/bootstrap.php, tests/wp-tests-config.php, scripts/free-admin-shel
 `tests/wp-tests-config.php` defaults `ABSPATH` to four levels above `tests/`. `tests/bootstrap.php` requires WooCommerce from `dirname( __DIR__, 2 ) . '/woocommerce/woocommerce.php'`, which has no override. Both assume the checkout is `wp-content/plugins/yaycheckout/`.
 - In a `.claude/worktrees/<slug>/` worktree (where `/yay:implement` and `/yay:fix` work), `ABSPATH` lands on the plugin root and WooCommerce is looked for in `.claude/worktrees/woocommerce/`, so `composer test` fails.
 - Until the bootstrap takes the WooCommerce path from the environment (or `WP_TESTS_ABSPATH` is derived from it), run the suite from the main checkout, or set `WP_TESTS_ABSPATH` and give the worktree a `woocommerce` sibling.
+
+Fix pending: `fix(tests): run the suite from a git worktree` (BL-1) makes both paths find the site, after which a worktree gives the same result as the main checkout.
+
+### Block render tests need a build
+`Blocks\BlockRegistry` registers only built blocks, so in a fresh checkout or worktree about a dozen tests in `tests/Integration/Blocks/` and `tests/Integration/Renderer/` fail until `./scripts/run.sh build` has written `assets/dist/blocks/`.
+
+### One integration test fails on `dev`
+`LayoutTemplateCatalogueTest::test_every_available_template_is_publishable_and_sets_every_section` fails with "classic-two-column: notices — Failed asserting that null is of type array" (run 2026-11-12, 72 tests). Every other test passes.
 
 ### Admin `prettier --check` fails on `dev`
 CI runs ESLint only for this reason (comment in `.github/workflows/js.yml`), so `pnpm --filter @yaycheckout/admin-page lint` exits 1. A likely cause is the `importOrder*` options in `apps/admin/package.json` that `@ianvs/prettier-plugin-sort-imports` 4 rejects (unverified). Check your own files with `npx --no-install prettier --check <files>` from `apps/admin`.
