@@ -30,6 +30,13 @@ export function isMainView(): boolean {
 	return editorData.view.current === 'main';
 }
 
+/** Load another view of this layout in the editor. Each view is its own page load. */
+export function openView( view: View ): void {
+	// replace(), not assign(): the iframe's history is the manager's, and a pushed entry makes its
+	// close button (navigate(-1) in LayoutsPage.tsx) step back to the previous view instead of closing.
+	window.location.replace( editorData.view.urls[ view ] );
+}
+
 const LOADING_MESSAGES: Record< View, string > = {
 	main: __( 'Loading the checkout…', 'yaycheckout' ),
 	'logged-out': __( 'Loading the guest view…', 'yaycheckout' ),
@@ -80,9 +87,7 @@ export default function LayoutViewSwitch( { pagesSlot }: { pagesSlot: HTMLElemen
 			}
 		}
 
-		// replace(), not assign(): the iframe's history is the manager's, and a pushed entry makes its
-		// close button (navigate(-1) in LayoutsPage.tsx) step back to the previous view instead of closing.
-		window.location.replace( editorData.view.urls[ view ] );
+		openView( view );
 	};
 
 	// Dropping the edits first keeps core's "unsaved changes" prompt from stopping the reload.

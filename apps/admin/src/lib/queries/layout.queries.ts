@@ -18,6 +18,7 @@ import {
   deleteLayout,
   duplicateLayout,
   getLayout,
+  getLayoutCheck,
   getLayoutCounts,
   getLayoutRules,
   getLayouts,
@@ -37,6 +38,7 @@ export const LAYOUT_KEYS = {
   counts: ['layouts', 'counts'] as const,
   detail: (id: number) => ['layouts', 'detail', id] as const,
   rules: (id: number) => ['layouts', 'rules', id] as const,
+  check: (id: number) => ['layouts', 'check', id] as const,
 };
 
 /** Refreshes the counts and the listed tab after a layout joins or leaves the listed set. */
@@ -264,6 +266,20 @@ export function useCreatePreviewLinkMutation() {
   return useMutation({
     mutationKey: ['layouts', 'preview-link'],
     mutationFn: createPreviewLink,
+  });
+}
+
+/**
+ * Run test's findings for a layout; idle while id is null. Always refetched on open: the store's settings
+ * and the saved markup can change between runs, and nothing invalidates on a store change.
+ */
+export function useLayoutCheckQuery(id: number | null) {
+  return useQuery({
+    queryKey: LAYOUT_KEYS.check(id ?? 0),
+    queryFn: () => getLayoutCheck(id as number),
+    enabled: null !== id,
+    staleTime: 0,
+    gcTime: 0,
   });
 }
 

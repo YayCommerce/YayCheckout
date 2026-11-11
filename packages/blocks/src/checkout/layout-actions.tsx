@@ -10,6 +10,7 @@ import { registerPlugin } from '@wordpress/plugins';
 import { editorData } from '../shared/editor-data';
 import { errorMessage } from '../shared/error-message';
 import { useIsPreviewingRevision } from '../shared/layout-editor';
+import { LayoutCheckButton, LayoutCheckSummary, useLayoutCheckCount } from './layout-check';
 import { layoutStateStore } from './layout-state';
 import LayoutViewSwitch, { isLoggedOutView } from './layout-view';
 import { useLayoutProblem } from './publish-guard';
@@ -151,6 +152,9 @@ function LayoutActions() {
 	const slot = useHeaderSlot( isLayout && ! isRevision, 'settings' );
 	const viewSlot = useHeaderSlot( isLayout && ! isRevision, 'toolbar' );
 	const pagesSlot = useHeaderSlot( isLayout && ! isRevision, 'pages' );
+	// Run test checks the checkout and its Guest view; the thank-you page takes no order.
+	const isCheckable = editorData.view.current !== 'thank-you';
+	const checkCount = useLayoutCheckCount( postId, isLayout && confirm === 'activate' );
 
 	useEffect( () => {
 		if ( ! isLayout || ! postId ) {
@@ -251,6 +255,7 @@ function LayoutActions() {
 			{ createPortal(
 		<>
 			<Flex gap={ 2 } expanded={ false }>
+				{ isCheckable && <LayoutCheckButton postId={ postId } disabled={ isBusy || isSaving } /> }
 				<Button
 					__next40pxDefaultSize
 					variant="tertiary"
@@ -286,6 +291,7 @@ function LayoutActions() {
 			{ confirm && modal && (
 				<Modal title={ modal.title } onRequestClose={ () => ! isBusy && setConfirm( null ) } size="small">
 					<p>{ modal.body }</p>
+					{ confirm === 'activate' && <LayoutCheckSummary count={ checkCount } /> }
 					<Flex justify="flex-end" gap={ 2 }>
 						<Button variant="tertiary" disabled={ isBusy } onClick={ () => setConfirm( null ) }>
 							{ __( 'Cancel', 'yaycheckout' ) }

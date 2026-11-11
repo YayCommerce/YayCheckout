@@ -100,6 +100,36 @@ export const previewLinkWireSchema = z
   })
   .strict();
 
+/** Owner: Services\LayoutCheck severities. */
+export const LAYOUT_FINDING_SEVERITIES = ['error', 'warning', 'info'] as const;
+
+/** GET /layouts/{id}/check. Owner: Services\LayoutCheck::run(). */
+export const layoutCheckWireSchema = z
+  .object({
+    findings: z.array(
+      z
+        .object({
+          code: z.string(),
+          severity: z.enum(LAYOUT_FINDING_SEVERITIES),
+          message: z.string(),
+          block: z
+            .object({
+              view: z.enum(['main', 'logged_out']),
+              name: z.string(),
+              index: z.number(),
+            })
+            .strict()
+            .nullable(),
+          link: z.string(),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+/** One Run test result. `block` is where it sits, for the editor's Go to block; '' link when none fixes it. */
+export type LayoutFinding = z.infer<typeof layoutCheckWireSchema>['findings'][number];
+
 export type LayoutStatus = z.infer<typeof layoutStatusSchema>;
 export type LayoutCounts = z.infer<typeof layoutCountsSchema>;
 

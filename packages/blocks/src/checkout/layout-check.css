@@ -1,0 +1,30 @@
+/* Run test's results modal in the layout editor (layout-check.tsx). */
+.yaycheckout-layout-check__intro {
+	margin-top: 0;
+	color: #757575;
+}
+
+.yaycheckout-layout-check .components-notice {
+	margin: 0 0 8px;
+}
+
+.yaycheckout-layout-check .components-notice p {
+	margin: 0 0 4px;
+}
+
+.yaycheckout-layout-check__group h3 {
+	margin: 16px 0 8px;
+	font-size: 13px;
+}
+
+.yaycheckout-layout-check__loading {
+	padding: 24px 0;
+}
+
+.yaycheckout-layout-check__actions {
+	font-size: 12px;
+}
+
+.yaycheckout-layout-check__footer {
+	margin-top: 16px;
+}
