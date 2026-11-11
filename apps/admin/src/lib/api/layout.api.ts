@@ -4,6 +4,7 @@ import {
   LayoutBulkAction,
   layoutBulkResponseWireSchema,
   LayoutBulkResult,
+  layoutCheckWireSchema,
   layoutCountsResponseSchema,
   LayoutListResponse,
   layoutListResponseWireSchema,
@@ -15,6 +16,7 @@ import {
   layoutWireSchema,
   PreviewLink,
   previewLinkWireSchema,
+  type LayoutFinding,
   type LayoutRulesResponse,
   type LayoutRulesWire,
 } from '@/lib/schema/layout.schema';
@@ -122,6 +124,11 @@ export async function createPreviewLink(id: number): Promise<PreviewLink> {
   const wire = previewLinkWireSchema.parse(await api.post(`layouts/${id}/preview-link`).json());
 
   return { url: wire.url, expiresAt: wire.expires_at };
+}
+
+/** Run test's static check of the saved layout. Every finding key is one word, so the wire shape is the app's. */
+export async function getLayoutCheck(id: number): Promise<LayoutFinding[]> {
+  return layoutCheckWireSchema.parse(await api.get(`layouts/${id}/check`).json()).findings;
 }
 
 export async function deleteLayout(id: number): Promise<void> {

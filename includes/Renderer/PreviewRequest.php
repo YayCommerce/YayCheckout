@@ -135,7 +135,12 @@ class PreviewRequest {
     }
 
     public function refuse_order(): void {
-        wc_add_notice( __( 'Orders cannot be placed from a preview link.', 'yaycheckout' ), 'error' );
+        wc_add_notice( self::refusal_message(), 'error' );
+    }
+
+    /** The notice that refuses an order from a preview; Run test's dry run looks for it in the response. */
+    public static function refusal_message(): string {
+        return __( 'Orders cannot be placed from a preview link.', 'yaycheckout' );
     }
 
     /**

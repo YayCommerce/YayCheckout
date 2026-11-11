@@ -110,6 +110,32 @@ class CheckoutHookScanHelper {
         return $rows;
     }
 
+    /**
+     * Those of $hooks that a plugin, mu-plugin or theme hooks, besides WooCommerce and YayCheckout: what owner() counts.
+     *
+     * @param string[] $hooks
+     * @return string[]
+     */
+    public function hooked_by_others( array $hooks ): array {
+        global $wp_filter;
+
+        $hooked = [];
+        foreach ( $hooks as $hook ) {
+            foreach ( isset( $wp_filter[ $hook ] ) ? $wp_filter[ $hook ]->callbacks : [] as $callbacks ) {
+                foreach ( $callbacks as $callback ) {
+                    $file = $this->resolve_file( $callback['function'] );
+
+                    if ( null !== $file && null !== $this->owner( $file ) ) {
+                        $hooked[] = $hook;
+                        continue 3;
+                    }
+                }
+            }
+        }
+
+        return $hooked;
+    }
+
     /** @param mixed $handler Anything add_filter() accepted. */
     private function resolve_file( $handler ): ?string {
         try {
@@ -132,7 +158,8 @@ class CheckoutHookScanHelper {
 
         $file = $reflection->getFileName();
 
-        return false === $file ? null : $file;
+        // Code eval()'d by a plugin such as Code Snippets reports "<file>(<line>) : eval()'d code"; the file is that plugin's.
+        return false === $file ? null : (string) preg_replace( '/\(\d+\) : eval\(\)\'d code$/', '', $file );
     }
 
     /**
