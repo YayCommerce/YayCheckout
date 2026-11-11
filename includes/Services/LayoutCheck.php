@@ -164,7 +164,7 @@ class LayoutCheck {
 
     /**
      * The first Steps block with two or more steps: Place Order must sit in its last step or outside it,
-     * and a Next Step Button must exist somewhere, or the shopper can't leave the first step.
+     * and every step but the last needs a Next Step Button, inside it or shared outside every step.
      *
      * @param array $blocks indexed() blocks.
      */
@@ -209,23 +209,48 @@ class LayoutCheck {
             }
         }
 
-        if ( ! in_array( self::STEP_BUTTON, array_column( $blocks, 'blockName' ), true ) ) {
-            $findings[] = self::finding(
-                'steps_without_next_button',
-                self::ERROR,
-                __( 'Add a Next Step Button: this layout has several steps, and without one shoppers can\'t leave the first.', 'yaycheckout' ),
-                self::ref( $steps )
-            );
+        // A Next Step Button inside a step advances only that step; one outside every step advances whichever is open.
+        $buttons = array_filter( $blocks, static fn( array $block ): bool => self::STEP_BUTTON === $block['blockName'] );
+        $shared  = array_filter( $buttons, static fn( array $button ): bool => ! self::in_a_step( $button ) );
+
+        if ( [] === $shared ) {
+            foreach ( $blocks as $block ) {
+                if ( ! in_array( self::key( $block ), $earlier, true ) ) {
+                    continue;
+                }
+
+                $key = self::key( $block );
+                $own = array_filter( $buttons, static fn( array $button ): bool => in_array( $key, $button['ancestors'], true ) );
+
+                if ( [] === $own ) {
+                    $findings[] = self::finding(
+                        'steps_without_next_button',
+                        self::ERROR,
+                        __( 'Add a Next Step Button to this step: without one, shoppers can\'t move on to the next step.', 'yaycheckout' ),
+                        self::ref( $block )
+                    );
+                }
+            }
         }
 
         return $findings;
     }
 
+    /** Whether a block sits inside a Step block. */
+    private static function in_a_step( array $block ): bool {
+        foreach ( $block['ancestors'] as $ancestor ) {
+            if ( 0 === strpos( $ancestor, self::STEP . '#' ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Required fields at or below a block with a Visibility setting. A hidden required field still blocks the
      * order (decisions/2026-10-13-block-visibility-in-block-markup.md), so the shopper may be stuck at Place Order.
-     * A condition that hides the block only while the field itself is empty is safe: a Field is empty only while
-     * the country's locale hides it, and WooCommerce then doesn't require it (the State column templates use).
+     * A condition that hides the field only when WooCommerce wouldn't require it is safe (hides_only_when_not_required()).
      *
      * @param array $tree parse_blocks() output.
      */
@@ -237,10 +262,9 @@ class LayoutCheck {
                 continue;
             }
 
-            $own_id = LayoutMarkupReader::text( $block['attrs'], 'blockId' );
-            $risky  = array_filter(
+            $risky = array_filter(
                 $block['conditions'],
-                static fn( array $setting ): bool => ! self::hides_only_when_empty( $setting, $own_id )
+                static fn( array $setting ): bool => ! self::hides_only_when_not_required( $setting, $block )
             );
 
             if ( [] === $risky ) {
@@ -265,21 +289,28 @@ class LayoutCheck {
     }
 
     /**
-     * Whether a Visibility setting hides its block only while the block $block_id is empty: every rule is
-     * "show when $block_id is not empty" or "hide when $block_id is empty". Rules are ANDed, so any other rule
-     * could hide the block for another reason.
+     * Whether a Visibility setting hides a required field only when WooCommerce wouldn't require it anyway.
+     * Each rule must be one of:
+     * - "show when the field itself is not empty" (or "hide when empty"): a Field is empty only while the
+     *   country's locale hides it, and WooCommerce then doesn't require it (the templates' State column);
+     * - "show when the cart needs shipping", around a shipping address field: WooCommerce checks shipping
+     *   fields only for a cart that needs shipping (the Multi-step wizard's shipping address).
+     * Rules are ANDed, so any other rule could hide the block for another reason.
      *
      * @param array $setting A BlockVisibility::normalize() setting.
+     * @param array $field   The required field, as indexed() gives it.
      */
-    private static function hides_only_when_empty( array $setting, string $block_id ): bool {
-        if ( '' === $block_id ) {
-            return false;
-        }
-
-        $safe = 'show' === $setting['action'] ? 'not_empty' : 'empty';
+    private static function hides_only_when_not_required( array $setting, array $field ): bool {
+        $block_id = LayoutMarkupReader::text( $field['attrs'], 'blockId' );
+        $shipping = 0 === strpos( LayoutMarkupReader::text( $field['attrs'], 'fieldKey' ), 'shipping_' );
+        $show     = 'show' === $setting['action'];
 
         foreach ( $setting['rules'] as $rule ) {
-            if ( 'block' !== $rule['type'] || $block_id !== $rule['block'] || $safe !== $rule['is'] ) {
+            $self_empty = 'block' === $rule['type'] && '' !== $block_id && $block_id === $rule['block']
+                && ( $show ? 'not_empty' : 'empty' ) === $rule['is'];
+            $ships      = 'needs_shipping' === $rule['type'] && $show && $shipping;
+
+            if ( ! $self_empty && ! $ships ) {
                 return false;
             }
         }
@@ -324,11 +355,11 @@ class LayoutCheck {
         $findings = [];
 
         if ( ! empty( $facts['shipping_needs_setup'] ) ) {
-            $findings[] = self::finding( 'shipping_needs_setup', self::WARNING, __( 'Your store has no shipping method, so carts that need shipping can\'t be ordered.', 'yaycheckout' ), null, (string) ( $urls['shipping'] ?? '' ) );
+            $findings[] = self::finding( 'shipping_needs_setup', self::WARNING, __( 'No shipping zone or method is set up, so shoppers check out without choosing shipping.', 'yaycheckout' ), null, (string) ( $urls['shipping'] ?? '' ) );
         }
 
         if ( ! empty( $facts['payment_needs_setup'] ) ) {
-            $findings[] = self::finding( 'payment_needs_setup', self::WARNING, __( 'Your store has no enabled payment method, so orders that need payment can\'t be placed.', 'yaycheckout' ), null, (string) ( $urls['payment'] ?? '' ) );
+            $findings[] = self::finding( 'payment_needs_setup', self::WARNING, __( 'No payment method is enabled, so shoppers cannot place an order.', 'yaycheckout' ), null, (string) ( $urls['payment'] ?? '' ) );
         }
 
         foreach ( (array) ( $facts['block_only_gateways'] ?? [] ) as $title ) {
