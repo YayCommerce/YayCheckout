@@ -25,3 +25,8 @@ package-lock.json
 .claude/settings.local.json
 .claude/worktrees/
 CLAUDE.local.md
+# yay harness
+.yay/local.json
+.yay/runs/
+.yay/designs/
+.yay-release/
