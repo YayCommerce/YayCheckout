@@ -5,7 +5,10 @@ import { select, useDispatch, useSelect } from '@wordpress/data';
 import { store as editorStore } from '@wordpress/editor';
 import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { editorData } from '../shared/editor-data';
 import { errorMessage } from '../shared/error-message';
+import { runLayoutTest, type BrowserFinding } from '../shared/layout-test-runner';
+import { ProUpgradeNotice } from '../shared/pro-upgrade-notice';
 import { isLoggedOutView, openView } from './layout-view';
 import './layout-check.css';
 
@@ -70,6 +73,8 @@ export function LayoutCheckButton( { postId, disabled }: { postId: number; disab
 	const [ findings, setFindings ] = useState< Finding[] | null >( null );
 	const [ error, setError ] = useState( '' );
 	const [ checkedSaved, setCheckedSaved ] = useState( false );
+	// Bumped per run, so the browser checks start again with the static ones.
+	const [ runKey, setRunKey ] = useState( 0 );
 
 	const run = async () => {
 		setOpen( true );
@@ -91,6 +96,7 @@ export function LayoutCheckButton( { postId, disabled }: { postId: number; disab
 			}
 
 			setFindings( await fetchFindings( postId ) );
+			setRunKey( ( key ) => key + 1 );
 		} catch ( caught ) {
 			setError( await errorMessage( caught, __( 'The test could not run. Try again.', 'yaycheckout' ) ) );
 		} finally {
@@ -184,6 +190,18 @@ export function LayoutCheckButton( { postId, disabled }: { postId: number; disab
 					) }
 					<FindingGroup title={ __( 'Errors', 'yaycheckout' ) } findings={ errors } status="error" onGoTo={ goTo } />
 					<FindingGroup title={ __( 'Warnings', 'yaycheckout' ) } findings={ warnings } status="warning" onGoTo={ goTo } />
+					{ findings &&
+						( editorData.isPro ? (
+							<BrowserChecks key={ runKey } postId={ postId } />
+						) : (
+							<section className="yaycheckout-layout-check__group">
+								<h3>{ __( 'Browser checks', 'yaycheckout' ) }</h3>
+								<ProUpgradeNotice
+									className="yaycheckout-layout-check__locked"
+									text={ __( 'Open the checkout in a real browser to catch JavaScript errors, a broken form or refresh, and steps that won\'t continue.', 'yaycheckout' ) }
+								/>
+							</section>
+						) ) }
 					<Flex justify="flex-end" gap={ 2 } className="yaycheckout-layout-check__footer">
 						<Button variant="tertiary" disabled={ isRunning } onClick={ () => setOpen( false ) }>
 							{ __( 'Close', 'yaycheckout' ) }
@@ -195,6 +213,83 @@ export function LayoutCheckButton( { postId, disabled }: { postId: number; disab
 				</Modal>
 			) }
 		</>
+	);
+}
+
+/** The test-run route's answer: Pro\Controllers\LayoutTestRestController::create_test_run(). */
+type TestRunWire = { url: string; expires_at: string; refusal_message: string };
+
+/**
+ * Pro: opens the saved layout's checkout in an off-screen iframe and lists what broke there. Starts on mount,
+ * so a new key runs it again; closing the modal unmounts it, which aborts the run and removes the iframe.
+ */
+function BrowserChecks( { postId }: { postId: number } ) {
+	const [ progress, setProgress ] = useState( '' );
+	const [ result, setResult ] = useState< { findings: BrowserFinding[]; timedOut: boolean } | null >( null );
+	const [ error, setError ] = useState( '' );
+
+	useEffect( () => {
+		const controller = new AbortController();
+		let live = true;
+
+		( async () => {
+			try {
+				const wire = await apiFetch< TestRunWire >( {
+					path: `/yaycheckout/v1/layouts/${ postId }/test-run`,
+					method: 'POST',
+					signal: controller.signal,
+				} );
+				const done = await runLayoutTest(
+					{ url: wire.url, expiresAt: wire.expires_at, refusalMessage: wire.refusal_message },
+					{ phases: [ 'render' ], onProgress: ( label ) => live && setProgress( label ), signal: controller.signal }
+				);
+
+				if ( live ) {
+					setResult( done );
+				}
+			} catch ( caught ) {
+				if ( live && ! controller.signal.aborted ) {
+					setError( await errorMessage( caught, __( 'The browser checks could not run. Try again.', 'yaycheckout' ) ) );
+				}
+			}
+		} )();
+
+		return () => {
+			live = false;
+			controller.abort();
+		};
+	}, [ postId ] );
+
+	return (
+		<section className="yaycheckout-layout-check__group">
+			<h3>{ __( 'Browser checks', 'yaycheckout' ) }</h3>
+			{ ! result && ! error && (
+				<Flex justify="flex-start" gap={ 2 } className="yaycheckout-layout-check__progress">
+					<Spinner />
+					<span>{ progress }</span>
+				</Flex>
+			) }
+			{ error && (
+				<Notice status="error" isDismissible={ false }>
+					{ error }
+				</Notice>
+			) }
+			{ result?.findings.map( ( finding ) => (
+				<Notice key={ finding.code } status="error" isDismissible={ false }>
+					<p>{ finding.message }</p>
+				</Notice>
+			) ) }
+			{ result?.timedOut && (
+				<Notice status="info" isDismissible={ false }>
+					{ __( 'The page took too long to load, so some browser checks didn\'t run.', 'yaycheckout' ) }
+				</Notice>
+			) }
+			{ result && result.findings.length === 0 && ! result.timedOut && (
+				<Notice status="success" isDismissible={ false }>
+					{ __( 'No problems found in the browser.', 'yaycheckout' ) }
+				</Notice>
+			) }
+		</section>
 	);
 }
 

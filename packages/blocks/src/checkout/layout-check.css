@@ -28,3 +28,16 @@
 .yaycheckout-layout-check__footer {
 	margin-top: 16px;
 }
+
+.yaycheckout-layout-check__progress {
+	padding: 8px 0;
+	color: #757575;
+}
+
+.yaycheckout-layout-check__progress .components-spinner {
+	margin: 0;
+}
+
+.yaycheckout-layout-check__locked {
+	margin: 0;
+}
