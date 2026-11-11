@@ -20,7 +20,7 @@ class LayoutCheckTest extends WP_UnitTestCase {
         'block_only_gateways'     => [],
         'express_pay_has_buttons' => true,
         'plugin_spot_states'      => [],
-        'before_form_hooked'      => false,
+        'hooked'                  => [],
     ];
 
     private const CLEAN = '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/email /--><!-- wp:yaycheckout/billing /--><!-- wp:yaycheckout/shipping-methods /--><!-- wp:yaycheckout/payment /--><!-- wp:yaycheckout/terms /--><!-- wp:yaycheckout/place-order /--><!-- /wp:yaycheckout/checkout -->';

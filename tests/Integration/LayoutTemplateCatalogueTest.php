@@ -7,6 +7,7 @@ use YayCheckout\Controllers\LayoutTemplateCatalogue;
 use YayCheckout\Helpers\LayoutCheckFacts;
 use YayCheckout\Models\Layout;
 use YayCheckout\Models\LayoutDesign;
+use YayCheckout\Renderer\WcHooks;
 use YayCheckout\Services\LayoutCheck;
 use YayCheckout\Services\LayoutMarkupReader;
 
@@ -53,7 +54,7 @@ class LayoutTemplateCatalogueTest extends WP_UnitTestCase {
             'block_only_gateways'     => [],
             'express_pay_has_buttons' => true,
             'plugin_spot_states'      => [],
-            'before_form_hooked'      => true,
+            'hooked'                  => array_keys( WcHooks::HOOKS ),
         ];
 
         foreach ( array_column( $available, 'slug' ) as $slug ) {

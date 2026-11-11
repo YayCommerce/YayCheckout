@@ -18,11 +18,8 @@ defined( 'ABSPATH' ) || exit;
  */
 class LayoutCheckFacts {
 
-    /** The hook every template places a Hook block for; WcHooks::core_callbacks() says which callbacks are WooCommerce's. */
-    private const BEFORE_FORM_HOOK = 'woocommerce_before_checkout_form';
-
     /**
-     * @return array{locked_blocks: string[], terms_page: bool, ships: bool, shipping_needs_setup: bool, payment_needs_setup: bool, login_required: bool, block_only_gateways: string[], express_pay_has_buttons: bool, plugin_spot_states: array<string, string>, before_form_hooked: bool, settings_urls: array{shipping: string, payment: string, terms: string}}
+     * @return array{locked_blocks: string[], terms_page: bool, ships: bool, shipping_needs_setup: bool, payment_needs_setup: bool, login_required: bool, block_only_gateways: string[], express_pay_has_buttons: bool, plugin_spot_states: array<string, string>, hooked: string[], settings_urls: array{shipping: string, payment: string, terms: string}}
      */
     public static function current(): array {
         return [
@@ -35,7 +32,8 @@ class LayoutCheckFacts {
             'block_only_gateways'     => self::block_only_gateways(),
             'express_pay_has_buttons' => ExpressPay::has_buttons(),
             'plugin_spot_states'      => array_column( PluginBlockCatalogue::editor_data()['entries'], 'state', 'target' ),
-            'before_form_hooked'      => WcHooks::callbacks_besides( self::BEFORE_FORM_HOOK, WcHooks::core_callbacks( self::BEFORE_FORM_HOOK ) ) > 0,
+            // Only other plugins' callbacks: WooCommerce's own, such as order attribution, sit on many hooks and need none placed.
+            'hooked'                  => ( new CheckoutHookScanHelper() )->hooked_by_others( array_keys( WcHooks::HOOKS ) ),
             'settings_urls'           => [
                 'shipping' => CheckoutSetupHelper::shipping_settings_url(),
                 'payment'  => CheckoutSetupHelper::payment_settings_url(),

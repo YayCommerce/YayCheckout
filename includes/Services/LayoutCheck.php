@@ -45,7 +45,7 @@ class LayoutCheck {
         'visibility_target_missing',
         'duplicate_wc_hook',
         'multiple_pinned_groups',
-        'before_form_hook_unplaced',
+        'wc_hook_unplaced',
         'custom_css_rejected',
     ];
 
@@ -69,7 +69,21 @@ class LayoutCheck {
     private const GROUP            = 'core/group';
 
     /** The hook every template places a Hook block for, where plugins print their checkout notices. */
-    private const BEFORE_FORM_HOOK = 'woocommerce_before_checkout_form';
+    /**
+     * The WooCommerce hooks a block fires by itself, unless a Hook block places them: a copy of the
+     * WcHooks::in_place() calls in those blocks' render.php and in CheckoutFragments. Change both together.
+     * Every other WcHooks::HOOKS hook fires only where a Hook block places it.
+     */
+    private const FIRED_BY_BLOCKS = [
+        'yaycheckout/express-pay'             => [ 'woocommerce_checkout_before_customer_details', 'woocommerce_checkout_after_customer_details' ],
+        'yaycheckout/create-account'          => [ 'woocommerce_before_checkout_registration_form', 'woocommerce_after_checkout_registration_form' ],
+        'yaycheckout/additional-fields'       => [ 'woocommerce_before_order_notes', 'woocommerce_after_order_notes' ],
+        'yaycheckout/order-summary-items'     => [ 'woocommerce_review_order_before_cart_contents', 'woocommerce_review_order_after_cart_contents' ],
+        'yaycheckout/shipping-methods'        => [ 'woocommerce_review_order_before_shipping', 'woocommerce_review_order_after_shipping' ],
+        'yaycheckout/order-summary-breakdown' => [ 'woocommerce_review_order_before_order_total', 'woocommerce_review_order_after_order_total' ],
+        'yaycheckout/payment'                 => [ 'woocommerce_review_order_before_payment', 'woocommerce_review_order_after_payment' ],
+        'yaycheckout/place-order'             => [ 'woocommerce_review_order_before_submit', 'woocommerce_review_order_after_submit' ],
+    ];
 
     /** A live value chip's key in saved markup: data-yaycheckout-value="field:<key>" (live-value/constants.ts). */
     private const LIVE_FIELD_PATTERN = '/data-yaycheckout-value=(["\'])field:([^"\']+)\1/';
@@ -465,11 +479,27 @@ class LayoutCheck {
         }
 
         if ( count( $pinned ) > 1 ) {
-            $findings[] = self::finding( 'multiple_pinned_groups', self::WARNING, __( 'More than one Group is pinned to the bottom of the screen, so they cover each other.', 'yaycheckout' ), self::ref( $pinned[1] ) );
+            $findings[] = self::finding( 'multiple_pinned_groups', self::WARNING, __( 'Another block is already pinned to the bottom. They will overlap.', 'yaycheckout' ), self::ref( $pinned[1] ) );
         }
 
-        if ( ! empty( $facts['before_form_hooked'] ) && ! isset( $hooks[ self::BEFORE_FORM_HOOK ] ) ) {
-            $findings[] = self::finding( 'before_form_hook_unplaced', self::WARNING, __( 'A plugin prints on woocommerce_before_checkout_form, but this layout has no WooCommerce Hook block for it, so that output never shows.', 'yaycheckout' ) );
+        $fired  = array_keys( $hooks );
+        $labels = WcHooks::labels();
+
+        foreach ( array_intersect_key( self::FIRED_BY_BLOCKS, array_flip( array_column( $blocks, 'blockName' ) ) ) as $block_hooks ) {
+            $fired = array_merge( $fired, $block_hooks );
+        }
+
+        foreach ( array_diff( (array) ( $facts['hooked'] ?? [] ), $fired ) as $hook ) {
+            $findings[] = self::finding(
+                'wc_hook_unplaced',
+                self::WARNING,
+                sprintf(
+                    /* translators: 1: the hook's label in the WooCommerce Hook block, 2: WooCommerce hook name. */
+                    __( 'A plugin prints on "%1$s" (%2$s), but nothing in this layout fires that hook, so its output never shows. Add a WooCommerce Hook block set to it.', 'yaycheckout' ),
+                    $labels[ $hook ] ?? $hook,
+                    $hook
+                )
+            );
         }
 
         if ( is_wp_error( LayoutDesign::sanitize_custom_css( $layout->design->custom_css ) ) ) {
