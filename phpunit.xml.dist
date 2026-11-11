@@ -14,7 +14,8 @@
       WP_TESTS_DB_PASSWORD  default empty
       WP_TESTS_DB_HOST      default localhost; Local (by Flywheel) sites need the per-site socket:
                             localhost:/Users/<you>/Library/Application Support/Local/run/<site-id>/mysql/mysqld.sock
-      WP_TESTS_ABSPATH      default four directories up (the site's app/public/)
+      WP_TESTS_ABSPATH      default the nearest directory above tests/ holding wp-load.php (the site's app/public/)
+      WP_TESTS_WC_DIR       default the site's wp-content/plugins/woocommerce
       WP_TESTS_DIR          default vendor/wp-phpunit/wp-phpunit
 -->
 <phpunit

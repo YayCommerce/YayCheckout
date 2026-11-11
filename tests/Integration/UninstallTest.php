@@ -92,6 +92,8 @@ class UninstallTest extends WP_UnitTestCase {
         if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
             define( 'WP_UNINSTALL_PLUGIN', 'yaycheckout/yaycheckout.php' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals -- WordPress's own constant.
         }
+        // Only this copy is installed. From a worktree, the site's own yaycheckout/ would count as a second copy and keep the data.
+        wp_cache_set( 'plugins', [ '' => [ basename( YAYCHECKOUT_PLUGIN_DIR ) . '/yaycheckout.php' => [ 'Name' => 'YayCheckout' ] ] ], 'plugins' );
         include YAYCHECKOUT_PLUGIN_DIR . 'uninstall.php';
     }
 
