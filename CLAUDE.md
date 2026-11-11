@@ -31,6 +31,58 @@ This repo uses the **yay** harness. Work through its skills so every developer a
 - Product PHP runs on PHP 7.4+. `.claude/rules/yay-wordpress.md` lists what that rules out.
 <!-- yay:managed:end -->
 
-<!-- yay:project:start -->
-_Project knowledge has not been written yet. Run `/yay:knowledge-init`._
+<!-- yay:project:start ref=edf2074 updated=2026-11-12 -->
+## What this is
+YayCheckout replaces WooCommerce's classic checkout with a layout the merchant builds from blocks in the block editor. The storefront prints that layout in place of the theme, but the form, fields, fragments, payments and orders stay WooCommerce's own. One branch, `dev`, is the Pro edition. Free (for wordpress.org) is built from it at release by deleting `includes/Pro/` and the Pro blocks and templates. Pro adds multi-step checkouts, assignment rules, a thank-you page, Order Again and export/import.
+
+## Layout
+| Path | What |
+|---|---|
+| `yaycheckout.php` | boot, constants, Free/Pro coexistence guards |
+| `includes/` | PHP: Models, Repositories, Services, Controllers (REST), Engine (hook glue) |
+| `includes/Renderer/` | storefront takeover, fragments, design CSS |
+| `includes/Pro/` | the Pro edition; booted once from `includes/YayCheckout.php` |
+| `packages/blocks/` | every checkout block (`block.json` + `render.php` + editor script); Pro ones under `src/pro/` |
+| `apps/admin/` | admin SPA (React, Vite, Tailwind) |
+| `templates/` | checkout page, themeless theme, layout templates (`templates/layouts/`) |
+| `assets/css/`, `assets/js/` | storefront base styles and view scripts (`assets/dist/` is built) |
+| `vendor-prefixed/` | scoped AdminShell, tracked; update only with `./scripts/run.sh shell-update` |
+| `scripts/run.sh` | dev, build, release |
+| `editions/` | the Free adapter the release swaps in |
+
+## Commands
+- `pnpm install && composer install`: install. Use Node 22. The root `postinstall` also runs composer, which needs access to the private admin-shell repo.
+- `./scripts/run.sh dev`: Vite on :3040 plus the blocks watcher. Without it, the admin page is blank (`YAYCHECKOUT_IS_DEVELOPMENT` defaults to true).
+- `./scripts/run.sh build`: admin SPA and blocks into `assets/dist/`. Unbuilt blocks never register.
+- `composer lint`: the Pro boundary check, then phpcs.
+- `pnpm --filter @yaycheckout/admin-page lint`: ESLint and prettier. prettier fails on `dev` today, so check only your files.
+- `composer test`: the WordPress integration suite. It needs a MySQL test DB and doesn't run from a worktree as it stands ([known issues](docs/knowledge/known-issues.md)).
+- `./scripts/run.sh release {version} --plan={edition} --no-prompt`: builds and checks one zip. It writes the version into the tree, and Free needs a committed bump.
+
+## Hard rules
+1. Nothing outside `includes/Pro/` and `packages/blocks/src/pro/` names `YayCheckout\Pro`, except the one bootstrap in `includes/YayCheckout.php`. Otherwise Free can't be built by deleting Pro (`composer lint` checks it).
+2. Edition checks go through `Plan::is_pro()` in PHP and `lib/plan.ts` in the SPA. Pro UI goes behind `isPro &&`, never only `ProGate`, which still ships its children in Free.
+3. Product PHP runs on PHP 7.4: no `match`, enums, named arguments or promoted constructors.
+4. Layout and settings storage goes through `LayoutRepository` and `SettingsRepository`. Never write `yaycheckout_active_layout` or the `_yaycheckout_*` meta directly.
+5. The checkout form stays WooCommerce's: fields through `woocommerce_form_field()`, refreshes through `update_order_review` fragments. Otherwise gateways and plugins break.
+6. Every REST route extends `BaseRestController` and uses its `manage_woocommerce` permission check. Sanitize in, escape out (`esc_html()`, `KsesHelper::storefront_html()`).
+7. Change PHP and TypeScript mirrors together ([conventions](docs/knowledge/conventions.md#mirrored-constants)). Nothing catches drift.
+8. Never change `YayCheckoutPluginAdapter::get_plugin_slug()`: it prefixes customers' license options.
+
+## Tests
+- Integration tests live in `tests/Integration/` (WordPress test library + WooCommerce). Pro tests are in `tests/Integration/Pro/` and skip on Free.
+- Run one with `vendor/bin/phpunit --filter <TestName>`.
+- There are no JS tests. CI runs only `php -l`, the boundary check, `tsc` and ESLint.
+- Setup and traps: [release.md § Tests](docs/knowledge/release.md#tests).
+
+## Read when…
+- adding any function, hook or setting → [docs/knowledge/helpers.md](docs/knowledge/helpers.md) (reuse first)
+- changing boot, editions, storage, REST or public hooks → [docs/knowledge/architecture.md](docs/knowledge/architecture.md)
+- changing what the storefront prints, a block, the design CSS or a template → [docs/knowledge/storefront.md](docs/knowledge/storefront.md)
+- changing the admin SPA → [docs/knowledge/admin.md](docs/knowledge/admin.md)
+- building, releasing, testing or touching CI → [docs/knowledge/release.md](docs/knowledge/release.md)
+- writing code in a new place, or adding a block, setting or route → [docs/knowledge/conventions.md](docs/knowledge/conventions.md)
+- touching gateway, WooCommerce-surface or other-plugin compatibility → [docs/knowledge/integrations.md](docs/knowledge/integrations.md)
+- something looks wrong or a check fails → [docs/knowledge/known-issues.md](docs/knowledge/known-issues.md)
+- asking "why is it built this way" → [docs/knowledge/decisions.md](docs/knowledge/decisions.md)
 <!-- yay:project:end -->
