@@ -6,7 +6,7 @@ import { store as editorStore } from '@wordpress/editor';
 import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { errorMessage } from '../shared/error-message';
-import { isMainView } from './layout-view';
+import { isLoggedOutView, openView } from './layout-view';
 import './layout-check.css';
 
 /** Copy of a finding from Services\LayoutCheck::run(), as GET /layouts/{id}/check sends it; LayoutFinding in the SPA. */
@@ -24,12 +24,27 @@ function fetchFindings( postId: number ): Promise< Finding[] > {
 	);
 }
 
+type FindingView = NonNullable< Finding[ 'block' ] >[ 'view' ];
+
+/** The view the editor has open, as a finding names it. Run test is hidden on the thank-you view. */
+function viewHere(): FindingView {
+	return isLoggedOutView() ? 'logged_out' : 'main';
+}
+
+/** A finding about a block shows only in that block's view; one about the store shows in both. */
+function inViewHere( finding: Finding ): boolean {
+	return ! finding.block || finding.block.view === viewHere();
+}
+
 /**
  * The block a finding points at, as LayoutCheck numbers it: the index-th block of that name in document order,
- * parents first, which is getClientIdsWithDescendants()'s order. '' when the block isn't in this view.
+ * parents first, which is getClientIdsWithDescendants()'s order. '' when the block isn't in this view, or when
+ * the finding is about a block that's missing (its ref only names the view).
  */
-function clientIdFor( block: NonNullable< Finding[ 'block' ] > ): string {
-	if ( block.view !== 'main' || ! isMainView() ) {
+function clientIdFor( finding: Finding ): string {
+	const block = finding.block;
+
+	if ( ! block || block.view !== viewHere() || finding.code === 'logged_out_without_login' ) {
 		return '';
 	}
 
@@ -88,8 +103,13 @@ export function LayoutCheckButton( { postId, disabled }: { postId: number; disab
 		selectBlock( clientId );
 	};
 
-	const errors = ( findings ?? [] ).filter( ( finding ) => finding.severity === 'error' );
-	const warnings = ( findings ?? [] ).filter( ( finding ) => finding.severity === 'warning' );
+	const shown = ( findings ?? [] ).filter( inViewHere );
+	const errors = shown.filter( ( finding ) => finding.severity === 'error' );
+	const warnings = shown.filter( ( finding ) => finding.severity === 'warning' );
+	const elsewhere = ( findings ?? [] ).filter(
+		( finding ) => ! inViewHere( finding ) && finding.severity !== 'info'
+	).length;
+	const otherView = viewHere() === 'main' ? 'logged-out' : 'main';
 
 	return (
 		<>
@@ -128,9 +148,38 @@ export function LayoutCheckButton( { postId, disabled }: { postId: number; disab
 							{ error }
 						</Notice>
 					) }
-					{ findings && findings.length === 0 && (
+					{ findings && shown.length === 0 && (
 						<Notice status="success" isDismissible={ false }>
-							{ __( 'No problems found.', 'yaycheckout' ) }
+							{ __( 'No problems found in this view.', 'yaycheckout' ) }
+						</Notice>
+					) }
+					{ elsewhere > 0 && (
+						<Notice status="info" isDismissible={ false }>
+							<p>
+								{ sprintf(
+									otherView === 'main'
+										? /* translators: %d: number of problems Run test found in the Logged in view */
+										  _n(
+												'%d more problem in the Logged in view.',
+												'%d more problems in the Logged in view.',
+												elsewhere,
+												'yaycheckout'
+										  )
+										: /* translators: %d: number of problems Run test found in the Guest view */
+										  _n(
+												'%d more problem in the Guest view.',
+												'%d more problems in the Guest view.',
+												elsewhere,
+												'yaycheckout'
+										  ),
+									elsewhere
+								) }
+							</p>
+							<Button variant="link" onClick={ () => openView( otherView ) }>
+								{ otherView === 'main'
+									? __( 'Switch to Logged in', 'yaycheckout' )
+									: __( 'Switch to Guest', 'yaycheckout' ) }
+							</Button>
 						</Notice>
 					) }
 					<FindingGroup title={ __( 'Errors', 'yaycheckout' ) } findings={ errors } status="error" onGoTo={ goTo } />
@@ -147,6 +196,19 @@ export function LayoutCheckButton( { postId, disabled }: { postId: number; disab
 			) }
 		</>
 	);
+}
+
+/** The settings link's text, worded like the Payment and Shipping methods blocks' setup notices. */
+function linkText( code: string ): string {
+	if ( code === 'payment_needs_setup' ) {
+		return __( 'Payments', 'yaycheckout' );
+	}
+
+	if ( code === 'shipping_needs_setup' ) {
+		return __( 'Shipping settings', 'yaycheckout' );
+	}
+
+	return __( 'Open settings', 'yaycheckout' );
 }
 
 function FindingGroup( {
@@ -168,7 +230,7 @@ function FindingGroup( {
 		<section className="yaycheckout-layout-check__group">
 			<h3>{ `${ title } (${ findings.length })` }</h3>
 			{ findings.map( ( finding, i ) => {
-				const clientId = finding.block ? clientIdFor( finding.block ) : '';
+				const clientId = clientIdFor( finding );
 
 				return (
 					<Notice key={ `${ finding.code }-${ i }` } status={ status } isDismissible={ false }>
@@ -179,9 +241,8 @@ function FindingGroup( {
 									{ __( 'Go to block', 'yaycheckout' ) }
 								</Button>
 							) }
-							{ finding.block?.view === 'logged_out' && <span>{ __( 'In the Guest view', 'yaycheckout' ) }</span> }
 							{ finding.link && (
-								<ExternalLink href={ finding.link }>{ __( 'Open settings', 'yaycheckout' ) }</ExternalLink>
+								<ExternalLink href={ finding.link }>{ linkText( finding.code ) }</ExternalLink>
 							) }
 						</Flex>
 					</Notice>
