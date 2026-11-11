@@ -2,12 +2,13 @@
 id: BL-1
 title: Let the PHPUnit suite run from a git worktree
 kind: deferred
-status: open
+status: done
 from: 
 affects: []
 default: 
-decision:
+decision: fix(tests): run the suite from a git worktree (b7fc2df, branch fix/tests-run-from-worktree)
 created: 2026-11-12
+settled: 2026-11-12
 ---
 # BL-1 Let the PHPUnit suite run from a git worktree
 
