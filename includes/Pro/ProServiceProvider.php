@@ -5,7 +5,9 @@ use YayCheckout\Pro\Controllers\AssignmentOptionsRestController;
 use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Pro\Controllers\LayoutImportRestController;
 use YayCheckout\Pro\Controllers\LayoutRulesRestController;
+use YayCheckout\Pro\Controllers\LayoutTestRestController;
 use YayCheckout\Pro\Controllers\ThankYouRestController;
+use YayCheckout\Pro\Renderer\LayoutTestMode;
 use YayCheckout\Pro\Renderer\OrderAgain;
 use YayCheckout\Pro\Renderer\ThankYouPage;
 use YayCheckout\Pro\Renderer\ThankYouText;
@@ -36,6 +38,9 @@ class ProServiceProvider {
         // The Order Again Button's form: refills the cart from a past order, then opens the checkout.
         OrderAgain::get_instance();
 
+        // Run test's browser checks: the error catcher on a signed preview link.
+        LayoutTestMode::get_instance();
+
         // The Thank You Text block's artworks, for its editor picker and canvas.
         add_action( 'enqueue_block_editor_assets', [ ThankYouText::class, 'editor_data' ] );
     }
@@ -63,6 +68,7 @@ class ProServiceProvider {
         LayoutExportRestController::get_instance();
         LayoutImportRestController::get_instance();
         LayoutRulesRestController::get_instance();
+        LayoutTestRestController::get_instance();
         ThankYouRestController::get_instance();
     }
 }
