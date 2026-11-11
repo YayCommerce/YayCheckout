@@ -1,7 +1,7 @@
 ---
 area: storefront
 updated: 2026-11-12
-updated_ref: edf2074
+updated_ref: 164770c
 covers: [includes/Renderer/, includes/Blocks/, packages/blocks/, templates/, assets/js/, assets/css/]
 ---
 # Storefront, blocks and design
@@ -36,6 +36,9 @@ covers: [includes/Renderer/, includes/Blocks/, packages/blocks/, templates/, ass
 - **Coupons.** `assets/js/checkout-coupon-form.js` posts `apply_coupon` and `remove_coupon` itself, with the marker field `yaycheckout_coupon_form`.
   - PHP blanks WooCommerce's notice only for that marker. It prints chips at `woocommerce_applied_coupon` priority 30, after the cart recalculates at 20.
   - The cart page posts without the marker and keeps WooCommerce's notice.
+  - **Why not WooCommerce's own handler:** `woocommerce/assets/js/frontend/checkout.js` applies a coupon only on a `form.checkout_coupon` submit. Forms can't nest, so the Coupon form block prints no `<form>` and can sit inside or beside the checkout form (`CheckoutScope::classes()` gives it the checkout styles beside it).
+    - Its chips' × (`.yaycheckout-coupon-form__chip-remove`) posts `remove_coupon` itself, with no `.woocommerce-remove-coupon` class, so WooCommerce's own remove handler doesn't fire.
+    - Its field has no `input-text` or `form-row` class, so WooCommerce's inline validation skips it, and the script catches Enter, which would submit the checkout.
 - **wc-ajax endpoints:** `yaycheckout_cart_item_quantity` (`CartItemQuantity`, with a 400 ms debounced stepper), `yaycheckout_login` and `yaycheckout_login_state` (`CheckoutLogin`). The login cookie is only seen by the next request.
 - **Stripe:** with an Express Pay block, `wc_stripe_express_checkout_params` gets `has_block=false` (`Renderer\ExpressPay`).
 

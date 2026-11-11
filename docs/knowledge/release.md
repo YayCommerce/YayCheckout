@@ -1,7 +1,7 @@
 ---
 area: release
 updated: 2026-11-12
-updated_ref: edf2074
+updated_ref: 164770c
 covers: [scripts/, scoper.inc.php, composer.json, package.json, pnpm-workspace.yaml, .nvmrc, phpcs.xml, phpunit.xml.dist, tests/, .github/workflows/, readme.txt, editions/]
 ---
 # Build, release, tests and CI
@@ -12,7 +12,7 @@ covers: [scripts/, scoper.inc.php, composer.json, package.json, pnpm-workspace.y
 
 - **Node and pnpm.** Node 22 (`.nvmrc`, `engines.node >=22`) with `pnpm@11.15.1`. The workspace is `apps/admin` + `packages/blocks`. `scripts/run.sh` finds pnpm through corepack, or the newest Node under `~/.nvm`.
 - **`pnpm install` also runs `composer install`** (the root `postinstall`), which needs access to the private admin-shell VCS repo. CI installs with `--filter @yaycheckout/admin-page --ignore-scripts` instead.
-- **`vendor-prefixed/` is tracked.** It holds the scoped AdminShell (prefix `YayCheckoutScoped`, see `scoper.inc.php`). Update it only with `./scripts/run.sh shell-update`, then commit it.
+- **`vendor-prefixed/` is tracked.** It holds the scoped AdminShell (prefix `YayCheckoutScoped`, see `scoper.inc.php`). Update it only with `./scripts/run.sh shell-update`, which also regenerates `scoper.inc.php` (comment in `scripts/run.sh`), then commit both.
 - **No lockfiles are tracked.** `composer.lock` and `pnpm-lock.yaml` are gitignored, so versions can differ between machines.
 
 ## `scripts/run.sh`

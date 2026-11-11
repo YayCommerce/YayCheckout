@@ -55,7 +55,7 @@ jobs:
           tools: none
           coverage: none
 
-      # Product PHP must run on PHP 7.4 (CLAUDE.md hard rule 4). scoper.inc.php is dev tooling and is skipped.
+      # Product PHP must run on PHP 7.4 (CLAUDE.md hard rule 3). scoper.inc.php is dev tooling and is skipped.
       - name: Lint product PHP
         run: |
           find includes editions packages/blocks/src templates yaycheckout.php YayCheckoutPluginAdapter.php uninstall.php index.php \
@@ -72,6 +72,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The first half of `composer lint` (CLAUDE.md hard rule 2); needs only bash and grep.
+      # The first half of `composer lint` (CLAUDE.md hard rule 1); needs only bash and grep.
       - name: check-pro-boundary.sh
         run: bash scripts/check-pro-boundary.sh

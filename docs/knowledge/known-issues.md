@@ -1,7 +1,7 @@
 ---
 area: known-issues
 updated: 2026-11-12
-updated_ref: edf2074
+updated_ref: 164770c
 covers: [tests/bootstrap.php, tests/wp-tests-config.php, scripts/free-admin-shell.patch, apps/admin/package.json, .github/workflows/, yaycheckout.php, uninstall.php, includes/Controllers/LayoutTemplateCatalogue.php]
 ---
 # Known issues
@@ -44,5 +44,4 @@ CI runs ESLint only for this reason (comment in `.github/workflows/js.yml`), so 
 ## Open questions
 
 - **`digital-product`.** `Controllers\LayoutTemplateCatalogue` lists it as a Free template, but `templates/layouts/digital-product/` holds only `preview.html` (no `markup.php` or `design.json`). Is it a placeholder, or is creating from it broken?
-- **Does `composer shell-update` rewrite `scoper.inc.php`?** That happens in vendor code (`yaycommerce-update`), which nobody has checked.
 - **Which tests cover the Pro assignment, rules and export controllers?** `tests/Integration/Pro/` has only `ThankYouPageTest` and `LayoutImportReviewTest`.
