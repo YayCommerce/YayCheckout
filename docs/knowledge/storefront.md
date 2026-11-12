@@ -1,7 +1,7 @@
 ---
 area: storefront
 updated: 2026-11-12
-updated_ref: 164770c
+updated_ref: 44fdc3b
 covers: [includes/Renderer/, includes/Blocks/, packages/blocks/, templates/, assets/js/, assets/css/]
 ---
 # Storefront, blocks and design
@@ -40,7 +40,11 @@ covers: [includes/Renderer/, includes/Blocks/, packages/blocks/, templates/, ass
     - Its chips' × (`.yaycheckout-coupon-form__chip-remove`) posts `remove_coupon` itself, with no `.woocommerce-remove-coupon` class, so WooCommerce's own remove handler doesn't fire.
     - Its field has no `input-text` or `form-row` class, so WooCommerce's inline validation skips it, and the script catches Enter, which would submit the checkout.
 - **wc-ajax endpoints:** `yaycheckout_cart_item_quantity` (`CartItemQuantity`, with a 400 ms debounced stepper), `yaycheckout_login` and `yaycheckout_login_state` (`CheckoutLogin`). The login cookie is only seen by the next request.
-- **Stripe:** with an Express Pay block, `wc_stripe_express_checkout_params` gets `has_block=false` (`Renderer\ExpressPay`).
+- **Express Pay** (`Renderer\ExpressPay`), when the served layout has an Express Pay block:
+  - Stripe's `wc_stripe_express_checkout_params` gets `has_block=false`;
+  - `adopt_into_block()` (on `wp`, from `CheckoutPage::maybe_take_over()`) moves each callback an integration registered with `ExpressPay::adopt()` from its classic hook to `ExpressPay::HOOK`, unless a Hook block places that hook. `has_buttons()`, the editor's notice, counts them too.
+  - **Wallet orders:** when `ExpressPay::is_wallet_order()` sees a gateway's marker in the POST (`payment_request_type`, `express_checkout_type`, `express_payment_type`, filtered by `yaycheckout_express_wallet_order_markers`), `CheckoutRequiredFields` and `CheckoutExtraFields::validate()` stand down, so the layout's own required flags and extra fields don't fail the order (BL-3).
+  - With no buttons, WooCommerce's order attribution still prints on `AFTER_HOOK`, so the block prints its wrapper marked empty, which hides it and the "OR" divider until `view.ts` sees a button.
 
 ## Blocks
 

@@ -1,7 +1,7 @@
 ---
 area: integrations
 updated: 2026-11-12
-updated_ref: edf2074
+updated_ref: 44fdc3b
 covers: [includes/Integrations/, includes/Helpers/IntegrationsHelper.php, includes/Helpers/PluginBlockCatalogue.php, includes/Helpers/GatewayCompatibilityHelper.php, includes/Helpers/StoreEnvironmentHelper.php, includes/Support/CompatibilityCatalogue.php, includes/Repositories/CompatibilityCatalogueRepository.php, includes/Repositories/FontRepository.php, includes/Renderer/ExpressPay.php]
 ---
 # Integrations
@@ -25,6 +25,7 @@ covers: [includes/Integrations/, includes/Helpers/IntegrationsHelper.php, includ
   - The bundled fallback covers `cod`, `bacs`, `cheque`, `stripe`, `ppcp-gateway` and `klarna_payments`.
 - **Block-only gateways.** `Helpers\GatewayCompatibilityHelper` lists the enabled classic gateways, then the Checkout-block payment methods that have no classic counterpart, as `block-only`. Those can't run in a layout.
 - **Stripe Express.** Its params get `has_block=false` when the layout has an Express Pay block (`Renderer\ExpressPay`).
+- **Wallet orders.** A gateway's own wallet endpoint posts a marker key; `ExpressPay::is_wallet_order()` reads it and the layout's own required rules stand down for that order. A gateway with another key is added through `yaycheckout_express_wallet_order_markers`. See [storefront.md](storefront.md#how-it-stays-a-woocommerce-checkout).
 
 ## Other plugins
 
@@ -40,6 +41,7 @@ covers: [includes/Integrations/, includes/Helpers/IntegrationsHelper.php, includ
   - renders its checkboxes on `yaycheckout_checkout_terms`;
   - removes its submit button on takeover;
   - adds CSS at priority 21, after checkout-base at 20.
+- **FunnelKit Stripe** (`Integrations\FunnelKitStripe`): its "inline" checkout position prints the wallet buttons on `woocommerce_checkout_billing`, which no block fires, so the adapter registers `FKWCS\Gateway\Stripe\SmartButtons::payment_request_button` with `ExpressPay::adopt()`. Inert without FunnelKit. Other gateways: BL-5.
 - **Plugin spots.** `Helpers\PluginBlockCatalogue` lists the placeholder spots, extensible with `yaycheckout_plugin_blocks`. `Helpers\IntegrationsHelper` tells the SPA which companion plugins are loaded (`YAYBOOST_VERSION`, `YAYLOYALTY_VERSION`). Icons are bundled, because wordpress.org forbids remote images.
 
 ## WordPress

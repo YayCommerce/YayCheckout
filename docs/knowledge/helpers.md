@@ -1,7 +1,7 @@
 ---
 area: helpers
 updated: 2026-11-12
-updated_ref: edf2074
+updated_ref: 44fdc3b
 covers: [includes/Helpers/, includes/Repositories/, includes/Services/, includes/Support/, includes/Renderer/CheckoutPage.php, includes/Renderer/CheckoutScope.php, includes/Renderer/BlockEmptiness.php, includes/Blocks/BlockRegistry.php, apps/admin/src/hooks/, apps/admin/src/lib/, packages/blocks/src/shared/]
 ---
 # Helpers: reuse before you write
@@ -38,6 +38,8 @@ covers: [includes/Helpers/, includes/Repositories/, includes/Services/, includes
 | `Services\RequiredIndicator`, `Services\RequiredFieldOverlay` | the required/optional label suffix, and making WooCommerce's field registry follow the layout |
 | `Services\ExtraFieldSubmission::collect()` | turning a submission into extra-field rows and errors |
 | `Renderer\CheckoutScope::classes()` (`includes/Renderer/CheckoutScope.php`) | a block that may render outside Checkout |
+| `Renderer\ExpressPay::adopt()` (`includes/Renderer/ExpressPay.php`) | a gateway prints wallet buttons on a classic hook no block fires: move them into the Express Pay block |
+| `Renderer\ExpressPay::is_wallet_order()` | this checkout request is a gateway's wallet payment, which posts only the wallet's fields |
 | `Renderer\BlockEmptiness::wrapper()` (`includes/Renderer/BlockEmptiness.php`) | a wrapper that supports the "Block is empty" visibility rule |
 | `Blocks\BlockRegistry::built_dirs()`, `locked_blocks()`, `registered_names()` (`includes/Blocks/BlockRegistry.php`) | built block paths and edition-aware block lists |
 | `Helpers\CheckoutSetupHelper::shipping_needs_setup()`, `payment_needs_setup()` (`includes/Helpers/CheckoutSetupHelper.php`) | WooCommerce setup gaps that leave a checkout unusable |

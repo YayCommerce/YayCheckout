@@ -1,7 +1,7 @@
 ---
 area: architecture
 updated: 2026-11-12
-updated_ref: edf2074
+updated_ref: 44fdc3b
 covers: [yaycheckout.php, YayCheckoutPluginAdapter.php, editions/, uninstall.php, includes/YayCheckout.php, includes/Fallback.php, includes/Engine/, includes/Controllers/, includes/Repositories/, includes/Models/, includes/Services/, includes/Support/, includes/PostTypes/, includes/Enums/, includes/Utils/, includes/Pro/]
 ---
 # Architecture
@@ -86,6 +86,7 @@ Core has no admin `wp_ajax_*` handlers. The storefront wc-ajax endpoints are lis
 | `yaycheckout_localize_admin_data`, `yaycheckout_localize_meta` | `Helpers\LocalizeHelper` | SPA bootstrap data |
 | `yaycheckout_integrations` | `Helpers\IntegrationsHelper` | companion plugins shown in the SPA |
 | `yaycheckout_plugin_blocks` | `Helpers\PluginBlockCatalogue` | plugin placeholder spots |
+| `yaycheckout_express_wallet_order_markers` | `Renderer\ExpressPay::is_wallet_order()` | POST keys that mark a gateway's wallet order |
 | `yaycheckout_themeless_checkout` | `Renderer\ThemelessCheckout` | opt out of themeless (mu-plugin only: runs at `setup_theme`) |
 | `yaycheckout_checkout_terms`, `yaycheckout_layout_renders_order_received`, `yaycheckout_live_values_source` | `includes/Renderer/` | renderer extension points |
 

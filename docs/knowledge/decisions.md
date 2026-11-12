@@ -1,7 +1,7 @@
 ---
 area: decisions
 updated: 2026-11-12
-updated_ref: edf2074
+updated_ref: 44fdc3b
 covers: [includes/YayCheckout.php, includes/Support/Plan.php, scripts/run.sh, includes/Renderer/LayoutPin.php, includes/Renderer/DesignFonts.php]
 ---
 # Decisions

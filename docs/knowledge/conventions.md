@@ -1,7 +1,7 @@
 ---
 area: conventions
 updated: 2026-11-12
-updated_ref: edf2074
+updated_ref: 44fdc3b
 covers: [includes/, packages/blocks/src/, phpcs.xml]
 ---
 # Conventions
