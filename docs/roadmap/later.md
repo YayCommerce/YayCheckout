@@ -13,3 +13,17 @@
 - target: 1.1.0
 - why: requested 2026-11-12; lets merchants switch from five competing checkout/field plugins without rebuilding their checkout
 - editions: pro
+
+### R-3 Side cart
+- status: planned
+- size: L
+- target: 1.1.0
+- why: requested 2026-11-12; a slide-out cart so shoppers reach checkout without leaving the page
+- editions: pro
+
+### R-4 YayReviews trust blocks
+- status: planned
+- size: M
+- target: 1.1.0
+- why: requested 2026-11-12; checkout blocks that show YayReviews ratings and reviews to lift trust at checkout
+- editions: pro
