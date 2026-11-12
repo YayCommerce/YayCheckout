@@ -8,7 +8,7 @@ use YayCheckout\Repositories\LayoutRepository;
 use YayCheckout\Support\Plan;
 use YayCheckout\Tests\Support\LayoutFactory;
 
-/** P-1: the merchant's priority decides which of several matching active layouts the storefront serves. */
+/** The merchant's priority decides which of several matching active layouts the storefront serves. */
 class LayoutPriorityTest extends WP_UnitTestCase {
 
     private LayoutRepository $layouts;
@@ -104,7 +104,7 @@ class LayoutPriorityTest extends WP_UnitTestCase {
         $this->assertSame( [ $a, $b ], $this->priority_ids() );
 
         $this->assertSame( 409, $this->put_priority( [ 'ids' => [ $a ] ] )->get_status() );
-        $this->assertSame( 400, $this->put_priority( [ 'ids' => [ (string) $a, (string) $b ] ] )->get_status() );
+        $this->assertSame( 400, $this->put_priority( [ 'ids' => [ 'first', 'second' ] ] )->get_status() );
         $this->assertSame( 400, $this->put_priority( [] )->get_status() );
         $this->assertSame( [ $a, $b ], $this->priority_ids() );
 

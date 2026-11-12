@@ -35,6 +35,16 @@ class LayoutPriorityRestController extends BaseRestController {
                     'methods'             => \WP_REST_Server::EDITABLE,
                     'callback'            => fn( $request ) => $this->exec_write_wp( [ $this, 'save_priority' ], $request ),
                     'permission_callback' => [ $this, 'permission_callback' ],
+                    'args'                => [
+                        'ids' => [
+                            'required' => true,
+                            'type'     => 'array',
+                            'items'    => [
+                                'type'    => 'integer',
+                                'minimum' => 1,
+                            ],
+                        ],
+                    ],
                 ],
             ]
         );
@@ -51,12 +61,7 @@ class LayoutPriorityRestController extends BaseRestController {
      * @return array|\WP_Error { layouts }
      */
     public function save_priority( \WP_REST_Request $request ) {
-        $input = $request->get_json_params();
-        $ids   = is_array( $input ) ? ( $input['ids'] ?? null ) : null;
-
-        if ( ! is_array( $ids ) || array_values( $ids ) !== $ids || [] !== array_filter( $ids, static fn( $id ) => ! is_int( $id ) || $id <= 0 ) ) {
-            return $this->error_invalid_arguments();
-        }
+        $ids = array_map( 'intval', (array) $request->get_param( 'ids' ) );
 
         try {
             $this->layouts->set_priority( $ids );
