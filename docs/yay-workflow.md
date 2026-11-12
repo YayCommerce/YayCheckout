@@ -1,4 +1,4 @@
-<!-- Kit-managed by the yay plugin 0.5.0. Run /yay:harness-update instead of editing; put repo-specific notes in another docs/ file. -->
+<!-- Kit-managed by the yay plugin 0.8.0. Run /yay:harness-update instead of editing; put repo-specific notes in another docs/ file. -->
 # From roadmap to release
 
 A worked example: shipping **v1.0.0** of this plugin with three features, from the roadmap to the release tag. Lines starting with `/yay:` are typed into Claude Code; lines starting with `yayh` are run in the terminal.
@@ -7,7 +7,7 @@ The skill table and the git rules are in the "How we work here" block of [`CLAUD
 
 ```
 /yay:roadmap --add="X; Y; Z" --target=1.0.0  →  /yay:roadmap --target=1.0.0  →  /yay:autopilot --target=1.0.0
-→ merge the PRs  →  /yay:release --bundle  →  /yay:release 1.0.0  →  merge  →  /yay:release --tag-only
+→ merge the PRs  →  /yay:release --bundle  →  /yay:release 1.0.0  →  merge  →  /yay:release --tag-only  →  /yay:archive
 ```
 
 Don't remember a command? Type `/yay:go` followed by what you want in plain words, and it runs the right skill.
@@ -32,6 +32,8 @@ Don't remember a command? Type `/yay:go` followed by what you want in plain word
 - Plain words work too: `/yay:roadmap add X, Y and Z for 1.0.0`. `--target=minor` (or `patch`, `major`) means the next such version.
 - Sizes: S = 1.5 dev-days, M = 4, L = 8. Capacity defaults to 8 dev-days per 2-week sprint. Once 3 items are built, `yayh roadmap pace` compares their sizes with the working days they took and suggests a capacity, and `/yay:roadmap` plans with it.
 - Each command opens one `docs(roadmap): …` PR. Merge it.
+- An item reads `done` once its plans are merged (`yayh roadmap sync`), so it isn't reported as slipped while it waits for the release. The release turns it into `shipped:<version>`.
+- When a sprint ends, `/yay:roadmap --close` writes its review (done, slipped, keep and change), carries over what's unfinished, and records the sprint's velocity. After 2 closed sprints, the next plan uses that velocity as the capacity.
 - `/yay:roadmap --status --target=1.0.0` shows what's left for the version, and `/yay:roadmap --status` the current sprint; neither changes anything.
 - Moved a feature to the next version? `/yay:roadmap --retarget=R-3:1.1.0`.
 

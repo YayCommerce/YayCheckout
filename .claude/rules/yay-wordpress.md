@@ -2,7 +2,7 @@
 paths:
   - "**/*.php"
 ---
-<!-- Kit-managed by the yay plugin 0.5.0. Run /yay:harness-update instead of editing. -->
+<!-- Kit-managed by the yay plugin 0.8.0. Run /yay:harness-update instead of editing. -->
 # WordPress and PHP rules (YayCheckout Pro - WooCommerce Checkout Builder)
 
 ## PHP 7.4 floor
