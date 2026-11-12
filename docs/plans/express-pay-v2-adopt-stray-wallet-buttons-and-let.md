@@ -45,7 +45,7 @@ R-6's acceptance: *Express pay buttons show and complete payment from the checko
 - **UI:** none. The editor notice text is unchanged; it just stops showing falsely.
 
 ## Tasks
-- [ ] T1 Add wallet-order detection: `ExpressPay::is_wallet_order()` and the `yaycheckout_express_wallet_order_markers` filter, with a docblock naming which gateway posts which key — `includes/Renderer/ExpressPay.php`
+- [x] T1 Add wallet-order detection: `ExpressPay::is_wallet_order()` and the `yaycheckout_express_wallet_order_markers` filter, with a docblock naming which gateway posts which key — `includes/Renderer/ExpressPay.php`
   - Reuse: none, new is_wallet_order() because no helper reads gateway wallet markers today (`yayh code find` and `docs/knowledge/helpers.md` have none); sanitising follows `CheckoutExtraFields::posted()` in `includes/Renderer/CheckoutExtraFields.php` (`wp_unslash` + `sanitize_text_field`)
 - [ ] T2 Stand the layout's required rules down on wallet orders: early return in `CheckoutRequiredFields::filter_fields()` and `CheckoutExtraFields::validate()`; add `tests/Integration/Renderer/ExpressWalletOrderTest.php` (new) — `includes/Renderer/CheckoutRequiredFields.php`, `includes/Renderer/CheckoutExtraFields.php`, `tests/Integration/Renderer/ExpressWalletOrderTest.php` (new) [risk: 3]
   - Reuse: ExpressPay::is_wallet_order() from T1; LayoutFactory::serve() in `tests/Support/LayoutFactory.php`; the WC_Checkout fields pattern of `tests/Integration/Renderer/CheckoutRequiredFieldsHiddenTest.php`

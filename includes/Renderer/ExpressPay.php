@@ -37,6 +37,26 @@ class ExpressPay {
     }
 
     /**
+     * Whether this checkout request is a wallet payment (Apple Pay, Google Pay, Link) that a gateway's own
+     * wc-ajax endpoint sends through WC_Checkout::process_checkout() with only the wallet's fields. Gateways
+     * mark it with a POST key: FunnelKit Stripe posts payment_request_type, WooCommerce Stripe's Express
+     * Checkout Element express_checkout_type, WooPayments express_payment_type. Filtered by
+     * yaycheckout_express_wallet_order_markers. Runs inside WooCommerce's checkout, after the gateway checked its nonce.
+     */
+    public static function is_wallet_order(): bool {
+        $markers = apply_filters( 'yaycheckout_express_wallet_order_markers', [ 'payment_request_type', 'express_checkout_type', 'express_payment_type' ] );
+
+        foreach ( is_array( $markers ) ? $markers : [] as $key ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- See above.
+            if ( is_string( $key ) && isset( $_POST[ $key ] ) && is_string( $_POST[ $key ] ) && '' !== sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Stripe's classic Express Checkout params, filtered by wc_stripe_express_checkout_params. Stripe sets
      * has_block while the checkout page holds WooCommerce's Checkout block and its classic script then leaves
      * the buttons to that block; our template prints in its place, so the script must run.
