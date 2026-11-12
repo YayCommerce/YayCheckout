@@ -1,5 +1,5 @@
 ---
-horizon: 2027-02-17
+horizon: 2027-03-31
 sprint_length: 2w
 updated: 2026-11-12
 capacity: 8
@@ -20,11 +20,15 @@ One file per sprint (`sprint-<n>.md`), `later.md` for unscheduled work, and a ge
 | [Sprint 5](sprint-5.md) | 2027-01-07 → 2027-01-20 | YayReviews trust blocks and the remaining Yay ecosystem integrations. | 2 (0 shipped) | 8 |
 | [Sprint 6](sprint-6.md) | 2027-01-21 → 2027-02-03 | Side cart. Second to cut if 1.1.0 runs late. | 1 (0 shipped) | 8 |
 | [Sprint 7](sprint-7.md) | 2027-02-04 → 2027-02-17 | Checkout analytics, then the 1.1.0 release. First to cut if it runs late. | 1 (0 shipped) | 8 |
-| [Later](later.md) | - | - | 0 (0 shipped) | 0 |
+| [Sprint 8](sprint-8.md) | 2027-02-18 → 2027-03-03 | Yay ecosystem first: YayCurrency and YayPricing work inside a checkout layout. | 2 (0 shipped) | 8 |
+| [Sprint 9](sprint-9.md) | 2027-03-04 → 2027-03-17 | Multilingual checkouts, YayReturns on the thank-you page, and more wallet gateways in Express Pay. | 3 (0 shipped) | 7 |
+| [Sprint 10](sprint-10.md) | 2027-03-18 → 2027-03-31 | Subscriptions and third-party currency switchers, then the 1.2.0 release. Currency switchers are first to cut if it runs late. | 2 (0 shipped) | 8 |
+| [Later](later.md) | - | - | 1 (0 shipped) | 4 |
 
 **Versions**
 
 | Version | Items | Last open item |
 |---|---|---|
 | [1.1.0](v1.1.0.md) · [brief](release-1.1.0.md) | 10 items: 8 open, 0 in progress, 2 done, 0 shipped, 0 dropped | [Sprint 7](sprint-7.md), ends 2027-02-17 |
+| [1.2.0](v1.2.0.md) · [brief](release-1.2.0.md) | 7 items: 7 open, 0 in progress, 0 shipped, 0 dropped | [Sprint 10](sprint-10.md), ends 2027-03-31 |
 <!-- yay:roadmap-index:end -->

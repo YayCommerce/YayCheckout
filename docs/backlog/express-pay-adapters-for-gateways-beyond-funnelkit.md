@@ -4,7 +4,7 @@ title: Express Pay adapters for gateways beyond FunnelKit Stripe that print wall
 kind: deferred
 status: open
 from: P-2
-affects: []
+affects: [R-15]
 default: 
 decision:
 created: 2026-11-12
