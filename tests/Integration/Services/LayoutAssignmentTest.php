@@ -23,7 +23,8 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         return $layout;
     }
 
-    private static function condition( string $type, string $operator, array $value ): array {
+    /** @param mixed $value */
+    private static function condition( string $type, string $operator, $value ): array {
         return [
             'type'     => $type,
             'operator' => $operator,
@@ -116,6 +117,46 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         $this->assertSame( LayoutAssignment::OUTLOOK_NO, LayoutAssignment::outlook( [ $guests ], self::SHOPPER ) );
         $this->assertSame( LayoutAssignment::OUTLOOK_YES, LayoutAssignment::outlook( [ $cart_only, self::layout( 3, [] ) ], self::SHOPPER ) );
         $this->assertSame( LayoutAssignment::OUTLOOK_NO, LayoutAssignment::outlook( [], self::SHOPPER ) );
+    }
+
+    /** P-1: amounts are money (rounded to the store's decimals), quantities whole; neither may be negative. */
+    public function test_sanitize_rules_accepts_and_rejects_numbers(): void {
+        update_option( 'woocommerce_price_num_decimals', 2 );
+
+        $value = static fn( string $type, $raw ) => Layout::sanitize_rules( [ [ self::condition( $type, ConditionType::AT_LEAST, $raw ) ] ] )[0][0]['value'];
+
+        $this->assertSame( 100.0, $value( ConditionType::CART_SUBTOTAL, 100 ) );
+        $this->assertSame( 99.99, $value( ConditionType::CART_SUBTOTAL, 99.987 ) );
+        $this->assertSame( 12.5, $value( ConditionType::CART_SUBTOTAL, '12.5' ) );
+        $this->assertSame( 0.0, $value( ConditionType::CART_SUBTOTAL, 0 ) );
+        $this->assertSame( 3, $value( ConditionType::CART_QUANTITY, 3 ) );
+        $this->assertSame( 3, $value( ConditionType::CART_QUANTITY, 3.0 ) );
+        $this->assertSame( 20, $value( ConditionType::CART_QUANTITY, '20' ) );
+
+        $refused = [
+            [ ConditionType::CART_SUBTOTAL, -1 ],
+            [ ConditionType::CART_SUBTOTAL, 'abc' ],
+            [ ConditionType::CART_SUBTOTAL, '-5' ],
+            [ ConditionType::CART_SUBTOTAL, null ],
+            [ ConditionType::CART_SUBTOTAL, [ 100 ] ],
+            [ ConditionType::CART_SUBTOTAL, INF ],
+            [ ConditionType::CART_QUANTITY, 1.5 ],
+            [ ConditionType::CART_QUANTITY, -2 ],
+            [ ConditionType::CART_QUANTITY, '2.5' ],
+            [ ConditionType::CART_QUANTITY, true ],
+        ];
+
+        foreach ( $refused as [ $type, $raw ] ) {
+            try {
+                $value( $type, $raw );
+                $this->fail( sprintf( '%s accepted %s.', $type, wp_json_encode( $raw ) ) );
+            } catch ( \InvalidArgumentException $ex ) {
+                $this->assertStringContainsString( 'Invalid value', $ex->getMessage() );
+            }
+        }
+
+        $this->expectException( \InvalidArgumentException::class );
+        Layout::sanitize_rules( [ [ self::condition( ConditionType::CART_QUANTITY, ConditionType::CONTAINS_ANY, [ 1 ] ) ] ] );
     }
 
     public function test_unknown_type_never_matches(): void {

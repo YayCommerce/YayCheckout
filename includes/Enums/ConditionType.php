@@ -20,9 +20,13 @@ final class ConditionType {
     public const PRODUCT = 'product';
     /** Cart items' product categories, their ancestors included. */
     public const PRODUCT_CATEGORY = 'product_category';
+    /** The cart subtotal as the shopper sees it; also its context key, a float. */
+    public const CART_SUBTOTAL = 'cart_subtotal';
+    /** How many items the cart holds, quantities summed; also its context key, an int. */
+    public const CART_QUANTITY = 'cart_quantity';
 
-    /** The types read from the cart; the context lacks CART_ITEMS until the cart loads. */
-    public const CART_TYPES = [ self::PRODUCT, self::PRODUCT_CATEGORY ];
+    /** The types read from the cart; the context lacks their facts until the cart loads. */
+    public const CART_TYPES = [ self::PRODUCT, self::PRODUCT_CATEGORY, self::CART_SUBTOTAL, self::CART_QUANTITY ];
 
     /** Context key: list<array{product: int, categories: int[]}>, one per cart item. */
     public const CART_ITEMS = 'cart_items';
@@ -33,6 +37,10 @@ final class ConditionType {
     public const VALUE_CHOICE = 'choice';
     /** Value is a list of post or term ids. */
     public const VALUE_IDS = 'ids';
+    /** Value is a money amount >= 0, rounded to the store's price decimals. */
+    public const VALUE_AMOUNT = 'amount';
+    /** Value is a whole number >= 0. */
+    public const VALUE_COUNT = 'count';
 
     /** Most ids one condition may list. */
     public const MAX_IDS = 500;
@@ -55,6 +63,10 @@ final class ConditionType {
     public const CONTAINS_ALL = 'contains_all';
     /** No cart item matches. */
     public const CONTAINS_NONE = 'contains_none';
+    /** The fact is greater than or equal to the value. */
+    public const AT_LEAST = 'at_least';
+    /** The fact is below the value. */
+    public const LESS_THAN = 'less_than';
 
     /** Operators whose condition holds when its test does; not_in and is_not invert it. */
     public const AFFIRMATIVE_OPERATORS = [ self::IN, self::IS ];
@@ -64,6 +76,8 @@ final class ConditionType {
     private const CHOICE_OPERATORS = [ self::IS, self::IS_NOT ];
 
     private const CART_OPERATORS = [ self::CONTAINS_ANY, self::CONTAINS_ALL, self::CONTAINS_NONE ];
+
+    private const NUMBER_OPERATORS = [ self::AT_LEAST, self::LESS_THAN ];
 
     /**
      * @return array<string, array{operators: string[], value: string, choices?: string[]}>
@@ -91,6 +105,14 @@ final class ConditionType {
             self::PRODUCT_CATEGORY => [
                 'operators' => self::CART_OPERATORS,
                 'value'     => self::VALUE_IDS,
+            ],
+            self::CART_SUBTOTAL    => [
+                'operators' => self::NUMBER_OPERATORS,
+                'value'     => self::VALUE_AMOUNT,
+            ],
+            self::CART_QUANTITY    => [
+                'operators' => self::NUMBER_OPERATORS,
+                'value'     => self::VALUE_COUNT,
             ],
         ];
     }
