@@ -21,6 +21,10 @@ function valueText({ type, value }: WireCondition, labels: Labels): string {
     return value.map((key) => storeData().roles[key] ?? key).join(', ');
   }
 
+  if (type === 'billing_country' || type === 'shipping_country') {
+    return value.map((code) => storeData().countries[code] ?? code).join(', ');
+  }
+
   const kind = isKnownType(type) ? CONDITION_TYPES[type].ids : undefined;
   if (kind) {
     return value.map((id) => labels[kind]?.[id] ?? `#${id}`).join(', ');

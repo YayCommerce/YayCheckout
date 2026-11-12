@@ -36,6 +36,20 @@ const OPTION_PICKERS = {
     searchPlaceholder: __('Search roles', 'yaycheckout'),
     emptyText: __('No roles found.', 'yaycheckout'),
   }),
+  billing_country: () => ({
+    options: storeData().countries,
+    placeholder: __('Select countries', 'yaycheckout'),
+    searchPlaceholder: __('Search countries', 'yaycheckout'),
+    emptyText: __('No countries found.', 'yaycheckout'),
+    'aria-label': __('Billing countries', 'yaycheckout'),
+  }),
+  shipping_country: () => ({
+    options: storeData().countries,
+    placeholder: __('Select countries', 'yaycheckout'),
+    searchPlaceholder: __('Search countries', 'yaycheckout'),
+    emptyText: __('No countries found.', 'yaycheckout'),
+    'aria-label': __('Shipping countries', 'yaycheckout'),
+  }),
 } satisfies Partial<Record<ConditionType, () => object>>;
 
 /** Copy for the types whose value the server searches for: those with CONDITION_TYPES' `ids`. */
@@ -143,37 +157,49 @@ function ConditionRow({
     );
   }
 
+  const isCountry = condition.type === 'billing_country' || condition.type === 'shipping_country';
+
   return (
-    <div className="flex items-center gap-2">
-      <Select value={condition.type} onValueChange={(type) => onChange(newCondition(type as ConditionType))}>
-        <SelectTrigger className="w-40 shrink-0">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {CONDITION_TYPE_KEYS.map((type) => (
-            <SelectItem key={type} value={type}>
-              {CONDITION_TYPES[type].label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <Select value={condition.type} onValueChange={(type) => onChange(newCondition(type as ConditionType))}>
+          <SelectTrigger className="w-40 shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CONDITION_TYPE_KEYS.map((type) => (
+              <SelectItem key={type} value={type}>
+                {CONDITION_TYPES[type].label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <Select value={condition.operator} onValueChange={(operator) => onChange({ ...condition, operator })}>
-        <SelectTrigger className="w-40 shrink-0">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {CONDITION_TYPES[condition.type].operators.map((operator) => (
-            <SelectItem key={operator.value} value={operator.value}>
-              {operator.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <Select value={condition.operator} onValueChange={(operator) => onChange({ ...condition, operator })}>
+          <SelectTrigger className="w-40 shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CONDITION_TYPES[condition.type].operators.map((operator) => (
+              <SelectItem key={operator.value} value={operator.value}>
+                {operator.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <ValuePicker condition={condition} onChange={(value) => onChange({ ...condition, value })} />
+        <ValuePicker condition={condition} onChange={(value) => onChange({ ...condition, value })} />
 
-      <TrashButton aria-label={__('Remove condition', 'yaycheckout')} onClick={onRemove} />
+        <TrashButton aria-label={__('Remove condition', 'yaycheckout')} onClick={onRemove} />
+      </div>
+      {isCountry && (
+        <p className="text-muted-foreground text-xs">
+          {__(
+            "Read from the customer's saved address when checkout opens. Changing the country in the form doesn't switch the layout.",
+            'yaycheckout',
+          )}
+        </p>
+      )}
     </div>
   );
 }

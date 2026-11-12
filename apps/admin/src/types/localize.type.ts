@@ -37,4 +37,6 @@ export type AdminData = {
 export type StoreData = {
   /** Role slug => translated name, every registered role. */
   roles: Record<string, string>;
+  /** Country code => name, as WooCommerce lists them. */
+  countries: Record<string, string>;
 };

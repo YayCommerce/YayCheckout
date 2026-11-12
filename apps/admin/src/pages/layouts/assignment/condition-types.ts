@@ -6,7 +6,15 @@ import type { LayoutRulesWire } from '@/lib/schema/layout.schema';
 
 /** Mirrors Enums\ConditionType (types, operators, value kind, choices); PHP validates on save. */
 export type ConditionType =
-  'customer_role' | 'login_status' | 'device' | 'product' | 'product_category' | 'cart_subtotal' | 'cart_quantity';
+  | 'customer_role'
+  | 'login_status'
+  | 'device'
+  | 'product'
+  | 'product_category'
+  | 'cart_subtotal'
+  | 'cart_quantity'
+  | 'billing_country'
+  | 'shipping_country';
 
 /**
  * Value is a list for multi-select types (role slugs, or ids as strings), one of the type's `choices` for choice types,
@@ -42,6 +50,12 @@ const CART_OPERATORS = [
   { value: 'contains_any', label: __('contains any of', 'yaycheckout') },
   { value: 'contains_all', label: __('contains only', 'yaycheckout') },
   { value: 'contains_none', label: __('contains none of', 'yaycheckout') },
+];
+
+/** The list operators, worded for a place: "in Germany", not "in list Germany". */
+const COUNTRY_OPERATORS = [
+  { value: 'in', label: __('in', 'yaycheckout') },
+  { value: 'not_in', label: __('not in', 'yaycheckout') },
 ];
 
 /** Compared with the cart's subtotal or item count. */
@@ -82,6 +96,8 @@ export const CONDITION_TYPES: Record<
   product_category: { label: __('Categories', 'yaycheckout'), operators: CART_OPERATORS, ids: 'categories' },
   cart_subtotal: { label: __('Cart subtotal', 'yaycheckout'), operators: NUMBER_OPERATORS, number: 'amount' },
   cart_quantity: { label: __('Cart quantity', 'yaycheckout'), operators: NUMBER_OPERATORS, number: 'count' },
+  billing_country: { label: __('Billing country', 'yaycheckout'), operators: COUNTRY_OPERATORS },
+  shipping_country: { label: __('Shipping country', 'yaycheckout'), operators: COUNTRY_OPERATORS },
 };
 
 export const CONDITION_TYPE_KEYS = Object.keys(CONDITION_TYPES) as ConditionType[];
