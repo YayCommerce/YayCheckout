@@ -3,7 +3,7 @@
 Goal: Faster address entry, and YayBoost offers rebuilt on the v2 adapter.
 
 ### R-5 Address autocomplete
-- status: planned
+- status: todo
 - size: M
 - target: 1.1.0
 - why: requested 2026-11-12; suggest addresses as the shopper types so checkout is faster with fewer typos
@@ -11,7 +11,7 @@ Goal: Faster address entry, and YayBoost offers rebuilt on the v2 adapter.
 - acceptance: Typing an address on checkout suggests matches and fills billing and shipping fields, and checkout still works when the lookup service is unavailable.
 
 ### R-9 YayBoost adapter v2
-- status: planned
+- status: todo
 - size: M
 - target: 1.1.0
 - why: requested 2026-11-12; next version of includes/Integrations/YayBoost.php

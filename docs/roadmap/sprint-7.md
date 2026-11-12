@@ -3,7 +3,7 @@
 Goal: Checkout analytics, then the 1.1.0 release. First to cut if it runs late.
 
 ### R-8 Checkout analytics
-- status: planned
+- status: todo
 - size: L
 - target: 1.1.0
 - why: requested 2026-11-12; show merchants where shoppers drop off in their checkout layout

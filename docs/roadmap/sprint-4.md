@@ -3,7 +3,7 @@
 Goal: Public developer API. Half capacity: the sprint spans the holidays.
 
 ### R-10 Public developer API
-- status: planned
+- status: todo
 - size: M
 - target: 1.1.0
 - why: requested 2026-11-12; a documented, stable set of hooks and functions for developers, beyond today's internal filters (docs/knowledge/architecture.md, Hooks the plugin exposes)
