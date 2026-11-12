@@ -70,10 +70,11 @@ YayCheckout replaces WooCommerce's classic checkout with a layout the merchant b
 8. Never change `YayCheckoutPluginAdapter::get_plugin_slug()`: it prefixes customers' license options.
 
 ## Tests
-- Integration tests live in `tests/Integration/` (WordPress test library + WooCommerce). Pro tests are in `tests/Integration/Pro/` and skip on Free.
-- Run one with `vendor/bin/phpunit --filter <TestName>`.
-- There are no JS tests. CI runs only `php -l`, the boundary check, `tsc` and ESLint.
-- Setup and traps: [release.md § Tests](docs/knowledge/release.md#tests).
+- `yayh test run all` runs the unit (`tests/php/unit/`, Brain Monkey), js (`tests/js/`, Vitest) and wp-env integration (`tests/php/integration/`) layers. Integration needs Docker and `yayh e2e env start`. Use Node 22.
+- The older integration suite lives in `tests/Integration/` (WordPress test library + WooCommerce, a Local MySQL database), run by `composer test`. Pro tests are in `tests/Integration/Pro/` and skip on Free.
+- Run one with `vendor/bin/phpunit -c tests/php/unit.xml.dist --filter <TestName>` (unit) or `vendor/bin/phpunit --filter <TestName>` (Local suite).
+- CI runs only `php -l`, the boundary check, `tsc` and ESLint.
+- Layers, stubs, traps and the Coverage table: [testing.md](docs/knowledge/testing.md). Local suite setup: [release.md § Tests](docs/knowledge/release.md#tests).
 
 ## Read when…
 - adding any function, hook or setting → [docs/knowledge/helpers.md](docs/knowledge/helpers.md) (reuse first)
@@ -83,6 +84,7 @@ YayCheckout replaces WooCommerce's classic checkout with a layout the merchant b
 - building, releasing, testing or touching CI → [docs/knowledge/release.md](docs/knowledge/release.md)
 - writing code in a new place, or adding a block, setting or route → [docs/knowledge/conventions.md](docs/knowledge/conventions.md)
 - touching gateway, WooCommerce-surface or other-plugin compatibility → [docs/knowledge/integrations.md](docs/knowledge/integrations.md)
+- writing or fixing a test → [docs/knowledge/testing.md](docs/knowledge/testing.md)
 - something looks wrong or a check fails → [docs/knowledge/known-issues.md](docs/knowledge/known-issues.md)
 - asking "why is it built this way" → [docs/knowledge/decisions.md](docs/knowledge/decisions.md)
 <!-- yay:project:end -->

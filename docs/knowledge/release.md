@@ -58,7 +58,7 @@ There's no PHP typecheck. The only typecheck is the admin `tsc --noEmit`, inside
 
 ## Tests
 
-- **Integration only.** The suite is `tests/Integration/`. Helpers are in `tests/Support/` (`LayoutFactory`, fake gateways) and fixtures in `tests/fixtures/`. Pro tests sit in `tests/Integration/Pro/` and skip when `! Plan::is_pro()`. `phpunit.xml.dist` sets `failOnWarning`.
+- **This section is the Local-MySQL integration suite.** The unit, js and wp-env integration layers are in [testing.md](testing.md). The suite is `tests/Integration/`. Helpers are in `tests/Support/` (`LayoutFactory`, fake gateways) and fixtures in `tests/fixtures/`. Pro tests sit in `tests/Integration/Pro/` and skip when `! Plan::is_pro()`. `phpunit.xml.dist` sets `failOnWarning`.
 - **`tests/bootstrap.php`:**
   - loads `wp-phpunit`;
   - requires WooCommerce from the **sibling** `../woocommerce/woocommerce.php` and the plugin as mu-plugins;
