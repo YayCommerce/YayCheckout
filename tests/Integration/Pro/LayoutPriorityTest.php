@@ -90,6 +90,38 @@ class LayoutPriorityTest extends WP_UnitTestCase {
         }
     }
 
+    public function test_priority_route_saves_and_needs_manage_woocommerce(): void {
+        [ $a, $b ] = $this->two_matching();
+        LayoutFactory::as_shop_manager();
+
+        $read = rest_do_request( new \WP_REST_Request( 'GET', '/yaycheckout/v1/layouts/priority' ) );
+        $this->assertSame( 200, $read->get_status() );
+        $this->assertSame( [ $b, $a ], wp_list_pluck( $read->get_data()['layouts'], 'id' ) );
+
+        $saved = $this->put_priority( [ 'ids' => [ $a, $b ] ] );
+        $this->assertSame( 200, $saved->get_status() );
+        $this->assertSame( [ $a, $b ], wp_list_pluck( $saved->get_data()['layouts'], 'id' ) );
+        $this->assertSame( [ $a, $b ], $this->priority_ids() );
+
+        $this->assertSame( 409, $this->put_priority( [ 'ids' => [ $a ] ] )->get_status() );
+        $this->assertSame( 400, $this->put_priority( [ 'ids' => [ (string) $a, (string) $b ] ] )->get_status() );
+        $this->assertSame( 400, $this->put_priority( [] )->get_status() );
+        $this->assertSame( [ $a, $b ], $this->priority_ids() );
+
+        wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
+        $this->assertSame( 403, $this->put_priority( [ 'ids' => [ $b, $a ] ] )->get_status() );
+        $this->assertSame( 403, rest_do_request( new \WP_REST_Request( 'GET', '/yaycheckout/v1/layouts/priority' ) )->get_status() );
+        $this->assertSame( [ $a, $b ], $this->priority_ids() );
+    }
+
+    private function put_priority( array $body ): \WP_REST_Response {
+        $request = new \WP_REST_Request( 'PUT', '/yaycheckout/v1/layouts/priority' );
+        $request->set_header( 'Content-Type', 'application/json' );
+        $request->set_body( wp_json_encode( $body ) );
+
+        return rest_do_request( $request );
+    }
+
     public function test_reactivating_keeps_the_priority(): void {
         [ $a, $b ] = $this->two_matching();
         $this->layouts->set_priority( [ $a, $b ] );

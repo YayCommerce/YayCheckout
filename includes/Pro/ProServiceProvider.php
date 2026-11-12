@@ -4,6 +4,7 @@ namespace YayCheckout\Pro;
 use YayCheckout\Pro\Controllers\AssignmentOptionsRestController;
 use YayCheckout\Pro\Controllers\LayoutExportRestController;
 use YayCheckout\Pro\Controllers\LayoutImportRestController;
+use YayCheckout\Pro\Controllers\LayoutPriorityRestController;
 use YayCheckout\Pro\Controllers\LayoutRulesRestController;
 use YayCheckout\Pro\Controllers\ThankYouRestController;
 use YayCheckout\Pro\Renderer\OrderAgain;
@@ -62,6 +63,7 @@ class ProServiceProvider {
         AssignmentOptionsRestController::get_instance();
         LayoutExportRestController::get_instance();
         LayoutImportRestController::get_instance();
+        LayoutPriorityRestController::get_instance();
         LayoutRulesRestController::get_instance();
         ThankYouRestController::get_instance();
     }
