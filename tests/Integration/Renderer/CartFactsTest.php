@@ -57,6 +57,8 @@ class CartFactsTest extends WP_UnitTestCase {
         $product->save();
 
         WC()->cart->add_to_cart( $product->get_id(), 2 );
+        // The cart outlives a test, and its add-to-cart recalculation hook doesn't: the suite restores hooks.
+        WC()->cart->calculate_totals();
         $session = new \WC_Cart_Session( WC()->cart );
         $session->set_session();
 
