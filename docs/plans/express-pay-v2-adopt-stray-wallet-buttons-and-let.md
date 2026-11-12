@@ -51,7 +51,7 @@ R-6's acceptance: *Express pay buttons show and complete payment from the checko
   - Reuse: ExpressPay::is_wallet_order() from T1; LayoutFactory::serve() in `tests/Support/LayoutFactory.php`; the WC_Checkout fields pattern of `tests/Integration/Renderer/CheckoutRequiredFieldsHiddenTest.php`
 - [x] T3 Add adoption to ExpressPay: `adopt()`, `adopt_into_block()` (skipped for a hook a Hook block places), `has_buttons()` counting attached registrations, and the call from `CheckoutPage::maybe_take_over()` beside the Stripe filter; add `tests/Integration/Blocks/ExpressPayRenderTest.php` (new) — `includes/Renderer/ExpressPay.php`, `includes/Renderer/CheckoutPage.php`, `tests/Integration/Blocks/ExpressPayRenderTest.php` (new)
   - Reuse: WcHooks::is_placed() and the `$wp_filter` scan of WcHooks::kept_in_place() in `includes/Renderer/WcHooks.php`; WcHooks::callbacks_besides() for the existing count; the WcHooks::anchor() registry shape for adopt()
-- [ ] T4 Add the FunnelKit Stripe adapter and boot it — `includes/Integrations/FunnelKitStripe.php` (new), `includes/YayCheckout.php`
+- [x] T4 Add the FunnelKit Stripe adapter and boot it — `includes/Integrations/FunnelKitStripe.php` (new), `includes/YayCheckout.php`
   - Reuse: ExpressPay::adopt() from T3; the singleton and guard shape of `includes/Integrations/Germanized.php`
 - [ ] T5 Update the knowledge docs for the new Express Pay behaviour: adoption and wallet orders in storefront.md (Stripe line) and integrations.md (Gateways, Other plugins: FunnelKit Stripe), the two helpers in helpers.md — `docs/knowledge/storefront.md`, `docs/knowledge/integrations.md`, `docs/knowledge/helpers.md` [risk: 1] [tier: veryfast]
   - Reuse: n/a

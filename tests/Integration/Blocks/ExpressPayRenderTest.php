@@ -12,15 +12,17 @@ class ExpressPayRenderTest extends WP_UnitTestCase {
 
     private const LAYOUT = '<!-- wp:yaycheckout/checkout --><!-- wp:yaycheckout/express-pay /-->%s<!-- /wp:yaycheckout/checkout -->';
 
+    /** @var array ExpressPay's registrations before the test, FunnelKitStripe's among them. */
+    private array $registered = [];
+
     public function set_up(): void {
         parent::set_up();
         wc_load_cart();
+        $this->registered = $this->adopted()->getValue();
     }
 
     public function tear_down(): void {
-        $adopted = new \ReflectionProperty( ExpressPay::class, 'adopted' );
-        $adopted->setAccessible( true );
-        $adopted->setValue( null, [] );
+        $this->adopted()->setValue( null, $this->registered );
         LayoutFactory::forget_served_layout();
         parent::tear_down();
     }
@@ -56,6 +58,13 @@ class ExpressPayRenderTest extends WP_UnitTestCase {
 
     public function print_wallet(): void {
         echo '<div id="wallet">WALLET</div>';
+    }
+
+    private function adopted(): \ReflectionProperty {
+        $adopted = new \ReflectionProperty( ExpressPay::class, 'adopted' );
+        $adopted->setAccessible( true );
+
+        return $adopted;
     }
 
     /** Hooks a stand-in for FunnelKit's inline buttons where FunnelKit hooks them, and registers it for adoption. */
