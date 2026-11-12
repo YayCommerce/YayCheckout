@@ -21,8 +21,8 @@ class CartFacts {
 
         return [
             ConditionType::CART_ITEMS    => self::items( WC()->cart ),
-            // As the shopper sees it: with tax when the store displays prices with tax. Restored from the session by now.
-            ConditionType::CART_SUBTOTAL => round( (float) WC()->cart->get_displayed_subtotal(), wc_get_price_decimals() ),
+            // Restored from the session by now.
+            ConditionType::CART_SUBTOTAL => round( LiveValues::money()['cart_subtotal'] ?? 0.0, wc_get_price_decimals() ),
             ConditionType::CART_QUANTITY => (int) WC()->cart->get_cart_contents_count(),
         ];
     }
