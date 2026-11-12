@@ -1,7 +1,7 @@
 ---
 id: P-1
 title: Rules v2: layout priority, cart value and country conditions
-status: in-progress
+status: done
 from: BS-1
 roadmap: R-1
 design: UX-1
@@ -12,6 +12,7 @@ pr:
 editions: [pro]
 created: 2026-11-12
 size: L
+reviewed: pending
 ---
 # P-1 Rules v2: layout priority, cart value and country conditions
 
