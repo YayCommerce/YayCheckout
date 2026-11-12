@@ -1,12 +1,12 @@
 ---
 id: B-1
 title: Block style values with a semicolon add declarations to the inline style
-status: open
+status: fixed
 severity: low
 editions: [free, pro]
 found_in:
 fixed_in:
-branch:
+branch: fix/block-style-values-with-a-semicolon-add-declaratio
 pr:
 created: 2026-11-12
 ---
@@ -30,3 +30,8 @@ A Payment Methods (or Shipping Methods, Order Summary) block whose style attribu
 
 ## Regression test proposal
 [unit] `CheckoutFragmentsTest::test_refuses_a_value_that_adds_a_declaration` (`tests/php/unit/Renderer/CheckoutFragmentsTest.php`), already written and marked incomplete; `/yay:fix B-1` removes the mark.
+
+## Fix
+`css_safe_token()` (`includes/Renderer/CheckoutFragments.php:433`) now also refuses `;` and `\`, the same characters `LayoutDesign::GRADIENT_PATTERN` refuses. A refused value prints no declaration at all, as a value with `{` or `/*` already did. Every block style value reaches the inline style through `css_length()`, `css_color()` or `css_gap()`, and all three end in `css_safe_token()`. That covers Payment Methods, Shipping Methods, the Order Summary blocks and the Pro Steps Progress, Thank-you Text and Order Details blocks, so the one pattern is enough.
+
+Verified: `CheckoutFragmentsTest::test_refuses_a_value_that_adds_a_declaration` (no longer incomplete, plus a `\3b` case and a `0.5rem` length that must still print) fails with the fix stashed and passes with it. The unit suite passes: 22 tests, 94 assertions.
