@@ -12,7 +12,7 @@ pr:
 editions: [pro]
 created: 2026-11-12
 size: L
-reviewed: pending
+reviewed: yes
 ---
 # P-1 Rules v2: layout priority, cart value and country conditions
 
