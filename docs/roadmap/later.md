@@ -62,3 +62,10 @@
 - target: 1.1.0
 - why: requested 2026-11-12; next version of includes/Integrations/YayBoost.php
 - editions: free, pro
+
+### R-10 Public developer API
+- status: planned
+- size: M
+- target: 1.1.0
+- why: requested 2026-11-12; a documented, stable set of hooks and functions for developers, beyond today's internal filters (docs/knowledge/architecture.md, Hooks the plugin exposes)
+- editions: free, pro
