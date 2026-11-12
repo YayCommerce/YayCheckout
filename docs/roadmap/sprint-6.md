@@ -3,7 +3,7 @@
 Goal: Side cart. Second to cut if 1.1.0 runs late.
 
 ### R-3 Side cart
-- status: planned
+- status: todo
 - size: L
 - target: 1.1.0
 - why: requested 2026-11-12; a slide-out cart so shoppers reach checkout without leaving the page

@@ -3,7 +3,7 @@
 Goal: YayReviews trust blocks and the remaining Yay ecosystem integrations.
 
 ### R-4 YayReviews trust blocks
-- status: planned
+- status: todo
 - size: M
 - target: 1.1.0
 - why: requested 2026-11-12; checkout blocks that show YayReviews ratings and reviews to lift trust at checkout
@@ -11,7 +11,7 @@ Goal: YayReviews trust blocks and the remaining Yay ecosystem integrations.
 - acceptance: YayReviews ratings and reviews show as checkout blocks, and the blocks are hidden when YayReviews is inactive.
 
 ### R-7 Remaining ecosystem integrations (YayExtra, Wholesale B2B, YayMail)
-- status: planned
+- status: todo
 - size: M
 - target: 1.1.0
 - why: requested 2026-11-12; Yay sister plugins not yet covered next to includes/Integrations/ (YayBoost, Germanized)
