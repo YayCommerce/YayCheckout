@@ -27,3 +27,17 @@
 - target: 1.1.0
 - why: requested 2026-11-12; checkout blocks that show YayReviews ratings and reviews to lift trust at checkout
 - editions: pro
+
+### R-5 Address autocomplete
+- status: planned
+- size: M
+- target: 1.1.0
+- why: requested 2026-11-12; suggest addresses as the shopper types so checkout is faster with fewer typos
+- editions: pro
+
+### R-6 Express pay v2
+- status: planned
+- size: M
+- target: 1.1.0
+- why: requested 2026-11-12; next version of the express pay block (includes/Renderer/ExpressPay.php)
+- editions: free, pro
