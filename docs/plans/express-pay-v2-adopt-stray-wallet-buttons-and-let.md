@@ -8,7 +8,7 @@ design:
 trello:
 type: feat
 branch: feat/express-pay-v2-adopt-stray-wallet-buttons-and-let
-pr:
+pr: 284
 editions: [free, pro]
 created: 2026-11-12
 reviewed: yes
