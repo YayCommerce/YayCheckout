@@ -1,7 +1,7 @@
 ---
 area: architecture
 updated: 2026-11-12
-updated_ref: c7ee247
+updated_ref: 44fdc3b
 covers: [yaycheckout.php, YayCheckoutPluginAdapter.php, editions/, uninstall.php, includes/YayCheckout.php, includes/Fallback.php, includes/Engine/, includes/Controllers/, includes/Repositories/, includes/Models/, includes/Services/, includes/Support/, includes/PostTypes/, includes/Enums/, includes/Utils/, includes/Pro/]
 ---
 # Architecture
@@ -27,7 +27,7 @@ Activation and deactivation do nothing (`Engine\ActDeact`). There are no tables,
 - **The tree is Pro.** `boot_pro()` requires `includes/Pro/ProServiceProvider.php` when it's readable. It's the only non-comment reference to `YayCheckout\Pro` outside Pro, and `scripts/check-pro-boundary.sh` enforces that.
 - **`Support\Plan::is_pro()`** reports that the provider booted, not the license. An expired license is still Pro. It's the only edition check core code should make.
 - **Pro attaches through hooks only** (`ProServiceProvider::boot()`):
-  - six REST controllers (assignment options, export, import, priority, rules, thank-you);
+  - five REST controllers (assignment options, export, import, rules, thank-you);
   - the `yaycheckout_built_blocks` filter for Pro blocks;
   - the `yaycheckout_localize_admin_data` filter, which adds `store`;
   - `ThankYouPage` and `OrderAgain`.
@@ -52,12 +52,12 @@ Activation and deactivation do nothing (`Engine\ActDeact`). There are no tables,
 | `yaycheckout_settings` | option | `general.{safe_mode,share_usage_data,delete_data_on_uninstall}`, `advanced.{preview_link_lifetime,force_enqueue_checkout_scripts,custom_css}`; `Models\Settings::schema()` is the only source |
 | `yaycheckout_settings_updated_at` | option | ISO 8601 UTC |
 | `yaycheckout_reviewed`, `yaycheckout_setup_done` | option | bools |
-| `yaycheckout_active_layout` | option | int[] of layout ids, lowest priority first: Pro's `set_active()` appends a newly active id (the top), and `LayoutRepository::set_priority()` rewrites the order from the Priority sheet (older installs stored a bare int; `active_ids()` accepts both) |
+| `yaycheckout_active_layout` | option | int[] of layout ids, oldest first (older installs stored a bare int; `active_ids()` accepts both) |
 | `yay_checkout_layout` | post type | One layout. `post_content` holds the block markup. Not public; `show_in_rest` through `LayoutCoreRestController`; every capability maps to `manage_woocommerce` |
 | `_yaycheckout_design` | post meta | `LayoutDesign`, sanitised by `LayoutDesign::from_meta()->to_meta()`, revisioned |
 | `_yaycheckout_rules`, `_yaycheckout_template`, `_yaycheckout_logged_out_content`, `_yaycheckout_thank_you_content`, `_yaycheckout_self_test` | post meta | assignment rules (Pro), template slug for Reset, the extra views |
 | `yaycheckout_compatibility_catalogue` | transient | Remote list for 12 h, or the bundled list for 1 h when the fetch fails |
-| `yaycheckout_layout_pin` | WC session + cookie | The pinned layout when rules read the cart or the country ([storefront.md](storefront.md#request-flow)) |
+| `yaycheckout_layout_pin` | WC session + cookie | The pinned layout when rules read the cart ([storefront.md](storefront.md#request-flow)) |
 | `{slug}_license_key`, `{slug}_license_info` | option | AdminShell licensing, prefixed by `get_plugin_slug()` |
 
 Preview links are stateless HMAC tokens (`Helpers\PreviewToken`, query arg `yaycheckout_preview`), with no per-link revocation.
@@ -86,6 +86,7 @@ Core has no admin `wp_ajax_*` handlers. The storefront wc-ajax endpoints are lis
 | `yaycheckout_localize_admin_data`, `yaycheckout_localize_meta` | `Helpers\LocalizeHelper` | SPA bootstrap data |
 | `yaycheckout_integrations` | `Helpers\IntegrationsHelper` | companion plugins shown in the SPA |
 | `yaycheckout_plugin_blocks` | `Helpers\PluginBlockCatalogue` | plugin placeholder spots |
+| `yaycheckout_express_wallet_order_markers` | `Renderer\ExpressPay::is_wallet_order()` | map of POST marker key => `gateways` (payment_method ids) and optional `values` that mark a gateway's wallet order |
 | `yaycheckout_themeless_checkout` | `Renderer\ThemelessCheckout` | opt out of themeless (mu-plugin only: runs at `setup_theme`) |
 | `yaycheckout_checkout_terms`, `yaycheckout_layout_renders_order_received`, `yaycheckout_live_values_source` | `includes/Renderer/` | renderer extension points |
 

@@ -17,18 +17,131 @@ class ExpressPay {
     /** HOOK's pair, fired right after it: a gateway may open markup on HOOK and close it here (PayPal's Fastlane loader). */
     public const AFTER_HOOK = 'woocommerce_checkout_after_customer_details';
 
+    /** @var array<int, array{hook: string, class: string, method: string}> Gateway buttons printed on a hook no block fires, see adopt(). */
+    private static array $adopted = [];
+
     /**
      * Whether an enabled gateway can put buttons in the block: one supports Woo's pay buttons, or something
-     * besides wc_get_pay_buttons() hooks HOOK. For the editor's notice, so it errs towards no notice.
+     * besides wc_get_pay_buttons() hooks HOOK, or an adopted callback is attached. For the editor's notice, so it errs towards no notice.
      */
     public static function has_buttons(): bool {
         if ( WcHooks::callbacks_besides( self::HOOK, [ 'wc_get_pay_buttons' ] ) > 0 ) {
             return true;
         }
 
+        foreach ( self::$adopted as $entry ) {
+            if ( null !== self::attached( $entry ) ) {
+                return true;
+            }
+        }
+
         foreach ( WC()->payment_gateways()->payment_gateways() as $gateway ) {
             // WooCommerce's PaymentGatewayFeature::PAY_BUTTON, written out for versions without the enum.
             if ( 'yes' === $gateway->enabled && $gateway->supports( 'pay_button' ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Moves $class_name's $method from $hook to the block when a layout with an Express Pay block is served: for a
+     * gateway that prints its wallet buttons on a classic hook no block fires. Names, not a callable, so the
+     * gateway isn't constructed early; adopt_into_block() finds its instance on $hook.
+     */
+    public static function adopt( string $hook, string $class_name, string $method ): void {
+        self::$adopted[] = [
+            'hook'   => $hook,
+            'class'  => $class_name,
+            'method' => $method,
+        ];
+    }
+
+    /** On wp, for a served layout with an Express Pay block. A Hook block that fires the original hook keeps its callback. */
+    public static function adopt_into_block(): void {
+        foreach ( self::$adopted as $entry ) {
+            if ( WcHooks::is_placed( $entry['hook'] ) ) {
+                continue;
+            }
+
+            $attached = self::attached( $entry );
+
+            if ( null === $attached ) {
+                continue;
+            }
+
+            remove_action( $entry['hook'], $attached['function'], $attached['priority'] );
+
+            // A gateway that also hooks HOOK would print twice.
+            if ( false === has_action( self::HOOK, $attached['function'] ) ) {
+                add_action( self::HOOK, $attached['function'], $attached['priority'], $attached['accepted_args'] );
+            }
+        }
+    }
+
+    /**
+     * The adopted object callback attached to its hook, or null.
+     *
+     * @param array{hook: string, class: string, method: string} $entry From adopt().
+     * @return array{function: callable, priority: int, accepted_args: int}|null
+     */
+    private static function attached( array $entry ): ?array {
+        global $wp_filter;
+
+        if ( ! isset( $wp_filter[ $entry['hook'] ] ) ) {
+            return null;
+        }
+
+        foreach ( $wp_filter[ $entry['hook'] ]->callbacks as $priority => $callbacks ) {
+            foreach ( $callbacks as $callback ) {
+                $function = $callback['function'];
+
+                if ( is_array( $function ) && isset( $function[0], $function[1] ) && is_object( $function[0] ) && is_a( $function[0], $entry['class'] ) && $entry['method'] === $function[1] ) {
+                    return [
+                        'function'      => $function,
+                        'priority'      => (int) $priority,
+                        'accepted_args' => (int) $callback['accepted_args'],
+                    ];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether this checkout request is a gateway's wallet payment: a marker key from the filtered map, posted with its gateway.
+     */
+    public static function is_wallet_order(): bool {
+        $markers = apply_filters(
+            'yaycheckout_express_wallet_order_markers',
+            [
+                'payment_request_type'  => [
+                    'gateways' => [ 'fkwcs_stripe', 'fkwcs_stripe_apple_pay', 'fkwcs_stripe_google_pay' ],
+                    'values'   => [ 'apple_pay', 'google_pay' ],
+                ],
+                'express_checkout_type' => [ 'gateways' => [ 'stripe' ] ],
+                'express_payment_type'  => [ 'gateways' => [ 'woocommerce_payments' ] ],
+            ]
+        );
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs inside WC_Checkout::process_checkout(), after the gateway's nonce check.
+        $method = isset( $_POST['payment_method'] ) && is_string( $_POST['payment_method'] ) ? sanitize_text_field( wp_unslash( $_POST['payment_method'] ) ) : '';
+        if ( '' === $method || ! is_array( $markers ) ) {
+            return false;
+        }
+
+        foreach ( $markers as $key => $rule ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs inside WC_Checkout::process_checkout(), after the gateway's nonce check.
+            if ( ! is_string( $key ) || ! is_array( $rule ) || ! isset( $_POST[ $key ] ) || ! is_string( $_POST[ $key ] ) ) {
+                continue;
+            }
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs inside WC_Checkout::process_checkout(), after the gateway's nonce check.
+            $value    = sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
+            $gateways = isset( $rule['gateways'] ) && is_array( $rule['gateways'] ) ? $rule['gateways'] : [];
+            $values   = isset( $rule['values'] ) && is_array( $rule['values'] ) ? $rule['values'] : null;
+            if ( '' !== $value && in_array( $method, $gateways, true ) && ( null === $values || in_array( $value, $values, true ) ) ) {
                 return true;
             }
         }
