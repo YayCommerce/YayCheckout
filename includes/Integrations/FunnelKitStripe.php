@@ -7,9 +7,7 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * FunnelKit Stripe's express checkout buttons. Its "inline" checkout position prints them on
- * woocommerce_checkout_billing, which no block fires (the Billing block prints its fields itself),
- * so they move into the Express Pay block. Inert without FunnelKit: adoption finds no callback.
+ * Moves FunnelKit Stripe's express buttons into the Express Pay block.
  */
 class FunnelKitStripe {
 
