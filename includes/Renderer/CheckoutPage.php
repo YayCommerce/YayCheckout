@@ -86,6 +86,7 @@ class CheckoutPage {
 
         if ( has_block( ExpressPay::BLOCK, $this->layout()->content ) ) {
             add_filter( 'wc_stripe_express_checkout_params', [ ExpressPay::class, 'stripe_params' ] );
+            ExpressPay::adopt_into_block();
         }
     }
 

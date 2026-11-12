@@ -17,13 +17,22 @@ class ExpressPay {
     /** HOOK's pair, fired right after it: a gateway may open markup on HOOK and close it here (PayPal's Fastlane loader). */
     public const AFTER_HOOK = 'woocommerce_checkout_after_customer_details';
 
+    /** @var array<int, array{hook: string, class: string, method: string}> Gateway buttons printed on a hook no block fires, see adopt(). */
+    private static array $adopted = [];
+
     /**
      * Whether an enabled gateway can put buttons in the block: one supports Woo's pay buttons, or something
-     * besides wc_get_pay_buttons() hooks HOOK. For the editor's notice, so it errs towards no notice.
+     * besides wc_get_pay_buttons() hooks HOOK, or an adopted callback is attached. For the editor's notice, so it errs towards no notice.
      */
     public static function has_buttons(): bool {
         if ( WcHooks::callbacks_besides( self::HOOK, [ 'wc_get_pay_buttons' ] ) > 0 ) {
             return true;
+        }
+
+        foreach ( self::$adopted as $entry ) {
+            if ( null !== self::attached( $entry ) ) {
+                return true;
+            }
         }
 
         foreach ( WC()->payment_gateways()->payment_gateways() as $gateway ) {
@@ -34,6 +43,71 @@ class ExpressPay {
         }
 
         return false;
+    }
+
+    /**
+     * Moves $class_name's $method from $hook to the block when a layout with an Express Pay block is served: for a
+     * gateway that prints its wallet buttons on a classic hook no block fires. Names, not a callable, so the
+     * gateway isn't constructed early; adopt_into_block() finds its instance on $hook.
+     */
+    public static function adopt( string $hook, string $class_name, string $method ): void {
+        self::$adopted[] = [
+            'hook'   => $hook,
+            'class'  => $class_name,
+            'method' => $method,
+        ];
+    }
+
+    /** On wp, for a served layout with an Express Pay block. A Hook block that fires the original hook keeps its callback. */
+    public static function adopt_into_block(): void {
+        foreach ( self::$adopted as $entry ) {
+            if ( WcHooks::is_placed( $entry['hook'] ) ) {
+                continue;
+            }
+
+            $attached = self::attached( $entry );
+
+            if ( null === $attached ) {
+                continue;
+            }
+
+            remove_action( $entry['hook'], $attached['function'], $attached['priority'] );
+
+            // A gateway that also hooks HOOK would print twice.
+            if ( false === has_action( self::HOOK, $attached['function'] ) ) {
+                add_action( self::HOOK, $attached['function'], $attached['priority'], $attached['accepted_args'] );
+            }
+        }
+    }
+
+    /**
+     * The adopted object callback attached to its hook, or null.
+     *
+     * @param array{hook: string, class: string, method: string} $entry From adopt().
+     * @return array{function: callable, priority: int, accepted_args: int}|null
+     */
+    private static function attached( array $entry ): ?array {
+        global $wp_filter;
+
+        if ( ! isset( $wp_filter[ $entry['hook'] ] ) ) {
+            return null;
+        }
+
+        foreach ( $wp_filter[ $entry['hook'] ]->callbacks as $priority => $callbacks ) {
+            foreach ( $callbacks as $callback ) {
+                $function = $callback['function'];
+
+                if ( is_array( $function ) && isset( $function[0], $function[1] ) && is_object( $function[0] ) && is_a( $function[0], $entry['class'] ) && $entry['method'] === $function[1] ) {
+                    return [
+                        'function'      => $function,
+                        'priority'      => (int) $priority,
+                        'accepted_args' => (int) $callback['accepted_args'],
+                    ];
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
