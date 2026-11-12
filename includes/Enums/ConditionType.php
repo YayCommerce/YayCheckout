@@ -25,8 +25,16 @@ final class ConditionType {
     /** How many items the cart holds, quantities summed; also its context key, an int. */
     public const CART_QUANTITY = 'cart_quantity';
 
+    /** The customer's billing country code; also its context key. */
+    public const BILLING_COUNTRY = 'billing_country';
+    /** The customer's shipping country code; also its context key. */
+    public const SHIPPING_COUNTRY = 'shipping_country';
+
     /** The types read from the cart; the context lacks their facts until the cart loads. */
     public const CART_TYPES = [ self::PRODUCT, self::PRODUCT_CATEGORY, self::CART_SUBTOTAL, self::CART_QUANTITY ];
+
+    /** The types read once on the checkout page load and pinned for the form: the cart's, and the countries the shopper can change in it. */
+    public const PINNED_TYPES = [ self::PRODUCT, self::PRODUCT_CATEGORY, self::CART_SUBTOTAL, self::CART_QUANTITY, self::BILLING_COUNTRY, self::SHIPPING_COUNTRY ];
 
     /** Context key: list<array{product: int, categories: int[]}>, one per cart item. */
     public const CART_ITEMS = 'cart_items';
@@ -41,9 +49,14 @@ final class ConditionType {
     public const VALUE_AMOUNT = 'amount';
     /** Value is a whole number >= 0. */
     public const VALUE_COUNT = 'count';
+    /** Value is a list of WooCommerce country codes. */
+    public const VALUE_COUNTRIES = 'countries';
 
     /** Most ids one condition may list. */
     public const MAX_IDS = 500;
+
+    /** Most countries one condition may list. */
+    public const MAX_COUNTRIES = 300;
 
     public const DESKTOP = 'desktop';
     public const MOBILE  = 'mobile';
@@ -113,6 +126,14 @@ final class ConditionType {
             self::CART_QUANTITY    => [
                 'operators' => self::NUMBER_OPERATORS,
                 'value'     => self::VALUE_COUNT,
+            ],
+            self::BILLING_COUNTRY  => [
+                'operators' => self::LIST_OPERATORS,
+                'value'     => self::VALUE_COUNTRIES,
+            ],
+            self::SHIPPING_COUNTRY => [
+                'operators' => self::LIST_OPERATORS,
+                'value'     => self::VALUE_COUNTRIES,
             ],
         ];
     }

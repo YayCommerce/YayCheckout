@@ -157,6 +157,62 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         $this->assertTrue( LayoutAssignment::reads_cart( [ $few ] ) );
     }
 
+    public function test_country_conditions_match_in_and_not_in(): void {
+        $in_germany = static fn( string $country ) => self::SHOPPER + [
+            ConditionType::BILLING_COUNTRY  => $country,
+            ConditionType::SHIPPING_COUNTRY => $country,
+        ];
+
+        foreach ( [ ConditionType::BILLING_COUNTRY, ConditionType::SHIPPING_COUNTRY ] as $type ) {
+            $in     = [ [ self::condition( $type, ConditionType::IN, [ 'DE' ] ) ] ];
+            $not_in = [ [ self::condition( $type, ConditionType::NOT_IN, [ 'DE' ] ) ] ];
+
+            $this->assertTrue( LayoutAssignment::matches( $in, $in_germany( 'DE' ) ) );
+            $this->assertFalse( LayoutAssignment::matches( $in, $in_germany( 'FR' ) ) );
+            $this->assertFalse( LayoutAssignment::matches( $not_in, $in_germany( 'DE' ) ) );
+            $this->assertTrue( LayoutAssignment::matches( $not_in, $in_germany( 'FR' ) ) );
+        }
+
+        $this->assertTrue(
+            LayoutAssignment::matches(
+                [ [ self::condition( ConditionType::SHIPPING_COUNTRY, ConditionType::IN, [ 'FR' ] ) ] ],
+                self::SHOPPER + [
+                    ConditionType::BILLING_COUNTRY  => 'DE',
+                    ConditionType::SHIPPING_COUNTRY => 'FR',
+                ]
+            ),
+            'Shipping tests the shipping country, not the billing one.'
+        );
+    }
+
+    /** P-1: the countries are read once the session loads, so before it a country rule is undecided and turns the pin on (BL-6). */
+    public function test_country_conditions_are_unknown_before_the_customer_loads(): void {
+        $germany  = self::layout( 1, [ [ self::condition( ConditionType::BILLING_COUNTRY, ConditionType::IN, [ 'DE' ] ) ] ] );
+        $not_fr   = self::layout( 2, [ [ self::condition( ConditionType::SHIPPING_COUNTRY, ConditionType::NOT_IN, [ 'FR' ] ) ] ] );
+        $everyone = self::layout( 3, [] );
+
+        $this->assertSame( LayoutAssignment::OUTLOOK_MAYBE, LayoutAssignment::outlook( [ $germany, $not_fr ], self::SHOPPER ) );
+        $this->assertNull( LayoutAssignment::pick( [ $germany, $not_fr ], self::SHOPPER ) );
+        $this->assertSame( 3, LayoutAssignment::pick( [ $germany, $not_fr, $everyone ], self::SHOPPER )->id );
+        $this->assertTrue( LayoutAssignment::reads_cart( [ $germany ] ) );
+        $this->assertTrue( LayoutAssignment::reads_cart( [ $not_fr ] ) );
+        $this->assertFalse( LayoutAssignment::reads_cart( [ self::layout( 4, [ [ self::condition( ConditionType::CUSTOMER_ROLE, ConditionType::IN, [ 'customer' ] ) ] ] ) ] ) );
+    }
+
+    public function test_sanitize_rules_refuses_unknown_countries(): void {
+        $clean = Layout::sanitize_rules( [ [ self::condition( ConditionType::BILLING_COUNTRY, ConditionType::IN, [ 'DE', 'XX', 'DE', 5, 'FR' ] ) ] ] );
+        $this->assertSame( [ 'DE', 'FR' ], $clean[0][0]['value'] );
+
+        foreach ( [ [], [ 'XX' ], 'DE', [ 'de' ] ] as $raw ) {
+            try {
+                Layout::sanitize_rules( [ [ self::condition( ConditionType::SHIPPING_COUNTRY, ConditionType::IN, $raw ) ] ] );
+                $this->fail( 'Accepted ' . wp_json_encode( $raw ) . '.' );
+            } catch ( \InvalidArgumentException $ex ) {
+                $this->assertStringContainsString( 'Invalid value', $ex->getMessage() );
+            }
+        }
+    }
+
     /** P-1: amounts are money (rounded to the store's decimals), quantities whole; neither may be negative. */
     public function test_sanitize_rules_accepts_and_rejects_numbers(): void {
         update_option( 'woocommerce_price_num_decimals', 2 );

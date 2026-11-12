@@ -30,7 +30,7 @@ class LayoutPin {
      * @param array $shopper CheckoutPage::shopper_context().
      */
     public static function pick( LayoutRepository $layouts, array $shopper ): ?Layout {
-        $layout = $layouts->active( $shopper + CartFacts::context() );
+        $layout = $layouts->active( $shopper + CartFacts::context() + CustomerFacts::context() );
         $id     = null === $layout ? 0 : $layout->id;
 
         if ( null !== WC()->session ) {
@@ -60,7 +60,7 @@ class LayoutPin {
             return $layouts->find( $id );
         }
 
-        return $layouts->active( $shopper + CartFacts::context() );
+        return $layouts->active( $shopper + CartFacts::context() + CustomerFacts::context() );
     }
 
     /** The id the cookie hints, 0 for none; null when it is missing or not signed here. Readable at setup_theme. */

@@ -64,7 +64,7 @@ class LayoutAssignment {
     }
 
     /**
-     * Whether any candidate's rules read the cart, so the pick must wait for it and be pinned.
+     * Whether any candidate's rules read the cart or the customer's countries, so the pick must wait for them and be pinned.
      *
      * @param Layout[] $candidates
      */
@@ -72,7 +72,7 @@ class LayoutAssignment {
         foreach ( $candidates as $layout ) {
             foreach ( $layout->rules as $group ) {
                 foreach ( $group as $condition ) {
-                    if ( in_array( $condition['type'], ConditionType::CART_TYPES, true ) ) {
+                    if ( in_array( $condition['type'], ConditionType::PINNED_TYPES, true ) ) {
                         return true;
                     }
                 }
@@ -86,7 +86,7 @@ class LayoutAssignment {
      * Groups are ORed, conditions inside a group ANDed.
      *
      * @param array $rules   Stored rules (Layout::sanitize_rules() shape).
-     * @param array $context array{customer_role: string[], login_status: string, device: string, cart_items?: array, cart_subtotal?: float, cart_quantity?: int}, keyed by ConditionType.
+     * @param array $context array{customer_role: string[], login_status: string, device: string, cart_items?: array, cart_subtotal?: float, cart_quantity?: int, billing_country?: string, shipping_country?: string}, keyed by ConditionType.
      */
     public static function matches( array $rules, array $context ): bool {
         return true === self::rules_state( $rules, $context );
@@ -152,6 +152,14 @@ class LayoutAssignment {
             case ConditionType::PRODUCT:
             case ConditionType::PRODUCT_CATEGORY:
                 return isset( $context[ ConditionType::CART_ITEMS ] ) ? self::cart_matches( $condition, $context[ ConditionType::CART_ITEMS ] ) : null;
+            case ConditionType::BILLING_COUNTRY:
+            case ConditionType::SHIPPING_COUNTRY:
+                if ( ! isset( $context[ $condition['type'] ] ) ) {
+                    return null;
+                }
+
+                $is_match = in_array( $context[ $condition['type'] ], $value, true );
+                break;
             case ConditionType::CART_SUBTOTAL:
             case ConditionType::CART_QUANTITY:
                 if ( ! isset( $context[ $condition['type'] ] ) ) {
