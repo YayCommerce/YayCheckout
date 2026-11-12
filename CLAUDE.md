@@ -73,6 +73,7 @@ YayCheckout replaces WooCommerce's classic checkout with a layout the merchant b
 - `yayh test run all` runs the unit (`tests/php/unit/`, Brain Monkey), js (`tests/js/`, Vitest) and wp-env integration (`tests/php/integration/`) layers. Integration needs Docker and `yayh e2e env start`. Use Node 22.
 - The older integration suite lives in `tests/Integration/` (WordPress test library + WooCommerce, a Local MySQL database), run by `composer test`. Pro tests are in `tests/Integration/Pro/` and skip on Free.
 - Run one with `vendor/bin/phpunit -c tests/php/unit.xml.dist --filter <TestName>` (unit) or `vendor/bin/phpunit --filter <TestName>` (Local suite).
+- Browser specs: `yayh e2e run`, flows in [docs/knowledge/e2e.md](docs/knowledge/e2e.md).
 - CI runs only `php -l`, the boundary check, `tsc` and ESLint.
 - Layers, stubs, traps and the Coverage table: [testing.md](docs/knowledge/testing.md). Local suite setup: [release.md § Tests](docs/knowledge/release.md#tests).
 
@@ -85,6 +86,7 @@ YayCheckout replaces WooCommerce's classic checkout with a layout the merchant b
 - writing code in a new place, or adding a block, setting or route → [docs/knowledge/conventions.md](docs/knowledge/conventions.md)
 - touching gateway, WooCommerce-surface or other-plugin compatibility → [docs/knowledge/integrations.md](docs/knowledge/integrations.md)
 - writing or fixing a test → [docs/knowledge/testing.md](docs/knowledge/testing.md)
+- writing or fixing a browser spec → [docs/knowledge/e2e.md](docs/knowledge/e2e.md)
 - something looks wrong or a check fails → [docs/knowledge/known-issues.md](docs/knowledge/known-issues.md)
 - asking "why is it built this way" → [docs/knowledge/decisions.md](docs/knowledge/decisions.md)
 <!-- yay:project:end -->
