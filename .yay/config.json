@@ -58,7 +58,10 @@
     "build": "./scripts/run.sh build",
     "lint": "composer lint",
     "test": "composer test",
-    "package": "./scripts/run.sh release {version} --plan={edition} --no-prompt"
+    "package": "./scripts/run.sh release {version} --plan={edition} --no-prompt",
+    "test-unit": "vendor/bin/phpunit -c tests/php/unit.xml.dist",
+    "test-integration": "cd tests/e2e && ./node_modules/.bin/wp-env run tests-cli --env-cwd=wp-content/plugins/yaycheckout vendor/bin/phpunit -c tests/php/integration.xml.dist",
+    "test-js": "./node_modules/.bin/vitest run --config tests/js/vitest.config.mjs"
   },
   "package": {
     "output": "release/*.zip",
@@ -96,5 +99,10 @@
     "notesDir": "docs/releases"
   },
   "checks": [],
-  "keep": []
+  "keep": [],
+  "tests": {
+    "php": "tests/php",
+    "js": "tests/js",
+    "jsRunner": "vitest"
+  }
 }

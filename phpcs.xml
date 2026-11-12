@@ -139,5 +139,14 @@
                 <element value="YayCheckout"/>
             </property>
         </properties>
+        <!-- The kit's test layers (yay:test-init): never shipped, and their base classes live under YayTests\. -->
+        <exclude-pattern>tests/php/*</exclude-pattern>
+        <exclude-pattern>tests/js/*</exclude-pattern>
+    </rule>
+
+    <!-- Test bootstraps and the PHP bridge the JS tests run read files and print JSON outside WordPress. -->
+    <rule ref="WordPress.WP.AlternativeFunctions">
+        <exclude-pattern>tests/php/*</exclude-pattern>
+        <exclude-pattern>tests/js/*</exclude-pattern>
     </rule>
 </ruleset>
