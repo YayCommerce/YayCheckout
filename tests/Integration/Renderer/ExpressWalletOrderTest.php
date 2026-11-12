@@ -27,7 +27,10 @@ class ExpressWalletOrderTest extends WP_UnitTestCase {
     }
 
     public function test_wallet_order_skips_layout_required_extra_field_and_address_flags(): void {
-        $_POST = [ 'payment_request_type' => 'google_pay' ];
+        $_POST = [
+			'payment_request_type' => 'google_pay',
+			'payment_method'       => 'fkwcs_stripe',
+        ];
 
         $this->assertFalse( $this->validation_errors()->has_errors() );
         $this->assertFalse( ( new \WC_Checkout() )->get_checkout_fields()['billing']['billing_company']['required'] );
@@ -36,6 +39,23 @@ class ExpressWalletOrderTest extends WP_UnitTestCase {
 
         $this->assertContains( 'yaycheckout_extra_delivery_note', $this->validation_errors()->get_error_codes() );
         $this->assertTrue( ( new \WC_Checkout() )->get_checkout_fields()['billing']['billing_company']['required'] );
+    }
+
+    public function test_forged_marker_on_another_gateway_keeps_layout_rules(): void {
+        foreach ( [
+			[
+				'payment_request_type' => 'google_pay',
+				'payment_method'       => 'cod',
+            ],
+			[
+				'payment_request_type' => 'x',
+				'payment_method'       => 'fkwcs_stripe',
+            ],
+			[ 'payment_request_type' => 'google_pay' ],
+        ] as $post ) {
+            $_POST = $post;
+            $this->assertContains( 'yaycheckout_extra_delivery_note', $this->validation_errors()->get_error_codes() );
+        }
     }
 
     private function validation_errors(): \WP_Error {

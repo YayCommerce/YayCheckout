@@ -43,7 +43,7 @@ covers: [includes/Renderer/, includes/Blocks/, packages/blocks/, templates/, ass
 - **Express Pay** (`Renderer\ExpressPay`), when the served layout has an Express Pay block:
   - Stripe's `wc_stripe_express_checkout_params` gets `has_block=false`;
   - `adopt_into_block()` (on `wp`, from `CheckoutPage::maybe_take_over()`) moves each callback an integration registered with `ExpressPay::adopt()` from its classic hook to `ExpressPay::HOOK`, unless a Hook block places that hook. `has_buttons()`, the editor's notice, counts them too.
-  - **Wallet orders:** when `ExpressPay::is_wallet_order()` sees a gateway's marker in the POST (`payment_request_type`, `express_checkout_type`, `express_payment_type`, filtered by `yaycheckout_express_wallet_order_markers`), `CheckoutRequiredFields` and `CheckoutExtraFields::validate()` stand down, so the layout's own required flags and extra fields don't fail the order (BL-3).
+  - **Wallet orders:** when `ExpressPay::is_wallet_order()` sees a gateway's marker in the POST, posted with that gateway's `payment_method` (and, for FunnelKit, a known wallet value), from the map filtered by `yaycheckout_express_wallet_order_markers`, `CheckoutRequiredFields` and `CheckoutExtraFields::validate()` stand down, so the layout's own required flags and extra fields don't fail the order (BL-3).
   - With no buttons, WooCommerce's order attribution still prints on `AFTER_HOOK`, so the block prints its wrapper marked empty, which hides it and the "OR" divider until `view.ts` sees a button.
 
 ## Blocks

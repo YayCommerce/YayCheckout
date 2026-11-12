@@ -86,7 +86,7 @@ Core has no admin `wp_ajax_*` handlers. The storefront wc-ajax endpoints are lis
 | `yaycheckout_localize_admin_data`, `yaycheckout_localize_meta` | `Helpers\LocalizeHelper` | SPA bootstrap data |
 | `yaycheckout_integrations` | `Helpers\IntegrationsHelper` | companion plugins shown in the SPA |
 | `yaycheckout_plugin_blocks` | `Helpers\PluginBlockCatalogue` | plugin placeholder spots |
-| `yaycheckout_express_wallet_order_markers` | `Renderer\ExpressPay::is_wallet_order()` | POST keys that mark a gateway's wallet order |
+| `yaycheckout_express_wallet_order_markers` | `Renderer\ExpressPay::is_wallet_order()` | map of POST marker key => `gateways` (payment_method ids) and optional `values` that mark a gateway's wallet order |
 | `yaycheckout_themeless_checkout` | `Renderer\ThemelessCheckout` | opt out of themeless (mu-plugin only: runs at `setup_theme`) |
 | `yaycheckout_checkout_terms`, `yaycheckout_layout_renders_order_received`, `yaycheckout_live_values_source` | `includes/Renderer/` | renderer extension points |
 

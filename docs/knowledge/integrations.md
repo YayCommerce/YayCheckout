@@ -25,7 +25,7 @@ covers: [includes/Integrations/, includes/Helpers/IntegrationsHelper.php, includ
   - The bundled fallback covers `cod`, `bacs`, `cheque`, `stripe`, `ppcp-gateway` and `klarna_payments`.
 - **Block-only gateways.** `Helpers\GatewayCompatibilityHelper` lists the enabled classic gateways, then the Checkout-block payment methods that have no classic counterpart, as `block-only`. Those can't run in a layout.
 - **Stripe Express.** Its params get `has_block=false` when the layout has an Express Pay block (`Renderer\ExpressPay`).
-- **Wallet orders.** A gateway's own wallet endpoint posts a marker key; `ExpressPay::is_wallet_order()` reads it and the layout's own required rules stand down for that order. A gateway with another key is added through `yaycheckout_express_wallet_order_markers`. See [storefront.md](storefront.md#how-it-stays-a-woocommerce-checkout).
+- **Wallet orders.** A gateway's own wallet endpoint posts a marker key; `ExpressPay::is_wallet_order()` reads it and the layout's own required rules stand down for that order. Markers: FunnelKit Stripe posts `payment_request_type` (`apple_pay`/`google_pay`, gateways `fkwcs_stripe*`), WooCommerce Stripe's Express Checkout Element `express_checkout_type` (`stripe`), WooPayments `express_payment_type` (`woocommerce_payments`), each through the gateway's own wc-ajax endpoint. A marker only counts with its gateway's `payment_method`, so a hidden input on a card or COD checkout skips nothing. A gateway with another key is added through `yaycheckout_express_wallet_order_markers`. See [storefront.md](storefront.md#how-it-stays-a-woocommerce-checkout).
 
 ## Other plugins
 

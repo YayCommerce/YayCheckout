@@ -111,18 +111,37 @@ class ExpressPay {
     }
 
     /**
-     * Whether this checkout request is a wallet payment (Apple Pay, Google Pay, Link) that a gateway's own
-     * wc-ajax endpoint sends through WC_Checkout::process_checkout() with only the wallet's fields. Gateways
-     * mark it with a POST key: FunnelKit Stripe posts payment_request_type, WooCommerce Stripe's Express
-     * Checkout Element express_checkout_type, WooPayments express_payment_type. Filtered by
-     * yaycheckout_express_wallet_order_markers. Runs inside WooCommerce's checkout, after the gateway checked its nonce.
+     * Whether this checkout request is a gateway's wallet payment: a marker key from the filtered map, posted with its gateway.
      */
     public static function is_wallet_order(): bool {
-        $markers = apply_filters( 'yaycheckout_express_wallet_order_markers', [ 'payment_request_type', 'express_checkout_type', 'express_payment_type' ] );
+        $markers = apply_filters(
+            'yaycheckout_express_wallet_order_markers',
+            [
+                'payment_request_type'  => [
+                    'gateways' => [ 'fkwcs_stripe', 'fkwcs_stripe_apple_pay', 'fkwcs_stripe_google_pay' ],
+                    'values'   => [ 'apple_pay', 'google_pay' ],
+                ],
+                'express_checkout_type' => [ 'gateways' => [ 'stripe' ] ],
+                'express_payment_type'  => [ 'gateways' => [ 'woocommerce_payments' ] ],
+            ]
+        );
 
-        foreach ( is_array( $markers ) ? $markers : [] as $key ) {
-            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- See above.
-            if ( is_string( $key ) && isset( $_POST[ $key ] ) && is_string( $_POST[ $key ] ) && '' !== sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) ) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs inside WC_Checkout::process_checkout(), after the gateway's nonce check.
+        $method = isset( $_POST['payment_method'] ) && is_string( $_POST['payment_method'] ) ? sanitize_text_field( wp_unslash( $_POST['payment_method'] ) ) : '';
+        if ( '' === $method || ! is_array( $markers ) ) {
+            return false;
+        }
+
+        foreach ( $markers as $key => $rule ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs inside WC_Checkout::process_checkout(), after the gateway's nonce check.
+            if ( ! is_string( $key ) || ! is_array( $rule ) || ! isset( $_POST[ $key ] ) || ! is_string( $_POST[ $key ] ) ) {
+                continue;
+            }
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs inside WC_Checkout::process_checkout(), after the gateway's nonce check.
+            $value    = sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
+            $gateways = isset( $rule['gateways'] ) && is_array( $rule['gateways'] ) ? $rule['gateways'] : [];
+            $values   = isset( $rule['values'] ) && is_array( $rule['values'] ) ? $rule['values'] : null;
+            if ( '' !== $value && in_array( $method, $gateways, true ) && ( null === $values || in_array( $value, $values, true ) ) ) {
                 return true;
             }
         }
