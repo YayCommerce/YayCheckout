@@ -1,4 +1,4 @@
-<!-- Kit-managed by the yay plugin 0.3.0. Run /yay:harness-update instead of editing. -->
+<!-- Kit-managed by the yay plugin 0.5.0. Run /yay:harness-update instead of editing. -->
 # Git rules
 
 - **Branches:** `<type>/<slug>`, with type one of: feat, fix, chore, hotfix, docs, refactor, test. Get the name from `yayh git branch-name <type> "<title>"`. One branch per plan or bug, in its own worktree under `.claude/worktrees/<slug>/` (`yayh git worktree <branch> [from]`).
