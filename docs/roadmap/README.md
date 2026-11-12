@@ -13,7 +13,7 @@ One file per sprint (`sprint-<n>.md`), `later.md` for unscheduled work, and a ge
 
 | Section | Dates | Goal | Items | Dev-days |
 |---|---|---|---|---|
-| [Sprint 1](sprint-1.md) | 2026-11-12 → 2026-11-25 | Rules v2 and Express pay v2: the two most-used Pro and Free checkout surfaces first. | 2 (0 shipped) | 8 |
+| [Sprint 1](sprint-1.md) | 2026-11-12 → 2026-11-25 | Rules v2 and Express pay v2: the two most-used Pro and Free checkout surfaces first. | 2 (2 done, 0 shipped) | 8 |
 | [Sprint 2](sprint-2.md) | 2026-11-26 → 2026-12-09 | Faster address entry, and YayBoost offers rebuilt on the v2 adapter. | 2 (0 shipped) | 8 |
 | [Sprint 3](sprint-3.md) | 2026-12-10 → 2026-12-23 | Migration importers, so merchants can switch from five competing plugins. | 1 (0 shipped) | 8 |
 | [Sprint 4](sprint-4.md) | 2026-12-24 → 2027-01-06 | Public developer API. Half capacity: the sprint spans the holidays. | 1 (0 shipped) | 4 |
@@ -26,5 +26,5 @@ One file per sprint (`sprint-<n>.md`), `later.md` for unscheduled work, and a ge
 
 | Version | Items | Last open item |
 |---|---|---|
-| [1.1.0](v1.1.0.md) · [brief](release-1.1.0.md) | 10 items: 8 open, 2 in progress, 0 shipped, 0 dropped | [Sprint 7](sprint-7.md), ends 2027-02-17 |
+| [1.1.0](v1.1.0.md) · [brief](release-1.1.0.md) | 10 items: 8 open, 0 in progress, 2 done, 0 shipped, 0 dropped | [Sprint 7](sprint-7.md), ends 2027-02-17 |
 <!-- yay:roadmap-index:end -->
