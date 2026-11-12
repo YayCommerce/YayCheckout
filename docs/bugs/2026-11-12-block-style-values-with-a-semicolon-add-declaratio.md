@@ -7,7 +7,7 @@ editions: [free, pro]
 found_in:
 fixed_in:
 branch: fix/block-style-values-with-a-semicolon-add-declaratio
-pr:
+pr: https://github.com/YayCommerce/YayCheckout/pull/286
 created: 2026-11-12
 ---
 # B-1 Block style values with a semicolon add declarations to the inline style
