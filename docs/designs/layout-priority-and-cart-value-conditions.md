@@ -57,7 +57,7 @@ A Pro store admin with several active layouts decides which one a shopper gets w
 ```
 - **Type select:** the existing type `Select`; two new entries, "Cart subtotal" and "Cart quantity", after "Categories".
 - **Operator select:** the existing operator `Select`, with "at least" and "less than".
-- **Value:** `NumberInputRoot`/`NumberInputInput` (`components/ui/number-input.tsx`, as `pagination.tsx` uses it); subtotal takes up to 2 decimals and min 0, quantity whole numbers and min 0. Empty counts as incomplete, so **Save rules** stays disabled, as for an empty multi-select today.
+- **Value:** `NumericFormat` (react-number-format, what `NumberInputInput` wraps) over `Input` (`components/ui/input.tsx`), since `NumberInputRoot` always holds a number and can't be empty; subtotal takes up to 2 decimals and min 0, quantity whole numbers and min 0. Empty counts as incomplete, so **Save rules** stays disabled, as for an empty multi-select today.
 - **Chip text** (`AssignmentChips`): "Cart subtotal at least 100", "Cart quantity less than 20".
 
 ### Country condition row (Assignment drawer)

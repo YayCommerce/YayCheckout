@@ -1,4 +1,5 @@
 import { Plus } from 'lucide-react';
+import { NumericFormat } from 'react-number-format';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ConfirmPopover } from '@/components/shared/ConfirmPopover';
 import { TrashButton } from '@/components/shared/TrashButton';
@@ -47,6 +49,18 @@ const ASYNC_PICKERS = {
     placeholder: __('Select categories', 'yaycheckout'),
     searchPlaceholder: __('Search categories', 'yaycheckout'),
     emptyText: __('No categories found.', 'yaycheckout'),
+  },
+} satisfies Partial<Record<ConditionType, object>>;
+
+/** Copy for the types whose value is one number: those with CONDITION_TYPES' `number`. */
+const NUMBER_INPUTS = {
+  cart_subtotal: {
+    placeholder: __('Amount', 'yaycheckout'),
+    'aria-label': __('Cart subtotal amount', 'yaycheckout'),
+  },
+  cart_quantity: {
+    placeholder: __('Items', 'yaycheckout'),
+    'aria-label': __('Cart quantity items', 'yaycheckout'),
   },
 } satisfies Partial<Record<ConditionType, object>>;
 
@@ -166,6 +180,24 @@ function ConditionRow({
 
 function ValuePicker({ condition, onChange }: { condition: Condition; onChange: (value: Condition['value']) => void }) {
   const kind = CONDITION_TYPES[condition.type].ids;
+  const number = CONDITION_TYPES[condition.type].number;
+
+  if (number) {
+    return (
+      // Not NumberInput: it always holds a number, and an empty value must keep Save rules disabled.
+      <NumericFormat
+        customInput={Input}
+        className="min-w-0 flex-1"
+        {...NUMBER_INPUTS[condition.type as keyof typeof NUMBER_INPUTS]}
+        inputMode={number === 'amount' ? 'decimal' : 'numeric'}
+        allowNegative={false}
+        decimalScale={number === 'amount' ? 2 : 0}
+        valueIsNumericString
+        value={condition.value as string}
+        onValueChange={({ value }) => onChange(value)}
+      />
+    );
+  }
 
   if (kind) {
     return (
