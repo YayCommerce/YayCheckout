@@ -19,6 +19,7 @@ import {
   duplicateLayout,
   getLayout,
   getLayoutCounts,
+  getLayoutPriority,
   getLayoutRules,
   getLayouts,
   LayoutListParams,
@@ -26,6 +27,7 @@ import {
   renameLayout,
   resetLayout,
   restoreLayout,
+  saveLayoutPriority,
   saveLayoutRules,
 } from '@/lib/api/layout.api';
 import { COMPATIBILITY_QUERIES } from '@/lib/queries/compatibility.queries';
@@ -37,6 +39,7 @@ export const LAYOUT_KEYS = {
   counts: ['layouts', 'counts'] as const,
   detail: (id: number) => ['layouts', 'detail', id] as const,
   rules: (id: number) => ['layouts', 'rules', id] as const,
+  priority: ['layouts', 'priority'] as const,
 };
 
 /** Refreshes the counts and the listed tab after a layout joins or leaves the listed set. */
@@ -272,6 +275,31 @@ export function useLayoutRulesQuery(id: number) {
   return useQuery({
     queryKey: LAYOUT_KEYS.rules(id),
     queryFn: () => getLayoutRules(id),
+  });
+}
+
+/** Pro only: the Free build has no priority route. */
+export function useLayoutPriorityQuery() {
+  return useQuery({
+    queryKey: LAYOUT_KEYS.priority,
+    queryFn: getLayoutPriority,
+  });
+}
+
+/** Refetches the active list on a refusal too: a 409 means it changed since the sheet loaded. */
+export function useSaveLayoutPriorityMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['layouts', 'save-priority'],
+    mutationFn: saveLayoutPriority,
+    onSuccess: (reply) => {
+      queryClient.setQueryData(LAYOUT_KEYS.priority, reply);
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.list() });
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: LAYOUT_KEYS.priority });
+    },
   });
 }
 

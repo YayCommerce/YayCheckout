@@ -202,6 +202,22 @@ class Layout {
 
             case ConditionType::VALUE_CHOICE:
                 return in_array( $value, $definition['choices'], true ) ? $value : null;
+
+            case ConditionType::VALUE_COUNTRIES:
+                $list      = is_array( $value ) ? $value : [];
+                $countries = WC()->countries->get_countries();
+                // A code WooCommerce no longer lists is dropped, not refused: an import from another store may carry one.
+                $known = array_values( array_unique( array_filter( $list, static fn( $code ) => is_string( $code ) && isset( $countries[ $code ] ) ) ) );
+                return [] === $known || count( $list ) > ConditionType::MAX_COUNTRIES ? null : $known;
+
+            case ConditionType::VALUE_AMOUNT:
+                $is_number = ( is_int( $value ) || is_float( $value ) ) && is_finite( (float) $value ) && $value >= 0;
+                return $is_number || ( is_string( $value ) && preg_match( '/^[0-9]{1,15}(\.[0-9]{1,15})?$/', $value ) ) ? round( (float) $value, wc_get_price_decimals() ) : null;
+
+            case ConditionType::VALUE_COUNT:
+                // A whole float too: JSON may carry 3 as 3.0.
+                $is_whole = ( is_int( $value ) || ( is_float( $value ) && floor( $value ) === $value && $value < 1e9 ) ) && $value >= 0;
+                return $is_whole || ( is_string( $value ) && preg_match( '/^[0-9]{1,9}$/', $value ) ) ? (int) $value : null;
         }
 
         return null;

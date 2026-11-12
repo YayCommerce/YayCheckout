@@ -1,12 +1,17 @@
 ---
 area: decisions
 updated: 2026-11-12
-updated_ref: edf2074
+updated_ref: c7ee247
 covers: [includes/YayCheckout.php, includes/Support/Plan.php, scripts/run.sh, includes/Renderer/LayoutPin.php, includes/Renderer/DesignFonts.php]
 ---
 # Decisions
 
 > Update when: a decision here is reversed, or a new one shapes how the plugin is built. Newest first. Each has its evidence.
+
+### 2026-11-12 Layout priority is the order of the active set; country rules are pinned like cart rules
+- **Why:** the active option's order already decided which match wins, so priority needed only a writer (`LayoutRepository::set_priority()`), not a number per layout. Overlap warnings were rejected: undecidable cheaply, and the list order answers "which wins".
+- **How:** `set_priority()` refuses a list that isn't exactly the active set (409 from `PUT /layouts/priority`), and re-activating an active layout leaves it in place. Billing/shipping country is read once at the checkout page load and pinned; a mid-form change doesn't swap the layout (BL-6).
+- **Evidence:** P-1, BS-1, `tests/Integration/Pro/LayoutPriorityTest.php`, `includes/Renderer/CustomerFacts.php`.
 
 ### 2026-11-06 Thank-you page gated as WooCommerce gates order-received
 The right order key, then the account owner, or a guest within the grace period or after email confirmation. It fires `woocommerce_thankyou`, so other plugins' thank-you hooks still run. Evidence: `062f792`, `tests/Integration/Pro/ThankYouPageTest.php`.

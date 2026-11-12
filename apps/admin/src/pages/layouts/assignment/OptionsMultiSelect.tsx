@@ -22,6 +22,7 @@ export function OptionsMultiSelect({
   searchPlaceholder,
   emptyText,
   className,
+  'aria-label': ariaLabel,
 }: {
   /** Key => label, in display order. */
   options: Record<string, string>;
@@ -31,6 +32,7 @@ export function OptionsMultiSelect({
   searchPlaceholder: string;
   emptyText: string;
   className?: string;
+  'aria-label'?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -44,6 +46,7 @@ export function OptionsMultiSelect({
       <MultiSelectTrigger
         className={className}
         placeholder={placeholder}
+        aria-label={ariaLabel}
         selected={value.map((key) => ({
           value: key,
           label: options[key] ?? key,

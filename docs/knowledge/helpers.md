@@ -1,7 +1,7 @@
 ---
 area: helpers
 updated: 2026-11-12
-updated_ref: edf2074
+updated_ref: c7ee247
 covers: [includes/Helpers/, includes/Repositories/, includes/Services/, includes/Support/, includes/Renderer/CheckoutPage.php, includes/Renderer/CheckoutScope.php, includes/Renderer/BlockEmptiness.php, includes/Blocks/BlockRegistry.php, apps/admin/src/hooks/, apps/admin/src/lib/, packages/blocks/src/shared/]
 ---
 # Helpers: reuse before you write
@@ -21,7 +21,9 @@ covers: [includes/Helpers/, includes/Repositories/, includes/Services/, includes
 | Use | When |
 |---|---|
 | `LayoutRepository::find()`, `active( $context )`, `activate()`, `deactivate()`, `forget_active()`, `archive()`, `duplicate()`, `reset()` (`includes/Repositories/LayoutRepository.php`) | every layout read and write. Never write `yaycheckout_active_layout` yourself |
-| `LayoutRepository::depends_on_cart()` | whether the served layout is pinned per page load |
+| `LayoutRepository::depends_on_cart()` | whether the served layout is pinned per page load (any `ConditionType::PINNED_TYPES` rule) |
+| `LayoutRepository::priority()`, `set_priority( $ids )` | the active layouts top priority first, and storing a new order (refuses a list that isn't the active set) |
+| `Renderer\CartFacts::context()`, `Renderer\CustomerFacts::context()` | the cart's and the customer's countries' part of the assignment context; empty before the session loads |
 | `Renderer\CheckoutPage::get_instance()->layout()`, `takes_over()`, `is_logged_out_view()` (`includes/Renderer/CheckoutPage.php`) | "which layout is served now", from `wp` on |
 | `Services\LayoutMarkupReader::plain_text()`, `rich_text()`, `slots()`, `publish_error()` (`includes/Services/LayoutMarkupReader.php`) | merchant text in `render.php`, the layout's sections, whether it may go live |
 | `Services\LayoutAssignment` (`includes/Services/LayoutAssignment.php`) | evaluating assignment rules against shopper facts |

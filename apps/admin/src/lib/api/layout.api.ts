@@ -7,6 +7,7 @@ import {
   layoutCountsResponseSchema,
   LayoutListResponse,
   layoutListResponseWireSchema,
+  layoutPriorityWireSchema,
   layoutRulesWireSchema,
   LayoutStatus,
   LayoutSummary,
@@ -149,6 +150,18 @@ export async function createLayoutDraft(payload: CreateLayoutDraftPayload): Prom
       : { name: payload.name, source: payload.source };
 
   return parseLayout(await api.post('layouts', { json }).json());
+}
+
+/** Pro only: the active layouts, top priority first. */
+export async function getLayoutPriority(): Promise<LayoutSummary[]> {
+  return layoutPriorityWireSchema.parse(await api.get('layouts/priority').json()).layouts.map(summaryFromWire);
+}
+
+/** Takes the active layouts' ids top priority first; the server refuses a list that is not the active set (409). */
+export async function saveLayoutPriority(ids: number[]): Promise<LayoutSummary[]> {
+  return layoutPriorityWireSchema
+    .parse(await api.put('layouts/priority', { json: { ids } }).json())
+    .layouts.map(summaryFromWire);
 }
 
 export async function getLayoutRules(id: number): Promise<LayoutRulesResponse> {

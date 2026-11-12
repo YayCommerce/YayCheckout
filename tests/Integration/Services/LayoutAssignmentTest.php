@@ -23,7 +23,8 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         return $layout;
     }
 
-    private static function condition( string $type, string $operator, array $value ): array {
+    /** @param mixed $value */
+    private static function condition( string $type, string $operator, $value ): array {
         return [
             'type'     => $type,
             'operator' => $operator,
@@ -116,6 +117,140 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         $this->assertSame( LayoutAssignment::OUTLOOK_NO, LayoutAssignment::outlook( [ $guests ], self::SHOPPER ) );
         $this->assertSame( LayoutAssignment::OUTLOOK_YES, LayoutAssignment::outlook( [ $cart_only, self::layout( 3, [] ) ], self::SHOPPER ) );
         $this->assertSame( LayoutAssignment::OUTLOOK_NO, LayoutAssignment::outlook( [], self::SHOPPER ) );
+    }
+
+    /** "At least" includes the threshold, "less than" excludes it; an empty cart is 0 and 0. */
+    public function test_cart_subtotal_and_quantity_operators(): void {
+        $facts = static fn( float $subtotal, int $quantity ) => self::context( [] ) + [
+            ConditionType::CART_SUBTOTAL => $subtotal,
+            ConditionType::CART_QUANTITY => $quantity,
+        ];
+        $holds = static fn( string $type, string $operator, $value, array $context ) => LayoutAssignment::matches( [ [ self::condition( $type, $operator, $value ) ] ], $context );
+
+        $this->assertTrue( $holds( ConditionType::CART_SUBTOTAL, ConditionType::AT_LEAST, 100.0, $facts( 100.0, 1 ) ) );
+        $this->assertFalse( $holds( ConditionType::CART_SUBTOTAL, ConditionType::LESS_THAN, 100.0, $facts( 100.0, 1 ) ) );
+        $this->assertTrue( $holds( ConditionType::CART_SUBTOTAL, ConditionType::AT_LEAST, 100.0, $facts( 120.0, 1 ) ) );
+        $this->assertFalse( $holds( ConditionType::CART_SUBTOTAL, ConditionType::AT_LEAST, 100.0, $facts( 80.0, 1 ) ) );
+        $this->assertTrue( $holds( ConditionType::CART_SUBTOTAL, ConditionType::LESS_THAN, 100.0, $facts( 99.99, 1 ) ) );
+
+        $this->assertTrue( $holds( ConditionType::CART_QUANTITY, ConditionType::AT_LEAST, 3, $facts( 0.0, 3 ) ) );
+        $this->assertFalse( $holds( ConditionType::CART_QUANTITY, ConditionType::LESS_THAN, 3, $facts( 0.0, 3 ) ) );
+        $this->assertTrue( $holds( ConditionType::CART_QUANTITY, ConditionType::LESS_THAN, 3, $facts( 0.0, 2 ) ) );
+
+        // An empty cart.
+        $this->assertTrue( $holds( ConditionType::CART_SUBTOTAL, ConditionType::LESS_THAN, 1.0, $facts( 0.0, 0 ) ) );
+        $this->assertFalse( $holds( ConditionType::CART_SUBTOTAL, ConditionType::AT_LEAST, 1.0, $facts( 0.0, 0 ) ) );
+        $this->assertTrue( $holds( ConditionType::CART_QUANTITY, ConditionType::AT_LEAST, 0, $facts( 0.0, 0 ) ) );
+        $this->assertFalse( $holds( ConditionType::CART_QUANTITY, ConditionType::AT_LEAST, 1, $facts( 0.0, 0 ) ) );
+    }
+
+    /** At setup_theme the cart facts are missing, so a cart value rule is undecided: the theme guess and the pin rely on it. */
+    public function test_cart_value_conditions_are_unknown_before_the_cart_loads(): void {
+        $big      = self::layout( 1, [ [ self::condition( ConditionType::CART_SUBTOTAL, ConditionType::AT_LEAST, 100.0 ) ] ] );
+        $few      = self::layout( 2, [ [ self::condition( ConditionType::CART_QUANTITY, ConditionType::LESS_THAN, 5 ) ] ] );
+        $everyone = self::layout( 3, [] );
+
+        $this->assertSame( LayoutAssignment::OUTLOOK_MAYBE, LayoutAssignment::outlook( [ $big, $few ], self::SHOPPER ) );
+        $this->assertNull( LayoutAssignment::pick( [ $big, $few ], self::SHOPPER ) );
+        $this->assertSame( 3, LayoutAssignment::pick( [ $big, $few, $everyone ], self::SHOPPER )->id );
+        $this->assertTrue( LayoutAssignment::reads_cart( [ $big ] ) );
+        $this->assertTrue( LayoutAssignment::reads_cart( [ $few ] ) );
+    }
+
+    public function test_country_conditions_match_in_and_not_in(): void {
+        $in_germany = static fn( string $country ) => self::SHOPPER + [
+            ConditionType::BILLING_COUNTRY  => $country,
+            ConditionType::SHIPPING_COUNTRY => $country,
+        ];
+
+        foreach ( [ ConditionType::BILLING_COUNTRY, ConditionType::SHIPPING_COUNTRY ] as $type ) {
+            $in     = [ [ self::condition( $type, ConditionType::IN, [ 'DE' ] ) ] ];
+            $not_in = [ [ self::condition( $type, ConditionType::NOT_IN, [ 'DE' ] ) ] ];
+
+            $this->assertTrue( LayoutAssignment::matches( $in, $in_germany( 'DE' ) ) );
+            $this->assertFalse( LayoutAssignment::matches( $in, $in_germany( 'FR' ) ) );
+            $this->assertFalse( LayoutAssignment::matches( $not_in, $in_germany( 'DE' ) ) );
+            $this->assertTrue( LayoutAssignment::matches( $not_in, $in_germany( 'FR' ) ) );
+        }
+
+        $this->assertTrue(
+            LayoutAssignment::matches(
+                [ [ self::condition( ConditionType::SHIPPING_COUNTRY, ConditionType::IN, [ 'FR' ] ) ] ],
+                self::SHOPPER + [
+                    ConditionType::BILLING_COUNTRY  => 'DE',
+                    ConditionType::SHIPPING_COUNTRY => 'FR',
+                ]
+            ),
+            'Shipping tests the shipping country, not the billing one.'
+        );
+    }
+
+    /** The countries are read once the session loads, so before it a country rule is undecided and turns the pin on. */
+    public function test_country_conditions_are_unknown_before_the_customer_loads(): void {
+        $germany  = self::layout( 1, [ [ self::condition( ConditionType::BILLING_COUNTRY, ConditionType::IN, [ 'DE' ] ) ] ] );
+        $not_fr   = self::layout( 2, [ [ self::condition( ConditionType::SHIPPING_COUNTRY, ConditionType::NOT_IN, [ 'FR' ] ) ] ] );
+        $everyone = self::layout( 3, [] );
+
+        $this->assertSame( LayoutAssignment::OUTLOOK_MAYBE, LayoutAssignment::outlook( [ $germany, $not_fr ], self::SHOPPER ) );
+        $this->assertNull( LayoutAssignment::pick( [ $germany, $not_fr ], self::SHOPPER ) );
+        $this->assertSame( 3, LayoutAssignment::pick( [ $germany, $not_fr, $everyone ], self::SHOPPER )->id );
+        $this->assertTrue( LayoutAssignment::reads_cart( [ $germany ] ) );
+        $this->assertTrue( LayoutAssignment::reads_cart( [ $not_fr ] ) );
+        $this->assertFalse( LayoutAssignment::reads_cart( [ self::layout( 4, [ [ self::condition( ConditionType::CUSTOMER_ROLE, ConditionType::IN, [ 'customer' ] ) ] ] ) ] ) );
+    }
+
+    public function test_sanitize_rules_refuses_unknown_countries(): void {
+        $clean = Layout::sanitize_rules( [ [ self::condition( ConditionType::BILLING_COUNTRY, ConditionType::IN, [ 'DE', 'XX', 'DE', 5, 'FR' ] ) ] ] );
+        $this->assertSame( [ 'DE', 'FR' ], $clean[0][0]['value'] );
+
+        foreach ( [ [], [ 'XX' ], 'DE', [ 'de' ] ] as $raw ) {
+            try {
+                Layout::sanitize_rules( [ [ self::condition( ConditionType::SHIPPING_COUNTRY, ConditionType::IN, $raw ) ] ] );
+                $this->fail( 'Accepted ' . wp_json_encode( $raw ) . '.' );
+            } catch ( \InvalidArgumentException $ex ) {
+                $this->assertStringContainsString( 'Invalid value', $ex->getMessage() );
+            }
+        }
+    }
+
+    /** Amounts are money (rounded to the store's decimals), quantities whole; neither may be negative. */
+    public function test_sanitize_rules_accepts_and_rejects_numbers(): void {
+        update_option( 'woocommerce_price_num_decimals', 2 );
+
+        $value = static fn( string $type, $raw ) => Layout::sanitize_rules( [ [ self::condition( $type, ConditionType::AT_LEAST, $raw ) ] ] )[0][0]['value'];
+
+        $this->assertSame( 100.0, $value( ConditionType::CART_SUBTOTAL, 100 ) );
+        $this->assertSame( 99.99, $value( ConditionType::CART_SUBTOTAL, 99.987 ) );
+        $this->assertSame( 12.5, $value( ConditionType::CART_SUBTOTAL, '12.5' ) );
+        $this->assertSame( 0.0, $value( ConditionType::CART_SUBTOTAL, 0 ) );
+        $this->assertSame( 3, $value( ConditionType::CART_QUANTITY, 3 ) );
+        $this->assertSame( 3, $value( ConditionType::CART_QUANTITY, 3.0 ) );
+        $this->assertSame( 20, $value( ConditionType::CART_QUANTITY, '20' ) );
+
+        $refused = [
+            [ ConditionType::CART_SUBTOTAL, -1 ],
+            [ ConditionType::CART_SUBTOTAL, 'abc' ],
+            [ ConditionType::CART_SUBTOTAL, '-5' ],
+            [ ConditionType::CART_SUBTOTAL, null ],
+            [ ConditionType::CART_SUBTOTAL, [ 100 ] ],
+            [ ConditionType::CART_SUBTOTAL, INF ],
+            [ ConditionType::CART_QUANTITY, 1.5 ],
+            [ ConditionType::CART_QUANTITY, -2 ],
+            [ ConditionType::CART_QUANTITY, '2.5' ],
+            [ ConditionType::CART_QUANTITY, true ],
+        ];
+
+        foreach ( $refused as [ $type, $raw ] ) {
+            try {
+                $value( $type, $raw );
+                $this->fail( sprintf( '%s accepted %s.', $type, wp_json_encode( $raw ) ) );
+            } catch ( \InvalidArgumentException $ex ) {
+                $this->assertStringContainsString( 'Invalid value', $ex->getMessage() );
+            }
+        }
+
+        $this->expectException( \InvalidArgumentException::class );
+        Layout::sanitize_rules( [ [ self::condition( ConditionType::CART_QUANTITY, ConditionType::CONTAINS_ANY, [ 1 ] ) ] ] );
     }
 
     public function test_unknown_type_never_matches(): void {

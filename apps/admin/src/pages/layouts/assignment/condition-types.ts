@@ -5,10 +5,20 @@ import type { AssignmentOptionKind } from '@/lib/schema/assignment.schema';
 import type { LayoutRulesWire } from '@/lib/schema/layout.schema';
 
 /** Mirrors Enums\ConditionType (types, operators, value kind, choices); PHP validates on save. */
-export type ConditionType = 'customer_role' | 'login_status' | 'device' | 'product' | 'product_category';
+export type ConditionType =
+  | 'customer_role'
+  | 'login_status'
+  | 'device'
+  | 'product'
+  | 'product_category'
+  | 'cart_subtotal'
+  | 'cart_quantity'
+  | 'billing_country'
+  | 'shipping_country';
 
 /**
- * Value is a list for multi-select types (role slugs, or ids as strings), one of the type's `choices` otherwise.
+ * Value is a list for multi-select types (role slugs, or ids as strings), one of the type's `choices` for choice types,
+ * and the number as typed ('' while empty) for number types.
  * `id` is form-only, the React key: rows keyed by position would hand a removed row's picker state to the next one.
  */
 export type Condition = { id: string; type: ConditionType; operator: string; value: string | string[] };
@@ -42,15 +52,28 @@ const CART_OPERATORS = [
   { value: 'contains_none', label: __('contains none of', 'yaycheckout') },
 ];
 
+/** The list operators, worded for a place: "in Germany", not "in list Germany". */
+const COUNTRY_OPERATORS = [
+  { value: 'in', label: __('in', 'yaycheckout') },
+  { value: 'not_in', label: __('not in', 'yaycheckout') },
+];
+
+/** Compared with the cart's subtotal or item count. */
+const NUMBER_OPERATORS = [
+  { value: 'at_least', label: __('at least', 'yaycheckout') },
+  { value: 'less_than', label: __('less than', 'yaycheckout') },
+];
+
 type Option = { value: string; label: string };
 
 /**
  * `choices`: the values a single-choice type takes; types without it pick several from a list.
  * `ids`: the list is searched on the server, and the value is its ids, sent as numbers.
+ * `number`: the value is one number, sent as a number: an `amount` of money, or a whole `count`.
  */
 export const CONDITION_TYPES: Record<
   ConditionType,
-  { label: string; operators: Option[]; choices?: Option[]; ids?: AssignmentOptionKind }
+  { label: string; operators: Option[]; choices?: Option[]; ids?: AssignmentOptionKind; number?: 'amount' | 'count' }
 > = {
   customer_role: { label: __('Customer role', 'yaycheckout'), operators: LIST_OPERATORS },
   login_status: {
@@ -71,12 +94,16 @@ export const CONDITION_TYPES: Record<
   },
   product: { label: __('Products', 'yaycheckout'), operators: CART_OPERATORS, ids: 'products' },
   product_category: { label: __('Categories', 'yaycheckout'), operators: CART_OPERATORS, ids: 'categories' },
+  cart_subtotal: { label: __('Cart subtotal', 'yaycheckout'), operators: NUMBER_OPERATORS, number: 'amount' },
+  cart_quantity: { label: __('Cart quantity', 'yaycheckout'), operators: NUMBER_OPERATORS, number: 'count' },
+  billing_country: { label: __('Billing country', 'yaycheckout'), operators: COUNTRY_OPERATORS },
+  shipping_country: { label: __('Shipping country', 'yaycheckout'), operators: COUNTRY_OPERATORS },
 };
 
 export const CONDITION_TYPE_KEYS = Object.keys(CONDITION_TYPES) as ConditionType[];
 
 function emptyValue(type: ConditionType): Condition['value'] {
-  return CONDITION_TYPES[type].choices ? '' : [];
+  return CONDITION_TYPES[type].choices || CONDITION_TYPES[type].number ? '' : [];
 }
 
 export function newCondition(type: ConditionType): Condition {
@@ -109,15 +136,23 @@ export function groupsFromWire(rules: LayoutRulesWire): Group[] {
   }));
 }
 
-/** Form state to the rules the route stores: ids stripped, and id values back to numbers. */
+/** Form state to the rules the route stores: ids stripped, and id and number values back to numbers. */
 export function groupsToWire(groups: Group[]): LayoutRulesWire {
   return groups.map((group) =>
     group.conditions.map(({ type, operator, value }) => ({
       type,
       operator,
-      value: isKnownType(type) && CONDITION_TYPES[type].ids && Array.isArray(value) ? value.map(Number) : value,
+      value: wireValue(type, value),
     })),
   );
+}
+
+function wireValue(type: ConditionType, value: Condition['value']): LayoutRulesWire[number][number]['value'] {
+  if (!isKnownType(type)) return value;
+  if (CONDITION_TYPES[type].ids && Array.isArray(value)) return value.map(Number);
+  if (CONDITION_TYPES[type].number && typeof value === 'string' && value !== '') return Number(value);
+
+  return value;
 }
 
 /** The page's store lists. Only the Pro page carries them, and only Pro renders the drawer. */
