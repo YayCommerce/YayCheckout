@@ -11,7 +11,7 @@ branch: feat/express-pay-v2-adopt-stray-wallet-buttons-and-let
 pr:
 editions: [free, pro]
 created: 2026-11-12
-reviewed: pending
+reviewed: yes
 ---
 # P-2 Express pay v2: adopt stray wallet buttons and let wallet orders through
 
