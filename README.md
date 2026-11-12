@@ -46,7 +46,7 @@ A checkout builder for WooCommerce: merchants build checkout layouts from blocks
 6. Install the team's Claude Code harness once per machine, then start Claude Code in the repo and accept the trust dialog:
 
    ```bash
-   claude plugin marketplace add ~/yayharness   # a clone of the kit, until YayCommerce/yayharness is published
+   claude plugin marketplace add thithiennta/yayharness-kit   # https://github.com/thithiennta/yayharness-kit
    claude plugin install yay@yayharness
    claude
    ```

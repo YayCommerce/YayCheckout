@@ -19,7 +19,7 @@
       "template": "rules/yay-wordpress.md"
     },
     ".claude/settings.json": {
-      "sha256": "37180d2ea1363a54817e8e963149da3a597f362b6903654ab84d7044c9c49db0",
+      "sha256": "750929117212fff719b4f7204ae728fea39ff4e4585d2235c2c19f3074221a91",
       "template": "settings.json"
     },
     ".github/pull_request_template.md": {
