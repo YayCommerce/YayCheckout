@@ -4,8 +4,19 @@
  * environment so nothing site-specific is committed; see phpunit.xml.dist.
  */
 
-// The Local site whose core files the tests run against; tests/ sits four levels below app/public/.
-define( 'ABSPATH', rtrim( getenv( 'WP_TESTS_ABSPATH' ) ?: dirname( __DIR__, 4 ), '/' ) . '/' );
+// The Local site whose core files the tests run against: the nearest directory above tests/ holding
+// wp-load.php, so a checkout in wp-content/plugins/ and a worktree under it (.claude/worktrees/<slug>/) both find it.
+$yaycheckout_abspath = getenv( 'WP_TESTS_ABSPATH' );
+if ( ! $yaycheckout_abspath ) {
+    $yaycheckout_abspath = dirname( __DIR__, 4 );
+    for ( $yaycheckout_dir = dirname( __DIR__ ); dirname( $yaycheckout_dir ) !== $yaycheckout_dir; $yaycheckout_dir = dirname( $yaycheckout_dir ) ) {
+        if ( is_file( $yaycheckout_dir . '/wp-load.php' ) ) {
+            $yaycheckout_abspath = $yaycheckout_dir;
+            break;
+        }
+    }
+}
+define( 'ABSPATH', rtrim( $yaycheckout_abspath, '/' ) . '/' );
 
 // The site's mu-plugins would load too; a missing directory makes wp_get_mu_plugins() return nothing.
 // Drop-ins (object-cache.php, db.php) under the site's wp-content still load.

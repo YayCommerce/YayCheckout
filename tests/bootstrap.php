@@ -18,7 +18,8 @@ require $yaycheckout_tests_dir . '/includes/functions.php';
 tests_add_filter(
     'muplugins_loaded',
     static function () {
-        require dirname( __DIR__, 2 ) . '/woocommerce/woocommerce.php';
+        // The site's WooCommerce, not a sibling directory: a worktree has none beside it.
+        require ( getenv( 'WP_TESTS_WC_DIR' ) ?: WP_PLUGIN_DIR . '/woocommerce' ) . '/woocommerce.php';
         require dirname( __DIR__ ) . '/yaycheckout.php';
     }
 );
