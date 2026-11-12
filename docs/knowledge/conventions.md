@@ -1,7 +1,7 @@
 ---
 area: conventions
 updated: 2026-11-12
-updated_ref: edf2074
+updated_ref: c7ee247
 covers: [includes/, packages/blocks/src/, phpcs.xml]
 ---
 # Conventions
@@ -55,6 +55,7 @@ Nothing catches drift between these pairs, so change both sides in the same comm
 | `LayoutMarkupReader::publish_error()` | `publish-guard.ts` |
 | `BlockRegistry::PRO_BLOCKS` | `shared/pro-blocks.ts` (checked by `scripts/check-pro-boundary.sh`) |
 | `Models\Settings` | `apps/admin/src/lib/schema/settings.schema.ts` |
+| `Enums\ConditionType` (types, operators, value kinds) | `apps/admin/src/pages/layouts/assignment/condition-types.ts` |
 
 ## Recipes
 

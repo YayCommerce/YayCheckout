@@ -1,7 +1,7 @@
 ---
 area: storefront
 updated: 2026-11-12
-updated_ref: 164770c
+updated_ref: c7ee247
 covers: [includes/Renderer/, includes/Blocks/, packages/blocks/, templates/, assets/js/, assets/css/]
 ---
 # Storefront, blocks and design
@@ -12,12 +12,14 @@ covers: [includes/Renderer/, includes/Blocks/, packages/blocks/, templates/, ass
 
 1. **Themeless (`setup_theme` priority 1).** `Renderer\ThemelessCheckout` swaps in `templates/themeless/yaycheckout-themeless/` for the checkout, its wc-ajax calls, the layout editor and an order-received page a layout renders (Pro). The site theme's `functions.php`, styles and `theme.json` never load.
    - This runs before the main query and the cart exist, so it guesses from the URL.
-   - With cart rules, `LayoutPin`'s signed cookie is the hint. If the guess was wrong, `CheckoutPage::maybe_repick` reloads **once** with `?yaycheckout_repick=1`.
+   - With pinned rules (cart or country), `LayoutPin`'s signed cookie is the hint. If the guess was wrong, `CheckoutPage::maybe_repick` reloads **once** with `?yaycheckout_repick=1`.
 2. **Takeover (`wp`).** `Renderer\CheckoutPage::maybe_take_over` takes the checkout page (not order-received, not order-pay) when a layout resolves. It adds `template_include` at `PHP_INT_MAX` (to beat block themes' `wp-includes/template-canvas.php`).
    - It stands down entirely when safe mode is on or no layout resolves.
    - A preview token renders its layout even in safe mode.
-3. **Which layout.** A preview token wins. Otherwise, without cart-dependent rules, the layout is `LayoutRepository::active( shopper_context() )` on every request.
-   - With cart rules, the checkout GET picks one and pins it in the WC session (`LayoutPin::SESSION_KEY`), and every later AJAX or submit uses the pin.
+3. **Which layout.** A preview token wins. Otherwise, without pinned rules, the layout is `LayoutRepository::active( shopper_context() )` on every request.
+   - Pro tries the active layouts in the merchant's priority (`LayoutRepository::priority()`, the Priority sheet on the Layouts page), and the first whose rules match is served.
+   - Rules on the cart (products, categories, subtotal, quantity) or the billing/shipping country are pinned (`ConditionType::PINNED_TYPES`): the checkout GET picks one from `CartFacts::context()` and `CustomerFacts::context()` and pins it in the WC session (`LayoutPin::SESSION_KEY`), and every later AJAX or submit uses the pin. A country changed inside the form doesn't swap the layout; the next page load re-picks (BL-6).
+   - Both facts read only after `woocommerce_cart_loaded_from_session`; before it a pinned condition is unknown (`LayoutAssignment::outlook()` `maybe`). The country falls back from shipping to billing to `wc_get_customer_default_location()`.
    - `CheckoutPage::get_instance()->layout()` is the one answer to "which layout is served". It's meaningful from `wp` on, and `null` means stand down.
 4. **Print.** `templates/checkout-page.php` is a whole HTML document with no theme header or footer.
    - It calls `WC()->cart->calculate_totals()` first, because shipping rows only exist after a calculation.

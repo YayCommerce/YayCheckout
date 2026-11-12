@@ -1,7 +1,7 @@
 ---
 area: release
 updated: 2026-11-12
-updated_ref: ee4784a
+updated_ref: c7ee247
 covers: [scripts/, scoper.inc.php, composer.json, package.json, pnpm-workspace.yaml, .nvmrc, phpcs.xml, phpunit.xml.dist, tests/, .github/workflows/, readme.txt, editions/]
 ---
 # Build, release, tests and CI
