@@ -86,6 +86,11 @@ class CheckoutExtraFields {
     }
 
     public function validate( $data, \WP_Error $errors ): void {
+        // A wallet can't collect the layout's extra fields; its order goes through without them.
+        if ( ExpressPay::is_wallet_order() ) {
+            return;
+        }
+
         foreach ( $this->submission( $data )['errors'] as $key => $message ) {
             $errors->add( 'yaycheckout_extra_' . $key, $message );
         }

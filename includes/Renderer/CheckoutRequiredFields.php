@@ -39,7 +39,8 @@ class CheckoutRequiredFields {
     }
 
     public function filter_fields( $fields ) {
-        if ( ! is_array( $fields ) ) {
+        // A wallet order carries only the wallet's fields; WooCommerce's and the gateway's rules decide.
+        if ( ! is_array( $fields ) || ExpressPay::is_wallet_order() ) {
             return $fields;
         }
 
