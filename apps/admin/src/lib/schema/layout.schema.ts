@@ -70,6 +70,13 @@ export const layoutCountsSchema = z
   })
   .strict();
 
+/** GET|PUT /layouts/priority. Mirrors LayoutPriorityRestController: the active layouts, top priority first. */
+export const layoutPriorityWireSchema = z
+  .object({
+    layouts: z.array(layoutSummaryWireSchema),
+  })
+  .strict();
+
 /** GET /layouts/counts. */
 export const layoutCountsResponseSchema = z
   .object({
