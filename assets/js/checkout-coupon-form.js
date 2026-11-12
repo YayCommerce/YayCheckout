@@ -2,7 +2,7 @@
  * Applies and removes coupons from the yaycheckout/coupon-form block and prints its notices below it; an applied
  * coupon shows as a chip (CheckoutFragments::coupon_chips_html()). The chips change as soon as WooCommerce answers,
  * before update_checkout refreshes them with the totals.
- * Why it does not reuse WooCommerce's handlers: docs/architecture.md, Storefront (Coupon form).
+ * Why it does not reuse WooCommerce's handlers: docs/knowledge/storefront.md, "How it stays a WooCommerce checkout".
  */
 jQuery(function ($) {
     var ERROR_ID = 'yaycheckout-coupon-error';

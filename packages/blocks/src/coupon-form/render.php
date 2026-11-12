@@ -4,7 +4,7 @@
  *
  * Storefront prints a coupon field and apply button, wired by assets/js/checkout-coupon-form.js,
  * which block.json's viewScript loads (handle registered in BlockRegistry::register_view_scripts()).
- * Why no <form>: docs/architecture.md, Storefront (Coupon form).
+ * Why no <form>: docs/knowledge/storefront.md, "How it stays a WooCommerce checkout".
  *
  * @var array    $attributes Block attributes.
  * @var string   $content    The Coupon Button inner block's markup; empty when the form has none.

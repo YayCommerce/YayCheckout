@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(composer lint *)",
+      "Bash(composer test)",
+      "Bash(pnpm --filter @yaycheckout/admin-page lint)",
+      "Bash(pnpm --filter @yaycheckout/admin-page exec tsc --noEmit)",
+      "Bash(./scripts/check-pro-boundary.sh)"
+    ]
+  },
+  "includeGitInstructions": false
+}

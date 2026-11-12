@@ -1,61 +1,88 @@
-<!--
-Purpose: the index every Claude Code session loads first: what this repo is, the commands, the hard rules, when to add a test, the git rules and where to look next.
-Update when: a command, hard rule, the test rule or a git rule changes, or a harness doc is added, moved or removed. Keep it under 100 lines. Detail goes in a linked doc, reached by a "read when…" link.
--->
+# YayCheckout Pro - WooCommerce Checkout Builder
 
-# YayCheckout
+<!-- yay:managed:start v=0.3.0 -->
+<!-- Kit-managed by the yay plugin 0.3.0. Don't edit this block; run /yay:harness-update. Project knowledge goes in the yay:project block below. -->
+## How we work here
 
-WooCommerce checkout builder. A merchant builds checkout layouts from blocks in an embedded block editor, and the storefront renders the active layout in place of WooCommerce's checkout form. One branch, `dev`, ships two builds: `./scripts/run.sh release --plan=free|pro` picks the edition, Pro by default. Free's zip is Pro without `includes/Pro/`, with the SPA built as `free`, and with `editions/YayCheckoutPluginAdapter.free.php` (no licensing) and a header naming no Pro staged over the branch's Pro ones.
-PHP lives in `includes/`. The admin SPA is `apps/admin/` (React, Vite, TypeScript), and the checkout blocks are `packages/blocks/` (`@wordpress/scripts`).
+This repo uses the **yay** harness. Work through its skills so every developer and every Claude session follows the same flow:
+
+| Step | Skill | Writes |
+|---|---|---|
+| Not sure? Say it in plain words | `/yay:go` | nothing: shows what's next, or picks the skill below |
+| Plan the horizon | `/yay:roadmap` | the roadmap (`R-<n>`): one file per sprint, a list per version |
+| Explore an idea | `/yay:brainstorm` | `docs/brainstorms/` (`BS-<n>`) |
+| Design a UI | `/yay:design` | `docs/designs/` (`UX-<n>`) |
+| Decide the work | `/yay:plan` | `docs/plans/` (`P-<n>`) |
+| Build it | `/yay:implement` | worktree, branch, commits, PR |
+| Run a whole queue | `/yay:autopilot` | all of the above per item, one decision sheet, `.yay/runs/` |
+| Find a bug's cause | `/yay:debug` | `docs/bugs/` (`B-<n>`) |
+| Fix a bug | `/yay:fix` | worktree, branch, commits, PR |
+| Test build for QA | `/yay:release --bundle` | `release/bundles/<slug>-<x.y.z>-rc.<n>/` |
+| Ship | `/yay:release` → merge → `/yay:release --tag-only` | readme.txt changelog, `docs/releases/`, checked bundle, tag |
+| Keep docs true | `/yay:knowledge-update` | this file's project block, `docs/knowledge/` |
+
+- A worked example from roadmap to release tag, with the exact prompts, is in `docs/yay-workflow.md`.
+- Each skill checks for the previous step's output and says when it's missing. You can still run any skill on its own.
+- Lost? `yayh status` lists the work in flight in every worktree, most urgent first, each with the command that moves it on. `yayh next [ID]` prints just that command.
+- The repo's commands, editions, branches and generated paths are in `.yay/config.json`. Read them with `yayh config get <key>`; never guess a command.
+- Get IDs and slugs from `yayh id next <R|BS|P|B|BL|UX>` and `yayh slug "<text>"`.
+- Git: branches are `<type>/<slug>`, commits are `type(scope): summary`, and you never commit to `dev` directly. The full rules are in `.claude/rules/yay-git.md`.
+- Never hand-edit generated paths: vendor/, vendor-prefixed/, node_modules/, assets/dist/, dist/, release/. A hook blocks it.
+- Product PHP runs on PHP 7.4+. `.claude/rules/yay-wordpress.md` lists what that rules out.
+<!-- yay:managed:end -->
+
+<!-- yay:project:start ref=edf2074 updated=2026-11-12 -->
+## What this is
+YayCheckout replaces WooCommerce's classic checkout with a layout the merchant builds from blocks in the block editor. The storefront prints that layout in place of the theme, but the form, fields, fragments, payments and orders stay WooCommerce's own. One branch, `dev`, is the Pro edition. Free (for wordpress.org) is built from it at release by deleting `includes/Pro/` and the Pro blocks and templates. Pro adds multi-step checkouts, assignment rules, a thank-you page, Order Again and export/import.
+
+## Layout
+| Path | What |
+|---|---|
+| `yaycheckout.php` | boot, constants, Free/Pro coexistence guards |
+| `includes/` | PHP: Models, Repositories, Services, Controllers (REST), Engine (hook glue) |
+| `includes/Renderer/` | storefront takeover, fragments, design CSS |
+| `includes/Pro/` | the Pro edition; booted once from `includes/YayCheckout.php` |
+| `packages/blocks/` | every checkout block (`block.json` + `render.php` + editor script); Pro ones under `src/pro/` |
+| `apps/admin/` | admin SPA (React, Vite, Tailwind) |
+| `templates/` | checkout page, themeless theme, layout templates (`templates/layouts/`) |
+| `assets/css/`, `assets/js/` | storefront base styles and view scripts (`assets/dist/` is built) |
+| `vendor-prefixed/` | scoped AdminShell, tracked; update only with `./scripts/run.sh shell-update` |
+| `scripts/run.sh` | dev, build, release |
+| `editions/` | the Free adapter the release swaps in |
 
 ## Commands
-
-Run from the repo root on Node 22: `nvm use` reads `.nvmrc`, and pnpm 11 [fails on older Node](docs/known-issues.md). Use pnpm only; `apps/admin` rejects npm and Yarn. Composer tooling needs PHP ≥ 8.2.
-
-- `pnpm install`: JS dependencies, then `composer install` (root `postinstall`).
-- `composer lint`: `scripts/check-pro-boundary.sh`, then phpcs (WordPress standard). `composer lint -- <files>` lints only those files.
-- `composer test`: PHPUnit integration suite, inside WordPress with WooCommerce, against a test database the bootstrap drops and recreates. Its tests live in `tests/Integration/`. Setup is in the header of `phpunit.xml.dist`; Local sites need [the per-site socket](docs/known-issues.md).
-- `pnpm --filter @yaycheckout/admin-page lint`: eslint, then prettier. [Fails today](docs/known-issues.md).
-- `pnpm --filter @yaycheckout/admin-page exec tsc --noEmit`: type-check the SPA.
-- `pnpm build:blocks`: build the blocks into `assets/dist/blocks/`. Without a build, the editor has no YayCheckout blocks and says nothing.
-- `./scripts/run.sh dev`: Vite on :3040, which wp-admin loads while `YAYCHECKOUT_IS_DEVELOPMENT` is true (the default), plus a blocks watcher. It first runs `composer update` and the admin-shell sync, which can [rewrite `composer.json` and `scoper.inc.php`](docs/known-issues.md): check `git status` before committing.
-- `./scripts/run.sh build`: type-check and build the SPA into `assets/dist/admin/`, then the blocks into `assets/dist/blocks/`.
-- `./scripts/run.sh release [version] [--plan=free|pro] [--wp-tested=X.Y] [--wc-tested=X.Y] [--no-prompt]`: package and check a zip in `release/` for the edition `--plan` names, Pro by default. It prompts for the version and the WP and WC tested-up-to versions. Pass a version or `--no-prompt` when there is no terminal to answer the prompts; then the tested-up-to values change only through their flags. It leaves [only `--no-dev` packages](docs/known-issues.md): run `composer install` afterwards.
-- `./scripts/run.sh backlog`: list the open items in `docs/backlog/` and their unticked boxes.
-- CI runs on PRs and pushes to dev, only for the files a change touches: `.github/workflows/php.yml` (`php -l` on PHP 7.4 and `scripts/check-pro-boundary.sh`) when PHP changes, and `.github/workflows/js.yml` (the SPA's `tsc --noEmit` and eslint, not prettier) when `apps/admin/` or `packages/blocks/src/shared/` changes. Add a path to a workflow's `paths:` when its job starts reading one. It runs no `composer install`, phpcs or `composer test`.
-
-Any pnpm command may [run `pnpm install`, and with it `composer install`, first](docs/known-issues.md). `./scripts/run.sh help` lists the rest. Judge a failing check against `dev`. If it fails there too, it was already failing: leave it unless asked, and don't add to it.
+- `pnpm install && composer install`: install. Use Node 22. The root `postinstall` also runs composer, which needs access to the private admin-shell repo.
+- `./scripts/run.sh dev`: Vite on :3040 plus the blocks watcher. Without it, the admin page is blank (`YAYCHECKOUT_IS_DEVELOPMENT` defaults to true).
+- `./scripts/run.sh build`: admin SPA and blocks into `assets/dist/`. Unbuilt blocks never register.
+- `composer lint`: the Pro boundary check, then phpcs.
+- `pnpm --filter @yaycheckout/admin-page lint`: ESLint and prettier. prettier fails on `dev` today, so check only your files.
+- `composer test`: the WordPress integration suite. It needs a MySQL test DB and doesn't run from a worktree as it stands ([known issues](docs/knowledge/known-issues.md)).
+- `./scripts/run.sh release {version} --plan={edition} --no-prompt`: builds and checks one zip. It writes the version into the tree, and Free needs a committed bump.
 
 ## Hard rules
-
-1. Never hand-edit generated output: `vendor/`, `vendor-prefixed/`, `node_modules/`, `assets/dist/`, `release/`, `templates/layouts/*/preview.html` and `templates/layouts/pro/*/preview.html`, and the `thank-you-preview.html` beside each. Change the input and rerun the command that builds it (`vendor-prefixed/` is committed; rebuild it with `./scripts/run.sh shell-update`). A block's `render.php` is edited in `packages/blocks/src/<block>/`, never in `assets/dist/blocks/`, a template's `preview.html` is rebuilt from the HTML mock with `./scripts/run.sh previews`, and its `thank-you-preview.html` from its `design.json` with `./scripts/run.sh thank-you-previews`.
-2. Free names Pro in exactly one place: the guarded `boot_pro()` in `includes/YayCheckout.php`. Pro attaches only through the hooks and filters that `includes/Pro/ProServiceProvider.php` adds. `scripts/check-pro-boundary.sh`, run by `composer lint`, fails any other reference to `YayCheckout\Pro` in `includes/`.
-3. Pro features are withheld by PHP: the Free build has no Pro REST routes, and the limits and templates check `Plan::is_pro()`. The SPA's `isPro` (`apps/admin/src/lib/plan.ts`) only decides what the SPA shows; the template list comes from PHP, for the installed plan, and Free has no Pro block or template code at all. Free's upsells (`ProBadge`, `UpgradeButton`, the locked mocks, `<ProGate>`) ship to Free, so never put real data or a real endpoint behind them.
-4. Product PHP must run on PHP 7.4: no enums, `match`, `readonly`, promoted constructor properties, `?->`, named arguments or union types. phpcs checks no PHP version and the dev tooling runs on PHP 8, so only review catches it.
+1. Nothing outside `includes/Pro/` and `packages/blocks/src/pro/` names `YayCheckout\Pro`, except the one bootstrap in `includes/YayCheckout.php`. Otherwise Free can't be built by deleting Pro (`composer lint` checks it).
+2. Edition checks go through `Plan::is_pro()` in PHP and `lib/plan.ts` in the SPA. Pro UI goes behind `isPro &&`, never only `ProGate`, which still ships its children in Free.
+3. Product PHP runs on PHP 7.4: no `match`, enums, named arguments or promoted constructors.
+4. Layout and settings storage goes through `LayoutRepository` and `SettingsRepository`. Never write `yaycheckout_active_layout` or the `_yaycheckout_*` meta directly.
+5. The checkout form stays WooCommerce's: fields through `woocommerce_form_field()`, refreshes through `update_order_review` fragments. Otherwise gateways and plugins break.
+6. Every REST route extends `BaseRestController` and uses its `manage_woocommerce` permission check. Sanitize in, escape out (`esc_html()`, `KsesHelper::storefront_html()`).
+7. Change PHP and TypeScript mirrors together ([conventions](docs/knowledge/conventions.md#mirrored-constants)). Nothing catches drift.
+8. Never change `YayCheckoutPluginAdapter::get_plugin_slug()`: it prefixes customers' license options.
 
 ## Tests
+- Integration tests live in `tests/Integration/` (WordPress test library + WooCommerce). Pro tests are in `tests/Integration/Pro/` and skip on Free.
+- Run one with `vendor/bin/phpunit --filter <TestName>`.
+- There are no JS tests. CI runs only `php -l`, the boundary check, `tsc` and ESLint.
+- Setup and traps: [release.md § Tests](docs/knowledge/release.md#tests).
 
-The team keeps only tests that guard real risk, so a test is warranted in two cases: logic whose failure silently breaks a shopper's checkout (publish rules in `LayoutMarkupReader::publish_error()`, layout assignment in `LayoutAssignment::pick()`, required fields in `RequiredFieldOverlay::apply()`, import review in `LayoutImportReview`), or a fixed bug that a test reproduces cheaply. Before adding any test, ask with AskUserQuestion: name the test, its file and suite, and what it guards. Write it only if the user accepts; a request for that test, or a plan whose `**Tests:**` line lists it, counts as acceptance. Otherwise verify with an exact manual check: the command or UI action and the result that means it passed.
-
-## Git
-
-- Branch from `dev` as `<name>/<type>/<topic>`.
-- Every change, docs included, lands through a PR into `dev` (squash merge). Never commit to `dev` directly. `dev` is the repository's only long-lived branch and its default; there is no `main` and no edition branch.
-- Commit messages follow Conventional Commits: `type(scope): summary`.
-- End each commit message with `Co-Authored-By: Claude <model> <noreply@anthropic.com>`, naming the model you run as, and each PR description you write with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. A personal `CLAUDE.local.md` may drop them.
-- Commit or push only when asked. Never force-push a shared branch, rewrite pushed history, skip hooks (`--no-verify`) or change git config.
-- Check `git status` and stage files by name, so personal and generated files stay out.
-
-## Plans and specs
-
-Plans live in `docs/plans/` and specs in `docs/specs/`; once their work ships they are deleted, and git history keeps them. Act only on a plan whose `Status:` is `active` or a spec whose `Status:` is `accepted`. Any other status makes it a record, not an instruction.
-
-## Where to look
-
-- [docs/architecture.md](docs/architecture.md): how the pieces fit: boot, the admin-shell sync, layers and who writes what, layouts and how the storefront picks one, preview links, blocks and the embedded editor, Free/Pro, the SPA↔WordPress bridge, the compatibility scan, release and tests. Read it before a change that crosses layers, adds a stored value or a writer, touches the Free/Pro split, or changes how the SPA or the editor loads or calls WordPress.
-- [docs/conventions.md](docs/conventions.md): team rules the code can't show: storage keys, settings and design schemas, TypeScript copies of PHP, wire casing and dates, file names, logging and comments. Read it before adding a file, a stored key or setting, a TypeScript copy of a PHP shape, or a REST field.
-- [docs/decisions/](docs/decisions/): the reasons behind architectural choices: the Free/Pro split, admin-shell scoping, a layout as one post and its design, wire timestamps, checkout base styles and fonts, block visibility, and this harness. Read the matching record before a change that alters an architectural choice; [the decision-record practice](docs/decisions/2026-10-05-decision-record-practice.md) says when to write a new one. Only `accepted` records are in force.
-- [docs/known-issues.md](docs/known-issues.md): checks that fail today and gotchas, each with a workaround. Read it when a command fails or does something unexpected, before you debug it.
-- [docs/backlog/](docs/backlog/): follow-ups that reviews left open, one file per item, each with a `## Done when` checklist. Read it when you start work in an area, or before you fix something a review flagged. `/yaybacklog` lists, checks and adds items; `./scripts/run.sh backlog` lists them.
-- [README.md](README.md): onboarding, the review, promotion and release practice, when to use each skill, and the owner map of the harness. Read it before adding or moving a harness doc, rule or skill.
-- [docs/plans/](docs/plans/): phased plans. Read it when you continue planned work; the plan with `Status: active` says what comes next.
+## Read when…
+- adding any function, hook or setting → [docs/knowledge/helpers.md](docs/knowledge/helpers.md) (reuse first)
+- changing boot, editions, storage, REST or public hooks → [docs/knowledge/architecture.md](docs/knowledge/architecture.md)
+- changing what the storefront prints, a block, the design CSS or a template → [docs/knowledge/storefront.md](docs/knowledge/storefront.md)
+- changing the admin SPA → [docs/knowledge/admin.md](docs/knowledge/admin.md)
+- building, releasing, testing or touching CI → [docs/knowledge/release.md](docs/knowledge/release.md)
+- writing code in a new place, or adding a block, setting or route → [docs/knowledge/conventions.md](docs/knowledge/conventions.md)
+- touching gateway, WooCommerce-surface or other-plugin compatibility → [docs/knowledge/integrations.md](docs/knowledge/integrations.md)
+- something looks wrong or a check fails → [docs/knowledge/known-issues.md](docs/knowledge/known-issues.md)
+- asking "why is it built this way" → [docs/knowledge/decisions.md](docs/knowledge/decisions.md)
+<!-- yay:project:end -->

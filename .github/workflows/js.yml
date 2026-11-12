@@ -40,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Node first: pnpm 11 crashes on Node older than 22 (docs/known-issues.md).
+      # Node first: pnpm 11 crashes on Node older than 22 (docs/knowledge/known-issues.md).
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -50,7 +50,7 @@ jobs:
 
       # --ignore-scripts: the root postinstall runs `composer install`, which needs the private
       # admin-shell repo, and still runs under --filter. tsc and ESLint need no install scripts.
-      # No lockfile is tracked (docs/known-issues.md), so no --frozen-lockfile or cache.
+      # No lockfile is tracked (docs/knowledge/release.md), so no --frozen-lockfile or cache.
       - name: Install dependencies
         run: pnpm install --filter @yaycheckout/admin-page --ignore-scripts
 
@@ -58,6 +58,6 @@ jobs:
         run: pnpm --filter @yaycheckout/admin-page exec tsc --noEmit
 
       # ESLint only: the package's `lint` script also runs `prettier --check`, which fails on dev
-      # (docs/known-issues.md). Warnings are shown but don't block.
+      # (docs/knowledge/known-issues.md). Warnings are shown but don't block.
       - name: ESLint
         run: pnpm --filter @yaycheckout/admin-page exec eslint .
