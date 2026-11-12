@@ -119,7 +119,7 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         $this->assertSame( LayoutAssignment::OUTLOOK_NO, LayoutAssignment::outlook( [], self::SHOPPER ) );
     }
 
-    /** P-1: "at least" includes the threshold, "less than" excludes it; an empty cart is 0 and 0. */
+    /** "At least" includes the threshold, "less than" excludes it; an empty cart is 0 and 0. */
     public function test_cart_subtotal_and_quantity_operators(): void {
         $facts = static fn( float $subtotal, int $quantity ) => self::context( [] ) + [
             ConditionType::CART_SUBTOTAL => $subtotal,
@@ -144,7 +144,7 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         $this->assertFalse( $holds( ConditionType::CART_QUANTITY, ConditionType::AT_LEAST, 1, $facts( 0.0, 0 ) ) );
     }
 
-    /** P-1: at setup_theme the cart facts are missing, so a cart value rule is undecided: the theme guess and the pin rely on it. */
+    /** At setup_theme the cart facts are missing, so a cart value rule is undecided: the theme guess and the pin rely on it. */
     public function test_cart_value_conditions_are_unknown_before_the_cart_loads(): void {
         $big      = self::layout( 1, [ [ self::condition( ConditionType::CART_SUBTOTAL, ConditionType::AT_LEAST, 100.0 ) ] ] );
         $few      = self::layout( 2, [ [ self::condition( ConditionType::CART_QUANTITY, ConditionType::LESS_THAN, 5 ) ] ] );
@@ -185,7 +185,7 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         );
     }
 
-    /** P-1: the countries are read once the session loads, so before it a country rule is undecided and turns the pin on (BL-6). */
+    /** The countries are read once the session loads, so before it a country rule is undecided and turns the pin on. */
     public function test_country_conditions_are_unknown_before_the_customer_loads(): void {
         $germany  = self::layout( 1, [ [ self::condition( ConditionType::BILLING_COUNTRY, ConditionType::IN, [ 'DE' ] ) ] ] );
         $not_fr   = self::layout( 2, [ [ self::condition( ConditionType::SHIPPING_COUNTRY, ConditionType::NOT_IN, [ 'FR' ] ) ] ] );
@@ -213,7 +213,7 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         }
     }
 
-    /** P-1: amounts are money (rounded to the store's decimals), quantities whole; neither may be negative. */
+    /** Amounts are money (rounded to the store's decimals), quantities whole; neither may be negative. */
     public function test_sanitize_rules_accepts_and_rejects_numbers(): void {
         update_option( 'woocommerce_price_num_decimals', 2 );
 

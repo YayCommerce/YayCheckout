@@ -5,7 +5,7 @@ use WP_UnitTestCase;
 use YayCheckout\Enums\ConditionType;
 use YayCheckout\Renderer\CustomerFacts;
 
-/** P-1: the country conditions test the customer's stored countries, with the address the form opens with as fallback. */
+/** The country conditions test the customer's stored countries, with the address the form opens with as fallback. */
 class CustomerFactsTest extends WP_UnitTestCase {
 
     private const LOADED = 'woocommerce_cart_loaded_from_session';

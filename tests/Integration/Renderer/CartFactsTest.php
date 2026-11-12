@@ -48,7 +48,7 @@ class CartFactsTest extends WP_UnitTestCase {
     }
 
     /**
-     * P-1: the layout is picked before the checkout recalculates, so the totals must already be there when
+     * The layout is picked before the checkout recalculates, so the totals must already be there when
      * WooCommerce restores the cart from the session.
      */
     public function test_context_reads_subtotal_and_quantity(): void {

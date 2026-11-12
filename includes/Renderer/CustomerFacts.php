@@ -11,9 +11,7 @@ defined( 'ABSPATH' ) || exit;
 class CustomerFacts {
 
     /**
-     * The customer's part of the assignment context, keyed by ConditionType. Empty until WooCommerce loads
-     * the session, so a country condition stays undecided rather than testing a blank customer.
-     * Shipping falls back to billing, and both to the store's default customer location, as the form opens with.
+     * The customer's part of the assignment context, keyed by ConditionType. Empty until WooCommerce loads the session.
      */
     public static function context(): array {
         if ( ! did_action( 'woocommerce_cart_loaded_from_session' ) || ! WC()->customer instanceof \WC_Customer ) {
