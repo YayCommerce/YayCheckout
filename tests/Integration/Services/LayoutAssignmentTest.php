@@ -119,6 +119,44 @@ class LayoutAssignmentTest extends WP_UnitTestCase {
         $this->assertSame( LayoutAssignment::OUTLOOK_NO, LayoutAssignment::outlook( [], self::SHOPPER ) );
     }
 
+    /** P-1: "at least" includes the threshold, "less than" excludes it; an empty cart is 0 and 0. */
+    public function test_cart_subtotal_and_quantity_operators(): void {
+        $facts = static fn( float $subtotal, int $quantity ) => self::context( [] ) + [
+            ConditionType::CART_SUBTOTAL => $subtotal,
+            ConditionType::CART_QUANTITY => $quantity,
+        ];
+        $holds = static fn( string $type, string $operator, $value, array $context ) => LayoutAssignment::matches( [ [ self::condition( $type, $operator, $value ) ] ], $context );
+
+        $this->assertTrue( $holds( ConditionType::CART_SUBTOTAL, ConditionType::AT_LEAST, 100.0, $facts( 100.0, 1 ) ) );
+        $this->assertFalse( $holds( ConditionType::CART_SUBTOTAL, ConditionType::LESS_THAN, 100.0, $facts( 100.0, 1 ) ) );
+        $this->assertTrue( $holds( ConditionType::CART_SUBTOTAL, ConditionType::AT_LEAST, 100.0, $facts( 120.0, 1 ) ) );
+        $this->assertFalse( $holds( ConditionType::CART_SUBTOTAL, ConditionType::AT_LEAST, 100.0, $facts( 80.0, 1 ) ) );
+        $this->assertTrue( $holds( ConditionType::CART_SUBTOTAL, ConditionType::LESS_THAN, 100.0, $facts( 99.99, 1 ) ) );
+
+        $this->assertTrue( $holds( ConditionType::CART_QUANTITY, ConditionType::AT_LEAST, 3, $facts( 0.0, 3 ) ) );
+        $this->assertFalse( $holds( ConditionType::CART_QUANTITY, ConditionType::LESS_THAN, 3, $facts( 0.0, 3 ) ) );
+        $this->assertTrue( $holds( ConditionType::CART_QUANTITY, ConditionType::LESS_THAN, 3, $facts( 0.0, 2 ) ) );
+
+        // An empty cart.
+        $this->assertTrue( $holds( ConditionType::CART_SUBTOTAL, ConditionType::LESS_THAN, 1.0, $facts( 0.0, 0 ) ) );
+        $this->assertFalse( $holds( ConditionType::CART_SUBTOTAL, ConditionType::AT_LEAST, 1.0, $facts( 0.0, 0 ) ) );
+        $this->assertTrue( $holds( ConditionType::CART_QUANTITY, ConditionType::AT_LEAST, 0, $facts( 0.0, 0 ) ) );
+        $this->assertFalse( $holds( ConditionType::CART_QUANTITY, ConditionType::AT_LEAST, 1, $facts( 0.0, 0 ) ) );
+    }
+
+    /** P-1: at setup_theme the cart facts are missing, so a cart value rule is undecided: the theme guess and the pin rely on it. */
+    public function test_cart_value_conditions_are_unknown_before_the_cart_loads(): void {
+        $big      = self::layout( 1, [ [ self::condition( ConditionType::CART_SUBTOTAL, ConditionType::AT_LEAST, 100.0 ) ] ] );
+        $few      = self::layout( 2, [ [ self::condition( ConditionType::CART_QUANTITY, ConditionType::LESS_THAN, 5 ) ] ] );
+        $everyone = self::layout( 3, [] );
+
+        $this->assertSame( LayoutAssignment::OUTLOOK_MAYBE, LayoutAssignment::outlook( [ $big, $few ], self::SHOPPER ) );
+        $this->assertNull( LayoutAssignment::pick( [ $big, $few ], self::SHOPPER ) );
+        $this->assertSame( 3, LayoutAssignment::pick( [ $big, $few, $everyone ], self::SHOPPER )->id );
+        $this->assertTrue( LayoutAssignment::reads_cart( [ $big ] ) );
+        $this->assertTrue( LayoutAssignment::reads_cart( [ $few ] ) );
+    }
+
     /** P-1: amounts are money (rounded to the store's decimals), quantities whole; neither may be negative. */
     public function test_sanitize_rules_accepts_and_rejects_numbers(): void {
         update_option( 'woocommerce_price_num_decimals', 2 );

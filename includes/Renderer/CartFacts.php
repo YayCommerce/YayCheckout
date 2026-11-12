@@ -6,7 +6,7 @@ use YayCheckout\Enums\ConditionType;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The cart facts assignment conditions test: per item, its product and categories.
+ * The cart facts assignment conditions test: per item, its product and categories; the subtotal and the item count.
  */
 class CartFacts {
 
@@ -19,7 +19,12 @@ class CartFacts {
             return [];
         }
 
-        return [ ConditionType::CART_ITEMS => self::items( WC()->cart ) ];
+        return [
+            ConditionType::CART_ITEMS    => self::items( WC()->cart ),
+            // As the shopper sees it: with tax when the store displays prices with tax. Restored from the session by now.
+            ConditionType::CART_SUBTOTAL => round( (float) WC()->cart->get_displayed_subtotal(), wc_get_price_decimals() ),
+            ConditionType::CART_QUANTITY => (int) WC()->cart->get_cart_contents_count(),
+        ];
     }
 
     /**
