@@ -1,7 +1,7 @@
 ---
 area: e2e
 updated: 2026-11-12
-updated_ref: 66dc911
+updated_ref: 7bd9c14
 covers: [tests/e2e/]
 ---
 # Browser tests (e2e)
