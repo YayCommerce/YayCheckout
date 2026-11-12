@@ -18,3 +18,4 @@ Goal: Rules v2 and Express pay v2: the two most-used Pro and Free checkout surfa
 - editions: free, pro
 - acceptance: Express pay buttons show and complete payment from the checkout layout in Free and Pro, including when a gateway offers no express method.
 - started: 2026-11-12
+- built: 2026-11-12

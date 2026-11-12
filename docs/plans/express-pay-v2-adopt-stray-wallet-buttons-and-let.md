@@ -1,7 +1,7 @@
 ---
 id: P-2
 title: Express pay v2: adopt stray wallet buttons and let wallet orders through
-status: in-progress
+status: done
 from: BS-2
 roadmap: R-6
 design:
@@ -11,6 +11,7 @@ branch: feat/express-pay-v2-adopt-stray-wallet-buttons-and-let
 pr:
 editions: [free, pro]
 created: 2026-11-12
+reviewed: pending
 ---
 # P-2 Express pay v2: adopt stray wallet buttons and let wallet orders through
 
