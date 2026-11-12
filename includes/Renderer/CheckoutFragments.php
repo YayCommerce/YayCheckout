@@ -430,7 +430,7 @@ class CheckoutFragments {
 
     /** Rejects values that could break out of a CSS custom-property declaration. */
     private static function css_safe_token( string $value ): string {
-        if ( preg_match( '/[=<>{}]|\/\*/', $value ) ) {
+        if ( preg_match( '/[=<>{};\\\\]|\/\*/', $value ) ) {
             return '';
         }
 

@@ -1,7 +1,7 @@
 ---
 area: testing
 updated: 2026-11-12
-updated_ref: 3c454cb
+updated_ref: af09235
 covers: [tests/php/, tests/js/, tests/e2e/.wp-env.json]
 ---
 # Testing
@@ -37,7 +37,7 @@ covers: [tests/php/, tests/js/, tests/e2e/.wp-env.json]
 ## Traps
 
 - **Pure PHP isn't always 7.4-safe to run on 7.4 without WordPress.** The code uses `str_contains` and friends, which WordPress polyfills (`BlockGap.php`, `RequiredFieldOverlay.php`). The unit layer runs on the host's PHP 8, so a test of those classes on PHP 7.4 would need shims.
-- **`@wordpress/*` isn't installed at the root.** It sits under `apps/admin/node_modules` and `packages/blocks/node_modules`, so mock it: `vi.mock( '@wordpress/i18n', () => ( { __: ( s ) => s } ) )`, then `await import()` the module (as `tests/js/admin/pages/layouts/assignment/condition-types.test.ts` does). `@wordpress/html-entities` exists in neither package.
+- **`@wordpress/*` isn't installed at the root.** It sits only in the admin app's and the blocks package's own node_modules, so mock it: `vi.mock( '@wordpress/i18n', () => ( { __: ( s ) => s } ) )`, then `await import()` the module (as `tests/js/admin/pages/layouts/assignment/condition-types.test.ts` does). `@wordpress/html-entities` exists in neither package.
 - **`phpcs.xml` lints `tests/`.** `tests/php/` and `tests/js/` are excluded from `PrefixAllGlobals` (the kit's `YayTests\` namespace) and `AlternativeFunctions` only.
 - **The wp-env tests site blocks outbound HTTP and turns off WP-Cron** (`WP_HTTP_BLOCK_EXTERNAL`, `DISABLE_WP_CRON` in `tests/e2e/.wp-env.json`, with `YAYCHECKOUT_IS_DEVELOPMENT=false`). An integration test that needs either must re-enable it or stub it (`pre_http_request`).
 - **wp-env and the e2e package.** Plain `pnpm install --ignore-workspace` in `tests/e2e/` exits non-zero on `ERR_PNPM_IGNORED_BUILDS` (fs-ext-extra-prebuilt), so `yayh run e2e-install` passes `--config.strict-dep-builds=false`. Never run two `wp-env start`s at once. The first test-init run collided and left a corrupt WooCommerce zip in wp-env's download cache (`adm-zip` error on the next start). Delete that environment's folder under `~/.wp-env/` and start again before relying on the integration layer.
@@ -54,7 +54,7 @@ covers: [tests/php/, tests/js/, tests/e2e/.wp-env.json]
 | `LayoutDesign::from_meta` / `is_gradient` / `sanitize_custom_css` | unit | critical | `tests/php/unit/Models/LayoutDesignTest.php` @group baseline | `includes/Models/LayoutDesign.php:336-470` |
 | `ExtraFieldSubmission::collect` | unit | critical | `tests/php/unit/Services/ExtraFieldSubmissionTest.php` @group baseline | `includes/Services/ExtraFieldSubmission.php` |
 | `CheckoutFragments` payment style, `css_color`, layouts, thumbnails | unit | important | `tests/php/unit/Renderer/CheckoutFragmentsTest.php` @group baseline | `includes/Renderer/CheckoutFragments.php:250-440,927-965` |
-| `CheckoutFragments::css_safe_token` lets `;` through | unit | important | bug: B-1 (`CheckoutFragmentsTest::test_refuses_a_value_that_adds_a_declaration`, incomplete) | `includes/Renderer/CheckoutFragments.php:431-438` |
+| `CheckoutFragments::css_safe_token` refuses `;` and `\` (B-1) | unit | important | `tests/php/unit/Renderer/CheckoutFragmentsTest.php` @group B-1 | `includes/Renderer/CheckoutFragments.php:431-438` |
 | `visibility-rules` `normalize` / `isVisible` + constants mirror | js | critical | `tests/js/blocks/shared/visibility-rules.test.ts` @baseline | `packages/blocks/src/shared/visibility-rules.ts` |
 | `design-css` `designCss` = `DesignStyles::css()` | js | critical | `tests/js/blocks/shared/design-css.test.ts` @baseline | `packages/blocks/src/shared/design-css.ts`, `includes/Renderer/DesignStyles.php` |
 | `condition-types` wire transforms + `ConditionType` mirror | js | critical | `tests/js/admin/pages/layouts/assignment/condition-types.test.ts` @baseline | `apps/admin/src/pages/layouts/assignment/condition-types.ts` |

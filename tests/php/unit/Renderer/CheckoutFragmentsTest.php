@@ -67,9 +67,9 @@ final class CheckoutFragmentsTest extends TestCase {
 	 * @group B-1
 	 */
 	public function test_refuses_a_value_that_adds_a_declaration() {
-		$this->markTestIncomplete( 'B-1: Block style values with a semicolon add declarations to the inline style' );
-
 		$this->assertSame( '', self::payment_style( [ 'border' => [ 'radius' => '4px;position:fixed' ] ] ) );
 		$this->assertSame( '', CheckoutFragments::css_color( 'red;position:fixed' ) );
+		$this->assertSame( '', CheckoutFragments::css_color( 'red\\3b position:fixed' ) );
+		$this->assertSame( '--yaycheckout-payment-radius:0.5rem', self::payment_style( [ 'border' => [ 'radius' => '0.5rem' ] ] ) );
 	}
 }
