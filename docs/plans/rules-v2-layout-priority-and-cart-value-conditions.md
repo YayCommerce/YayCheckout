@@ -8,7 +8,7 @@ design: UX-1
 trello:
 type: feat
 branch: feat/rules-v2-layout-priority-cart-value-and-country-co
-pr:
+pr: 283
 editions: [pro]
 created: 2026-11-12
 size: L
