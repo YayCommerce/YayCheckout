@@ -12,11 +12,11 @@ One file per sprint (`sprint-<n>.md`), `later.md` for unscheduled work, and a ge
 
 | Section | Dates | Goal | Items | Dev-days |
 |---|---|---|---|---|
-| [Later](later.md) | - | - | 6 (0 shipped) | 32 |
+| [Later](later.md) | - | - | 9 (0 shipped) | 48 |
 
 **Versions**
 
 | Version | Items | Last open item |
 |---|---|---|
-| [1.1.0](v1.1.0.md) | 6 items: 6 open, 0 in progress, 0 shipped, 0 dropped | - |
+| [1.1.0](v1.1.0.md) | 9 items: 9 open, 0 in progress, 0 shipped, 0 dropped | - |
 <!-- yay:roadmap-index:end -->
