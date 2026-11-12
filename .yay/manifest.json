@@ -1,21 +1,21 @@
 {
-  "kitVersion": "0.8.0",
+  "kitVersion": "0.10.0",
   "updated": "2026-11-12",
   "files": {
     "CLAUDE.md#managed": {
-      "sha256": "acf967bae459dac234b79d9723a8596531d3ecbc84a4aa6a939d75a68742eac9",
+      "sha256": "ac91355faad9e1cd929aa5c278b4a44b6aebbb1ce01752efe039b1c2e679ff5f",
       "template": "CLAUDE.managed.md"
     },
     ".claude/rules/yay-workflow.md": {
-      "sha256": "5dc7987514a0180decd620e3f2f948518fa2151d4dd0258a4bec60dfc73ea98a",
+      "sha256": "dfcdefa9d3ce2f82802b161ce47b89b820e40fae4121850f56f4d97bc6d4b446",
       "template": "rules/yay-workflow.md"
     },
     ".claude/rules/yay-git.md": {
-      "sha256": "80a294d8c3cb752800820d7fc3b95dc93345b1a443cf777fa8733ad0831232c3",
+      "sha256": "befd185f44b31a3d89cefa85df51bb38fcf3482877cb5a602f16ba8c379984e0",
       "template": "rules/yay-git.md"
     },
     ".claude/rules/yay-wordpress.md": {
-      "sha256": "755401e8bb66cececab37d6c474d466ee926de1cb8b837b3e1b8efa48eae5e3c",
+      "sha256": "722b3d3e408702cda08f5dc7e6608656ee070338ec61bcb73b4228e5b99a7716",
       "template": "rules/yay-wordpress.md"
     },
     ".claude/settings.json": {
@@ -27,7 +27,7 @@
       "template": "github/pull_request_template.md"
     },
     "docs/yay-workflow.md": {
-      "sha256": "2d2057c70200e20b4c5c28127424bc3ac0532a278697a5c5e7d6c821d5e733c1",
+      "sha256": "f445de742fa437bc7dd1008b7b04efc1389760ce351a8f657666f96a5ba1b2fd",
       "template": "docs/yay-workflow.md"
     }
   }
