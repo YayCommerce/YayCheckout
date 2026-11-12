@@ -1,4 +1,5 @@
 import { Plus } from 'lucide-react';
+import { NumericFormat } from 'react-number-format';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ConfirmPopover } from '@/components/shared/ConfirmPopover';
 import { TrashButton } from '@/components/shared/TrashButton';
@@ -34,6 +36,20 @@ const OPTION_PICKERS = {
     searchPlaceholder: __('Search roles', 'yaycheckout'),
     emptyText: __('No roles found.', 'yaycheckout'),
   }),
+  billing_country: () => ({
+    options: storeData().countries,
+    placeholder: __('Select countries', 'yaycheckout'),
+    searchPlaceholder: __('Search countries', 'yaycheckout'),
+    emptyText: __('No countries found.', 'yaycheckout'),
+    'aria-label': __('Billing countries', 'yaycheckout'),
+  }),
+  shipping_country: () => ({
+    options: storeData().countries,
+    placeholder: __('Select countries', 'yaycheckout'),
+    searchPlaceholder: __('Search countries', 'yaycheckout'),
+    emptyText: __('No countries found.', 'yaycheckout'),
+    'aria-label': __('Shipping countries', 'yaycheckout'),
+  }),
 } satisfies Partial<Record<ConditionType, () => object>>;
 
 /** Copy for the types whose value the server searches for: those with CONDITION_TYPES' `ids`. */
@@ -47,6 +63,18 @@ const ASYNC_PICKERS = {
     placeholder: __('Select categories', 'yaycheckout'),
     searchPlaceholder: __('Search categories', 'yaycheckout'),
     emptyText: __('No categories found.', 'yaycheckout'),
+  },
+} satisfies Partial<Record<ConditionType, object>>;
+
+/** Copy for the types whose value is one number: those with CONDITION_TYPES' `number`. */
+const NUMBER_INPUTS = {
+  cart_subtotal: {
+    placeholder: __('Amount', 'yaycheckout'),
+    'aria-label': __('Cart subtotal amount', 'yaycheckout'),
+  },
+  cart_quantity: {
+    placeholder: __('Items', 'yaycheckout'),
+    'aria-label': __('Cart quantity items', 'yaycheckout'),
   },
 } satisfies Partial<Record<ConditionType, object>>;
 
@@ -129,43 +157,73 @@ function ConditionRow({
     );
   }
 
+  const isCountry = condition.type === 'billing_country' || condition.type === 'shipping_country';
+
   return (
-    <div className="flex items-center gap-2">
-      <Select value={condition.type} onValueChange={(type) => onChange(newCondition(type as ConditionType))}>
-        <SelectTrigger className="w-40 shrink-0">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {CONDITION_TYPE_KEYS.map((type) => (
-            <SelectItem key={type} value={type}>
-              {CONDITION_TYPES[type].label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <Select value={condition.type} onValueChange={(type) => onChange(newCondition(type as ConditionType))}>
+          <SelectTrigger className="w-40 shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CONDITION_TYPE_KEYS.map((type) => (
+              <SelectItem key={type} value={type}>
+                {CONDITION_TYPES[type].label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <Select value={condition.operator} onValueChange={(operator) => onChange({ ...condition, operator })}>
-        <SelectTrigger className="w-40 shrink-0">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {CONDITION_TYPES[condition.type].operators.map((operator) => (
-            <SelectItem key={operator.value} value={operator.value}>
-              {operator.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <Select value={condition.operator} onValueChange={(operator) => onChange({ ...condition, operator })}>
+          <SelectTrigger className="w-40 shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CONDITION_TYPES[condition.type].operators.map((operator) => (
+              <SelectItem key={operator.value} value={operator.value}>
+                {operator.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <ValuePicker condition={condition} onChange={(value) => onChange({ ...condition, value })} />
+        <ValuePicker condition={condition} onChange={(value) => onChange({ ...condition, value })} />
 
-      <TrashButton aria-label={__('Remove condition', 'yaycheckout')} onClick={onRemove} />
+        <TrashButton aria-label={__('Remove condition', 'yaycheckout')} onClick={onRemove} />
+      </div>
+      {isCountry && (
+        <p className="text-muted-foreground text-xs">
+          {__(
+            "Read from the customer's saved address when checkout opens. Changing the country in the form doesn't switch the layout.",
+            'yaycheckout',
+          )}
+        </p>
+      )}
     </div>
   );
 }
 
 function ValuePicker({ condition, onChange }: { condition: Condition; onChange: (value: Condition['value']) => void }) {
   const kind = CONDITION_TYPES[condition.type].ids;
+  const number = CONDITION_TYPES[condition.type].number;
+
+  if (number) {
+    return (
+      // Not NumberInput: it always holds a number, and an empty value must keep Save rules disabled.
+      <NumericFormat
+        customInput={Input}
+        className="min-w-0 flex-1"
+        {...NUMBER_INPUTS[condition.type as keyof typeof NUMBER_INPUTS]}
+        inputMode={number === 'amount' ? 'decimal' : 'numeric'}
+        allowNegative={false}
+        decimalScale={number === 'amount' ? 2 : 0}
+        valueIsNumericString
+        value={condition.value as string}
+        onValueChange={({ value }) => onChange(value)}
+      />
+    );
+  }
 
   if (kind) {
     return (

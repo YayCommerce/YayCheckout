@@ -45,7 +45,7 @@ class LayoutRepository {
     }
 
     /**
-     * The active layout for this shopper: the most recently activated whose assignment rules match $context.
+     * The active layout for this shopper: the highest in the merchant's priority whose assignment rules match $context.
      * Free has no assignment, so its one active layout serves everyone.
      *
      * @param array $context Shopper facts; see LayoutAssignment::matches().
@@ -74,7 +74,39 @@ class LayoutRepository {
         return Plan::is_pro() && LayoutAssignment::reads_cart( $this->active_layouts() );
     }
 
-    /** @return Layout[] The active set, most recently activated first. */
+    /** @return Layout[] The active set, top priority first: the order active() tries them in. */
+    public function priority(): array {
+        return $this->active_layouts();
+    }
+
+    /**
+     * Stores the order active() tries the active layouts in. Refuses any list that isn't exactly the active set,
+     * so a screen loaded before another activation or deactivation can't drop or revive a layout.
+     *
+     * @param int[] $ids Top priority first.
+     * @throws \InvalidArgumentException When this is not Pro, or $ids is not the active set.
+     */
+    public function set_priority( array $ids ): void {
+        if ( ! Plan::is_pro() ) {
+            throw new \InvalidArgumentException( esc_html__( 'Layout priority is part of YayCheckout Pro.', 'yaycheckout' ) );
+        }
+
+        $current = array_map( static fn( Layout $layout ) => $layout->id, $this->active_layouts() );
+        $ids     = array_map( 'intval', array_values( $ids ) );
+        $sorted  = $ids;
+
+        sort( $current );
+        sort( $sorted );
+
+        if ( $sorted !== $current ) {
+            throw new \InvalidArgumentException( esc_html__( 'The active layouts changed since this list was loaded. Reload it and try again.', 'yaycheckout' ) );
+        }
+
+        // Stored lowest priority first, the order set_active() appends in.
+        $this->store_ids( array_reverse( $ids ) );
+    }
+
+    /** @return Layout[] The active set, top priority first. */
     private function active_layouts(): array {
         return array_values( array_filter( array_map( [ $this, 'find' ], array_reverse( $this->active_ids() ) ) ) );
     }
@@ -338,12 +370,16 @@ class LayoutRepository {
 
     /**
      * Free replaces the set and drafts the layout it replaces, as a Deactivate would;
-     * Pro moves the id to the end, the most recent choice.
+     * Pro appends a newly active id, the top priority, and leaves an already active one where the merchant put it.
      */
     public function set_active( int $id ): void {
         $others = array_diff( $this->active_ids(), [ $id ] );
 
         if ( Plan::is_pro() ) {
+            if ( $this->is_active( $id ) ) {
+                return;
+            }
+
             $ids = array_merge( $others, [ $id ] );
         } else {
             foreach ( $others as $replaced ) {
@@ -643,7 +679,7 @@ class LayoutRepository {
     }
 
     /**
-     * The active ids the current plan allows, oldest first.
+     * The active ids the current plan allows, lowest priority first.
      * Accepts a bare int (pre-Pro storage). On Free, keeps only the last id so
      * a site dropping back from Pro stays on the same layout and deactivating
      * it does not revive an older one.

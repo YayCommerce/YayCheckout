@@ -13,14 +13,16 @@ export function MultiSelectTrigger({
   placeholder,
   onRemove,
   className,
+  'aria-label': ariaLabel,
 }: {
   selected: { value: string; label: string; isMissing?: boolean }[];
   placeholder: string;
   onRemove: (value: string) => void;
   className?: string;
+  'aria-label'?: string;
 }) {
   return (
-    <ComboboxTrigger className={cn('min-w-0', className)}>
+    <ComboboxTrigger className={cn('min-w-0', className)} aria-label={ariaLabel}>
       <div className={cn('flex flex-wrap gap-1', selected.length > 0 && '-ml-1')}>
         {selected.length === 0 ? (
           <span className="text-muted-foreground">{placeholder}</span>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, MoreHorizontal, Plus, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, ListOrdered, Loader2, MoreHorizontal, Plus, Search } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { __, _n, sprintf } from '@wordpress/i18n';
@@ -59,6 +59,7 @@ import { DeleteModal } from '@/pages/layouts/DeleteModal';
 import { LayoutBulkBar } from '@/pages/layouts/LayoutBulkBar';
 import { NewLayoutModal } from '@/pages/layouts/new-layout/NewLayoutModal';
 import { PreviewLinkModal } from '@/pages/layouts/PreviewLinkModal';
+import { PrioritySheet } from '@/pages/layouts/priority/PrioritySheet';
 import { RenameModal } from '@/pages/layouts/RenameModal';
 import { SetActiveModal } from '@/pages/layouts/SetActiveModal';
 import PageLayout from '@/pages/PageLayout';
@@ -195,6 +196,7 @@ function LayoutsPageBody({
   const [archivingLayout, setArchivingLayout] = useState<LayoutSummary | null>(null);
   const [deletingLayout, setDeletingLayout] = useState<LayoutSummary | null>(null);
   const [assigningLayout, setAssigningLayout] = useState<LayoutSummary | null>(null);
+  const [priorityOpen, setPriorityOpen] = useState(false);
   const [previewing, setPreviewing] = useState<{ layout: LayoutSummary; link: PreviewLink } | null>(null);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
   const [confirmingBulk, setConfirmingBulk] = useState<ConfirmedBulkAction | null>(null);
@@ -397,6 +399,7 @@ function LayoutsPageBody({
         isPending={bulkMutation.isPending}
       />
       <AssignmentDrawer layout={assigningLayout} onOpenChange={(open) => !open && setAssigningLayout(null)} />
+      {isPro && <PrioritySheet open={priorityOpen} onOpenChange={setPriorityOpen} />}
       <PreviewLinkModal
         layout={previewing?.layout ?? null}
         link={previewing?.link ?? null}
@@ -445,6 +448,12 @@ function LayoutsPageBody({
                   <Search className="size-4" />
                 </InputGroupAddon>
               </InputGroup>
+            )}
+            {isPro && counts.active >= 2 && (
+              <Button size="sm" variant="outline" onClick={() => setPriorityOpen(true)}>
+                <ListOrdered className="size-4" />
+                {__('Priority', 'yaycheckout')}
+              </Button>
             )}
             <Button size="sm" variant="primary-outline" onClick={() => setNewLayoutOpen(true)}>
               <Plus className="size-4" />

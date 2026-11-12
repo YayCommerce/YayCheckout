@@ -8,8 +8,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Picks the checkout layout by assignment rules, from shopper facts the caller reads.
- * The candidates' order stands in for a priority the merchant can't set, and overlapping
- * rules aren't checked, so the first match wins.
+ * The candidates come in the priority order the merchant sets, and overlapping rules
+ * aren't checked, so the first match wins.
  */
 class LayoutAssignment {
 
@@ -24,7 +24,7 @@ class LayoutAssignment {
      * The first candidate that applies to this shopper: a layout without rules applies to everyone, so it ends the search.
      * A condition on a fact $context lacks never applies.
      *
-     * @param Layout[] $candidates Most recently activated first.
+     * @param Layout[] $candidates Top priority first.
      * @param array    $context    See matches().
      */
     public static function pick( array $candidates, array $context ): ?Layout {
@@ -42,7 +42,7 @@ class LayoutAssignment {
      * has not loaded, yet the theme must be chosen.
      *
      * @param Layout[] $candidates As for pick().
-     * @param array    $context    See matches(); CART_ITEMS may be missing.
+     * @param array    $context    See matches(); the cart facts may be missing.
      * @return string An OUTLOOK_* constant.
      */
     public static function outlook( array $candidates, array $context ): string {
@@ -64,7 +64,7 @@ class LayoutAssignment {
     }
 
     /**
-     * Whether any candidate's rules read the cart, so the pick must wait for it and be pinned.
+     * Whether any candidate's rules read the cart or the customer's countries, so the pick must wait for them and be pinned.
      *
      * @param Layout[] $candidates
      */
@@ -72,7 +72,7 @@ class LayoutAssignment {
         foreach ( $candidates as $layout ) {
             foreach ( $layout->rules as $group ) {
                 foreach ( $group as $condition ) {
-                    if ( in_array( $condition['type'], ConditionType::CART_TYPES, true ) ) {
+                    if ( in_array( $condition['type'], ConditionType::PINNED_TYPES, true ) ) {
                         return true;
                     }
                 }
@@ -86,7 +86,7 @@ class LayoutAssignment {
      * Groups are ORed, conditions inside a group ANDed.
      *
      * @param array $rules   Stored rules (Layout::sanitize_rules() shape).
-     * @param array $context array{customer_role: string[], login_status: string, device: string, cart_items?: array}, keyed by ConditionType.
+     * @param array $context array{customer_role: string[], login_status: string, device: string, cart_items?: array, cart_subtotal?: float, cart_quantity?: int, billing_country?: string, shipping_country?: string}, keyed by ConditionType.
      */
     public static function matches( array $rules, array $context ): bool {
         return true === self::rules_state( $rules, $context );
@@ -152,6 +152,21 @@ class LayoutAssignment {
             case ConditionType::PRODUCT:
             case ConditionType::PRODUCT_CATEGORY:
                 return isset( $context[ ConditionType::CART_ITEMS ] ) ? self::cart_matches( $condition, $context[ ConditionType::CART_ITEMS ] ) : null;
+            case ConditionType::BILLING_COUNTRY:
+            case ConditionType::SHIPPING_COUNTRY:
+                if ( ! isset( $context[ $condition['type'] ] ) ) {
+                    return null;
+                }
+
+                $is_match = in_array( $context[ $condition['type'] ], $value, true );
+                break;
+            case ConditionType::CART_SUBTOTAL:
+            case ConditionType::CART_QUANTITY:
+                if ( ! isset( $context[ $condition['type'] ] ) ) {
+                    return null;
+                }
+
+                return ConditionType::AT_LEAST === $condition['operator'] ? $context[ $condition['type'] ] >= $value : $context[ $condition['type'] ] < $value;
             default:
                 return false;
         }

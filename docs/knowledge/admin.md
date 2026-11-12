@@ -1,7 +1,7 @@
 ---
 area: admin
 updated: 2026-11-12
-updated_ref: edf2074
+updated_ref: c7ee247
 covers: [apps/admin/, includes/Engine/Admin/, includes/Engine/Register/, includes/Helpers/LocalizeHelper.php]
 ---
 # Admin SPA
