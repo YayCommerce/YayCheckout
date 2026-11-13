@@ -71,17 +71,30 @@ This service is provided by Google: [Google Fonts API Terms of Service](https://
 
 == Source code ==
 
-The JavaScript and CSS in `assets/dist/admin/` are built from `apps/admin/` (React, Vite, TypeScript), and those in `assets/dist/blocks/` from `packages/blocks/` (`@wordpress/scripts`). Neither is minified or obfuscated by hand: both are the plain output of those two builds.
+This plugin ships compiled JavaScript and CSS in the `assets/dist/` folder. The human-readable source code of these files is public, and you can review, study and fork it:
 
-The full, human-readable source of both, with the build tooling and configuration, is public at [github.com/YayCommerce/YayCheckout](https://github.com/YayCommerce/YayCheckout). This release was built from commit `@SOURCE_COMMIT@` of that repository.
+[https://github.com/YayCommerce/YayCheckout](https://github.com/YayCommerce/YayCheckout)
 
-To rebuild the assets from that source, use Node 22 and pnpm 11, and run these from the repository root:
+This release was built from commit `@SOURCE_COMMIT@` of that repository.
 
-1. `pnpm install`
-2. `pnpm build:admin`
-3. `pnpm build:blocks`
+= Compiled files and their source =
 
-That writes the same `assets/dist/admin/` and `assets/dist/blocks/` this plugin ships.
+* `assets/dist/admin/` (the admin app under YayCommerce > YayCheckout): [apps/admin/src](https://github.com/YayCommerce/YayCheckout/tree/dev/apps/admin/src)
+* `assets/dist/blocks/` (the checkout blocks' editor and view scripts and styles): [packages/blocks/src](https://github.com/YayCommerce/YayCheckout/tree/dev/packages/blocks/src)
+
+The admin app is built with Vite, and the blocks with `@wordpress/scripts` (webpack).
+
+= Build from source =
+
+You need Node.js 22 and pnpm 11. Run these commands:
+
+1. `git clone https://github.com/YayCommerce/YayCheckout.git`
+2. `cd YayCheckout`
+3. `pnpm install --ignore-scripts`
+4. `pnpm build:admin` (builds the admin app)
+5. `pnpm build:blocks` (builds the blocks)
+
+The compiled files go to `assets/dist/`.
 
 == Changelog ==
 
