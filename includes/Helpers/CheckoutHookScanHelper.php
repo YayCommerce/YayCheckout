@@ -70,7 +70,7 @@ class CheckoutHookScanHelper {
     }
 
     /**
-     * @param  array $catalogue CompatibilityCatalogueRepository::get() output; only 'plugins' is read.
+     * @param  array $catalogue CompatibilityCatalogueRepository::bundled() output; only 'plugins' is read.
      * @return array<int, array{slug: string, name: string, version: string, kind: string, touches: string[], status: string, notes: ?string, docs_url: ?string}> Sorted by name.
      */
     public function scan( array $catalogue ): array {

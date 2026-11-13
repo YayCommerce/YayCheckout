@@ -61,13 +61,7 @@ Only if you turn on "Delete all data on uninstall" in the plugin's settings. The
 
 == External services ==
 
-YayCheckout connects to the services below, only from the WordPress admin. Shoppers on the checkout page never contact a third-party service.
-
-= YayCommerce compatibility list =
-
-The Compatibility screen fetches a list of known plugin and theme compatibility notes from `https://yaycommerce.com/yaycheckout/compatibility.json`. It is a plain request with no data from your store; like any WordPress HTTP request it carries your site's URL (in the User-Agent) and your server's IP address. It is sent when an administrator opens the Compatibility screen or clicks Refresh, and the result is cached; if the request fails, the list bundled with the plugin is used.
-
-This service is provided by YayCommerce: [Terms and Conditions](https://yaycommerce.com/terms-and-conditions/), [Privacy Policy](https://yaycommerce.com/privacy-policy/).
+YayCheckout connects to the service below, only from the WordPress admin. Shoppers on the checkout page never contact a third-party service.
 
 = Google Fonts =
 

@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
 class GatewayCompatibilityHelper {
 
     /**
-     * @param  array $catalogue CompatibilityCatalogueRepository::get() output; only 'gateways' is read.
+     * @param  array $catalogue CompatibilityCatalogueRepository::bundled() output; only 'gateways' is read.
      * @return array<int, array{id: string, title: string, status: string, express_pay: ?string, notes: ?string, docs_url: ?string}>
      */
     public static function list( array $catalogue ): array {

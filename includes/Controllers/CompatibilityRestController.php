@@ -11,7 +11,7 @@ use YayCheckout\Utils\SingletonTrait;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * GET /yaycheckout/v1/compatibility?refresh= — the Compatibility page in one
+ * GET /yaycheckout/v1/compatibility — the Compatibility page in one
  * read: { store, gateways, plugins, catalogue: { source, fetched_at } }.
  * Each detection fails on its own to null, which the SPA shows as "Not
  * detected", so one broken check never costs the merchant the whole report.
@@ -27,19 +27,12 @@ class CompatibilityRestController extends BaseRestController {
                 'methods'             => \WP_REST_Server::READABLE,
                 'callback'            => fn( $request ) => $this->exec_read( [ $this, 'get_report' ], $request ),
                 'permission_callback' => [ $this, 'permission_callback' ],
-                'args'                => [
-                    'refresh' => [
-                        'type'    => 'boolean',
-                        'default' => false,
-                    ],
-                ],
             ]
         );
     }
 
-    public function get_report( \WP_REST_Request $request ): array {
-        $catalogue = $this->detect( 'catalogue', fn() => ( new CompatibilityCatalogueRepository() )->get( (bool) $request['refresh'] ) )
-            ?? CompatibilityCatalogueRepository::bundled();
+    public function get_report(): array {
+        $catalogue = CompatibilityCatalogueRepository::bundled();
 
         return [
             'store'     => $this->detect( 'store', fn() => StoreEnvironmentHelper::describe() ),
