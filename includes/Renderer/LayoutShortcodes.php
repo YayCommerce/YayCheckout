@@ -1,6 +1,8 @@
 <?php
 namespace YayCheckout\Renderer;
 
+use YayCheckout\Helpers\KsesHelper;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -48,7 +50,7 @@ final class LayoutShortcodes {
             return $block_content;
         }
 
-        $html = do_shortcode( shortcode_unautop( $block_content ) );
+        $html = wp_kses( do_shortcode( shortcode_unautop( $block_content ) ), KsesHelper::shortcode_html() );
 
         // Core's Shortcode block prints no wrapper; one gives Visibility a tag to mark, whatever the shortcode prints.
         return 'core/shortcode' === $name ? '<div class="wp-block-shortcode">' . $html . '</div>' : $html;

@@ -57,4 +57,76 @@ class KsesHelper {
 
         return $tags;
     }
+
+    /**
+     * The storefront_html() tags plus the form controls a shortcode may print (a newsletter or login form),
+     * for the shortcodes LayoutShortcodes runs in a layout's text blocks.
+     */
+    public static function shortcode_html(): array {
+        static $tags = null;
+
+        if ( null !== $tags ) {
+            return $tags;
+        }
+
+        $control = [
+            'id'          => true,
+            'class'       => true,
+            'name'        => true,
+            'value'       => true,
+            'disabled'    => true,
+            'required'    => true,
+            'placeholder' => true,
+            'aria-label'  => true,
+        ];
+
+        $tags = array_merge(
+            self::storefront_html(),
+            _wp_add_global_attributes(
+                [
+                    'form'     => [
+                        'id'      => true,
+                        'class'   => true,
+                        'action'  => true,
+                        'method'  => true,
+                        'enctype' => true,
+                        'name'    => true,
+                    ],
+                    'input'    => array_merge(
+                        $control,
+                        [
+                            'type'         => true,
+                            'checked'      => true,
+                            'min'          => true,
+                            'max'          => true,
+                            'step'         => true,
+                            'size'         => true,
+                            'maxlength'    => true,
+                            'autocomplete' => true,
+                        ]
+                    ),
+                    'select'   => array_merge( $control, [ 'multiple' => true ] ),
+                    'option'   => [
+                        'value'    => true,
+                        'selected' => true,
+                        'disabled' => true,
+                    ],
+                    'textarea' => array_merge(
+                        $control,
+                        [
+                            'rows' => true,
+                            'cols' => true,
+                        ]
+                    ),
+                    'button'   => array_merge( $control, [ 'type' => true ] ),
+                    'label'    => [
+                        'for'   => true,
+                        'class' => true,
+                    ],
+                ]
+            )
+        );
+
+        return $tags;
+    }
 }

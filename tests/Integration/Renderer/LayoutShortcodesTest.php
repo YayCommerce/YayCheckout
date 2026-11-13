@@ -66,6 +66,16 @@ class LayoutShortcodesTest extends WP_UnitTestCase {
         $this->assertMatchesRegularExpression( '#<div [^>]*\b' . BlockVisibility::HIDDEN_CLASS . '\b[^>]*>\s*<div class="zz-out">#', $html );
     }
 
+    public function test_shortcode_output_is_escaped_but_keeps_form_controls(): void {
+        add_shortcode( 'zz_unsafe', static fn() => '<form method="post"><input type="email" name="zz_email" required></form><script>alert(1)</script>' );
+
+        $html = LayoutShortcodes::render( "<!-- wp:shortcode -->\n[zz_unsafe]\n<!-- /wp:shortcode -->" );
+        remove_shortcode( 'zz_unsafe' );
+
+        $this->assertStringContainsString( '<input type="email" name="zz_email" required>', $html );
+        $this->assertStringNotContainsString( '<script', $html );
+    }
+
     public function test_a_null_from_another_filter_does_not_fatal(): void {
         $null = static fn() => null;
         add_filter( 'render_block', $null, 8 );
