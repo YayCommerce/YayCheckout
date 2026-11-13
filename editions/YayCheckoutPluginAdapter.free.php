@@ -3,11 +3,11 @@
  * Un-namespaced and excluded from PHP-Scoper so class_exists() checks hit real
  * WordPress/WooCommerce symbols.
  *
- * The Free edition's adapter: no licensing, and a Go Pro link. A build input, not a
+ * The Free edition's adapter: no licensing and no Go Pro link. A build input, not a
  * loaded file — `cmd_release` in scripts/run.sh stages it over the root
  * YayCheckoutPluginAdapter.php (the Pro one, which the branch runs) when --plan=free,
  * so only one of the two ever reaches a zip. Keep the menu methods identical to the
- * root file's; only the licensing half, the page title and get_pro_url() differ.
+ * root file's; only the licensing half, the page title and the WooCommerce screen differ.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -26,8 +26,5 @@ class YayCheckoutPluginAdapter implements \YayCheckoutScoped\YayCommerce\AdminSh
     public function get_plugin_basename(): string    { return YAYCHECKOUT_BASE_NAME; }
     public function get_settings_label(): string     { return 'Settings'; }
     public function get_docs_url(): string           { return 'https://docs.yaycommerce.com/'; }
-    public function get_pro_url(): string            { return 'https://yaycommerce.com/'; }
-
-    /** Optional; AdminShell detects it via method_exists. */
-    public function needs_woocommerce_screen(): bool { return ! class_exists( 'WooCommerce' ); }
+    public function get_pro_url(): string            { return ''; }
 }

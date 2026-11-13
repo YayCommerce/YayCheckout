@@ -23,7 +23,7 @@
  use YayCheckoutScoped\YayCommerce\AdminShell\Support\Constants;
  defined('ABSPATH') || exit;
 @@ -33,13 +24,10 @@
-     const VERSION = '2.8.6';
+     const VERSION = '2.10.0';
      private static ?self $instance = null;
      private static bool $booted = \false;
 -    private static array $enabled_slugs = [];
@@ -170,7 +170,18 @@
       * Register plugin action links + row meta.
       */
      private static function register_plugin_links(PluginMenuAdapter $adapter): void
-@@ -294,13 +199,6 @@
+@@ -277,10 +182,6 @@
+                 $url = admin_url('admin.php?page=' . $menu_slug);
+                 $new['settings'] = '<a href="' . esc_url($url) . '">' . esc_html($adapter->get_settings_label()) . '</a>';
+             }
+-            $pro_url = $adapter->get_pro_url();
+-            if (!empty($pro_url)) {
+-                $new['go-pro'] = '<a href="' . esc_url($pro_url) . '" target="_blank" style="color:#00a32a;font-weight:700;">' . esc_html__('Go Pro', 'yaycommerce') . '</a>';
+-            }
+             return array_merge($new, $links);
+         });
+         add_filter('plugin_row_meta', function (array $meta, string $file) use ($adapter, $basename) {
+@@ -294,13 +195,6 @@
              $meta[] = '<a href="https://yaycommerce.com/support" target="_blank">' . esc_html__('Support', 'yaycommerce') . '</a>';
              return $meta;
          }, 10, 2);
@@ -232,16 +243,17 @@
  }
 --- a/vendor-prefixed/src/Menu/PluginSubmenu.php
 +++ b/vendor-prefixed/src/Menu/PluginSubmenu.php
-@@ -3,8 +3,6 @@
+@@ -3,9 +3,6 @@
  namespace YayCheckoutScoped\YayCommerce\AdminShell\Menu;
  
  use YayCheckoutScoped\YayCommerce\AdminShell\Contracts\PluginMenuAdapter;
 -use YayCheckoutScoped\YayCommerce\AdminShell\License\Contracts\LicenseConfigAdapter;
 -use YayCheckoutScoped\YayCommerce\AdminShell\License\License;
- use YayCheckoutScoped\YayCommerce\AdminShell\Pages\WooCommerceRequiredPage;
+-use YayCheckoutScoped\YayCommerce\AdminShell\Pages\WooCommerceRequiredPage;
  use YayCheckoutScoped\YayCommerce\AdminShell\Support\AdminContext;
  /**
-@@ -68,23 +66,13 @@
+  * Registers a plugin-named submenu under YayCommerce.
+@@ -68,28 +65,6 @@
          if (null !== $callback && !is_callable($callback)) {
              $callback = null;
          }
@@ -254,20 +266,23 @@
 -                $callback = null;
 -            }
 -        }
-         // WooCommerce dependency gate: when the plugin depends on WooCommerce and it
-         // is inactive, render the shared "install WooCommerce" screen in place of the
+-        // WooCommerce dependency gate: when the plugin depends on WooCommerce and it
+-        // is inactive, render the shared "install WooCommerce" screen in place of the
 -        // settings page. Applied only on the real render path — the license redirect
 -        // above takes precedence, so unlicensed pro plugins still land on Licenses.
-+        // settings page.
-         // Opt-in via the optional needs_woocommerce_screen() adapter method; the
-         // adapter owns the runtime WooCommerce check so it runs un-prefixed under
-         // PHP-Scoper (the adapter class is excluded from scoping in each plugin).
+-        // Opt-in via the optional needs_woocommerce_screen() adapter method; the
+-        // adapter owns the runtime WooCommerce check so it runs un-prefixed under
+-        // PHP-Scoper (the adapter class is excluded from scoping in each plugin).
 -        if (!$needs_redirect && method_exists($this->adapter, 'needs_woocommerce_screen') && $this->adapter->needs_woocommerce_screen()) {
-+        if (method_exists($this->adapter, 'needs_woocommerce_screen') && $this->adapter->needs_woocommerce_screen()) {
-             $screen_copy = method_exists($this->adapter, 'get_woocommerce_screen_copy') ? (array) $this->adapter->get_woocommerce_screen_copy() : [];
-             $callback = static function () use ($screen_copy) {
-                 WooCommerceRequiredPage::render($screen_copy);
-@@ -107,17 +95,5 @@
+-            $screen_copy = method_exists($this->adapter, 'get_woocommerce_screen_copy') ? (array) $this->adapter->get_woocommerce_screen_copy() : [];
+-            $callback = static function () use ($screen_copy) {
+-                WooCommerceRequiredPage::render($screen_copy);
+-            };
+-        }
+         $page_id = add_submenu_page(
+             'yaycommerce',
+             $this->adapter->get_page_title(),
+@@ -107,17 +82,5 @@
          if ($is_override) {
              remove_all_actions('load-' . $page_id);
          }

@@ -28,8 +28,6 @@ if ( 'yaycheckout-pro' !== basename( __DIR__ ) && (
     in_array( $yaycheckout_pro_basename, (array) get_option( 'active_plugins', [] ), true )
     || ( is_multisite() && isset( get_site_option( 'active_sitewide_plugins', [] )[ $yaycheckout_pro_basename ] ) )
 ) ) {
-    $yaycheckout_fallback_reason = 'pro_active';
-    require_once plugin_dir_path( __FILE__ ) . 'includes/Fallback.php';
     add_action(
         'admin_init',
         function () {
@@ -40,8 +38,6 @@ if ( 'yaycheckout-pro' !== basename( __DIR__ ) && (
 }
 
 if ( function_exists( 'YayCheckout\\plugin_init' ) ) {
-    $yaycheckout_fallback_reason = 'duplicate';
-    require_once plugin_dir_path( __FILE__ ) . 'includes/Fallback.php';
     add_action(
         'admin_init',
         function () {
@@ -131,7 +127,6 @@ add_action(
 if ( ! function_exists( 'YayCheckout\\plugin_init' ) ) {
     function plugin_init() {
         if ( ! function_exists( 'WC' ) ) {
-            add_action( 'admin_notices', [ \YayCheckout\Engine\ActDeact::class, 'install_woocommerce_admin_notice' ] );
             return;
         }
 

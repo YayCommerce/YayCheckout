@@ -38,15 +38,17 @@ JS_SOURCE_PATHS="apps packages pnpm-lock.yaml pnpm-workspace.yaml package.json .
 # The public development location readme.txt's Source code section points at, which is what guideline 4 asks for
 # now that no source ships. The artifact check fails the release if the readme stops naming it.
 SOURCE_REPO_URL="https://github.com/YayCommerce/YayCheckout"
-# Admin-shell files the Free zip deletes: its licensing (with the EDD updater) and the Recommended Plugins
-# page. FREE_SHELL_PATCH first removes every reference to them; the artifact check enforces both.
+# Admin-shell files the Free zip deletes: its licensing (with the EDD updater), the Recommended Plugins
+# page and the WooCommerce-required screen, which `Requires Plugins: woocommerce` makes unreachable.
+# FREE_SHELL_PATCH first removes every reference to them; the artifact check enforces it.
 FREE_SHELL_STRIP="src/License/ src/Registry/ src/Contracts/AddonHostAdapter.php src/Menu/ExternalPluginMenuAdapter.php
-src/Pages/LicensesPage.php src/Pages/RecommendedPluginsPage.php views/license-card.php views/license-activate-card.php
+src/Pages/LicensesPage.php src/Pages/RecommendedPluginsPage.php src/Pages/WooCommerceRequiredPage.php
+views/woocommerce-required-page.php views/license-card.php views/license-activate-card.php
 views/licenses-page.php views/recommended-plugins-data.php views/recommended-plugins-page.php
 assets/css/licenses.css assets/css/other-plugins.css assets/js/license.js assets/js/other-plugins.js"
 FREE_SHELL_PATCH="$PLUGIN_DIR/scripts/free-admin-shell.patch"
 
-# The Free edition's adapter (no licensing, a Go Pro link). Staged over the root
+# The Free edition's adapter (no licensing, no Go Pro link). Staged over the root
 # YayCheckoutPluginAdapter.php, which is Pro, when --plan=free.
 FREE_ADAPTER="$PLUGIN_DIR/editions/YayCheckoutPluginAdapter.free.php"
 # A gettext call whose text domain is admin-shell's 'yaycommerce'. wordpress.org rejects a zip whose text domain
@@ -487,7 +489,7 @@ cmd_release() {
         done
         print_info "Free build: removed $PRO_PATHS (kept preview.html)"
 
-        # The patch drops the shell's licensing and Recommended Plugins wiring, and registers this copy
+        # The patch drops the shell's licensing, Recommended Plugins, WooCommerce-required and Go Pro wiring, and registers this copy
         # at a low election version so a full shell from another YayCommerce plugin runs the shared menu.
         # It is made against vendor-prefixed/ and fails on a changed shell: regenerate it then.
         if ! patch -p1 -d "$temp_dir" --forward --no-backup-if-mismatch --quiet < "$FREE_SHELL_PATCH"; then
@@ -504,7 +506,7 @@ cmd_release() {
                 exit 1
             fi
         done
-        print_info "Free build: removed the admin-shell licensing and Recommended Plugins"
+        print_info "Free build: removed the admin-shell licensing, Recommended Plugins and WooCommerce-required screen"
 
         # The edition's two remaining files. The branch carries the Pro adapter and the Pro
         # header; Free's adapter is a build input beside it, and its header differs in the
@@ -589,11 +591,11 @@ cmd_release() {
                 exit 1
             fi
         done
-        if unzip -p "$zip_name" "$plan_slug/vendor-prefixed/*" | grep -qE 'AdminShell\\(License|Registry)\\|LicensesPage|RecommendedPluginsPage|ExternalPluginMenuAdapter'; then
+        if unzip -p "$zip_name" "$plan_slug/vendor-prefixed/*" | grep -qE 'AdminShell\\(License|Registry)\\|LicensesPage|RecommendedPluginsPage|WooCommerceRequiredPage(::|;)|ExternalPluginMenuAdapter'; then
             print_error "Free artifact's admin-shell still names a removed class"
             exit 1
         fi
-        if unzip -p "$zip_name" "$plan_slug/vendor/composer/*" | grep -qE 'AdminShell\\+(License|Registry)\\+|EDD_SL|LicensesPage|RecommendedPluginsPage|ExternalPluginMenuAdapter'; then
+        if unzip -p "$zip_name" "$plan_slug/vendor/composer/*" | grep -qE 'AdminShell\\+(License|Registry)\\+|EDD_SL|LicensesPage|RecommendedPluginsPage|WooCommerceRequiredPage|ExternalPluginMenuAdapter'; then
             print_error "Free artifact's Composer autoloader still names a removed class"
             exit 1
         fi
