@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 
 class YayCheckoutPluginAdapter implements \YayCheckoutScoped\YayCommerce\AdminShell\Contracts\PluginMenuAdapter {
     public function get_menu_title(): string         { return 'YayCheckout'; }
-    public function get_page_title(): string         { return 'YayCheckout - WooCommerce Checkout Builder'; }
+    public function get_page_title(): string         { return 'YayCheckout - Checkout Builder for WooCommerce'; }
     public function get_menu_slug(): string          { return 'yaycheckout'; }
     public function get_settings_page_callback(): ?callable {
         return function () {

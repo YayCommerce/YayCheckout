@@ -516,7 +516,8 @@ cmd_release() {
             exit 1
         fi
         cp "$FREE_ADAPTER" "$temp_dir/YayCheckoutPluginAdapter.php"
-        sed_inplace "s/^ \\* Plugin Name:       YayCheckout Pro - / * Plugin Name:       YayCheckout - /" "$temp_dir/$PLUGIN_SLUG.php"
+        # The same name as readme.txt's title: wordpress.org refuses one that leads with WooCommerce.
+        perl -CSD -pi -e 's{^ \* Plugin Name:\s+.*$}{ * Plugin Name:       YayCheckout \x{2013} Checkout Builder for WooCommerce}' "$temp_dir/$PLUGIN_SLUG.php"
         # perl, not sed_inplace: a literal newline in the replacement is not portable
         # between GNU and BSD sed. Same reason the text-domain rewrite below uses perl.
         perl -pi -e 's{^ \* Requires PHP: (.*)$}{ * Requires PHP: $1\n * Requires Plugins:  woocommerce}' "$temp_dir/$PLUGIN_SLUG.php"
