@@ -6,8 +6,7 @@ use YayCheckout\Models\LayoutDesign;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Prints the layout's design as `--yaycheckout-*` custom properties on :root, then the page rule, then the
- * site-wide custom CSS and the layout's. An empty token prints nothing: checkout-base.css and the blocks' CSS
+ * Prints the layout's design as `--yaycheckout-*` custom properties on :root, then the page rule. An empty token prints nothing: checkout-base.css and the blocks' CSS
  * read each property with a neutral fallback that follows the theme.
  * inputs.label is the one token with no property here: it switches a layout of rules on, so it is a class on the
  * checkout wrapper (checkout/render.php, and checkout/edit.tsx on the canvas).
@@ -19,8 +18,7 @@ defined( 'ABSPATH' ) || exit;
  * inherited property on body takes html's value, not the theme's body value).
  *
  * Values are printed unescaped: LayoutDesign::from_meta() only lets through colours and gradients its
- * patterns accept, enum members and in-range ints. Each custom CSS is checked here, not only on save: the
- * setting and the meta can be written without going through REST, and one rejected CSS must not drop the other.
+ * patterns accept, enum members and in-range ints.
  */
 class DesignStyles {
 
@@ -85,13 +83,10 @@ class DesignStyles {
     ];
 
     /**
-     * The design as one stylesheet. Everything before the custom CSS is mirrored by the layout
-     * editor (design-css.ts), which reprints it as the merchant edits the layout's design.
-     *
-     * @param string $site_css        The site-wide custom CSS (Settings → Advanced), printed before the layout's.
-     * @param bool   $with_custom_css False in the layout editor, where the merchant's storefront CSS could break the canvas.
+     * The design as one stylesheet, mirrored by the layout editor (design-css.ts), which reprints
+     * it as the merchant edits the layout's design.
      */
-    public function css( LayoutDesign $design, string $site_css, bool $with_custom_css ): string {
+    public function css( LayoutDesign $design ): string {
         $vars = $this->vars( $design->sections );
         $page = array_intersect( self::PAGE_PROPERTIES, array_keys( $vars ) );
         $css  = '';
@@ -123,18 +118,6 @@ class DesignStyles {
         // An empty hover colour keeps the link colour, so the theme's hover colour doesn't show either.
         if ( isset( $vars['link-color'] ) || isset( $vars['link-hover-color'] ) ) {
             $css .= self::LINK_HOVER_SELECTOR . " {\n\tcolor: var(--yaycheckout-link-hover-color, var(--yaycheckout-link-color));\n}\n";
-        }
-
-        if ( ! $with_custom_css ) {
-            return $css;
-        }
-
-        foreach ( [ $site_css, $design->custom_css ] as $custom_css ) {
-            $custom_css = LayoutDesign::sanitize_custom_css( $custom_css );
-
-            if ( ! $custom_css instanceof \WP_Error && '' !== trim( $custom_css ) ) {
-                $css .= $custom_css . "\n";
-            }
         }
 
         return $css;

@@ -451,8 +451,7 @@ class LayoutRepository {
 
         $slug = LayoutTemplateCatalogue::is_available( $layout->template ) ? $layout->template : LayoutTemplateCatalogue::DEFAULT_SLUG;
 
-        // Slashed by update_post(): without it block attributes lose their \uXXXX escapes, and a template's
-        // custom CSS its backslashes. The design goes in the same update, so the revision core saves after it
+        // Slashed by update_post(): without it block attributes lose their \uXXXX escapes. The design goes in the same update, so the revision core saves after it
         // pairs the template's markup with the template's design.
         $this->update_post(
             [

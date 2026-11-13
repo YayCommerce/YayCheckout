@@ -51,6 +51,5 @@
 		"radius": 0,
 		"font_weight": "semibold",
 		"text_transform": "uppercase"
-	},
-	"custom_css": ""
+	}
 }

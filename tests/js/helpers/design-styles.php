@@ -1,7 +1,7 @@
 <?php
 /**
  * Prints, as JSON, what PHP makes of each raw design read from STDIN: the projected tokens, the font lists the
- * editor is given (BlockRegistry) and DesignStyles::css() without custom CSS. For design-css.test.ts.
+ * editor is given (BlockRegistry) and DesignStyles::css(). For design-css.test.ts.
  */
 
 define( 'ABSPATH', __DIR__ );
@@ -31,7 +31,7 @@ foreach ( $yay_designs as $yay_raw ) {
 	$yay_design           = LayoutDesign::from_meta( $yay_raw );
 	$yay_out['designs'][] = [
 		'tokens' => $yay_design->to_meta(),
-		'css'    => ( new DesignStyles() )->css( $yay_design, '', false ),
+		'css'    => ( new DesignStyles() )->css( $yay_design ),
 	];
 }
 

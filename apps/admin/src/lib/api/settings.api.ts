@@ -19,7 +19,6 @@ export function settingsFromWire(wire: SettingsWire): Settings {
     advanced: {
       previewLinkLifetime: wire.advanced.preview_link_lifetime,
       forceEnqueueCheckoutScripts: wire.advanced.force_enqueue_checkout_scripts,
-      customCss: wire.advanced.custom_css,
     },
   };
 }
@@ -34,7 +33,6 @@ export function settingsToWire(settings: Settings): SettingsWire {
     advanced: {
       preview_link_lifetime: settings.advanced.previewLinkLifetime,
       force_enqueue_checkout_scripts: settings.advanced.forceEnqueueCheckoutScripts,
-      custom_css: settings.advanced.customCss,
     },
   };
 }

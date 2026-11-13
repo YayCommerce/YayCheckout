@@ -10,7 +10,6 @@ import {
 	PanelBody,
 	RangeControl,
 	SelectControl,
-	TextareaControl,
 	__experimentalToolsPanel as ToolsPanel,
 } from '@wordpress/components';
 import { useEntityProp } from '@wordpress/core-data';
@@ -29,7 +28,6 @@ import { StateColourItem, type ColourState } from '../shared/state-colour-item';
 import './layout-design.css';
 
 export const SIDEBAR = 'yaycheckout-layout-design';
-const CSS_LOCK = 'yaycheckout-layout-design-css';
 
 type SectionTokens = Record< string, string | number | null >;
 
@@ -43,7 +41,6 @@ export type LayoutDesignMeta = {
 	help_text: SectionTokens;
 	buttons: SectionTokens;
 	notices: SectionTokens;
-	custom_css: string;
 };
 
 type Section = 'colours' | 'typography' | 'inputs' | 'checkboxes' | 'radios' | 'help_text' | 'buttons' | 'notices';
@@ -158,7 +155,6 @@ function normalize( design: EditorDesign, raw: unknown ): LayoutDesignMeta {
 		help_text: sectionTokens( design.schema.help_text, meta.help_text ),
 		buttons: sectionTokens( design.schema.buttons, meta.buttons ),
 		notices: sectionTokens( design.schema.notices, meta.notices ),
-		custom_css: 'string' === typeof meta.custom_css ? meta.custom_css : '',
 	};
 }
 
@@ -173,20 +169,6 @@ function useLayoutDesign( design: EditorDesign ): [ LayoutDesignMeta, ( next: La
 	const { editPost } = useDispatch( editorStore );
 
 	return [ normalize( design, meta?.[ design.metaKey ] ), ( next ) => editPost( { meta: { [ design.metaKey ]: next } } ) ];
-}
-
-/** Mirrors LayoutDesign::sanitize_custom_css() in PHP: its limits and its messages. */
-function customCssError( css: string, maxBytes: number ): string | null {
-	if ( new TextEncoder().encode( css ).length > maxBytes ) {
-		/* translators: %d: size limit in KB */
-		return sprintf( __( 'Custom CSS must be under %d KB.', 'yaycheckout' ), Math.floor( maxBytes / 1000 ) );
-	}
-
-	if ( css.includes( '\0' ) || /<\/style|<script/i.test( css ) ) {
-		return __( 'Custom CSS contains disallowed markup.', 'yaycheckout' );
-	}
-
-	return null;
 }
 
 type Swatch = { name?: string; slug: string; color?: string; gradient?: string };
@@ -746,22 +728,10 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 
 	// Leaving the layout editor must not drop a pending edit.
 	useEffect( () => () => flushRef.current(), [] );
-	const cssError = customCssError( current.custom_css, design.customCssMaxBytes );
-	const { lockPostSaving, unlockPostSaving } = useDispatch( editorStore );
-
 	const font = useDesignFont( design, String( current.typography.font_family ?? '' ) );
 
 	useCanvasStyle( designCss( current, design ), design.styleId );
 	useCanvasStyle( font.css, design.fontStyleId );
-
-	// The server would skip this CSS on print without saying so, so it is never saved.
-	useEffect( () => {
-		if ( cssError ) {
-			lockPostSaving( CSS_LOCK );
-		} else {
-			unlockPostSaving( CSS_LOCK );
-		}
-	}, [ cssError ] );
 
 	return (
 		<>
@@ -787,24 +757,6 @@ function LayoutDesignSidebar( { design }: { design: EditorDesign } ) {
 						onChange={ ( next ) => setCurrent( { ...current, [ section ]: next } ) }
 					/>
 				) ) }
-				<PanelBody title={ __( 'Custom CSS', 'yaycheckout' ) } initialOpen={ '' !== current.custom_css }>
-					<TextareaControl
-						__nextHasNoMarginBottom
-						label={ __( 'Custom CSS', 'yaycheckout' ) }
-						hideLabelFromVision
-						className={ `yaycheckout-layout-design__css${ cssError ? ' is-invalid' : '' }` }
-						rows={ 10 }
-						value={ current.custom_css }
-						help={
-							cssError ??
-							__(
-								'Printed on the checkout after the site-wide custom CSS (Settings → Advanced). Not shown in the editor.',
-								'yaycheckout'
-							)
-						}
-						onChange={ ( next: string ) => setCurrent( { ...current, custom_css: next } ) }
-					/>
-				</PanelBody>
 			</PluginSidebar>
 		</>
 	);

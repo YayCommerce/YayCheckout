@@ -49,21 +49,12 @@ final class LayoutDesignTest extends TestCase {
 			]
 		)->to_meta();
 
-		$this->assertSame( [ 'colours', 'typography', 'inputs', 'checkboxes', 'radios', 'help_text', 'buttons', 'notices', 'custom_css' ], array_keys( $meta ) );
+		$this->assertSame( [ 'colours', 'typography', 'inputs', 'checkboxes', 'radios', 'help_text', 'buttons', 'notices' ], array_keys( $meta ) );
 		$this->assertNull( $meta['typography']['base_size'] );
 		$this->assertSame( 0, $meta['inputs']['radius'] );
 		$this->assertSame( '', $meta['inputs']['size'] );
 		$this->assertSame( '#000000', $meta['inputs']['focus_border'] );
 		$this->assertSame( '#111111', $meta['inputs']['text_color'] );
 		$this->assertSame( LayoutDesign::from_meta( [] )->to_meta(), LayoutDesign::from_meta( 'garbage' )->to_meta() );
-	}
-
-	public function test_refuses_custom_css_that_closes_the_style_element_or_is_too_large() {
-		$this->assertSame( 'a{color:red}', LayoutDesign::sanitize_custom_css( 'a{color:red}' ) );
-		$this->assertSame( 50000, strlen( LayoutDesign::sanitize_custom_css( str_repeat( 'a', 50000 ) ) ) );
-
-		foreach ( [ 'a</STYLE>', '<script>', "a\0b", str_repeat( 'a', 50001 ) ] as $bad ) {
-			$this->assertInstanceOf( \WP_Error::class, LayoutDesign::sanitize_custom_css( $bad ) );
-		}
 	}
 }

@@ -2,15 +2,9 @@ import { ExternalLink } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
-import {
-  CUSTOM_CSS_MAX_BYTES,
-  PREVIEW_LINK_LIFETIME_OPTIONS,
-  type PreviewLinkLifetime,
-  type Settings,
-} from '@/lib/schema/settings.schema';
+import { PREVIEW_LINK_LIFETIME_OPTIONS, type PreviewLinkLifetime, type Settings } from '@/lib/schema/settings.schema';
 import { FormControl, FormField } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { DocLink } from './DocLink';
 import { SettingActionRow, SettingRow } from './SettingRow';
 import { SettingsSection } from './SettingsSection';
@@ -79,37 +73,6 @@ export function AdvancedTab() {
                   ))}
                 </SelectContent>
               </Select>
-            </SettingRow>
-          )}
-        />
-      </SettingsSection>
-
-      <SettingsSection
-        title={__('Custom CSS', 'yaycheckout')}
-        description={__('Store-wide styles for every checkout layout.', 'yaycheckout')}
-      >
-        <FormField
-          control={control}
-          name="advanced.customCss"
-          render={({ field }) => (
-            <SettingRow
-              orientation="vertical"
-              label={__('CSS', 'yaycheckout')}
-              description={__(
-                "Printed on every checkout, before each layout's own custom CSS. Not shown in the editor.",
-                'yaycheckout',
-              )}
-            >
-              <FormControl>
-                <Textarea
-                  {...field}
-                  rows={8}
-                  maxLength={CUSTOM_CSS_MAX_BYTES}
-                  placeholder=".yaycheckout-checkout { }"
-                  spellCheck={false}
-                  className="w-full! max-w-2xl font-mono text-xs md:text-xs"
-                />
-              </FormControl>
             </SettingRow>
           )}
         />

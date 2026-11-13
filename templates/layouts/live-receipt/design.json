@@ -51,6 +51,5 @@
 		"radius": 2,
 		"font_weight": "semibold",
 		"text_transform": ""
-	},
-	"custom_css": ""
+	}
 }

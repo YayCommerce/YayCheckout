@@ -126,7 +126,7 @@ class CheckoutPage {
             wp_dequeue_style( $handle );
         }
 
-        ( new CheckoutBaseStyles() )->enqueue( true, $this->layout()->design );
+        ( new CheckoutBaseStyles() )->enqueue( $this->layout()->design );
 
         if ( $this->layout()->design->has_floating_labels() ) {
             wp_enqueue_script(

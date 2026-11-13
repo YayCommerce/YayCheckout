@@ -26,7 +26,6 @@ export type EditorDesign = {
 	fontStacks: Record< string, string >;
 	/** The id of the canvas's printed font faces, which the sidebar rewrites when the merchant picks a font. */
 	fontStyleId: string;
-	customCssMaxBytes: number;
 };
 
 /** The layout editor's view switch, from BlockRegistry::editor_design_data(). */

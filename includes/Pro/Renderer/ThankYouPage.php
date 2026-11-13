@@ -181,7 +181,7 @@ class ThankYouPage {
             wp_enqueue_style( 'woocommerce-layout' );
         }
 
-        ( new CheckoutBaseStyles() )->enqueue( true, $layout->design );
+        ( new CheckoutBaseStyles() )->enqueue( $layout->design );
     }
 
     /**

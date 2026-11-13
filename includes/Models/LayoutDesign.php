@@ -4,13 +4,11 @@ namespace YayCheckout\Models;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * A layout's whole design, and the only design model: every section's tokens, plus custom CSS printed after the
- * site-wide custom CSS. An empty token ('' or null) prints nothing, so the theme shows through.
+ * A layout's whole design, and the only design model: every section's tokens. An empty token ('' or null)
+ * prints nothing, so the theme shows through.
  * Stored as Layout::META_DESIGN; to_meta() is also its wire and export shape.
  */
 final class LayoutDesign {
-
-    public const CUSTOM_CSS_MAX_BYTES = 50000;
 
     /** Six-digit #rrggbb, no alpha. Unanchored by delimiters so a JSON Schema `pattern` can use it too. */
     public const HEX_COLOR_PATTERN = '^#[0-9A-Fa-f]{6}$';
@@ -77,9 +75,6 @@ final class LayoutDesign {
      * @var array<string, array>
      */
     public array $sections = [];
-
-    /** Unchecked here: DesignStyles checks it when printing, so a stored value it rejects prints nothing. */
-    public string $custom_css = '';
 
     /**
      * Shape: section => key => [ 'type' => 'int'|'enum'|'color'|'fill', 'default' => mixed,
@@ -351,14 +346,12 @@ final class LayoutDesign {
             $design->sections[ $section ] = self::project_section( $rules, $value[ $section ] ?? null );
         }
 
-        $design->custom_css = is_string( $value['custom_css'] ?? null ) ? $value['custom_css'] : '';
-
         return $design;
     }
 
     /** Every key always present, so the editor and an export never meet a partial shape. */
     public function to_meta(): array {
-        return array_merge( $this->sections, [ 'custom_css' => $this->custom_css ] );
+        return $this->sections;
     }
 
     /** Whether $fill is a gradient, written out or a theme preset, rather than a colour. */
@@ -367,31 +360,6 @@ final class LayoutDesign {
             && ( self::matches( self::GRADIENT_PATTERN, $fill ) || self::matches( self::PRESET_GRADIENT_PATTERN, $fill ) );
     }
 
-    /**
-     * Custom CSS as stored, or why it can't be. It is printed through
-     * wp_add_inline_style(), which does not escape, so a closing </style> or
-     * an opening <script> would break out of the stylesheet.
-     *
-     * @return string|\WP_Error
-     */
-    public static function sanitize_custom_css( string $css ) {
-        if ( strlen( $css ) > self::CUSTOM_CSS_MAX_BYTES ) {
-            return new \WP_Error(
-                'invalid_arguments',
-                sprintf(
-                    /* translators: %d: size limit in KB */
-                    __( 'Custom CSS must be under %d KB.', 'yaycheckout' ),
-                    (int) ( self::CUSTOM_CSS_MAX_BYTES / 1000 )
-                )
-            );
-        }
-
-        if ( false !== strpos( $css, "\0" ) || preg_match( '#</style|<script#i', $css ) ) {
-            return new \WP_Error( 'invalid_arguments', __( 'Custom CSS contains disallowed markup.', 'yaycheckout' ) );
-        }
-
-        return $css;
-    }
 
     /**
      * JSON Schema for the meta's wp/v2 field, built from schema() so core refuses
@@ -413,8 +381,6 @@ final class LayoutDesign {
                 'additionalProperties' => false,
             ];
         }
-
-        $properties['custom_css'] = [ 'type' => 'string' ];
 
         return [
             'type'                 => 'object',

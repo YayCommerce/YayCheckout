@@ -84,7 +84,7 @@ body.yaycheckout-has-layout-actions :is(
         add_action( 'enqueue_block_assets', [ $this, 'canvas_base_styles' ] );
     }
 
-    /** The storefront's base stylesheet and the edited layout's design tokens, without the merchant's custom CSS. */
+    /** The storefront's base stylesheet and the edited layout's design tokens. */
     public function canvas_base_styles(): void {
         if ( ! $this->is_layout_editor() ) {
             return;
@@ -92,7 +92,7 @@ body.yaycheckout-has-layout-actions :is(
 
         $layout = ( new LayoutRepository() )->find( (int) get_the_ID() );
 
-        ( new CheckoutBaseStyles() )->enqueue( false, null !== $layout ? $layout->design : LayoutDesign::from_meta( [] ) );
+        ( new CheckoutBaseStyles() )->enqueue( null !== $layout ? $layout->design : LayoutDesign::from_meta( [] ) );
     }
 
     private function is_layout_editor(): bool {
